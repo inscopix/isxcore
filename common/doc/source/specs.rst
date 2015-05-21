@@ -9,6 +9,6 @@ Specifications
     specs/Data
     specs/Trace
     specs/History
-    specs/Time
+    specs/DateTime
     specs/TimeGrid
 
