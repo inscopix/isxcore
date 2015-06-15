@@ -1,10 +1,12 @@
-#ifndef MOSAIC_TRACE_H
-#define MOSAIC_TRACE_H
+#ifndef ISCPX_TRACE_H
+#define ISCPX_TRACE_H
 
-#include <cstddef>
-#include "TimeGrid.h"
+#include <cinttypes>
 
-namespace mosaic {
+#include "iscpxDateTime.h"
+#include "iscpxTimeGrid.h"
+
+namespace iscpx {
 
 /*!
  * A function of time with a discrete domain.
@@ -16,13 +18,12 @@ public:
 
     /*!
      * Trace constructor.
+     *
+     * \param   start       The start time of the trace.
+     * \param   numTimes    The number of time points in the trace.
+     * \param   step        The step time of the trace in milliseconds.
      */
-    Trace(QDateTime start, qint32 nTimes, qint16 step);
-
-    /*!
-     * Time destructor.
-     */
-    ~Trace();
+    Trace(iscpx::DateTime start, uint32_t numTimes, uint16_t step);
 
     /*!
      * Read access to a range value by index.
@@ -30,7 +31,7 @@ public:
      * \param   i   The index.
      * \return  The ith range value.
      */
-    T getValue(qint32 i) const;
+    T getValue(uint32_t i) const;
 
     /*!
      * Read access to a range value by time.
@@ -47,18 +48,18 @@ public:
      * \param   val The new value.
      * \return  The new ith range value.
      */
-    void setValue(qint32 i, T val);
+    void setValue(uint32_t i, T val);
 
 private:
 
     //! The discrete domain of the function.
-    mosaic::TimeGrid domain;
+    iscpx::TimeGrid m_Domain;
 
     //! The discrete range of the function.
-    T *range;
+    T* m_Range;
 
 }; // class
 
 } // namespace
 
-#endif // MOSAIC_TRACE_H
+#endif // ISCPX_TRACE_H

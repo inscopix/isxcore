@@ -1,10 +1,11 @@
-#ifndef MOSAIC_TIMEGRID_H
-#define MOSAIC_TIMEGRID_H
+#ifndef ISCPX_TIMEGRID_H
+#define ISCPX_TIMEGRID_H
 
-#include <cstddef>
-#include <QDateTime>
+#include <cinttypes>
 
-namespace mosaic {
+#include "iscpxDateTime.h"
+
+namespace iscpx {
 
 /*!
  * A regularly spaced sample of time points.
@@ -16,55 +17,50 @@ public:
     /*!
      * TimeGrid constructor.
      *
-     * \param nTimes	The number of samples.
-     * \param start	The start time of the samples.
-     * \param step	The step time of the samples.
+     * \param start	    The start time of the samples.
+     * \param numTimes	The number of samples.
+     * \param step	    The step time of the samples.
      */
-    TimeGrid(QDateTime start, qint32 nTimes, qint16 step);
-
-    /*!
-     * TimeGrid destructor.
-     */
-    ~TimeGrid();
+    TimeGrid(iscpx::DateTime start, uint32_t numTimes, uint16_t step);
 
     /*!
      * Get the start time of the samples.
      */
-    QDateTime getStart() const;
+    iscpx::DateTime getStart() const;
 
     /*!
      * Get the end time of the samples.
      */
-    QDateTime getEnd() const;
+    iscpx::DateTime getEnd() const;
 
     /*!
      * Get the duration of a single sample in milliseconds.
      */
-    qint16 getStep() const;
+    uint16_t getStep() const;
 
     /*!
      * Get the number of time samples.
      */
-    qint32 getNTimes() const;
+    uint32_t getNumTimes() const;
 
     /*!
      * Get the length of all samples in milliseconds.
      */
-    qint64 getLength() const;
+    uint64_t getLength() const;
 
 private:
 
     //! The start time of the samples.
-    QDateTime start;
+    iscpx::DateTime m_Start;
 
     //! The number of time samples.
-    qint32 nTimes;
+    uint32_t m_NumTimes;
 
     //! The duration of a single sample in milliseconds.
-    qint16 step;
+    uint16_t m_Step;
 
 }; // class
 
 } // namespace
 
-#endif // MOSAIC_TIMEGRID_H
+#endif // ISCPX_TIMEGRID_H
