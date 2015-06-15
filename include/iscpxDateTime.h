@@ -24,11 +24,6 @@ public:
     DateTime();
 
     /*!
-     * DateTime destructor.
-     */
-    ~DateTime();
-
-    /*!
      * Convert this to a string.
 	 *
 	 * The format argument determines the format of the output.
