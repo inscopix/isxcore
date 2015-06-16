@@ -1,3 +1,5 @@
 TEMPLATE = subdirs
-SUBDIRS = TimeGridTest
-
+SUBDIRS =	core \
+			TimeGridTest
+core.subdir = ..
+TimeGridTest.depends = core
