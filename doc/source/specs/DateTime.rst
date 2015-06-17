@@ -1,9 +1,9 @@
-.. _Time:
+.. _DateTime:
 
-Time
-----
+DateTime
+--------
 
-A Time object stores a date/time stamp that is used to mark particular
+A DateTime object stores a date/time stamp that is used to mark particular
 points in time in a trace or a movie.
 
 The Mosaic 2 GUI is supposed to be based around time. Time can be tricky
@@ -30,21 +30,21 @@ Requirements
   Time stamps should likely be defined w.r.t. UTC, but allowing users to
   choose a working time stamp for visualization would be very useful.
 
-- Add a duration of time in seconds to a Time.
+- Add a duration of time in seconds to a DateTime object.
 
   This would be most convenient as an operator. For example::
 
-    Time time;
+    DateTime dateTime;
     double duration = 2.5;
-    Time newTime = time + duration;
+    DateTime newDateTime = dateTime + duration;
 
-- Calculate duration between two Times.
+- Calculate duration between two DateTime objects.
 
   This would be most convenient as an operator. For example::
 
-    Time time1;
-    Time time2;
-    double duration = time2 - time1;
+    Time dateTime1;
+    Time dateTime2;
+    double duration = dateTime2 - dateTime1;
 
 
 Non-Requirements
