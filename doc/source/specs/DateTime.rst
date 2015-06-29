@@ -14,7 +14,12 @@ difficulties.
 Requirements
 ^^^^^^^^^^^^
 
-- Read access to string representations of date/time.
+- Read access to string representations.
+
+  At least a format like "20150512-142947-372". Also things like day of the
+  week and month name would be useful.
+
+- Creation using string representations.
 
   At least a format like "20150512-142947-372". Also things like day of the
   week and month name would be useful.
@@ -53,5 +58,4 @@ Non-Requirements
 - Need not allow modification of any property.
 
   Any properties should be set on construction.
-
 
