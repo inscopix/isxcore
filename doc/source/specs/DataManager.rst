@@ -63,7 +63,7 @@ Requirements
     String name1 = dm->set("/a/b/c", data1);
     String name2 = dm->set("/a/b/c", data2, true);
 
-  then :code:`name2.equals("/a/b/d")` is always :code:`true`.
+  then :code:`name2.equals("/a/b/c")` is always :code:`true`.
 
 - Copy one node to another by name.
 
@@ -147,4 +147,14 @@ Requirements
 Non-Requirements
 ^^^^^^^^^^^^^^^^
 
+- No need to have multiple data managers per session.
+
+  This adds complication without any gain.
+
+- No need for the hierarchy in the data manager to be reflected on the
+  file system.
+
+  This is not a requirement of the data manager, though we may decide to
+  have the data manager be reflected on the file system for reasons of
+  usability.
 

@@ -61,9 +61,15 @@ Requirements
 
 - Read access to the location of the data (on a drive or in memory).
 
-  This is required so that the user can easily see where the data
-  is. If the object is on a drive, the file(s) containing it should
-  also be accessible.
+  This is required so that the developer can easily see where the data is.
+  If the object is on a drive, the file(s) containing it should also be
+  accessible.
+
+  For example, one could check if a data object is entirely in memory as
+  follows::
+
+    Data* data1 = fromSomewhere();
+    String location = data1->getLocation();
 
 - Read access to whether the actual data is somewhere else.
 

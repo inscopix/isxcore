@@ -16,28 +16,45 @@ Requirements
 
 - Read access to string representations.
 
-  At least a format like "20150512-142947-372". Also things like day of the
-  week and month name would be useful.
+  For example::
+
+    DateTime dateTime;
+    std::cout << dateTime.getString("YYYYMMDD-hhmmss-zzz");
+
+  would print :code:`19700101-000000-000` to standard out.
 
 - Creation using string representations.
 
-  At least a format like "20150512-142947-372". Also things like day of the
-  week and month name would be useful.
+  For example::
 
-- Millisecond precision.
+    DateTime dateTime = DateTime::fromString("YYYYMMDD-hhmmss-zzz", "20150512-142947-372")
 
-  Unlikely to need to be more precise than this. I think it's fast enough
-  for electrophysiology input and that's probably the fastest signal we
-  have to worry about.
+  would create a :code:`DateTime` with a date of the 12th of May 2015
+  and a time of 14:29:47.372.
 
-- Accessible w.r.t. a chosen time zone.
+- Floating point precision.
 
-  Time stamps should likely be defined w.r.t. UTC, but allowing users to
-  choose a working time stamp for visualization would be very useful.
+  At one time I considered that we might be able to get away with millisecond
+  or microsecond precision, but I believe nVista can record at frame periods
+  of floating point precision.
+
+- Default time zone of UTC/GMT.
+
+  This may be modifiable as a user preference. Note that nVista does not seem
+  to record a time zone, though it probably should.
+
+- Convertible to a chosen time zone.
+
+  For example::
+    DateTime epoch;
+    DateTime epochPst = dateTime.toTimeZone("PST");
+
+  would make :code:`epochPst` have a date of the 31st of December 1969 and
+  a time of 16:00:00.000 where :code:`epoch` is the Unix Epoch.
 
 - Add a duration of time in seconds to a DateTime object.
 
-  This would be most convenient as an operator. For example::
+  For example::
 
     DateTime dateTime;
     double duration = 2.5;
@@ -45,7 +62,7 @@ Requirements
 
 - Calculate duration between two DateTime objects.
 
-  This would be most convenient as an operator. For example::
+  For example::
 
     Time dateTime1;
     Time dateTime2;
