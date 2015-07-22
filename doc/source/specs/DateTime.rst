@@ -34,9 +34,9 @@ Requirements
 
 - Floating point precision.
 
-  At one time I considered that we might be able to get away with millisecond
-  or microsecond precision, but I believe nVista can record at frame periods
-  of floating point precision.
+  We need this because nVista can recording at floating point frame rates.
+  Even if it couldn't, we would still need this because Mosaic should allow
+  for temporal downsampling.
 
 - Default time zone of UTC/GMT.
 
@@ -58,15 +58,15 @@ Requirements
 
     DateTime dateTime;
     double duration = 2.5;
-    DateTime newDateTime = dateTime + duration;
+    DateTime newDateTime = dateTime.addSecs(duration);
 
 - Calculate duration between two DateTime objects.
 
   For example::
 
-    Time dateTime1;
-    Time dateTime2;
-    double duration = dateTime2 - dateTime1;
+    DateTime dateTime1;
+    DateTime dateTime2;
+    double duration = dateTime2.secsFrom(dateTime1);
 
 
 Non-Requirements

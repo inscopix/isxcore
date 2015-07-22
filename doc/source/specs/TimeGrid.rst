@@ -26,7 +26,7 @@ Requirements
     TimeGrid timeGrid;
     DateTime end = timeGrid.getEnd();
 
-- Read access to temporal spacing in seconds.
+- Read access to step time in seconds.
 
   This should correspond to the reciprocal of the frame rate used to
   acquire a recording.
@@ -59,21 +59,16 @@ Requirements
     TimeGrid timeGrid;
     double duration = timeGrid.getDuration();
 
-- Read access to relative and absolute mid times of samples.
+- Read access to mid times of sample relative to the start.
 
   For convenience, when a single value needs to represent a time sample, such
   as interpolation or visualization.
   For example::
 
     TimeGrid timeGrid;
-    DateTime* midTimes = timeGrid.getAbsMidTimes();
-
-  and::
-
-    TimeGrid timeGrid;
     double* midTimes = timeGrid.getRelMidTimes();
 
-- Ability to convert an index to a mid time (relative or absolute).
+- Ability to convert an index to an absolute mid time.
 
   This should error if the index is out of bounds.
   For example::
@@ -84,11 +79,26 @@ Requirements
     TimeGrid timeGrid(start, step, numTimes);
 
     uint32_t index = 5;
-    DateTime dateTime = timeGrid.getIndex(dateTime);
+    DateTime dateTime = timeGrid.getMidTime(index);
 
   should make :code:`dateTime` have a time of 14:29:47.275.
 
-- Ability to convert a time (relative or absolute) to an index.
+- Ability to convert an index to a mid time relative to the start.
+
+  This should error if the index is out of bounds.
+  For example::
+
+    DateTime start = DateTime::fromString("YYYYMMDD-hhmmss", "20150512-142947");
+    double step = 0.05;
+    uint32_t numTimes = 100;
+    TimeGrid timeGrid(start, step, numTimes);
+
+    uint32_t index = 5;
+    double time = timeGrid.getMidTime(index);
+
+  should make :code:`time` be equal to :code:`0.275`.
+
+- Ability to convert an absolute time to an index.
 
   This should return the index of the time sample whose center is closest to
   the given time. This should error if the time is not in the domain.
@@ -101,6 +111,22 @@ Requirements
 
     DateTime later = DateTime::fromString("YYYYMMDD-hhmmss-zzz", "20150512-142947-275");
     uint32_t index = timeGrid.getIndex(dateTime);
+
+  should make :code:`index` have a value of :code:`5`.
+
+- Ability to convert a relative time to an index.
+
+  This should return the index of the time sample whose center is closest to
+  the given time. This should error if the time is negative or if it is greater than
+  the duration of the time grid.
+  For example::
+
+    DateTime start = DateTime::fromString("YYYYMMDD-hhmmss", "20150512-142947");
+    double step = 0.05;
+    uint32_t numTimes = 100;
+    TimeGrid timeGrid(start, step, numTimes);
+
+    uint32_t index = timeGrid.getIndex(0.275);
 
   should make :code:`index` have a value of :code:`5`.
 
