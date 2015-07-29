@@ -17,14 +17,14 @@ Requirements
   For example::
 
     TimeGrid timeGrid;
-    DateTime start = timeGrid.getStart();
+    Time start = timeGrid.getStart();
 
 - Read access to end time.
 
   For example::
 
     TimeGrid timeGrid;
-    DateTime end = timeGrid.getEnd();
+    Time end = timeGrid.getEnd();
 
 - Read access to step time in seconds.
 
@@ -73,13 +73,12 @@ Requirements
   This should error if the index is out of bounds.
   For example::
 
-    DateTime start = DateTime::fromString("YYYYMMDD-hhmmss", "20150512-142947");
+    Time start("20150512-142947");
     double step = 0.05;
     uint32_t numTimes = 100;
     TimeGrid timeGrid(start, step, numTimes);
-
     uint32_t index = 5;
-    DateTime dateTime = timeGrid.getMidTime(index);
+    Time dateTime = timeGrid.getMidTime(index);
 
   should make :code:`dateTime` have a time of 14:29:47.275.
 
@@ -88,11 +87,10 @@ Requirements
   This should error if the index is out of bounds.
   For example::
 
-    DateTime start = DateTime::fromString("YYYYMMDD-hhmmss", "20150512-142947");
+    Time start("20150512-142947");
     double step = 0.05;
     uint32_t numTimes = 100;
     TimeGrid timeGrid(start, step, numTimes);
-
     uint32_t index = 5;
     double time = timeGrid.getMidTime(index);
 
@@ -104,12 +102,11 @@ Requirements
   the given time. This should error if the time is not in the domain.
   For example::
 
-    DateTime start = DateTime::fromString("YYYYMMDD-hhmmss", "20150512-142947");
+    Time start("20150512-142947");
     double step = 0.05;
     uint32_t numTimes = 100;
     TimeGrid timeGrid(start, step, numTimes);
-
-    DateTime later = DateTime::fromString("YYYYMMDD-hhmmss-zzz", "20150512-142947-275");
+    Time later("20150512-142947.275");
     uint32_t index = timeGrid.getIndex(dateTime);
 
   should make :code:`index` have a value of :code:`5`.
@@ -121,11 +118,10 @@ Requirements
   the duration of the time grid.
   For example::
 
-    DateTime start = DateTime::fromString("YYYYMMDD-hhmmss", "20150512-142947");
+    Time start("20150512-142947");
     double step = 0.05;
     uint32_t numTimes = 100;
     TimeGrid timeGrid(start, step, numTimes);
-
     uint32_t index = timeGrid.getIndex(0.275);
 
   should make :code:`index` have a value of :code:`5`.
@@ -160,6 +156,7 @@ Non-Requirements
 Related Specifications
 ^^^^^^^^^^^^^^^^^^^^^^
 
-- :ref:`Trace` : stores a TimeGrid to define its domain as a function of time.
-- :ref:`DateTime` : represents an absolute point in time.
+- :ref:`Trace` : stores a :code:`TimeGrid` to define its domain as a
+  function of time.
+- :ref:`Time` : represents an absolute point in time.
 

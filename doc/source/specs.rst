@@ -6,10 +6,10 @@ Specifications
 .. toctree::
     :maxdepth: 1
 
-    specs/DataManager
     specs/Data
+    specs/DataManager
+    specs/Time
+    specs/TimeGrid
     specs/Trace
     specs/History
-    specs/DateTime
-    specs/TimeGrid
 
