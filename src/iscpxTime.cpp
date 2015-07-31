@@ -1,6 +1,6 @@
 #include <math.h>
 #include "iscpxTime.h"
-#include "QTimeZone.h"
+#include <QTimeZone>
 
 namespace iscpx {
 

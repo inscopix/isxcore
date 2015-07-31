@@ -24,22 +24,12 @@ public:
     Time();
 
     /*!
-     * Constructor with full specification of date, time and time zone.
-     */
-    Time(int year, int month, int day, int hour, int min, int sec, double ms);
-
-    /*!
      * Constructor with a string in format "YYYYMMDD-hhmmss.zzz"
      *
      * \param   str     The string to create a Time from.
      */
     Time(const std::string& str);
-
-    /*!
-     * \return  The milliseconds of the second.
-     */
-    double getMilliSecs();
-
+    
     /*!
      * Convert this to a string of the form "YYYYMMDD-hhmmss(.z*)".
 	 *
