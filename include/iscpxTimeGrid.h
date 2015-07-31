@@ -3,7 +3,7 @@
 
 #include <cinttypes>
 
-#include "iscpxDateTime.h"
+#include "iscpxTime.h"
 
 namespace iscpx {
 
@@ -21,17 +21,17 @@ public:
      * \param numTimes	The number of samples.
      * \param step	    The step time of the samples.
      */
-    TimeGrid(iscpx::DateTime start, uint32_t numTimes, uint16_t step);
+    TimeGrid(iscpx::Time start, uint32_t numTimes, uint16_t step);
 
     /*!
      * Get the start time of the samples.
      */
-    iscpx::DateTime getStart() const;
+    iscpx::Time getStart() const;
 
     /*!
      * Get the end time of the samples.
      */
-    iscpx::DateTime getEnd() const;
+    iscpx::Time getEnd() const;
 
     /*!
      * Get the duration of a single sample in milliseconds.
@@ -51,7 +51,7 @@ public:
 private:
 
     //! The start time of the samples.
-    iscpx::DateTime m_Start;
+    iscpx::Time m_Start;
 
     //! The number of time samples.
     uint32_t m_NumTimes;

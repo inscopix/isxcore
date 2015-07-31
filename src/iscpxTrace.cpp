@@ -3,7 +3,7 @@
 namespace iscpx {
 
 template <class T>
-Trace<T>::Trace(iscpx::DateTime start, uint32_t numTimes, uint16_t step) {
+Trace<T>::Trace(iscpx::Time start, uint32_t numTimes, uint16_t step) {
     m_Domain = iscpx::TimeGrid(start, numTimes, step);
 }
 

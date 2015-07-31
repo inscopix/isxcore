@@ -3,7 +3,7 @@
 
 #include <cinttypes>
 
-#include "iscpxDateTime.h"
+#include "iscpxTime.h"
 #include "iscpxTimeGrid.h"
 
 namespace iscpx {
@@ -23,7 +23,7 @@ public:
      * \param   numTimes    The number of time points in the trace.
      * \param   step        The step time of the trace in milliseconds.
      */
-    Trace(iscpx::DateTime start, uint32_t numTimes, uint16_t step);
+    Trace(iscpx::Time start, uint32_t numTimes, uint16_t step);
 
     /*!
      * Read access to a range value by index.

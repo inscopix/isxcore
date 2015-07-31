@@ -2,18 +2,18 @@
 
 namespace iscpx {
 
-TimeGrid::TimeGrid(iscpx::DateTime start, uint32_t numTimes, uint16_t step) {
+TimeGrid::TimeGrid(iscpx::Time start, uint32_t numTimes, uint16_t step) {
 	m_Start = start;
 	m_NumTimes = numTimes;
 	m_Step = step;
 }
 
-iscpx::DateTime
+iscpx::Time
 TimeGrid::getStart() const {
 	return m_Start;
 }
 
-iscpx::DateTime
+iscpx::Time
 TimeGrid::getEnd() const {
 	return m_Start.addMilliSecs(this->getLength());
 }

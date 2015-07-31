@@ -1,5 +1,5 @@
 include( ../../tools/qmake/libModule.pri )
 
-TARGET = mosaiccore
+TARGET = iscpxcore
 VERSION = 0.0.0
 

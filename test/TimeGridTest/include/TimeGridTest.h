@@ -1,9 +1,8 @@
-#include <QtTest>
-#include "iscpxTimeGrid.h"
+#include "iscpxTest.h"
 
-class TimeGridTest : public QObject
-{
+class TimeGridTest : public iscpx::Test {
 	Q_OBJECT
+
 private slots:
 
 	//! Tests valid usage of constructor.

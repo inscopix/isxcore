@@ -1,32 +1,29 @@
 #include "TimeGridTest.h"
-#include "iscpxDateTime.h"
+#include "iscpxTimeGrid.h"
 
-void TimeGridTest::testConstructor()
-{
-	iscpx::DateTime start;
+void TimeGridTest::testConstructor() {
+	iscpx::Time start;
 	uint32_t numTimes = 20;
 	uint16_t step = 50;
 	iscpx::TimeGrid timeGrid(start, numTimes, step);
-	QVERIFY(timeGrid.getStart().toString() == start.toString());
-	QVERIFY(timeGrid.getNumTimes() == numTimes);
-	QVERIFY(timeGrid.getStep() == step);
+	ISCPX_COMPARE_STRINGS(timeGrid.getStart().toString(), start.toString());
+	QCOMPARE(timeGrid.getNumTimes(), numTimes);
+	QCOMPARE(timeGrid.getStep(), step);
 }
 
-void TimeGridTest::testGetStart()
-{
-	iscpx::DateTime start;
+void TimeGridTest::testGetStart() {
+	iscpx::Time start;
 	iscpx::TimeGrid timeGrid(start, 20, 50);
-	QVERIFY(timeGrid.getStart().toString() == start.toString());
+	ISCPX_COMPARE_STRINGS(timeGrid.getStart().toString(), start.toString());
 }
 
-void TimeGridTest::testGetLength()
-{
-	iscpx::DateTime start;
+void TimeGridTest::testGetLength() {
+	iscpx::Time start;
 	uint32_t numTimes = 20;
 	uint16_t step = 50;
 	iscpx::TimeGrid timeGrid(start, numTimes, step);
 	uint64_t length = numTimes * step;
-	QVERIFY(timeGrid.getLength() == length);
+	QCOMPARE(timeGrid.getLength(), length);
 }
 
 QTEST_APPLESS_MAIN(TimeGridTest)
