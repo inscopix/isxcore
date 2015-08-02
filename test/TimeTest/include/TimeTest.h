@@ -1,9 +1,9 @@
 #ifndef TIMETEST_H
 #define TIMETEST_H
 
-#include "iscpxTest.h"
+#include "isxTest.h"
 
-class TimeTest : public iscpx::Test {
+class TimeTest : public isx::Test {
 	Q_OBJECT
 
 private slots:

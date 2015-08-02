@@ -1,6 +1,6 @@
-#include "iscpxTest.h"
+#include "isxTest.h"
 
-class TimeGridTest : public iscpx::Test {
+class TimeGridTest : public isx::Test {
 	Q_OBJECT
 
 private slots:
