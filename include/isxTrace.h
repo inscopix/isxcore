@@ -1,12 +1,12 @@
-#ifndef ISCPX_TRACE_H
-#define ISCPX_TRACE_H
+#ifndef ISX_TRACE_H
+#define ISX_TRACE_H
 
 #include <cinttypes>
 
-#include "iscpxTime.h"
-#include "iscpxTimeGrid.h"
+#include "isxTime.h"
+#include "isxTimeGrid.h"
 
-namespace iscpx {
+namespace isx {
 
 /*!
  * A function of time with a discrete domain.
@@ -23,7 +23,7 @@ public:
      * \param   numTimes    The number of time points in the trace.
      * \param   step        The step time of the trace in milliseconds.
      */
-    Trace(iscpx::Time start, uint32_t numTimes, uint16_t step);
+    Trace(isx::Time start, uint32_t numTimes, uint16_t step);
 
     /*!
      * Read access to a range value by index.
@@ -53,7 +53,7 @@ public:
 private:
 
     //! The discrete domain of the function.
-    iscpx::TimeGrid m_Domain;
+    isx::TimeGrid m_Domain;
 
     //! The discrete range of the function.
     T* m_Range;
@@ -62,4 +62,4 @@ private:
 
 } // namespace
 
-#endif // ISCPX_TRACE_H
+#endif // ISX_TRACE_H

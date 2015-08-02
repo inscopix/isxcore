@@ -1,5 +1,5 @@
 include( ../../tools/qmake/libModule.pri )
 
-TARGET = iscpxcore
+TARGET = isxcore
 VERSION = 0.0.0
 

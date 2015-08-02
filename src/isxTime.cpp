@@ -1,8 +1,8 @@
 #include <math.h>
-#include "iscpxTime.h"
+#include "isxTime.h"
 #include <QTimeZone>
 
-namespace iscpx {
+namespace isx {
 
 Time::Time() {
 	QDate epoch(1970, 1, 1);
@@ -29,9 +29,9 @@ Time::toString(int msPrec) const {
 	return qStr.toStdString();
 }
 
-iscpx::Time
+isx::Time
 Time::addMilliSecs(double ms) const {
-	iscpx::Time dateTime;
+	isx::Time dateTime;
 	double msFloored = floor(ms);
 	dateTime.m_QDateTime = m_QDateTime.addMSecs(static_cast<qint64>(msFloored));
 	dateTime.m_offset = m_offset + (ms - msFloored);
@@ -39,7 +39,7 @@ Time::addMilliSecs(double ms) const {
 }
 
 double
-Time::milliSecsFrom(iscpx::Time from) const {
+Time::milliSecsFrom(isx::Time from) const {
 	double fromEpochMs = from.m_QDateTime.toMSecsSinceEpoch();
 	double thisEpochMs = m_QDateTime.toMSecsSinceEpoch();
 	double diffEpochMs = thisEpochMs - fromEpochMs;

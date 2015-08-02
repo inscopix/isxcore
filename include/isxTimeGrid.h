@@ -1,11 +1,11 @@
-#ifndef ISCPX_TIMEGRID_H
-#define ISCPX_TIMEGRID_H
+#ifndef ISX_TIMEGRID_H
+#define ISX_TIMEGRID_H
 
 #include <cinttypes>
 
-#include "iscpxTime.h"
+#include "isxTime.h"
 
-namespace iscpx {
+namespace isx {
 
 /*!
  * A regularly spaced sample of time points.
@@ -21,17 +21,17 @@ public:
      * \param numTimes	The number of samples.
      * \param step	    The step time of the samples.
      */
-    TimeGrid(iscpx::Time start, uint32_t numTimes, uint16_t step);
+    TimeGrid(isx::Time start, uint32_t numTimes, uint16_t step);
 
     /*!
      * Get the start time of the samples.
      */
-    iscpx::Time getStart() const;
+    isx::Time getStart() const;
 
     /*!
      * Get the end time of the samples.
      */
-    iscpx::Time getEnd() const;
+    isx::Time getEnd() const;
 
     /*!
      * Get the duration of a single sample in milliseconds.
@@ -51,7 +51,7 @@ public:
 private:
 
     //! The start time of the samples.
-    iscpx::Time m_Start;
+    isx::Time m_Start;
 
     //! The number of time samples.
     uint32_t m_NumTimes;
@@ -63,4 +63,4 @@ private:
 
 } // namespace
 
-#endif // ISCPX_TIMEGRID_H
+#endif // ISX_TIMEGRID_H

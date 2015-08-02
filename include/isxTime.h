@@ -1,11 +1,11 @@
-#ifndef ISCPX_TIME_H
-#define ISCPX_TIME_H
+#ifndef ISX_TIME_H
+#define ISX_TIME_H
 
 #include <string>
 #include <cstdint>
 #include <QDateTime>
 
-namespace iscpx
+namespace isx
 {
 
 /*!
@@ -29,7 +29,7 @@ public:
      * \param   str     The string to create a Time from.
      */
     Time(const std::string& str);
-    
+
     /*!
      * Convert this to a string of the form "YYYYMMDD-hhmmss(.z*)".
 	 *
@@ -44,7 +44,7 @@ public:
      * \param   ms      The number of milliseconds to add.
      * \return  A date time ms milliseconds after this.
      */
-    iscpx::Time addMilliSecs(double s) const;
+    isx::Time addMilliSecs(double s) const;
 
     /*!
      * Returns the milliseconds from the given time to this.
@@ -52,7 +52,7 @@ public:
      * \param   from    The time to calculate milliseconds from.
      * \return  The milliseconds from the given time to this.
      */
-    double milliSecsFrom(iscpx::Time from) const;
+    double milliSecsFrom(isx::Time from) const;
 
 private:
 
@@ -66,4 +66,4 @@ private:
 
 } // namespace
 
-#endif // ISCPX_TIME_H
+#endif // ISX_TIME_H

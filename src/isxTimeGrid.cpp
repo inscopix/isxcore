@@ -1,19 +1,19 @@
-#include "iscpxTimeGrid.h"
+#include "isxTimeGrid.h"
 
-namespace iscpx {
+namespace isx {
 
-TimeGrid::TimeGrid(iscpx::Time start, uint32_t numTimes, uint16_t step) {
+TimeGrid::TimeGrid(isx::Time start, uint32_t numTimes, uint16_t step) {
 	m_Start = start;
 	m_NumTimes = numTimes;
 	m_Step = step;
 }
 
-iscpx::Time
+isx::Time
 TimeGrid::getStart() const {
 	return m_Start;
 }
 
-iscpx::Time
+isx::Time
 TimeGrid::getEnd() const {
 	return m_Start.addMilliSecs(this->getLength());
 }
