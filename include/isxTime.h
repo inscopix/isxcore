@@ -5,14 +5,12 @@
 #include <cstdint>
 #include <QDateTime>
 
-namespace isx
-{
+namespace isx {
 
 /*!
  * An absolute time stamp to floating point precision in the Gregorian calendar.
  */
-class Time
-{
+class Time {
 
 public:
 
@@ -44,7 +42,7 @@ public:
      * \param   ms      The number of milliseconds to add.
      * \return  A date time ms milliseconds after this.
      */
-    isx::Time addMilliSecs(double s) const;
+    isx::Time addMilliSecs(double ms) const;
 
     /*!
      * Returns the milliseconds from the given time to this.

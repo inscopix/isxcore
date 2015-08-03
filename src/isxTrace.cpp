@@ -15,8 +15,7 @@ Trace<T>::getValue(uint32_t i) const {
 
 template <class T>
 void
-Trace<T>::setValue(uint32_t i, T val)
-{
+Trace<T>::setValue(uint32_t i, T val) {
     m_Range[i] = val;
 }
 

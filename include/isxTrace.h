@@ -34,14 +34,6 @@ public:
     T getValue(uint32_t i) const;
 
     /*!
-     * Read access to a range value by time.
-     *
-     * \param   t   The time.
-     * \return      The range value at time t.
-     */
-    //T getValue(mosaic::Time t) const;
-
-    /*!
      * Write access to a range value by index.
      *
      * \param   i   The index.
