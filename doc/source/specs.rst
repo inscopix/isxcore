@@ -10,6 +10,7 @@ Specifications
     specs/DataManager
     specs/Time
     specs/TimeGrid
+    specs/Point
     specs/Trace
     specs/History
 
