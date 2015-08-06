@@ -4,7 +4,7 @@
 void TimeGridTest::testConstructor() {
 	isx::Time start;
 	uint32_t numTimes = 20;
-	uint16_t step = 50;
+	double step = 50;
 	isx::TimeGrid timeGrid(start, numTimes, step);
 	ISX_COMPARE_STRINGS(timeGrid.getStart().toString(), start.toString());
 	QCOMPARE(timeGrid.getNumTimes(), numTimes);
@@ -20,9 +20,9 @@ void TimeGridTest::testGetStart() {
 void TimeGridTest::testGetLength() {
 	isx::Time start;
 	uint32_t numTimes = 20;
-	uint16_t step = 50;
+	double step = 50;
 	isx::TimeGrid timeGrid(start, numTimes, step);
-	uint64_t length = numTimes * step;
+	double length = numTimes * step;
 	QCOMPARE(timeGrid.getLength(), length);
 }
 

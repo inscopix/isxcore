@@ -22,11 +22,18 @@ public:
     Time();
 
     /*!
-     * Constructor with a string in format "YYYYMMDD-hhmmss.zzz"
+     * Fully specified constructor.
      *
-     * \param   str     The string to create a Time from.
+     * \param   year    The year in the common era [1970, 2^16].
+     * \param   month   The month of the year in [1-12].
+     * \param   day     The day of the month [1-31].
+     * \param   hour    The hour of the day [0-23].
+     * \param   mins    The minutes past the hour [0-59].
+     * \param   secs    The seconds past the minute [0-59].
+     * \param   ms      The milliseconds past the second [0-1000).
+     * \param   utcOff  The time zone in hours offset from UTC [-14, 14].
      */
-    Time(const std::string& str);
+    Time(uint16_t year, uint8_t mon, uint8_t day, uint8_t hour, uint8_t mins, uint8_t secs = 0, double ms = 0, int8_t utcOff = 0);
 
     /*!
      * Convert this to a string of the form "YYYYMMDD-hhmmss(.z*)".
@@ -37,20 +44,20 @@ public:
     std::string toString(int msPrec = 3) const;
 
     /*!
-     * Returns a time with a number of milliseconds added to this.
+     * Returns a time with the given seconds added to this.
      *
-     * \param   ms      The number of milliseconds to add.
-     * \return  A date time ms milliseconds after this.
+     * \param   s       The seconds to add to this.
+     * \return  A time s seconds after this.
      */
-    isx::Time addMilliSecs(double ms) const;
+    isx::Time addSecs(double s) const;
 
     /*!
-     * Returns the milliseconds from the given time to this.
+     * Returns the seconds from the given time to this.
      *
-     * \param   from    The time to calculate milliseconds from.
-     * \return  The milliseconds from the given time to this.
+     * \param   from    The time from which to calculate.
+     * \return  The seconds from the given time to this.
      */
-    double milliSecsFrom(isx::Time from) const;
+    double secsFrom(isx::Time from) const;
 
 private:
 

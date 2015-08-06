@@ -2,7 +2,13 @@
 
 namespace isx {
 
-TimeGrid::TimeGrid(isx::Time start, uint32_t numTimes, uint16_t step) {
+TimeGrid::TimeGrid() {
+	m_Start = isx::Time();
+	m_NumTimes = 100;
+	m_Step = 0.05;
+}
+
+TimeGrid::TimeGrid(isx::Time start, uint32_t numTimes, double step) {
 	m_Start = start;
 	m_NumTimes = numTimes;
 	m_Step = step;
@@ -15,10 +21,10 @@ TimeGrid::getStart() const {
 
 isx::Time
 TimeGrid::getEnd() const {
-	return m_Start.addMilliSecs(this->getLength());
+	return m_Start.addSecs(this->getLength());
 }
 
-uint16_t
+double
 TimeGrid::getStep() const {
 	return m_Step;
 }
@@ -28,7 +34,7 @@ TimeGrid::getNumTimes() const {
 	return m_NumTimes;
 }
 
-uint64_t
+double
 TimeGrid::getLength() const {
 	return m_NumTimes * m_Step;
 }

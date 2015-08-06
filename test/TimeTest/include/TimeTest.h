@@ -14,14 +14,14 @@ private slots:
 	//! Tests constructing a time with a string.
 	void testConstructorWithString();
 
-	//! Tests adding zero milliseconds to a time.
-	void testAddMSecsZero();
+	//! Tests adding zero seconds to a time.
+	void testAddSecsZero();
 
-	//! Tests adding integral milliseconds to a time.
-	void testAddMSecsInt();
+	//! Tests adding integral seconds to a time.
+	void testAddSecsInt();
 
-	//! Tests adding floating point milliseconds to a time.
-	void testAddMSecsFloat();
+	//! Tests adding floating point seconds to a time.
+	void testAddSecsFloat();
 };
 
 #endif // TIMETEST_H

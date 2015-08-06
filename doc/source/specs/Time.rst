@@ -33,26 +33,17 @@ Requirements
   We may wish to define an Inscopix epoch, or just use the Unix epoch of
   midnight on 1970/01/01 UTC.
 
-- Construction using a string representation.
-
-  It should be satisfactory to have one format for construction, which could
-  be of the form :code:`YYYYMMDD-hhmmss.z*`, where milliseconds can be given
-  up to an arbitrary precision.
+- Fully specified construction with year, month, day, hour, minutes, seconds
+  milliseconds and time zone (or offset from UTC).
 
   For example::
 
-    Time time("20150512-142947.372")
+    Time time(2015, 5, 12, 14, 29, 47.372, -5)
 
   would create a :code:`Time` with a date of the 12th of May 2015
-  and a time of 14:29:47.372.
+  and a time of 14:29:47.372 in time zone UTC-5.
 
-  It should also be possible to specify the time zone.
-
-  For example::
-
-    Time time("20150512-142947.372", "PST")
-
-  would create the same time local to Pacific Standard Time (PST).
+  If any of the values are invalid, the constructor should error.
 
 - Read access to string representations.
 
@@ -86,21 +77,21 @@ Requirements
   would make :code:`epochPst` have a date of the 31st of December 1969 and
   a time of 16:00:00.000 where :code:`epoch` is the Unix Epoch.
 
-- Add a duration of time in milliseconds to a Time object.
+- Add a duration of time in seconds to a Time object.
 
   For example::
 
     Time time;
     double duration = 2.5;
-    Time newTime = time.addMSecs(duration);
+    Time newTime = time.addSecs(duration);
 
-- Calculate duration between two Time objects.
+- Calculate duration in seconds between two Time objects.
 
   For example::
 
     Time time1;
     Time time2;
-    double duration = time2.mSecsFrom(time1);
+    double duration = time2.secsFrom(time1);
 
 
 Non-Requirements

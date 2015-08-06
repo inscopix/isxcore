@@ -8,26 +8,26 @@ void TimeTest::testConstructor() {
 
 void TimeTest::testConstructorWithString() {
 	std::string timeStr = "20151022-110159.293";
-	isx::Time time(timeStr);
+	isx::Time time(2015, 10, 22, 11, 1, 59, 293);
 	ISX_COMPARE_STRINGS(time.toString(), timeStr);
 }
 
-void TimeTest::testAddMSecsZero() {
+void TimeTest::testAddSecsZero() {
 	isx::Time time;
-	isx::Time newTime = time.addMilliSecs(0.0);
+	isx::Time newTime = time.addSecs(0);
 	ISX_COMPARE_STRINGS(newTime.toString(), "19700101-000000.000");
 }
 
-void TimeTest::testAddMSecsInt() {
+void TimeTest::testAddSecsInt() {
 	isx::Time time;
-	isx::Time newTime = time.addMilliSecs(7.0);
-	ISX_COMPARE_STRINGS(newTime.toString(), "19700101-000000.007");
+	isx::Time newTime = time.addSecs(7);
+	ISX_COMPARE_STRINGS(newTime.toString(), "19700101-000007.000");
 }
 
-void TimeTest::testAddMSecsFloat() {
+void TimeTest::testAddSecsFloat() {
 	isx::Time time;
-	isx::Time newTime = time.addMilliSecs(7.543);
-	ISX_COMPARE_STRINGS(newTime.toString(4), "19700101-000000.0075");
+	isx::Time newTime = time.addSecs(0.07543);
+	ISX_COMPARE_STRINGS(newTime.toString(5), "19700101-000000.07543");
 }
 
 QTEST_APPLESS_MAIN(TimeTest)

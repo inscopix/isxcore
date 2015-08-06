@@ -12,6 +12,20 @@ word.
 Requirements
 ^^^^^^^^^^^^
 
+- Default constructor creates a time grid starting at the Unix epoch with
+  100 samples at 20Hz.
+
+- A constructor that allows specification of the start time, the number of
+  times and the step time.
+
+  For example::
+
+    isx::Time start;
+    TimeGrid timeGrid(start, 1000, 0.1);
+
+  creates a time grid starting at the default time, with 1000 samples
+  separated by 0.1 seconds.
+
 - Read access to start time.
 
   For example::
@@ -156,7 +170,5 @@ Non-Requirements
 Related Specifications
 ^^^^^^^^^^^^^^^^^^^^^^
 
-- :ref:`Trace` : stores a :code:`TimeGrid` to define its domain as a
-  function of time.
 - :ref:`Time` : represents an absolute point in time.
 

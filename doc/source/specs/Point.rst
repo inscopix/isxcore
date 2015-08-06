@@ -12,11 +12,17 @@ convert between x/y coordinates and columns/rows of an image matrix.
 Requirements
 ^^^^^^^^^^^^
 
-- Floating point precision.
+- Floating point precision as the default.
 
   I believe the sensor pixel width and height are floating point. Even if
   they're not, we will allow spatial downsampling. Additionally, we want to
   allow continuous coordinates for define regions of interest.
+
+- Specifically allow integer values.
+
+  For example, this could be achieved with templating::
+
+    Point<int> point(5, 10);
 
 - Default construction gives :code:`(0, 0)`.
 

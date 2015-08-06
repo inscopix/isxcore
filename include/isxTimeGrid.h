@@ -2,7 +2,6 @@
 #define ISX_TIMEGRID_H
 
 #include <cinttypes>
-
 #include "isxTime.h"
 
 namespace isx {
@@ -14,14 +13,17 @@ class TimeGrid {
 
 public:
 
+    /*
+     * Default constructor.
+     */
+    TimeGrid();
+
     /*!
-     * TimeGrid constructor.
-     *
      * \param start	    The start time of the samples.
      * \param numTimes	The number of samples.
      * \param step	    The step time of the samples.
      */
-    TimeGrid(isx::Time start, uint32_t numTimes, uint16_t step);
+    TimeGrid(isx::Time start, uint32_t numTimes, double step);
 
     /*!
      * Get the start time of the samples.
@@ -34,9 +36,9 @@ public:
     isx::Time getEnd() const;
 
     /*!
-     * Get the duration of a single sample in milliseconds.
+     * Get the duration of a single sample in seconds.
      */
-    uint16_t getStep() const;
+    double getStep() const;
 
     /*!
      * Get the number of time samples.
@@ -44,9 +46,9 @@ public:
     uint32_t getNumTimes() const;
 
     /*!
-     * Get the length of all samples in milliseconds.
+     * Get the length of all samples in seconds.
      */
-    uint64_t getLength() const;
+    double getLength() const;
 
 private:
 
@@ -57,7 +59,7 @@ private:
     uint32_t m_NumTimes;
 
     //! The duration of a single sample in milliseconds.
-    uint16_t m_Step;
+    double m_Step;
 
 }; // class
 
