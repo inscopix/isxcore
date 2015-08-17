@@ -1,8 +1,8 @@
 TEMPLATE = subdirs
-SUBDIRS =	core\
-			TimeTest\
-			TimeGridTest\
-			PointTest
+SUBDIRS =   core\
+            TimeTest\
+            TimeGridTest\
+            PointTest
 core.subdir = ..
 TimeGridTest.depends = core
 TimeTest.depends = core
