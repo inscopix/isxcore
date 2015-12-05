@@ -11,6 +11,8 @@ Specifications
     specs/Time
     specs/TimeGrid
     specs/Point
+    specs/SpaceGrid
+    specs/Image
     specs/Trace
     specs/History
 
