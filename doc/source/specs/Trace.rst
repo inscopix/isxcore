@@ -25,9 +25,33 @@ Requirements
     - Integer (e.g. for traces extracted from a raw movie).
     - Float (e.g. for traces extracted from a processed movie).
 
+  Support for these types is likely best achieved using templating.
+  In this case the default type should be floating point.
+
+- Default constructor creates an image with the default :ref:`TimeGrid`.
+
+- A constructor that allows specification of the :ref:`TimeGrid` domain.
+
+  For example::
+
+    Time start(2015, 5, 12, 14, 29, 47.372, -8);
+    TimeGrid timeGrid(start, 1000, 0.1);
+    Trace trace(timeGrid);
+
+  would create a ``Trace`` that starts on the 12th of May 2015
+  at 14:29:47.372 in time zone UTC-8.
+
+- Access to non-const pointer to range array.
+
+  For developer convenience.
+  For example::
+
+    Trace trace;
+    float *traceArray = trace.getArray();
+
 - Read/write access to the range array by index.
 
-  For convenience, this may be achieved by overloading the :code:`[]`
+  For convenience, this may be achieved by overloading the ``[]``
   operator. For example, the third value in a trace could be written and
   read as follows::
 
@@ -60,7 +84,7 @@ Non-Requirements
   be created from multi-channel movies. Even in cases where it's plausible,
   such as for a dual color microscope, we could simply create two traces.
 
-- Need not be memory mapped to disk.
+- Need not be memory mapped from disk.
 
   Even very long traces will be relatively small in size. For example, a
   trace containing 1 hour of data acquired at 20 Hz will contain
@@ -74,22 +98,27 @@ Non-Requirements
   .. math::
     4 \cdot 7.2 \times 10^4 \mathrm{B} = 3 \times 10^5 \mathrm{B} \approx 300 \mathrm{KB}
 
-  of storage space. At worst, we should only need to store 1000 neurons
+  of storage space.
+  For one animal, we may need to store 1000 traces (corresponding to 1000 traces)
   simultaneously, which would require
 
   .. math::
-    3 \times 10^5 \mathrm{KB} \cdot 10^3 = 3 \times 10^8 \mathrm{KB} \approx 300 \mathrm{MB}
+    3 \times 10^2 \mathrm{KB} \cdot 10^3 = 3 \times 10^8 \mathrm{KB} \approx 300 \mathrm{MB}
 
-  of storage space. Even if the 1 hour length or 20 Hz frame rate of this
-  example is off by an order of magnitude, we can still expect to only
-  consume around 3 GB of space, which is well contained by our recommended
-  machine specifications.
+  of storage space.
 
-- Need not support dynamical resizing.
+  At most, we should expect to store the neuron traces of 10 animals simultaneously,
+  so we can expect to use about 3 GB of memory, which is well contained by our
+  machine specification.
 
-  This includes decreases and increases in size anywhere in the trace.
+- Need not support modification of time grid.
+
+  In general, this may require dynamic resizing of the data array, which
+  seems unnecessary.
   I can't think of any case where this is required or would even be
   particularly convenient.
+  Similarly changing the start time or sampling rate does not seem to be
+  required.
 
 - Need not support in-place resampling.
 

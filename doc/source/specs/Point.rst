@@ -12,25 +12,50 @@ convert between x/y coordinates and columns/rows of an image matrix.
 Requirements
 ^^^^^^^^^^^^
 
-- Floating point precision as the default.
+- Allow both floating point and unsigned integer values.
 
-  I believe the sensor pixel width and height are floating point. Even if
-  they're not, we will allow spatial downsampling. Additionally, we want to
-  allow continuous coordinates for define regions of interest.
+  We need unsigned integer values for sizes (e.g. number of pixels in each
+  dimension) and floating point values for pixel/image widths/heights and
+  general continous coordinates (e.g. cell centers or ROI vertices).
 
-- Specifically allow integer values.
+  Floating point should be the default.
 
-  For example, this could be achieved with templating::
-
-    Point<int> point(5, 10);
-
-- Default construction gives :code:`(0, 0)`.
+- Default construction gives ``(0.0, 0.0)``.
 
 - Construction using the x and y coordinates.
 
   For example::
 
     Point point(5.2, 108);
+
+- Read access to individual x/y coordinates.
+
+  For example::
+
+    Point point(5.2, 108);
+    float x = point.getX();
+
+  makes ``x`` take on the value ``5.2``.
+
+- Read access to array.
+
+  Some developers may prefer direct access to the array.
+
+  For example::
+
+    Point point(5.2, 108);
+    float *pointArray = point.getArray();
+
+- Access to array values using the ``[]`` operator.
+
+  This may be convenient for developers.
+
+  For example::
+
+    Point point(5.2, 108);
+    float y = point[1];
+
+  would give ``y`` a value of ``108``.
 
 - Access to string representation.
 
@@ -76,7 +101,7 @@ Requirements
     Point point2(1, 0.5);
     Point newPoint = point1.divide(point2);
 
-  would give a new point :code:`(2, 1.5)`.
+  would give a new point :code:`(2, 6)`.
 
 - Perform scalar based arithmetic.
 
