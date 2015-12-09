@@ -10,9 +10,10 @@ Specifications
     specs/DataManager
     specs/Time
     specs/TimeGrid
+    specs/Trace
     specs/Point
     specs/SpaceGrid
     specs/Image
-    specs/Trace
+    specs/Movie
     specs/History
 

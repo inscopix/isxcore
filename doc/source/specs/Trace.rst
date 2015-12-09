@@ -39,7 +39,7 @@ Requirements
     Trace trace(timeGrid);
 
   would create a ``Trace`` that starts on the 12th of May 2015
-  at 14:29:47.372 in time zone UTC-8.
+  at 14:29:47.372 in time zone UTC-8 with 1000 samples acquired in 10 Hz.
 
 - Access to non-const pointer to range array.
 
@@ -84,7 +84,7 @@ Non-Requirements
   be created from multi-channel movies. Even in cases where it's plausible,
   such as for a dual color microscope, we could simply create two traces.
 
-- Need not be memory mapped from disk.
+- Need not be stored on disk.
 
   Even very long traces will be relatively small in size. For example, a
   trace containing 1 hour of data acquired at 20 Hz will contain
@@ -107,9 +107,13 @@ Non-Requirements
 
   of storage space.
 
-  At most, we should expect to store the neuron traces of 10 animals simultaneously,
-  so we can expect to use about 3 GB of memory, which is well contained by our
-  machine specification.
+  At most, we should expect to store the neuron traces of 10 animals
+  simultaneously, so we can expect to use about 3 GB of memory, which is well
+  contained by our machine specification.
+
+  Also note that is likely convenient to store traces in physical memory
+  because large portions may be simultaneously visualized in the GUI, which
+  then may be analyzed in an App.
 
 - Need not support modification of time grid.
 

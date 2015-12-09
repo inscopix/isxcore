@@ -3,8 +3,8 @@
 Image
 -----
 
-An Image represents a scalar valued function of space, for a discrete set of
-points.
+An Image represents a scalar or vector valued function of space, for a
+discrete set of points.
 
 
 Requirements
@@ -19,11 +19,19 @@ Requirements
 
   For more details, see :ref:`SpaceGrid`.
 
-- The range of the function is stored in a 2D array, where types may be one of:
+- The chromatic domain of the function is defined by a number of channels.
+
+  We need to support scalar, dual-color and RGB movies at least.
+
+- The range of the function can be one of several types.
 
     - Boolean (e.g. for the hard definition of an ROI).
     - Integer (e.g. for an image extracted from an integer valued movie).
-    - Float (e.g. for a soft definition of a cell).
+    - Single precision floating point (e.g. for a soft definition of a cell).
+
+  The simplest way to achieve this is with templating.
+  The default value type should be float with single precision.
+  I [Andy] don't think we have a need for double precision floating point.
 
 - Default constructor creates an image with the default :ref:`SpaceGrid`.
 
@@ -37,53 +45,20 @@ Requirements
   would create an image with a top left of ``(10, 200)``, a pixel size of
   ``(2, 2)`` microns and ``(720, 540)`` pixels.
 
-- Access to non-const pointer to range array.
+- Access to non-const pointer to 3D array of image data.
 
-  For developer convenience.
+  Clients may require direct access to the array for efficiency reasons.
   For example::
 
     Image image;
-    float *imageArray = image.getArray();
+    float *imageArray = 0;
+    image.getArray(imageArray);
 
-- Read/write access to the image value array.
+  If the image is actually stored on disk, the client will be responsible
+  for deleting the resulting array.
+  
 
-  Developers may require direct access to the array for efficiency reasons.
-  For example::
-
-    Image image;
-    float *imageArray = image.getArray();
-
-- Read/write access to the image values by row/column indices.
-
-  For convenience, this may be achieved by overloading the :code:`[][]`
-  operator. For example, the (first, third) value in an image could be
-  written and read as follows::
-
-    Image image;
-    image[0][3] = 5;
-    std::cout << "The value at (0, 3) is " << image[0][3];
-
-- Read access to the image values by a point in space.
-
-  For example, this could be accessed as follows::
-
-    Image float;
-    Point point(6.4, 100.7);
-    float value = image.getValue(time);
-    std::cout << "The value at location " << point << " is " << value;
-
-  This access should at least support nearest neighbor interpolation. We may
-  also require bilinear, bicubic or other interpolation.
-
-- Storage and access to multiple channels.
-
-  We need to support dual-color and RGB images.
-  While we could define special classes to handle these, I believe it's
-  easier to utilize templates and allow the values of images to be fixed
-  length arrays (of lengths 2 and 3 in this case) with some suitable
-  arithmetic operators defined.
-
-- May need to be memory mapped from disk.
+- May need to be stored on disk.
 
   The sensor size of nVista is ``(1440, 1080)``.
   I don't believe sensor sizes will get larger in the products we will be
@@ -126,10 +101,6 @@ Non-Requirements
   particularly convenient.
   Similarly changing the top left corner or the pixel sizes does not seem to
   be required.
-
-- Need not support in-place resampling.
-
-  A separate App should be created to handle resampling of an entire image.
 
 
 Related Specifications
