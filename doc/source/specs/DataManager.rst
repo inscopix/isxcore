@@ -12,9 +12,11 @@ tree, and also allowing some basic queries to select a subset of nodes from
 it.
 
 It should also be able to keep reference counts on all the Data objects it
-stores. References may be from the command line interface, from a viewer,
-or from an app. The user should only be able to delete objects when the
-reference count drops to zero.
+stores.
+References may be from the command line interface, from a viewer, or from an
+app.
+The user should only be able to delete objects when the reference count drops
+to zero.
 
 
 Requirements
@@ -24,7 +26,7 @@ Requirements
 
   For example this could be accessible using a singleton design pattern::
 
-    DataManager* dm = DataManager::getInstance();
+    DataManager dm = DataManager::getInstance();
 
 - Non-leaf nodes must be some kind of group container.
 
@@ -36,13 +38,13 @@ Requirements
 
 - Each node has a unique hierarchical name.
 
-  For example nodes with names :code:`/a/b/c` and :code:`/a/x/c` would be allowed.
+  For example nodes with names ``/a/b/c`` and ``/a/x/c`` would be allowed.
 
 - A node should be accessible by name.
 
   For example::
 
-    Data* data = DataManager::getInstance()->get("/a/b/c");
+    Data data = DataManager::getInstance().get("/a/b/c");
 
 - Add a node with a new name.
 
@@ -52,18 +54,18 @@ Requirements
 
   For example::
 
-    Data* data = fromSomewhere();
-    String name = DataManager::getInstance()->set("/a/b/c", data);
+    Data data = fromSomewhere();
+    String name = DataManager::getInstance().set("/a/b/c", data);
 
   Also provide an option to force overwrite. For example::
 
-    DataManager* dm = DataManager::getInstance();
-    Data* data1 = fromSomewhere();
-    Data* data2 = fromSomewhereElse();
-    String name1 = dm->set("/a/b/c", data1);
-    String name2 = dm->set("/a/b/c", data2, true);
+    DataManager dm = DataManager::getInstance();
+    Data data1 = fromSomewhere();
+    Data data2 = fromSomewhereElse();
+    String name1 = dm.set("/a/b/c", data1);
+    String name2 = dm.set("/a/b/c", data2, true);
 
-  then :code:`name2.equals("/a/b/c")` is always :code:`true`.
+  then ``name2.equals("/a/b/c")`` is always true.
 
 - Copy one node to another by name.
 
@@ -74,45 +76,45 @@ Requirements
 
   For example::
 
-    DataManager* dm = DataManager::getInstance();
-    Data* data = fromSomewhere();
-    String name = dm->set("/a/b/c", data);
-    String name = dm->copy("/a/b/c", "/a/b/cCopy");
+    DataManager dm = DataManager::getInstance();
+    Data data = fromSomewhere();
+    String name = dm.set("/a/b/c", data);
+    String name = dm.copy("/a/b/c", "/a/b/cCopy");
 
   Also provide an option to force overwrite. For example::
 
-    DataManager* dm = DataManager::getInstance();
-    Data* data1 = fromSomewhere();
-    Data* data2 = fromSomewhereElse();
-    String name1 = dm->set("/a/b/c", data1);
-    String name2 = dm->set("/a/b/d", data2);
-    String name3 = dm->copy("/a/b/c", "/a/b/d", true);
+    DataManager dm = DataManager::getInstance();
+    Data data1 = fromSomewhere();
+    Data data2 = fromSomewhereElse();
+    String name1 = dm.set("/a/b/c", data1);
+    String name2 = dm.set("/a/b/d", data2);
+    String name3 = dm.copy("/a/b/c", "/a/b/d", true);
 
-  then :code:`name3.equals("/a/b/d")` is always :code:`true`.
+  then ``name3.equals("/a/b/d")`` is always true.
 
 - Move one node to another by name.
 
   If the destination name is already taken, then prevent overwrite and
-  provide actual name assigned. This should act like a rename, and should
-  not make a deep copy of the data.
+  provide actual name assigned.
+  This should act like a rename, and should not make a deep copy of the data.
 
   For example::
 
-    DataManager* dm = DataManager::getInstance();
-    Data* data = fromSomewhere();
-    String name = dm->set("/a/b/c", data);
-    String name = dm->move("/a/b/c", "/a/b/d");
+    DataManager dm = DataManager::getInstance();
+    Data data = fromSomewhere();
+    String name = dm.set("/a/b/c", data);
+    String name = dm.move("/a/b/c", "/a/b/d");
 
   Also provide an option to force overwrite. For example::
 
-    DataManager* dm = DataManager::getInstance();
-    Data* data1 = fromSomewhere();
-    Data* data2 = fromSomewhereElse();
-    String name1 = dm->set("/a/b/c", data1);
-    String name2 = dm->set("/a/b/d", data2);
-    String name3 = dm->move("/a/b/c", "/a/b/d", true);
+    DataManager dm = DataManager::getInstance();
+    Data data1 = fromSomewhere();
+    Data data2 = fromSomewhereElse();
+    String name1 = dm.set("/a/b/c", data1);
+    String name2 = dm.set("/a/b/d", data2);
+    String name3 = dm.move("/a/b/c", "/a/b/d", true);
 
-  then :code:`name3.equals("/a/b/d")` is always :code:`true`.
+  then ``name3.equals("/a/b/d")`` is always true.
 
 - A node should be removable by name.
 
@@ -121,9 +123,9 @@ Requirements
 
   For example::
 
-    DataManager::getInstance()->remove("/a/b/c");
+    DataManager::getInstance().remove("/a/b/c");
 
-- There must a current working (non-leaf) node.
+- There must be a current working (non-leaf) node.
 
   This is similar to a current working directory in a file system.
   This would be convenient for access by name within one group.
@@ -132,16 +134,16 @@ Requirements
 
   For example::
 
-    DataManager* dm = DataManager::getInstance();
-    dm->setWorkingNode("/group1/animal1/day1");
-    Data* data1 = dm->get("recording1");
-    Data* data2 = dm->get("recording2");
+    DataManager dm = DataManager::getInstance();
+    dm.setWorkingNode("/group1/animal1/day1");
+    Data data1 = dm.get("recording1");
+    Data data2 = dm.get("recording2");
 
   instead of::
 
-    DataManager* dm = DataManager::getInstance();
-    Data* data1 = dm->get("/group1/animal1/day1/recording1");
-    Data* data2 = dm->get("/group1/animal1/day1/recording2");
+    DataManager dm = DataManager::getInstance();
+    Data data1 = dm.get("/group1/animal1/day1/recording1");
+    Data data2 = dm.get("/group1/animal1/day1/recording2");
 
 
 Non-Requirements

@@ -13,16 +13,16 @@ Requirements
 - A unique name in a Mosaic session.
 
   This will be used for identifying objects by name. For example, when
-  specifying the inputs to an App. Uniqueness should be controlled by the
-  :ref:`DataManager`.
+  specifying the inputs to an App.
+  Uniqueness should be controlled by the :ref:`DataManager`.
 
-  Only read access to the name is required. Changing the name requires
-  interaction with the :ref:`DataManager`.
+  Only read access to the name is required.
+  Changing the name requires interaction with the :ref:`DataManager`.
 
   For example::
 
-    Data* data1 = fromSomewhere();
-    String name = data1->getName();
+    Data data1 = fromSomewhere();
+    String name = data1.getName();
 
 - A unique identifier in a Mosaic project.
 
@@ -35,41 +35,45 @@ Requirements
   Each app in the history should record all inputs and settings.
   See the :ref:`History` specification for more detail.
 
-  History should not be modifiable. Instead, it should
-  be passed as argument during construction of a data object, likely
-  during an initialization phase of an App. For example::
+  History should not be modifiable.
+  Instead, it should be passed as argument during construction of a data
+  object, likely during an initialization phase of an App.
+  For example::
 
-    Data* data1 = fromSomewhere();
-    App* app = fromSomewhereElse();
-    History* history1 = data1->getHistory();
-    History* history2 = history1->append(app);
-    Data* data2 = dm->createMovie(..., history2);
+    Data data1 = fromSomewhere();
+    App app = fromSomewhereElse();
+    History history1 = data1.getHistory();
+    History history2 = history1.append(app);
+    Data data2 = dm.createMovie(..., history2);
 
   If we allow for data objects to come into existence without an
   App (e.g. a manually created trace that annotates the state of an
-  animal), then we must allow for a null history.
+  animal), then we must allow for an empty history.
 
-- Read access to the space required to store the data object.
+- Read access to the space required to store the data in MB.
 
   This is required so that the user can easily find any large data
   objects that could be removed.
 
-  For example, one could access the size in GB as follows::
+  We should use binary MegaBytes by default, but should allow one to get
+  the most human readable unit (e.g. sometimes KB, sometimes GB).
 
-    Data* data1 = fromSomewhere();
-    double sizeGB = data1.getSize();
+  For example, one could access the size in MB as follows::
 
-- Read access to the location of the data (on a drive or in memory).
+    Data data = fromSomewhere();
+    double sizeMB = data.getSizeMB();
 
-  This is required so that the developer can easily see where the data is.
-  If the object is on a drive, the file(s) containing it should also be
-  accessible.
+- Read access to the location of the data file.
 
-  For example, one could check if a data object is entirely in memory as
-  follows::
+  This is required so that the developer can open/read/write the data file.
 
-    Data* data1 = fromSomewhere();
-    String location = data1->getLocation();
+  For example::
+
+    Data data = fromSomewhere();
+    String location = data.getLocation();
+
+  If the data links to a file somewhere else, e.g. on another file system,
+  then this should return the target location.
 
 - Read access to whether the actual data is somewhere else.
 
@@ -77,12 +81,18 @@ Requirements
   data may sit on a remote disk that has nothing to do with the local
   filesystem or project directory.
 
+  For example::
+
+    Data data = fromSomewhere();
+    bool link = data.isLink();
+
 
 Non-Requirements
 ^^^^^^^^^^^^^^^^
 
 - Need not know its place in a data object hierarchy.
 
-  This should be controlled by the :ref:`DataManager`. This means that
-  the object does not need to know about its parents nor children.
+  This should be controlled by the :ref:`DataManager`.
+  This means that the object does not need to know about its parents or
+  children.
 
