@@ -1,41 +1,34 @@
 #include "isxTest.h"
 #include "isxTimeGrid.h"
+#include "catch.hpp"
 
-class TimeGridTest : public isx::Test {
-    Q_OBJECT
+TEST_CASE("TimeGridTest", "[core]") {
 
-private slots:
-
-    //! Tests valid usage of constructor.
-    void testConstructor() {
+    SECTION("valid usage of constructor") {
+        //! Tests valid usage of constructor.
         isx::Time start;
         uint32_t numTimes = 20;
         double step = 50;
         isx::TimeGrid timeGrid(start, numTimes, step);
-        ISX_COMPARE_STRINGS(timeGrid.getStart().toString(), start.toString());
-        QCOMPARE(timeGrid.getNumTimes(), numTimes);
-        QCOMPARE(timeGrid.getStep(), step);
+        REQUIRE(timeGrid.getStart().toString() == start.toString());
+        REQUIRE(timeGrid.getNumTimes() == numTimes);
+        REQUIRE(timeGrid.getStep() == step);
     }
 
-    //! Tests getting the start time.
-    void testGetStart() {
+    SECTION("getting the start time") {
+        //! Tests getting the start time.
         isx::Time start;
         isx::TimeGrid timeGrid(start, 20, 50);
-        ISX_COMPARE_STRINGS(timeGrid.getStart().toString(), start.toString());
+        REQUIRE(timeGrid.getStart().toString() == start.toString());
     }
 
-    //! Test getting the length of the samples.
-    void testGetLength() {
+    SECTION("getting the length of the samples") {
+        //! Test getting the length of the samples.
         isx::Time start;
         uint32_t numTimes = 20;
         double step = 50;
         isx::TimeGrid timeGrid(start, numTimes, step);
         double length = numTimes * step;
-        QCOMPARE(timeGrid.getLength(), length);
+        REQUIRE(timeGrid.getLength() == length);
     }
-
-};
-
-QTEST_APPLESS_MAIN(TimeGridTest)
-#include "TimeGridTest.moc"
-
+}

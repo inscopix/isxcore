@@ -1,0 +1,7 @@
+file(GLOB_RECURSE SRCS ${CMAKE_CURRENT_LIST_DIR}/*.cpp)
+file(GLOB_RECURSE HDRS ${CMAKE_CURRENT_LIST_DIR}/*.h)
+
+include_directories(${CMAKE_CURRENT_LIST_DIR}/../include)
+
+list(APPEND TEST_SOURCES ${SRCS})
+
