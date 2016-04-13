@@ -1,7 +1,7 @@
 #ifndef ISX_TIMEGRID_H
 #define ISX_TIMEGRID_H
 
-#include <cinttypes>
+#include <cstdint>
 #include "isxTime.h"
 
 namespace isx {

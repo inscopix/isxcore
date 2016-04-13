@@ -1,7 +1,7 @@
 #ifndef ISX_TRACE_H
 #define ISX_TRACE_H
 
-#include <cinttypes>
+#include <cstdint>
 
 #include "isxTime.h"
 #include "isxTimeGrid.h"
