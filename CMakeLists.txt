@@ -6,6 +6,8 @@ file(GLOB HDRS ${CMAKE_CURRENT_LIST_DIR}/include/*.h)
 
 add_library(core STATIC ${SRCS} ${HDRS})
 
+target_compile_options(core PUBLIC ${GLOBAL_CXX_OPTIONS})
+
 #target_include_directories(core ${CMAKE_CURRENT_LIST_DIR}/include ${QT_HEADER_SEARCH_PATHS})
 target_include_directories(core PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 target_include_directories(core PRIVATE ${QT_HEADER_SEARCH_PATHS})
