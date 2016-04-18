@@ -25,7 +25,7 @@ public:
      * Fully specified constructor.
      *
      * \param   year    The year in the common era [1970, 2^16].
-     * \param   month   The month of the year in [1-12].
+     * \param   mon     The month of the year in [1-12].
      * \param   day     The day of the month [1-31].
      * \param   hour    The hour of the day [0-23].
      * \param   mins    The minutes past the hour [0-59].
