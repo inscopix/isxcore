@@ -19,5 +19,8 @@ Trace<T>::setValue(uint32_t i, T val) {
     m_Range[i] = val;
 }
 
+// bogus instantiation to quiet ranlib message isxTrace.cpp.p has no symbols
+Trace<int> intTrace(Time(), 0, 0);
+
 } // namespace
 
