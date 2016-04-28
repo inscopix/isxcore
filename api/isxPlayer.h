@@ -3,7 +3,7 @@
 
 #include <QBoxLayout>
 #include <memory>
-
+#include "Fwd.h"
 
 namespace isx
 {
@@ -15,14 +15,20 @@ class Player
 {
 public:
     /// Constructor.
-    /// \param inParent BoxLayout to which this player will at its window into which it draw its frames
+    /// \param inParent Parent window
+    /// \param inLayout BoxLayout to which this player will add its window into which it draws its frames
     ///
-    Player(const std::shared_ptr<QBoxLayout> & inParent);
+    Player(QWidget * inParent, QBoxLayout * inLayout);
 
     /// Destructor.
     ///
     ~Player();
 
+    /// Set movie for player
+    /// \param inMovie Movie to play.
+    void
+    setMovie(const tMovie_SP & inMovie);
+    
     /// Start playback.
     ///
     void
@@ -39,10 +45,18 @@ public:
     bool
     isPlaying();
 
+    /// Query player valid state
+    /// \return true means player is valid and can render (eg. failed OpenGL init would yield an invalid player)
+    ///
+    bool
+    isValid();
+
 private:
     class MyOpenGLWidget;
     std::shared_ptr<MyOpenGLWidget> window_;
+    tMovie_SP movie_;
 
+    bool isValid_ = false;
     bool isPlaying_ = false;
 
 };

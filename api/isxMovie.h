@@ -48,7 +48,7 @@ public:
     /// \param outBuffer pointer to memory where this function copies the frame data
     /// \param inBufferSize size of outBuffer in bytes
     ///
-    void getFrame(int inFrameNumber, void * outBuffer, size_t inBufferSize);
+    void getFrame(uint32_t inFrameNumber, void * outBuffer, size_t inBufferSize);
 
     /// \return the duration of the movie in seconds
     /// 

@@ -84,7 +84,7 @@ public:
     }
 
     void 
-    getFrame(int inFrameNumber, void * outBuffer, size_t inBufferSize)
+    getFrame(uint32_t inFrameNumber, void * outBuffer, size_t inBufferSize)
     {
         try {
             H5::DataSpace fileSpace(dataSpace_);
@@ -167,7 +167,7 @@ Movie::getFrameSizeInBytes() const
 }
 
 void 
-Movie::getFrame(int inFrameNumber, void * outBuffer, size_t inBufferSize)
+Movie::getFrame(uint32_t inFrameNumber, void * outBuffer, size_t inBufferSize)
 {
     pImpl->getFrame(inFrameNumber, outBuffer, inBufferSize);
 }
