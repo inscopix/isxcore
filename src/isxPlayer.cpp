@@ -9,6 +9,7 @@
 #include <QTimer>
 #include <memory>
 #include <vector>
+#include <array>
 #include <cmath>
 
 #include "shaders.h"
@@ -29,7 +30,6 @@ public:
         fmt.setVersion(2, 1);
 //        setFormat(fmt);
         
-        mvp_matrix_.resize(16);
     }
     
     void setMovieInfo(
@@ -77,45 +77,20 @@ public:
         vertexPosition_modelspaceID_ = glGetAttribLocation(programObj_, "vertexPosition_modelspace");
         vertexUVID_ = glGetAttribLocation(programObj_, "vertexUV");
         
-#if 1
-        static float s_vertex_buffer_data[] =
-        {
-            0.f, 0.f, 0.f,
-            0.f, 1.f, 0.f,
-            1.f, 1.f, 0.f,
-            1.f, 0.f, 0.f
-        };
-        
-        static float s_uv_buffer_data[] =
-        {
+        uv_buffer_ = { {
+            0.f, 1.f,
             0.f, 0.f,
-            0.f, 1.f,
-            1.f, 1.f,
-            1.f, 0.f
-        };
-#else
-        static float s_vertex_buffer_data[] =
-        {
-            200.f, 125.f, 0.f,
-            100.f, 375.f, 0.f,
-            300.f, 375.f, 0.f
-        };
-        
-        static float s_uv_buffer_data[] =
-        {
-            0.5f, 0.f,
-            0.f, 1.f,
+            1.f, 0.f,
             1.f, 1.f
-        };
-#endif
-        
+        } };
+
         glGenBuffers(1, &vertexbufferObj_);
         glBindBuffer(GL_ARRAY_BUFFER, vertexbufferObj_);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(s_vertex_buffer_data), s_vertex_buffer_data, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_), &vertex_buffer_[0], GL_STATIC_DRAW);
         
         glGenBuffers(1, &uvbufferObj_);
         glBindBuffer(GL_ARRAY_BUFFER, uvbufferObj_);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(s_uv_buffer_data), s_uv_buffer_data, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(uv_buffer_), &uv_buffer_[0], GL_STATIC_DRAW);
         
         doneCurrent();
     }
@@ -152,49 +127,85 @@ protected:
         {
             qDebug() << "QOpenGLWidget::isValid: " << valid << "\n";
         }
-        
     }
 
-    void resizeGL(int w, int h)
+    void resizeGL(int inWidth, int inHeight)
     {
-        float r_x = 2.f / float(1.f);
-        float r_y = 2.f / float(1.f);
+        windowWidth_ = inWidth;
+        windowHeight_ = inHeight;
+        
+        float x0 = 0.f;
+        float y0 = 0.f;
+        float x1 = float(windowWidth_);
+        float y1 = float(windowHeight_);
+        
+        if (frameWidth_ == 0 || frameHeight_ == 0)
+        {
+            return;
+        }
+
+        float r_x = 2.f / float(windowWidth_);
+        float r_y = 2.f / float(windowHeight_);
         float r_z = -2.f / (-1.f - 1.f);
         float t_x = -1.f;
         float t_y = -1.f;
         float t_z = 0.f;
         
-        mvp_matrix_ = {
+        mvp_matrix_ = { {
             r_x, 0.f, 0.f, 0.f,
             0.f, r_y, 0.f, 0.f,
             0.f, 0.f, r_z, 0.f,
             t_x, t_y, t_z, 1.f
-        };
+        } };
+        
+        float wr = float(windowWidth_) / float(windowHeight_);
+        float fr = float(frameWidth_) / float(frameHeight_);
+        
+        
+        if (fr > wr)
+        {
+            // letter box
+            float scale = float(windowWidth_) / float(frameWidth_);
+            float scaledHeight = scale * float(frameHeight_);
+            y0 = (float(windowHeight_) - scaledHeight) / 2.f;
+            y1 = y0 + scaledHeight;
+        }
+        else
+        {
+            // pillar box
+            float scale = float(windowHeight_) / float(frameHeight_);
+            float scaledWidth = scale * float(frameWidth_);
+            x0 = (float(windowWidth_) - scaledWidth) / 2.f;
+            x1 = x0 + scaledWidth;
+        }
+        
+        vertex_buffer_ = { {
+            x0, y0, 0.f,
+            x0, y1, 0.f,
+            x1, y1, 0.f,
+            x1, y0, 0.f
+        } };
 
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbufferObj_);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_), &vertex_buffer_[0], GL_STATIC_DRAW);
     }
 
     void paintGL()
     {
         if (vertexbufferObj_ && uvbufferObj_)
         {
-            
-            glClear(GL_COLOR_BUFFER_BIT);		/* clear the display */
+            glClear(GL_COLOR_BUFFER_BIT);
             glUseProgram(programObj_);
-            
-            // Send our transformation to the currently bound shader,
-            // in the "MVP" uniform
             glUniformMatrix4fv(matrixID_, 1, GL_FALSE, &mvp_matrix_[0]);
             
-            // Bind our texture in Texture Unit 0
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texObj_);
-            // Set our "myTextureSampler" sampler to use Texture Unit 0
             glUniform1i(textureID_, 0);
             
             glEnableVertexAttribArray(vertexPosition_modelspaceID_);
             glBindBuffer(GL_ARRAY_BUFFER, vertexbufferObj_);
             glVertexAttribPointer(
-                vertexPosition_modelspaceID_, // The attribute we want to configure
+                vertexPosition_modelspaceID_,
                 3,                            // size
                 GL_FLOAT,                     // type
                 GL_FALSE,                     // normalized?
@@ -202,11 +213,10 @@ protected:
                 (void*)0                      // array buffer offset
             );
             
-            // 2nd attribute buffer : UVs
             glEnableVertexAttribArray(vertexUVID_);
             glBindBuffer(GL_ARRAY_BUFFER, uvbufferObj_);
             glVertexAttribPointer(
-                vertexUVID_,                  // The attribute we want to configure
+                vertexUVID_,
                 2,                            // size : U+V => 2
                 GL_FLOAT,                     // type
                 GL_FALSE,                     // normalized?
@@ -214,8 +224,7 @@ protected:
                 (void*)0                      // array buffer offset
             );
             
-            // Draw the triangles !
-            glDrawArrays(GL_QUADS, 0, 16*3); // 12*3 indices starting at 0 -> 12 triangles
+            glDrawArrays(GL_QUADS, 0, 16*3);
             
             glDisableVertexAttribArray(vertexPosition_modelspaceID_);
             glDisableVertexAttribArray(vertexUVID_);
@@ -322,6 +331,12 @@ private:
         update();
     }
     
+    tCurrentFrameCB currentFrameCB_;
+    std::unique_ptr<QTimer> timer_;
+    int32_t windowWidth_ = 0;
+    int32_t windowHeight_ = 0;
+    
+    // movie specific data
     int32_t currentFrameIndex_ = 0;
     int32_t firstFrameIndex_ = 0;
     int32_t lastFrameIndex_ = 0;
@@ -330,12 +345,7 @@ private:
     int32_t frameHeight_ = 0;
     size_t frameSizeInBytes_;
     tGetFrameCB getFrameCB_;
-    tCurrentFrameCB currentFrameCB_;
-    
-    std::vector<float> mvp_matrix_;
-
-    std::unique_ptr<QTimer> timer_;
-    
+ 
     // opengl objects and IDs
     uint32_t texObj_ = 0;
     uint32_t programObj_ = 0;
@@ -347,6 +357,9 @@ private:
     uint32_t vertexbufferObj_ = 0;
     uint32_t uvbufferObj_ = 0;
 
+    std::array<float, 16>   mvp_matrix_;
+    std::array<float, 12>   vertex_buffer_;
+    std::array<float, 8>    uv_buffer_;
 };
 
 Player::Player(QWidget * inParent, QBoxLayout * inLayout)
