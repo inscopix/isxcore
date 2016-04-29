@@ -3,6 +3,7 @@
 
 #include <QBoxLayout>
 #include <memory>
+#include <functional>
 #include "Fwd.h"
 
 namespace isx
@@ -14,6 +15,8 @@ namespace isx
 class Player
 {
 public:
+    typedef std::function<void(double, uint32_t)> tCurrentFrameCB;
+    
     /// Constructor.
     /// \param inParent Parent window
     /// \param inLayout BoxLayout to which this player will add its window into which it draws its frames
@@ -50,11 +53,18 @@ public:
     ///
     bool
     isValid();
+    
+    /// Set callback function that is invoked after every frame draw
+    /// \param inCurrentFrameCB callback function takes two parameters: double seconds, uint32_t frameIndex
+    ///
+    void
+    setCurrentFrameCB(tCurrentFrameCB inCurrentFrameCB);
 
 private:
     class MyOpenGLWidget;
     std::shared_ptr<MyOpenGLWidget> window_;
     tMovie_SP movie_;
+
 
     bool isValid_ = false;
     bool isPlaying_ = false;

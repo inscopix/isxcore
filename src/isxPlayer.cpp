@@ -131,6 +131,12 @@ public:
     {
     }
     
+    void
+    setCurrentFrameCB(tCurrentFrameCB inCurrentFrameCB)
+    {
+        currentFrameCB_ = inCurrentFrameCB;
+    }
+
 
 protected:
     void initializeGL()
@@ -213,6 +219,8 @@ protected:
             
             glDisableVertexAttribArray(vertexPosition_modelspaceID_);
             glDisableVertexAttribArray(vertexUVID_);
+
+            currentFrameCB_(0.0, currentFrameIndex_);
         }
     }
     
@@ -322,6 +330,7 @@ private:
     int32_t frameHeight_ = 0;
     size_t frameSizeInBytes_;
     tGetFrameCB getFrameCB_;
+    tCurrentFrameCB currentFrameCB_;
     
     std::vector<float> mvp_matrix_;
 
@@ -414,5 +423,15 @@ Player::isValid()
     
     return isValid_;
 }
+    
+void
+Player::setCurrentFrameCB(tCurrentFrameCB inCurrentFrameCB)
+{
+    if (isValid_)
+    {
+        window_->setCurrentFrameCB(inCurrentFrameCB);
+    }
+}
+    
     
 } // namespace isx
