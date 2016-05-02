@@ -108,6 +108,15 @@ public:
         timer_.reset();
     }
     
+    void setTime(float inTime)
+    {
+        float t = std::min(1.f, std::max(0.f, inTime));
+        currentFrameIndex_ = std::floor(float(firstFrameIndex_) + t * float(lastFrameIndex_ - firstFrameIndex_) + 0.5f);
+        currentFrameIndex_ = std::min(lastFrameIndex_, std::max(firstFrameIndex_, currentFrameIndex_));
+        updateTexture(texObj_, frameWidth_, frameHeight_);
+        update();
+    }
+    
     void
     setCurrentFrameCB(tCurrentFrameCB inCurrentFrameCB)
     {
@@ -417,6 +426,20 @@ Player::stop()
     isPlaying_ = false;
 }
 
+void
+Player::setTime(float inTime)
+{
+    if (!isValid_)
+    {
+        return;
+    }
+    if (isPlaying_)
+    {
+        stop();
+    }
+    window_->setTime(inTime);
+}
+    
 bool
 Player::isPlaying()
 {

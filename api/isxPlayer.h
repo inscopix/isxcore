@@ -41,6 +41,12 @@ public:
     ///
     void
     stop();
+    
+    /// Set current playback time.
+    /// \param inTime 0.0 and less represent the beginning of the movie, 1.0 and more represent the end of the movie
+    ///
+    void
+    setTime(float inTime);
 
     /// Query playback state
     /// \return true means is this player is in playing state
