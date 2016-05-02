@@ -23,7 +23,6 @@ public:
 
     MyOpenGLWidget(QWidget * inParent, QBoxLayout * inLayout)
     : QOpenGLWidget(inParent)
-    , timer_(new QTimer())
     {
         inLayout->addWidget(this);
         QSurfaceFormat fmt = format();
@@ -98,12 +97,15 @@ public:
 
     void start()
     {
+        timer_.reset(new QTimer());
         QObject::connect(timer_.get(), &QTimer::timeout, this, &MyOpenGLWidget::nextFrame);
         timer_->start(1000/20); // 20 Hz
     }
     
     void stop()
     {
+        timer_->stop();
+        timer_.reset();
     }
     
     void
@@ -401,10 +403,6 @@ Player::start()
         return;
     }
     window_->start();
-    window_->update();
-
-
-
     isPlaying_ = true;
 }
 
@@ -415,7 +413,7 @@ Player::stop()
     {
         return;
     }
-
+    window_->stop();
     isPlaying_ = false;
 }
 
