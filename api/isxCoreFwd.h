@@ -1,5 +1,5 @@
-#ifndef FWD_H
-#define FWD_H
+#ifndef ISX_CORE_FWD_H
+#define ISX_CORE_FWD_H
 
 #include <memory>
 
@@ -13,8 +13,9 @@ typedef std::weak_ptr<C>    t##C##_WP;
 namespace isx
 {
     FWD_DECLARE_WITH_PTRS(Movie);
-    FWD_DECLARE_WITH_PTRS(Player);
-
 } // namespace isx
 
-#endif // FWD_H
+
+#undef FWD_DECLARE_WITH_PTRS
+
+#endif // ISX_CORE_FWD_H
