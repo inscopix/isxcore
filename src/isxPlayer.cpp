@@ -374,7 +374,7 @@ private:
 };
 
 Player::Player(QWidget * inParent, QBoxLayout * inLayout)
-: window_(new MyOpenGLWidget(inParent, inLayout))
+: m_window(new MyOpenGLWidget(inParent, inLayout))
 {
 
 }
@@ -385,19 +385,19 @@ Player::~Player()
 void
 Player::setMovie(const tMovie_SP & inMovie)
 {
-    if (isValid_ && !isPlaying_)
+    if (m_isValid && !m_isPlaying)
     {
-        movie_ = inMovie;
-        window_->setMovieInfo(
-            movie_->getFrameWidth(),
-            movie_->getFrameHeight(),
-            movie_->getFrameSizeInBytes(),
+        m_movie = inMovie;
+        m_window->setMovieInfo(
+            m_movie->getFrameWidth(),
+            m_movie->getFrameHeight(),
+            m_movie->getFrameSizeInBytes(),
             0,
-            movie_->getNumFrames() - 1,
+            m_movie->getNumFrames() - 1,
             [&](uint32_t inFrameNumber, void * inBuffer, size_t inBufferSize){
-                if (inBufferSize == movie_->getFrameSizeInBytes())
+                if (inBufferSize == m_movie->getFrameSizeInBytes())
                 {
-                    movie_->getFrame(inFrameNumber, inBuffer, inBufferSize);
+                    m_movie->getFrame(inFrameNumber, inBuffer, inBufferSize);
                 }
                 
         });
@@ -407,63 +407,63 @@ Player::setMovie(const tMovie_SP & inMovie)
 void
 Player::start()
 {
-    if (!isValid_ || isPlaying_)
+    if (!m_isValid || m_isPlaying)
     {
         return;
     }
-    window_->start();
-    isPlaying_ = true;
+    m_window->start();
+    m_isPlaying = true;
 }
 
 void
 Player::stop()
 {
-    if (!isValid_ || !isPlaying_)
+    if (!m_isValid || !m_isPlaying)
     {
         return;
     }
-    window_->stop();
-    isPlaying_ = false;
+    m_window->stop();
+    m_isPlaying = false;
 }
 
 void
 Player::setTime(float inTime)
 {
-    if (!isValid_)
+    if (!m_isValid)
     {
         return;
     }
-    if (isPlaying_)
+    if (m_isPlaying)
     {
         stop();
     }
-    window_->setTime(inTime);
+    m_window->setTime(inTime);
 }
     
 bool
 Player::isPlaying()
 {
-    return isValid_ && isPlaying_;
+    return m_isValid && m_isPlaying;
 }
 
 bool
 Player::isValid()
 {
-    isValid_ = window_->isValid();
-    if (!isValid_)
+    m_isValid = m_window->isValid();
+    if (!m_isValid)
     {
-        window_.reset();
+        m_window.reset();
     }
     
-    return isValid_;
+    return m_isValid;
 }
     
 void
 Player::setCurrentFrameCB(tCurrentFrameCB inCurrentFrameCB)
 {
-    if (isValid_)
+    if (m_isValid)
     {
-        window_->setCurrentFrameCB(inCurrentFrameCB);
+        m_window->setCurrentFrameCB(inCurrentFrameCB);
     }
 }
     

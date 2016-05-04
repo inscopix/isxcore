@@ -70,12 +70,12 @@ public:
 
 private:
     class MyOpenGLWidget;
-    std::shared_ptr<MyOpenGLWidget> window_;
-    tMovie_SP movie_;
+    std::shared_ptr<MyOpenGLWidget> m_window;
+    tMovie_SP m_movie;
 
 
-    bool isValid_ = false;
-    bool isPlaying_ = false;
+    bool m_isValid = false;
+    bool m_isPlaying = false;
 
 };
 
