@@ -51,28 +51,11 @@ public:
         
         getFrameCB_  = inGetFrameCB;
         
-        glGenTextures(1, &texObj_);
-        glBindTexture(GL_TEXTURE_2D, texObj_);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        
-#if 1
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frameWidth_, frameHeight_, 0, GL_LUMINANCE, GL_UNSIGNED_SHORT, 0);
-#else
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frameWidth_, frameHeight_, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-#endif
-        updateTexture(texObj_, frameWidth_, frameHeight_);
-        
-        // Create and compile our GLSL program from the shaders
         programObj_ = buildShaders(vertexShader, fragmentShader);   // defined in shaders.h
         
-        // Get a handle for our "MVP" uniform
         matrixID_ = glGetUniformLocation(programObj_, "MVP");
         textureID_ = glGetUniformLocation(programObj_, "myTextureSampler");
         
-        // Get a handle for our buffers
         vertexPosition_modelspaceID_ = glGetAttribLocation(programObj_, "vertexPosition_modelspace");
         vertexUVID_ = glGetAttribLocation(programObj_, "vertexUV");
         
@@ -91,9 +74,20 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, uvbufferObj_);
         glBufferData(GL_ARRAY_BUFFER, sizeof(uv_buffer_), &uv_buffer_[0], GL_STATIC_DRAW);
         
-        doneCurrent();
-    }
+        glGenTextures(1, &texObj_);
+        glBindTexture(GL_TEXTURE_2D, texObj_);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frameWidth_, frameHeight_, 0, GL_LUMINANCE, GL_UNSIGNED_SHORT, 0);
 
+        updateTexture(texObj_, frameWidth_, frameHeight_);
+        resizeGL(width(), height());
+        doneCurrent();
+        update();
+    }
 
     void start()
     {
@@ -142,18 +136,18 @@ protected:
 
     void resizeGL(int inWidth, int inHeight)
     {
-        windowWidth_ = inWidth;
-        windowHeight_ = inHeight;
-        
-        float x0 = 0.f;
-        float y0 = 0.f;
-        float x1 = float(windowWidth_);
-        float y1 = float(windowHeight_);
-        
         if (frameWidth_ == 0 || frameHeight_ == 0)
         {
             return;
         }
+
+        windowWidth_ = inWidth;
+        windowHeight_ = inHeight;
+
+        float x0 = 0.f;
+        float y0 = 0.f;
+        float x1 = float(windowWidth_);
+        float y1 = float(windowHeight_);
 
         float r_x = 2.f / float(windowWidth_);
         float r_y = 2.f / float(windowHeight_);
