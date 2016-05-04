@@ -31,6 +31,7 @@ public:
         
     }
     
+    // TODO aschildan, 05/04/2016: Aggregate the parameters once we have a eg spaceGrid class
     void setMovieInfo(
         int32_t inFrameWidth,
         int32_t inFrameHeight,
@@ -311,13 +312,14 @@ private:
         for (int i = 0; i < w * h; ++i)
         {
             float f = float(p[i]);
+
+            // TODO aschildan, 05/04/2016: Don't hard-code sensor range, instead extract this from recording / movie
             f /= 4095.f;
             f *= 255.f;
             f += 0.5f;
             f = std::floor(f);
             
             texbuf[i] = (unsigned char) f; //(unsigned char)(floorf((float(b) / 4095.f) + 0.5f) * 255.f);
-            
         }
 
         if (frameWidth_ % 4)
