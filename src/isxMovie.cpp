@@ -10,7 +10,7 @@ public:
     ~Impl(){};
     Impl(){};
     Impl(const std::string & inPath)
-    : path_(inPath)
+    : m_path(inPath)
     {
         try
         {
@@ -19,20 +19,20 @@ public:
             H5::Exception::dontPrint();
             
             // Open an existing file and dataset.
-            file_ = H5::H5File(path_.c_str(), H5F_ACC_RDONLY);
-            dataSet_ = file_.openDataSet("/images");
-            dataType_ = dataSet_.getDataType();
-            dataSpace_ = dataSet_.getSpace();
+            m_file = H5::H5File(m_path.c_str(), H5F_ACC_RDONLY);
+            m_dataSet = m_file.openDataSet("/images");
+            m_dataType = m_dataSet.getDataType();
+            m_dataSpace = m_dataSet.getSpace();
             
-            ndims_ = dataSpace_.getSimpleExtentNdims();
-            dims_.resize(ndims_);
-            maxdims_.resize(ndims_);
-            dataSpace_.getSimpleExtentDims(&dims_[0], &maxdims_[0]);
+            m_ndims = m_dataSpace.getSimpleExtentNdims();
+            m_dims.resize(m_ndims);
+            m_maxdims.resize(m_ndims);
+            m_dataSpace.getSimpleExtentDims(&m_dims[0], &m_maxdims[0]);
             
-            if (dataType_ == H5::PredType::STD_U16LE)
+            if (m_dataType == H5::PredType::STD_U16LE)
             {
-                frameSizeInBytes_ = dims_[1] * dims_[2] * 2;
-                isValid_ = true;
+                m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
+                m_isValid = true;
             }
             else
             {
@@ -62,80 +62,80 @@ public:
     int 
     getNumFrames() const
     {
-        return int(dims_[0]);
+        return int(m_dims[0]);
     }
 
     int 
     getFrameWidth() const
     {
-        return int(dims_[2]);
+        return int(m_dims[2]);
     }
 
     int 
     getFrameHeight() const
     {
-        return int(dims_[1]);
+        return int(m_dims[1]);
     }
 
     size_t 
     getFrameSizeInBytes() const
     {
-        return frameSizeInBytes_;
+        return m_frameSizeInBytes;
     }
 
     void 
-    getFrame(int inFrameNumber, void * outBuffer, size_t inBufferSize)
+    getFrame(uint32_t inFrameNumber, void * outBuffer, size_t inBufferSize)
     {
         try {
-            H5::DataSpace fileSpace(dataSpace_);
+            H5::DataSpace fileSpace(m_dataSpace);
             hsize_t fileStart[3] = {(hsize_t)inFrameNumber, 0, 0};
-            hsize_t fileCount[3] = {1, dims_[1], dims_[2]};
+            hsize_t fileCount[3] = {1, m_dims[1], m_dims[2]};
             fileSpace.selectHyperslab(H5S_SELECT_SET, fileCount, fileStart);
             
             H5::DataSpace bufferSpace(3, fileCount);
             hsize_t bufferStart[3] = { 0, 0, 0 };
             bufferSpace.selectHyperslab(H5S_SELECT_SET, fileCount, bufferStart);
             
-            dataSet_.read(outBuffer, dataType_, bufferSpace, fileSpace);
+            m_dataSet.read(outBuffer, m_dataType, bufferSpace, fileSpace);
         }
         catch(H5::DataSetIException error)
         {
             std::cerr << "Exception in " << error.getFuncName() << ": " << std::endl << error.getDetailMsg() << std::endl;
-            isValid_ = false;
+            m_isValid = false;
         }
     }
 
     double 
     getDurationInSeconds() const
     {
-        ///TODO aschildan 4/21/2016: Fix to take actual framerate into account
+        // TODO aschildan 4/21/2016: Fix to take actual framerate into account
         return double(getNumFrames()) / 30.0;
     }
 
 private:
-    bool isValid_ = false;
-    std::string path_;
+    bool m_isValid = false;
+    std::string m_path;
     
-    H5::H5File file_;
-    H5::DataSet dataSet_;
-    H5::DataSpace dataSpace_;
-    H5::DataType dataType_;
+    H5::H5File m_file;
+    H5::DataSet m_dataSet;
+    H5::DataSpace m_dataSpace;
+    H5::DataType m_dataType;
     
-    int ndims_;
-    std::vector<hsize_t> dims_;
-    std::vector<hsize_t> maxdims_;
-    size_t frameSizeInBytes_;
+    int m_ndims;
+    std::vector<hsize_t> m_dims;
+    std::vector<hsize_t> m_maxdims;
+    size_t m_frameSizeInBytes;
 };
 
 
 Movie::Movie()
 {
-    pImpl.reset(new Impl());
+    m_pImpl.reset(new Impl());
 }
 
 Movie::Movie(const std::string & inPath)
 {
-    pImpl.reset(new Impl(inPath));
+    m_pImpl.reset(new Impl(inPath));
 }
 
 Movie::~Movie()
@@ -145,37 +145,37 @@ Movie::~Movie()
 int 
 Movie::getNumFrames() const
 {
-    return pImpl->getNumFrames();
+    return m_pImpl->getNumFrames();
 }
 
 int 
 Movie::getFrameWidth() const
 {
-    return pImpl->getFrameWidth();
+    return m_pImpl->getFrameWidth();
 }
 
 int 
 Movie::getFrameHeight() const
 {
-    return pImpl->getFrameHeight();
+    return m_pImpl->getFrameHeight();
 }
 
 size_t 
 Movie::getFrameSizeInBytes() const
 {
-    return pImpl->getFrameSizeInBytes();
+    return m_pImpl->getFrameSizeInBytes();
 }
 
 void 
-Movie::getFrame(int inFrameNumber, void * outBuffer, size_t inBufferSize)
+Movie::getFrame(uint32_t inFrameNumber, void * outBuffer, size_t inBufferSize)
 {
-    pImpl->getFrame(inFrameNumber, outBuffer, inBufferSize);
+    m_pImpl->getFrame(inFrameNumber, outBuffer, inBufferSize);
 }
 
 double 
 Movie::getDurationInSeconds() const
 {
-    return pImpl->getDurationInSeconds();
+    return m_pImpl->getDurationInSeconds();
 }
 
 } // namespace isx
