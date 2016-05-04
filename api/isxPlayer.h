@@ -15,6 +15,8 @@ namespace isx
 class Player
 {
 public:
+    /// Type of callback reporting current frame.
+    ///
     typedef std::function<void(double, uint32_t)> tCurrentFrameCB;
     
     /// Constructor.

@@ -172,7 +172,6 @@ protected:
         float wr = float(windowWidth_) / float(windowHeight_);
         float fr = float(frameWidth_) / float(frameHeight_);
         
-        
         if (fr > wr)
         {
             // letter box
@@ -326,9 +325,14 @@ private:
             texbuf[i] = (unsigned char) f; //(unsigned char)(floorf((float(b) / 4095.f) + 0.5f) * 255.f);
             
         }
-        
+
+        if (frameWidth_ % 4)
+        {
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        }
         glBindTexture(GL_TEXTURE_2D, tex);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_LUMINANCE, GL_UNSIGNED_BYTE, &texbuf[0]);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     }
     
     void nextFrame()
