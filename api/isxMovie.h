@@ -56,7 +56,7 @@ public:
 
 private:
     class Impl;
-    std::unique_ptr<Impl> pImpl;
+    std::unique_ptr<Impl> m_pImpl;
 };
 
 } // namespace isx
