@@ -1,4 +1,6 @@
 #include "isxMovie.h"
+#include "isxRecording.h"
+#include "isxRecording_internal.h"
 #include "H5Cpp.h"
 
 #include <iostream>
@@ -9,8 +11,9 @@ class Movie::Impl
 public:
     ~Impl(){};
     Impl(){};
-    Impl(const std::string & inPath)
-    : m_path(inPath)
+    Impl(const tRecording_SP & inRecording, const std::string & inPath)
+    : m_H5File(inRecording->m_pImpl->getH5FileRef())
+    , m_path(inPath)
     {
         try
         {
@@ -18,9 +21,8 @@ public:
             // handle the errors appropriately
             H5::Exception::dontPrint();
             
-            // Open an existing file and dataset.
-            m_file = H5::H5File(m_path.c_str(), H5F_ACC_RDONLY);
-            m_dataSet = m_file.openDataSet("/images");
+            // Open an existing dataset from H5File.
+            m_dataSet = m_H5File->openDataSet(m_path);
             m_dataType = m_dataSet.getDataType();
             m_dataSpace = m_dataSet.getSpace();
             
@@ -114,9 +116,9 @@ public:
 
 private:
     bool m_isValid = false;
+    Recording::Impl::tH5File_SP m_H5File;
     std::string m_path;
-    
-    H5::H5File m_file;
+
     H5::DataSet m_dataSet;
     H5::DataSpace m_dataSpace;
     H5::DataType m_dataType;
@@ -133,9 +135,9 @@ Movie::Movie()
     m_pImpl.reset(new Impl());
 }
 
-Movie::Movie(const std::string & inPath)
+Movie::Movie(const tRecording_SP & inRecording, const std::string & inPath)
 {
-    m_pImpl.reset(new Impl(inPath));
+    m_pImpl.reset(new Impl(inRecording, inPath));
 }
 
 Movie::~Movie()

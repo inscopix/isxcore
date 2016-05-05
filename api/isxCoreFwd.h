@@ -12,6 +12,7 @@ typedef std::weak_ptr<C>    t##C##_WP;
 
 namespace isx
 {
+    FWD_DECLARE_WITH_PTRS(Recording);
     FWD_DECLARE_WITH_PTRS(Movie);
 } // namespace isx
 
