@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdint>
 #include <QDateTime>
+#include <memory>
 
 namespace isx {
 
@@ -33,7 +34,14 @@ public:
      * \param   ms      The milliseconds past the second [0-1000).
      * \param   utcOff  The time zone in hours offset from UTC [-14, 14].
      */
-    Time(uint16_t year, uint8_t mon, uint8_t day, uint8_t hour, uint8_t mins, uint8_t secs = 0, double ms = 0, int8_t utcOff = 0);
+    Time(   uint16_t year,
+            uint8_t mon,
+            uint8_t day,
+            uint8_t hour,
+            uint8_t mins,
+            uint8_t secs = 0,
+            double ms = 0,
+            int8_t utcOff = 0);
 
     /*!
      * Convert this to a string of the form "YYYYMMDD-hhmmss(.z*)".
@@ -58,6 +66,11 @@ public:
      * \return  The seconds from the given time to this.
      */
     double secsFrom(isx::Time from) const;
+
+    /*!
+     * \return  The current time.
+     */
+    static std::unique_ptr<isx::Time> now();
 
 private:
 
