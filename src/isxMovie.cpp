@@ -125,6 +125,8 @@ private:
     Recording::Impl::tH5File_SP m_H5File;
     std::string m_path;
 
+    
+    H5::H5File m_file;
     H5::DataSet m_dataSet;
     H5::DataSpace m_dataSpace;
     H5::DataType m_dataType;
