@@ -18,6 +18,9 @@ Recording::Impl::Impl(const std::string & inPath)
         
         // Open an existing file and dataset.
         m_file.reset(new H5::H5File(m_path.c_str(), H5F_ACC_RDONLY));
+
+        // no exception until here --> this is a valid file
+        m_isValid = true;
     }  // end of try block
     
     // catch failure caused by the H5File operations
@@ -38,6 +41,12 @@ Recording::Impl::Impl(const std::string & inPath)
     }
 }
 
+bool
+Recording::Impl::isValid() const
+{
+    return m_isValid;
+}
+
 Recording::Impl::tH5File_SP
 Recording::Impl::getH5FileRef()
 {
@@ -56,6 +65,12 @@ Recording::Recording(const std::string & inPath)
 
 Recording::~Recording()
 {
+}
+
+bool
+Recording::isValid() const
+{
+    return m_pImpl->isValid();
 }
 
 } // namespace isx

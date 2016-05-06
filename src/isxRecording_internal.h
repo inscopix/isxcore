@@ -27,6 +27,11 @@ public:
     ///
     ~Impl();
 
+    /// \return whether this is a valid internal recording object.
+    ///
+    bool
+    isValid() const;
+
     /// Accessor to H5File object (ref-counted)
     /// \return a shared pointer to the H5File object for this recording
     ///
@@ -34,6 +39,7 @@ public:
     getH5FileRef();
 
 private:
+    bool m_isValid = false;
     std::string m_path;
     
     tH5File_SP m_file;

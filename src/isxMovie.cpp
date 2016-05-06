@@ -61,6 +61,12 @@ public:
         }
     }
 
+    bool
+    isValid() const
+    {
+        return m_isValid;
+    }
+
     int 
     getNumFrames() const
     {
@@ -142,6 +148,12 @@ Movie::Movie(const tRecording_SP & inRecording, const std::string & inPath)
 
 Movie::~Movie()
 {
+}
+
+bool
+Movie::isValid() const
+{
+    return m_pImpl->isValid();
 }
 
 int 

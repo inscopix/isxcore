@@ -25,7 +25,15 @@ public:
     ///
     Recording(const std::string & inPath);
 
+    /// \return whether this is a valid recording object.
+    ///
+    bool
+    isValid() const;
+
     class Impl;
+
+    /// Internal implementation of Recording class
+    ///
     std::unique_ptr<Impl> m_pImpl;
 };
 
