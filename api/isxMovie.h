@@ -29,13 +29,11 @@ public:
     /// 
     ~Movie();
 
-    ///
     /// \return whether this is a valid movie object.
     ///
     bool
     isValid() const;
 
-    ///
     /// \return the number of frames in this movie.
     ///
     int getNumFrames() const;
