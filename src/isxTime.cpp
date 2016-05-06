@@ -70,4 +70,20 @@ Time::secsFrom(isx::Time from) const {
 	return diffEpochSecs + diffOffsetSecs;
 }
 
+std::unique_ptr<isx::Time>
+Time::now() {
+    QDateTime nowDateTime = QDateTime::currentDateTime();
+    QDate nowDate = nowDateTime.date();
+    QTime nowTime = nowDateTime.time();
+    return std::unique_ptr<isx::Time>(new isx::Time(
+            nowDate.year(),
+            nowDate.month(),
+            nowDate.day(),
+            nowTime.hour(),
+            nowTime.minute(),
+            nowTime.second(),
+            nowTime.msec(),
+            0));
+}
+
 } // namespace
