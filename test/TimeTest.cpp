@@ -4,38 +4,48 @@
 
 TEST_CASE("TimeTest", "[core]") {
 
-    SECTION("valid usage of constructor") {
-        //! Tests valid usage of constructor.
-        isx::Time time;
-        REQUIRE(time.toString() == "19700101-000000.000");
+    SECTION("default constructor") {
+        isx::Time actual;
+        isx::Time expected(1970, 1, 1, 0, 0, 0, 0);
+        REQUIRE(actual == expected);
     }
 
-    SECTION("constructing a time with a string") {
-        //! Tests constructing a time with a string.
-        std::string timeStr = "20151022-110159.293";
-        isx::Time time(2015, 10, 22, 11, 1, 59, 293);
-        REQUIRE(time.toString() == timeStr);
+    SECTION("add zero seconds to a time") {
+        isx::Time expected(1970, 1, 1, 0, 0, 0, 0);
+        isx::Time actual = expected.addSecs(0);
+        REQUIRE(actual == expected);
     }
 
-    SECTION("adding zero seconds to a time") {
-        //! Tests adding zero seconds to a time.
-        isx::Time time;
-        isx::Time newTime = time.addSecs(0);
-        REQUIRE(newTime.toString() == "19700101-000000.000");
+    SECTION("add integral seconds to a time") {
+        isx::Time time(1970, 1, 1, 0, 0, 0, 0);
+        isx::Time expected(1970, 1, 1, 0, 0, 7, 0);
+        isx::Time actual = time.addSecs(7);
+        REQUIRE(actual == expected);
     }
 
-    SECTION("adding integral seconds to a time") {
-        //! Tests adding integral seconds to a time.
+    SECTION("add floating point seconds to a time") {
         isx::Time time;
-        isx::Time newTime = time.addSecs(7);
-        REQUIRE(newTime.toString() == "19700101-000007.000");
+        isx::Time expected(1970, 1, 1, 0, 0, 0, 0.531);
+        isx::Time actual = time.addSecs(0.531);
+        REQUIRE(actual == expected);
     }
 
-    SECTION("adding floating point seconds to a time") {
-        //! Tests adding floating point seconds to a time.
+    SECTION("copy constructor") {
         isx::Time time;
-        isx::Time newTime = time.addSecs(0.07543);
-        REQUIRE(newTime.toString(5) == "19700101-000000.07543");
+        isx::Time otherTime(time);
+        REQUIRE(time == otherTime);
+    }
+
+    SECTION("copy assignment") {
+        isx::Time time;
+        isx::Time otherTime = time;
+        REQUIRE(time == otherTime);
+    }
+
+    SECTION("equals operator") {
+        isx::Time time(1970, 1, 1, 0, 0, 0, 0);
+        isx::Time otherTime(1970, 1, 1, 0, 0, 0, 0);
+        REQUIRE(time == otherTime);
     }
 
 }
