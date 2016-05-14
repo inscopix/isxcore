@@ -124,8 +124,8 @@ Time::Time( uint16_t year,
             uint8_t hour,
             uint8_t mins,
             uint8_t secs,
-            double ms) {
-    m_impl.reset(new Impl(year, mon, day, hour, mins, secs, ms));
+            double offset) {
+    m_impl.reset(new Impl(year, mon, day, hour, mins, secs, offset));
 }
 
 Time::Time(const Time& other) {
@@ -164,6 +164,21 @@ Time::operator ==(const isx::Time& other) const {
 void
 Time::serialize(std::ostream& strm) const {
     m_impl->serialize(strm);
+}
+
+std::unique_ptr<isx::Time>
+Time::now() {
+    QDateTime nowDateTime = QDateTime::currentDateTime();
+    QDate nowDate = nowDateTime.date();
+    QTime nowTime = nowDateTime.time();
+    return std::unique_ptr<isx::Time>(new isx::Time(
+            nowDate.year(),
+            nowDate.month(),
+            nowDate.day(),
+            nowTime.hour(),
+            nowTime.minute(),
+            nowTime.second(),
+            nowTime.msec() / 1000.0));
 }
 
 } // namespace

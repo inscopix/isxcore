@@ -1,6 +1,8 @@
 #ifndef ISX_MOVIE_H
 #define ISX_MOVIE_H
 
+#include "isxCoreFwd.h"
+
 #include <string>
 #include <vector>
 #include <memory>
@@ -17,16 +19,21 @@ public:
     ///
     Movie();
 
-    /// Construct movide from a given file.
-    /// \param inPath Path to movie file.
+    /// Construct movie from a dataset in a Recording.
+    /// \param inRecording Recording from which to retrieve movie dataset.
+    /// \param inPath Path to dataset in Recording.
     ///
-    Movie(const std::string & inPath);
+    Movie(const tRecording_SP & inRecording, const std::string & inPath);
 
     /// Destructor
     /// 
     ~Movie();
 
+    /// \return whether this is a valid movie object.
     ///
+    bool
+    isValid() const;
+
     /// \return the number of frames in this movie.
     ///
     int getNumFrames() const;

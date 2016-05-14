@@ -88,6 +88,11 @@ public:
     // Overrides
     virtual void serialize(std::ostream& strm) const;
 
+    /*!
+     * \return  The current time.
+     */
+    static std::unique_ptr<isx::Time> now();
+
 private:
 
     //! The actual implementation depends on Qt and is hidden here.
