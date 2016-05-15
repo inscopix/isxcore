@@ -65,26 +65,19 @@ public:
 
     ~Impl() {};
 
-    std::string toString(int msPrec) const {
-        QString qStr = m_qDateTime.toString("yyyyMMdd-hhmmss");
-        if (msPrec > 0) {
-            QString milliSecStr = QString::number(m_offset, 'f', msPrec);
-            qStr.append(milliSecStr.right(msPrec + 1));
-        }
-        return qStr.toStdString();
-    }
-
     isx::Time addSecs(double s) const {
+        double totalSecs = m_offset + s;
+        double flooredSecs = floor(totalSecs);
+        qint64 qFlooredSecs = static_cast<qint64>(flooredSecs);
         isx::Time dateTime;
-        double sFloored = floor(s);
-        dateTime.m_impl->m_qDateTime = m_qDateTime.addSecs(static_cast<qint64>(sFloored));
-        dateTime.m_impl->m_offset = m_offset + (s - sFloored);
+        dateTime.m_impl->m_qDateTime = m_qDateTime.addSecs(qFlooredSecs);
+        dateTime.m_impl->m_offset = totalSecs - flooredSecs;
         return dateTime;
     }
 
     double secsFrom(const isx::Time& from) const {
-        double fromEpochSecs = from.m_impl->m_qDateTime.toMSecsSinceEpoch() / 1000;
-        double thisEpochSecs = m_qDateTime.toMSecsSinceEpoch() / 1000;
+        double fromEpochSecs = from.m_impl->m_qDateTime.toMSecsSinceEpoch() / 1000.0;
+        double thisEpochSecs = m_qDateTime.toMSecsSinceEpoch() / 1000.0;
         double diffEpochSecs = (thisEpochSecs - fromEpochSecs);
         double diffOffsetSecs = m_offset - from.m_impl->m_offset;
         return diffEpochSecs + diffOffsetSecs;
@@ -139,11 +132,6 @@ Time::operator =(const Time& other) {
 }
 
 Time::~Time() {
-}
-
-std::string
-Time::toString(int msPrec) const {
-    return m_impl->toString(msPrec);
 }
 
 isx::Time

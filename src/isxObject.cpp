@@ -5,11 +5,6 @@
 namespace isx {
 
 std::string
-Object::toString() const {
-    return this->toString(3);
-}
-
-std::string
 Object::toString(uint8_t prec) const {
     std::stringstream strm;
     strm.precision(prec);

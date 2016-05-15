@@ -30,6 +30,19 @@ TEST_CASE("TimeTest", "[core]") {
         REQUIRE(actual == expected);
     }
 
+    SECTION("accumulate floating point seconds") {
+        double stepTime = 1 / 30.0;
+        uint32_t numTimes = 32;
+        isx::Time time;
+        isx::Time expected = time.addSecs(stepTime * numTimes);
+
+        isx::Time actual = time;
+        for (int t = 0; t < numTimes; ++t)
+            actual = actual.addSecs(stepTime);
+
+        REQUIRE(actual == expected);
+    }
+
     SECTION("copy constructor") {
         isx::Time time;
         isx::Time otherTime(time);

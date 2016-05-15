@@ -57,14 +57,6 @@ public:
     ~Time();
 
     /*!
-     * Convert this to a string of the form "YYYYMMDD-hhmmss(.z*)".
-     *
-     * \param   msPrec  The number of millisecond digits.
-     * \return  The output string.
-     */
-    std::string toString(int msPrec = 3) const;
-
-    /*!
      * Returns a time with the given seconds added to this.
      *
      * \param   s       The seconds to add to this.

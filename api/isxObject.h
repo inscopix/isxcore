@@ -20,14 +20,9 @@ public:
     virtual void serialize(std::ostream& strm) const = 0;
 
     /*!
-     * Conversion to a string.
-     */
-    std::string toString() const;
-
-    /*!
      * Conversion to a string with specific floating point precision.
      */
-    std::string toString(uint8_t prec) const;
+    std::string toString(uint8_t prec = 6) const;
 
 }; // class
 
