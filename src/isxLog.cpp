@@ -17,11 +17,7 @@ namespace internal
 {
 std::ostringstream & getLogStream()
 {
-#if ISX_OS_WIN32
 	return sstm;
-#else
-	return std::cout;
-#endif
 }
 
 void flushLogStream()
@@ -31,7 +27,7 @@ void flushLogStream()
 	OutputDebugString(getLogStream().str().c_str());
     getLogStream().str("");
 #else
-	std::cout << std::flush();
+	std::cout << std::flush;
 #endif
 }
 
