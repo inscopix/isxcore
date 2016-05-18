@@ -7,6 +7,7 @@
 
 #include <sstream>
 
+
 namespace isx {
 
 namespace {
@@ -31,6 +32,20 @@ void flushLogStream()
 #endif
 }
 
+#if ISX_OS_WIN32
+void ISX_LOG_INTERNAL()
+{
+    std::ostringstream & sstm = isx::internal::getLogStream();
+    sstm << "\n";
+    isx::internal::flushLogStream();
+}
+#else
+void ISX_LOG_INTERNAL()
+{
+    std::cout << "\n";
+    std::cout << std::flush;
+}
+#endif
+
 } // namespace internal
 } // namespace isx
-
