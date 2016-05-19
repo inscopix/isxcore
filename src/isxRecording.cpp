@@ -1,6 +1,5 @@
 #include "isxRecording.h"
 #include "isxRecording_internal.h"
-#include "isxLog.h"
 #include "H5Cpp.h"
 
 #include <iostream>
@@ -38,7 +37,7 @@ Recording::Impl::Impl(const std::string & inPath)
     
     catch(...)
     {
-        ISX_LOG_ERROR("Unhandled exception.");
+        std::cerr << "Unhandled exception.";
     }
 }
 
