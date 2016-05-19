@@ -21,21 +21,21 @@ void flushLogStream();
 #ifdef NDEBUG
 #define ISX_LOG_INFO(...)
 #define ISX_LOG_WARNING(...)
-#define ISX_LOG_ERROR(...) isx::internal::ISX_LOG_INTERNAL(__VA_ARGS__)
+#define ISX_LOG_ERROR(...) isx::internal::log_(__VA_ARGS__)
 #else
-#define ISX_LOG_INFO(...) isx::internal::ISX_LOG_INTERNAL(__VA_ARGS__)
-#define ISX_LOG_WARNING(...) isx::internal::ISX_LOG_INTERNAL(__VA_ARGS__)
-#define ISX_LOG_ERROR(...) isx::internal::ISX_LOG_INTERNAL(__VA_ARGS__)
+#define ISX_LOG_INFO(...) isx::internal::log_(__VA_ARGS__)
+#define ISX_LOG_WARNING(...) isx::internal::log_(__VA_ARGS__)
+#define ISX_LOG_ERROR(...) isx::internal::log_(__VA_ARGS__)
 #endif
 
 namespace isx
 {
 namespace internal
 {
-void ISX_LOG_INTERNAL();
+void log_();
 
 template<typename First, typename ...Rest>
-void ISX_LOG_INTERNAL(First && first, Rest && ...rest)
+void log_(First && first, Rest && ...rest)
 {
 #if ISX_OS_WIN32
     std::ostringstream & sstm = isx::internal::getLogStream();
@@ -43,7 +43,7 @@ void ISX_LOG_INTERNAL(First && first, Rest && ...rest)
 #else
     std::cout << std::forward<First>(first);
 #endif
-    ISX_LOG_INTERNAL(std::forward<Rest>(rest)...);
+    log_(std::forward<Rest>(rest)...);
 }
 } // namespace internal
 } // namespace isx

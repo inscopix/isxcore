@@ -33,14 +33,14 @@ void flushLogStream()
 }
 
 #if ISX_OS_WIN32
-void ISX_LOG_INTERNAL()
+void log_()
 {
     std::ostringstream & sstm = isx::internal::getLogStream();
     sstm << "\n";
     isx::internal::flushLogStream();
 }
 #else
-void ISX_LOG_INTERNAL()
+void log_()
 {
     std::cout << "\n";
     std::cout << std::flush;
