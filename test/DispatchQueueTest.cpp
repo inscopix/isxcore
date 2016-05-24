@@ -1,3 +1,4 @@
+#include "isxCore.h"
 #include "isxDispatchQueue.h"
 #include "catch.hpp"
 #include "isxLog.h"
@@ -8,14 +9,23 @@
 
 TEST_CASE("DispatchQueue", "[core]") {
 
-//    SECTION("default queue") {
-//        REQUIRE(!!isx::DispatchQueue::defaultQueue());
-//    }
+    isx::CoreInitialize();
+
+    SECTION("initialize") {
+        REQUIRE(isx::CoreIsInitialized());
+        isx::CoreShutdown();
+        REQUIRE(!isx::CoreIsInitialized());
+        isx::CoreInitialize();
+    }
+
+    SECTION("default queues") {
+        REQUIRE(isx::DispatchQueue::poolQueue());
+        REQUIRE(isx::DispatchQueue::mainQueue());
+    }
 
     SECTION("run task") {
         bool taskRan = false;
-        REQUIRE(!taskRan);
-        isx::DispatchQueue::poolQueue().dispatch([&]()
+        isx::DispatchQueue::poolQueue()->dispatch([&]()
         {
             taskRan = true;
         });
@@ -40,7 +50,7 @@ TEST_CASE("DispatchQueue", "[core]") {
             *p = secret;
         };
         REQUIRE(secret != revealed);
-        isx::DispatchQueue::poolQueue().dispatch(&revealed, t);
+        isx::DispatchQueue::poolQueue()->dispatch(&revealed, t);
         for (int i = 0; i < 250; ++i)
         {
             if (secret == revealed)
@@ -53,6 +63,28 @@ TEST_CASE("DispatchQueue", "[core]") {
         REQUIRE(secret == revealed);
     }
     
+    SECTION("run task on new worker thread") {
+        isx::tDispatchQueue_SP worker = isx::DispatchQueue::create();
+        REQUIRE(worker);
+        bool taskRan = false;
+        worker->dispatch([&]()
+        {
+            taskRan = true;
+        });
+        for (int i = 0; i < 250; ++i)
+        {
+            if (taskRan)
+            {
+                break;
+            }
+            std::chrono::milliseconds d(2);
+            std::this_thread::sleep_for(d);
+        }
+        REQUIRE(taskRan);
+        worker.reset();
+    }
+
+
 // this test does not work because we need a Qt event loop handler running in the main
 // thread and this test application is not a Qt application (and the main thread is not
 // a QThread.
@@ -91,4 +123,7 @@ TEST_CASE("DispatchQueue", "[core]") {
         REQUIRE(taskRan);
     }
 #endif
+
+    isx::CoreShutdown();
+
 }

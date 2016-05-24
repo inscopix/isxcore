@@ -16,9 +16,32 @@ namespace isx
 class DispatchQueue
 {
 public:
-    /// Default constructor
+    /// factory method to create a new dispatch queue with
+    /// its own single worker thread
     ///
-    DispatchQueue(bool inIsMain = false);
+    static tDispatchQueue_SP
+    create();
+
+    /// Destructor
+    ///
+    ~DispatchQueue();
+
+    /// initialize the default queues (main and pool).
+    /// Note: Must be called on main threaad.
+    ///
+    static void 
+    initializeDefaultQueues();
+
+    /// accessor for static m_IsInitialized boolean
+    /// true only in between initialize and destroy calls
+    ///
+    static bool 
+    isInitialized();
+
+    /// destroy the default queues (main and pool).
+    ///
+    static void 
+    destroyDefaultQueues();
 
     /// type of task dispatched into queue for processing
     ///
@@ -30,12 +53,12 @@ public:
 
     /// \return the main thread dispatch queue
     ///
-    static DispatchQueue &
+    static tDispatchQueue_SP
     mainQueue();
 
     /// \return the thread pool dispatch queue
     ///
-    static DispatchQueue &
+    static tDispatchQueue_SP
     poolQueue();
 
     /// dispatch a task into this queue for processing
@@ -52,13 +75,35 @@ public:
     dispatch(void * inContext, tContextTask inContextTask);
 
 private:
-    static DispatchQueue m_Pool;
-    static DispatchQueue m_Main;
+    enum eType
+    {
+        kSINGLE_THREADED_WORKER,
+        kPOOL,
+        kMAIN
+    };
 
-    class MainThreadObject;
-    std::unique_ptr<MainThreadObject> m_pMainThreadObject;
-    
-    bool m_isMainQueue = false;
+    /// Default constructor
+    ///
+    explicit DispatchQueue(eType inType);
+
+    /// Copy constructor
+    /// private (don't make copies of DispatchQueue objects)
+    ///
+    DispatchQueue(const DispatchQueue &);
+
+    /// Assignment operator
+    /// private (don't assign DispatchQueue objects)
+    ///
+    DispatchQueue & operator=(const DispatchQueue &);
+
+    static tDispatchQueue_SP m_Pool;
+    static tDispatchQueue_SP m_Main;
+    static bool m_IsInitialized;
+
+    class Dispatcher;
+    std::shared_ptr<Dispatcher> m_pDispatcher;
+    class WorkerThread;
+    std::unique_ptr<WorkerThread> m_pWorkerThread;
 };
 
 

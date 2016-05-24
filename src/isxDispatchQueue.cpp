@@ -1,5 +1,7 @@
 #include "isxDispatchQueue.h"
 #include "isxDispatchQueue_internal.h"
+#include "isxLog.h"
+
 #include <QObject>
 #include <QThreadPool>
 #include <QApplication>
@@ -29,61 +31,107 @@ private:
     DispatchQueue::tTask m_Task;
 };
     
-DispatchQueue::MainThreadObject::MainThreadObject()
+DispatchQueue::Dispatcher::Dispatcher()
 {
     // these are needed by Qt so it can queue tTask objects in its queues between threads
     qRegisterMetaType<tTask>("tTask");
     qRegisterMetaType<tContextTask>("tContextTask");
     
-    QObject::connect(this, &MainThreadObject::dispatchToMain,
-                     this, &MainThreadObject::processOnMain);
-    QObject::connect(this, &MainThreadObject::dispatchToMainWithContext,
-                     this, &MainThreadObject::processOnMainWithContext);
+    QObject::connect(this, &Dispatcher::dispatch,
+                     this, &Dispatcher::process);
+    QObject::connect(this, &Dispatcher::dispatchWithContext,
+                     this, &Dispatcher::processWithContext);
 }
 
 void 
-DispatchQueue::MainThreadObject::processOnMain(tTask inTask)
+DispatchQueue::Dispatcher::process(tTask inTask)
 {
-    if (QApplication::instance())
-    {
-        assert(QApplication::instance()->thread() == QThread::currentThread());
-    }
     inTask();
 }
 
 void 
-DispatchQueue::MainThreadObject::processOnMainWithContext(void * inContext, tContextTask inContextTask)
+DispatchQueue::Dispatcher::processWithContext(void * inContext, tContextTask inContextTask)
 {
-    if (QApplication::instance())
-    {
-        assert(QApplication::instance()->thread() == QThread::currentThread());
-    }
     inContextTask(inContext);
 }
    
-DispatchQueue DispatchQueue::m_Pool;
-DispatchQueue DispatchQueue::m_Main(true);
+tDispatchQueue_SP DispatchQueue::m_Pool;
+tDispatchQueue_SP DispatchQueue::m_Main;
+bool DispatchQueue::m_IsInitialized;
 
-DispatchQueue::DispatchQueue(bool inIsMain)
+DispatchQueue::~DispatchQueue()
 {
-    if (inIsMain)
+}
+
+void 
+DispatchQueue::initializeDefaultQueues()
+{
+    m_Pool.reset(new DispatchQueue(kPOOL));
+    m_Main.reset(new DispatchQueue(kMAIN));
+    m_IsInitialized = true;
+}
+
+bool 
+DispatchQueue::isInitialized()
+{
+    return m_IsInitialized;
+}
+
+void 
+DispatchQueue::destroyDefaultQueues()
+{
+    m_Pool.reset();
+    m_Main.reset();
+    m_IsInitialized = false;
+}
+
+tDispatchQueue_SP
+DispatchQueue::create()
+{
+    return tDispatchQueue_SP(new DispatchQueue(kSINGLE_THREADED_WORKER));
+}
+
+DispatchQueue::DispatchQueue(eType inType)
+{
+    if (inType == kPOOL)
     {
-//        if (QApplication::instance())
+        // don't create thread object -> dispatch methods will use ThreadPool
+    }
+    else if (inType == kMAIN)
+    {
+        // if possible, verify that we're called on main thread
+        if (QApplication::instance())
         {
-//            assert(QApplication::instance()->thread() == QThread::currentThread())
-            m_pMainThreadObject.reset(new MainThreadObject());
+            assert(QApplication::instance()->thread() == QThread::currentThread());
         }
-        assert(m_pMainThreadObject);
+        m_pDispatcher.reset(new Dispatcher());
+    }
+    else if (inType == kSINGLE_THREADED_WORKER)
+    {
+        m_pWorkerThread.reset(new WorkerThread());
+        for (int i = 0; i < 100; ++i)
+        {
+            m_pDispatcher = m_pWorkerThread->dispatcher();
+            if (m_pDispatcher)
+            {
+                break;
+            }
+        }
+        assert(m_pDispatcher);
+        if (!m_pDispatcher)
+        {
+            ISX_LOG_ERROR("Error: Worker thread did not provide dispatcher.");
+        }
     }
 }
 
-DispatchQueue &
+tDispatchQueue_SP
 DispatchQueue::poolQueue()
 {
     return m_Pool;
 }
 
-DispatchQueue &
+tDispatchQueue_SP
 DispatchQueue::mainQueue()
 {
     return m_Main;
@@ -92,9 +140,9 @@ DispatchQueue::mainQueue()
 void
 DispatchQueue::dispatch(tTask inTask)
 {
-    if (m_pMainThreadObject)
+    if (m_pDispatcher)
     {
-        emit m_pMainThreadObject->dispatchToMain(inTask);
+        emit m_pDispatcher->dispatch(inTask);
     }
     else
     {
@@ -108,9 +156,9 @@ DispatchQueue::dispatch(tTask inTask)
 void
 DispatchQueue::dispatch(void * inContext, tContextTask inTask)
 {
-    if (m_pMainThreadObject)
+    if (m_pDispatcher)
     {
-        emit m_pMainThreadObject->dispatchToMainWithContext(inContext, inTask);
+        emit m_pDispatcher->dispatchWithContext(inContext, inTask);
     }
     else
     {
