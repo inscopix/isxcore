@@ -33,10 +33,10 @@ public:
     static DispatchQueue &
     mainQueue();
 
-    /// \return the default dispatch queue
+    /// \return the thread pool dispatch queue
     ///
     static DispatchQueue &
-    defaultQueue();
+    poolQueue();
 
     /// dispatch a task into this queue for processing
     /// \param inTask the task to be processed
@@ -52,14 +52,16 @@ public:
     dispatch(void * inContext, tContextTask inContextTask);
 
 private:
-    static DispatchQueue m_DefaultQueue;
-    static DispatchQueue m_MainQueue;
+    static DispatchQueue m_Pool;
+    static DispatchQueue m_Main;
 
     class MainThreadObject;
     std::unique_ptr<MainThreadObject> m_pMainThreadObject;
     
     bool m_isMainQueue = false;
 };
+
+
 
 } // namespace isx
 

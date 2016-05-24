@@ -6,6 +6,7 @@
 
 #include <assert.h>
 
+// these are needed by Qt so it can queue tTask objects in its queues between threads
 Q_DECLARE_METATYPE(isx::DispatchQueue::tTask);
 Q_DECLARE_METATYPE(isx::DispatchQueue::tContextTask);
 
@@ -30,8 +31,10 @@ private:
     
 DispatchQueue::MainThreadObject::MainThreadObject()
 {
+    // these are needed by Qt so it can queue tTask objects in its queues between threads
     qRegisterMetaType<tTask>("tTask");
     qRegisterMetaType<tContextTask>("tContextTask");
+    
     QObject::connect(this, &MainThreadObject::dispatchToMain,
                      this, &MainThreadObject::processOnMain);
     QObject::connect(this, &MainThreadObject::dispatchToMainWithContext,
@@ -57,35 +60,33 @@ DispatchQueue::MainThreadObject::processOnMainWithContext(void * inContext, tCon
     }
     inContextTask(inContext);
 }
-    
-DispatchQueue DispatchQueue::m_DefaultQueue;
-DispatchQueue DispatchQueue::m_MainQueue(true);
-    
+   
+DispatchQueue DispatchQueue::m_Pool;
+DispatchQueue DispatchQueue::m_Main(true);
+
 DispatchQueue::DispatchQueue(bool inIsMain)
 {
     if (inIsMain)
     {
 //        if (QApplication::instance())
         {
-//            if (QApplication::instance()->thread() == QThread::currentThread())
-            {
-                m_pMainThreadObject.reset(new MainThreadObject());
-            }
+//            assert(QApplication::instance()->thread() == QThread::currentThread())
+            m_pMainThreadObject.reset(new MainThreadObject());
         }
         assert(m_pMainThreadObject);
     }
 }
 
 DispatchQueue &
-DispatchQueue::defaultQueue()
+DispatchQueue::poolQueue()
 {
-    return m_DefaultQueue;
+    return m_Pool;
 }
 
 DispatchQueue &
 DispatchQueue::mainQueue()
 {
-    return m_MainQueue;
+    return m_Main;
 }
 
 void

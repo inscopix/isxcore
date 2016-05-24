@@ -15,7 +15,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task") {
         bool taskRan = false;
         REQUIRE(!taskRan);
-        isx::DispatchQueue::defaultQueue().dispatch([&]()
+        isx::DispatchQueue::poolQueue().dispatch([&]()
         {
             taskRan = true;
         });
@@ -40,7 +40,7 @@ TEST_CASE("DispatchQueue", "[core]") {
             *p = secret;
         };
         REQUIRE(secret != revealed);
-        isx::DispatchQueue::defaultQueue().dispatch(&revealed, t);
+        isx::DispatchQueue::poolQueue().dispatch(&revealed, t);
         for (int i = 0; i < 250; ++i)
         {
             if (secret == revealed)
