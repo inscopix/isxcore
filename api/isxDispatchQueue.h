@@ -18,7 +18,7 @@ class DispatchQueue
 public:
     /// Default constructor
     ///
-    DispatchQueue();
+    DispatchQueue(bool inIsMain = false);
 
     /// type of task dispatched into queue for processing
     ///
@@ -28,27 +28,41 @@ public:
     ///
     typedef std::function<void(void *)> tContextTask;
 
+    /// \return the main thread dispatch queue
+    ///
+    static DispatchQueue &
+    mainQueue();
+
     /// \return the default dispatch queue
     ///
-    static DispatchQueue & defaultQueue();
+    static DispatchQueue &
+    defaultQueue();
 
     /// dispatch a task into this queue for processing
-    /// \param inWork the task to be processed
+    /// \param inTask the task to be processed
     ///
-    void dispatch(tTask inWork);
+    void
+    dispatch(tTask inTask);
     
-    /// dispatch a task with contextinto this queue for processing
+    /// dispatch a task with context into this queue for processing
     /// \param inContext passed into the task function at processing time
-    /// \param inWork the task accepting a context to be processed
+    /// \param inContextTask the task accepting a context to be processed
     ///
-    void dispatch(void * inContext, tContextTask inWork);
-
+    void
+    dispatch(void * inContext, tContextTask inContextTask);
 
 private:
     static DispatchQueue m_DefaultQueue;
+    static DispatchQueue m_MainQueue;
+
+    class MainThreadObject;
+    std::unique_ptr<MainThreadObject> m_pMainThreadObject;
+    
+    bool m_isMainQueue = false;
 };
 
 } // namespace isx
+
 
 
 

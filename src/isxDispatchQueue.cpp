@@ -1,11 +1,17 @@
 #include "isxDispatchQueue.h"
-#include "QThreadPool"
+#include "isxDispatchQueue_internal.h"
+#include <QObject>
+#include <QThreadPool>
+#include <QApplication>
+
+#include <assert.h>
+
+Q_DECLARE_METATYPE(isx::DispatchQueue::tTask);
+Q_DECLARE_METATYPE(isx::DispatchQueue::tContextTask);
 
 namespace isx
 {
-
-DispatchQueue DispatchQueue::m_DefaultQueue;
-
+    
 class TaskWrapper : public QRunnable
 {
 public:
@@ -21,10 +27,53 @@ public:
 private:
     DispatchQueue::tTask m_Task;
 };
-
-DispatchQueue::DispatchQueue()
+    
+DispatchQueue::MainThreadObject::MainThreadObject()
 {
+    qRegisterMetaType<tTask>("tTask");
+    qRegisterMetaType<tContextTask>("tContextTask");
+    QObject::connect(this, &MainThreadObject::dispatchToMain,
+                     this, &MainThreadObject::processOnMain);
+    QObject::connect(this, &MainThreadObject::dispatchToMainWithContext,
+                     this, &MainThreadObject::processOnMainWithContext);
+}
 
+void 
+DispatchQueue::MainThreadObject::processOnMain(tTask inTask)
+{
+    if (QApplication::instance())
+    {
+        assert(QApplication::instance()->thread() == QThread::currentThread());
+    }
+    inTask();
+}
+
+void 
+DispatchQueue::MainThreadObject::processOnMainWithContext(void * inContext, tContextTask inContextTask)
+{
+    if (QApplication::instance())
+    {
+        assert(QApplication::instance()->thread() == QThread::currentThread());
+    }
+    inContextTask(inContext);
+}
+    
+DispatchQueue DispatchQueue::m_DefaultQueue;
+DispatchQueue DispatchQueue::m_MainQueue(true);
+    
+DispatchQueue::DispatchQueue(bool inIsMain)
+{
+    if (inIsMain)
+    {
+//        if (QApplication::instance())
+        {
+//            if (QApplication::instance()->thread() == QThread::currentThread())
+            {
+                m_pMainThreadObject.reset(new MainThreadObject());
+            }
+        }
+        assert(m_pMainThreadObject);
+    }
 }
 
 DispatchQueue &
@@ -33,24 +82,47 @@ DispatchQueue::defaultQueue()
     return m_DefaultQueue;
 }
 
-void DispatchQueue::dispatch(tTask inWork)
+DispatchQueue &
+DispatchQueue::mainQueue()
 {
-    // since we only support the default queue we can
-    // hard-code to use global QThreadPool for now
-    TaskWrapper * tw = new TaskWrapper(std::move(inWork));
-    QThreadPool::globalInstance()->start(tw);
+    return m_MainQueue;
 }
 
-void DispatchQueue::dispatch(void * inContext, tContextTask inWork)
+void
+DispatchQueue::dispatch(tTask inTask)
 {
-    // since we only support the default queue we can
-    // hard-code to use global QThreadPool for now
-    TaskWrapper * tw = new TaskWrapper([=]()
+    if (m_pMainThreadObject)
     {
-        inWork(inContext);
-    });
-    QThreadPool::globalInstance()->start(tw);
+        emit m_pMainThreadObject->dispatchToMain(inTask);
+    }
+    else
+    {
+        // since we only support the default queue we can
+        // hard-code to use global QThreadPool for now
+        TaskWrapper * tw = new TaskWrapper(std::move(inTask));
+        QThreadPool::globalInstance()->start(tw);
+    }
+}
+
+void
+DispatchQueue::dispatch(void * inContext, tContextTask inTask)
+{
+    if (m_pMainThreadObject)
+    {
+        emit m_pMainThreadObject->dispatchToMainWithContext(inContext, inTask);
+    }
+    else
+    {
+        // since we only support the default queue we can
+        // hard-code to use global QThreadPool for now
+        TaskWrapper * tw = new TaskWrapper([=]()
+        {
+            inTask(inContext);
+        });
+        QThreadPool::globalInstance()->start(tw);
+    }
 }
 
 } // namespace isx
+
 
