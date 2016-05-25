@@ -6,6 +6,9 @@
 #include <QThreadPool>
 #include <QApplication>
 
+#include <chrono>
+#include <thread>
+
 #include <assert.h>
 
 // these are needed by Qt so it can queue tTask objects in its queues between threads
@@ -109,6 +112,7 @@ DispatchQueue::DispatchQueue(eType inType)
     else if (inType == kSINGLE_THREADED_WORKER)
     {
         m_pWorkerThread.reset(new WorkerThread());
+        m_pWorkerThread->start();
         for (int i = 0; i < 100; ++i)
         {
             m_pDispatcher = m_pWorkerThread->dispatcher();
@@ -116,6 +120,8 @@ DispatchQueue::DispatchQueue(eType inType)
             {
                 break;
             }
+            std::chrono::milliseconds d(2);
+            std::this_thread::sleep_for(d);
         }
         assert(m_pDispatcher);
         if (!m_pDispatcher)
