@@ -2,8 +2,15 @@
 #define ISX_DISPATCH_QUEUE_INTERNAL
 
 #include "isxDispatchQueue.h"
+#include "isxLog.h"
+
 #include <QObject>
 #include <QThread>
+
+#include <chrono>
+#include <thread>
+
+#include <assert.h>
 
 namespace isx
 {
@@ -73,6 +80,28 @@ public:
     {
         m_pDispatcher.reset(new Dispatcher());
         exec();
+    }
+
+    /// destroys this worker
+    ///
+    void destroy()
+    {
+        exit();
+        for (int i = 0; i < 100; ++i)
+        {
+            if (isFinished())
+            {
+                break;
+            }
+            std::chrono::milliseconds d(2);
+            std::this_thread::sleep_for(d);
+        }
+        assert(isFinished());
+        if (!isFinished())
+        {
+            ISX_LOG_ERROR("Worker thread failed to finish");
+            //m_pWorkerThread->terminate();
+        }
     }
 private:
     std::shared_ptr<Dispatcher> m_pDispatcher;

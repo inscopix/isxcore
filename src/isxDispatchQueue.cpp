@@ -94,6 +94,15 @@ DispatchQueue::create()
     return tDispatchQueue_SP(new DispatchQueue(kSINGLE_THREADED_WORKER));
 }
 
+void
+DispatchQueue::destroy()
+{
+    if (m_pWorkerThread)
+    {
+        m_pWorkerThread->destroy();
+    }
+}
+
 DispatchQueue::DispatchQueue(eType inType)
 {
     if (inType == kPOOL)

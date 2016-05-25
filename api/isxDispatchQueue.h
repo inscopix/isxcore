@@ -43,6 +43,12 @@ public:
     static void 
     destroyDefaultQueues();
 
+    /// destroy a dispatch queue instance with a single worker thread
+    /// that was created with the create method
+    /// call before destructor gets called
+    ///
+    void destroy();
+
     /// type of task dispatched into queue for processing
     ///
     typedef std::function<void()> tTask;
