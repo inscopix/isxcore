@@ -1,9 +1,15 @@
 #include "isxRecording.h"
 #include "isxMovie.h"
 #include "catch.hpp"
+#include "isxTest.h"
+
+#include <string>
+#include <map>
+
 
 TEST_CASE("RecordingTest", "[core]") {
-    const char * testFile = "test_data/recording_20160426_145041.hdf5";
+    std::string testFileStr = g_Resources["testDataPath"] + "/recording_20160426_145041.hdf5";
+    const char * testFile = testFileStr.c_str();
 
     SECTION("default constructor") {
         isx::Recording r;

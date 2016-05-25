@@ -2,10 +2,13 @@
 #include "isxMovie.h"
 #include "catch.hpp"
 
+#include "isxTest.h"
+
 #include <vector>
 
 TEST_CASE("MovieTest", "[core]") {
-    const char * testFile = "test_data/recording_20160426_145041.hdf5";
+    std::string testFileStr = g_Resources["testDataPath"] + "/recording_20160426_145041.hdf5";
+    const char * testFile = testFileStr.c_str();
 
     SECTION("default constructor") {
         isx::Movie m;
