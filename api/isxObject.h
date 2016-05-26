@@ -5,23 +5,23 @@
 
 namespace isx {
 
-/*!
- * The base class of all Inscopix objects.
- */
+/// The base class of all Inscopix objects.
+///
 class Object {
 
 public:
 
-    /*!
-     * Serialize the object into an output stream.
-     *
-     * \param   strm    The output stream.
-     */
+    /// Destructor.
+    ///
+    virtual ~Object();
+
+    /// Serialize the object into an output stream.
+    ///
+    /// \param   strm    The output stream.
     virtual void serialize(std::ostream& strm) const = 0;
 
-    /*!
-     * Conversion to a string with specific floating point precision.
-     */
+    /// Conversion to a string with specific floating point precision.
+    ///
     std::string toString(uint8_t prec = 6) const;
 
 }; // class

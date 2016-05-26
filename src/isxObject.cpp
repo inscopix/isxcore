@@ -4,8 +4,13 @@
 
 namespace isx {
 
+Object::~Object()
+{
+}
+
 std::string
-Object::toString(uint8_t prec) const {
+Object::toString(uint8_t prec) const
+{
     std::stringstream strm;
     strm.precision(prec);
     strm << *this;
@@ -13,7 +18,8 @@ Object::toString(uint8_t prec) const {
 }
 
 ::std::ostream&
-operator<<(::std::ostream& strm, const isx::Object& object) {
+operator<<(::std::ostream& strm, const isx::Object& object)
+{
     object.serialize(strm);
     return strm;
 }
