@@ -1,114 +1,16 @@
 #include <math.h>
-#include "isxTime.h"
-#include <QDateTime>
 #include <QTimeZone>
+#include <QDateTime>
 #include <stdexcept>
+#include "isxTime.h"
 
-#include <iostream>
+namespace isx
+{
 
-namespace isx {
-
-class Time::Impl {
-
-public:
-
-    Impl() {
-        QDate epoch(1970, 1, 1);
-        QTime midnight(0, 0, 0, 0);
-        m_qDateTime = QDateTime(epoch, midnight);
-        m_offset = 0.0;
-    }
-
-    Impl(   uint16_t year,
-            uint8_t mon,
-            uint8_t day,
-            uint8_t hour,
-            uint8_t mins,
-            uint8_t secs,
-            double offset) {
-
-        if (year < 1970)
-            throw std::runtime_error("Year must be in [1970, 2^16).");
-        if (mon < 1 || mon > 12)
-            throw std::runtime_error("Month must be in [1, 12].");
-        if (day < 1 || day > 31)
-            throw std::runtime_error("Day must be in [1, 31].");
-        if (hour > 23)
-            throw std::runtime_error("Hour must be in [0, 23].");
-        if (mins > 59)
-            throw std::runtime_error("Minutes must be in [0, 59].");
-        if (secs > 59)
-            throw std::runtime_error("Seconds must be in [0, 59].");
-        if (offset < 0 || offset >= 1)
-            throw std::runtime_error("Offset must be in [0, 1).");
-
-        QDate date(year, mon, day);
-
-        if (!date.isValid())
-            throw std::runtime_error("Date " + date.toString().toStdString() + " is not valid.");
-
-        QTime time(hour, mins, secs);
-        m_qDateTime = QDateTime(date, time);
-        m_offset = offset;
-    }
-
-    Impl(const Impl& other) {
-        m_qDateTime = other.m_qDateTime;
-        m_offset = other.m_offset;
-    }
-
-    Impl& operator =(const Impl& other) {
-        m_qDateTime = other.m_qDateTime;
-        m_offset = other.m_offset;
-        return *this;
-    }
-
-    ~Impl() {};
-
-    isx::Time addSecs(double s) const {
-        double totalSecs = m_offset + s;
-        double flooredSecs = floor(totalSecs);
-        qint64 qFlooredSecs = static_cast<qint64>(flooredSecs);
-        isx::Time dateTime;
-        dateTime.m_impl->m_qDateTime = m_qDateTime.addSecs(qFlooredSecs);
-        dateTime.m_impl->m_offset = totalSecs - flooredSecs;
-        return dateTime;
-    }
-
-    double secsFrom(const isx::Time& from) const {
-        double fromEpochSecs = from.m_impl->m_qDateTime.toMSecsSinceEpoch() / 1000.0;
-        double thisEpochSecs = m_qDateTime.toMSecsSinceEpoch() / 1000.0;
-        double diffEpochSecs = (thisEpochSecs - fromEpochSecs);
-        double diffOffsetSecs = m_offset - from.m_impl->m_offset;
-        return diffEpochSecs + diffOffsetSecs;
-    }
-
-    bool operator ==(const isx::Time::Impl& other) const {
-        return m_offset == other.m_offset
-            && m_qDateTime == other.m_qDateTime;
-    }
-
-    void serialize(std::ostream& strm) const {
-        uint8_t prec = strm.precision();
-        QString qStr = m_qDateTime.toString("yyyyMMdd-hhmmss");
-        if (prec > 0) {
-            QString milliSecStr = QString::number(m_offset, 'f', prec);
-            qStr.append(milliSecStr.right(prec + 1));
-        }
-        strm << qStr.toStdString();
-    }
-
-private:
-
-    //! The QDateTime used to store the base time up to second precision.
-    QDateTime m_qDateTime;
-
-    //! The offset in seconds from the base time in [0, 1).
-    double m_offset;
-};
-
-Time::Time() {
-    m_impl.reset(new Impl());
+Time::Time(const isx::Ratio& secsSinceEpoch, int32_t utcOffset)
+: m_secsSinceEpoch(secsSinceEpoch)
+, m_utcOffset(utcOffset)
+{
 }
 
 Time::Time( uint16_t year,
@@ -117,48 +19,105 @@ Time::Time( uint16_t year,
             uint8_t hour,
             uint8_t mins,
             uint8_t secs,
-            double offset) {
-    m_impl.reset(new Impl(year, mon, day, hour, mins, secs, offset));
+            const isx::Ratio& secsOffset,
+            int32_t utcOffset)
+{
+    if (year < 1970)
+    {
+        throw std::runtime_error("Year must be in [1970, 2^16).");
+    }
+    if (mon < 1 || mon > 12)
+    {
+        throw std::runtime_error("Month must be in [1, 12].");
+    }
+    if (day < 1 || day > 31)
+    {
+        throw std::runtime_error("Day must be in [1, 31].");
+    }
+    if (hour > 23)
+    {
+        throw std::runtime_error("Hour must be in [0, 23].");
+    }
+    if (mins > 59)
+    {
+        throw std::runtime_error("Minutes must be in [0, 59].");
+    }
+    if (secs > 59)
+    {
+        throw std::runtime_error("Seconds must be in [0, 59].");
+    }
+    if (secsOffset < 0 || secsOffset >= 1)
+    {
+        throw std::runtime_error("Second offset must be in [0, 1).");
+    }
+    if (utcOffset < -50400 || utcOffset > 50400)
+    {
+        throw std::runtime_error("UTC offset must be in [-50400, 50400].");
+    }
+
+    QDate date(year, mon, day);
+    if (!date.isValid())
+    {
+        throw std::runtime_error("Date " + date.toString().toStdString() + " is not valid.");
+    }
+
+    QTime time(hour, mins, secs);
+    QTimeZone timeZone(utcOffset);
+    QDateTime dateTime(date, time, timeZone);
+
+    int64_t secsSinceEpoch = dateTime.toMSecsSinceEpoch() / 1000;
+
+    m_secsSinceEpoch = secsOffset + secsSinceEpoch;
+    m_utcOffset = utcOffset;
 }
 
-Time::Time(const Time& other) {
-    m_impl.reset(new Impl(*(other.m_impl)));
-}
-
-Time&
-Time::operator =(const Time& other) {
-    m_impl.reset(new Impl(*(other.m_impl)));
-    return *this;
-}
-
-Time::~Time() {
-}
+//Time::~Time()
+//{
+//}
 
 isx::Time
-Time::addSecs(double s) const {
-    return m_impl->addSecs(s);
+Time::addSecs(const isx::Ratio& secs) const
+{
+    isx::Ratio secsSinceEpoch = m_secsSinceEpoch + secs;
+    return isx::Time(secsSinceEpoch);
 }
 
-double
-Time::secsFrom(const isx::Time& from) const {
-    return m_impl->secsFrom(from);
+isx::Ratio
+Time::secsFrom(const isx::Time& from) const
+{
+    return m_secsSinceEpoch - from.m_secsSinceEpoch;
 }
 
 bool
-Time::operator ==(const isx::Time& other) const {
-    return *m_impl == *(other.m_impl);
+Time::operator ==(const isx::Time& other) const
+{
+    return this->m_secsSinceEpoch == other.m_secsSinceEpoch;
 }
 
 void
-Time::serialize(std::ostream& strm) const {
-    m_impl->serialize(strm);
+Time::serialize(std::ostream& strm) const
+{
+    double secsDouble = m_secsSinceEpoch.toDouble();
+    int64_t secsInt = floor(secsDouble);
+
+    QTimeZone timeZone(m_utcOffset);
+    QDateTime dateTime = QDateTime::fromMSecsSinceEpoch(secsInt * 1000, timeZone);
+
+    std::string dateTimeStr = dateTime.toString("yyyyMMdd-hhmmss").toStdString();
+    isx::Ratio secsOffset = m_secsSinceEpoch - secsInt;
+    std::string timeZoneStr = timeZone.displayName(dateTime).toStdString();
+
+    strm << dateTimeStr << " " << secsOffset << " " << timeZoneStr;
 }
 
 std::unique_ptr<isx::Time>
-Time::now() {
+Time::now()
+{
     QDateTime nowDateTime = QDateTime::currentDateTime();
     QDate nowDate = nowDateTime.date();
     QTime nowTime = nowDateTime.time();
+    isx::Ratio secsOffset(nowTime.msec(), 1000);
+    int32_t utcOffset = nowDateTime.timeZone().offsetFromUtc(nowDateTime);
     return std::unique_ptr<isx::Time>(new isx::Time(
             nowDate.year(),
             nowDate.month(),
@@ -166,7 +125,8 @@ Time::now() {
             nowTime.hour(),
             nowTime.minute(),
             nowTime.second(),
-            nowTime.msec() / 1000.0));
+            secsOffset,
+            utcOffset));
 }
 
 } // namespace
