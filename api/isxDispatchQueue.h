@@ -16,15 +16,13 @@ namespace isx
 class DispatchQueue
 {
 public:
-    /// factory method to create a new dispatch queue with
-    /// its own single worker thread
+    /// type of task dispatched into queue for processing
     ///
-    static tDispatchQueue_SP
-    create();
-
-    /// Destructor
+    typedef std::function<void()> tTask;
+    
+    /// type of task with context dispatched into queue for processing
     ///
-    ~DispatchQueue();
+    typedef std::function<void(void *)> tContextTask;
 
     /// initialize the default queues (main and pool).
     /// Note: Must be called on main threaad.
@@ -43,20 +41,6 @@ public:
     static void 
     destroyDefaultQueues();
 
-    /// destroy a dispatch queue instance with a single worker thread
-    /// that was created with the create method
-    /// call before destructor gets called
-    ///
-    void destroy();
-
-    /// type of task dispatched into queue for processing
-    ///
-    typedef std::function<void()> tTask;
-    
-    /// type of task with context dispatched into queue for processing
-    ///
-    typedef std::function<void(void *)> tContextTask;
-
     /// \return the main thread dispatch queue
     ///
     static tDispatchQueue_SP
@@ -66,6 +50,22 @@ public:
     ///
     static tDispatchQueue_SP
     poolQueue();
+
+    /// factory method to create a new dispatch queue with
+    /// its own single worker thread
+    ///
+    static tDispatchQueue_SP
+    create();
+
+    /// destroy a dispatch queue instance with a single worker thread
+    /// that was created with the create method
+    /// call before destructor gets called
+    ///
+    void destroy();
+
+    /// Destructor
+    ///
+    ~DispatchQueue();
 
     /// dispatch a task into this queue for processing
     /// \param inTask the task to be processed
@@ -88,19 +88,23 @@ private:
         kMAIN
     };
 
-    /// Default constructor
+    /// Default Constructor
+    ///
+    DispatchQueue() = delete;
+
+    /// Constructor
     ///
     explicit DispatchQueue(eType inType);
 
     /// Copy constructor
     /// private (don't make copies of DispatchQueue objects)
     ///
-    DispatchQueue(const DispatchQueue &);
+    DispatchQueue(const DispatchQueue &) = delete;
 
     /// Assignment operator
     /// private (don't assign DispatchQueue objects)
     ///
-    DispatchQueue & operator=(const DispatchQueue &);
+    DispatchQueue & operator=(const DispatchQueue &) = delete;
 
     static tDispatchQueue_SP m_Pool;
     static tDispatchQueue_SP m_Main;
