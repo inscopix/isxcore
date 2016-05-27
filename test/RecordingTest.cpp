@@ -8,8 +8,7 @@
 
 
 TEST_CASE("RecordingTest", "[core]") {
-    std::string testFileStr = g_Resources["testDataPath"] + "/recording_20160426_145041.hdf5";
-    const char * testFile = testFileStr.c_str();
+    std::string testFile = g_Resources["testDataPath"] + "/recording_20160426_145041.hdf5";
 
     SECTION("default constructor") {
         isx::Recording r;
