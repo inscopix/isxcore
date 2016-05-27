@@ -2,7 +2,6 @@
 #define ISX_MUTEX_H
 
 #include <memory>
-#include <mutex>
 
 namespace isx
 {

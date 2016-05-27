@@ -143,7 +143,7 @@ TEST_CASE("DispatchQueue", "[core]") {
             poolQueue->dispatch(incTask);
         }
 
-        std::chrono::milliseconds duration(3000);
+        std::chrono::milliseconds duration(500);
         std::this_thread::sleep_for(duration);
 
         REQUIRE(count == n);

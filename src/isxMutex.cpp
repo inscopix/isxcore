@@ -1,8 +1,25 @@
 #include "isxMutex.h"
-#include "isxMutex_internal.h"
+
 
 namespace isx
 {
+    /// A wrapper around QMutex
+    ///
+    class Mutex::Impl : public QMutex
+    {
+    public: 
+        /// Constructor
+        ///
+        Impl(){}
+
+        /// Destructor
+        ///
+        ~Impl(){}
+
+    };
+    
+    
+    
     Mutex::Mutex() :
         m_bIsLocked(false)
     {
