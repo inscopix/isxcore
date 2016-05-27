@@ -10,9 +10,36 @@ namespace isx
 {
 
 ///
-/// A class implementing a DispatchQueue API.
+/// An interface class defining a DispatchQueue API.
 ///
 
+class DispatchQueueInterface
+{
+public:
+    /// Destructor
+    ///
+    virtual
+    ~DispatchQueueInterface();
+
+    /// dispatch a task into this queue for processing
+    /// \param inTask the task to be processed
+    ///
+    virtual
+    void
+    dispatch(tTask inTask) = 0;
+    
+    /// dispatch a task with context into this queue for processing
+    /// \param inContext passed into the task function at processing time
+    /// \param inContextTask the task accepting a context to be processed
+    ///
+    virtual
+    void
+    dispatch(void * inContext, tContextTask inContextTask) = 0;
+};
+
+
+/// Container for Pool DispatchQueue & Main DispatchQueue singletons
+///
 class DispatchQueue
 {
 public:
@@ -27,74 +54,39 @@ public:
     /// initialize the default queues (main and pool).
     /// Note: Must be called on main threaad.
     ///
-    static void 
+    static
+    void 
     initializeDefaultQueues();
 
     /// accessor for static m_IsInitialized boolean
     /// true only in between initialize and destroy calls
     ///
-    static bool 
+    static
+    bool 
     isInitialized();
 
     /// destroy the default queues (main and pool).
     ///
-    static void 
+    static
+    void 
     destroyDefaultQueues();
 
     /// \return the main thread dispatch queue
     ///
-    static tDispatchQueue_SP
+    static
+    tDispatchQueue_SP
     mainQueue();
 
     /// \return the thread pool dispatch queue
     ///
-    static tDispatchQueue_SP
+    static
+    tDispatchQueue_SP
     poolQueue();
 
-    /// factory method to create a new dispatch queue with
-    /// its own single worker thread
-    ///
-    static tDispatchQueue_SP
-    create();
-
-    /// destroy a dispatch queue instance with a single worker thread
-    /// that was created with the create method
-    /// call before destructor gets called
-    ///
-    void destroy();
-
-    /// Destructor
-    ///
-    ~DispatchQueue();
-
-    /// dispatch a task into this queue for processing
-    /// \param inTask the task to be processed
-    ///
-    void
-    dispatch(tTask inTask);
-    
-    /// dispatch a task with context into this queue for processing
-    /// \param inContext passed into the task function at processing time
-    /// \param inContextTask the task accepting a context to be processed
-    ///
-    void
-    dispatch(void * inContext, tContextTask inContextTask);
-
 private:
-    enum eType
-    {
-        kSINGLE_THREADED_WORKER,
-        kPOOL,
-        kMAIN
-    };
-
     /// Default Constructor
     ///
     DispatchQueue() = delete;
-
-    /// Constructor
-    ///
-    explicit DispatchQueue(eType inType);
 
     /// Copy constructor
     /// private (don't make copies of DispatchQueue objects)
@@ -109,11 +101,6 @@ private:
     static tDispatchQueue_SP m_Pool;
     static tDispatchQueue_SP m_Main;
     static bool m_IsInitialized;
-
-    class Dispatcher;
-    std::shared_ptr<Dispatcher> m_pDispatcher;
-    class WorkerThread;
-    std::unique_ptr<WorkerThread> m_pWorkerThread;
 };
 
 
