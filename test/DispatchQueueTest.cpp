@@ -125,7 +125,7 @@ TEST_CASE("DispatchQueue", "[core]") {
         { 
             int readCount;
             
-			std::lock_guard<isx::Mutex> guard(countMutex);
+            std::lock_guard<isx::Mutex> guard(countMutex);
             // read
             readCount = count;
             
