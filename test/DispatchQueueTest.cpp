@@ -1,5 +1,6 @@
 #include "isxCore.h"
 #include "isxDispatchQueue.h"
+#include "isxMutex.h"
 #include "catch.hpp"
 #include "isxLog.h"
 
@@ -7,6 +8,7 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+
 
 TEST_CASE("DispatchQueue", "[core]") {
 
@@ -118,11 +120,22 @@ TEST_CASE("DispatchQueue", "[core]") {
 
         int n = 100;
         int count = 0;
-        std::mutex countMutex;
+        isx::Mutex countMutex;
         isx::DispatchQueue::tTask incTask([&]()
-        {
-            std::lock_guard<std::mutex> guard(countMutex);
-            ++count;
+        { 
+            int readCount;
+            
+            std::lock_guard<isx::Mutex> guard(countMutex);
+            // read
+            readCount = count;
+            
+            // sleep
+            std::chrono::milliseconds d(1);
+            std::this_thread::sleep_for(d);
+            
+            // write
+            count = readCount + 1;
+			
         });
 
         for (int i = 0; i < n; ++i)
@@ -130,7 +143,7 @@ TEST_CASE("DispatchQueue", "[core]") {
             poolQueue->dispatch(incTask);
         }
 
-        std::chrono::milliseconds duration(200);
+        std::chrono::milliseconds duration(2000);
         std::this_thread::sleep_for(duration);
 
         REQUIRE(count == n);
