@@ -3,10 +3,6 @@
 #include "catch.hpp"
 #include "isxLog.h"
 
-#include <math.h>
-#include <array>
-#include <vector>
-#include <string>
 #include <sstream>
 #include <chrono>
 #include <thread>
