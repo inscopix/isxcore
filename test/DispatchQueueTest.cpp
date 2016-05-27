@@ -3,7 +3,11 @@
 #include "catch.hpp"
 #include "isxLog.h"
 
+#include <math.h>
+#include <array>
 #include <vector>
+#include <string>
+#include <sstream>
 #include <chrono>
 #include <thread>
 
@@ -108,6 +112,31 @@ TEST_CASE("DispatchQueue", "[core]") {
         worker->destroy();
         worker.reset();
         REQUIRE(secret == revealed);
+    }
+
+    SECTION("run tasks in the pool with mutex locking")
+    {
+        isx::tDispatchQueue_SP poolQueue = isx::DispatchQueue::poolQueue();
+        REQUIRE(poolQueue);
+
+        int n = 100;
+        int count = 0;
+        std::mutex countMutex;
+        isx::DispatchQueue::tTask incTask([&]()
+        {
+            std::lock_guard<std::mutex> lock(countMutex);
+            ++count;
+        });
+
+        for (int i = 0; i < n; ++i)
+        {
+            poolQueue->dispatch(incTask);
+        }
+
+        std::chrono::milliseconds duration(200);
+        std::this_thread::sleep_for(duration);
+
+        REQUIRE(count == n);
     }
 
 // this test does not work because we need a Qt event loop handler running in the main
