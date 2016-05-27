@@ -43,7 +43,7 @@ TEST_CASE("TimeTest", "[core]") {
         isx::Time expected = time.addSecs(stepTime * numTimes);
 
         isx::Time actual = time;
-        for (int t = 0; t < numTimes; ++t)
+        for (uint32_t t = 0; t < numTimes; ++t)
         {
             actual = actual.addSecs(stepTime);
         }
