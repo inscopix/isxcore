@@ -18,11 +18,11 @@ class DispatchQueue
 public:
     /// type of task dispatched into queue for processing
     ///
-    typedef std::function<void()> tTask;
+    typedef std::function<void()> Task_t;
     
     /// type of task with context dispatched into queue for processing
     ///
-    typedef std::function<void(void *)> tContextTask;
+    typedef std::function<void(void *)> ContextTask_t;
 
     /// initialize the default queues (main and pool).
     /// Note: Must be called on main threaad.
@@ -43,18 +43,18 @@ public:
 
     /// \return the main thread dispatch queue
     ///
-    static tDispatchQueue_SP
+    static SpDispatchQueue_t
     mainQueue();
 
     /// \return the thread pool dispatch queue
     ///
-    static tDispatchQueue_SP
+    static SpDispatchQueue_t
     poolQueue();
 
     /// factory method to create a new dispatch queue with
     /// its own single worker thread
     ///
-    static tDispatchQueue_SP
+    static SpDispatchQueue_t
     create();
 
     /// destroy a dispatch queue instance with a single worker thread
@@ -71,21 +71,21 @@ public:
     /// \param inTask the task to be processed
     ///
     void
-    dispatch(tTask inTask);
+    dispatch(Task_t inTask);
     
     /// dispatch a task with context into this queue for processing
     /// \param inContext passed into the task function at processing time
-    /// \param inContextTask the task accepting a context to be processed
+    /// \param inContexTask the task accepting a context to be processed
     ///
     void
-    dispatch(void * inContext, tContextTask inContextTask);
+    dispatch(void * inContext, ContextTask_t inContexTask);
 
 private:
-    enum eType
+    enum QueueType
     {
-        kSINGLE_THREADED_WORKER,
-        kPOOL,
-        kMAIN
+        QUEUE_TYPE_SINGLE_THREADED_WORKER,
+        QUEUE_TYPE_POOL,
+        QUEUE_TYPE_MAIN,
     };
 
     /// Default Constructor
@@ -94,7 +94,7 @@ private:
 
     /// Constructor
     ///
-    explicit DispatchQueue(eType inType);
+    explicit DispatchQueue(QueueType inType);
 
     /// Copy constructor
     /// private (don't make copies of DispatchQueue objects)
@@ -106,8 +106,8 @@ private:
     ///
     DispatchQueue & operator=(const DispatchQueue &) = delete;
 
-    static tDispatchQueue_SP m_Pool;
-    static tDispatchQueue_SP m_Main;
+    static SpDispatchQueue_t m_Pool;
+    static SpDispatchQueue_t m_Main;
     static bool m_IsInitialized;
 
     class Dispatcher;

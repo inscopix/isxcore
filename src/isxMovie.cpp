@@ -11,7 +11,7 @@ class Movie::Impl
 public:
     ~Impl(){};
     Impl(){};
-    Impl(const tRecording_SP & inRecording, const std::string & inPath)
+    Impl(const SpRecording_t & inRecording, const std::string & inPath)
     : m_H5File(inRecording->m_pImpl->getH5FileRef())
     , m_path(inPath)
     {
@@ -143,7 +143,7 @@ Movie::Movie()
     m_pImpl.reset(new Impl());
 }
 
-Movie::Movie(const tRecording_SP & inRecording, const std::string & inPath)
+Movie::Movie(const SpRecording_t & inRecording, const std::string & inPath)
 {
     m_pImpl.reset(new Impl(inRecording, inPath));
 }

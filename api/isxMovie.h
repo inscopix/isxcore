@@ -23,7 +23,7 @@ public:
     /// \param inRecording Recording from which to retrieve movie dataset.
     /// \param inPath Path to dataset in Recording.
     ///
-    Movie(const tRecording_SP & inRecording, const std::string & inPath);
+    Movie(const SpRecording_t & inRecording, const std::string & inPath);
 
     /// Destructor
     /// 
