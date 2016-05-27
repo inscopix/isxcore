@@ -10,7 +10,7 @@
     QFileInfo fileInfo(__FILE__); \
     std::cout   << fileInfo.fileName().toStdString() << " : " \
                 << __LINE__ << " : " \
-                << isx::Time::now()->toString() << " : " \
+                << isx::Time::now().toString() << " : " \
                 << std::this_thread::get_id() << " " \
                 << MSG << std::endl;
 #endif

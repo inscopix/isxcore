@@ -2,7 +2,7 @@
 #define ISX_TIME_H
 
 #include <cstdint>
-#include <memory>
+
 #include "isxObject.h"
 #include "isxRatio.h"
 
@@ -16,9 +16,10 @@ class Time : public isx::Object
 
 public:
 
-    /// Default constructor.
+    /// Construct a time with seconds sinces the Unix epoch.
     ///
-    /// \param  secs        Seconds since the Unix epoch as a rational number.
+    /// \param  secsSinceEpoch  Seconds since the Unix epoch as a rational number.
+    /// \param  utcOffset       Time zone offset from UTC in seconds [-50400, 50400].
     Time(const isx::Ratio& secsSinceEpoch = 0, int32_t utcOffset = 0);
 
     /// Fully specified constructor.
@@ -40,10 +41,6 @@ public:
             const isx::Ratio& secsOffset = 0,
             int32_t utcOffset = 0);
 
-    ///// Destructor.
-    /////
-    //~Time();
-
     /// Returns the result of adding a rational number of seconds to this.
     ///
     /// \param   secs   The seconds to add to this.
@@ -56,18 +53,25 @@ public:
     /// \return  The seconds from the given time to this.
     isx::Ratio secsFrom(const isx::Time& from) const;
 
-    /// \return  True if this is exactly equal to other, false otherwise.
+    /// Compares this with another time exactly.
     ///
+    /// \return  True if this is exactly equal to other, false otherwise.
     bool operator ==(const isx::Time& other) const;
+
+    /// Returns the current time.
+    ///
+    /// \return  The current time.
+    static isx::Time now();
 
     // Overrides
     virtual void serialize(std::ostream& strm) const;
 
-    /// \return  The current time.
-    ///
-    static std::unique_ptr<isx::Time> now();
-
 private:
+
+    /// Throws an exception if utcOffset is not in the acceptable range.
+    ///
+    /// \param  utcOffset   The time zone offset from UTC in seconds.
+    static void verifyUtcOffset(int32_t utcOffset);
 
     /// The rational number of seconds since the Unix epoch.
     isx::Ratio m_secsSinceEpoch;

@@ -22,6 +22,7 @@ public:
 
     /// Conversion to a string with specific floating point precision.
     ///
+    /// \param  prec    The number of digits after the decimal point.
     std::string toString(uint8_t prec = 6) const;
 
 }; // class

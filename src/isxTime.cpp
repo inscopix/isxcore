@@ -2,6 +2,7 @@
 #include <QTimeZone>
 #include <QDateTime>
 #include <stdexcept>
+
 #include "isxTime.h"
 
 namespace isx
@@ -11,6 +12,7 @@ Time::Time(const isx::Ratio& secsSinceEpoch, int32_t utcOffset)
 : m_secsSinceEpoch(secsSinceEpoch)
 , m_utcOffset(utcOffset)
 {
+    isx::Time::verifyUtcOffset(utcOffset);
 }
 
 Time::Time( uint16_t year,
@@ -46,14 +48,8 @@ Time::Time( uint16_t year,
     {
         throw std::runtime_error("Seconds must be in [0, 59].");
     }
-    if (secsOffset < 0 || secsOffset >= 1)
-    {
-        throw std::runtime_error("Second offset must be in [0, 1).");
-    }
-    if (utcOffset < -50400 || utcOffset > 50400)
-    {
-        throw std::runtime_error("UTC offset must be in [-50400, 50400].");
-    }
+
+    isx::Time::verifyUtcOffset(utcOffset);
 
     QDate date(year, mon, day);
     if (!date.isValid())
@@ -70,10 +66,6 @@ Time::Time( uint16_t year,
     m_secsSinceEpoch = secsOffset + secsSinceEpoch;
     m_utcOffset = utcOffset;
 }
-
-//Time::~Time()
-//{
-//}
 
 isx::Time
 Time::addSecs(const isx::Ratio& secs) const
@@ -110,7 +102,7 @@ Time::serialize(std::ostream& strm) const
     strm << dateTimeStr << " " << secsOffset << " " << timeZoneStr;
 }
 
-std::unique_ptr<isx::Time>
+isx::Time
 Time::now()
 {
     QDateTime nowDateTime = QDateTime::currentDateTime();
@@ -118,7 +110,7 @@ Time::now()
     QTime nowTime = nowDateTime.time();
     isx::Ratio secsOffset(nowTime.msec(), 1000);
     int32_t utcOffset = nowDateTime.timeZone().offsetFromUtc(nowDateTime);
-    return std::unique_ptr<isx::Time>(new isx::Time(
+    return isx::Time(
             nowDate.year(),
             nowDate.month(),
             nowDate.day(),
@@ -126,7 +118,16 @@ Time::now()
             nowTime.minute(),
             nowTime.second(),
             secsOffset,
-            utcOffset));
+            utcOffset);
+}
+
+void
+Time::verifyUtcOffset(int32_t utcOffset)
+{
+    if (utcOffset < -50400 || utcOffset > 50400)
+    {
+        throw std::runtime_error("UTC offset must be in [-50400, 50400].");
+    }
 }
 
 } // namespace

@@ -7,7 +7,7 @@
 namespace isx
 {
 
-/// A rational number with unsigned 64-bit numators and deninators.
+/// A rational number with unsigned 64-bit numerators and denominators.
 ///
 class Ratio : public isx::Object
 {
@@ -16,8 +16,8 @@ public:
 
     /// Default constructor.
     ///
-    /// \param  num     The numator of the rational number.
-    /// \param  den     The deninator of the rational number.
+    /// \param  num     The numerator of the rational number.
+    /// \param  den     The denominator of the rational number.
     Ratio(int64_t num = 0, int64_t den = 1);
 
     /// Return the numerator.
@@ -100,10 +100,10 @@ public:
 
 private:
 
-    /// The numator of the fraction storing the number of seconds since the Unix epoch.
+    /// The numerator of the fraction storing the number of seconds since the Unix epoch.
     int64_t m_num;
 
-    /// The deninator of the fraction storing the number of seconds since the Unix epoch.
+    /// The denominator of the fraction storing the number of seconds since the Unix epoch.
     int64_t m_den;
 
 }; // class

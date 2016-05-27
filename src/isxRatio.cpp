@@ -31,16 +31,34 @@ Ratio::toDouble() const
 isx::Ratio
 Ratio::operator +(const isx::Ratio& other) const
 {
-    int64_t num = (m_num * other.m_den) + (m_den * other.m_num);
-    int64_t den = m_den * other.m_den;
+    int64_t num, den;
+    if (m_den == other.m_den)
+    {
+        num = m_num + other.m_num;
+        den = m_den;
+    }
+    else
+    {
+        num = (m_num * other.m_den) + (m_den * other.m_num);
+        den = m_den * other.m_den;
+    }
     return isx::Ratio(num, den);
 }
 
 isx::Ratio
 Ratio::operator -(const isx::Ratio& other) const
 {
-    int64_t num = (m_num * other.m_den) - (m_den * other.m_num);
-    int64_t den = m_den * other.m_den;
+    int64_t num, den;
+    if (m_den == other.m_den)
+    {
+        num = m_num - other.m_num;
+        den = m_den;
+    }
+    else
+    {
+        num = (m_num * other.m_den) - (m_den * other.m_num);
+        den = m_den * other.m_den;
+    }
     return isx::Ratio(num, den);
 }
 
