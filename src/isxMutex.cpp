@@ -1,5 +1,7 @@
 #include "isxMutex.h"
 
+#include <QMutex>
+
 
 namespace isx
 {
