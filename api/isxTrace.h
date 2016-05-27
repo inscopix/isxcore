@@ -4,51 +4,48 @@
 #include <cstdint>
 
 #include "isxTime.h"
-#include "isxTimeGrid.h"
+#include "isxTimingInfo.h"
 
-namespace isx {
+namespace isx
+{
 
-/*!
- * A function of time with a discrete domain.
- */
+/// A function of time with a discrete domain and a scalar range.
+///
 template <class T = float>
-class Trace {
-
+class Trace
+{
 public:
 
-    /*!
-     * Trace constructor.
-     *
-     * \param   start       The start time of the trace.
-     * \param   numTimes    The number of time points in the trace.
-     * \param   step        The step time of the trace in milliseconds.
-     */
-    Trace(isx::Time start, uint32_t numTimes, uint16_t step);
+    /// Fully specified constructor.
+    ///
+    /// \param   start       The start time of the trace.
+    /// \param   step        The step time of the trace in milliseconds.
+    /// \param   numTimes    The number of time points in the trace.
+    Trace(isx::Time start, isx::Ratio step, uint32_t numTimes);
 
-    /*!
-     * Read access to a range value by index.
-     *
-     * \param   i   The index.
-     * \return  The ith range value.
-     */
-    T getValue(uint32_t i) const;
+    /// Destructor.
+    ///
+    ~Trace();
 
-    /*!
-     * Write access to a range value by index.
-     *
-     * \param   i   The index.
-     * \param   val The new value.
-     * \return  The new ith range value.
-     */
-    void setValue(uint32_t i, T val);
+    /// Read access to a range value by index.
+    ///
+    /// \param   index      The index.
+    /// \return             The value at the index.
+    T getValue(uint32_t index) const;
+
+    /// Write access to a range value by index.
+    ///
+    /// \param   index      The index.
+    /// \param   value      The new value.
+    void setValue(uint32_t index, T value);
 
 private:
 
-    //! The discrete domain of the function.
-    isx::TimeGrid m_Domain;
+    /// The temporal domain of the function.
+    isx::TimingInfo m_timingInfo;
 
-    //! The discrete range of the function.
-    T* m_Range;
+    /// The range of the function.
+    T* m_data;
 
 }; // class
 
