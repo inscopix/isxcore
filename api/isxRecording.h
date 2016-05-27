@@ -1,10 +1,13 @@
 #ifndef ISX_RECORDING_H
 #define ISX_RECORDING_H
 
+#include "isxCoreFwd.h"
+
 #include <string>
 #include <memory>
 
 namespace isx {
+
 
 /// A class for nvista recordings
 ///
@@ -30,8 +33,23 @@ public:
     bool
     isValid() const;
 
-    class Impl;
+    /// Factory method to create a movie instance for a dataset in this
+    /// Recording.
+    ///
+    /// \return new movie instance
+    ///
+    tMovie_SP getMovie(const std::string & inDataSetName);
 
+private:
+    /// Do not copy Recordings
+    ///
+    Recording(const Recording &) = delete;
+
+    /// Do not assign Recordings
+    ///
+    const Recording & operator=(const Recording &) = delete;
+
+    class Impl;
     /// Internal implementation of Recording class
     ///
     std::unique_ptr<Impl> m_pImpl;
