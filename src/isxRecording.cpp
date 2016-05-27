@@ -1,12 +1,13 @@
 #include "isxRecording.h"
-#include "isxMovie.h"
 #include "isxLog.h"
+#include "isxHdf5FileHandle.h"
 
 #include "H5Cpp.h"
 
 #include <iostream>
 
 namespace isx {
+
 class Recording::Impl
 {
 public:
@@ -62,12 +63,20 @@ public:
     {
         return m_isValid;
     }
+    
+    /// \return Hdf5FileHandle
+    ///
+    tHdf5FileHandle_SP
+    getHdf5FileHandle() const
+    {
+        return std::make_shared<Hdf5FileHandle>(m_file);
+    }
 
 private:
     bool m_isValid = false;
     std::string m_path;
     
-    tH5File_SP m_file;
+    SpH5File_t m_file;
 };
 
 Recording::Recording()
@@ -90,10 +99,10 @@ Recording::isValid() const
     return m_pImpl->isValid();
 }
 
-tMovie_SP
-Recording::getMovie(const std::string & inDataSetName)
+tHdf5FileHandle_SP
+Recording::getHdf5FileHandle()
 {
-    return tMovie_SP();
+    return m_pImpl->getHdf5FileHandle();
 }
 
 } // namespace isx

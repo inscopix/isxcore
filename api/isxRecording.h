@@ -33,12 +33,12 @@ public:
     bool
     isValid() const;
 
-    /// Factory method to create a movie instance for a dataset in this
-    /// Recording.
+    /// Accessor for opaque HDF5 file handle
+    /// Can be used to create an isx::Movie instance
     ///
-    /// \return new movie instance
+    /// \return Opaque HDF5 file handle
     ///
-    tMovie_SP getMovie(const std::string & inDataSetName);
+    tHdf5FileHandle_SP getHdf5FileHandle();
 
 private:
     /// Do not copy Recordings

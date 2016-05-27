@@ -15,14 +15,14 @@ TEST_CASE("MovieTest", "[core]") {
     SECTION("create movie from dataset in recording", "[core]") {
         isx::tRecording_SP r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
-        isx::Movie m(r, "/images");
+        isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
     }
 
     SECTION("getNumFrames", "[core]") {
         isx::tRecording_SP r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
-        isx::Movie m(r, "/images");
+        isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
         REQUIRE(m.getNumFrames() == 33);
     }
@@ -30,7 +30,7 @@ TEST_CASE("MovieTest", "[core]") {
     SECTION("getFrameWidth", "[core]") {
         isx::tRecording_SP r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
-        isx::Movie m(r, "/images");
+        isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
         REQUIRE(m.getFrameWidth() == 500);
     }
@@ -38,7 +38,7 @@ TEST_CASE("MovieTest", "[core]") {
     SECTION("getFrameHeight", "[core]") {
         isx::tRecording_SP r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
-        isx::Movie m(r, "/images");
+        isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
         REQUIRE(m.getFrameHeight() == 500);
     }
@@ -46,7 +46,7 @@ TEST_CASE("MovieTest", "[core]") {
     SECTION("getFrameSizeInBytes", "[core]") {
         isx::tRecording_SP r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
-        isx::Movie m(r, "/images");
+        isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
         REQUIRE(m.getFrameSizeInBytes() == 500000);
     }
@@ -54,7 +54,7 @@ TEST_CASE("MovieTest", "[core]") {
     SECTION("getFrame", "[core]") {
         isx::tRecording_SP r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
-        isx::Movie m(r, "/images");
+        isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
         size_t s = m.getFrameSizeInBytes();
         std::vector<unsigned char> t(s);
@@ -66,7 +66,7 @@ TEST_CASE("MovieTest", "[core]") {
     SECTION("getDurationInSeconds", "[core]") {
         isx::tRecording_SP r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
-        isx::Movie m(r, "/images");
+        isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
         REQUIRE(m.getDurationInSeconds() == 1.1);
     }
