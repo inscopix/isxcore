@@ -7,7 +7,7 @@ namespace isx
 {
     /// A wrapper around QMutex
     ///
-    class Mutex::Impl : public QMutex
+    class Mutex::Impl
     {
     public: 
         /// Constructor
@@ -17,6 +17,12 @@ namespace isx
         /// Destructor
         ///
         ~Impl(){}
+        
+        void lock() { m_mutex.lock();}
+        void unlock() { m_mutex.unlock();}
+        
+    private:
+        QMutex m_mutex;
 
     };
     

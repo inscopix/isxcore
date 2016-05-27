@@ -19,7 +19,6 @@ namespace isx
         Mutex();
 
         /// Default Destructor
-        /// If locked when going out of scope, the mutex is unlocked 
         ///
         ~Mutex();
 
