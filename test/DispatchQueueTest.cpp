@@ -6,6 +6,7 @@
 #include <sstream>
 #include <chrono>
 #include <thread>
+#include <mutex>
 
 TEST_CASE("DispatchQueue", "[core]") {
 
@@ -120,7 +121,7 @@ TEST_CASE("DispatchQueue", "[core]") {
         std::mutex countMutex;
         isx::DispatchQueue::tTask incTask([&]()
         {
-            std::lock_guard<std::mutex> lock(countMutex);
+            std::lock_guard<std::mutex> guard(countMutex);
             ++count;
         });
 
