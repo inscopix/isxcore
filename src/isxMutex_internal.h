@@ -7,20 +7,20 @@
 
 namespace isx
 {
-	/// A wrapper around QMutex
-	///
-	class Mutex::Impl : public QMutex
-	{
-	public: 
-		/// Constructor
-		///
-		Impl(){}
+    /// A wrapper around QMutex
+    ///
+    class Mutex::Impl : public QMutex
+    {
+    public: 
+        /// Constructor
+        ///
+        Impl(){}
 
-		/// Destructor
-		///
-		~Impl(){}
+        /// Destructor
+        ///
+        ~Impl(){}
 
-	};
+    };
 }
 
 #endif // ISX_MUTEX_INTERNAL

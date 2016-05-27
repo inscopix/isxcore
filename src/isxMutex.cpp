@@ -3,29 +3,29 @@
 
 namespace isx
 {
-	Mutex::Mutex() :
-		m_bIsLocked(false)
-	{
-		m_internal.reset(new Impl());
-	}
+    Mutex::Mutex() :
+        m_bIsLocked(false)
+    {
+        m_internal.reset(new Impl());
+    }
 
-	Mutex::~Mutex()
-	{
-	}
+    Mutex::~Mutex()
+    {
+    }
 
-	void Mutex::lock()
-	{
+    void Mutex::lock()
+    {
         m_internal->lock();
-		m_bIsLocked = true;
-	}
+        m_bIsLocked = true;
+    }
 
-	void Mutex::unlock()
-	{
+    void Mutex::unlock()
+    {
         if (m_bIsLocked)
         {
             m_internal->unlock();
             m_bIsLocked = false;
         }
-	}
+    }
 
 }
