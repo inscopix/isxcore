@@ -29,26 +29,26 @@ public:
     /// \param inTask the task to be processed
     ///
     void
-    process(tTask inTask);
+    process(Task_t inTask);
 
     /// process a task with a context on this dispatcher's thread
     /// \param inContext the context to be passed in to the task
-    /// \param inContextTask the task to be processed
+    /// \param inContexTask_t the task to be processed
     void
-    processWithContext(void * inContext, tContextTask inContextTask);
+    processWithContext(void * inContext, ContextTask_t inContexTask_t);
     
 signals:
     /// dispatch a task to this dispatcher's thread
     /// \param inTask the task to be processed
     ///
     void
-    dispatch(tTask inTask);
+    dispatch(Task_t inTask);
     
     /// dispatch a task with a context to this dispatcher's thread
     /// \param inContext the context to be passed in to the task
-    /// \param inContextTask the task to be processed
+    /// \param inContexTask_t the task to be processed
     void
-    dispatchWithContext(void * inContext, tContextTask inContextTask);
+    dispatchWithContext(void * inContext, ContextTask_t inContexTask_t);
 };
 
 /// class for a worker thread

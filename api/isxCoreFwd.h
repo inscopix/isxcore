@@ -6,9 +6,9 @@
 
 #define FWD_DECLARE_WITH_PTRS( C ) \
 class C; \
-typedef std::shared_ptr<C>  t##C##_SP; \
-typedef std::unique_ptr<C>  t##C##_UP; \
-typedef std::weak_ptr<C>    t##C##_WP;
+typedef std::shared_ptr<C>  Sp##C##_t; \
+typedef std::unique_ptr<C>  Up##C##_t; \
+typedef std::weak_ptr<C>    Wp##C##_t;
 
 namespace isx
 {

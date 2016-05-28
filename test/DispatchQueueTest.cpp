@@ -47,7 +47,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task with context") {
         int secret = 123;
         int revealed = -1;
-        isx::DispatchQueue::tContextTask t = [&](void * inP)
+        isx::DispatchQueue::ContextTask_t t = [&](void * inP)
         {
             int * p = (int *) inP;
             *p = secret;
@@ -66,7 +66,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     }
     
     SECTION("run task on new worker thread") {
-        isx::tDispatchQueue_SP worker = isx::DispatchQueue::create();
+        isx::SpDispatchQueue_t worker = isx::DispatchQueue::create();
         REQUIRE(worker);
         bool taskRan = false;
         worker->dispatch([&]()
@@ -90,12 +90,12 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task with context on new worker thread") {
         int secret = 123;
         int revealed = -1;
-        isx::DispatchQueue::tContextTask t = [&](void * inP)
+        isx::DispatchQueue::ContextTask_t t = [&](void * inP)
         {
             int * p = (int *) inP;
             *p = secret;
         };
-        isx::tDispatchQueue_SP worker = isx::DispatchQueue::create();
+        isx::SpDispatchQueue_t worker = isx::DispatchQueue::create();
         REQUIRE(worker);
         bool taskRan = false;
         worker->dispatch(&revealed, t);
@@ -115,13 +115,13 @@ TEST_CASE("DispatchQueue", "[core]") {
 
     SECTION("run tasks in the pool with mutex locking")
     {
-        isx::tDispatchQueue_SP poolQueue = isx::DispatchQueue::poolQueue();
+        isx::SpDispatchQueue_t poolQueue = isx::DispatchQueue::poolQueue();
         REQUIRE(poolQueue);
 
         int n = 100;
         int count = 0;
         isx::Mutex countMutex;
-        isx::DispatchQueue::tTask incTask([&]()
+        isx::DispatchQueue::Task_t incTask([&]()
         { 
             int readCount;
             
@@ -135,7 +135,6 @@ TEST_CASE("DispatchQueue", "[core]") {
             
             // write
             count = readCount + 1;
-			
         });
 
         for (int i = 0; i < n; ++i)
