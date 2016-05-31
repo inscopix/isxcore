@@ -8,6 +8,15 @@
 
 namespace isx
 {
+    
+// NOTE: aschildan 5/31/2016: Ideally these would be in DispatchQueueInterface but
+// I get the following when I try to register them with the QMetaType system
+// via qRegisterMetaType:
+// ""
+// QObject::connect: Cannot queue arguments of type 'DispatchQueueInterface::ContextTask_t'
+// (Make sure 'DispatchQueueInterface::ContextTask_t' is registered using qRegisterMetaType().)
+// ""
+    
 /// type of task dispatched into queue for processing
 ///
 typedef std::function<void()> Task_t;
