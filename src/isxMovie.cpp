@@ -59,6 +59,14 @@ public:
         {
             std::cerr << "Unhandled exception." << std::endl;
         }
+
+        // TODO asweet 2015/05/31 : the start and step should be read from
+        // the file but it doesn't currently contain these, so picking some
+        // dummy values
+        isx::Time start = isx::Time();
+        isx::Ratio step(1, 30);
+        uint32_t numFrames = m_dims[0];
+        m_timingInfo = isx::TimingInfo(start, step, numFrames);
     }
 
     bool
@@ -70,7 +78,7 @@ public:
     int 
     getNumFrames() const
     {
-        return int(m_dims[0]);
+        return int(m_timingInfo.getNumTimes());
     }
 
     int 
@@ -116,8 +124,13 @@ public:
     double 
     getDurationInSeconds() const
     {
-        // TODO aschildan 4/21/2016: Fix to take actual framerate into account
-        return double(getNumFrames()) / 30.0;
+        return m_timingInfo.getDuration().toDouble();
+    }
+
+    isx::TimingInfo
+    getTimingInfo() const
+    {
+        return m_timingInfo;
     }
 
 private:
@@ -135,6 +148,8 @@ private:
     std::vector<hsize_t> m_dims;
     std::vector<hsize_t> m_maxdims;
     size_t m_frameSizeInBytes;
+
+    isx::TimingInfo m_timingInfo;
 };
 
 
@@ -192,6 +207,12 @@ double
 Movie::getDurationInSeconds() const
 {
     return m_pImpl->getDurationInSeconds();
+}
+
+isx::TimingInfo
+Movie::getTimingInfo() const
+{
+    return m_pImpl->getTimingInfo();
 }
 
 } // namespace isx

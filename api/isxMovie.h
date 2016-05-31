@@ -1,6 +1,7 @@
 #ifndef ISX_MOVIE_H
 #define ISX_MOVIE_H
 
+#include "isxTimingInfo.h"
 #include "isxCoreFwd.h"
 
 #include <string>
@@ -60,6 +61,10 @@ public:
     /// \return the duration of the movie in seconds
     /// 
     double getDurationInSeconds() const;
+
+    /// \return     The timing information of a movie.
+    ///
+    isx::TimingInfo getTimingInfo() const;
 
 private:
     class Impl;
