@@ -12,6 +12,17 @@
 
 #include <assert.h>
 
+// Note aschildan 5/31/2016:
+// Dispatch Queues are implemented in three subclasses: 
+// DispatchQueuePool, DispatchQueueWorker and DispatchQueueMain.
+// There is also a DispatchQueue class that contains only static members that are initialized as part
+// of CoreInitialize() and that manages the DispatchQueuePool and DispatchQueueMain singleton instances.
+// The DispatchQueueDispatcher class enables dispatching to a Qt event loop via signals / slots.  
+// The dispatcher's slots are exeuted on the thread that owns the dispatcher (which is the thread that
+// created it), while the signals can be called from any thread.  We are using Qt's Qt::AutoConnection
+// connection type which queues signals when called from a different thread and invokes the slot
+// function immediately when called on the same thread.
+
 namespace isx
 {
     
