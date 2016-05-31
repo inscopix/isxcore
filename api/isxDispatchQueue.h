@@ -8,22 +8,20 @@
 
 namespace isx
 {
+/// type of task dispatched into queue for processing
+///
+typedef std::function<void()> Task_t;
+
+/// type of task with context dispatched into queue for processing
+///
+typedef std::function<void(void *)> ContextTask_t;
 
 ///
 /// An interface class defining a DispatchQueue API.
 ///
-
 class DispatchQueueInterface
 {
 public:
-    /// type of task dispatched into queue for processing
-    ///
-    typedef std::function<void()> Task_t;
-    
-    /// type of task with context dispatched into queue for processing
-    ///
-    typedef std::function<void(void *)> ContextTask_t;
-    
     /// Destructor
     ///
     virtual

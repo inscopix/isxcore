@@ -48,7 +48,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task with context") {
         int secret = 123;
         int revealed = -1;
-        isx::DispatchQueueInterface::ContextTask_t t = [&](void * inP)
+        isx::ContextTask_t t = [&](void * inP)
         {
             int * p = (int *) inP;
             *p = secret;
@@ -91,7 +91,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task with context on new worker thread") {
         int secret = 123;
         int revealed = -1;
-        isx::DispatchQueueInterface::ContextTask_t t = [&](void * inP)
+        isx::ContextTask_t t = [&](void * inP)
         {
             int * p = (int *) inP;
             *p = secret;
@@ -122,7 +122,7 @@ TEST_CASE("DispatchQueue", "[core]") {
         int n = 100;
         int count = 0;
         isx::Mutex countMutex;
-        isx::DispatchQueueInterface::Task_t incTask([&]()
+        isx::Task_t incTask([&]()
         { 
             int readCount;
             

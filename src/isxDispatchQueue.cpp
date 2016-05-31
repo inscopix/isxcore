@@ -12,10 +12,6 @@
 
 #include <assert.h>
 
-// these are needed by Qt so it can queue Task_t objects in its queues between threads
-Q_DECLARE_METATYPE(isx::DispatchQueueInterface::Task_t);
-Q_DECLARE_METATYPE(isx::DispatchQueueInterface::ContextTask_t);
-
 namespace isx
 {
     

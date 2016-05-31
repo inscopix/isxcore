@@ -3,10 +3,6 @@
 
 #include <QThreadPool>
 
-// these are needed by Qt so it can queue Task_t objects in its queues between threads
-Q_DECLARE_METATYPE(isx::DispatchQueueInterface::Task_t);
-Q_DECLARE_METATYPE(isx::DispatchQueueInterface::ContextTask_t);
-
 namespace isx
 {
 namespace 
@@ -14,7 +10,7 @@ namespace
 class TaskWrapper : public QRunnable
 {
 public:
-    explicit TaskWrapper(DispatchQueueInterface::Task_t && inTask)
+    explicit TaskWrapper(Task_t && inTask)
     : m_Task(std::move(inTask))
     {}
 
@@ -24,7 +20,7 @@ public:
     }
 
 private:
-    DispatchQueueInterface::Task_t m_Task;
+    Task_t m_Task;
 };
 
 } // namespace

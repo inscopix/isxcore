@@ -8,10 +8,6 @@
 #include <thread>
 #include <assert.h>
 
-// these are needed by Qt so it can queue Task_t objects in its queues between threads
-Q_DECLARE_METATYPE(isx::DispatchQueueInterface::Task_t);
-Q_DECLARE_METATYPE(isx::DispatchQueueInterface::ContextTask_t);
-
 namespace isx
 {
 
@@ -74,13 +70,6 @@ private:
 
 DispatchQueueWorker::DispatchQueueWorker()
 {
-    // these are needed by Qt so it can queue Task_t objects in its queues between threads
-    int task_id = qRegisterMetaType<DispatchQueueInterface::Task_t>("Task_t");
-    int contextTask_id = qRegisterMetaType<DispatchQueueInterface::ContextTask_t>("ContextTask_t");
-    ISX_LOG_DEBUG("DispatchQueueWorker task_id: ", task_id, ", contextTask_id: ", contextTask_id);
-    ISX_LOG_DEBUG("DispatchQueueWorker typename(", task_id, "): ", QMetaType::typeName(task_id));
-    ISX_LOG_DEBUG("DispatchQueueWorker typename(", contextTask_id, "): ", QMetaType::typeName(contextTask_id));
-    
     m_worker.reset(new WorkerThread());
     m_worker->start();
     for (int i = 0; i < 100; ++i)
