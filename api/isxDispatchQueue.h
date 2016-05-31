@@ -16,17 +16,25 @@ namespace isx
 class DispatchQueueInterface
 {
 public:
+    /// type of task dispatched into queue for processing
+    ///
+    typedef std::function<void()> Task_t;
+    
+    /// type of task with context dispatched into queue for processing
+    ///
+    typedef std::function<void(void *)> ContextTask_t;
+    
     /// Destructor
     ///
     virtual
-    ~DispatchQueueInterface();
+    ~DispatchQueueInterface() = default;
 
     /// dispatch a task into this queue for processing
     /// \param inTask the task to be processed
     ///
     virtual
     void
-    dispatch(tTask inTask) = 0;
+    dispatch(Task_t inTask) = 0;
     
     /// dispatch a task with context into this queue for processing
     /// \param inContext passed into the task function at processing time
@@ -34,7 +42,7 @@ public:
     ///
     virtual
     void
-    dispatch(void * inContext, tContextTask inContextTask) = 0;
+    dispatch(void * inContext, ContextTask_t inContextTask) = 0;
 };
 
 
@@ -43,14 +51,6 @@ public:
 class DispatchQueue
 {
 public:
-    /// type of task dispatched into queue for processing
-    ///
-    typedef std::function<void()> tTask;
-    
-    /// type of task with context dispatched into queue for processing
-    ///
-    typedef std::function<void(void *)> tContextTask;
-
     /// initialize the default queues (main and pool).
     /// Note: Must be called on main threaad.
     ///
@@ -74,14 +74,15 @@ public:
     /// \return the main thread dispatch queue
     ///
     static
-    tDispatchQueue_SP
+    SpDispatchQueueInterface_t
     mainQueue();
 
     /// \return the thread pool dispatch queue
     ///
     static
-    tDispatchQueue_SP
+    SpDispatchQueueInterface_t
     poolQueue();
+
 
 private:
     /// Default Constructor
@@ -98,9 +99,9 @@ private:
     ///
     DispatchQueue & operator=(const DispatchQueue &) = delete;
 
-    static tDispatchQueue_SP m_Pool;
-    static tDispatchQueue_SP m_Main;
-    static bool m_IsInitialized;
+    static SpDispatchQueueInterface_t s_pool;
+    static SpDispatchQueueInterface_t s_main;
+    static bool s_isInitialized;
 };
 
 

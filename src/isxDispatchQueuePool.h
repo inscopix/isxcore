@@ -3,7 +3,12 @@
 
 #include "isxDispatchQueue.h"
 
+namespace isx
+{
 
+/// A class implementing DispatchQueueInterface with a Thread pool
+/// Use this as the default queue for compute-heavy asynchronous tasks
+///
 class DispatchQueuePool : public DispatchQueueInterface
 {
 public:
@@ -16,7 +21,7 @@ public:
     ///
     virtual
     void
-    dispatch(tTask inTask);
+    dispatch(Task_t inTask);
     
     /// dispatch a task with context into this queue for processing
     /// \param inContext passed into the task function at processing time
@@ -24,8 +29,10 @@ public:
     ///
     virtual
     void
-    dispatch(void * inContext, tContextTask inContextTask);
-
+    dispatch(void * inContext, ContextTask_t inContextTask);
+private:
+    DispatchQueuePool(const DispatchQueuePool & inOther) = delete;
+    const DispatchQueuePool & operator=(const DispatchQueuePool & inOther) = delete;
 };
-
+} // namespace isx
 #endif // def ISX_DISPATCH_QUEUE_POOL_H

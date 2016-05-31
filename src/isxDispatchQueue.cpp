@@ -1,5 +1,6 @@
 #include "isxDispatchQueue.h"
-#include "isxDispatchQueue_internal.h"
+#include "isxDispatchQueuePool.h"
+#include "isxDispatchQueueMain.h"
 #include "isxLog.h"
 
 #include <QObject>
@@ -11,180 +12,49 @@
 
 #include <assert.h>
 
-// these are needed by Qt so it can queue tTask objects in its queues between threads
-Q_DECLARE_METATYPE(isx::DispatchQueue::tTask);
-Q_DECLARE_METATYPE(isx::DispatchQueue::tContextTask);
+// these are needed by Qt so it can queue Task_t objects in its queues between threads
+Q_DECLARE_METATYPE(isx::DispatchQueueInterface::Task_t);
+Q_DECLARE_METATYPE(isx::DispatchQueueInterface::ContextTask_t);
 
 namespace isx
 {
     
-class TaskWrapper : public QRunnable
-{
-public:
-    explicit TaskWrapper(DispatchQueue::tTask && inTask)
-    : m_Task(std::move(inTask))
-    {}
+SpDispatchQueueInterface_t DispatchQueue::s_pool;
+SpDispatchQueueInterface_t DispatchQueue::s_main;
+bool DispatchQueue::s_isInitialized;
 
-    void run()
-    {
-        m_Task();
-    }
-
-private:
-    DispatchQueue::tTask m_Task;
-};
-    
-DispatchQueue::Dispatcher::Dispatcher()
-{
-    // these are needed by Qt so it can queue tTask objects in its queues between threads
-    qRegisterMetaType<tTask>("tTask");
-    qRegisterMetaType<tContextTask>("tContextTask");
-    
-    QObject::connect(this, &Dispatcher::dispatch,
-                     this, &Dispatcher::process);
-    QObject::connect(this, &Dispatcher::dispatchWithContext,
-                     this, &Dispatcher::processWithContext);
-}
-
-void 
-DispatchQueue::Dispatcher::process(tTask inTask)
-{
-    inTask();
-}
-
-void 
-DispatchQueue::Dispatcher::processWithContext(void * inContext, tContextTask inContextTask)
-{
-    inContextTask(inContext);
-}
-   
-tDispatchQueue_SP DispatchQueue::m_Pool;
-tDispatchQueue_SP DispatchQueue::m_Main;
-bool DispatchQueue::m_IsInitialized;
-
-DispatchQueue::~DispatchQueue()
-{
-}
-
-void 
+void
 DispatchQueue::initializeDefaultQueues()
 {
-    m_Pool.reset(new DispatchQueue(kPOOL));
-    m_Main.reset(new DispatchQueue(kMAIN));
-    m_IsInitialized = true;
+    s_pool.reset(new DispatchQueuePool());
+    s_main.reset(new DispatchQueueMain());
+    s_isInitialized = true;
 }
 
 bool 
 DispatchQueue::isInitialized()
 {
-    return m_IsInitialized;
+    return s_isInitialized;
 }
 
 void 
 DispatchQueue::destroyDefaultQueues()
 {
-    m_Pool.reset();
-    m_Main.reset();
-    m_IsInitialized = false;
+    s_pool.reset();
+    s_main.reset();
+    s_isInitialized = false;
 }
 
-tDispatchQueue_SP
-DispatchQueue::create()
-{
-    return tDispatchQueue_SP(new DispatchQueue(kSINGLE_THREADED_WORKER));
-}
-
-void
-DispatchQueue::destroy()
-{
-    if (m_pWorkerThread)
-    {
-        m_pWorkerThread->destroy();
-    }
-}
-
-DispatchQueue::DispatchQueue(eType inType)
-{
-    if (inType == kPOOL)
-    {
-        // don't create thread object -> dispatch methods will use ThreadPool
-    }
-    else if (inType == kMAIN)
-    {
-        // if possible, verify that we're called on main thread
-        if (QApplication::instance())
-        {
-            assert(QApplication::instance()->thread() == QThread::currentThread());
-        }
-        m_pDispatcher.reset(new Dispatcher());
-    }
-    else if (inType == kSINGLE_THREADED_WORKER)
-    {
-        m_pWorkerThread.reset(new WorkerThread());
-        m_pWorkerThread->start();
-        for (int i = 0; i < 100; ++i)
-        {
-            m_pDispatcher = m_pWorkerThread->dispatcher();
-            if (m_pDispatcher)
-            {
-                break;
-            }
-            std::chrono::milliseconds d(2);
-            std::this_thread::sleep_for(d);
-        }
-        assert(m_pDispatcher);
-        if (!m_pDispatcher)
-        {
-            ISX_LOG_ERROR("Error: Worker thread did not provide dispatcher.");
-        }
-    }
-}
-
-tDispatchQueue_SP
+SpDispatchQueueInterface_t
 DispatchQueue::poolQueue()
 {
-    return m_Pool;
+    return s_pool;
 }
 
-tDispatchQueue_SP
+SpDispatchQueueInterface_t
 DispatchQueue::mainQueue()
 {
-    return m_Main;
-}
-
-void
-DispatchQueue::dispatch(tTask inTask)
-{
-    if (m_pDispatcher)
-    {
-        emit m_pDispatcher->dispatch(inTask);
-    }
-    else
-    {
-        // since we only support the default queue we can
-        // hard-code to use global QThreadPool for now
-        TaskWrapper * tw = new TaskWrapper(std::move(inTask));
-        QThreadPool::globalInstance()->start(tw);
-    }
-}
-
-void
-DispatchQueue::dispatch(void * inContext, tContextTask inTask)
-{
-    if (m_pDispatcher)
-    {
-        emit m_pDispatcher->dispatchWithContext(inContext, inTask);
-    }
-    else
-    {
-        // since we only support the default queue we can
-        // hard-code to use global QThreadPool for now
-        TaskWrapper * tw = new TaskWrapper([=]()
-        {
-            inTask(inContext);
-        });
-        QThreadPool::globalInstance()->start(tw);
-    }
+    return s_main;
 }
 
 } // namespace isx

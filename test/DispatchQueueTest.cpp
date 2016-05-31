@@ -1,5 +1,7 @@
 #include "isxCore.h"
 #include "isxDispatchQueue.h"
+#include "isxDispatchQueueWorker.h"
+#include "isxMutex.h"
 #include "catch.hpp"
 #include "isxLog.h"
 
@@ -7,6 +9,7 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+
 
 TEST_CASE("DispatchQueue", "[core]") {
 
@@ -45,7 +48,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task with context") {
         int secret = 123;
         int revealed = -1;
-        isx::DispatchQueue::tContextTask t = [&](void * inP)
+        isx::DispatchQueueInterface::ContextTask_t t = [&](void * inP)
         {
             int * p = (int *) inP;
             *p = secret;
@@ -64,7 +67,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     }
     
     SECTION("run task on new worker thread") {
-        isx::tDispatchQueue_SP worker = isx::DispatchQueue::create();
+        isx::SpDispatchQueueWorker_t worker(new isx::DispatchQueueWorker());
         REQUIRE(worker);
         bool taskRan = false;
         worker->dispatch([&]()
@@ -88,12 +91,12 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task with context on new worker thread") {
         int secret = 123;
         int revealed = -1;
-        isx::DispatchQueue::tContextTask t = [&](void * inP)
+        isx::DispatchQueueInterface::ContextTask_t t = [&](void * inP)
         {
             int * p = (int *) inP;
             *p = secret;
         };
-        isx::tDispatchQueue_SP worker = isx::DispatchQueue::create();
+        isx::SpDispatchQueueWorker_t worker(new isx::DispatchQueueWorker());
         REQUIRE(worker);
         bool taskRan = false;
         worker->dispatch(&revealed, t);
@@ -113,16 +116,26 @@ TEST_CASE("DispatchQueue", "[core]") {
 
     SECTION("run tasks in the pool with mutex locking")
     {
-        isx::tDispatchQueue_SP poolQueue = isx::DispatchQueue::poolQueue();
+        isx::SpDispatchQueueInterface_t poolQueue = isx::DispatchQueue::poolQueue();
         REQUIRE(poolQueue);
 
         int n = 100;
         int count = 0;
-        std::mutex countMutex;
-        isx::DispatchQueue::tTask incTask([&]()
-        {
-            std::lock_guard<std::mutex> guard(countMutex);
-            ++count;
+        isx::Mutex countMutex;
+        isx::DispatchQueueInterface::Task_t incTask([&]()
+        { 
+            int readCount;
+            
+            std::lock_guard<isx::Mutex> guard(countMutex);
+            // read
+            readCount = count;
+            
+            // sleep
+            std::chrono::milliseconds d(1);
+            std::this_thread::sleep_for(d);
+            
+            // write
+            count = readCount + 1;
         });
 
         for (int i = 0; i < n; ++i)
@@ -130,7 +143,7 @@ TEST_CASE("DispatchQueue", "[core]") {
             poolQueue->dispatch(incTask);
         }
 
-        std::chrono::milliseconds duration(200);
+        std::chrono::milliseconds duration(2000);
         std::this_thread::sleep_for(duration);
 
         REQUIRE(count == n);
