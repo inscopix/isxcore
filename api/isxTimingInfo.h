@@ -20,9 +20,9 @@ public:
     /// Fully specified constructor.
     ///
     /// \param start    The start time of the samples.
-    /// \param step     The duration of one sample.
+    /// \param step     The duration of one sample in seconds.
     /// \param numTimes The number of samples.
-    TimingInfo(isx::Time start, isx::Ratio step, uint32_t numTimes);
+    TimingInfo(const isx::Time& start, const isx::Ratio& step, uint32_t numTimes);
 
     /// Check validity of this.
     ///

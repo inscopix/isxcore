@@ -10,7 +10,7 @@ TimingInfo::TimingInfo()
 {
 }
 
-TimingInfo::TimingInfo(isx::Time start, isx::Ratio step, uint32_t numTimes)
+TimingInfo::TimingInfo(const isx::Time& start, const isx::Ratio& step, uint32_t numTimes)
 : m_start(start)
 , m_step(step)
 , m_numTimes(numTimes)
