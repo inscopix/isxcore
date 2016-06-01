@@ -60,12 +60,15 @@ public:
             std::cerr << "Unhandled exception." << std::endl;
         }
 
-        // TODO asweet 2015/05/31 : the start and step should be read from
+        // TODO sweet 2016/05/31 : the start and step should be read from
         // the file but it doesn't currently contain these, so picking some
         // dummy values
         isx::Time start = isx::Time();
         isx::Ratio step(1, 30);
-        uint32_t numFrames = m_dims[0];
+        // TODO sweet 2016/05/31 : adding this to compile on windows, but
+        // loss of precision may require more thought on design on time or
+        // use of HDF5
+        uint32_t numFrames = static_cast<uint32_t>(m_dims[0]);
         m_timingInfo = isx::TimingInfo(start, step, numFrames);
     }
 
