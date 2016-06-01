@@ -39,7 +39,7 @@ public:
     ///
     /// \return Opaque HDF5 file handle
     ///
-    tHdf5FileHandle_SP getHdf5FileHandle();
+    SpHdf5FileHandle_t getHdf5FileHandle();
 
 private:
     /// Do not copy Recordings

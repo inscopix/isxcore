@@ -67,7 +67,7 @@ public:
     
     /// \return Hdf5FileHandle
     ///
-    tHdf5FileHandle_SP
+    SpHdf5FileHandle_t
     getHdf5FileHandle() const
     {
         return m_fileHandle;
@@ -78,7 +78,7 @@ private:
     std::string m_path;
     
     SpH5File_t m_file;
-    tHdf5FileHandle_SP m_fileHandle;
+    SpHdf5FileHandle_t m_fileHandle;
 };
 
 Recording::Recording()
@@ -101,7 +101,7 @@ Recording::isValid() const
     return m_pImpl->isValid();
 }
 
-tHdf5FileHandle_SP
+SpHdf5FileHandle_t
 Recording::getHdf5FileHandle()
 {
     return m_pImpl->getHdf5FileHandle();

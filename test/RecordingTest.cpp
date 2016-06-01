@@ -1,9 +1,14 @@
 #include "isxRecording.h"
 #include "isxMovie.h"
 #include "catch.hpp"
+#include "isxTest.h"
+
+#include <string>
+#include <map>
+
 
 TEST_CASE("RecordingTest", "[core]") {
-    const char * testFile = "test_data/recording_20160426_145041.hdf5";
+    std::string testFile = g_resources["testDataPath"] + "/recording_20160426_145041.hdf5";
 
     SECTION("default constructor") {
         isx::Recording r;
@@ -11,7 +16,7 @@ TEST_CASE("RecordingTest", "[core]") {
     }
 
     SECTION("create movie from dataset in recording", "[core]") {
-        isx::tRecording_SP r = std::make_shared<isx::Recording>(testFile);
+        isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
         isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());

@@ -139,7 +139,7 @@ Movie::Movie()
     m_pImpl.reset(new Impl());
 }
 
-Movie::Movie(const tHdf5FileHandle_SP & inHdf5FileHandle, const std::string & inPath)
+Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath)
 {
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
 }

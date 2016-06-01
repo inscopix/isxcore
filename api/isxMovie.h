@@ -23,7 +23,7 @@ public:
     /// \param inHdf5FileHandle opaque HDF5 file handle from Recording.
     /// \param inPath Path to dataset in Recording.
     ///
-    Movie(const tHdf5FileHandle_SP & inHdf5FileHandle, const std::string & inPath);
+    Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath);
 
     /// Destructor
     /// 
