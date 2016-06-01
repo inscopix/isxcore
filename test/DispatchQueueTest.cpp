@@ -1,5 +1,6 @@
 #include "isxCore.h"
 #include "isxDispatchQueue.h"
+#include "isxDispatchQueueWorker.h"
 #include "isxMutex.h"
 #include "catch.hpp"
 #include "isxLog.h"
@@ -47,7 +48,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task with context") {
         int secret = 123;
         int revealed = -1;
-        isx::DispatchQueue::ContextTask_t t = [&](void * inP)
+        isx::ContextTask_t t = [&](void * inP)
         {
             int * p = (int *) inP;
             *p = secret;
@@ -66,7 +67,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     }
     
     SECTION("run task on new worker thread") {
-        isx::SpDispatchQueue_t worker = isx::DispatchQueue::create();
+        isx::SpDispatchQueueWorker_t worker(new isx::DispatchQueueWorker());
         REQUIRE(worker);
         bool taskRan = false;
         worker->dispatch([&]()
@@ -90,12 +91,12 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task with context on new worker thread") {
         int secret = 123;
         int revealed = -1;
-        isx::DispatchQueue::ContextTask_t t = [&](void * inP)
+        isx::ContextTask_t t = [&](void * inP)
         {
             int * p = (int *) inP;
             *p = secret;
         };
-        isx::SpDispatchQueue_t worker = isx::DispatchQueue::create();
+        isx::SpDispatchQueueWorker_t worker(new isx::DispatchQueueWorker());
         REQUIRE(worker);
         bool taskRan = false;
         worker->dispatch(&revealed, t);
@@ -115,13 +116,13 @@ TEST_CASE("DispatchQueue", "[core]") {
 
     SECTION("run tasks in the pool with mutex locking")
     {
-        isx::SpDispatchQueue_t poolQueue = isx::DispatchQueue::poolQueue();
+        isx::SpDispatchQueueInterface_t poolQueue = isx::DispatchQueue::poolQueue();
         REQUIRE(poolQueue);
 
         int n = 100;
         int count = 0;
         isx::Mutex countMutex;
-        isx::DispatchQueue::Task_t incTask([&]()
+        isx::Task_t incTask([&]()
         { 
             int readCount;
             
