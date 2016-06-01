@@ -28,7 +28,8 @@ public:
             H5::Exception::dontPrint();
             
             // Open an existing file and dataset.
-            m_file.reset(new H5::H5File(m_path.c_str(), H5F_ACC_RDONLY));
+            m_file = std::make_shared<H5::H5File>(m_path.c_str(), H5F_ACC_RDONLY);
+            m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file);
 
             // no exception until here --> this is a valid file
             m_isValid = true;
@@ -69,7 +70,7 @@ public:
     tHdf5FileHandle_SP
     getHdf5FileHandle() const
     {
-        return std::make_shared<Hdf5FileHandle>(m_file);
+        return m_fileHandle;
     }
 
 private:
@@ -77,6 +78,7 @@ private:
     std::string m_path;
     
     SpH5File_t m_file;
+    tHdf5FileHandle_SP m_fileHandle;
 };
 
 Recording::Recording()

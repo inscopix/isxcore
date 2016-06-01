@@ -10,6 +10,7 @@ namespace isx {
 
 
 /// A class for nvista recordings
+/// This is considered immutable - we will never write to it
 ///
 class Recording
 {
