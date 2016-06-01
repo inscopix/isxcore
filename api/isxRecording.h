@@ -1,12 +1,16 @@
 #ifndef ISX_RECORDING_H
 #define ISX_RECORDING_H
 
+#include "isxCoreFwd.h"
+
 #include <string>
 #include <memory>
 
 namespace isx {
 
+
 /// A class for nvista recordings
+/// This is considered immutable - we will never write to it
 ///
 class Recording
 {
@@ -30,8 +34,23 @@ public:
     bool
     isValid() const;
 
-    class Impl;
+    /// Accessor for opaque HDF5 file handle
+    /// Can be used to create an isx::Movie instance
+    ///
+    /// \return Opaque HDF5 file handle
+    ///
+    SpHdf5FileHandle_t getHdf5FileHandle();
 
+private:
+    /// Do not copy Recordings
+    ///
+    Recording(const Recording &) = delete;
+
+    /// Do not assign Recordings
+    ///
+    const Recording & operator=(const Recording &) = delete;
+
+    class Impl;
     /// Internal implementation of Recording class
     ///
     std::unique_ptr<Impl> m_pImpl;

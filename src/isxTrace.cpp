@@ -1,22 +1,31 @@
 #include "isxTrace.h"
 
-namespace isx {
+namespace isx
+{
 
 template <class T>
-Trace<T>::Trace(isx::Time start, uint32_t numTimes, uint16_t step) {
-    m_Domain = isx::TimeGrid(start, numTimes, step);
+Trace<T>::Trace(isx::Time start, isx::Ratio step, uint32_t numTimes)
+{
+    m_timingInfo = isx::TimingInfo(start, step, numTimes);
+    m_data = new T[numTimes];
+}
+
+template <class T>
+Trace<T>::~Trace()
+{
+    delete m_data;
 }
 
 template <class T>
 T
-Trace<T>::getValue(uint32_t i) const {
-    return m_Range[i];
+Trace<T>::getValue(uint32_t index) const {
+    return m_data[index];
 }
 
 template <class T>
 void
-Trace<T>::setValue(uint32_t i, T val) {
-    m_Range[i] = val;
+Trace<T>::setValue(uint32_t index, T value) {
+    m_data[index] = value;
 }
 
 // bogus instantiation to quiet ranlib message isxTrace.cpp.p has no symbols

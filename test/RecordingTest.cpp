@@ -18,7 +18,7 @@ TEST_CASE("RecordingTest", "[core]") {
     SECTION("create movie from dataset in recording", "[core]") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
-        isx::Movie m(r, "/images");
+        isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
     }
 

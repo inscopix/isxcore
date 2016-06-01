@@ -4,38 +4,80 @@
 
 TEST_CASE("TimeTest", "[core]") {
 
-    SECTION("valid usage of constructor") {
-        //! Tests valid usage of constructor.
-        isx::Time time;
-        REQUIRE(time.toString() == "19700101-000000.000");
+    SECTION("default constructor")
+    {
+        isx::Time actual;
+        isx::Time expected(1970, 1, 1, 0, 0, 0, 0);
+        REQUIRE(actual == expected);
     }
 
-    SECTION("constructing a time with a string") {
-        //! Tests constructing a time with a string.
-        std::string timeStr = "20151022-110159.293";
-        isx::Time time(2015, 10, 22, 11, 1, 59, 293);
-        REQUIRE(time.toString() == timeStr);
+    SECTION("add zero seconds to a time")
+    {
+        isx::Time expected(1970, 1, 1, 0, 0, 0, 0);
+        isx::Time actual = expected.addSecs(0);
+        REQUIRE(actual == expected);
     }
 
-    SECTION("adding zero seconds to a time") {
-        //! Tests adding zero seconds to a time.
-        isx::Time time;
-        isx::Time newTime = time.addSecs(0);
-        REQUIRE(newTime.toString() == "19700101-000000.000");
+    SECTION("add integral seconds to a time")
+    {
+        isx::Time time(1970, 1, 1, 0, 0, 0, 0);
+        isx::Time expected(1970, 1, 1, 0, 0, 7, 0);
+        isx::Time actual = time.addSecs(7);
+        REQUIRE(actual == expected);
     }
 
-    SECTION("adding integral seconds to a time") {
-        //! Tests adding integral seconds to a time.
+    SECTION("add rational number seconds to a time")
+    {
         isx::Time time;
-        isx::Time newTime = time.addSecs(7);
-        REQUIRE(newTime.toString() == "19700101-000007.000");
+        isx::Ratio offset(531, 1000);
+        isx::Time expected(1970, 1, 1, 0, 0, 0, offset);
+        isx::Time actual = time.addSecs(offset);
+        REQUIRE(actual == expected);
     }
 
-    SECTION("adding floating point seconds to a time") {
-        //! Tests adding floating point seconds to a time.
+    SECTION("accumulate rational number seconds")
+    {
+        isx::Ratio stepTime(1, 30);
+        uint32_t numTimes = 32;
         isx::Time time;
-        isx::Time newTime = time.addSecs(0.07543);
-        REQUIRE(newTime.toString(5) == "19700101-000000.07543");
+        isx::Time expected = time.addSecs(stepTime * numTimes);
+
+        isx::Time actual = time;
+        for (uint32_t t = 0; t < numTimes; ++t)
+        {
+            actual = actual.addSecs(stepTime);
+        }
+
+        REQUIRE(actual == expected);
+    }
+
+    SECTION("copy constructor")
+    {
+        isx::Time time;
+        isx::Time otherTime(time);
+        REQUIRE(time == otherTime);
+    }
+
+    SECTION("copy assignment")
+    {
+        isx::Time time;
+        isx::Time otherTime = time;
+        REQUIRE(time == otherTime);
+    }
+
+    SECTION("equals operator")
+    {
+        isx::Time time(1970, 1, 1, 0, 0, 0, 0);
+        isx::Time otherTime(1970, 1, 1, 0, 0, 0, 0);
+        REQUIRE(time == otherTime);
+    }
+
+    SECTION("String conversion")
+    {
+        isx::Time time(1970, 1, 1, 0, 0, 0, 0);
+        std::string expected = "19700101-000000 0 / 1 UTC";
+        std::string actual = time.toString();
+        REQUIRE(actual == expected);
     }
 
 }

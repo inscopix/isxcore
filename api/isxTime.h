@@ -1,84 +1,83 @@
 #ifndef ISX_TIME_H
 #define ISX_TIME_H
 
-#include <string>
 #include <cstdint>
-#include <QDateTime>
-#include <memory>
 
-namespace isx {
+#include "isxObject.h"
+#include "isxRatio.h"
 
-/*!
- * An absolute time stamp to floating point precision in the Gregorian calendar.
- */
-class Time {
+namespace isx
+{
+
+/// An absolute date/time stamp.
+///
+class Time : public isx::Object
+{
 
 public:
 
-    /*!
-     * Default constructor.
-     *
-     * Initially the date and time is set to 1970/01/01 00:00:00.000 UTC.
-     */
-    Time();
+    /// Construct a time with seconds sinces the Unix epoch.
+    ///
+    /// \param  secsSinceEpoch  Seconds since the Unix epoch as a rational number.
+    /// \param  utcOffset       Time zone offset from UTC in seconds [-50400, 50400].
+    Time(const isx::Ratio& secsSinceEpoch = 0, int32_t utcOffset = 0);
 
-    /*!
-     * Fully specified constructor.
-     *
-     * \param   year    The year in the common era [1970, 2^16].
-     * \param   mon     The month of the year in [1-12].
-     * \param   day     The day of the month [1-31].
-     * \param   hour    The hour of the day [0-23].
-     * \param   mins    The minutes past the hour [0-59].
-     * \param   secs    The seconds past the minute [0-59].
-     * \param   ms      The milliseconds past the second [0-1000).
-     * \param   utcOff  The time zone in hours offset from UTC [-14, 14].
-     */
+    /// Fully specified constructor.
+    ///
+    /// \param   year       The year in the common era [1970, 2^16).
+    /// \param   mon        The month of the year in [1-12].
+    /// \param   day        The day of the month [1-31].
+    /// \param   hour       The hour of the day [0-23].
+    /// \param   mins       The minutes past the hour [0-59].
+    /// \param   secs       The seconds past the minute [0-59].
+    /// \param   secsOffset The rational number offset in seconds [0-1).
+    /// \param   utcOffset  The time zone offset from UTC in seconds [-50400, 50400].
     Time(   uint16_t year,
             uint8_t mon,
             uint8_t day,
             uint8_t hour,
             uint8_t mins,
             uint8_t secs = 0,
-            double ms = 0,
-            int8_t utcOff = 0);
+            const isx::Ratio& secsOffset = 0,
+            int32_t utcOffset = 0);
 
-    /*!
-     * Convert this to a string of the form "YYYYMMDD-hhmmss(.z*)".
-	 *
-     * \param   msPrec  The number of millisecond digits.
-     * \return  The output string.
-     */
-    std::string toString(int msPrec = 3) const;
+    /// Returns the result of adding a rational number of seconds to this.
+    ///
+    /// \param   secs   The seconds to add to this.
+    /// \return         The result of adding a rational number of secons to this.
+    isx::Time addSecs(const isx::Ratio& secs) const;
 
-    /*!
-     * Returns a time with the given seconds added to this.
-     *
-     * \param   s       The seconds to add to this.
-     * \return  A time s seconds after this.
-     */
-    isx::Time addSecs(double s) const;
+    /// Returns the number of seconds from another time to this.
+    ///
+    /// \param   from   The time to start counting from.
+    /// \return  The seconds from the given time to this.
+    isx::Ratio secsFrom(const isx::Time& from) const;
 
-    /*!
-     * Returns the seconds from the given time to this.
-     *
-     * \param   from    The time from which to calculate.
-     * \return  The seconds from the given time to this.
-     */
-    double secsFrom(isx::Time from) const;
+    /// Compares this with another time exactly.
+    ///
+    /// \return  True if this is exactly equal to other, false otherwise.
+    bool operator ==(const isx::Time& other) const;
 
-    /*!
-     * \return  The current time.
-     */
-    static std::unique_ptr<isx::Time> now();
+    /// Returns the current time.
+    ///
+    /// \return  The current time.
+    static isx::Time now();
+
+    // Overrides
+    virtual void serialize(std::ostream& strm) const;
 
 private:
 
-    //! The Qt DateTime that stores the base time up to second precision.
-    QDateTime m_QDateTime;
+    /// Throws an exception if utcOffset is not in the acceptable range.
+    ///
+    /// \param  utcOffset   The time zone offset from UTC in seconds.
+    static void verifyUtcOffset(int32_t utcOffset);
 
-    //! The floating point offset in seconds from the base time in [0, 1).
-    double m_offset;
+    /// The rational number of seconds since the Unix epoch.
+    isx::Ratio m_secsSinceEpoch;
+
+    /// The time zone offset from UTC in seconds
+    int32_t m_utcOffset;
 
 }; // class
 
