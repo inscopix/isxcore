@@ -20,10 +20,10 @@ public:
     Movie();
 
     /// Construct movie from a dataset in a Recording.
-    /// \param inRecording Recording from which to retrieve movie dataset.
+    /// \param inHdf5FileHandle opaque HDF5 file handle from Recording.
     /// \param inPath Path to dataset in Recording.
     ///
-    Movie(const SpRecording_t & inRecording, const std::string & inPath);
+    Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath);
 
     /// Destructor
     /// 
