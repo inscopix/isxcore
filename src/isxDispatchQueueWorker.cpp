@@ -48,13 +48,13 @@ public:
     void destroy()
     {
         exit();
-        for (int i = 0; i < 100; ++i)
+        for (int32_t i = 0; i < m_numThreadedRetries; ++i)
         {
             if (isFinished())
             {
                 break;
             }
-            std::chrono::milliseconds d(2);
+            std::chrono::milliseconds d(m_numThreadedWaitMs);
             std::this_thread::sleep_for(d);
         }
         assert(isFinished());
@@ -72,14 +72,14 @@ DispatchQueueWorker::DispatchQueueWorker()
 {
     m_worker.reset(new WorkerThread());
     m_worker->start();
-    for (int i = 0; i < 100; ++i)
+    for (int32_t i = 0; i < m_numThreadedRetries; ++i)
     {
         m_dispatcher = m_worker->dispatcher();
         if (m_dispatcher)
         {
             break;
         }
-        std::chrono::milliseconds d(2);
+        std::chrono::milliseconds d(m_numThreadedWaitMs);
         std::this_thread::sleep_for(d);
     }
     assert(m_dispatcher);

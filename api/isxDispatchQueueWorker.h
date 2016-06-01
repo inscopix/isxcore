@@ -46,6 +46,8 @@ public:
     void destroy();
 
 private:
+    static const int32_t m_numThreadedRetries = 100;
+    static const int32_t m_numThreadedWaitMs = 2;
     DispatchQueueWorker(const DispatchQueueWorker & inOther) = delete;
     const DispatchQueueWorker & operator=(const DispatchQueueWorker & inOther) = delete;
 
