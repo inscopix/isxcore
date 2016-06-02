@@ -9,7 +9,6 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
-#include <array>
 
 TEST_CASE("DispatchQueue", "[core]") {
 
