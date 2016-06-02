@@ -1,6 +1,8 @@
 #ifndef ISX_MUTEX_H
 #define ISX_MUTEX_H
 
+#include "isxObject.h"
+
 #include <memory>
 #include <string>
 #include <thread>
@@ -11,7 +13,7 @@ namespace isx
     /// A class implementing a Mutex.
     ///
 
-    class Mutex
+    class Mutex : public Object
     {
     public:
         // Methods 
@@ -32,6 +34,11 @@ namespace isx
         /// unlock mutex
         ///
         void unlock();
+
+        /// Serialize the object into an output stream.
+        ///
+        /// \param   strm    The output stream.
+        virtual void serialize(std::ostream& strm) const;
 
     private:
         class Impl;

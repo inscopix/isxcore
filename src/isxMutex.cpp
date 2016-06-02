@@ -48,6 +48,11 @@ namespace isx
          m_internal->unlock();
     }
 
+    void Mutex::serialize(std::ostream& strm) const
+    {
+        strm << "Owner: " << m_owningThread << ", " << m_owner;
+    }
+
     ScopedMutex::ScopedMutex(Mutex & inMutex, const std::string & inOwner)
     : m_mutex(inMutex)
     {
