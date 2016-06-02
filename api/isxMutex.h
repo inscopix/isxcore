@@ -31,10 +31,6 @@ namespace isx
         void unlock();
 
     private:
-
-        // Attributes
-        bool m_bIsLocked;
-
         class Impl;
         std::unique_ptr<Impl> m_internal;
     };
