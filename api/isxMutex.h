@@ -28,6 +28,8 @@ namespace isx
 
         /// lock mutex
         /// \param inOwner string identifying the owning code
+        ///        this can be anything that seems useful
+        ///        the purpose of this is to help debugging dead locks
         ///
         void lock(const std::string & inOwner);
 

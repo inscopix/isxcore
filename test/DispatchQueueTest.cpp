@@ -124,28 +124,26 @@ TEST_CASE("DispatchQueue", "[core]") {
         isx::Mutex countMutex;
         isx::ContextTask_t incTask([&](void * inSleep)
         {
+            std::string name = "task0";
+            if (inSleep && *(bool *)inSleep)
             {
-                std::string name = "task0";
-                if (inSleep && *(bool *)inSleep)
-                {
-                    name[4] = '1';
-                }
-
-                isx::ScopedMutex guard(countMutex, name.c_str());
-
-                // read
-                int32_t readCount = count;
-                
-                // sleep
-                if (inSleep && *(bool *)inSleep)
-                {
-                    std::chrono::microseconds d(1);
-                    std::this_thread::sleep_for(d);
-                }
-                
-                // write
-                count = readCount + 1;
+                name[4] = '1';
             }
+
+            isx::ScopedMutex guard(countMutex, name);
+
+            // read
+            int32_t readCount = count;
+            
+            // sleep
+            if (inSleep && *(bool *)inSleep)
+            {
+                std::chrono::microseconds d(1);
+                std::this_thread::sleep_for(d);
+            }
+            
+            // write
+            count = readCount + 1;
         });
 
         std::atomic_int doneCount(0);
@@ -163,7 +161,15 @@ TEST_CASE("DispatchQueue", "[core]") {
         w0->dispatch(lastTask);
         w1->dispatch(lastTask);
 
-        while (doneCount != 2);
+        for (int i = 0; i < 250000; ++i)
+        {
+            if (doneCount == 2)
+            {
+                break;
+            }
+            std::chrono::microseconds d(1);
+            std::this_thread::sleep_for(d);
+        }
 
         w0->destroy();
         w1->destroy();
