@@ -125,7 +125,14 @@ TEST_CASE("DispatchQueue", "[core]") {
         isx::ContextTask_t incTask([&](void * inSleep)
         {
             {
-                std::lock_guard<isx::Mutex> guard(countMutex);
+                std::string name = "task0";
+                if (inSleep && *(bool *)inSleep)
+                {
+                    name[4] = '1';
+                }
+
+                isx::ScopedMutex guard(countMutex, name.c_str());
+
                 // read
                 int32_t readCount = count;
                 

@@ -36,9 +36,11 @@ namespace isx
     {
     }
 
-    void Mutex::lock()
+    void Mutex::lock(const std::string & inOwner)
     {
         m_internal->lock();
+        m_owner = inOwner;
+        m_owningThread = std::this_thread::get_id();
     }
 
     void Mutex::unlock()
@@ -46,4 +48,14 @@ namespace isx
          m_internal->unlock();
     }
 
+    ScopedMutex::ScopedMutex(Mutex & inMutex, const std::string & inOwner)
+    : m_mutex(inMutex)
+    {
+        m_mutex.lock(inOwner);
+    }
+
+    ScopedMutex::~ScopedMutex()
+    {
+        m_mutex.unlock();
+    }
 }
