@@ -61,6 +61,25 @@ public:
     /// 
     double getDurationInSeconds() const;
 
+
+    /// Set the size for a new movie to be written to the file
+    /// The file needs to be opened with write permission and the defined path for the 
+    /// the movie needs to exist within the file structure for this to succeed
+    /// \param inNumFrames total number of frames for the movie, use non-positive numbers
+    /// to indicate that this is an expandible movie where the total number of frames is unknown
+    /// \param inFrameWidth total number of columns in each frame
+    /// \param inFrameHeight total number of rows in each frame
+    /// \return true if it succeeds
+    bool setMovieSize(int inNumFrames, int inFrameWidth, int inFrameHeight);
+
+    /// Writes a new frame to the movie dataset
+    /// The file needs to be opened with write permission and the defined path for the 
+    /// the movie needs to exist within the file structure for this to succeed
+    /// \param inBuffer the buffer containing frame data
+    /// \param inBufferSize size of inBuffer
+    /// \return true if it succeeds
+    bool writeFrame(uint32_t inFrameNumber, void * inBuffer, size_t inBufferSize);
+
 private:
     class Impl;
     std::unique_ptr<Impl> m_pImpl;
