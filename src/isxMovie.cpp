@@ -118,6 +118,12 @@ public:
         return double(getNumFrames()) / 30.0;
     }
 
+    void
+    serialize(std::ostream& strm) const
+    {
+        strm << m_path;
+    }
+
 private:
     bool m_isValid = false;
     SpH5File_t m_H5File;
@@ -189,6 +195,13 @@ Movie::getDurationInSeconds() const
 {
     return m_pImpl->getDurationInSeconds();
 }
+
+void 
+Movie::serialize(std::ostream& strm) const
+{
+    m_pImpl->serialize(strm);
+}
+
 
 } // namespace isx
 
