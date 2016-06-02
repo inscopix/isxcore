@@ -21,7 +21,7 @@ public:
     /// \param   start       The start time of the trace.
     /// \param   step        The step time of the trace in milliseconds.
     /// \param   numTimes    The number of time points in the trace.
-    Trace(isx::Time start, isx::Ratio step, uint32_t numTimes);
+    Trace(isx::Time start, isx::Ratio step, uint64_t numTimes);
 
     /// Destructor.
     ///
@@ -31,13 +31,13 @@ public:
     ///
     /// \param   index      The index.
     /// \return             The value at the index.
-    T getValue(uint32_t index) const;
+    T getValue(uint64_t index) const;
 
     /// Write access to a range value by index.
     ///
     /// \param   index      The index.
     /// \param   value      The new value.
-    void setValue(uint32_t index, T value);
+    void setValue(uint64_t index, T value);
 
 private:
 

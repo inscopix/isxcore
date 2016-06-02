@@ -53,14 +53,12 @@ public:
     /// \return  The seconds from the given time to this.
     isx::Ratio secsFrom(const isx::Time& from) const;
 
-    /// Compares this with another time exactly.
+    /// \return     True if this is exactly equal to another time, false otherwise.
     ///
-    /// \return  True if this is exactly equal to other, false otherwise.
     bool operator ==(const isx::Time& other) const;
 
-    /// Returns the current time.
+    /// \return     The current time.
     ///
-    /// \return  The current time.
     static isx::Time now();
 
     // Overrides

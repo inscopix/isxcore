@@ -4,7 +4,7 @@ namespace isx
 {
 
 template <class T>
-Trace<T>::Trace(isx::Time start, isx::Ratio step, uint32_t numTimes)
+Trace<T>::Trace(isx::Time start, isx::Ratio step, uint64_t numTimes)
 {
     m_timingInfo = isx::TimingInfo(start, step, numTimes);
     m_data = new T[numTimes];
@@ -18,13 +18,13 @@ Trace<T>::~Trace()
 
 template <class T>
 T
-Trace<T>::getValue(uint32_t index) const {
+Trace<T>::getValue(uint64_t index) const {
     return m_data[index];
 }
 
 template <class T>
 void
-Trace<T>::setValue(uint32_t index, T value) {
+Trace<T>::setValue(uint64_t index, T value) {
     m_data[index] = value;
 }
 
