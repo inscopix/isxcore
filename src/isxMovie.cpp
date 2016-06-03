@@ -10,7 +10,7 @@ public:
     ~Impl(){};
     Impl(){};
     Impl(const SpH5File_t & inHdf5File, const std::string & inPath)
-    : m_H5File(inHdf5File)
+    : m_H5File(inHdf5File)    
     , m_path(inPath)
     {
         try
@@ -19,13 +19,14 @@ public:
             // handle the errors appropriately
             H5::Exception::dontPrint();
             
-            bool bExists = true;
+            bool bExists = false;
             
             try 
             {  // Determine if the dataset exists in the HDF5 file
                 m_dataSet = m_H5File->openDataSet(m_path);
+                bExists = true;
             }
-            catch (H5::GroupIException not_found_error)
+            catch (H5::FileIException not_found_error)
             {
                 bExists = false;
             }
@@ -105,9 +106,10 @@ public:
     getFrame(uint32_t inFrameNumber, void * outBuffer, size_t inBufferSize)
     {
         try {
-            H5::DataSpace fileSpace(m_dataSpace);
+            
+            H5::DataSpace fileSpace(m_dataSpace);            
             hsize_t fileStart[3] = {(hsize_t)inFrameNumber, 0, 0};
-            hsize_t fileCount[3] = {1, m_dims[1], m_dims[2]};
+            hsize_t fileCount[3] = {1, m_dims[1], m_dims[2]};            
             fileSpace.selectHyperslab(H5S_SELECT_SET, fileCount, fileStart);
             
             H5::DataSpace bufferSpace(3, fileCount);
@@ -132,7 +134,7 @@ public:
 
     bool setMovieSize(int inNumFrames, int inFrameWidth, int inFrameHeight);
 
-    bool writeFrame(uint32_t inFrameNumber, void * inBuffer, size_t inBufferSize);
+    bool writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
 
 private:
     bool m_isValid = false;
@@ -147,6 +149,7 @@ private:
     std::vector<hsize_t> m_dims;
     std::vector<hsize_t> m_maxdims;
     size_t m_frameSizeInBytes;
+
 };
 
 
@@ -213,7 +216,7 @@ Movie::setMovieSize(int inNumFrames, int inFrameWidth, int inFrameHeight)
 }
 
 bool 
-Movie::writeFrame(uint32_t inFrameNumber, void * inBuffer, size_t inBufferSize)
+Movie::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
 {
     return m_pImpl->writeFrame(inFrameNumber, inBuffer, inBufferSize);
 }
@@ -221,21 +224,16 @@ Movie::writeFrame(uint32_t inFrameNumber, void * inBuffer, size_t inBufferSize)
 bool
 Movie::Impl::setMovieSize(int inNumFrames, int inFrameWidth, int inFrameHeight)
 {
+    if (inNumFrames <= 0 || inFrameWidth <= 0 || inFrameHeight <= 0)
+        return false;
+
     /* Set rank, dimensions and max dimensions */
     m_ndims = 3;
     m_dims.resize(m_ndims);
     m_maxdims.resize(m_ndims);
 
-    if (inNumFrames > 0)
-    {
-        m_dims[0] = inNumFrames;
-        m_maxdims[0] = inNumFrames;
-    }
-    else
-    {
-        m_dims[0] = 10;     // default number of frames at creation time
-        m_maxdims[0] = H5S_UNLIMITED;
-    }
+    m_dims[0] = inNumFrames;
+    m_maxdims[0] = inNumFrames;
 
     m_dims[1] = inFrameHeight;
     m_maxdims[1] = inFrameHeight;
@@ -244,60 +242,77 @@ Movie::Impl::setMovieSize(int inNumFrames, int inFrameWidth, int inFrameHeight)
     m_maxdims[2] = inFrameWidth;
 
     /* Create the dataspace */
-    m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data());
-
-    /* Modify dataset creation properties, i.e. enable chunking  */
-    H5::DSetCreatPropList prop;
-    if (inNumFrames <= 0)
-    {
-        std::vector<hsize_t> chunk_dims(3);
-        chunk_dims[0] = 1;
-        chunk_dims[1] = 16;
-        chunk_dims[2] = 16;
-        prop.setChunk(m_ndims, chunk_dims.data());
-    }
+    m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
 
     /* Create a new dataset within the file */
-    m_dataType = H5::PredType::STD_U16LE;
-    m_dataSet = H5::DataSet(m_H5File->createDataSet(m_path, m_dataType, m_dataSpace, prop));
-
+    m_dataType = H5::PredType::STD_U16LE;    
+    try
+    {
+        m_dataSet = H5::DataSet(m_H5File->createDataSet(m_path, m_dataType, m_dataSpace));
+        m_isValid = true;
+        m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
+    }
+    catch (H5::DataSetIException error)
+    {
+        error.printError();
+        m_isValid = false;
+    }
+    catch(H5::FileIException error)
+    {
+        error.printError();
+        m_isValid = false;
+    }
+    catch(H5::GroupIException error)
+    {
+        error.printError();
+        m_isValid = false;
+    }
+    return m_isValid;
  }
 
 bool
-Movie::Impl::writeFrame(uint32_t inFrameNumber, void * inBuffer, size_t inBufferSize)
+Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
 {
     bool result = false;
 
+    // Make sure the movie is valid
+    if (!m_isValid)
+        return result;
+
     // Check that buffer size matches dataspace definition
-    if (inBufferSize != m_dims[1] * m_dims[2])
+    if (inBufferSize != m_frameSizeInBytes)
         return result;
 
     // Check that frame number is within range
-    if ((m_maxdims[0] != H5S_UNLIMITED) && (inFrameNumber > m_maxdims[0]))
+    if (inFrameNumber > m_maxdims[0])
         return result;
-
-    // If this is an extendible dataset, and inFrameNumber exceeds the size of the data, make sure the frame will be appended
-    if ((H5S_UNLIMITED == m_maxdims[0]) && (inFrameNumber > m_dims[0]))
-    {
-        inFrameNumber = m_dims[0];
-        m_dims[0] += 1;
-        m_dataSet.extend(m_dims.data());
-        m_dataSpace = H5::DataSpace(m_dataSet.getSpace());
-    }
-
-    // Select Hyperslab
-    hsize_t offset[3] = { inFrameNumber, 0, 0 };
+   
+    // Define file space.
+    H5::DataSpace fileSpace(m_dataSpace);
+    hsize_t fileOffset[3] = { inFrameNumber, 0, 0 };
     hsize_t dims[3] = { 1, m_dims[1], m_dims[2] };
-    m_dataSpace.selectHyperslab(H5S_SELECT_SET, dims, offset);
+    fileSpace.selectHyperslab(H5S_SELECT_SET, dims, fileOffset);
 
     // Define memory space.
-   H5::DataSpace *memspace = new H5::DataSpace(1, &inBufferSize, NULL);
+   H5::DataSpace memSpace = H5::DataSpace(3, dims, NULL);
+   hsize_t memOffset[3] = { 0, 0, 0 };
+   memSpace.selectHyperslab(H5S_SELECT_SET, dims, memOffset);
 
     // Write data to the dataset.
-    m_dataSet.write(inBuffer, m_dataType, *memspace, m_dataSpace);
+   try
+   {
+       m_dataSet.write(inBuffer, m_dataType, memSpace, fileSpace);
+   }
+   
+   // Catch failure caused by the DataSet operations
+   catch (H5::DataSetIException error)
+   {
+       error.printError();
+       return result;
+   } 
     
     // Update the return value
-    result = true;
+    result = true; 
 
     return result;
 }

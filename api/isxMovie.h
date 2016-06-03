@@ -75,10 +75,11 @@ public:
     /// Writes a new frame to the movie dataset
     /// The file needs to be opened with write permission and the defined path for the 
     /// the movie needs to exist within the file structure for this to succeed
+    /// \param inFrameNumber the frame number to insert
     /// \param inBuffer the buffer containing frame data
     /// \param inBufferSize size of inBuffer
     /// \return true if it succeeds
-    bool writeFrame(uint32_t inFrameNumber, void * inBuffer, size_t inBufferSize);
+    bool writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
 
 private:
     class Impl;

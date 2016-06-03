@@ -18,7 +18,7 @@ public:
     /// Constructor for Recording from file
     /// \param inPath to file on disk
     ///
-    Impl(const std::string & inPath)
+    Impl(const std::string & inPath, RecordingOpenMode openMode)
     : m_path(inPath)
     {
         try
@@ -28,7 +28,11 @@ public:
             H5::Exception::dontPrint();
             
             // Open an existing file and dataset.
-            m_file = std::make_shared<H5::H5File>(m_path.c_str(), H5F_ACC_RDONLY);
+            unsigned int flag = H5F_ACC_RDONLY;
+            if (openMode == RECOPENMODE_TRUNC)
+                flag = H5F_ACC_TRUNC;
+
+            m_file = std::make_shared<H5::H5File>(m_path.c_str(), flag);
             m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file);
 
             // no exception until here --> this is a valid file
@@ -86,9 +90,9 @@ Recording::Recording()
     m_pImpl.reset(new Impl());
 }
 
-Recording::Recording(const std::string & inPath)
+Recording::Recording(const std::string & inPath, RecordingOpenMode openMode)
 {
-    m_pImpl.reset(new Impl(inPath));
+    m_pImpl.reset(new Impl(inPath, openMode));
 }
 
 Recording::~Recording()
