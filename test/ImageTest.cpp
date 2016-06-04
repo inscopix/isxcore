@@ -11,12 +11,11 @@ TEST_CASE("ImageTest", "[core]") {
 
     SECTION("default constructor") 
     {
-        isx::Image i;
-        REQUIRE(i.getFormat() == isx::Image::FORMAT_UNDEFINED);
+        isx::Image<uint32_t> i;
         REQUIRE(i.getRowBytes() == 0);
         REQUIRE(i.getWidth() == 0);
         REQUIRE(i.getHeight() == 0);
-        REQUIRE(i.getPixelSizeInBytes() == 0);
+        REQUIRE(i.getPixelSizeInBytes() == 4);
         REQUIRE(i.getImageSizeInBytes() == 0);
         REQUIRE(i.hasTimeStamp() == false);
         REQUIRE(i.getTimeStamp() == isx::Time());
@@ -29,8 +28,7 @@ TEST_CASE("ImageTest", "[core]") {
         const int32_t h = 10;
         const int32_t r = 32;
 
-        isx::Image i(isx::Image::FORMAT_UINT16_1, w, h, r);
-        REQUIRE(i.getFormat() == isx::Image::FORMAT_UINT16_1);
+        isx::Image<uint16_t> i(w, h, r);
         REQUIRE(i.getRowBytes() == r);
         REQUIRE(i.getWidth() == w);
         REQUIRE(i.getHeight() == h);
@@ -39,15 +37,15 @@ TEST_CASE("ImageTest", "[core]") {
         REQUIRE(i.hasTimeStamp() == false);
         REQUIRE(i.getTimeStamp() == isx::Time());
 
-        std::vector<uint8_t> buf(r * h);
+        std::vector<uint16_t> buf(r * h);
         for (int j = 0; j < i.getImageSizeInBytes(); ++j)
         {
-            buf[j] = (uint8_t) j;
+            buf[j] = (uint16_t) j;
         }
 
         // write, should have enough buffer space to not cause
         // access violation :)
-        uint8_t * p = (uint8_t *) i.getPixels();
+        uint16_t * p = (uint16_t *) i.getPixels();
         memcpy(p, &buf[0], buf.size());
 
         // read, check if data is the same as what was written
@@ -62,8 +60,7 @@ TEST_CASE("ImageTest", "[core]") {
 
         isx::Time t = isx::Time::now();
 
-        isx::Image i(isx::Image::FORMAT_UINT16_1, w, h, r, t);
-        REQUIRE(i.getFormat() == isx::Image::FORMAT_UINT16_1);
+        isx::Image<uint16_t> i(w, h, r, t);
         REQUIRE(i.getRowBytes() == r);
         REQUIRE(i.getWidth() == w);
         REQUIRE(i.getHeight() == h);
