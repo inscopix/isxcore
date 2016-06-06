@@ -64,9 +64,9 @@ namespace isx
 
     protected:
         
-        std::string m_funcName;
-        std::string m_msg;
-        std::string m_exceptionType;
+        std::string m_funcName;      //!< Failing function
+        std::string m_msg;           //!< Detailed message
+        std::string m_exceptionType; //!< Exception type
     };
 
     /// File I/O exception class
