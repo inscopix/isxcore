@@ -57,6 +57,10 @@ public:
     ///
     bool operator ==(const isx::Time& other) const;
 
+    /// \return     True if this is earlier than another time, false other.
+    ///
+    bool operator <(const isx::Time& other) const;
+
     /// \return     The current time.
     ///
     static isx::Time now();
