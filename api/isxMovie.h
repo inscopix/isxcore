@@ -79,7 +79,7 @@ public:
     /// \param inBuffer the buffer containing frame data
     /// \param inBufferSize size of inBuffer
     /// \return true if it succeeds
-    bool writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
+    void writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
 
     /// Serialize the object into an output stream.
     ///

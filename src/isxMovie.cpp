@@ -1,10 +1,11 @@
 #include "isxMovie.h"
 #include "isxHdf5FileHandle.h"
+#include "isxException.h"
 #include "H5Cpp.h"
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <stdexcept>
+#include <cassert>
 
 namespace isx {
 class Movie::Impl
@@ -68,11 +69,8 @@ public:
     , m_path(inPath)
     , m_isValid(false)    
     {
-        if (inNumFrames <= 0 || inFrameWidth <= 0 || inFrameHeight <= 0)
-        {
-            return;
-        }
-
+        std::assert(inNumFrames && inFrameWidth && inFrameHeight);
+ 
         /* Set rank, dimensions and max dimensions */
         m_ndims = 3;
         m_dims.resize(m_ndims);
@@ -173,7 +171,7 @@ public:
         return double(getNumFrames()) / 30.0;
     }
     
-    bool writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
+    void writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
 
     void
     serialize(std::ostream& strm) const
@@ -212,7 +210,7 @@ Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & in
 {
     if (false == inHdf5FileHandle->isReadOnly())
     {
-        throw std::exception("File was opened with no read permission");
+        throw ExceptionFileIO("isx::Movie::Movie", "File was opened with no read permission");
     }
     
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
@@ -222,7 +220,7 @@ Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & in
 {
     if (false == inHdf5FileHandle->isReadWrite())
     {
-        throw std::exception("File was opened with no write permission");
+        throw ExceptionFileIO("isx::Movie::Movie", "File was opened with no write permission");
     }
     
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inNumFrames, inFrameWidth, inFrameHeight));
@@ -280,31 +278,27 @@ Movie::serialize(std::ostream& strm) const
     m_pImpl->serialize(strm);
 }
 
-
-
-bool 
+void 
 Movie::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
 {
-    return m_pImpl->writeFrame(inFrameNumber, inBuffer, inBufferSize);
+    m_pImpl->writeFrame(inFrameNumber, inBuffer, inBufferSize);
 }
 
-bool
+void
 Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
 {
-    bool result = false;
-
     // Make sure the movie is valid
     if (!m_isValid)
-        return result;
- 
+        throw ExceptionFileIO("isx::Movie::Impl::writeFrame", "Writing frame to invalid movie");
+         
     // Check that buffer size matches dataspace definition
     if (inBufferSize != m_frameSizeInBytes)
-        return result;
-
+        throw ExceptionUserInput("isx::Movie::Impl::writeFrame", "The buffer size does not match the the frame size in the file");
+        
     // Check that frame number is within range
     if (inFrameNumber > m_maxdims[0])
-        return result;
-   
+        throw ExceptionUserInput("isx::Movie::Impl::writeFrame", "Frame number exceeds the total number of frames in the movie");
+           
     // Define file space.
     H5::DataSpace fileSpace(m_dataSpace);
     hsize_t fileOffset[3] = { inFrameNumber, 0, 0 };
@@ -325,14 +319,9 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
     // Catch failure caused by the DataSet operations
     catch (H5::DataSetIException error)
     {
-       error.printError();
-       return result;
-    } 
-    
-    // Update the return value
-    result = true; 
-
-    return result;
+       throw ExceptionDataIO("isx::Movie::Impl::writeFrame", "Failed to write frame to movie");
+    }     
+ 
 }
 
 
@@ -373,15 +362,15 @@ Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_ty
         // Check that the size of the file dataset is the same as the one the 
         // user is trying to write out
         if(nDims != m_ndims)
-            throw std::exception("Dataset dimension mismatch");
+            throw ExceptionDataIO("isx::Movie::Impl::createDataSet", "Dataset dimension mismatch");
         
         for (int i(0); i < nDims; i++)
         {
             if(dims[i] != m_dims[i])
-                throw std::exception("Dataset size mismatch");
+                throw ExceptionDataIO("isx::Movie::Impl::createDataSet", "Dataset size mismatch");
             
             if(maxdims[i] != m_maxdims[i])
-                throw std::exception("Dataset size mismatch");
+                throw ExceptionDataIO("isx::Movie::Impl::createDataSet", "Dataset size mismatch");
         }
         
         // Dataset is valid if we get here

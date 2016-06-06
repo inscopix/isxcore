@@ -21,7 +21,8 @@ namespace isx
         enum ExceptionTypes
         {
             ISX_EXCEPTION_FILEIO = 0,       
-            ISX_EXCEPTION_DATAIO
+            ISX_EXCEPTION_DATAIO,
+            ISX_EXCEPTION_USERINPUT
         };
 
         /// A vector containing the string names of the exception types
@@ -107,6 +108,26 @@ namespace isx
         /// Destructor
         ///
         ~ExceptionDataIO() {}
+    };
+    
+    /// User input exception class
+    ///
+    class ExceptionUserInput : public Exception
+    {
+    public:
+
+        /// Constructor
+        ///
+        explicit ExceptionUserInput(const std::string& function, const std::string& message = DEFAULT_MSG) :
+            Exception(function, message)
+        {
+            m_exceptionType = ExceptionTypeNames[ISX_EXCEPTION_USERINPUT];
+            ISX_LOG_ERROR(m_exceptionType + " in " + m_funcName + " - " + m_msg);
+        }
+        
+        /// Destructor
+        ///
+        ~ExceptionUserInput() {}
     };
 }
 
