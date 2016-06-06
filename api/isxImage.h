@@ -113,6 +113,15 @@ public:
         return m_timeStamp;
     }
 
+    /// \return timestamp of this image
+    ///
+    void
+    setTimeStamp(const Time & inTimeStamp)
+    {
+        m_hasTimeStamp = true;
+        m_timeStamp = inTimeStamp;
+    }
+
     /// \return the address of the first pixel in memory
     ///
     T *
