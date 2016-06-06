@@ -15,11 +15,16 @@ TEST_CASE("RecordingTest", "[core]") {
         REQUIRE(!r.isValid());
     }
 
-    SECTION("create movie from dataset in recording", "[core]") {
+    SECTION("create movie from dataset in recording") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
         isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
+    }
+
+    SECTION("toString") {
+        isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
+        REQUIRE(r->toString() == testFile);
     }
 
 }
