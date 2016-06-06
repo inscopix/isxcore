@@ -48,13 +48,13 @@ public:
         // catch failure caused by the H5File operations
         catch(H5::FileIException error)
         {
-            error.printError();
+            throw ExceptionFileIO("isx::Movie::Impl", "Failure caused by the H5File operations");
         }
         
         // catch failure caused by the DataSet operations
         catch(H5::DataSetIException error)
         {
-            error.printError();
+            throw ExceptionDataIO("isx::Movie::Impl", "Failure caused by the DataSet operations");
         }
         
         catch(...)
@@ -98,15 +98,15 @@ public:
         }
         catch (H5::DataSetIException error)
         {
-            error.printError(); 
+            throw ExceptionDataIO("isx::Movie::Impl", "Failure caused by the DataSet operations");
         }
         catch(H5::FileIException error)
         {
-            error.printError(); 
+            throw ExceptionFileIO("isx::Movie::Impl", "Failure caused by the H5File operations"); 
         }
         catch(H5::GroupIException error)
         {
-            error.printError(); 
+            throw ExceptionDataIO("isx::Movie::Impl", "Failure caused by the Group operations");
         }
  
     }
