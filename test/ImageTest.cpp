@@ -12,6 +12,7 @@ TEST_CASE("ImageTest", "[core]") {
     SECTION("default constructor") 
     {
         isx::Image<uint32_t> i;
+        uint32_t * p = 0;
         REQUIRE(i.getWidth() == 0);
         REQUIRE(i.getHeight() == 0);
         REQUIRE(i.getRowBytes() == 0);
@@ -20,7 +21,7 @@ TEST_CASE("ImageTest", "[core]") {
         REQUIRE(i.getImageSizeInBytes() == 0);
         REQUIRE(i.hasTimeStamp() == false);
         REQUIRE(i.getTimeStamp() == isx::Time());
-        REQUIRE(i.getPixels() == 0);
+        REQUIRE(i.getPixels() == p);
     }
 
     SECTION("constructor") 
