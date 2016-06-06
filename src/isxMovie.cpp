@@ -175,6 +175,12 @@ public:
     
     bool writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
 
+    void
+    serialize(std::ostream& strm) const
+    {
+        strm << m_path;
+    }
+
 private:
 
     bool m_isValid = false;
@@ -267,6 +273,13 @@ Movie::getDurationInSeconds() const
 {
     return m_pImpl->getDurationInSeconds();
 }
+
+void 
+Movie::serialize(std::ostream& strm) const
+{
+    m_pImpl->serialize(strm);
+}
+
 
 
 bool 

@@ -2,6 +2,7 @@
 #define ISX_RECORDING_H
 
 #include "isxCoreFwd.h"
+#include "isxObject.h"
 
 #include <string>
 #include <memory>
@@ -11,7 +12,7 @@ namespace isx {
 /// A class for nvista recordings
 /// This is considered immutable - we will never write to it
 ///
-class Recording
+class Recording : public Object
 {
 public:
     
@@ -39,6 +40,11 @@ public:
     /// \return Opaque HDF5 file handle
     ///
     SpHdf5FileHandle_t getHdf5FileHandle();
+
+    /// Serialize the object into an output stream.
+    ///
+    /// \param   strm    The output stream.
+    virtual void serialize(std::ostream& strm) const;
 
 private:
     /// Do not copy Recordings

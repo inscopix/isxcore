@@ -72,6 +72,12 @@ public:
         return m_fileHandle;
     }
 
+    void
+    serialize(std::ostream& strm) const
+    {
+        strm << m_path;
+    }
+
 private:
     bool m_isValid = false;
     std::string m_path;
@@ -106,5 +112,10 @@ Recording::getHdf5FileHandle()
     return m_pImpl->getHdf5FileHandle();
 }
 
+void
+Recording::serialize(std::ostream& strm) const
+{
+    m_pImpl->serialize(strm);
+}
 } // namespace isx
 

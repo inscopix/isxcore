@@ -2,6 +2,7 @@
 #define ISX_MOVIE_H
 
 #include "isxCoreFwd.h"
+#include "isxObject.h"
 
 #include <string>
 #include <vector>
@@ -12,7 +13,7 @@ namespace isx {
 ///
 /// A class encapsulating an nVista movie file.
 ///
-class Movie
+class Movie : public Object
 {
 public:
     /// Default constructor.  Is a valid C++ object but not a valid Movie.
@@ -79,6 +80,11 @@ public:
     /// \param inBufferSize size of inBuffer
     /// \return true if it succeeds
     bool writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
+
+    /// Serialize the object into an output stream.
+    ///
+    /// \param   strm    The output stream.
+    virtual void serialize(std::ostream& strm) const;
 
 private:
     class Impl;
