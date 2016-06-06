@@ -48,7 +48,7 @@ TEST_CASE("ImageTest", "[core]") {
 
         // write, should have enough buffer space to not cause
         // access violation :)
-        uint16_t * p = (uint16_t *) i.getPixels();
+        uint16_t * p = i.getPixels();
         memcpy(p, &buf[0], buf.size());
 
         // read, check if data is the same as what was written
