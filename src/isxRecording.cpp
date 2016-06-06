@@ -18,22 +18,17 @@ public:
     /// Constructor for Recording from file
     /// \param inPath to file on disk
     ///
-    Impl(const std::string & inPath, RecordingOpenMode openMode)
+    Impl(const std::string & inPath)
     : m_path(inPath)
     {
         try
         {
             // Turn off the auto-printing when failure occurs so that we can
             // handle the errors appropriately
-            H5::Exception::dontPrint();
-            
-            // Open an existing file and dataset.
-            unsigned int flag = H5F_ACC_RDONLY;
-            if (openMode == RECOPENMODE_TRUNC)
-                flag = H5F_ACC_TRUNC;
-
-            m_file = std::make_shared<H5::H5File>(m_path.c_str(), flag);
-            m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file);
+            H5::Exception::dontPrint();            
+ 
+            m_file = std::make_shared<H5::H5File>(m_path.c_str(), H5F_ACC_RDONLY);
+            m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, H5F_ACC_RDONLY);
 
             // no exception until here --> this is a valid file
             m_isValid = true;
@@ -90,9 +85,9 @@ Recording::Recording()
     m_pImpl.reset(new Impl());
 }
 
-Recording::Recording(const std::string & inPath, RecordingOpenMode openMode)
+Recording::Recording(const std::string & inPath)
 {
-    m_pImpl.reset(new Impl(inPath, openMode));
+    m_pImpl.reset(new Impl(inPath));
 }
 
 Recording::~Recording()

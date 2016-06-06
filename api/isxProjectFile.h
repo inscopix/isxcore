@@ -6,6 +6,9 @@
 /*
 
 /MosaicProject 
+    /FileHeader
+        /Mosaic Version
+        /Operating System
     /History
         /History item 1
             /Type
@@ -29,7 +32,7 @@
             :
             :
         /Comment M
-    /Recording schedules
+    /Schedules
         /Schedule item 1
             /Recording item 1
                 /Properties
@@ -48,7 +51,7 @@
             /Cells
                 /Cell 1
                     /Properties
-                        /bValid
+                        /isValid
                         /Cell_ID
                         /Comment
                     /Contour
@@ -125,25 +128,17 @@ namespace isx {
     public:
         /// constructor
         ///
-        ProjectFile();
+        ProjectFile(std::string & inFileName);
         
         /// destructor
         ///
         ~ProjectFile();
 
-        // General
-        /// Open the file
-        /// \return true if succeeds
-        /// \param inFileName the name of the project file
-        bool open(std::string & inFileName); // Will check if the file exists, if not, will set up the data model. Set the first videoData group as the working group
-        
-        /// Close the file
+        /// Get the file handle
         ///
-        void close();
- 
+        SpHdf5FileHandle_t getHdf5FileHandle();
        
     private:        
-        bool  m_bIsOpen;
         class Impl;
         /// Internal implementation of ProjectFile class
         ///

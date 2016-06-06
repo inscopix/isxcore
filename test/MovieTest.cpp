@@ -1,6 +1,6 @@
 #include "isxRecording.h"
 #include "isxMovie.h"
-
+#include "isxProjectFile.h"
 #include "catch.hpp"
 
 #include "isxTest.h"
@@ -73,33 +73,22 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(m.getDurationInSeconds() == 1.1);
     }
 
-    SECTION("Set size of dataset for a new movie in a hdf5 file", "[core]") {
-        std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
-        isx::SpRecording_t outputFile = std::make_shared<isx::Recording>(outputFilename, isx::RECOPENMODE_TRUNC);
-        isx::Movie m(outputFile->getHdf5FileHandle(), "/Movie");
-        REQUIRE(m.isValid() == false);                      // Dataset doesn't exist yet
-        REQUIRE(m.setMovieSize(10, 1440, 1080) == true);    // Dataset was successfully created in the file
-    }
-
-     SECTION("Write frames to new movie", "[core]") {
+    SECTION("Write frames to new movie", "[core]") {
         // Inputs
         isx::SpRecording_t inputFile = std::make_shared<isx::Recording>(testFile);
         isx::Movie inputMovie(inputFile->getHdf5FileHandle(), "/images");
-
-        // Outputs
-        std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
-        isx::SpRecording_t outputFile = std::make_shared<isx::Recording>(outputFilename, isx::RECOPENMODE_TRUNC);
-        isx::Movie outputMovie(outputFile->getHdf5FileHandle(), "/Movie");
-
+        
         // Get sizes from input
         int nFrames, nCols, nRows;
         nFrames = inputMovie.getNumFrames();
         nCols   = inputMovie.getFrameWidth();
         nRows   = inputMovie.getFrameHeight();
 
-        // Set sizes in output
-        bool result = outputMovie.setMovieSize(nFrames, nCols, nRows);
-        REQUIRE(result);
+        // Outputs
+        std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
+        isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename);
+        
+        isx::Movie outputMovie(outputFile->getHdf5FileHandle(), "/MosaicProject/Schedules/Schedule1/Recording1/Movie", nFrames, nCols, nRows); 
         REQUIRE(nFrames == outputMovie.getNumFrames());
         REQUIRE(nCols == outputMovie.getFrameWidth());
         REQUIRE(nRows == outputMovie.getFrameHeight());
@@ -109,7 +98,7 @@ TEST_CASE("MovieTest", "[core]") {
         size_t inputSize = inputMovie.getFrameSizeInBytes();
         std::vector<unsigned char> inputFrameBuffer(inputSize);
         inputMovie.getFrame(nFrame, &inputFrameBuffer[0], inputSize);
-        result = outputMovie.writeFrame(nFrame, &inputFrameBuffer[0], inputSize);
+        bool result = outputMovie.writeFrame(nFrame, &inputFrameBuffer[0], inputSize);
         REQUIRE(result);
         
         // Read dataset from output

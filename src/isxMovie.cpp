@@ -2,6 +2,9 @@
 #include "isxHdf5FileHandle.h"
 #include "H5Cpp.h"
 #include <iostream>
+#include <vector>
+#include <sstream>
+#include <stdexcept>
 
 namespace isx {
 class Movie::Impl
@@ -17,40 +20,27 @@ public:
         {
             // Turn off the auto-printing when failure occurs so that we can
             // handle the errors appropriately
-            H5::Exception::dontPrint();
-            
-            bool bExists = false;
-            
-            try 
-            {  // Determine if the dataset exists in the HDF5 file
-                m_dataSet = m_H5File->openDataSet(m_path);
-                bExists = true;
-            }
-            catch (H5::FileIException not_found_error)
+            H5::Exception::dontPrint();  
+            m_dataSet = m_H5File->openDataSet(m_path); 
+
+            m_dataType = m_dataSet.getDataType();
+            m_dataSpace = m_dataSet.getSpace();
+
+            m_ndims = m_dataSpace.getSimpleExtentNdims();
+            m_dims.resize(m_ndims);
+            m_maxdims.resize(m_ndims);
+            m_dataSpace.getSimpleExtentDims(&m_dims[0], &m_maxdims[0]);
+
+            if (m_dataType == H5::PredType::STD_U16LE)
             {
-                bExists = false;
+                m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
+                m_isValid = true;
             }
-
-            if (bExists)
+            else
             {
-                m_dataType = m_dataSet.getDataType();
-                m_dataSpace = m_dataSet.getSpace();
-
-                m_ndims = m_dataSpace.getSimpleExtentNdims();
-                m_dims.resize(m_ndims);
-                m_maxdims.resize(m_ndims);
-                m_dataSpace.getSimpleExtentDims(&m_dims[0], &m_maxdims[0]);
-
-                if (m_dataType == H5::PredType::STD_U16LE)
-                {
-                    m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
-                    m_isValid = true;
-                }
-                else
-                {
-                    std::cerr << "Unsupported data type." << std::endl;
-                }
+                std::cerr << "Unsupported data type." << std::endl;
             }
+            
             
         }  // end of try block
         
@@ -70,6 +60,57 @@ public:
         {
             std::cerr << "Unhandled exception." << std::endl;
         }
+    }
+    
+    
+    Impl(const SpH5File_t & inHdf5File, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight)
+    : m_H5File(inHdf5File)
+    , m_path(inPath)
+    , m_isValid(false)    
+    {
+        if (inNumFrames <= 0 || inFrameWidth <= 0 || inFrameHeight <= 0)
+        {
+            return;
+        }
+
+        /* Set rank, dimensions and max dimensions */
+        m_ndims = 3;
+        m_dims.resize(m_ndims);
+        m_maxdims.resize(m_ndims);
+
+        m_dims[0] = inNumFrames;
+        m_maxdims[0] = inNumFrames;
+
+        m_dims[1] = inFrameHeight;
+        m_maxdims[1] = inFrameHeight;
+
+        m_dims[2] = inFrameWidth;
+        m_maxdims[2] = inFrameWidth;
+
+        /* Create the dataspace */
+        m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
+
+        /* Create a new dataset within the file */
+        m_dataType = H5::PredType::STD_U16LE;    
+        try
+        {
+            createDataSet(m_path, m_dataType, m_dataSpace);
+            m_isValid = true;
+            m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
+        }
+        catch (H5::DataSetIException error)
+        {
+            error.printError(); 
+        }
+        catch(H5::FileIException error)
+        {
+            error.printError(); 
+        }
+        catch(H5::GroupIException error)
+        {
+            error.printError(); 
+        }
+ 
     }
 
     bool
@@ -131,12 +172,11 @@ public:
         // TODO aschildan 4/21/2016: Fix to take actual framerate into account
         return double(getNumFrames()) / 30.0;
     }
-
-    bool setMovieSize(int inNumFrames, int inFrameWidth, int inFrameHeight);
-
+    
     bool writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
 
 private:
+
     bool m_isValid = false;
     SpH5File_t m_H5File;
     std::string m_path;
@@ -149,6 +189,10 @@ private:
     std::vector<hsize_t> m_dims;
     std::vector<hsize_t> m_maxdims;
     size_t m_frameSizeInBytes;
+    
+    
+    void createDataSet(const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space);
+    std::vector<std::string> splitPath(const std::string &s);
 
 };
 
@@ -160,7 +204,22 @@ Movie::Movie()
 
 Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath)
 {
+    if (false == inHdf5FileHandle->isReadOnly())
+    {
+        throw std::exception("File was opened with no read permission");
+    }
+    
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
+}
+
+Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight)
+{
+    if (false == inHdf5FileHandle->isReadWrite())
+    {
+        throw std::exception("File was opened with no write permission");
+    }
+    
+    m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inNumFrames, inFrameWidth, inFrameHeight));
 }
 
 Movie::~Movie()
@@ -209,66 +268,12 @@ Movie::getDurationInSeconds() const
     return m_pImpl->getDurationInSeconds();
 }
 
-bool 
-Movie::setMovieSize(int inNumFrames, int inFrameWidth, int inFrameHeight)
-{
-    return m_pImpl->setMovieSize(inNumFrames, inFrameWidth, inFrameHeight);
-}
 
 bool 
 Movie::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
 {
     return m_pImpl->writeFrame(inFrameNumber, inBuffer, inBufferSize);
 }
-
-bool
-Movie::Impl::setMovieSize(int inNumFrames, int inFrameWidth, int inFrameHeight)
-{
-    if (inNumFrames <= 0 || inFrameWidth <= 0 || inFrameHeight <= 0)
-        return false;
-
-    /* Set rank, dimensions and max dimensions */
-    m_ndims = 3;
-    m_dims.resize(m_ndims);
-    m_maxdims.resize(m_ndims);
-
-    m_dims[0] = inNumFrames;
-    m_maxdims[0] = inNumFrames;
-
-    m_dims[1] = inFrameHeight;
-    m_maxdims[1] = inFrameHeight;
-
-    m_dims[2] = inFrameWidth;
-    m_maxdims[2] = inFrameWidth;
-
-    /* Create the dataspace */
-    m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
-
-    /* Create a new dataset within the file */
-    m_dataType = H5::PredType::STD_U16LE;    
-    try
-    {
-        m_dataSet = H5::DataSet(m_H5File->createDataSet(m_path, m_dataType, m_dataSpace));
-        m_isValid = true;
-        m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
-    }
-    catch (H5::DataSetIException error)
-    {
-        error.printError();
-        m_isValid = false;
-    }
-    catch(H5::FileIException error)
-    {
-        error.printError();
-        m_isValid = false;
-    }
-    catch(H5::GroupIException error)
-    {
-        error.printError();
-        m_isValid = false;
-    }
-    return m_isValid;
- }
 
 bool
 Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
@@ -278,7 +283,7 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
     // Make sure the movie is valid
     if (!m_isValid)
         return result;
-
+ 
     // Check that buffer size matches dataspace definition
     if (inBufferSize != m_frameSizeInBytes)
         return result;
@@ -294,22 +299,22 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
     fileSpace.selectHyperslab(H5S_SELECT_SET, dims, fileOffset);
 
     // Define memory space.
-   H5::DataSpace memSpace = H5::DataSpace(3, dims, NULL);
-   hsize_t memOffset[3] = { 0, 0, 0 };
-   memSpace.selectHyperslab(H5S_SELECT_SET, dims, memOffset);
+    H5::DataSpace memSpace = H5::DataSpace(3, dims, NULL);
+    hsize_t memOffset[3] = { 0, 0, 0 };
+    memSpace.selectHyperslab(H5S_SELECT_SET, dims, memOffset);
 
     // Write data to the dataset.
-   try
-   {
+    try
+    {
        m_dataSet.write(inBuffer, m_dataType, memSpace, fileSpace);
-   }
+    }
    
-   // Catch failure caused by the DataSet operations
-   catch (H5::DataSetIException error)
-   {
+    // Catch failure caused by the DataSet operations
+    catch (H5::DataSetIException error)
+    {
        error.printError();
        return result;
-   } 
+    } 
     
     // Update the return value
     result = true; 
@@ -317,6 +322,85 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
     return result;
 }
 
+
+void 
+Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space)
+{
+    // Parse name and create the hierarchy tree (if not in the file already). 
+    // Every level other than the last one is created as a group. The last level is the dataset
+    std::vector<std::string> tree = splitPath(name);
+    std::string location("/");
+    for (int i(0); i < tree.size() - 1; ++i)
+    {
+        location += tree[i];  
+        try
+        {
+            m_H5File->openGroup(location);
+        }
+        catch (...)
+        {
+            m_H5File->createGroup(location);
+        }
+        
+        location += "/";
+        
+    }
+
+    // Create it if dataset doesn't exist. Overwrite it otherwise
+    try
+    {
+        m_dataSet = m_H5File->openDataSet(name);
+        H5::DataType type = m_dataSet.getDataType();
+        H5::DataSpace space = m_dataSet.getSpace();
+        int nDims = space.getSimpleExtentNdims();;
+        std::vector<hsize_t> dims(nDims);
+        std::vector<hsize_t> maxdims(nDims);
+        space.getSimpleExtentDims(&dims[0], &maxdims[0]);
+        
+        // Check that the size of the file dataset is the same as the one the 
+        // user is trying to write out
+        if(nDims != m_ndims)
+            throw std::exception("Dataset dimension mismatch");
+        
+        for (int i(0); i < nDims; i++)
+        {
+            if(dims[i] != m_dims[i])
+                throw std::exception("Dataset size mismatch");
+            
+            if(maxdims[i] != m_maxdims[i])
+                throw std::exception("Dataset size mismatch");
+        }
+        
+        // Dataset is valid if we get here
+        m_dataType = type;
+        m_dataSpace = space;
+        
+        if (m_dataType == H5::PredType::STD_U16LE)
+        {
+            m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
+        }
+    }
+    catch(...)
+    {
+        m_dataSet = H5::DataSet(m_H5File->createDataSet(name, data_type, data_space));  
+    }
+    
+}
+
+std::vector<std::string> 
+Movie::Impl::splitPath(const std::string &s)
+{
+    using namespace std;
+    char delim = '/';
+    stringstream ss(s);
+    string item;
+    vector<string> tokens;
+    while (getline(ss, item, delim)) 
+    {
+        tokens.push_back(item);
+    }
+    return tokens;
+}
 
 } // namespace isx
 

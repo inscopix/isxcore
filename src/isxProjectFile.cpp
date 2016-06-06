@@ -1,6 +1,6 @@
 #include "isxHdf5FileHandle.h" 
 #include "isxProjectFile.h"
-
+#include <fstream>
 namespace isx {
 
  
@@ -9,18 +9,56 @@ namespace isx {
     public:
         /// Constructor
         ///
-        Impl() {}
-        bool open(std::string & inFileName);
-        void close();
+        Impl(std::string & inFileName) 
+        {
+            int openFlag = H5F_ACC_RDWR;
+            if ( false == exists(inFileName))
+            {
+                openFlag = H5F_ACC_TRUNC;                
+            }
         
+            m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
+            m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, openFlag);
+                
+            if(false == isInitialized())
+            {
+                // Initialize the data model if the file hasn't been initialized
+                initDataModel();
+            }
+        }
+        
+        ~Impl()
+        {
+            m_file->close();
+
+            m_file.reset();
+            m_fileHandle.reset();
+        }
+         
         bool exists(std::string & inFileName);
         bool isInitialized();
         void initDataModel();
+        
+        /// \return Hdf5FileHandle
+        ///
+        SpHdf5FileHandle_t
+        getHdf5FileHandle() const
+        {
+            return m_fileHandle;
+        }
         
     private:
 
         SpH5File_t m_file;
         SpHdf5FileHandle_t m_fileHandle;
+        
+        H5::Group  m_grProject;
+        H5::Group  m_grFileHeader;
+        H5::Group  m_grHistory;
+        H5::Group  m_grAnnotations;
+        H5::Group  m_grSchedules;
+        H5::Group  m_grCells;
+        
 
     };
 
@@ -28,31 +66,19 @@ namespace isx {
     ///////////////////////////////////////////////////////////////////////////////
     //  PROJECT FILE
     ///////////////////////////////////////////////////////////////////////////////
-    ProjectFile::ProjectFile() :
-        m_bIsOpen(false)
+    ProjectFile::ProjectFile(std::string & inFileName) 
     {
-        m_pImpl.reset(new Impl());
+        m_pImpl.reset(new Impl(inFileName));
     }
 
     ProjectFile::~ProjectFile() 
     {
+    } 
 
-    }
-
-    bool ProjectFile::open(std::string & inFileName) 
+        
+    SpHdf5FileHandle_t ProjectFile::getHdf5FileHandle()
     {
-        m_bIsOpen = m_pImpl->open(inFileName);
-
-        return m_bIsOpen;
-    }
-
-    void ProjectFile::close() 
-    {
-        if (m_bIsOpen)
-        {
-            m_pImpl->close();
-            m_bIsOpen = false;
-        }
+        return m_pImpl->getHdf5FileHandle();
     }
 
  
@@ -60,24 +86,7 @@ namespace isx {
     ///////////////////////////////////////////////////////////////////////////////
     //  PROJECT FILE IMPLEMENTATION
     ///////////////////////////////////////////////////////////////////////////////
-    bool ProjectFile::Impl::open(std::string & inFileName)
-    {      
-        int openFlag = H5F_ACC_RDWR;
-        if ( false == exists(inFileName))
-            openFlag = H5F_ACC_TRUNC;
-        
-        m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
-        m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file);
-                
-        if(false == isInitialized())
-        {
-            // Initialize the data model if the file hasn't been initialized
-            initDataModel();
-        }
-        return true;
-    }
-
-
+ 
     bool ProjectFile::Impl::isInitialized()
     {        
         bool bInitialized = false;
@@ -95,23 +104,20 @@ namespace isx {
         return bInitialized;
     }
 
-    void ProjectFile::Impl::close()
-    {
-        m_file->close();
-
-        m_file.reset();
-        m_fileHandle.reset();
-    }
-
-    void ProjectFile::Impl::initDataModel()
-    {
  
+    void ProjectFile::Impl::initDataModel()
+    { 
+        
+        m_grProject    = m_file->createGroup("/MosaicProject");
+        m_grFileHeader = m_file->createGroup("/MosaicProject/FileHeader");
+        m_grSchedules  = m_file->createGroup("/MosaicProject/Schedules");
+                
     }
  
  
     bool ProjectFile::Impl::exists(std::string & inFileName)
     {
-        std::ifstream infile(fileName.c_str());
+        std::ifstream infile(inFileName.c_str());
         return infile.good();
     }
  
