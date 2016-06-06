@@ -12,10 +12,11 @@ TEST_CASE("ImageTest", "[core]") {
     SECTION("default constructor") 
     {
         isx::Image<uint32_t> i;
-        REQUIRE(i.getRowBytes() == 0);
         REQUIRE(i.getWidth() == 0);
         REQUIRE(i.getHeight() == 0);
-        REQUIRE(i.getPixelSizeInBytes() == 4);
+        REQUIRE(i.getRowBytes() == 0);
+        REQUIRE(i.getNumChannels() == 0);
+        REQUIRE(i.getPixelSizeInBytes() == 0);
         REQUIRE(i.getImageSizeInBytes() == 0);
         REQUIRE(i.hasTimeStamp() == false);
         REQUIRE(i.getTimeStamp() == isx::Time());
@@ -26,13 +27,15 @@ TEST_CASE("ImageTest", "[core]") {
     {
         const int32_t w = 10;
         const int32_t h = 10;
-        const int32_t r = 32;
+        const int32_t r = 128;
+        const int32_t c = 6;
 
-        isx::Image<uint16_t> i(w, h, r);
-        REQUIRE(i.getRowBytes() == r);
+        isx::Image<uint16_t> i(w, h, r, c);
         REQUIRE(i.getWidth() == w);
         REQUIRE(i.getHeight() == h);
-        REQUIRE(i.getPixelSizeInBytes() == 2);
+        REQUIRE(i.getRowBytes() == r);
+        REQUIRE(i.getNumChannels() == c);
+        REQUIRE(i.getPixelSizeInBytes() == 2 * c);
         REQUIRE(i.getImageSizeInBytes() == r * h);
         REQUIRE(i.hasTimeStamp() == false);
         REQUIRE(i.getTimeStamp() == isx::Time());
@@ -57,14 +60,16 @@ TEST_CASE("ImageTest", "[core]") {
         const int32_t w = 10;
         const int32_t h = 10;
         const int32_t r = 32;
+        const int32_t c = 1;
 
         isx::Time t = isx::Time::now();
 
-        isx::Image<uint16_t> i(w, h, r, t);
-        REQUIRE(i.getRowBytes() == r);
+        isx::Image<uint16_t> i(w, h, r, c, t);
         REQUIRE(i.getWidth() == w);
         REQUIRE(i.getHeight() == h);
-        REQUIRE(i.getPixelSizeInBytes() == 2);
+        REQUIRE(i.getRowBytes() == r);
+        REQUIRE(i.getNumChannels() == c);
+        REQUIRE(i.getPixelSizeInBytes() == 2 * c);
         REQUIRE(i.getImageSizeInBytes() == r * h);
         REQUIRE(i.hasTimeStamp() == true);
         REQUIRE(i.getTimeStamp() == t);

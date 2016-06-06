@@ -21,35 +21,30 @@ public:
 
     /// Constructor for an image
     ///
-    Image(int32_t inWidth, int32_t inHeight, int32_t inRowBytes)
-        : m_rowBytes(inRowBytes)
-        , m_width(inWidth)
+    Image(int32_t inWidth, int32_t inHeight, int32_t inRowBytes, int32_t inNumChannels)
+        : m_width(inWidth)
         , m_height(inHeight)
+        , m_rowBytes(inRowBytes)
+        , m_numChannels(inNumChannels)
     {
+        assert(inWidth > 0 && inHeight > 0 && inRowBytes > 0 && inNumChannels > 0);
         assert(m_rowBytes >= m_width * getPixelSizeInBytes());
         m_pixels.resize(getImageSizeInBytes());
     }
 
     /// Constructor for an image with a timestamp
     ///
-    Image(int32_t inWidth, int32_t inHeight, int32_t inRowBytes, const Time & inTimeStamp)
-        : m_rowBytes(inRowBytes)
-        , m_width(inWidth)
+    Image(int32_t inWidth, int32_t inHeight, int32_t inRowBytes, int32_t inNumChannels, const Time & inTimeStamp)
+        : m_width(inWidth)
         , m_height(inHeight)
+        , m_rowBytes(inRowBytes)
+        , m_numChannels(inNumChannels)
         , m_hasTimeStamp(true)
         , m_timeStamp(inTimeStamp)
     {
+        assert(inWidth > 0 && inHeight > 0 && inRowBytes > 0 && inNumChannels > 0);
         assert(m_rowBytes >= m_width * getPixelSizeInBytes());
         m_pixels.resize(getImageSizeInBytes());
-    }
-
-    /// \return the number of bytes between the first pixels of two neighboring rows
-    /// note that this could be different from getPixelSizeInBytes() * getWidth()
-    ///
-    int32_t
-    getRowBytes() const
-    {
-        return m_rowBytes;
     }
 
     /// \return the width of this image
@@ -68,12 +63,30 @@ public:
         return m_height;
     }
 
+    /// \return the number of bytes between the first pixels of two neighboring rows
+    /// note that this could be different from getPixelSizeInBytes() * getWidth()
+    ///
+    int32_t
+    getRowBytes() const
+    {
+        return m_rowBytes;
+    }
+
+    /// \return the number of bytes between the first pixels of two neighboring rows
+    /// note that this could be different from getPixelSizeInBytes() * getWidth()
+    ///
+    int32_t
+    getNumChannels() const
+    {
+        return m_numChannels;
+    }
+
     /// \return the size of one pixel in bytes
     ///
     size_t
     getPixelSizeInBytes() const
     {
-        return sizeof(T);
+        return sizeof(T) * m_numChannels;
     }
 
     /// \return the size of this image in bytes
@@ -114,9 +127,10 @@ public:
 
 private:
     std::vector<T> m_pixels;
-    int32_t m_rowBytes = 0;
     int32_t m_width = 0;
     int32_t m_height = 0;
+    int32_t m_rowBytes = 0;
+    int32_t m_numChannels = 0;
     bool m_hasTimeStamp = false;
     Time m_timeStamp;
 };
