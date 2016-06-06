@@ -41,7 +41,7 @@ TEST_CASE("ImageTest", "[core]") {
         REQUIRE(i.getTimeStamp() == isx::Time());
 
         std::vector<uint16_t> buf(r * h);
-        for (int j = 0; j < i.getImageSizeInBytes(); ++j)
+        for (size_t j = 0; j < i.getImageSizeInBytes(); ++j)
         {
             buf[j] = (uint16_t) j;
         }
