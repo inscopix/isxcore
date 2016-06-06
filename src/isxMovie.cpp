@@ -69,7 +69,7 @@ public:
     , m_path(inPath)
     , m_isValid(false)    
     {
-        std::assert(inNumFrames && inFrameWidth && inFrameHeight);
+        assert((inNumFrames > 0) && (inFrameWidth > 0) && (inFrameHeight > 0));
  
         /* Set rank, dimensions and max dimensions */
         m_ndims = 3;

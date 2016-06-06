@@ -104,8 +104,7 @@ TEST_CASE("MovieTest", "[core]") {
         size_t inputSize = inputMovie.getFrameSizeInBytes();
         std::vector<unsigned char> inputFrameBuffer(inputSize);
         inputMovie.getFrame(nFrame, &inputFrameBuffer[0], inputSize);
-        bool result = outputMovie.writeFrame(nFrame, &inputFrameBuffer[0], inputSize);
-        REQUIRE(result);
+        outputMovie.writeFrame(nFrame, &inputFrameBuffer[0], inputSize); 
         
         // Read dataset from output
         size_t outputSize = outputMovie.getFrameSizeInBytes();
