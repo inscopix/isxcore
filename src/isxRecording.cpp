@@ -25,11 +25,10 @@ public:
         {
             // Turn off the auto-printing when failure occurs so that we can
             // handle the errors appropriately
-            H5::Exception::dontPrint();
-            
-            // Open an existing file and dataset.
+            H5::Exception::dontPrint();            
+ 
             m_file = std::make_shared<H5::H5File>(m_path.c_str(), H5F_ACC_RDONLY);
-            m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file);
+            m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, H5F_ACC_RDONLY);
 
             // no exception until here --> this is a valid file
             m_isValid = true;
