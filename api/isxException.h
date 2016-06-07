@@ -7,6 +7,9 @@
 
 #include "isxLog.h"
 
+#define ISX_THROW_EXCEPTION_FILEIO(MSG) throw isx::ExceptionFileIO(__FILE__, __LINE__, MSG)
+#define ISX_THROW_EXCEPTION_DATAIO(MSG) throw isx::ExceptionDataIO(__FILE__, __LINE__, MSG)
+#define ISX_THROW_EXCEPTION_USRINPUT(MSG) throw isx::ExceptionUserInput(__FILE__, __LINE__, MSG)
 
 namespace isx
 {
@@ -16,28 +19,18 @@ namespace isx
     {
     public:
         
-        /// An enumerator describing the types of exceptions that exist
-        //
-        enum ExceptionTypes
-        {
-            ISX_EXCEPTION_FILEIO = 0,       
-            ISX_EXCEPTION_DATAIO,
-            ISX_EXCEPTION_USERINPUT
-        };
-
-        /// A vector containing the string names of the exception types
-        ///
-        static const std::vector<std::string> ExceptionTypeNames;
-
         /// Default message for exceptions
         static const std::string DEFAULT_MSG;
 
         /// Constructor
         ///
-        explicit Exception(const std::string& function, const std::string& message) :
-            m_msg(message),
-            m_funcName(function)
-        {}
+        explicit Exception(const char* file, int line, const std::string& message) :
+            m_fileName(file),
+            m_msg(message)            
+        {
+            m_line = std::to_string(line);
+            ISX_LOG_ERROR("Exception in line " + m_line + " of file " + m_fileName + " - " + m_msg);
+        }
 
         /// Destructor
         ///
@@ -49,26 +42,27 @@ namespace isx
             return m_msg.c_str();
         }
 
-        /// Retrieves the function name in which failure occurs
+        /// Retrieves the file name in which failure occurs
         ///
-        const char* getFuncName() const
+        const char* getFileName() const
         {
-            return m_funcName.c_str();
+            return m_fileName.c_str();
+        }
+        
+        /// Return the line where failure occurs
+        ///
+        int getLine()
+        {
+            return std::atoi(m_line.c_str());
         }
 
-        /// Retrieves the exception type
-        ///
-        const char* getType() const
-        {
-            return m_exceptionType.c_str();
-        }
-
+ 
     protected:
         
         std::string m_msg;           //!< Detailed message
-        std::string m_funcName;      //!< Failing function
-        std::string m_exceptionType; //!< Exception type
-    };
+        std::string m_fileName;      //!< Failing file
+        std::string m_line;          //!< Failing line within the file
+     };
 
     /// File I/O exception class
     ///
@@ -78,12 +72,9 @@ namespace isx
         
         /// Constructor
         ///
-        explicit ExceptionFileIO(const std::string& function, const std::string& message = DEFAULT_MSG) :
-            Exception(function, message)
-        {
-            m_exceptionType = ExceptionTypeNames[ISX_EXCEPTION_FILEIO];
-            ISX_LOG_ERROR(m_exceptionType + " in " + m_funcName + " - " + m_msg);
-        }
+        explicit ExceptionFileIO(const char* file, int line, const std::string& message = DEFAULT_MSG) :
+            Exception(file, line, message)
+        {}
         
         /// Destructor
         ///
@@ -98,12 +89,9 @@ namespace isx
 
         /// Constructor
         ///
-        explicit ExceptionDataIO(const std::string& function, const std::string& message = DEFAULT_MSG) :
-            Exception(function, message)
-        {
-            m_exceptionType = ExceptionTypeNames[ISX_EXCEPTION_DATAIO];
-            ISX_LOG_ERROR(m_exceptionType + " in " + m_funcName + " - " + m_msg);
-        }
+        explicit ExceptionDataIO(const char* file, int line, const std::string& message = DEFAULT_MSG) :
+            Exception(file, line, message)
+        {}
         
         /// Destructor
         ///
@@ -118,12 +106,9 @@ namespace isx
 
         /// Constructor
         ///
-        explicit ExceptionUserInput(const std::string& function, const std::string& message = DEFAULT_MSG) :
-            Exception(function, message)
-        {
-            m_exceptionType = ExceptionTypeNames[ISX_EXCEPTION_USERINPUT];
-            ISX_LOG_ERROR(m_exceptionType + " in " + m_funcName + " - " + m_msg);
-        }
+        explicit ExceptionUserInput(const char* file, int line, const std::string& message = DEFAULT_MSG) :
+            Exception(file, line, message)
+        {}
         
         /// Destructor
         ///

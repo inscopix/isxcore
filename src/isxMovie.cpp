@@ -48,13 +48,13 @@ public:
         // catch failure caused by the H5File operations
         catch(H5::FileIException error)
         {
-            throw ExceptionFileIO("isx::Movie::Impl", "Failure caused by the H5File operations");
+            ISX_THROW_EXCEPTION_FILEIO("Failure caused by the H5File operations");
         }
         
         // catch failure caused by the DataSet operations
         catch(H5::DataSetIException error)
         {
-            throw ExceptionDataIO("isx::Movie::Impl", "Failure caused by the DataSet operations");
+            ISX_THROW_EXCEPTION_DATAIO("Failure caused by the DataSet operations");
         }
         
         catch(...)
@@ -98,15 +98,15 @@ public:
         }
         catch (H5::DataSetIException error)
         {
-            throw ExceptionDataIO("isx::Movie::Impl", "Failure caused by the DataSet operations");
+            ISX_THROW_EXCEPTION_DATAIO("Failure caused by the DataSet operations");
         }
         catch(H5::FileIException error)
         {
-            throw ExceptionFileIO("isx::Movie::Impl", "Failure caused by the H5File operations"); 
+            ISX_THROW_EXCEPTION_FILEIO("Failure caused by the H5File operations"); 
         }
         catch(H5::GroupIException error)
         {
-            throw ExceptionDataIO("isx::Movie::Impl", "Failure caused by the Group operations");
+            ISX_THROW_EXCEPTION_DATAIO("Failure caused by the Group operations");
         }
  
     }
@@ -210,7 +210,7 @@ Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & in
 {
     if (false == inHdf5FileHandle->isReadOnly())
     {
-        throw ExceptionFileIO("isx::Movie::Movie", "File was opened with no read permission");
+        ISX_THROW_EXCEPTION_FILEIO("File was opened with no read permission");
     }
     
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
@@ -220,7 +220,7 @@ Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & in
 {
     if (false == inHdf5FileHandle->isReadWrite())
     {
-        throw ExceptionFileIO("isx::Movie::Movie", "File was opened with no write permission");
+        ISX_THROW_EXCEPTION_FILEIO("File was opened with no write permission");
     }
     
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inNumFrames, inFrameWidth, inFrameHeight));
@@ -289,15 +289,21 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
 {
     // Make sure the movie is valid
     if (!m_isValid)
-        throw ExceptionFileIO("isx::Movie::Impl::writeFrame", "Writing frame to invalid movie");
+    {
+        ISX_THROW_EXCEPTION_FILEIO("Writing frame to invalid movie");
+    }
          
     // Check that buffer size matches dataspace definition
     if (inBufferSize != m_frameSizeInBytes)
-        throw ExceptionUserInput("isx::Movie::Impl::writeFrame", "The buffer size does not match the the frame size in the file");
+    {
+        ISX_THROW_EXCEPTION_USRINPUT("The buffer size does not match the the frame size in the file");
+    }
         
     // Check that frame number is within range
     if (inFrameNumber > m_maxdims[0])
-        throw ExceptionUserInput("isx::Movie::Impl::writeFrame", "Frame number exceeds the total number of frames in the movie");
+    {
+        ISX_THROW_EXCEPTION_USRINPUT("Frame number exceeds the total number of frames in the movie");
+    }
            
     // Define file space.
     H5::DataSpace fileSpace(m_dataSpace);
@@ -319,7 +325,7 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
     // Catch failure caused by the DataSet operations
     catch (H5::DataSetIException error)
     {
-       throw ExceptionDataIO("isx::Movie::Impl::writeFrame", "Failed to write frame to movie");
+       ISX_THROW_EXCEPTION_DATAIO("Failed to write frame to movie");
     }     
  
 }
@@ -332,7 +338,7 @@ Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_ty
     // Every level other than the last one is created as a group. The last level is the dataset
     std::vector<std::string> tree = splitPath(name);
     std::string location("/");
-    for (int i(0); i < (int)tree.size() - 1; ++i)
+    for (unsigned int i(0); i < tree.size() - 1; ++i)
     {
         location += tree[i];  
         try
@@ -362,15 +368,21 @@ Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_ty
         // Check that the size of the file dataset is the same as the one the 
         // user is trying to write out
         if(nDims != m_ndims)
-            throw ExceptionDataIO("isx::Movie::Impl::createDataSet", "Dataset dimension mismatch");
+        {
+            ISX_THROW_EXCEPTION_DATAIO("Dataset dimension mismatch");
+        }
         
         for (int i(0); i < nDims; i++)
         {
             if(dims[i] != m_dims[i])
-                throw ExceptionDataIO("isx::Movie::Impl::createDataSet", "Dataset size mismatch");
+            {
+                ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
+            }
             
             if(maxdims[i] != m_maxdims[i])
-                throw ExceptionDataIO("isx::Movie::Impl::createDataSet", "Dataset size mismatch");
+            {
+                ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
+            }
         }
         
         // Dataset is valid if we get here
