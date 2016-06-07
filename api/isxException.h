@@ -65,8 +65,8 @@ namespace isx
 
     protected:
         
-        std::string m_funcName;      //!< Failing function
         std::string m_msg;           //!< Detailed message
+        std::string m_funcName;      //!< Failing function
         std::string m_exceptionType; //!< Exception type
     };
 
