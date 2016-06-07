@@ -63,7 +63,10 @@ public:
         // dummy values
         isx::Time start = isx::Time();
         isx::Ratio step(1, 30);
-        m_timingInfo = isx::TimingInfo(start, step, m_dims[0]);
+	// TODO sweet 2016/06/06 : on Windows the type of m_dims is a uint64_t
+	// so this needs some more thought
+	uint32_t numTimes = static_cast<uint32_t>(m_dims[0]);
+        m_timingInfo = isx::TimingInfo(start, step, numTimes);
     }
 
     bool
