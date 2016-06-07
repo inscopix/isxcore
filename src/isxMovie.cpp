@@ -63,7 +63,7 @@ public:
         // dummy values
         isx::Time start = isx::Time();
         isx::Ratio step(1, 30);
-        uint64_t numFrames = m_dims[0];
+        size_t numFrames = m_dims[0];
         m_timingInfo = isx::TimingInfo(start, step, numFrames);
     }
 

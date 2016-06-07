@@ -26,7 +26,7 @@ public:
     /// \param start    The start time of the samples.
     /// \param step     The duration of one sample in seconds.
     /// \param numTimes The number of samples.
-    TimingInfo(const isx::Time& start, const isx::Ratio& step, uint64_t numTimes);
+    TimingInfo(const isx::Time& start, const isx::Ratio& step, size_t numTimes);
 
     /// Get the start time of the samples.
     ///
@@ -46,7 +46,7 @@ public:
     /// Get the number of time samples.
     ///
     /// \return         The number of time samples.
-    uint64_t getNumTimes() const;
+    size_t getNumTimes() const;
 
     /// Get the duration of all samples in seconds.
     ///
@@ -66,7 +66,7 @@ public:
     ///
     /// \param      inTime  The time to convert to an index.
     /// \return             The sample index closest to the given time.
-    uint64_t convertTimeToIndex(const isx::Time& inTime) const;
+    size_t convertTimeToIndex(const isx::Time& inTime) const;
 
 private:
 
@@ -77,7 +77,7 @@ private:
     isx::Ratio m_step;
 
     /// The number of time samples.
-    uint64_t m_numTimes;
+    size_t m_numTimes;
 
 }; // class
 
