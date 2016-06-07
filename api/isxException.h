@@ -25,8 +25,8 @@ namespace isx
         /// Constructor
         ///
         explicit Exception(const char* file, int line, const std::string& message) :
-            m_fileName(file),
-            m_msg(message)            
+            m_msg(message),
+            m_fileName(file)            
         {
             m_line = std::to_string(line);
             ISX_LOG_ERROR("Exception in line " + m_line + " of file " + m_fileName + " - " + m_msg);
