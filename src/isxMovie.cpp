@@ -65,9 +65,9 @@ public:
     
     
     Impl(const SpH5File_t & inHdf5File, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight)
-    : m_H5File(inHdf5File)
-    , m_path(inPath)
-    , m_isValid(false)    
+    : m_isValid(false) 
+    , m_H5File(inHdf5File)
+    , m_path(inPath)   
     {
         assert((inNumFrames > 0) && (inFrameWidth > 0) && (inFrameHeight > 0));
  
@@ -332,7 +332,7 @@ Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_ty
     // Every level other than the last one is created as a group. The last level is the dataset
     std::vector<std::string> tree = splitPath(name);
     std::string location("/");
-    for (int i(0); i < tree.size() - 1; ++i)
+    for (int i(0); i < (int)tree.size() - 1; ++i)
     {
         location += tree[i];  
         try

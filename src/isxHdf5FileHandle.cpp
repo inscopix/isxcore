@@ -13,7 +13,7 @@ Hdf5FileHandle::Hdf5FileHandle()
 
 }
 
-Hdf5FileHandle::Hdf5FileHandle(const SpH5File_t & inFile, int accessMode)
+Hdf5FileHandle::Hdf5FileHandle(const SpH5File_t & inFile, unsigned int accessMode)
 : m_H5File(inFile)
 , m_isValid(true)
 , m_accessMode(accessMode)

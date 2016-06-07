@@ -20,7 +20,7 @@ public:
     /// constructor
     /// \ param inFile the SpH5File_t object to wrap
     ///
-    explicit Hdf5FileHandle(const SpH5File_t & inFile, int accessMode);
+    explicit Hdf5FileHandle(const SpH5File_t & inFile, unsigned int accessMode);
 
     /// accessor
     /// \return the wrapped SpH5File_t object
@@ -43,7 +43,7 @@ private:
     SpH5File_t m_H5File;
     bool m_isValid = false;
     
-    int m_accessMode;
+    unsigned int m_accessMode;
 };
 
 } // namespace isx
