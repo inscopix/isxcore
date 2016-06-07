@@ -11,7 +11,7 @@ TimingInfo::TimingInfo()
 {
 }
 
-TimingInfo::TimingInfo(const isx::Time& start, const isx::Ratio& step, size_t numTimes)
+TimingInfo::TimingInfo(const isx::Time& start, const isx::Ratio& step, uint32_t numTimes)
 : m_start(start)
 , m_step(step)
 , m_numTimes(numTimes)
@@ -36,7 +36,7 @@ TimingInfo::getStep() const
     return m_step;
 }
 
-size_t
+uint32_t
 TimingInfo::getNumTimes() const
 {
     return m_numTimes;
@@ -48,23 +48,27 @@ TimingInfo::getDuration() const
     return m_step * m_numTimes;
 }
 
-size_t
+uint32_t
 TimingInfo::convertTimeToIndex(const isx::Time& inTime) const
 {
     isx::Ratio secsFromStart = inTime.secsFrom(m_start);
     isx::Ratio indexRatio = (secsFromStart / m_step) - isx::Ratio(1, 2);
-    double index = std::round(indexRatio.toDouble());
+    long long indexLongLong = std::llround(indexRatio.toDouble());
 
-    if (index <= 0)
+    uint32_t index = 0;
+    if (indexLongLong < 0)
     {
-        return 0;
+        index = 0;
     }
-    else if (index >= m_numTimes)
+    else if (indexLongLong >= m_numTimes)
     {
-        return m_numTimes - 1;
+        index = m_numTimes - 1;
     }
-
-    return size_t(index);
+    else
+    {
+        index = static_cast<uint32_t>(indexLongLong);
+    }
+    return index;
 }
 
 } // namespace
