@@ -25,7 +25,7 @@ public:
     /// accessor
     /// \return the wrapped SpH5File_t object
     const SpH5File_t & 
-    get() const;
+    get() const; 
 
     /// \return whether this is a valid Hdf5FileHandle object
     ///
