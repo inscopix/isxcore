@@ -27,9 +27,7 @@ namespace isx
     };
     
     
-    
-    Mutex::Mutex() :
-        m_bIsLocked(false)
+    Mutex::Mutex()
     {
         m_internal.reset(new Impl());
     }
@@ -38,19 +36,31 @@ namespace isx
     {
     }
 
-    void Mutex::lock()
+    void Mutex::lock(const std::string & inOwner)
     {
         m_internal->lock();
-        m_bIsLocked = true;
+        m_owner = inOwner;
+        m_owningThread = std::this_thread::get_id();
     }
 
     void Mutex::unlock()
     {
-        if (m_bIsLocked)
-        {
-            m_internal->unlock();
-            m_bIsLocked = false;
-        }
+         m_internal->unlock();
     }
 
+    void Mutex::serialize(std::ostream& strm) const
+    {
+        strm << "Owner: " << m_owningThread << ", " << m_owner;
+    }
+
+    ScopedMutex::ScopedMutex(Mutex & inMutex, const std::string & inOwner)
+    : m_mutex(inMutex)
+    {
+        m_mutex.lock(inOwner);
+    }
+
+    ScopedMutex::~ScopedMutex()
+    {
+        m_mutex.unlock();
+    }
 }

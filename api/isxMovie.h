@@ -3,6 +3,7 @@
 
 #include "isxTimingInfo.h"
 #include "isxCoreFwd.h"
+#include "isxObject.h"
 
 #include <string>
 #include <vector>
@@ -13,7 +14,7 @@ namespace isx {
 ///
 /// A class encapsulating an nVista movie file.
 ///
-class Movie
+class Movie : public Object
 {
 public:
     /// Default constructor.  Is a valid C++ object but not a valid Movie.
@@ -21,10 +22,10 @@ public:
     Movie();
 
     /// Construct movie from a dataset in a Recording.
-    /// \param inRecording Recording from which to retrieve movie dataset.
+    /// \param inHdf5FileHandle opaque HDF5 file handle from Recording.
     /// \param inPath Path to dataset in Recording.
     ///
-    Movie(const SpRecording_t & inRecording, const std::string & inPath);
+    Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath);
 
     /// Destructor
     /// 
@@ -65,6 +66,11 @@ public:
     /// \return     The timing information of a movie.
     ///
     isx::TimingInfo getTimingInfo() const;
+
+    /// Serialize the object into an output stream.
+    ///
+    /// \param   strm    The output stream.
+    virtual void serialize(std::ostream& strm) const;
 
 private:
     class Impl;

@@ -1,8 +1,6 @@
 #include "isxMovie.h"
-#include "isxRecording.h"
-#include "isxRecording_internal.h"
+#include "isxHdf5FileHandle.h"
 #include "H5Cpp.h"
-
 #include <iostream>
 
 namespace isx {
@@ -11,8 +9,8 @@ class Movie::Impl
 public:
     ~Impl(){};
     Impl(){};
-    Impl(const SpRecording_t & inRecording, const std::string & inPath)
-    : m_H5File(inRecording->m_pImpl->getH5FileRef())
+    Impl(const SpH5File_t & inHdf5File, const std::string & inPath)
+    : m_H5File(inHdf5File)
     , m_path(inPath)
     {
         try
@@ -133,13 +131,17 @@ public:
         return m_timingInfo;
     }
 
+    void
+    serialize(std::ostream& strm) const
+    {
+        strm << m_path;
+    }
+
 private:
     bool m_isValid = false;
-    Recording::Impl::tH5File_SP m_H5File;
+    SpH5File_t m_H5File;
     std::string m_path;
-
     
-    H5::H5File m_file;
     H5::DataSet m_dataSet;
     H5::DataSpace m_dataSpace;
     H5::DataType m_dataType;
@@ -158,9 +160,9 @@ Movie::Movie()
     m_pImpl.reset(new Impl());
 }
 
-Movie::Movie(const SpRecording_t & inRecording, const std::string & inPath)
+Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath)
 {
-    m_pImpl.reset(new Impl(inRecording, inPath));
+    m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
 }
 
 Movie::~Movie()
@@ -213,6 +215,12 @@ isx::TimingInfo
 Movie::getTimingInfo() const
 {
     return m_pImpl->getTimingInfo();
+}
+
+void 
+Movie::serialize(std::ostream& strm) const
+{
+    m_pImpl->serialize(strm);
 }
 
 } // namespace isx

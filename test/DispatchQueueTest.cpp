@@ -1,5 +1,6 @@
 #include "isxCore.h"
 #include "isxDispatchQueue.h"
+#include "isxDispatchQueueWorker.h"
 #include "isxMutex.h"
 #include "catch.hpp"
 #include "isxLog.h"
@@ -7,8 +8,7 @@
 #include <sstream>
 #include <chrono>
 #include <thread>
-#include <mutex>
-
+#include <atomic>
 
 TEST_CASE("DispatchQueue", "[core]") {
 
@@ -47,7 +47,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task with context") {
         int secret = 123;
         int revealed = -1;
-        isx::DispatchQueue::ContextTask_t t = [&](void * inP)
+        isx::ContextTask_t t = [&](void * inP)
         {
             int * p = (int *) inP;
             *p = secret;
@@ -66,7 +66,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     }
     
     SECTION("run task on new worker thread") {
-        isx::SpDispatchQueue_t worker = isx::DispatchQueue::create();
+        isx::SpDispatchQueueWorker_t worker(new isx::DispatchQueueWorker());
         REQUIRE(worker);
         bool taskRan = false;
         worker->dispatch([&]()
@@ -90,12 +90,12 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task with context on new worker thread") {
         int secret = 123;
         int revealed = -1;
-        isx::DispatchQueue::ContextTask_t t = [&](void * inP)
+        isx::ContextTask_t t = [&](void * inP)
         {
             int * p = (int *) inP;
             *p = secret;
         };
-        isx::SpDispatchQueue_t worker = isx::DispatchQueue::create();
+        isx::SpDispatchQueueWorker_t worker(new isx::DispatchQueueWorker());
         REQUIRE(worker);
         bool taskRan = false;
         worker->dispatch(&revealed, t);
@@ -113,39 +113,68 @@ TEST_CASE("DispatchQueue", "[core]") {
         REQUIRE(secret == revealed);
     }
 
-    SECTION("run tasks in the pool with mutex locking")
+    SECTION("mutex locking to avoid race between two workers")
     {
-        isx::SpDispatchQueue_t poolQueue = isx::DispatchQueue::poolQueue();
-        REQUIRE(poolQueue);
+        auto w0 = std::make_shared<isx::DispatchQueueWorker>();
+        auto w1 = std::make_shared<isx::DispatchQueueWorker>();
 
-        int n = 100;
-        int count = 0;
+        int32_t n = 500;
+        int32_t count = 0;
+        bool doSleep = true;
         isx::Mutex countMutex;
-        isx::DispatchQueue::Task_t incTask([&]()
-        { 
-            int readCount;
-            
-            std::lock_guard<isx::Mutex> guard(countMutex);
+        isx::ContextTask_t incTask([&](void * inSleep)
+        {
+            std::string name = "task0";
+            if (inSleep && *(bool *)inSleep)
+            {
+                name[4] = '1';
+            }
+
+            isx::ScopedMutex guard(countMutex, name);
+
             // read
-            readCount = count;
+            int32_t readCount = count;
             
             // sleep
-            std::chrono::milliseconds d(1);
-            std::this_thread::sleep_for(d);
+            if (inSleep && *(bool *)inSleep)
+            {
+                std::chrono::microseconds d(1);
+                std::this_thread::sleep_for(d);
+            }
             
             // write
             count = readCount + 1;
         });
 
+        std::atomic_int doneCount(0);
+        isx::Task_t lastTask([&]()
+        {
+            doneCount++;
+        });
+
         for (int i = 0; i < n; ++i)
         {
-            poolQueue->dispatch(incTask);
+            w0->dispatch(&doSleep, incTask);
+            w1->dispatch(0, incTask);
+        }
+        
+        w0->dispatch(lastTask);
+        w1->dispatch(lastTask);
+
+        for (int i = 0; i < 250000; ++i)
+        {
+            if (doneCount == 2)
+            {
+                break;
+            }
+            std::chrono::microseconds d(1);
+            std::this_thread::sleep_for(d);
         }
 
-        std::chrono::milliseconds duration(2000);
-        std::this_thread::sleep_for(duration);
-
-        REQUIRE(count == n);
+        w0->destroy();
+        w1->destroy();
+        
+        REQUIRE(count == 2 * n);
     }
 
 // this test does not work because we need a Qt event loop handler running in the main
