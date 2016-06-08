@@ -1,8 +1,6 @@
 #ifndef ISX_IMAGE_H
 #define ISX_IMAGE_H
 
-#include "isxTime.h"
-
 #include <vector>
 #include <assert.h>
 
@@ -26,21 +24,6 @@ public:
         , m_height(inHeight)
         , m_rowBytes(inRowBytes)
         , m_numChannels(inNumChannels)
-    {
-        assert(inWidth > 0 && inHeight > 0 && inRowBytes > 0 && inNumChannels > 0);
-        assert(m_rowBytes >= m_width * getPixelSizeInBytes());
-        m_pixels.resize(getImageSizeInBytes());
-    }
-
-    /// Constructor for an image with a timestamp
-    ///
-    Image(int32_t inWidth, int32_t inHeight, int32_t inRowBytes, int32_t inNumChannels, const Time & inTimeStamp)
-        : m_width(inWidth)
-        , m_height(inHeight)
-        , m_rowBytes(inRowBytes)
-        , m_numChannels(inNumChannels)
-        , m_hasTimeStamp(true)
-        , m_timeStamp(inTimeStamp)
     {
         assert(inWidth > 0 && inHeight > 0 && inRowBytes > 0 && inNumChannels > 0);
         assert(m_rowBytes >= m_width * getPixelSizeInBytes());
@@ -97,22 +80,6 @@ public:
         return getRowBytes() * getHeight();
     }
 
-    /// \return whether this image has a timestamp
-    ///
-    bool
-    hasTimeStamp() const
-    {
-        return m_hasTimeStamp;
-    }
-
-    /// \return timestamp of this image
-    ///
-    const Time &
-    getTimeStamp() const
-    {
-        return m_timeStamp;
-    }
-
     /// \return the address of the first pixel in memory
     ///
     T *
@@ -131,8 +98,6 @@ private:
     int32_t m_height = 0;
     int32_t m_rowBytes = 0;
     int32_t m_numChannels = 0;
-    bool m_hasTimeStamp = false;
-    Time m_timeStamp;
 };
 
 } // namespace isx
