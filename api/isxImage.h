@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <assert.h>
+#include <cstdint>
 
 namespace isx
 {
