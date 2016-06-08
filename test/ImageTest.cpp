@@ -1,5 +1,4 @@
 #include "isxImage.h"
-#include "isxTime.h"
 #include "isxTest.h"
 #include "catch.hpp"
 #include "isxLog.h"
@@ -19,8 +18,6 @@ TEST_CASE("ImageTest", "[core]") {
         REQUIRE(i.getNumChannels() == 0);
         REQUIRE(i.getPixelSizeInBytes() == 0);
         REQUIRE(i.getImageSizeInBytes() == 0);
-        REQUIRE(i.hasTimeStamp() == false);
-        REQUIRE(i.getTimeStamp() == isx::Time());
         REQUIRE(i.getPixels() == p);
     }
 
@@ -38,8 +35,6 @@ TEST_CASE("ImageTest", "[core]") {
         REQUIRE(i.getNumChannels() == c);
         REQUIRE(i.getPixelSizeInBytes() == 2 * c);
         REQUIRE(i.getImageSizeInBytes() == r * h);
-        REQUIRE(i.hasTimeStamp() == false);
-        REQUIRE(i.getTimeStamp() == isx::Time());
 
         std::vector<uint16_t> buf(r * h);
         for (size_t j = 0; j < i.getImageSizeInBytes(); ++j)
@@ -54,26 +49,6 @@ TEST_CASE("ImageTest", "[core]") {
 
         // read, check if data is the same as what was written
         REQUIRE(0 == memcmp(p, &buf[0], buf.size()));
-    }
-
-    SECTION("constructor with time stamp")
-    {
-        const int32_t w = 10;
-        const int32_t h = 10;
-        const int32_t r = 32;
-        const int32_t c = 1;
-
-        isx::Time t = isx::Time::now();
-
-        isx::Image<uint16_t> i(w, h, r, c, t);
-        REQUIRE(i.getWidth() == w);
-        REQUIRE(i.getHeight() == h);
-        REQUIRE(i.getRowBytes() == r);
-        REQUIRE(i.getNumChannels() == c);
-        REQUIRE(i.getPixelSizeInBytes() == 2 * c);
-        REQUIRE(i.getImageSizeInBytes() == r * h);
-        REQUIRE(i.hasTimeStamp() == true);
-        REQUIRE(i.getTimeStamp() == t);
     }
 
 }
