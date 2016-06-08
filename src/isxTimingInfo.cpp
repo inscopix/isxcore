@@ -52,23 +52,20 @@ uint32_t
 TimingInfo::convertTimeToIndex(const isx::Time& inTime) const
 {
     isx::Ratio secsFromStart = inTime.secsFrom(m_start);
-    isx::Ratio indexRatio = (secsFromStart / m_step) - isx::Ratio(1, 2);
-    long long indexLongLong = std::llround(indexRatio.toDouble());
+    double index = std::floor((secsFromStart / m_step).toDouble());
 
-    uint32_t index = 0;
-    if (indexLongLong < 0)
+    if (index < 0)
     {
-        index = 0;
+        return 0;
     }
-    else if (indexLongLong >= m_numTimes)
+    else if (index >= m_numTimes)
     {
-        index = m_numTimes - 1;
+        return m_numTimes - 1;
     }
     else
     {
-        index = static_cast<uint32_t>(indexLongLong);
+        return static_cast<uint32_t>(index);
     }
-    return index;
 }
 
 } // namespace
