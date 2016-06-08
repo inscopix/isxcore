@@ -110,4 +110,24 @@ TEST_CASE("TimingInfoTest", "[core]")
         REQUIRE(index == 99);
     }
 
+    SECTION("Convert largest time value in a frame to an index")
+    {
+        isx::Time start;
+        isx::Ratio step(50, 1000);
+        isx::TimingInfo timingInfo(start, step, 100);
+        isx::Time time = start.addSecs(isx::Ratio(199, 1000));
+        uint32_t index = timingInfo.convertTimeToIndex(time);
+        REQUIRE(index == 3);
+    }
+
+    SECTION("Convert smallest time value in a frame to an index")
+    {
+        isx::Time start;
+        isx::Ratio step(50, 1000);
+        isx::TimingInfo timingInfo(start, step, 100);
+        isx::Time time = start.addSecs(isx::Ratio(200, 1000));
+        uint32_t index = timingInfo.convertTimeToIndex(time);
+        REQUIRE(index == 4);
+    }
+
 }
