@@ -4,6 +4,7 @@
 #include <vector>
 #include <assert.h>
 #include <cstdint>
+#include <cstddef>
 
 namespace isx
 {
@@ -19,7 +20,12 @@ public:
     Image(){}
 
     /// Constructor for an image
-    ///
+    /// \param inWidth width of the image in pixels
+    /// \param inHeight height of the image in pixels
+    /// \param inRowBytes number of bytes between 
+    ///        column 0 of any two subsequent rows
+    /// \param inNumChannels number of data channels
+    ///        of type T per pixel (eg. RGBA would be 4)
     Image(int32_t inWidth, int32_t inHeight, int32_t inRowBytes, int32_t inNumChannels)
         : m_width(inWidth)
         , m_height(inHeight)
