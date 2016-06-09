@@ -42,4 +42,92 @@ TEST_CASE("TimingInfoTest", "[core]")
         isx::TimingInfo timingInfo(start, step, numTimes);
         REQUIRE(timingInfo.getDuration() == 1);
     }
+
+    SECTION("Convert start time to index")
+    {
+        isx::Time start;
+        isx::Ratio step(50, 1000);
+        isx::TimingInfo timingInfo(start, step, 100);
+        uint32_t index = timingInfo.convertTimeToIndex(start);
+        REQUIRE(index == 0);
+    }
+
+    SECTION("Convert time before the start to index")
+    {
+        isx::Time start;
+        isx::Ratio step(50, 1000);
+        isx::TimingInfo timingInfo(start, step, 100);
+        isx::Time time = start.addSecs(-2);
+        uint32_t index = timingInfo.convertTimeToIndex(time);
+        REQUIRE(index == 0);
+    }
+
+    SECTION("Convert time half a sample after start to an index")
+    {
+        isx::Time start;
+        isx::Ratio step(50, 1000);
+        isx::TimingInfo timingInfo(start, step, 100);
+        isx::Time time = start.addSecs(isx::Ratio(25, 1000));
+        uint32_t index = timingInfo.convertTimeToIndex(time);
+        REQUIRE(index == 0);
+    }
+
+    SECTION("Convert time one sample after the start to an index")
+    {
+        isx::Time start;
+        isx::Ratio step(50, 1000);
+        isx::TimingInfo timingInfo(start, step, 100);
+        isx::Time time = start.addSecs(isx::Ratio(50, 1000));
+        uint32_t index = timingInfo.convertTimeToIndex(time);
+        REQUIRE(index == 1);
+    }
+
+    SECTION("Convert time almost one and a half samples after the start to an index")
+    {
+        isx::Time start;
+        isx::Ratio step(50, 1000);
+        isx::TimingInfo timingInfo(start, step, 100);
+        isx::Time time = start.addSecs(isx::Ratio(74, 1000));
+        uint32_t index = timingInfo.convertTimeToIndex(time);
+        REQUIRE(index == 1);
+    }
+
+    SECTION("Convert end time to index")
+    {
+        isx::Time start;
+        isx::Ratio step(50, 1000);
+        isx::TimingInfo timingInfo(start, step, 100);
+        isx::Time time = timingInfo.getEnd();
+        uint32_t index = timingInfo.convertTimeToIndex(time);
+        REQUIRE(index == 99);
+    }
+
+    SECTION("Convert time after end to index")
+    {
+        isx::TimingInfo timingInfo;
+        isx::Time time = timingInfo.getEnd().addSecs(2);
+        uint32_t index = timingInfo.convertTimeToIndex(time);
+        REQUIRE(index == 99);
+    }
+
+    SECTION("Convert largest time value in a frame to an index")
+    {
+        isx::Time start;
+        isx::Ratio step(50, 1000);
+        isx::TimingInfo timingInfo(start, step, 100);
+        isx::Time time = start.addSecs(isx::Ratio(199, 1000));
+        uint32_t index = timingInfo.convertTimeToIndex(time);
+        REQUIRE(index == 3);
+    }
+
+    SECTION("Convert smallest time value in a frame to an index")
+    {
+        isx::Time start;
+        isx::Ratio step(50, 1000);
+        isx::TimingInfo timingInfo(start, step, 100);
+        isx::Time time = start.addSecs(isx::Ratio(200, 1000));
+        uint32_t index = timingInfo.convertTimeToIndex(time);
+        REQUIRE(index == 4);
+    }
+
 }

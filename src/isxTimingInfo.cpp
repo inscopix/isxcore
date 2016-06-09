@@ -1,4 +1,5 @@
 #include "isxTimingInfo.h"
+#include <cmath>
 
 namespace isx
 {
@@ -45,6 +46,26 @@ isx::Ratio
 TimingInfo::getDuration() const
 {
     return m_step * m_numTimes;
+}
+
+uint32_t
+TimingInfo::convertTimeToIndex(const isx::Time& inTime) const
+{
+    isx::Ratio secsFromStart = inTime.secsFrom(m_start);
+    double index = std::floor((secsFromStart / m_step).toDouble());
+
+    if (index < 0)
+    {
+        return 0;
+    }
+    else if (index >= m_numTimes)
+    {
+        return m_numTimes - 1;
+    }
+    else
+    {
+        return static_cast<uint32_t>(index);
+    }
 }
 
 } // namespace
