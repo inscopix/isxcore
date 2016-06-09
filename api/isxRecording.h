@@ -7,8 +7,7 @@
 #include <string>
 #include <memory>
 
-namespace isx {
-
+namespace isx { 
 
 /// A class for nvista recordings
 /// This is considered immutable - we will never write to it
@@ -27,7 +26,7 @@ public:
 
     /// Construct recording from a given file.
     /// \param inPath Path to recording file.
-    ///
+     ///
     Recording(const std::string & inPath);
 
     /// \return whether this is a valid recording object.

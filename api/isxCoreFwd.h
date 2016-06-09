@@ -14,6 +14,7 @@ namespace isx
 {
     FWD_DECLARE_WITH_PTRS(Recording);
     FWD_DECLARE_WITH_PTRS(Movie);
+    FWD_DECLARE_WITH_PTRS(ProjectFile);
     FWD_DECLARE_WITH_PTRS(Hdf5FileHandle);
     FWD_DECLARE_WITH_PTRS(DispatchQueueInterface);
     FWD_DECLARE_WITH_PTRS(DispatchQueueWorker);
