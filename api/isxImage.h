@@ -33,7 +33,7 @@ public:
         , m_numChannels(inNumChannels)
     {
         assert(inWidth > 0 && inHeight > 0 && inRowBytes > 0 && inNumChannels > 0);
-        assert(m_rowBytes >= m_width * getPixelSizeInBytes());
+        assert(m_rowBytes >= int32_t(m_width * getPixelSizeInBytes()));
         m_pixels.resize(getImageSizeInBytes());
     }
 
