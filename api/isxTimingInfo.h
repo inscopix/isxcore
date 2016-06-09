@@ -9,6 +9,10 @@ namespace isx
 
 /// The timing info associated with temporal samples.
 ///
+/// This class is used to store timing info about samples associated with
+/// movies and traces. It also contains some utility methods to convert
+/// times to sample indices so that samples can be retrieved with respect
+/// to absolute time points.
 class TimingInfo
 {
 public:
@@ -23,11 +27,6 @@ public:
     /// \param step     The duration of one sample in seconds.
     /// \param numTimes The number of samples.
     TimingInfo(const isx::Time& start, const isx::Ratio& step, uint32_t numTimes);
-
-    /// Check validity of this.
-    ///
-    /// \return         True if this is valid.
-    bool isValid() const;
 
     /// Get the start time of the samples.
     ///
@@ -53,6 +52,32 @@ public:
     ///
     /// \return         The duration of all samples in seconds.
     isx::Ratio getDuration() const;
+
+    /// Converts an absolute time to the corresponding index within this.
+    ///
+    /// This associates each sample with the center of its temporal bin.
+    /// It returns the index with the center that is closest to the given
+    /// time. If the time is equally close to two centers, then this
+    /// returns the larger index.
+    ///
+    /// For example, consider temporal samples with the following bins.
+    ///
+    ///             Bin 0       Bin 1       Bin 2       Bin 3       Bin 4
+    ///         +-----------+-----------+-----------+-----------+-------
+    /// Time    0    0.1   0.2   0.3   0.4   0.5   0.6   0.7   0.8
+    /// Index   0           1           2           3           4
+    ///
+    /// Index 1 represents temporal bin 1, which contains all times in
+    /// [0.2, 0.4). If the inTime is in [0.2, 0.4) then 1 will be returned.
+    /// If the inTime is equal to 0.3, then 2 will be returned.
+    ///
+    /// If the time is earlier than the start time, then zero is returned.
+    /// If the time is later than the end time, then the last index is
+    /// returned.
+    ///
+    /// \param      inTime  The time to convert to an index.
+    /// \return             The sample index closest to the given time.
+    uint32_t convertTimeToIndex(const isx::Time& inTime) const;
 
 private:
 
