@@ -39,7 +39,7 @@ public:
             }
             else
             {
-                std::cerr << "Unsupported data type." << std::endl;
+                ISX_THROW_EXCEPTION_DATAIO("Unsupported data type");                
             }
             
             
@@ -59,7 +59,7 @@ public:
         
         catch(...)
         {
-            std::cerr << "Unhandled exception." << std::endl;
+            ISX_LOG_ERROR("Unhandled exception.");
         }
     }
     
