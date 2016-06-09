@@ -344,7 +344,7 @@ Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_ty
     
     
     
-    int nCreateFromIdx = 0;
+    unsigned int nCreateFromIdx = 0;
     
     while((nObjInGroup > 0) && (nCreateFromIdx < tree.size()))
     {
