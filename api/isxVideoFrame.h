@@ -56,7 +56,7 @@ public:
         return m_frameIndex;
     }
 
-    /// \return the iamge data for this videoframe
+    /// \return the image data for this videoframe
     ///
     Image<T> &
     getImage()
