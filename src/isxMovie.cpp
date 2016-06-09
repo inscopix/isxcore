@@ -102,7 +102,6 @@ public:
         }
         catch(H5::FileIException error)
         {
-            error.printError();
             ISX_THROW_EXCEPTION_FILEIO("Failure caused by the H5File operations"); 
         }
         catch(H5::GroupIException error)
@@ -338,16 +337,12 @@ Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_ty
     // Parse name and create the hierarchy tree (if not in the file already). 
     // Every level other than the last one is created as a group. The last level is the dataset
     std::vector<std::string> tree = splitPath(name); 
-    std::cout << "Found groups are:" << std::endl;
-    for(int i(0); i < tree.size(); ++i)
-    {
-        std::cout << tree[i] << std::endl;
-        
-    }
-    H5::Group currentGroup = m_H5File->openGroup("/");
+ 
+    std::string currentObjName("/");
+    H5::Group currentGroup = m_H5File->openGroup(currentObjName);
     hsize_t nObjInGroup = currentGroup.getNumObjs();
     
-    std::string currentObjName;
+    
     
     int nCreateFromIdx = 0;
     
@@ -359,7 +354,7 @@ Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_ty
         for(hsize_t obj(0); obj < nObjInGroup; ++obj)
         {
             std::string objName = currentGroup.getObjnameByIdx(obj);
-            if(objName == targetObjName)
+            if(objName == tree[nCreateFromIdx])
             {
                 bTargetFound = true;
                 break;
@@ -383,21 +378,17 @@ Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_ty
         }
     }
     
-    std::cout << "Create path index is " << nCreateFromIdx << std::endl;
-    
+       
     for ( ; nCreateFromIdx < tree.size(); ++nCreateFromIdx)
     {
         if(nCreateFromIdx == (tree.size() - 1))
         {
-            m_dataSet = m_H5File->createDataSet(name, data_type, data_space);   
-            std::cout << "Created dataset " << name << std::endl;            
+            m_dataSet = m_H5File->createDataSet(name, data_type, data_space);           
             return;
         }
         
-        std::string targetObjName = currentObjName + "/" + tree[nCreateFromIdx];
-        std::cout << "Trying to create group " << targetObjName << std::endl;
-        m_H5File->createGroup(targetObjName);
-        std::cout << "Created group " << targetObjName << std::endl;
+        std::string targetObjName = currentObjName + "/" + tree[nCreateFromIdx]; 
+        m_H5File->createGroup(targetObjName); 
         currentObjName = targetObjName;
     }
     
