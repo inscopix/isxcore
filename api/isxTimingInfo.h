@@ -68,7 +68,7 @@ public:
     /// Index   0           1           2           3           4
     ///
     /// Index 1 represents temporal bin 1, which contains all times in
-    /// [0.2, 0.3). If the inTime is in [0.2, 0.3) then 1 will be returned.
+    /// [0.2, 0.4). If the inTime is in [0.2, 0.4) then 1 will be returned.
     /// If the inTime is equal to 0.3, then 2 will be returned.
     ///
     /// If the time is earlier than the start time, then zero is returned.

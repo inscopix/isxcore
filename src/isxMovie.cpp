@@ -393,7 +393,7 @@ Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_ty
         m_dataSet = m_H5File->openDataSet(name);
         H5::DataType type = m_dataSet.getDataType();
         H5::DataSpace space = m_dataSet.getSpace();
-        int nDims = space.getSimpleExtentNdims();;
+        int nDims = space.getSimpleExtentNdims();
         std::vector<hsize_t> dims(nDims);
         std::vector<hsize_t> maxdims(nDims);
         space.getSimpleExtentDims(&dims[0], &maxdims[0]);
