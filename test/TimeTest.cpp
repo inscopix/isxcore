@@ -38,12 +38,12 @@ TEST_CASE("TimeTest", "[core]") {
     SECTION("accumulate rational number seconds")
     {
         isx::Ratio stepTime(1, 30);
-        uint32_t numTimes = 32;
+        uint64_t numTimes = 32;
         isx::Time time;
         isx::Time expected = time.addSecs(stepTime * numTimes);
 
         isx::Time actual = time;
-        for (uint32_t t = 0; t < numTimes; ++t)
+        for (uint64_t t = 0; t < numTimes; ++t)
         {
             actual = actual.addSecs(stepTime);
         }

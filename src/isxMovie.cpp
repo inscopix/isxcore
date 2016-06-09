@@ -61,6 +61,15 @@ public:
         {
             ISX_LOG_ERROR("Unhandled exception.");
         }
+
+        // TODO sweet 2016/05/31 : the start and step should be read from
+        // the file but it doesn't currently contain these, so picking some
+        // dummy values
+        isx::Time start = isx::Time();
+        isx::Ratio step(1, 30);
+        // TODO sweet 2016/06/06 : on Windows the type of m_dims is a uint64_t
+        // so this needs some more thought
+        m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]));
     }
     
     
@@ -84,6 +93,10 @@ public:
 
         m_dims[2] = inFrameWidth;
         m_maxdims[2] = inFrameWidth;
+
+        // TODO sweet 2016/09/31 : the start and step should also be specified
+        // but we don't currently have a mechnanism for that
+        m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]));
 
         /* Create the dataspace */
         m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
@@ -120,7 +133,7 @@ public:
     int 
     getNumFrames() const
     {
-        return int(m_dims[0]);
+        return int(m_timingInfo.getNumTimes());
     }
 
     int 
@@ -167,8 +180,13 @@ public:
     double 
     getDurationInSeconds() const
     {
-        // TODO aschildan 4/21/2016: Fix to take actual framerate into account
-        return double(getNumFrames()) / 30.0;
+        return m_timingInfo.getDuration().toDouble();
+    }
+
+    isx::TimingInfo
+    getTimingInfo() const
+    {
+        return m_timingInfo;
     }
     
     void writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
@@ -180,6 +198,16 @@ public:
     }
 
 private:
+
+    /// A method to create a dummy TimingInfo object from the number of frames.
+    ///
+    isx::TimingInfo
+    createDummyTimingInfo(uint32_t numFrames)
+    {
+        isx::Time start = isx::Time();
+        isx::Ratio step(1, 30);
+        return isx::TimingInfo(start, step, numFrames);
+    }
 
     bool m_isValid = false;
     SpH5File_t m_H5File;
@@ -193,11 +221,11 @@ private:
     std::vector<hsize_t> m_dims;
     std::vector<hsize_t> m_maxdims;
     size_t m_frameSizeInBytes;
-    
-    
+
+    isx::TimingInfo m_timingInfo;
+
     void createDataSet(const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space);
     std::vector<std::string> splitPath(const std::string &s);
-
 };
 
 
@@ -272,6 +300,12 @@ Movie::getDurationInSeconds() const
     return m_pImpl->getDurationInSeconds();
 }
 
+isx::TimingInfo
+Movie::getTimingInfo() const
+{
+    return m_pImpl->getTimingInfo();
+}
+
 void 
 Movie::serialize(std::ostream& strm) const
 {
@@ -329,7 +363,6 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
     }     
  
 }
-
 
 void 
 Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space)
@@ -430,6 +463,7 @@ Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_ty
         m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
     }    
 }
+
 
 std::vector<std::string> 
 Movie::Impl::splitPath(const std::string &s)

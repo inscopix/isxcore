@@ -83,7 +83,13 @@ Time::secsFrom(const isx::Time& from) const
 bool
 Time::operator ==(const isx::Time& other) const
 {
-    return this->m_secsSinceEpoch == other.m_secsSinceEpoch;
+    return m_secsSinceEpoch == other.m_secsSinceEpoch;
+}
+
+bool
+Time::operator <(const isx::Time& other) const
+{
+    return m_secsSinceEpoch < other.m_secsSinceEpoch;
 }
 
 void

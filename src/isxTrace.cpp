@@ -13,7 +13,7 @@ Trace<T>::Trace(isx::Time start, isx::Ratio step, uint32_t numTimes)
 template <class T>
 Trace<T>::~Trace()
 {
-    delete m_data;
+    delete[] m_data;
 }
 
 template <class T>
