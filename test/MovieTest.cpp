@@ -58,9 +58,8 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(r->isValid());
         isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
-        size_t s = m.getFrameSizeInBytes();
-        std::vector<unsigned char> t(s);
-        m.getFrame(0, &t[0], s);
+        auto nvf = m.getFrame(m.getTimingInfo().getStart());
+        unsigned char * t = reinterpret_cast<unsigned char *>(nvf->getPixels());
         REQUIRE(t[0] == 0x43);
         REQUIRE(t[1] == 0x3);
     }
@@ -102,14 +101,16 @@ TEST_CASE("MovieTest", "[core]") {
         // Write a frame from the input movie to the output movie
         int nFrame = 15;
         size_t inputSize = inputMovie.getFrameSizeInBytes();
-        std::vector<unsigned char> inputFrameBuffer(inputSize);
-        inputMovie.getFrame(nFrame, &inputFrameBuffer[0], inputSize);
+        isx::Time frame15Time = inputMovie.getTimingInfo().getStart();
+        frame15Time.addSecs(isx::Ratio(15, 1) * inputMovie.getTimingInfo().getStep());
+        auto nvf = inputMovie.getFrame(frame15Time);
+        unsigned char * inputFrameBuffer = reinterpret_cast<unsigned char *>(nvf->getPixels());
         outputMovie.writeFrame(nFrame, &inputFrameBuffer[0], inputSize); 
         
         // Read dataset from output
         size_t outputSize = outputMovie.getFrameSizeInBytes();
-        std::vector<unsigned char> outputFrameBuffer(outputSize);        
-        outputMovie.getFrame(nFrame, &outputFrameBuffer[0], outputSize);
+        auto outputNvf = inputMovie.getFrame(frame15Time);
+        unsigned char * outputFrameBuffer = reinterpret_cast<unsigned char *>(outputNvf->getPixels());
 
         int nCol = 35;
         int nRow = 3;

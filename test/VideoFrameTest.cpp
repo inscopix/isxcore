@@ -12,8 +12,8 @@ TEST_CASE("VideoFrameTest", "[core]") {
     {
         isx::VideoFrame<uint32_t> v;
         uint32_t * p = 0;
-        REQUIRE(v.getImage().getWidth() == 0);
-        REQUIRE(v.getImage().getPixels() == p);
+        REQUIRE(v.getWidth() == 0);
+        REQUIRE(v.getPixels() == p);
         REQUIRE(v.getTimeStamp() == isx::Time());
         REQUIRE(v.getFrameIndex() == 0);
     }
@@ -28,19 +28,19 @@ TEST_CASE("VideoFrameTest", "[core]") {
         const size_t f = 42;
 
         isx::VideoFrame<uint16_t> v(w, h, r, c, t, f);
-        REQUIRE(v.getImage().getWidth() == w);
+        REQUIRE(v.getWidth() == w);
         REQUIRE(v.getTimeStamp() == t);
         REQUIRE(v.getFrameIndex() == f);
 
         std::vector<uint16_t> buf(r * h);
-        for (size_t j = 0; j < v.getImage().getImageSizeInBytes(); ++j)
+        for (size_t j = 0; j < v.getImageSizeInBytes(); ++j)
         {
             buf[j] = (uint16_t) j;
         }
 
         // write, should have enough buffer space to not cause
         // access violation :)
-        uint16_t * p = v.getImage().getPixels();
+        uint16_t * p = v.getPixels();
         memcpy(p, &buf[0], buf.size());
 
         // read, check if data is the same as what was written
