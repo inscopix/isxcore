@@ -178,6 +178,11 @@ public:
     {
         strm << m_path;
     }
+    
+    std::string getName()
+    {
+        return m_path.substr(m_path.find_last_of("/")+1);
+    }
 
 private:
 
@@ -276,6 +281,12 @@ void
 Movie::serialize(std::ostream& strm) const
 {
     m_pImpl->serialize(strm);
+}
+
+std::string 
+Movie::getName()
+{
+    return m_pImpl->getName();
 }
 
 void 

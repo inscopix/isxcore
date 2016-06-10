@@ -94,7 +94,7 @@ TEST_CASE("MovieTest", "[core]") {
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
         isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename);
         
-        isx::Movie outputMovie(outputFile->getHdf5FileHandle(), "/MosaicProject/Schedules/Schedule1/Recording1/Movie", nFrames, nCols, nRows); 
+        /* isx::Movie outputMovie(outputFile->getHdf5FileHandle(), "/MosaicProject/Schedules/Schedule1/Recording1/Movie", nFrames, nCols, nRows); 
         REQUIRE(nFrames == outputMovie.getNumFrames());
         REQUIRE(nCols == outputMovie.getFrameWidth());
         REQUIRE(nRows == outputMovie.getFrameHeight());
@@ -115,7 +115,7 @@ TEST_CASE("MovieTest", "[core]") {
         int nRow = 3;
         int idx = (nRows * nCol + nRow) * 2;
         REQUIRE(inputFrameBuffer[idx] == outputFrameBuffer[idx]);  
-        REQUIRE(inputFrameBuffer[idx+1] == outputFrameBuffer[idx+1]);        
+        REQUIRE(inputFrameBuffer[idx+1] == outputFrameBuffer[idx+1]); */        
 
     } 
 
