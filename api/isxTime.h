@@ -57,10 +57,26 @@ public:
     ///
     bool operator ==(const isx::Time& other) const;
 
+    /// \return     True if this is not exactly equal to another time, false otherwise.
+    ///
+    bool operator !=(const isx::Time& other) const;
+
     /// \return     True if this is earlier than another time, false other.
     ///
     bool operator <(const isx::Time& other) const;
 
+    /// \return     True if this is earlier than or equal to another time, false other.
+    ///
+    bool operator <=(const isx::Time& other) const;
+
+    /// \return     True if this is later than another time, false other.
+    ///
+    bool operator >(const isx::Time& other) const;
+
+    /// \return     True if this is later than or equal to another time, false other.
+    ///
+    bool operator >=(const isx::Time& other) const;
+    
     /// \return     The current time.
     ///
     static isx::Time now();

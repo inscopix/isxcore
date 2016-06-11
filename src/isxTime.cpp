@@ -85,6 +85,12 @@ Time::operator ==(const isx::Time& other) const
 {
     return m_secsSinceEpoch == other.m_secsSinceEpoch;
 }
+    
+bool
+Time::operator !=(const isx::Time& other) const
+{
+    return m_secsSinceEpoch != other.m_secsSinceEpoch;
+}
 
 bool
 Time::operator <(const isx::Time& other) const
@@ -92,6 +98,24 @@ Time::operator <(const isx::Time& other) const
     return m_secsSinceEpoch < other.m_secsSinceEpoch;
 }
 
+bool
+Time::operator <=(const isx::Time& other) const
+{
+    return m_secsSinceEpoch <= other.m_secsSinceEpoch;
+}
+
+bool
+Time::operator >(const isx::Time& other) const
+{
+    return m_secsSinceEpoch > other.m_secsSinceEpoch;
+}
+    
+bool
+Time::operator >=(const isx::Time& other) const
+{
+    return m_secsSinceEpoch >= other.m_secsSinceEpoch;
+}
+    
 void
 Time::serialize(std::ostream& strm) const
 {
