@@ -33,7 +33,7 @@ namespace isx {
                 {
                     std::string objName = recordingScheduleGroup.getObjnameByIdx(m);
                     std::string path = m_path + "/" + objName;
-                    m_movies[m].reset(new Movie(m_fileHandle, path));
+                    m_movies[m].reset(new Movie(m_fileHandle, path + "/Movie"));
                 }
             }
         }
@@ -64,7 +64,10 @@ namespace isx {
         addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight)
         {
             std::string path = m_path + "/" + inName;
-            m_movies.push_back(std::make_shared<Movie>(m_fileHandle, path, inNumFrames, inFrameWidth, inFrameHeight));
+            // Create the properties group
+            m_file->createGroup(path);
+            m_file->createGroup(path + "/Properties");    
+            m_movies.push_back(std::make_shared<Movie>(m_fileHandle, path + "/Movie", inNumFrames, inFrameWidth, inFrameHeight));
             return m_movies[m_movies.size()-1];
         }
         

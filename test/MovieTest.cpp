@@ -94,28 +94,52 @@ TEST_CASE("MovieTest", "[core]") {
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
         isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename);
         
-        /* isx::Movie outputMovie(outputFile->getHdf5FileHandle(), "/MosaicProject/Schedules/Schedule1/Recording1/Movie", nFrames, nCols, nRows); 
-        REQUIRE(nFrames == outputMovie.getNumFrames());
-        REQUIRE(nCols == outputMovie.getFrameWidth());
-        REQUIRE(nRows == outputMovie.getFrameHeight());
+        uint16_t nSchedules = outputFile->getNumRecordingSchedules();
+        isx::SpRecordingSchedule_t rs;
+        isx::SpMovie_t outputMovie; 
+        
+        if(nSchedules == 0)
+        {
+            // Create it
+            rs = outputFile->addRecordingSchedule("RecSchedule0");
+            outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows);
+        }
+        else
+        {
+            // Read it
+            rs = outputFile->getRecordingSchedule(0);
+            uint16_t nMovies = rs->getNumMovies();
+            if(nMovies == 0)
+            {
+                outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows);
+            }
+            else
+            {
+                outputMovie = rs->getMovie(0);
+            }            
+        }        
+        
+        REQUIRE(nFrames == outputMovie->getNumFrames());
+        REQUIRE(nCols == outputMovie->getFrameWidth());
+        REQUIRE(nRows == outputMovie->getFrameHeight());
 
         // Write a frame from the input movie to the output movie
         int nFrame = 15;
         size_t inputSize = inputMovie.getFrameSizeInBytes();
         std::vector<unsigned char> inputFrameBuffer(inputSize);
         inputMovie.getFrame(nFrame, &inputFrameBuffer[0], inputSize);
-        outputMovie.writeFrame(nFrame, &inputFrameBuffer[0], inputSize); 
+        outputMovie->writeFrame(nFrame, &inputFrameBuffer[0], inputSize); 
         
         // Read dataset from output
-        size_t outputSize = outputMovie.getFrameSizeInBytes();
+        size_t outputSize = outputMovie->getFrameSizeInBytes();
         std::vector<unsigned char> outputFrameBuffer(outputSize);        
-        outputMovie.getFrame(nFrame, &outputFrameBuffer[0], outputSize);
+        outputMovie->getFrame(nFrame, &outputFrameBuffer[0], outputSize);
 
         int nCol = 35;
         int nRow = 3;
         int idx = (nRows * nCol + nRow) * 2;
         REQUIRE(inputFrameBuffer[idx] == outputFrameBuffer[idx]);  
-        REQUIRE(inputFrameBuffer[idx+1] == outputFrameBuffer[idx+1]); */        
+        REQUIRE(inputFrameBuffer[idx+1] == outputFrameBuffer[idx+1]);        
 
     } 
 

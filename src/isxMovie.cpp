@@ -212,12 +212,7 @@ Movie::Movie()
 }
 
 Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath)
-{
-    if (false == inHdf5FileHandle->isReadOnly())
-    {
-        ISX_THROW_EXCEPTION_FILEIO("File was opened with no read permission");
-    }
-    
+{    
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
 }
 
