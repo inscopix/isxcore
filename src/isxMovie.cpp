@@ -196,6 +196,11 @@ public:
     {
         strm << m_path;
     }
+    
+    std::string getName()
+    {
+        return m_path.substr(m_path.find_last_of("/")+1);
+    }
 
 private:
 
@@ -235,12 +240,7 @@ Movie::Movie()
 }
 
 Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath)
-{
-    if (false == inHdf5FileHandle->isReadOnly())
-    {
-        ISX_THROW_EXCEPTION_FILEIO("File was opened with no read permission");
-    }
-    
+{    
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
 }
 
@@ -310,6 +310,12 @@ void
 Movie::serialize(std::ostream& strm) const
 {
     m_pImpl->serialize(strm);
+}
+
+std::string 
+Movie::getName()
+{
+    return m_pImpl->getName();
 }
 
 void 

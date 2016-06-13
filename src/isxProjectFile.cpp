@@ -3,7 +3,6 @@
 #include <fstream>
 namespace isx {
 
- 
     class ProjectFile::Impl
     {
     public:
@@ -20,11 +19,7 @@ namespace isx {
             m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
             m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, openFlag);
                 
-            if(false == isInitialized())
-            {
-                // Initialize the data model if the file hasn't been initialized
-                initDataModel();
-            }
+            initialize();
         }
         
         ~Impl()
@@ -36,8 +31,6 @@ namespace isx {
         }
          
         bool exists(std::string & inFileName);
-        bool isInitialized();
-        void initDataModel();
         
         /// \return Hdf5FileHandle
         ///
@@ -47,8 +40,24 @@ namespace isx {
             return m_fileHandle;
         }
         
+        uint16_t 
+        getNumRecordingSchedules()
+        {
+            return (uint16_t)m_recordingSchedules.size();
+        }
+        
+        SpRecordingSchedule_t 
+        getRecordingSchedule(uint16_t inIndex)
+        {
+            return m_recordingSchedules[inIndex];
+        }
+        
+        SpRecordingSchedule_t addRecordingSchedule(const std::string & inName);
+        
     private:
-
+        void initialize();
+        void initDataModel();
+        
         SpH5File_t m_file;
         SpHdf5FileHandle_t m_fileHandle;
         
@@ -59,10 +68,16 @@ namespace isx {
         H5::Group  m_grSchedules;
         H5::Group  m_grCells;
         
+        std::vector<SpRecordingSchedule_t> m_recordingSchedules;
+        
 
     };
-
-
+    
+    
+    
+    
+        
+    
     ///////////////////////////////////////////////////////////////////////////////
     //  PROJECT FILE
     ///////////////////////////////////////////////////////////////////////////////
@@ -76,9 +91,29 @@ namespace isx {
     } 
 
         
-    SpHdf5FileHandle_t ProjectFile::getHdf5FileHandle()
+    SpHdf5FileHandle_t 
+    ProjectFile::getHdf5FileHandle()
     {
         return m_pImpl->getHdf5FileHandle();
+    }
+    
+    uint16_t 
+    ProjectFile::getNumRecordingSchedules()
+    {
+        return m_pImpl->getNumRecordingSchedules();
+    }
+        
+
+    SpRecordingSchedule_t 
+    ProjectFile::getRecordingSchedule(uint16_t inIndex)
+    {
+        return m_pImpl->getRecordingSchedule(inIndex);
+    }
+    
+    SpRecordingSchedule_t 
+    ProjectFile::addRecordingSchedule(const std::string & inName)
+    {
+        return m_pImpl->addRecordingSchedule(inName);
     }
 
  
@@ -86,26 +121,51 @@ namespace isx {
     ///////////////////////////////////////////////////////////////////////////////
     //  PROJECT FILE IMPLEMENTATION
     ///////////////////////////////////////////////////////////////////////////////
- 
-    bool ProjectFile::Impl::isInitialized()
-    {        
-        bool bInitialized = false;
-        
-        try
-        {
-            m_file->openGroup("/MosaicProject");
-            bInitialized = true;
-        }
-
-        catch (H5::FileIException error)
-        {
-            // Do nothing
-        }
-        return bInitialized;
+    
+    SpRecordingSchedule_t 
+    ProjectFile::Impl::addRecordingSchedule(const std::string & inName)
+    {
+        std::string path = "/MosaicProject/Schedules/" + inName;
+        m_file->createGroup(path);        
+        m_recordingSchedules.push_back(std::make_shared<RecordingSchedule>(m_fileHandle, path));
+        return m_recordingSchedules[m_recordingSchedules.size() - 1];
     }
-
- 
-    void ProjectFile::Impl::initDataModel()
+    
+    void 
+    ProjectFile::Impl::initialize()
+    {
+        // Get the number of objects and initialize schedules
+        std::string rootObjName("/");
+        H5::Group rootGroup = m_file->openGroup(rootObjName);
+        hsize_t nObjInGroup = rootGroup.getNumObjs();
+        
+        if(nObjInGroup == 0)
+        {
+            initDataModel();
+        }
+        else
+        {
+            m_grProject    = m_file->openGroup("/MosaicProject");
+            m_grFileHeader = m_file->openGroup("/MosaicProject/FileHeader");
+            m_grSchedules  = m_file->openGroup("/MosaicProject/Schedules");
+            
+            nObjInGroup = m_grSchedules.getNumObjs();
+            if(nObjInGroup != 0)
+            {
+                m_recordingSchedules.resize(nObjInGroup);
+                for (hsize_t rs(0); rs < nObjInGroup; ++rs)
+                {
+                    std::string rs_name = "/MosaicProject/Schedules/" + m_grSchedules.getObjnameByIdx(rs);
+                    m_recordingSchedules[rs].reset(new RecordingSchedule(getHdf5FileHandle(), rs_name));
+                }
+            }
+            
+        }
+    }
+    
+    
+    void 
+    ProjectFile::Impl::initDataModel()
     { 
         
         m_grProject    = m_file->createGroup("/MosaicProject");
@@ -115,7 +175,8 @@ namespace isx {
     }
  
  
-    bool ProjectFile::Impl::exists(std::string & inFileName)
+    bool 
+    ProjectFile::Impl::exists(std::string & inFileName)
     {
         std::ifstream infile(inFileName.c_str());
         return infile.good();

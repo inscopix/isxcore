@@ -66,7 +66,7 @@
 */
 #include "isxTime.h"
 #include "isxCoreFwd.h"
-
+#include "isxRecordingSchedule.h"
 #include <utility>
 #include <vector>
 #include <memory>
@@ -119,7 +119,6 @@ namespace isx {
     ///
     typedef std::vector<std::pair<uint16_t, uint16_t> > CellContour;    
 
-
     
     /// The project file class
     ///
@@ -137,6 +136,18 @@ namespace isx {
         /// Get the file handle
         ///
         SpHdf5FileHandle_t getHdf5FileHandle();
+        
+        /// Get the number of recording schedules in the project file
+        ///
+        uint16_t getNumRecordingSchedules();
+        
+        /// Get a recording schedule by index
+        ///
+        SpRecordingSchedule_t getRecordingSchedule(uint16_t inIndex);
+        
+        /// Add a recording schedule to the project file
+        ///
+        SpRecordingSchedule_t addRecordingSchedule(const std::string & inName);
        
     private:        
         class Impl;

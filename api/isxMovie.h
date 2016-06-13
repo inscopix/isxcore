@@ -90,6 +90,10 @@ public:
     ///
     /// \param   strm    The output stream.
     virtual void serialize(std::ostream& strm) const;
+    
+    /// Get movie name
+    ///
+    std::string getName();
 
 private:
     class Impl;
