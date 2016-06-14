@@ -84,10 +84,9 @@ TEST_CASE("MovieTest", "[core]") {
         isx::Movie inputMovie(inputFile->getHdf5FileHandle(), "/images");
         
         // Get sizes from input
-        int nFrames, nCols, nRows;
-        nFrames = inputMovie.getNumFrames();
-        nCols   = inputMovie.getFrameWidth();
-        nRows   = inputMovie.getFrameHeight();
+        size_t nFrames = inputMovie.getNumFrames();
+        int32_t nCols  = inputMovie.getFrameWidth();
+        int32_t nRows  = inputMovie.getFrameHeight();
 
         // Outputs
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";

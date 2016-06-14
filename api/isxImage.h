@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <cstdint>
 #include <cstddef>
+#include <memory>
 
 namespace isx
 {
