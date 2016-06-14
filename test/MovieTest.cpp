@@ -1,4 +1,5 @@
 #include "isxRecording.h"
+#include "isxAlgorithm.h"
 #include "isxMovie.h"
 #include "isxProjectFile.h"
 #include "catch.hpp"
@@ -118,5 +119,12 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(inputFrameBuffer[idx+1] == outputFrameBuffer[idx+1]);        
 
     } 
-
+    SECTION("applyAppDFF") {
+        isx::SpRecording_t r = std::make_shared<isx::Recording>(g_resources["testDataPath"] + "/recording_20150414_144706.hdf5");
+        REQUIRE(r->isValid());
+        isx::SpMovie_t m = std::make_shared<isx::Movie>(r->getHdf5FileHandle(), "/images");
+        std::string	outputFilename = g_resources["testDataPath"] + "/DFFout.hdf5";
+        isx::Algorithm algo = isx::Algorithm(m, outputFilename);
+        algo.ApplyApp();
+    }
 }

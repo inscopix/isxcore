@@ -296,7 +296,7 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
     // Check that buffer size matches dataspace definition
     if (inBufferSize != m_frameSizeInBytes)
     {
-        ISX_THROW_EXCEPTION_USRINPUT("The buffer size does not match the the frame size in the file");
+        ISX_THROW_EXCEPTION_USRINPUT("The buffer size does not match the frame size in the file");
     }
         
     // Check that frame number is within range
