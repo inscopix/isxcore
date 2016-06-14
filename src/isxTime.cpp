@@ -80,6 +80,12 @@ Time::secsFrom(const isx::Time& from) const
     return m_secsSinceEpoch - from.m_secsSinceEpoch;
 }
 
+int32_t
+Time::getUtcOffset() const
+{
+    return m_utcOffset;
+}
+    
 bool
 Time::operator ==(const isx::Time& other) const
 {

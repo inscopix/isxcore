@@ -94,6 +94,12 @@ public:
     /// \param   other  The rational number with which to compare.
     /// \return         True, if this is greater than or equal to the other rational number.
     bool operator >=(const isx::Ratio& other) const;
+    
+    /// \return the largest ratio with this denom that is not greater than
+    ///         the other ratio in value
+    /// \param other The rational number for which to return the above
+    ///
+    Ratio floorWithThisDenom(const isx::Ratio& other) const;
 
     // Overrides
     virtual void serialize(std::ostream& strm) const;

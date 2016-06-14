@@ -100,7 +100,8 @@ public:
 
     /// \return     The timing information of a movie.
     ///
-    isx::TimingInfo getTimingInfo() const;
+    const isx::TimingInfo &
+    getTimingInfo() const;
 
     /// Serialize the object into an output stream.
     ///

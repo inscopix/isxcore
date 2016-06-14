@@ -1,5 +1,7 @@
-#include <iostream>
 #include "isxRatio.h"
+
+#include <iostream>
+#include <cmath>
 
 namespace isx
 {
@@ -112,6 +114,13 @@ bool
 Ratio::operator >=(const isx::Ratio& other) const
 {
     return (*this > other) || (*this == other);
+}
+    
+Ratio
+Ratio::floorWithThisDenom(const isx::Ratio& other) const
+{
+    double ov = double(other.getNum()) / double (other.getDen());
+    return Ratio(int64_t(std::floor(ov * double(m_den))), m_den);
 }
 
 void

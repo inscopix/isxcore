@@ -158,11 +158,13 @@ public:
     getFrame(const Time & inTime)
     {
         hsize_t frameNumber = hsize_t(m_timingInfo.convertTimeToIndex(inTime));
+        Time frameTime = m_timingInfo.convertIndexToTime(frameNumber);
+        
         auto nvf = std::make_shared<NvistaVideoFrame_t>(
             getFrameWidth(), getFrameHeight(),
             int32_t(sizeof(uint16_t)) * getFrameWidth(),
             1, // numChannels
-            inTime, frameNumber);
+            frameTime, frameNumber);
         try {
             
             H5::DataSpace fileSpace(m_dataSpace);            
@@ -191,7 +193,7 @@ public:
         return m_timingInfo.getDuration().toDouble();
     }
 
-    isx::TimingInfo
+    const isx::TimingInfo &
     getTimingInfo() const
     {
         return m_timingInfo;
@@ -467,7 +469,7 @@ Movie::getDurationInSeconds() const
     return m_pImpl->getDurationInSeconds();
 }
 
-isx::TimingInfo
+const isx::TimingInfo &
 Movie::getTimingInfo() const
 {
     return m_pImpl->getTimingInfo();

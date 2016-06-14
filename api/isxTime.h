@@ -52,6 +52,11 @@ public:
     /// \param   from   The time to start counting from.
     /// \return  The seconds from the given time to this.
     isx::Ratio secsFrom(const isx::Time& from) const;
+    
+    /// \return the utcOffset
+    ///
+    int32_t
+    getUtcOffset() const;
 
     /// \return     True if this is exactly equal to another time, false otherwise.
     ///
