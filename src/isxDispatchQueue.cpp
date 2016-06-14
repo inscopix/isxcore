@@ -10,8 +10,6 @@
 #include <chrono>
 #include <thread>
 
-#include <assert.h>
-
 // Note aschildan 5/31/2016:
 // Dispatch Queues are implemented in three subclasses: 
 // DispatchQueuePool, DispatchQueueWorker and DispatchQueueMain.

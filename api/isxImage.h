@@ -2,9 +2,10 @@
 #define ISX_IMAGE_H
 
 #include <vector>
-#include <assert.h>
 #include <cstdint>
 #include <cstddef>
+
+#include "isxAssert.h"
 
 namespace isx
 {
@@ -32,8 +33,11 @@ public:
         , m_rowBytes(inRowBytes)
         , m_numChannels(inNumChannels)
     {
-        assert(inWidth > 0 && inHeight > 0 && inRowBytes > 0 && inNumChannels > 0);
-        assert(size_t(m_rowBytes) >= m_width * getPixelSizeInBytes());
+        ISX_ASSERT(inWidth > 0);
+        ISX_ASSERT(inHeight > 0);
+        ISX_ASSERT(inRowBytes > 0);
+        ISX_ASSERT(inNumChannels > 0);
+        ISX_ASSERT(size_t(m_rowBytes) >= m_width * getPixelSizeInBytes());
         m_pixels.resize(getImageSizeInBytes());
     }
 

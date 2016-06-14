@@ -1,5 +1,6 @@
 #include "isxRecording.h"
-#include "isxLog.h"
+#include "isxException.h"
+#include "isxAssert.h"
 #include "isxHdf5FileHandle.h"
 
 #include "H5Cpp.h"
@@ -37,18 +38,18 @@ public:
         // catch failure caused by the H5File operations
         catch(H5::FileIException error)
         {
-            error.printError();
+            ISX_THROW_EXCEPTION_FILEIO(error.getDetailMsg());
         }
         
         // catch failure caused by the DataSet operations
         catch(H5::DataSetIException error)
         {
-            error.printError();
+            ISX_THROW_EXCEPTION_DATAIO(error.getDetailMsg());
         }
         
         catch(...)
         {
-            ISX_LOG_ERROR("Unhandled exception.");
+            ISX_ASSERT(false, "Unhandled exception.");
         }
     }
 

@@ -3,7 +3,8 @@
 #include "isxDispatchQueueDispatcher.h"
 #include <QApplication>
 #include <QThreadPool>
-#include <assert.h>
+
+#include "isxAssert.h"
 
 namespace isx
 {
@@ -14,7 +15,7 @@ DispatchQueueMain::DispatchQueueMain()
     // if possible, verify that we're called on main thread
     if (QApplication::instance())
     {
-        assert(QApplication::instance()->thread() == QThread::currentThread());
+        ISX_ASSERT(QApplication::instance()->thread() == QThread::currentThread());
     }
 }
 

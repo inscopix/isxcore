@@ -1,18 +1,20 @@
 #include "isxMovie.h"
 #include "isxHdf5FileHandle.h"
 #include "isxException.h"
+#include "isxAssert.h"
 #include "H5Cpp.h"
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <cassert>
 
 namespace isx {
 class Movie::Impl
 {
 public:
     ~Impl(){};
+
     Impl(){};
+
     Impl(const SpH5File_t & inHdf5File, const std::string & inPath)
     : m_H5File(inHdf5File)    
     , m_path(inPath)
@@ -56,12 +58,12 @@ public:
         {
             ISX_THROW_EXCEPTION_DATAIO("Failure caused by the DataSet operations");
         }
-        
+
         catch(...)
         {
-            ISX_LOG_ERROR("Unhandled exception.");
+            ISX_ASSERT(false, "Unhandled exception.");
         }
-
+        
         // TODO sweet 2016/05/31 : the start and step should be read from
         // the file but it doesn't currently contain these, so picking some
         // dummy values
@@ -78,7 +80,9 @@ public:
     , m_H5File(inHdf5File)
     , m_path(inPath)   
     {
-        assert((inNumFrames > 0) && (inFrameWidth > 0) && (inFrameHeight > 0));
+        ISX_ASSERT(inNumFrames > 0);
+        ISX_ASSERT(inFrameWidth > 0);
+        ISX_ASSERT(inFrameHeight > 0);
  
         /* Set rank, dimensions and max dimensions */
         m_ndims = 3;
@@ -172,7 +176,7 @@ public:
         }
         catch(H5::DataSetIException error)
         {
-            std::cerr << "Exception in " << error.getFuncName() << ": " << std::endl << error.getDetailMsg() << std::endl;
+            ISX_LOG_ERROR("DataSetIException in ", error.getFuncName(), ":\n", error.getDetailMsg(), "\n");
             m_isValid = false;
         }
     }

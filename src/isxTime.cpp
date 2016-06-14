@@ -1,8 +1,9 @@
 #include <math.h>
 #include <QTimeZone>
 #include <QDateTime>
-#include <stdexcept>
+#include <cmath>
 
+#include "isxAssert.h"
 #include "isxTime.h"
 
 namespace isx
@@ -12,7 +13,8 @@ Time::Time(const isx::Ratio& secsSinceEpoch, int32_t utcOffset)
 : m_secsSinceEpoch(secsSinceEpoch)
 , m_utcOffset(utcOffset)
 {
-    isx::Time::verifyUtcOffset(utcOffset);
+    ISX_ASSERT(secsSinceEpoch >= 0);
+    ISX_ASSERT(utcOffset >= -50400 || utcOffset <= 50400);
 }
 
 Time::Time( uint16_t year,
@@ -24,44 +26,23 @@ Time::Time( uint16_t year,
             const isx::Ratio& secsOffset,
             int32_t utcOffset)
 {
-    if (year < 1970)
-    {
-        throw std::runtime_error("Year must be in [1970, 2^16).");
-    }
-    if (mon < 1 || mon > 12)
-    {
-        throw std::runtime_error("Month must be in [1, 12].");
-    }
-    if (day < 1 || day > 31)
-    {
-        throw std::runtime_error("Day must be in [1, 31].");
-    }
-    if (hour > 23)
-    {
-        throw std::runtime_error("Hour must be in [0, 23].");
-    }
-    if (mins > 59)
-    {
-        throw std::runtime_error("Minutes must be in [0, 59].");
-    }
-    if (secs > 59)
-    {
-        throw std::runtime_error("Seconds must be in [0, 59].");
-    }
-
-    isx::Time::verifyUtcOffset(utcOffset);
+    ISX_ASSERT(year >= 1970);
+    ISX_ASSERT(mon >= 1 || mon <= 12);
+    ISX_ASSERT(day >= 1 || day <= 31);
+    ISX_ASSERT(hour <= 24);
+    ISX_ASSERT(mins <= 60);
+    ISX_ASSERT(secs <= 60);
+    ISX_ASSERT(secsOffset >= 0 || secsOffset < 1);
+    ISX_ASSERT(utcOffset >= -50400 || utcOffset <= 50400);
 
     QDate date(year, mon, day);
-    if (!date.isValid())
-    {
-        throw std::runtime_error("Date " + date.toString().toStdString() + " is not valid.");
-    }
+    ISX_ASSERT(date.isValid());
 
     QTime time(hour, mins, secs);
     QTimeZone timeZone(utcOffset);
     QDateTime dateTime(date, time, timeZone);
 
-    int64_t secsSinceEpoch = dateTime.toMSecsSinceEpoch() / 1000;
+    int64_t secsSinceEpoch = std::floor(dateTime.toMSecsSinceEpoch() / 1000);
 
     m_secsSinceEpoch = secsOffset + secsSinceEpoch;
     m_utcOffset = utcOffset;
@@ -125,15 +106,6 @@ Time::now()
             nowTime.second(),
             secsOffset,
             utcOffset);
-}
-
-void
-Time::verifyUtcOffset(int32_t utcOffset)
-{
-    if (utcOffset < -50400 || utcOffset > 50400)
-    {
-        throw std::runtime_error("UTC offset must be in [-50400, 50400].");
-    }
 }
 
 } // namespace
