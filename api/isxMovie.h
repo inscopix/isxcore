@@ -1,6 +1,7 @@
 #ifndef ISX_MOVIE_H
 #define ISX_MOVIE_H
 
+#include "isxTimingInfo.h"
 #include "isxCoreFwd.h"
 #include "isxObject.h"
 
@@ -80,6 +81,10 @@ public:
     /// \param inBufferSize size of inBuffer
     /// \return true if it succeeds
     void writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
+
+    /// \return     The timing information of a movie.
+    ///
+    isx::TimingInfo getTimingInfo() const;
 
     /// Serialize the object into an output stream.
     ///

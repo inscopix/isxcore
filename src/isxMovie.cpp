@@ -39,7 +39,7 @@ public:
             }
             else
             {
-                std::cerr << "Unsupported data type." << std::endl;
+                ISX_THROW_EXCEPTION_DATAIO("Unsupported data type");                
             }
             
             
@@ -59,8 +59,17 @@ public:
         
         catch(...)
         {
-            std::cerr << "Unhandled exception." << std::endl;
+            ISX_LOG_ERROR("Unhandled exception.");
         }
+
+        // TODO sweet 2016/05/31 : the start and step should be read from
+        // the file but it doesn't currently contain these, so picking some
+        // dummy values
+        isx::Time start = isx::Time();
+        isx::Ratio step(1, 30);
+        // TODO sweet 2016/06/06 : on Windows the type of m_dims is a uint64_t
+        // so this needs some more thought
+        m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]));
     }
     
     
@@ -84,6 +93,10 @@ public:
 
         m_dims[2] = inFrameWidth;
         m_maxdims[2] = inFrameWidth;
+
+        // TODO sweet 2016/09/31 : the start and step should also be specified
+        // but we don't currently have a mechnanism for that
+        m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]));
 
         /* Create the dataspace */
         m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
@@ -120,7 +133,7 @@ public:
     int 
     getNumFrames() const
     {
-        return int(m_dims[0]);
+        return int(m_timingInfo.getNumTimes());
     }
 
     int 
@@ -167,8 +180,13 @@ public:
     double 
     getDurationInSeconds() const
     {
-        // TODO aschildan 4/21/2016: Fix to take actual framerate into account
-        return double(getNumFrames()) / 30.0;
+        return m_timingInfo.getDuration().toDouble();
+    }
+
+    isx::TimingInfo
+    getTimingInfo() const
+    {
+        return m_timingInfo;
     }
     
     void writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
@@ -180,6 +198,16 @@ public:
     }
 
 private:
+
+    /// A method to create a dummy TimingInfo object from the number of frames.
+    ///
+    isx::TimingInfo
+    createDummyTimingInfo(uint32_t numFrames)
+    {
+        isx::Time start = isx::Time();
+        isx::Ratio step(1, 30);
+        return isx::TimingInfo(start, step, numFrames);
+    }
 
     bool m_isValid = false;
     SpH5File_t m_H5File;
@@ -193,11 +221,11 @@ private:
     std::vector<hsize_t> m_dims;
     std::vector<hsize_t> m_maxdims;
     size_t m_frameSizeInBytes;
-    
-    
+
+    isx::TimingInfo m_timingInfo;
+
     void createDataSet(const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space);
     std::vector<std::string> splitPath(const std::string &s);
-
 };
 
 
@@ -272,6 +300,12 @@ Movie::getDurationInSeconds() const
     return m_pImpl->getDurationInSeconds();
 }
 
+isx::TimingInfo
+Movie::getTimingInfo() const
+{
+    return m_pImpl->getTimingInfo();
+}
+
 void 
 Movie::serialize(std::ostream& strm) const
 {
@@ -330,76 +364,106 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
  
 }
 
-
 void 
 Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space)
 {
     // Parse name and create the hierarchy tree (if not in the file already). 
     // Every level other than the last one is created as a group. The last level is the dataset
-    std::vector<std::string> tree = splitPath(name);
-    std::string location("/");
-    for (unsigned int i(0); i < tree.size() - 1; ++i)
+    std::vector<std::string> tree = splitPath(name); 
+ 
+    std::string currentObjName("/");
+    H5::Group currentGroup = m_H5File->openGroup(currentObjName);
+    hsize_t nObjInGroup = currentGroup.getNumObjs();
+    
+    
+    
+    unsigned int nCreateFromIdx = 0;
+    
+    while((nObjInGroup > 0) && (nCreateFromIdx < tree.size()))
     {
-        location += tree[i];  
-        try
-        {
-            m_H5File->openGroup(location);
-        }
-        catch (...)
-        {
-            m_H5File->createGroup(location);
-        }
+        std::string targetObjName = currentObjName + "/" + tree[nCreateFromIdx];
+        bool bTargetFound = false;
         
-        location += "/";
-        
-    }
+        for(hsize_t obj(0); obj < nObjInGroup; ++obj)
+        {
+            std::string objName = currentGroup.getObjnameByIdx(obj);
+            if(objName == tree[nCreateFromIdx])
+            {
+                bTargetFound = true;
+                break;
+            }
+        }
 
-    // Create it if dataset doesn't exist. Overwrite it otherwise
-    try
-    {
-        m_dataSet = m_H5File->openDataSet(name);
-        H5::DataType type = m_dataSet.getDataType();
-        H5::DataSpace space = m_dataSet.getSpace();
-        int nDims = space.getSimpleExtentNdims();;
-        std::vector<hsize_t> dims(nDims);
-        std::vector<hsize_t> maxdims(nDims);
-        space.getSimpleExtentDims(&dims[0], &maxdims[0]);
-        
-        // Check that the size of the file dataset is the same as the one the 
-        // user is trying to write out
-        if(nDims != m_ndims)
+        if(bTargetFound)
         {
-            ISX_THROW_EXCEPTION_DATAIO("Dataset dimension mismatch");
-        }
-        
-        for (int i(0); i < nDims; i++)
-        {
-            if(dims[i] != m_dims[i])
-            {
-                ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
-            }
+            nCreateFromIdx += 1;
             
-            if(maxdims[i] != m_maxdims[i])
+            if(nCreateFromIdx < tree.size())
             {
-                ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
-            }
+                currentGroup = m_H5File->openGroup(targetObjName);
+                currentObjName = targetObjName;
+                nObjInGroup = currentGroup.getNumObjs(); 
+            }           
         }
-        
-        // Dataset is valid if we get here
-        m_dataType = type;
-        m_dataSpace = space;
-        
-        if (m_dataType == H5::PredType::STD_U16LE)
+        else
         {
-            m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
+            break;
         }
-    }
-    catch(...)
-    {
-        m_dataSet = H5::DataSet(m_H5File->createDataSet(name, data_type, data_space));  
     }
     
+       
+    for ( ; nCreateFromIdx < tree.size(); ++nCreateFromIdx)
+    {
+        if(nCreateFromIdx == (tree.size() - 1))
+        {
+            m_dataSet = m_H5File->createDataSet(name, data_type, data_space);           
+            return;
+        }
+        
+        std::string targetObjName = currentObjName + "/" + tree[nCreateFromIdx]; 
+        m_H5File->createGroup(targetObjName); 
+        currentObjName = targetObjName;
+    }
+    
+    // If we get here, the dataset exists in the file and we don't need to create it
+    m_dataSet = m_H5File->openDataSet(name);
+    H5::DataType type = m_dataSet.getDataType();
+    H5::DataSpace space = m_dataSet.getSpace();
+    int nDims = space.getSimpleExtentNdims();;
+    std::vector<hsize_t> dims(nDims);
+    std::vector<hsize_t> maxdims(nDims);
+    space.getSimpleExtentDims(&dims[0], &maxdims[0]);
+        
+    // Check that the size of the file dataset is the same as the one the 
+    // user is trying to write out
+    if(nDims != m_ndims)
+    {
+        ISX_THROW_EXCEPTION_DATAIO("Dataset dimension mismatch");
+    }
+        
+    for (int i(0); i < nDims; i++)
+    {
+        if(dims[i] != m_dims[i])
+        {
+            ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
+        }
+            
+        if(maxdims[i] != m_maxdims[i])
+        {
+            ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
+        }
+    }
+        
+    // Dataset is valid if we get here
+    m_dataType = type;
+    m_dataSpace = space;
+        
+    if (m_dataType == H5::PredType::STD_U16LE)
+    {
+        m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
+    }    
 }
+
 
 std::vector<std::string> 
 Movie::Impl::splitPath(const std::string &s)
@@ -411,7 +475,10 @@ Movie::Impl::splitPath(const std::string &s)
     vector<string> tokens;
     while (getline(ss, item, delim)) 
     {
-        tokens.push_back(item);
+        if(!item.empty())
+        {
+            tokens.push_back(item);
+        }
     }
     return tokens;
 }
