@@ -1,6 +1,7 @@
 #ifndef ISX_RECORDINGSCHEDULE_H
 #define ISX_RECORDINGSCHEDULE_H
-#include "isxCoreFwd.h"
+
+#include "isxMovie.h"
 #include <vector>
 #include <memory>
 
@@ -43,7 +44,7 @@ namespace isx {
         
         /// Add a movie to the recording schedule
         ///
-        SpMovie_t addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight);
+        SpMovie_t addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate);
         
     private:
         class Impl;

@@ -61,13 +61,14 @@ namespace isx {
         }
         
         SpMovie_t 
-        addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight)
+        addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate)
         {
             std::string path = m_path + "/" + inName;
             // Create the properties group
+            // TODO sylvana 2016/06/14 : Movie needs to manage its properties and create/read the properties group in the file
             m_file->createGroup(path);
             m_file->createGroup(path + "/Properties");    
-            m_movies.push_back(std::make_shared<Movie>(m_fileHandle, path + "/Movie", inNumFrames, inFrameWidth, inFrameHeight));
+            m_movies.push_back(std::make_shared<Movie>(m_fileHandle, path + "/Movie", inNumFrames, inFrameWidth, inFrameHeight, inFrameRate));
             return m_movies[m_movies.size()-1];
         }
         
@@ -116,9 +117,9 @@ namespace isx {
     }
     
     SpMovie_t 
-    RecordingSchedule::addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight)
+    RecordingSchedule::addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate)
     {
-        return m_pImpl->addMovie(inName, inNumFrames, inFrameWidth, inFrameHeight);
+        return m_pImpl->addMovie(inName, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate);
     }
     
 }

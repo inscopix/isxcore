@@ -34,7 +34,7 @@ public:
     /// \param inFrameWidth number of columns in the frame
     /// \param inFrameHeight number of rows in the frame
     ///
-    Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight);
+    Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate);
 
     /// Destructor
     /// 
@@ -94,6 +94,7 @@ public:
     /// Get movie name
     ///
     std::string getName();
+
 
 private:
     class Impl;

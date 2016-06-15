@@ -86,9 +86,14 @@ TEST_CASE("MovieTest", "[core]") {
         
         // Get sizes from input
         int nFrames, nCols, nRows;
+        isx::TimingInfo timingInfo;
+        isx::Ratio timeStep, frameRate;
         nFrames = inputMovie.getNumFrames();
         nCols   = inputMovie.getFrameWidth();
         nRows   = inputMovie.getFrameHeight();
+        timingInfo = inputMovie.getTimingInfo();
+        timeStep = timingInfo.getStep();
+        frameRate = timeStep.invert();
 
         // Outputs
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
@@ -102,7 +107,7 @@ TEST_CASE("MovieTest", "[core]") {
         {
             // Create it
             rs = outputFile->addRecordingSchedule("RecSchedule0");
-            outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows);
+            outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);
         }
         else
         {
@@ -111,7 +116,7 @@ TEST_CASE("MovieTest", "[core]") {
             uint16_t nMovies = rs->getNumMovies();
             if(nMovies == 0)
             {
-                outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows);
+                outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);
             }
             else
             {
@@ -122,6 +127,11 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(nFrames == outputMovie->getNumFrames());
         REQUIRE(nCols == outputMovie->getFrameWidth());
         REQUIRE(nRows == outputMovie->getFrameHeight());
+        
+        timingInfo = outputMovie->getTimingInfo();
+        timeStep = timingInfo.getStep();
+        isx::Ratio outpuFrameRate = timeStep.invert();
+        REQUIRE(frameRate == outpuFrameRate);
 
         // Write a frame from the input movie to the output movie
         int nFrame = 15;

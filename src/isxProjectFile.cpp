@@ -8,7 +8,7 @@ namespace isx {
     public:
         /// Constructor
         ///
-        Impl(std::string & inFileName) 
+        Impl(const std::string & inFileName) 
         {
             int openFlag = H5F_ACC_RDWR;
             if ( false == exists(inFileName))
@@ -30,7 +30,7 @@ namespace isx {
             m_fileHandle.reset();
         }
          
-        bool exists(std::string & inFileName);
+        bool exists(const std::string & inFileName);
         
         /// \return Hdf5FileHandle
         ///
@@ -81,7 +81,7 @@ namespace isx {
     ///////////////////////////////////////////////////////////////////////////////
     //  PROJECT FILE
     ///////////////////////////////////////////////////////////////////////////////
-    ProjectFile::ProjectFile(std::string & inFileName) 
+    ProjectFile::ProjectFile(const std::string & inFileName) 
     {
         m_pImpl.reset(new Impl(inFileName));
     }
@@ -176,7 +176,7 @@ namespace isx {
  
  
     bool 
-    ProjectFile::Impl::exists(std::string & inFileName)
+    ProjectFile::Impl::exists(const std::string & inFileName)
     {
         std::ifstream infile(inFileName.c_str());
         return infile.good();

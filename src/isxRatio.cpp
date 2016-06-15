@@ -22,6 +22,12 @@ Ratio::getDen() const
     return m_den;
 }
 
+Ratio
+Ratio::invert() const
+{
+    return Ratio(m_den, m_num);
+}
+
 double
 Ratio::toDouble() const
 {

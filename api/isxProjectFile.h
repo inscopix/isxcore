@@ -127,7 +127,7 @@ namespace isx {
     public:
         /// constructor
         ///
-        ProjectFile(std::string & inFileName);
+        ProjectFile(const std::string & inFileName);
         
         /// destructor
         ///

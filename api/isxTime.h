@@ -83,6 +83,8 @@ private:
 
 }; // class
 
+typedef Time Time_t;
+
 } // namespace
 
 #endif // ISX_TIME_H

@@ -30,6 +30,9 @@ public:
     /// \return         The denominator.
     int64_t getDen() const;
 
+    /// Invert the rational number
+    Ratio invert() const;
+
     /// Return the floating point evaluation of this.
     ///
     /// \return         The floating point evaluation of this.
@@ -107,6 +110,8 @@ private:
     int64_t m_den;
 
 }; // class
+
+typedef Ratio Ratio_t;
 
 } // namespace
 
