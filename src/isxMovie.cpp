@@ -48,18 +48,18 @@ public:
         }  // end of try block
         
         // catch failure caused by the H5File operations
-        catch(H5::FileIException error)
+        catch (const H5::FileIException& error)
         {
             ISX_THROW_EXCEPTION_FILEIO("Failure caused by the H5File operations");
         }
         
         // catch failure caused by the DataSet operations
-        catch(H5::DataSetIException error)
+        catch (const H5::DataSetIException& error)
         {
             ISX_THROW_EXCEPTION_DATAIO("Failure caused by the DataSet operations");
         }
 
-        catch(...)
+        catch (...)
         {
             ISX_ASSERT(false, "Unhandled exception.");
         }
@@ -113,15 +113,15 @@ public:
             m_isValid = true;
             m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
         }
-        catch (H5::DataSetIException error)
+        catch (const H5::DataSetIException& error)
         {
             ISX_THROW_EXCEPTION_DATAIO("Failure caused by the DataSet operations");
         }
-        catch(H5::FileIException error)
+        catch (const H5::FileIException& error)
         {
             ISX_THROW_EXCEPTION_FILEIO("Failure caused by the H5File operations"); 
         }
-        catch(H5::GroupIException error)
+        catch (const H5::GroupIException& error)
         {
             ISX_THROW_EXCEPTION_DATAIO("Failure caused by the Group operations");
         }
@@ -174,7 +174,7 @@ public:
             
             m_dataSet.read(outBuffer, m_dataType, bufferSpace, fileSpace);
         }
-        catch(H5::DataSetIException error)
+        catch (const H5::DataSetIException& error)
         {
             ISX_LOG_ERROR("DataSetIException in ", error.getFuncName(), ":\n", error.getDetailMsg(), "\n");
             m_isValid = false;

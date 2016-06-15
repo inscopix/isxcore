@@ -6,6 +6,10 @@
 #include "isxAssert.h"
 #include "isxTime.h"
 
+// The minimum and maximum UTC offsets in seconds.
+#define MIN_UTC_OFFSET -50400
+#define MAX_UTC_OFFSET 50400
+
 namespace isx
 {
 
@@ -14,7 +18,7 @@ Time::Time(const isx::Ratio& secsSinceEpoch, int32_t utcOffset)
 , m_utcOffset(utcOffset)
 {
     ISX_ASSERT(secsSinceEpoch >= 0);
-    ISX_ASSERT(utcOffset >= -50400 || utcOffset <= 50400);
+    ISX_ASSERT(utcOffset >= MIN_UTC_OFFSET || utcOffset <= MAX_UTC_OFFSET);
 }
 
 Time::Time( uint16_t year,
@@ -29,11 +33,11 @@ Time::Time( uint16_t year,
     ISX_ASSERT(year >= 1970);
     ISX_ASSERT(mon >= 1 || mon <= 12);
     ISX_ASSERT(day >= 1 || day <= 31);
-    ISX_ASSERT(hour <= 24);
+    ISX_ASSERT(hour <= 23);
     ISX_ASSERT(mins <= 60);
     ISX_ASSERT(secs <= 60);
     ISX_ASSERT(secsOffset >= 0 || secsOffset < 1);
-    ISX_ASSERT(utcOffset >= -50400 || utcOffset <= 50400);
+    ISX_ASSERT(utcOffset >= -MIN_UTC_OFFSET || utcOffset <= MAX_UTC_OFFSET);
 
     QDate date(year, mon, day);
     ISX_ASSERT(date.isValid());

@@ -59,6 +59,10 @@ public:
             std::this_thread::sleep_for(d);
         }
         ISX_ASSERT(isFinished(), "Worker thread failed to finish.");
+        //if (!isFinished())
+        //{
+        //    m_pWorkerThread->terminate();
+        //}
     }
 private:
     std::shared_ptr<DispatchQueueDispatcher> m_dispatcher;

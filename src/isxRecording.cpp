@@ -36,13 +36,13 @@ public:
         }  // end of try block
         
         // catch failure caused by the H5File operations
-        catch(H5::FileIException error)
+        catch (const H5::FileIException& error)
         {
             ISX_THROW_EXCEPTION_FILEIO(error.getDetailMsg());
         }
         
         // catch failure caused by the DataSet operations
-        catch(H5::DataSetIException error)
+        catch (const H5::DataSetIException& error)
         {
             ISX_THROW_EXCEPTION_DATAIO(error.getDetailMsg());
         }
