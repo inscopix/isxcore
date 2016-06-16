@@ -130,22 +130,22 @@ public:
         return m_isValid;
     }
 
-    int 
+    size_t 
     getNumFrames() const
     {
-        return int(m_timingInfo.getNumTimes());
+        return m_timingInfo.getNumTimes();
     }
 
-    int 
+    int32_t
     getFrameWidth() const
     {
-        return int(m_dims[2]);
+        return int32_t(m_dims[2]);
     }
 
-    int 
+    int32_t 
     getFrameHeight() const
     {
-        return int(m_dims[1]);
+        return int32_t(m_dims[1]);
     }
 
     size_t 
@@ -154,13 +154,20 @@ public:
         return m_frameSizeInBytes;
     }
 
-    void 
-    getFrame(uint32_t inFrameNumber, void * outBuffer, size_t inBufferSize)
+    SpU16VideoFrame_t
+    getFrame(size_t inFrameNumber)
     {
+        Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
+        
+        auto nvf = std::make_shared<U16VideoFrame_t>(
+            getFrameWidth(), getFrameHeight(),
+            int32_t(sizeof(uint16_t)) * getFrameWidth(),
+            1, // numChannels
+            frameTime, inFrameNumber);
         try {
             
             H5::DataSpace fileSpace(m_dataSpace);            
-            hsize_t fileStart[3] = {(hsize_t)inFrameNumber, 0, 0};
+            hsize_t fileStart[3] = {inFrameNumber, 0, 0};
             hsize_t fileCount[3] = {1, m_dims[1], m_dims[2]};            
             fileSpace.selectHyperslab(H5S_SELECT_SET, fileCount, fileStart);
             
@@ -168,13 +175,22 @@ public:
             hsize_t bufferStart[3] = { 0, 0, 0 };
             bufferSpace.selectHyperslab(H5S_SELECT_SET, fileCount, bufferStart);
             
-            m_dataSet.read(outBuffer, m_dataType, bufferSpace, fileSpace);
+            m_dataSet.read(nvf->getPixels(), m_dataType, bufferSpace, fileSpace);
         }
         catch(H5::DataSetIException error)
         {
-            std::cerr << "Exception in " << error.getFuncName() << ": " << std::endl << error.getDetailMsg() << std::endl;
+            ISX_LOG_ERROR("Exception in ", error.getFuncName(), ":\n", error.getDetailMsg());
             m_isValid = false;
         }
+
+        return nvf;
+    }
+
+    SpU16VideoFrame_t
+    getFrame(const Time & inTime)
+    {
+        hsize_t frameNumber = hsize_t(m_timingInfo.convertTimeToIndex(inTime));
+        return getFrame(frameNumber);
     }
 
     double 
@@ -183,18 +199,62 @@ public:
         return m_timingInfo.getDuration().toDouble();
     }
 
-    isx::TimingInfo
+    const isx::TimingInfo &
     getTimingInfo() const
     {
         return m_timingInfo;
     }
     
-    void writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
-
     void
     serialize(std::ostream& strm) const
     {
         strm << m_path;
+    }
+
+    void
+    writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
+    {
+        // Make sure the movie is valid
+        if (!m_isValid)
+        {
+            ISX_THROW_EXCEPTION_FILEIO("Writing frame to invalid movie");
+        }
+             
+        // Check that buffer size matches dataspace definition
+        if (inBufferSize != m_frameSizeInBytes)
+        {
+            ISX_THROW_EXCEPTION_USRINPUT("The buffer size does not match the the frame size in the file");
+        }
+            
+        // Check that frame number is within range
+        if (inFrameNumber > m_maxdims[0])
+        {
+            ISX_THROW_EXCEPTION_USRINPUT("Frame number exceeds the total number of frames in the movie");
+        }
+               
+        // Define file space.
+        H5::DataSpace fileSpace(m_dataSpace);
+        hsize_t fileOffset[3] = { inFrameNumber, 0, 0 };
+        hsize_t dims[3] = { 1, m_dims[1], m_dims[2] };
+        fileSpace.selectHyperslab(H5S_SELECT_SET, dims, fileOffset);
+
+        // Define memory space.
+        H5::DataSpace memSpace = H5::DataSpace(3, dims, NULL);
+        hsize_t memOffset[3] = { 0, 0, 0 };
+        memSpace.selectHyperslab(H5S_SELECT_SET, dims, memOffset);
+
+        // Write data to the dataset.
+        try
+        {
+           m_dataSet.write(inBuffer, m_dataType, memSpace, fileSpace);
+        }
+       
+        // Catch failure caused by the DataSet operations
+        catch (H5::DataSetIException error)
+        {
+           ISX_THROW_EXCEPTION_DATAIO("Failed to write frame to movie");
+        }     
+     
     }
 
 private:
@@ -224,8 +284,123 @@ private:
 
     isx::TimingInfo m_timingInfo;
 
-    void createDataSet(const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space);
-    std::vector<std::string> splitPath(const std::string &s);
+    void 
+    createDataSet (const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space)
+    {
+        // Parse name and create the hierarchy tree (if not in the file already). 
+        // Every level other than the last one is created as a group. The last level is the dataset
+        std::vector<std::string> tree = splitPath(name); 
+     
+        std::string currentObjName("/");
+        H5::Group currentGroup = m_H5File->openGroup(currentObjName);
+        hsize_t nObjInGroup = currentGroup.getNumObjs();
+        
+        
+        
+        unsigned int nCreateFromIdx = 0;
+        
+        while((nObjInGroup > 0) && (nCreateFromIdx < tree.size()))
+        {
+            std::string targetObjName = currentObjName + "/" + tree[nCreateFromIdx];
+            bool bTargetFound = false;
+            
+            for(hsize_t obj(0); obj < nObjInGroup; ++obj)
+            {
+                std::string objName = currentGroup.getObjnameByIdx(obj);
+                if(objName == tree[nCreateFromIdx])
+                {
+                    bTargetFound = true;
+                    break;
+                }
+            }
+
+            if(bTargetFound)
+            {
+                nCreateFromIdx += 1;
+                
+                if(nCreateFromIdx < tree.size())
+                {
+                    currentGroup = m_H5File->openGroup(targetObjName);
+                    currentObjName = targetObjName;
+                    nObjInGroup = currentGroup.getNumObjs(); 
+                }           
+            }
+            else
+            {
+                break;
+            }
+        }
+        
+           
+        for ( ; nCreateFromIdx < tree.size(); ++nCreateFromIdx)
+        {
+            if(nCreateFromIdx == (tree.size() - 1))
+            {
+                m_dataSet = m_H5File->createDataSet(name, data_type, data_space);           
+                return;
+            }
+            
+            std::string targetObjName = currentObjName + "/" + tree[nCreateFromIdx]; 
+            m_H5File->createGroup(targetObjName); 
+            currentObjName = targetObjName;
+        }
+        
+        // If we get here, the dataset exists in the file and we don't need to create it
+        m_dataSet = m_H5File->openDataSet(name);
+        H5::DataType type = m_dataSet.getDataType();
+        H5::DataSpace space = m_dataSet.getSpace();
+        int nDims = space.getSimpleExtentNdims();;
+        std::vector<hsize_t> dims(nDims);
+        std::vector<hsize_t> maxdims(nDims);
+        space.getSimpleExtentDims(&dims[0], &maxdims[0]);
+            
+        // Check that the size of the file dataset is the same as the one the 
+        // user is trying to write out
+        if(nDims != m_ndims)
+        {
+            ISX_THROW_EXCEPTION_DATAIO("Dataset dimension mismatch");
+        }
+            
+        for (int i(0); i < nDims; i++)
+        {
+            if(dims[i] != m_dims[i])
+            {
+                ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
+            }
+                
+            if(maxdims[i] != m_maxdims[i])
+            {
+                ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
+            }
+        }
+            
+        // Dataset is valid if we get here
+        m_dataType = type;
+        m_dataSpace = space;
+            
+        if (m_dataType == H5::PredType::STD_U16LE)
+        {
+            m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
+        }    
+    }
+
+    std::vector<std::string> 
+    splitPath(const std::string &s)
+    {
+        using namespace std;
+        char delim = '/';
+        stringstream ss(s);
+        string item;
+        vector<string> tokens;
+        while (getline(ss, item, delim)) 
+        {
+            if(!item.empty())
+            {
+                tokens.push_back(item);
+            }
+        }
+        return tokens;
+    }
 };
 
 
@@ -264,19 +439,19 @@ Movie::isValid() const
     return m_pImpl->isValid();
 }
 
-int 
+size_t 
 Movie::getNumFrames() const
 {
     return m_pImpl->getNumFrames();
 }
 
-int 
+int32_t 
 Movie::getFrameWidth() const
 {
     return m_pImpl->getFrameWidth();
 }
 
-int 
+int32_t
 Movie::getFrameHeight() const
 {
     return m_pImpl->getFrameHeight();
@@ -288,10 +463,16 @@ Movie::getFrameSizeInBytes() const
     return m_pImpl->getFrameSizeInBytes();
 }
 
-void 
-Movie::getFrame(uint32_t inFrameNumber, void * outBuffer, size_t inBufferSize)
+SpU16VideoFrame_t
+Movie::getFrame(size_t inFrameNumber)
 {
-    m_pImpl->getFrame(inFrameNumber, outBuffer, inBufferSize);
+    return m_pImpl->getFrame(inFrameNumber);
+}
+
+SpU16VideoFrame_t
+Movie::getFrame(const Time & inTime)
+{
+    return m_pImpl->getFrame(inTime);
 }
 
 double 
@@ -300,7 +481,7 @@ Movie::getDurationInSeconds() const
     return m_pImpl->getDurationInSeconds();
 }
 
-isx::TimingInfo
+const isx::TimingInfo &
 Movie::getTimingInfo() const
 {
     return m_pImpl->getTimingInfo();
@@ -316,171 +497,6 @@ void
 Movie::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
 {
     m_pImpl->writeFrame(inFrameNumber, inBuffer, inBufferSize);
-}
-
-void
-Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
-{
-    // Make sure the movie is valid
-    if (!m_isValid)
-    {
-        ISX_THROW_EXCEPTION_FILEIO("Writing frame to invalid movie");
-    }
-         
-    // Check that buffer size matches dataspace definition
-    if (inBufferSize != m_frameSizeInBytes)
-    {
-        ISX_THROW_EXCEPTION_USRINPUT("The buffer size does not match the the frame size in the file");
-    }
-        
-    // Check that frame number is within range
-    if (inFrameNumber > m_maxdims[0])
-    {
-        ISX_THROW_EXCEPTION_USRINPUT("Frame number exceeds the total number of frames in the movie");
-    }
-           
-    // Define file space.
-    H5::DataSpace fileSpace(m_dataSpace);
-    hsize_t fileOffset[3] = { inFrameNumber, 0, 0 };
-    hsize_t dims[3] = { 1, m_dims[1], m_dims[2] };
-    fileSpace.selectHyperslab(H5S_SELECT_SET, dims, fileOffset);
-
-    // Define memory space.
-    H5::DataSpace memSpace = H5::DataSpace(3, dims, NULL);
-    hsize_t memOffset[3] = { 0, 0, 0 };
-    memSpace.selectHyperslab(H5S_SELECT_SET, dims, memOffset);
-
-    // Write data to the dataset.
-    try
-    {
-       m_dataSet.write(inBuffer, m_dataType, memSpace, fileSpace);
-    }
-   
-    // Catch failure caused by the DataSet operations
-    catch (H5::DataSetIException error)
-    {
-       ISX_THROW_EXCEPTION_DATAIO("Failed to write frame to movie");
-    }     
- 
-}
-
-void 
-Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space)
-{
-    // Parse name and create the hierarchy tree (if not in the file already). 
-    // Every level other than the last one is created as a group. The last level is the dataset
-    std::vector<std::string> tree = splitPath(name); 
- 
-    std::string currentObjName("/");
-    H5::Group currentGroup = m_H5File->openGroup(currentObjName);
-    hsize_t nObjInGroup = currentGroup.getNumObjs();
-    
-    
-    
-    unsigned int nCreateFromIdx = 0;
-    
-    while((nObjInGroup > 0) && (nCreateFromIdx < tree.size()))
-    {
-        std::string targetObjName = currentObjName + "/" + tree[nCreateFromIdx];
-        bool bTargetFound = false;
-        
-        for(hsize_t obj(0); obj < nObjInGroup; ++obj)
-        {
-            std::string objName = currentGroup.getObjnameByIdx(obj);
-            if(objName == tree[nCreateFromIdx])
-            {
-                bTargetFound = true;
-                break;
-            }
-        }
-
-        if(bTargetFound)
-        {
-            nCreateFromIdx += 1;
-            
-            if(nCreateFromIdx < tree.size())
-            {
-                currentGroup = m_H5File->openGroup(targetObjName);
-                currentObjName = targetObjName;
-                nObjInGroup = currentGroup.getNumObjs(); 
-            }           
-        }
-        else
-        {
-            break;
-        }
-    }
-    
-       
-    for ( ; nCreateFromIdx < tree.size(); ++nCreateFromIdx)
-    {
-        if(nCreateFromIdx == (tree.size() - 1))
-        {
-            m_dataSet = m_H5File->createDataSet(name, data_type, data_space);           
-            return;
-        }
-        
-        std::string targetObjName = currentObjName + "/" + tree[nCreateFromIdx]; 
-        m_H5File->createGroup(targetObjName); 
-        currentObjName = targetObjName;
-    }
-    
-    // If we get here, the dataset exists in the file and we don't need to create it
-    m_dataSet = m_H5File->openDataSet(name);
-    H5::DataType type = m_dataSet.getDataType();
-    H5::DataSpace space = m_dataSet.getSpace();
-    int nDims = space.getSimpleExtentNdims();;
-    std::vector<hsize_t> dims(nDims);
-    std::vector<hsize_t> maxdims(nDims);
-    space.getSimpleExtentDims(&dims[0], &maxdims[0]);
-        
-    // Check that the size of the file dataset is the same as the one the 
-    // user is trying to write out
-    if(nDims != m_ndims)
-    {
-        ISX_THROW_EXCEPTION_DATAIO("Dataset dimension mismatch");
-    }
-        
-    for (int i(0); i < nDims; i++)
-    {
-        if(dims[i] != m_dims[i])
-        {
-            ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
-        }
-            
-        if(maxdims[i] != m_maxdims[i])
-        {
-            ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
-        }
-    }
-        
-    // Dataset is valid if we get here
-    m_dataType = type;
-    m_dataSpace = space;
-        
-    if (m_dataType == H5::PredType::STD_U16LE)
-    {
-        m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
-    }    
-}
-
-
-std::vector<std::string> 
-Movie::Impl::splitPath(const std::string &s)
-{
-    using namespace std;
-    char delim = '/';
-    stringstream ss(s);
-    string item;
-    vector<string> tokens;
-    while (getline(ss, item, delim)) 
-    {
-        if(!item.empty())
-        {
-            tokens.push_back(item);
-        }
-    }
-    return tokens;
 }
 
 } // namespace isx

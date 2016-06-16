@@ -80,4 +80,14 @@ TEST_CASE("TimeTest", "[core]") {
         REQUIRE(actual == expected);
     }
 
+    SECTION("floorToDenomOf")
+    {
+        isx::Time t1(isx::Ratio(3, 7), 3);
+        isx::Ratio r2(20, 23);
+        isx::Time tf = t1.floorToDenomOf(r2);
+        isx::Time expected(isx::Ratio(9, 23), 3);
+        REQUIRE(tf == expected);
+        REQUIRE(tf.getUtcOffset() == expected.getUtcOffset());
+    }
+
 }

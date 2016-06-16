@@ -3,6 +3,7 @@
 #if ISX_OS_WIN32
 #define NOMINMAX
 #include <windows.h>
+#include "isxMutex.h"
 #endif
 
 #include <sstream>
@@ -12,6 +13,9 @@ namespace isx {
 
 namespace {
     std::ostringstream sstm;
+#if ISX_OS_WIN32
+    isx::Mutex smutex;  //  protect stringstream above
+#endif
 }
 
 namespace internal
@@ -24,6 +28,7 @@ std::ostringstream & getLogStream()
 #if ISX_OS_WIN32
 void flushLogStream()
 {
+    isx::ScopedMutex(smutex, "flushLogStream");
     getLogStream().flush();
     OutputDebugString(getLogStream().str().c_str());
     getLogStream().str("");

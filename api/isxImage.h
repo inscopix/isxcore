@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <cstdint>
 #include <cstddef>
+#include <memory>
 
 namespace isx
 {
@@ -34,7 +35,7 @@ public:
     {
         assert(inWidth > 0 && inHeight > 0 && inRowBytes > 0 && inNumChannels > 0);
         assert(size_t(m_rowBytes) >= m_width * getPixelSizeInBytes());
-        m_pixels.resize(getImageSizeInBytes());
+        m_pixels.reset(new T[getImageSizeInBytes()]);
     }
 
     /// \return the width of this image
@@ -92,7 +93,7 @@ public:
     T *
     getPixels()
     {
-        if (m_pixels.size() > 0)
+        if (m_pixels)
         {
             return &m_pixels[0];
         }
@@ -100,7 +101,7 @@ public:
     }
 
 private:
-    std::vector<T> m_pixels;
+    std::unique_ptr<T[]> m_pixels = 0;
     int32_t m_width = 0;
     int32_t m_height = 0;
     int32_t m_rowBytes = 0;
