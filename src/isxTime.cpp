@@ -37,7 +37,7 @@ Time::Time( uint16_t year,
     ISX_ASSERT(mins <= 60);
     ISX_ASSERT(secs <= 60);
     ISX_ASSERT(secsOffset >= 0 || secsOffset < 1);
-    ISX_ASSERT(utcOffset >= -MIN_UTC_OFFSET || utcOffset <= MAX_UTC_OFFSET);
+    ISX_ASSERT(utcOffset >= MIN_UTC_OFFSET || utcOffset <= MAX_UTC_OFFSET);
 
     QDate date(year, mon, day);
     ISX_ASSERT(date.isValid());

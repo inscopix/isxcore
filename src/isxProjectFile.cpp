@@ -1,5 +1,6 @@
 #include "isxHdf5FileHandle.h" 
 #include "isxProjectFile.h"
+#include "isxLog.h"
 #include <fstream>
 namespace isx {
 
@@ -99,7 +100,7 @@ namespace isx {
 
         catch (const H5::FileIException& error)
         {
-            // Do nothing
+	    ISX_LOG_ERROR("Failed to open H5 file.", error.getDetailMsg());
         }
         return bInitialized;
     }
