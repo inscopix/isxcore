@@ -4,6 +4,8 @@
 #include "H5Cpp.h"
 
 #include <memory>
+#include <vector>
+#include <string>
 
 namespace isx
 {
@@ -38,6 +40,10 @@ public:
     /// \return whether this is a handle to a file opened with Read Write permissions
     ///
     bool isReadWrite() const;
+
+    /// \param outNames a vector of objects under the hdf5 root
+    ///
+    void getObjNames(std::vector<std::string> & outNames);
 
 private:
     SpH5File_t m_H5File;

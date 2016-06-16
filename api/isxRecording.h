@@ -46,6 +46,10 @@ public:
     /// \param   strm    The output stream.
     virtual void serialize(std::ostream& strm) const;
 
+    /// \return a pointer to a movie inside the recording
+    ///
+    SpMovie_t getMovie();
+
 private:
     /// Do not copy Recordings
     ///

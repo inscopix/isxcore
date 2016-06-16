@@ -1,8 +1,8 @@
 #include "isxRecording.h"
+#include "isxMovie.h"
 #include "isxLog.h"
 #include "isxHdf5FileHandle.h"
 
-#include "H5Cpp.h"
 
 #include <iostream>
 
@@ -29,6 +29,7 @@ public:
  
             m_file = std::make_shared<H5::H5File>(m_path.c_str(), H5F_ACC_RDONLY);
             m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, H5F_ACC_RDONLY);
+            m_movie = std::make_shared<Movie>(m_fileHandle, "/images");
 
             // no exception until here --> this is a valid file
             m_isValid = true;
@@ -78,12 +79,19 @@ public:
         strm << m_path;
     }
 
+    SpMovie_t 
+    getMovie()
+    {
+        return m_movie;
+    }
+
 private:
     bool m_isValid = false;
     std::string m_path;
     
     SpH5File_t m_file;
     SpHdf5FileHandle_t m_fileHandle;
+    SpMovie_t  m_movie;
 };
 
 Recording::Recording()
@@ -116,6 +124,12 @@ void
 Recording::serialize(std::ostream& strm) const
 {
     m_pImpl->serialize(strm);
+}
+
+SpMovie_t 
+Recording::getMovie()
+{
+    return m_pImpl->getMovie();
 }
 } // namespace isx
 

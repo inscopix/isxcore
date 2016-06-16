@@ -10,6 +10,11 @@ namespace isx {
         ///
         Impl(const std::string & inFileName) 
         {
+            // H5F_ACC_RDWR fails if the file doesn't exist. If it exists we open 
+            // it with Read/Write permission and everything works. H5F_ACC_TRUNC 
+            // opens it also with Read/Write permission but it creates the file if
+            // it doesn't exist.This means that the file opening will always succeed,
+            // whether you are opening an existing file or trying to create one from scratch
             int openFlag = H5F_ACC_RDWR;
             if ( false == exists(inFileName))
             {

@@ -33,7 +33,7 @@ public:
     /// \param inNumFrames number of frames
     /// \param inFrameWidth number of columns in the frame
     /// \param inFrameHeight number of rows in the frame
-    ///
+    /// \param inFrameRate default frame rate
     Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate);
 
     /// Destructor
