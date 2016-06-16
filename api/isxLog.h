@@ -22,8 +22,11 @@ namespace isx
 {
 namespace internal
 {
+
 std::ostringstream & getLogStream();
+
 void flushLogStream();
+
 void log_();
 
 template<typename First, typename ...Rest>
@@ -38,20 +41,9 @@ void log_(First && first, Rest && ...rest)
     log_(std::forward<Rest>(rest)...);
 }
 
-} // namespace internal0
+std::string baseName(const std::string& fileName);
+
+} // namespace internal
 } // namespace isx
 
-#if 0
-#include "isxTime.h"
-#include <QFileInfo>
-#include <thread>
-#define ISX_LOG_INTERNAL_DETAILED(MSG)\
-    QFileInfo fileInfo(__FILE__); \
-    std::cout   << fileInfo.fileName().toStdString() << " : " \
-                << __LINE__ << " : " \
-                << isx::Time::now().toString() << " : " \
-                << std::this_thread::get_id() << " " \
-                << MSG << std::endl;
-
-#endif // ISX_LOG_H
 #endif

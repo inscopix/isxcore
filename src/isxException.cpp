@@ -3,7 +3,7 @@
 namespace isx
 {
 
-Exception::Exception(const char* file, int line, const std::string& message)
+Exception::Exception(const std::string& file, int line, const std::string& message)
     : m_msg(message)
     , m_fileName(file)
 {
@@ -19,10 +19,10 @@ Exception::what() const noexcept
     return m_msg.c_str();
 }
 
-const char*
+const std::string&
 Exception::getFileName() const
 {
-    return m_fileName.c_str();
+    return m_fileName;
 }
 
 int
@@ -31,7 +31,7 @@ Exception::getLine()
     return m_line;
 }
 
-ExceptionFileIO::ExceptionFileIO(const char* file, int line, const std::string& message)
+ExceptionFileIO::ExceptionFileIO(const std::string& file, int line, const std::string& message)
     : Exception(file, line, message)
 {
 }
@@ -40,7 +40,7 @@ ExceptionFileIO::~ExceptionFileIO()
 {
 }
 
-ExceptionDataIO::ExceptionDataIO(const char* file, int line, const std::string& message)
+ExceptionDataIO::ExceptionDataIO(const std::string& file, int line, const std::string& message)
     : Exception(file, line, message)
 {
 }
@@ -49,7 +49,7 @@ ExceptionDataIO::~ExceptionDataIO()
 {
 }
 
-ExceptionUserInput::ExceptionUserInput(const char* file, int line, const std::string& message)
+ExceptionUserInput::ExceptionUserInput(const std::string& file, int line, const std::string& message)
     : Exception(file, line, message)
 {
 }
@@ -62,7 +62,7 @@ ExceptionUserInput::~ExceptionUserInput()
 namespace internal
 {
 
-void streamVarArgs_(std::ostringstream& strm)
+void streamVarArgs(std::ostringstream& strm)
 {
 }
 

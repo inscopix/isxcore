@@ -12,9 +12,10 @@
 /// Throws a type of exception with a message consisting of the variadic
 /// arguments converted to strings.
 #define ISX_THROW(TYPE, ...)\
-    std::string msg = isx::internal::varArgsToString_(__VA_ARGS__);\
-    ISX_LOG_ERROR(__FILE__, ":", __LINE__, ": Exception - ", msg);\
-    throw TYPE(__FILE__, __LINE__, msg)
+    std::string msg = isx::internal::varArgsToString(__VA_ARGS__);\
+    std::string file = isx::internal::baseName(__FILE__);\
+    ISX_LOG_ERROR(file, ":", __LINE__, ": Exception - ", msg);\
+    throw TYPE(file, __LINE__, msg)
 
 namespace isx
 {
@@ -31,7 +32,7 @@ namespace isx
         /// \param  file    The name of the file from where the exception is thrown.
         /// \param  line    The line in the file from where the exception is thrown.
         /// \param  message The error message.
-        explicit Exception(const char* file, int line, const std::string& message);
+        explicit Exception(const std::string& file, int line, const std::string& message);
 
         /// Destructor
         ///
@@ -45,7 +46,7 @@ namespace isx
         /// Retrieves the file name in which failure occurs
         ///
         /// \return         The name of the file from where the exception was thrown.
-        const char* getFileName() const;
+        const std::string& getFileName() const;
 
         /// Return the line where failure occurs
         ///
@@ -69,7 +70,7 @@ namespace isx
 
         /// Constructor
         ///
-        explicit ExceptionFileIO(const char* file, int line, const std::string& message);
+        explicit ExceptionFileIO(const std::string& file, int line, const std::string& message);
 
         /// Destructor
         ///
@@ -87,7 +88,7 @@ namespace isx
         /// \param  file    The name of the file from where the exception is thrown.
         /// \param  line    The line in the file from where the exception is thrown.
         /// \param  message The error message.
-        explicit ExceptionDataIO(const char* file, int line, const std::string& message);
+        explicit ExceptionDataIO(const std::string& file, int line, const std::string& message);
 
         /// Destructor
         ///
@@ -107,7 +108,7 @@ namespace isx
         /// \param  file    The name of the file from where the exception is thrown.
         /// \param  line    The line in the file from where the exception is thrown.
         /// \param  message The error message.
-        explicit ExceptionUserInput(const char* file, int line, const std::string& message);
+        explicit ExceptionUserInput(const std::string& file, int line, const std::string& message);
 
         /// Destructor
         ///
@@ -118,10 +119,10 @@ namespace isx
 namespace internal
 {
 
-    /// Stopping condition for recursive streamVarArgs_.
+    /// Stopping condition for recursive streamVarArgs.
     ///
     /// \param  strm        The stream to which to append.
-    void streamVarArgs_(std::ostringstream& strm);
+    void streamVarArgs(std::ostringstream& strm);
 
     /// Appends variadic arguments to an output string stream.
     ///
@@ -129,10 +130,10 @@ namespace internal
     /// \param  first       The next argument to append.
     /// \param  rest        The rest of the arguments to append.
     template<typename First, typename ...Rest>
-    void streamVarArgs_(std::ostringstream& strm, First && first, Rest && ...rest)
+    void streamVarArgs(std::ostringstream& strm, First && first, Rest && ...rest)
     {
         strm << std::forward<First>(first);
-        streamVarArgs_(strm, std::forward<Rest>(rest)...);
+        streamVarArgs(strm, std::forward<Rest>(rest)...);
     }
 
     /// Converts variadic arguments to a string using an output string stream.
@@ -140,10 +141,10 @@ namespace internal
     /// \param  rest        The arguments to convert to a string.
     /// \return             The converted string.
     template<typename ...Rest>
-    std::string varArgsToString_(Rest && ...rest)
+    std::string varArgsToString(Rest && ...rest)
     {
         std::ostringstream strm;
-        streamVarArgs_(strm, std::forward<Rest>(rest)...);
+        streamVarArgs(strm, std::forward<Rest>(rest)...);
         return strm.str();
     }
 

@@ -1,3 +1,4 @@
+#include <QFileInfo>
 #include "isxLog.h"
 
 #if ISX_OS_WIN32
@@ -16,9 +17,10 @@ namespace {
 
 namespace internal
 {
+
 std::ostringstream & getLogStream()
 {
-	return sstm;
+    return sstm;
 }
 
 #if ISX_OS_WIN32
@@ -40,7 +42,7 @@ void log_()
 
 void flushLogStream()
 {
-	std::cout << std::flush;
+    std::cout << std::flush;
 }
 
 void log_()
@@ -50,6 +52,13 @@ void log_()
 }
 
 #endif
+
+std::string
+baseName(const std::string& fileName)
+{
+    QFileInfo fileInfo(fileName.c_str());
+    return fileInfo.fileName().toStdString();
+}
 
 } // namespace internal
 } // namespace isx

@@ -10,7 +10,8 @@
     if (!(COND))\
     {\
         ISX_LOG_ERROR(__VA_ARGS__);\
-        ISX_LOG_ERROR(__FILE__, ":", __LINE__, ": Assertion `", #COND, "' failed.");\
+        std::string file = isx::internal::baseName(__FILE__);\
+        ISX_LOG_ERROR(file, ":", __LINE__, ": Assertion `", #COND, "' failed.");\
     }\
     assert(COND)
 #else
