@@ -97,7 +97,7 @@ namespace isx {
             bInitialized = true;
         }
 
-        catch (H5::FileIException error)
+        catch (...)
         {
             // Do nothing
         }

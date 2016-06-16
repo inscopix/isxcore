@@ -95,7 +95,7 @@ public:
         m_maxdims[2] = inFrameWidth;
 
         // TODO sweet 2016/09/31 : the start and step should also be specified
-        // but we don't currently have a mechnanism for that
+        // but we don't currently have a mechanism for that
         m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]));
 
         /* Create the dataspace */
