@@ -41,22 +41,23 @@ public:
             }
             else
             {
-                ISX_THROW(isx::ExceptionDataIO, "Unsupported data type");
+                ISX_THROW(isx::ExceptionDataIO,
+                    "Unsupported data type ", m_dataType.getTag());
             }
             
             
         }  // end of try block
         
-        // catch failure caused by the H5File operations
         catch (const H5::FileIException& error)
         {
-            ISX_THROW(isx::ExceptionFileIO, "Failure caused by the H5File operations");
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failure caused by H5File operations.\n", error.getDetailMsg());
         }
         
-        // catch failure caused by the DataSet operations
         catch (const H5::DataSetIException& error)
         {
-            ISX_THROW(isx::ExceptionDataIO, "Failure caused by the DataSet operations");
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failure caused by DataSet operations.\n", error.getDetailMsg());
         }
 
         catch (...)
@@ -106,7 +107,7 @@ public:
         m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
 
         /* Create a new dataset within the file */
-        m_dataType = H5::PredType::STD_U16LE;    
+        m_dataType = H5::PredType::STD_U16LE;
         try
         {
             createDataSet(m_path, m_dataType, m_dataSpace);
@@ -115,17 +116,20 @@ public:
         }
         catch (const H5::DataSetIException& error)
         {
-            ISX_THROW(isx::ExceptionDataIO, "Failure caused by the DataSet operations");
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failure caused by H5 DataSet operations.\n", error.getDetailMsg());
         }
         catch (const H5::FileIException& error)
         {
-            ISX_THROW(isx::ExceptionFileIO, "Failure caused by the H5File operations"); 
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failure caused by H5 File operations.\n", error.getDetailMsg());
         }
         catch (const H5::GroupIException& error)
         {
-            ISX_THROW(isx::ExceptionDataIO, "Failure caused by the Group operations");
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failure caused by H5 Group operations.\n", error.getDetailMsg());
         }
- 
+
     }
 
     bool
@@ -242,7 +246,7 @@ Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & in
 {
     if (false == inHdf5FileHandle->isReadOnly())
     {
-        ISX_THROW(isx::ExceptionFileIO, "File was opened with no read permission");
+        ISX_THROW(isx::ExceptionFileIO, "File was opened with no read permission.");
     }
     
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
@@ -252,7 +256,7 @@ Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & in
 {
     if (false == inHdf5FileHandle->isReadWrite())
     {
-        ISX_THROW(isx::ExceptionFileIO, "File was opened with no write permission");
+        ISX_THROW(isx::ExceptionFileIO, "File was opened with no write permission.");
     }
     
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inNumFrames, inFrameWidth, inFrameHeight));
@@ -328,19 +332,23 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
     // Make sure the movie is valid
     if (!m_isValid)
     {
-        ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie");
+        ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie.");
     }
          
     // Check that buffer size matches dataspace definition
     if (inBufferSize != m_frameSizeInBytes)
     {
-        ISX_THROW(isx::ExceptionUserInput, "The buffer size does not match the the frame size in the file");
+        ISX_THROW(isx::ExceptionUserInput,
+            "The buffer size (", inBufferSize, " B) does not match the frame size (",
+            m_frameSizeInBytes, " B).");
     }
         
     // Check that frame number is within range
     if (inFrameNumber > m_maxdims[0])
     {
-        ISX_THROW(isx::ExceptionUserInput, "Frame number exceeds the total number of frames in the movie");
+        ISX_THROW(isx::ExceptionUserInput,
+            "Frame number (", inFrameNumber, ") exceeds the total number of frames (",
+            m_maxdims[0], ") in the movie.");
     }
            
     // Define file space.
@@ -363,8 +371,9 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
     // Catch failure caused by the DataSet operations
     catch (H5::DataSetIException error)
     {
-       ISX_THROW(isx::ExceptionDataIO, "Failed to write frame to movie");
-    }     
+       ISX_THROW(isx::ExceptionDataIO,
+            "Failed to write frame to movie.\n", error.getDetailMsg());
+    }
  
 }
 

@@ -35,16 +35,16 @@ public:
             m_isValid = true;
         }  // end of try block
         
-        // catch failure caused by the H5File operations
         catch (const H5::FileIException& error)
         {
-            ISX_THROW(isx::ExceptionFileIO, error.getDetailMsg());
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failure caused by H5 File operations.\n", error.getDetailMsg());
         }
         
-        // catch failure caused by the DataSet operations
         catch (const H5::DataSetIException& error)
         {
-            ISX_THROW(isx::ExceptionDataIO, error.getDetailMsg());
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failure caused by H5 Dataset operations.\n", error.getDetailMsg());
         }
         
         catch(...)
