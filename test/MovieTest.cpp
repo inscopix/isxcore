@@ -119,14 +119,4 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(inputFrameBuffer[idx+1] == outputFrameBuffer[idx+1]);        
 
     } 
-    SECTION("applyAppDFF") {
-        isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
-        REQUIRE(r->isValid());
-        isx::SpMovie_t m = std::make_shared<isx::Movie>(r->getHdf5FileHandle(), "/images");
-        std::string	outputFilename = g_resources["testDataPath"] + "/DFFout.hdf5";
-        isx::Algorithm algo = isx::Algorithm(m);
-        REQUIRE(algo.IsValid());
-        algo.SetOutputFileName(outputFilename);
-        algo.ApplyApp();
-    }
 }
