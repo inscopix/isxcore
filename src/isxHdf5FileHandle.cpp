@@ -57,7 +57,7 @@ Hdf5FileHandle::getObjNames(std::vector<std::string> & outNames)
     }
 
     outNames.resize((size_t)nObjInGroup);
-    for (int i(0); i < nObjInGroup; ++i)
+    for (unsigned int i(0); i < nObjInGroup; ++i)
     {
         outNames[i] = rootGroup.getObjnameByIdx(i);
     }
