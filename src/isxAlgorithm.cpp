@@ -35,7 +35,7 @@ namespace isx
 
     void Algorithm::FindMinMax(const std::vector<double> &input, double &min, double &max, size_t nLength)
     {
-        for (int i = 0; i < nLength; i++)
+        for (size_t i = 0; i < nLength; i++)
         {
             if (input[i] < min)
             {
@@ -53,7 +53,7 @@ namespace isx
     {
         if (min != max)
         {
-            for (int i = 0; i < nLength; i++)
+            for (size_t i = 0; i < nLength; i++)
             {
                 output[i] = uint16_t((4095 / (max - min)) * (input[i] - min));
             }
@@ -62,7 +62,7 @@ namespace isx
 
     void Algorithm::Add_V(const std::vector<double> &inputA, const std::vector<uint16_t> &inputB, std::vector<double> &output, size_t nLength)
     {
-        for (int i = 0; i < nLength; i++)
+        for (size_t i = 0; i < nLength; i++)
         {
             output[i] = inputA[i] + double(inputB[i]);
         }
@@ -70,7 +70,7 @@ namespace isx
 
     void Algorithm::Subtract_V(const std::vector<uint16_t> &inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength)
     {
-        for (int i = 0; i < nLength; i++)
+        for (size_t i = 0; i < nLength; i++)
         {
             output[i] = double(inputA[i]) - inputB[i];
         }
@@ -78,7 +78,7 @@ namespace isx
 
     void Algorithm::Divide_V(const std::vector<double> &inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength)
     {
-        for (int i = 0; i < nLength; i++)
+        for (size_t i = 0; i < nLength; i++)
         {
             if (inputA[i] != 0)
             {
@@ -96,7 +96,7 @@ namespace isx
     {
         if (num != 0)
         {
-            for (int i = 0; i < nLength; i++)
+            for (size_t i = 0; i < nLength; i++)
             {
                 output[i] = (double)inputA[i] / num;
             }
