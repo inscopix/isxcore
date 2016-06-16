@@ -53,12 +53,23 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(m.getFrameSizeInBytes() == 500000);
     }
 
-    SECTION("getFrame") {
+    SECTION("getFrame for time") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
         isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
         auto nvf = m.getFrame(m.getTimingInfo().getStart());
+        unsigned char * t = reinterpret_cast<unsigned char *>(nvf->getPixels());
+        REQUIRE(t[0] == 0x43);
+        REQUIRE(t[1] == 0x3);
+    }
+
+    SECTION("getFrame for frame number") {
+        isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
+        REQUIRE(r->isValid());
+        isx::Movie m(r->getHdf5FileHandle(), "/images");
+        REQUIRE(m.isValid());
+        auto nvf = m.getFrame(0);
         unsigned char * t = reinterpret_cast<unsigned char *>(nvf->getPixels());
         REQUIRE(t[0] == 0x43);
         REQUIRE(t[1] == 0x3);
@@ -78,6 +89,7 @@ TEST_CASE("MovieTest", "[core]") {
         isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.toString() == "/images");
     }
+
     SECTION("Write frames to new movie", "[core]") {
         // Inputs
         isx::SpRecording_t inputFile = std::make_shared<isx::Recording>(testFile);

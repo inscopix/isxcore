@@ -154,21 +154,20 @@ public:
         return m_frameSizeInBytes;
     }
 
-    SpNvistaVideoFrame_t
-    getFrame(const Time & inTime)
+    SpU16VideoFrame_t
+    getFrame(size_t inFrameNumber)
     {
-        hsize_t frameNumber = hsize_t(m_timingInfo.convertTimeToIndex(inTime));
-        Time frameTime = m_timingInfo.convertIndexToTime(frameNumber);
+        Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
         
-        auto nvf = std::make_shared<NvistaVideoFrame_t>(
+        auto nvf = std::make_shared<U16VideoFrame_t>(
             getFrameWidth(), getFrameHeight(),
             int32_t(sizeof(uint16_t)) * getFrameWidth(),
             1, // numChannels
-            frameTime, frameNumber);
+            frameTime, inFrameNumber);
         try {
             
             H5::DataSpace fileSpace(m_dataSpace);            
-            hsize_t fileStart[3] = {frameNumber, 0, 0};
+            hsize_t fileStart[3] = {inFrameNumber, 0, 0};
             hsize_t fileCount[3] = {1, m_dims[1], m_dims[2]};            
             fileSpace.selectHyperslab(H5S_SELECT_SET, fileCount, fileStart);
             
@@ -185,6 +184,13 @@ public:
         }
 
         return nvf;
+    }
+
+    SpU16VideoFrame_t
+    getFrame(const Time & inTime)
+    {
+        hsize_t frameNumber = hsize_t(m_timingInfo.convertTimeToIndex(inTime));
+        return getFrame(frameNumber);
     }
 
     double 
@@ -457,7 +463,13 @@ Movie::getFrameSizeInBytes() const
     return m_pImpl->getFrameSizeInBytes();
 }
 
-SpNvistaVideoFrame_t
+SpU16VideoFrame_t
+Movie::getFrame(size_t inFrameNumber)
+{
+    return m_pImpl->getFrame(inFrameNumber);
+}
+
+SpU16VideoFrame_t
 Movie::getFrame(const Time & inTime)
 {
     return m_pImpl->getFrame(inTime);

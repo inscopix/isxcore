@@ -15,11 +15,11 @@ namespace isx {
 
 /// type for an nvista movie video frame
 ///
-typedef VideoFrame<uint16_t> NvistaVideoFrame_t;
+typedef VideoFrame<uint16_t> U16VideoFrame_t;
 
 /// shared_ptr type for an nvista movie video frame
 ///
-typedef std::shared_ptr<NvistaVideoFrame_t> SpNvistaVideoFrame_t;
+typedef std::shared_ptr<U16VideoFrame_t> SpU16VideoFrame_t;
 
 ///
 /// A class encapsulating an nVista movie file.
@@ -75,12 +75,20 @@ public:
     size_t
     getFrameSizeInBytes() const;
 
-    /// Get the frame data for given frame.
+    /// Get the frame data for given frame number.
+    /// \param inFrameNumber 0-based index of frame for which to retrieve frame data
+    /// \return a shared_ptr to a VideoFrame object containing the
+    ///         requested frame data
+    ///
+    SpU16VideoFrame_t
+    getFrame(size_t inFrameNumber);
+
+    /// Get the frame data for given time.
     /// \param inTime time of frame for which to retrieve frame data
     /// \return a shared_ptr to a VideoFrame object containing the
     ///         requested frame data
     ///
-    SpNvistaVideoFrame_t
+    SpU16VideoFrame_t
     getFrame(const Time & inTime);
 
     /// \return the duration of the movie in seconds
