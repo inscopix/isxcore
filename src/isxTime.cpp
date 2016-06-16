@@ -166,4 +166,10 @@ Time::verifyUtcOffset(int32_t utcOffset)
     }
 }
 
+Time
+Time::floorToDenomOf(const isx::Ratio & inRatio) const
+{
+    return Time(m_secsSinceEpoch.floorToDenomOf(inRatio), m_utcOffset);
+}
+
 } // namespace

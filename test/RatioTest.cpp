@@ -184,20 +184,20 @@ TEST_CASE("RatioTest", "[core]")
         REQUIRE(actual == expected);
     }
     
-    SECTION("floorWithThisDenom")
+    SECTION("floorToDenomOf")
     {
         isx::Ratio r1(3, 7);
         isx::Ratio r2(20, 23);
-        isx::Ratio f = r1.floorWithThisDenom(r2);
-        REQUIRE(f.getDen() == r1.getDen());
+        isx::Ratio f = r1.floorToDenomOf(r2);
+        REQUIRE(f.getDen() == r2.getDen());
         
-        double r2Value = r2.toDouble();
+        double r1Value = r1.toDouble();
         double fvBelow = f.toDouble();
         double fvAbove = double(f.getNum() + 1) / double(f.getDen());
         
-        REQUIRE(fvBelow <= r2Value);
-        REQUIRE(fvAbove > r2Value);
-        REQUIRE(f.getNum() == 6);
+        REQUIRE(fvBelow <= r1Value);
+        REQUIRE(fvAbove > r1Value);
+        REQUIRE(f.getNum() == 9);
     }
 
 }

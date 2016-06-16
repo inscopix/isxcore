@@ -86,6 +86,12 @@ public:
     ///
     static isx::Time now();
 
+    /// This method works on the Ratio contained in Time objects. 
+    /// \return     A time with its Ratio set to the largest ratio with inRatio's denom
+    ///             that is not greater than the other ratio in value
+    Time
+    floorToDenomOf(const isx::Ratio & inRatio) const;
+
     // Overrides
     virtual void serialize(std::ostream& strm) const;
 

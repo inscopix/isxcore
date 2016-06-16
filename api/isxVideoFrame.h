@@ -95,7 +95,7 @@ public:
     int32_t
     getNumChannels() const
     {
-        return m_image.getNumChannels;
+        return m_image.getNumChannels();
     }
 
     /// \return the size of one pixel in bytes
