@@ -37,6 +37,7 @@ void log_(First && first, Rest && ...rest)
 #endif
     log_(std::forward<Rest>(rest)...);
 }
+
 } // namespace internal0
 } // namespace isx
 

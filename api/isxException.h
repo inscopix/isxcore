@@ -7,9 +7,9 @@
 
 #include "isxLog.h"
 
-#define ISX_THROW_EXCEPTION_FILEIO(MSG) throw isx::ExceptionFileIO(__FILE__, __LINE__, MSG)
-#define ISX_THROW_EXCEPTION_DATAIO(MSG) throw isx::ExceptionDataIO(__FILE__, __LINE__, MSG)
-#define ISX_THROW_EXCEPTION_USRINPUT(MSG) throw isx::ExceptionUserInput(__FILE__, __LINE__, MSG)
+#define ISX_THROW(TYPE, ...)\
+    std::string msg = isx::internal::varArgsToString_(__VA_ARGS__);\
+    throw TYPE(__FILE__, __LINE__, msg)
 
 namespace isx
 {
@@ -18,9 +18,6 @@ namespace isx
     class Exception : public std::exception
     {
     public:
-        
-        /// Default message for exceptions
-        static const std::string DEFAULT_MSG;
 
         /// Constructor
         ///
@@ -72,7 +69,7 @@ namespace isx
         
         /// Constructor
         ///
-        explicit ExceptionFileIO(const char* file, int line, const std::string& message = DEFAULT_MSG) :
+        explicit ExceptionFileIO(const char* file, int line, const std::string& message) :
             Exception(file, line, message)
         {}
         
@@ -89,7 +86,7 @@ namespace isx
 
         /// Constructor
         ///
-        explicit ExceptionDataIO(const char* file, int line, const std::string& message = DEFAULT_MSG) :
+        explicit ExceptionDataIO(const char* file, int line, const std::string& message) :
             Exception(file, line, message)
         {}
         
@@ -106,7 +103,7 @@ namespace isx
 
         /// Constructor
         ///
-        explicit ExceptionUserInput(const char* file, int line, const std::string& message = DEFAULT_MSG) :
+        explicit ExceptionUserInput(const char* file, int line, const std::string& message) :
             Exception(file, line, message)
         {}
         
@@ -114,7 +111,30 @@ namespace isx
         ///
         ~ExceptionUserInput() {}
     };
-}
 
+// Non API utilities.
+namespace internal
+{
+
+    void streamVarArgs_(std::ostringstream& strm);
+
+    template<typename First, typename ...Rest>
+    void streamVarArgs_(std::ostringstream& strm, First && first, Rest && ...rest)
+    {
+        strm << std::forward<First>(first);
+        streamVarArgs_(strm, std::forward<Rest>(rest)...);
+    }
+
+    template<typename ...Rest>
+    std::string varArgsToString_(Rest && ...rest)
+    {
+        std::ostringstream strm;
+        streamVarArgs_(strm, std::forward<Rest>(rest)...);
+        return strm.str();
+    }
+
+} // namespace internal
+
+} // namespace isx
 
 #endif //ISX_EXCEPTION_H

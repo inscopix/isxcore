@@ -41,7 +41,7 @@ public:
             }
             else
             {
-                ISX_THROW_EXCEPTION_DATAIO("Unsupported data type");                
+                ISX_THROW(isx::ExceptionDataIO, "Unsupported data type");
             }
             
             
@@ -50,13 +50,13 @@ public:
         // catch failure caused by the H5File operations
         catch (const H5::FileIException& error)
         {
-            ISX_THROW_EXCEPTION_FILEIO("Failure caused by the H5File operations");
+            ISX_THROW(isx::ExceptionFileIO, "Failure caused by the H5File operations");
         }
         
         // catch failure caused by the DataSet operations
         catch (const H5::DataSetIException& error)
         {
-            ISX_THROW_EXCEPTION_DATAIO("Failure caused by the DataSet operations");
+            ISX_THROW(isx::ExceptionDataIO, "Failure caused by the DataSet operations");
         }
 
         catch (...)
@@ -115,15 +115,15 @@ public:
         }
         catch (const H5::DataSetIException& error)
         {
-            ISX_THROW_EXCEPTION_DATAIO("Failure caused by the DataSet operations");
+            ISX_THROW(isx::ExceptionDataIO, "Failure caused by the DataSet operations");
         }
         catch (const H5::FileIException& error)
         {
-            ISX_THROW_EXCEPTION_FILEIO("Failure caused by the H5File operations"); 
+            ISX_THROW(isx::ExceptionFileIO, "Failure caused by the H5File operations"); 
         }
         catch (const H5::GroupIException& error)
         {
-            ISX_THROW_EXCEPTION_DATAIO("Failure caused by the Group operations");
+            ISX_THROW(isx::ExceptionDataIO, "Failure caused by the Group operations");
         }
  
     }
@@ -242,7 +242,7 @@ Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & in
 {
     if (false == inHdf5FileHandle->isReadOnly())
     {
-        ISX_THROW_EXCEPTION_FILEIO("File was opened with no read permission");
+        ISX_THROW(isx::ExceptionFileIO, "File was opened with no read permission");
     }
     
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
@@ -252,7 +252,7 @@ Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & in
 {
     if (false == inHdf5FileHandle->isReadWrite())
     {
-        ISX_THROW_EXCEPTION_FILEIO("File was opened with no write permission");
+        ISX_THROW(isx::ExceptionFileIO, "File was opened with no write permission");
     }
     
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inNumFrames, inFrameWidth, inFrameHeight));
@@ -328,19 +328,19 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
     // Make sure the movie is valid
     if (!m_isValid)
     {
-        ISX_THROW_EXCEPTION_FILEIO("Writing frame to invalid movie");
+        ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie");
     }
          
     // Check that buffer size matches dataspace definition
     if (inBufferSize != m_frameSizeInBytes)
     {
-        ISX_THROW_EXCEPTION_USRINPUT("The buffer size does not match the the frame size in the file");
+        ISX_THROW(isx::ExceptionUserInput, "The buffer size does not match the the frame size in the file");
     }
         
     // Check that frame number is within range
     if (inFrameNumber > m_maxdims[0])
     {
-        ISX_THROW_EXCEPTION_USRINPUT("Frame number exceeds the total number of frames in the movie");
+        ISX_THROW(isx::ExceptionUserInput, "Frame number exceeds the total number of frames in the movie");
     }
            
     // Define file space.
@@ -363,7 +363,7 @@ Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSi
     // Catch failure caused by the DataSet operations
     catch (H5::DataSetIException error)
     {
-       ISX_THROW_EXCEPTION_DATAIO("Failed to write frame to movie");
+       ISX_THROW(isx::ExceptionDataIO, "Failed to write frame to movie");
     }     
  
 }
@@ -442,19 +442,19 @@ Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_ty
     // user is trying to write out
     if(nDims != m_ndims)
     {
-        ISX_THROW_EXCEPTION_DATAIO("Dataset dimension mismatch");
+        ISX_THROW(isx::ExceptionDataIO, "Dataset dimension mismatch");
     }
         
     for (int i(0); i < nDims; i++)
     {
         if(dims[i] != m_dims[i])
         {
-            ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
+            ISX_THROW(isx::ExceptionDataIO, "Dataset size mismatch");
         }
             
         if(maxdims[i] != m_maxdims[i])
         {
-            ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
+            ISX_THROW(isx::ExceptionDataIO, "Dataset size mismatch");
         }
     }
         

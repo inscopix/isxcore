@@ -38,13 +38,13 @@ public:
         // catch failure caused by the H5File operations
         catch (const H5::FileIException& error)
         {
-            ISX_THROW_EXCEPTION_FILEIO(error.getDetailMsg());
+            ISX_THROW(isx::ExceptionFileIO, error.getDetailMsg());
         }
         
         // catch failure caused by the DataSet operations
         catch (const H5::DataSetIException& error)
         {
-            ISX_THROW_EXCEPTION_DATAIO(error.getDetailMsg());
+            ISX_THROW(isx::ExceptionDataIO, error.getDetailMsg());
         }
         
         catch(...)
