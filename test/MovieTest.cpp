@@ -99,20 +99,20 @@ TEST_CASE("MovieTest", "[core]") {
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
         isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename);
         
-        uint16_t nSchedules = outputFile->getNumRecordingSchedules();
-        isx::SpRecordingSchedule_t rs;
+        uint16_t nSeries = outputFile->getNumMovieSeries();
+        isx::SpMovieSeries_t rs;
         isx::SpMovie_t outputMovie; 
         
-        if(nSchedules == 0)
+        if(nSeries == 0)
         {
             // Create it
-            rs = outputFile->addRecordingSchedule("RecSchedule0");
+            rs = outputFile->addMovieSeries("RecSeries0");
             outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);
         }
         else
         {
             // Read it
-            rs = outputFile->getRecordingSchedule(0);
+            rs = outputFile->getMovieSeries(0);
             uint16_t nMovies = rs->getNumMovies();
             if(nMovies == 0)
             {

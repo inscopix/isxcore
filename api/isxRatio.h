@@ -111,7 +111,6 @@ private:
 
 }; // class
 
-typedef Ratio Ratio_t;
 
 } // namespace
 

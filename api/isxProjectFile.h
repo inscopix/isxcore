@@ -14,14 +14,14 @@
             /Type
             /Parameters
             /InputMovies         ---> to be saved only for the last history item (if needed to undo an operation)
-                /Schedule item 1
+                /Series item 1
                     /Movie 1
                         :
                         :
                     /Movie L
                     :
                     :
-                /Schedule item P
+                /Series item P
             :
             :
         /History item N
@@ -32,8 +32,8 @@
             :
             :
         /Comment M
-    /Schedules
-        /Schedule item 1
+    /Series
+        /Series item 1
             /Recording item 1
                 /Properties
                     /FrameRate
@@ -44,7 +44,7 @@
             /Recording item L
             :
             :
-        /Schedule item P
+        /Series item P
     /Cells
         /Cell Set 1
             /Cell set ID
@@ -66,58 +66,12 @@
 */
 #include "isxTime.h"
 #include "isxCoreFwd.h"
-#include "isxRecordingSchedule.h"
+#include "isxMovieSeries.h"
 #include <utility>
 #include <vector>
 #include <memory>
 
-
-#pragma pack(push, 1)
 namespace isx {
-    
-    const int COMMENT_LENGTH = 256;
-
-    /// enum for the available types for history records
-    ///
-    enum HistoryItemType
-    {
-        HISTORYITEMTYPE_SPATIAL_CROP = 0,
-        HISTORYITEMTYPE_TEMPORAL_CROP,
-        HISTORYITEMTYPE_SPATIAL_DOWNSAMPLE,
-        HISTORYITEMTYPE_TEMPORAL_DOWNSAMPLE,
-        HISTORYITEMTYPE_F_NORM,
-        HISTORYITEMTYPE_CELL_SEG
-    };
-
-    ///TODO: Define parameters for each of the operations defined in History
-
-    /// The annotation item basic structure
-    ///
-    struct FileComment
-    {
-        uint64_t nTimestamp;              //!< Frame index associated to the comment 
-        char     cText[COMMENT_LENGTH];   //!< Comment text 
-    };
-
-    /// Video properties basic structure
-    ///
-    struct VideoProperties
-    {
-        double   dFrameRate;             //!< The frame rate for the video 
-        Time     dateOfCreation;         //!< The date of creation 
-    };
-
-    /// Cell properties basic structure
-    ///
-    struct CellProperties
-    {
-        uint64_t cellId;                //!< Unique cell ID for each cell identified in the video 
-        uint64_t cText[COMMENT_LENGTH]; //!< A generic comment to attach to each cell 
-    };
-
-    /// A vector of <Row, Column> pairs describing the contour of an identified cell
-    ///
-    typedef std::vector<std::pair<uint16_t, uint16_t> > CellContour;    
 
     
     /// The project file class
@@ -136,18 +90,22 @@ namespace isx {
         /// Get the file handle
         ///
         SpHdf5FileHandle_t getHdf5FileHandle();
+
+        static const std::string projectPath;
+        static const std::string headerPath;
+        static const std::string seriesPath;
         
-        /// Get the number of recording schedules in the project file
+        /// Get the number of recording series in the project file
         ///
-        uint16_t getNumRecordingSchedules();
+        uint16_t getNumMovieSeries();
         
-        /// Get a recording schedule by index
+        /// Get a recording series by index
         ///
-        SpRecordingSchedule_t getRecordingSchedule(uint16_t inIndex);
+        SpMovieSeries_t getMovieSeries(uint16_t inIndex);
         
-        /// Add a recording schedule to the project file
+        /// Add a recording series to the project file
         ///
-        SpRecordingSchedule_t addRecordingSchedule(const std::string & inName);
+        SpMovieSeries_t addMovieSeries(const std::string & inName);
        
     private:        
         class Impl;
@@ -158,5 +116,4 @@ namespace isx {
     };
  
 }
-#pragma pack(pop)
 #endif // ISX_PROJECTFILE_H

@@ -230,7 +230,6 @@ private:
     size_t m_frameSizeInBytes;
 
     isx::TimingInfo m_timingInfo;
-    int64_t         m_frameRate;
 
     void createDataSet(const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space);
     std::vector<std::string> splitPath(const std::string &s);

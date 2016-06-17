@@ -1,10 +1,10 @@
 #include "isxHdf5FileHandle.h" 
-#include "isxRecordingSchedule.h"
+#include "isxMovieSeries.h"
 #include "isxMovie.h"
 
 namespace isx {
 
-    class RecordingSchedule::Impl
+    class MovieSeries::Impl
     {
     public:  
     
@@ -14,15 +14,15 @@ namespace isx {
         
         /// Constructor 
         /// \param inHdf5FileHandle file handle
-        /// \param inPath path for the recording schedule
+        /// \param inPath path for the recording series
         ///
         Impl(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath):
         m_fileHandle(inHdf5FileHandle),
         m_path(inPath)
         {
             m_file = inHdf5FileHandle->get();
-            H5::Group recordingScheduleGroup = m_file->openGroup(m_path);
-            hsize_t nObjInGroup = recordingScheduleGroup.getNumObjs();
+            H5::Group MovieSeriesGroup = m_file->openGroup(m_path);
+            hsize_t nObjInGroup = MovieSeriesGroup.getNumObjs();
             
             if(nObjInGroup != 0)
             {
@@ -31,7 +31,7 @@ namespace isx {
                 // Initialize movies
                 for (uint16_t m(0); m < nObjInGroup; ++m)
                 {
-                    std::string objName = recordingScheduleGroup.getObjnameByIdx(m);
+                    std::string objName = MovieSeriesGroup.getObjnameByIdx(m);
                     std::string path = m_path + "/" + objName;
                     m_movies[m].reset(new Movie(m_fileHandle, path + "/Movie"));
                 }
@@ -81,43 +81,43 @@ namespace isx {
     };  
 
     //////////////////////////////////////////////////////////////////////////////
-    //  RECORDING SCHEDULE
+    //  RECORDING SERIES
     ///////////////////////////////////////////////////////////////////////////////
-    RecordingSchedule::RecordingSchedule()
+    MovieSeries::MovieSeries()
     {
         
     }
     
-    RecordingSchedule::RecordingSchedule(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath)
+    MovieSeries::MovieSeries(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath)
     {
         m_pImpl.reset(new Impl(inHdf5FileHandle, inPath));
     }
         
-    RecordingSchedule::~RecordingSchedule()
+    MovieSeries::~MovieSeries()
     {
         
     }
         
     uint16_t 
-    RecordingSchedule::getNumMovies()
+    MovieSeries::getNumMovies()
     {
         return m_pImpl->getNumMovies();
     }
         
     SpMovie_t
-    RecordingSchedule::getMovie(uint16_t inIndex)
+    MovieSeries::getMovie(uint16_t inIndex)
     {
         return m_pImpl->getMovie(inIndex);
     }
     
     std::string 
-    RecordingSchedule::getName()
+    MovieSeries::getName()
     {
         return m_pImpl->getName();
     }
     
     SpMovie_t 
-    RecordingSchedule::addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate)
+    MovieSeries::addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate)
     {
         return m_pImpl->addMovie(inName, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate);
     }

@@ -2,6 +2,13 @@
 #include "isxProjectFile.h"
 #include <fstream>
 namespace isx {
+    
+    /* static */
+    const std::string ProjectFile::projectPath = "/MosaicProject";
+    /* static */
+    const std::string ProjectFile::headerPath = "/MosaicProject/FileHeader";
+    /* static */
+    const std::string ProjectFile::seriesPath = "/MosaicProject/Series";
 
     class ProjectFile::Impl
     {
@@ -46,18 +53,18 @@ namespace isx {
         }
         
         uint16_t 
-        getNumRecordingSchedules()
+        getNumMovieSeries()
         {
-            return (uint16_t)m_recordingSchedules.size();
+            return (uint16_t)m_movieSeries.size();
         }
         
-        SpRecordingSchedule_t 
-        getRecordingSchedule(uint16_t inIndex)
+        SpMovieSeries_t 
+        getMovieSeries(uint16_t inIndex)
         {
-            return m_recordingSchedules[inIndex];
+            return m_movieSeries[inIndex];
         }
         
-        SpRecordingSchedule_t addRecordingSchedule(const std::string & inName);
+        SpMovieSeries_t addMovieSeries(const std::string & inName);
         
     private:
         void initialize();
@@ -70,10 +77,10 @@ namespace isx {
         H5::Group  m_grFileHeader;
         H5::Group  m_grHistory;
         H5::Group  m_grAnnotations;
-        H5::Group  m_grSchedules;
+        H5::Group  m_grSeries;
         H5::Group  m_grCells;
         
-        std::vector<SpRecordingSchedule_t> m_recordingSchedules;
+        std::vector<SpMovieSeries_t> m_movieSeries;
         
 
     };
@@ -103,22 +110,22 @@ namespace isx {
     }
     
     uint16_t 
-    ProjectFile::getNumRecordingSchedules()
+    ProjectFile::getNumMovieSeries()
     {
-        return m_pImpl->getNumRecordingSchedules();
+        return m_pImpl->getNumMovieSeries();
     }
         
 
-    SpRecordingSchedule_t 
-    ProjectFile::getRecordingSchedule(uint16_t inIndex)
+    SpMovieSeries_t 
+    ProjectFile::getMovieSeries(uint16_t inIndex)
     {
-        return m_pImpl->getRecordingSchedule(inIndex);
+        return m_pImpl->getMovieSeries(inIndex);
     }
     
-    SpRecordingSchedule_t 
-    ProjectFile::addRecordingSchedule(const std::string & inName)
+    SpMovieSeries_t 
+    ProjectFile::addMovieSeries(const std::string & inName)
     {
-        return m_pImpl->addRecordingSchedule(inName);
+        return m_pImpl->addMovieSeries(inName);
     }
 
  
@@ -127,19 +134,19 @@ namespace isx {
     //  PROJECT FILE IMPLEMENTATION
     ///////////////////////////////////////////////////////////////////////////////
     
-    SpRecordingSchedule_t 
-    ProjectFile::Impl::addRecordingSchedule(const std::string & inName)
+    SpMovieSeries_t 
+    ProjectFile::Impl::addMovieSeries(const std::string & inName)
     {
-        std::string path = "/MosaicProject/Schedules/" + inName;
+        std::string path = seriesPath + "/" + inName;
         m_file->createGroup(path);        
-        m_recordingSchedules.push_back(std::make_shared<RecordingSchedule>(m_fileHandle, path));
-        return m_recordingSchedules[m_recordingSchedules.size() - 1];
+        m_movieSeries.push_back(std::make_shared<MovieSeries>(m_fileHandle, path));
+        return m_movieSeries[m_movieSeries.size() - 1];
     }
     
     void 
     ProjectFile::Impl::initialize()
     {
-        // Get the number of objects and initialize schedules
+        // Get the number of objects and initialize series
         std::string rootObjName("/");
         H5::Group rootGroup = m_file->openGroup(rootObjName);
         hsize_t nObjInGroup = rootGroup.getNumObjs();
@@ -150,18 +157,18 @@ namespace isx {
         }
         else
         {
-            m_grProject    = m_file->openGroup("/MosaicProject");
-            m_grFileHeader = m_file->openGroup("/MosaicProject/FileHeader");
-            m_grSchedules  = m_file->openGroup("/MosaicProject/Schedules");
+            m_grProject    = m_file->openGroup(projectPath);
+            m_grFileHeader = m_file->openGroup(headerPath);
+            m_grSeries  = m_file->openGroup(seriesPath);
             
-            nObjInGroup = m_grSchedules.getNumObjs();
+            nObjInGroup = m_grSeries.getNumObjs();
             if(nObjInGroup != 0)
             {
-                m_recordingSchedules.resize(nObjInGroup);
+                m_movieSeries.resize(nObjInGroup);
                 for (hsize_t rs(0); rs < nObjInGroup; ++rs)
                 {
-                    std::string rs_name = "/MosaicProject/Schedules/" + m_grSchedules.getObjnameByIdx(rs);
-                    m_recordingSchedules[rs].reset(new RecordingSchedule(getHdf5FileHandle(), rs_name));
+                    std::string rs_name = seriesPath + "/" + m_grSeries.getObjnameByIdx(rs);
+                    m_movieSeries[rs].reset(new MovieSeries(getHdf5FileHandle(), rs_name));
                 }
             }
             
@@ -173,9 +180,9 @@ namespace isx {
     ProjectFile::Impl::initDataModel()
     { 
         
-        m_grProject    = m_file->createGroup("/MosaicProject");
-        m_grFileHeader = m_file->createGroup("/MosaicProject/FileHeader");
-        m_grSchedules  = m_file->createGroup("/MosaicProject/Schedules");
+        m_grProject    = m_file->createGroup(projectPath);
+        m_grFileHeader = m_file->createGroup(headerPath);
+        m_grSeries  = m_file->createGroup(seriesPath);
                 
     }
  
