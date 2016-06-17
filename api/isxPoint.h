@@ -2,112 +2,129 @@
 #define ISX_POINT_H
 
 #include <string>
+#include "isxObject.h"
 
-namespace isx {
+namespace isx
+{
 
-/*!
- * A pair of 2D (x, y) coordinates.
- */
-class Point {
-
+/// A point in 2D space defined by x and y coorindates.
+///
+/// This class is templated so that it can also be used to store sizes
+/// and numbers of pixels, but still consistently refer to the x and
+/// y dimensions.
+template <typename T>
+class Point : public isx::Object
+{
 public:
 
-    /*!
-     * Default constructor.
-     *
-     * Initially the coordinates are (0, 0).
-     */
+    /// Default constructor.
+    ///
+    /// Initially the coordinates are (0, 0).
     Point();
 
-    /*!
-     * Constructor that allows for specification of (x, y) coordinates.
-     *
-     * \param   x       The x coordinate.
-     * \param   y       The y coordinate.
-     */
-    Point(double x, double y);
+    /// Constructor that allows for specification of (x, y) coordinates.
+    ///
+    /// \param   x      The x coordinate.
+    /// \param   y      The y coordinate.
+    Point(T x, T y);
 
-    /*!
-     * Returns a new point which is the result of this plus another point.
-     *
-     * \param   other   The point to add.
-     * \return  The result of adding other to this.
-     */
-    isx::Point plus(const isx::Point& other) const;
+    /// \return         The x coordinate.
+    ///
+    T getX() const;
 
-    /*!
-     * Returns a new point which is the result of this plus a scalar.
-     *
-     * \param   scalar  The scalar to add.
-     * \return  The result of adding scalar to this.
-     */
-    isx::Point plus(double scalar) const;
+    /// \return         The y coordinate.
+    ///
+    T getY() const;
 
-    /*!
-     * Returns a new point which is the result of this minus another point.
-     *
-     * \param   other   The point to subtract.
-     * \return  The result of subtracting other from this.
-     */
-    isx::Point minus(const isx::Point& other) const;
+    /// Point addition where coordinate type must be the same as this.
+    ///
+    /// \param   other  The point to add.
+    /// \return         The result of adding other to this.
+    isx::Point<T> operator +(const isx::Point<T>& other) const;
 
-    /*!
-     * Returns a new point which is the result of this plus a scalar.
-     *
-     * \param   scalar  The scalar to subtract.
-     * \return  The result of subtracting scalar from this.
-     */
-    isx::Point minus(double scalar) const;
+    /// Point multiplication where coordinate type can be different to this.
+    ///
+    /// \param   other  The point with which to multiply.
+    /// \return         The result of multiplying this with other.
+    template <typename TOther>
+    isx::Point<T> operator *(const isx::Point<TOther>& other) const;
 
-    /*!
-     * Returns a new point which is the result of this times another point.
-     *
-     * \param   other   The point with which to multiply.
-     * \return  The result of multiplying this with other.
-     */
-    isx::Point times(const isx::Point& other) const;
+    /// Exact comparison.
+    ///
+    /// param   other   The point with which to compare.
+    /// \return         True if this is exactly equal to the other point.
+    bool operator ==(const isx::Point<T>& other) const;
 
-    /*!
-     * Returns a new point which is the result of this times a scalar.
-     *
-     * \param   scalar  The scalar with which to multiply.
-     * \return  The result of multiplying this with scalar.
-     */
-    isx::Point times(double scalar) const;
-
-    /*!
-     * Returns a new point which is the result of this divided by another point.
-     *
-     * \param   other   The point with which to divide.
-     * \return  The result of dividing this with other.
-     */
-    isx::Point divide(const isx::Point& other) const;
-
-    /*!
-     * Returns a new point which is the result of this divided by a scalar.
-     *
-     * \param   scalar  The scalar with which to divide.
-     * \return  The result of dividing this with scalar.
-     */
-    isx::Point divide(double scalar) const;
-
-    /*!
-     * Returns a string representation of the point as "(x, y)".
-     *
-     * \param   prec    The number of decimal places.
-     * \return  A string representation of the point as "(x, y)".
-     */
-    std::string toString(int prec = 2) const;
+    // Overrides
+    virtual void serialize(std::ostream& strm) const;
 
 private:
 
-    //! The x coordinate.
-    double m_x;
+    /// The x coordinate.
+    T m_x;
 
-    //! The y coordinate.
-    double m_y;
+    /// The y coordinate.
+    T m_y;
 
 }; // class
+
+// Implementation
+template <typename T>
+Point<T>::Point()
+    : m_x(0)
+    , m_y(0)
+{
+}
+
+template <typename T>
+Point<T>::Point(T x, T y)
+    : m_x(x)
+    , m_y(y)
+{
+}
+
+template <typename T>
+T
+Point<T>::getX() const
+{
+    return m_x;
+}
+
+template <typename T>
+T
+Point<T>::getY() const
+{
+    return m_y;
+}
+
+template <typename T>
+isx::Point<T>
+Point<T>::operator +(const isx::Point<T>& other) const
+{
+    return isx::Point<T>(m_x + other.m_x, m_y + other.m_y);
+}
+
+template <typename T>
+template <typename TOther>
+isx::Point<T>
+Point<T>::operator *(const isx::Point<TOther>& other) const
+{
+    return isx::Point<T>(m_x * other.getX(), m_y * other.getY());
+}
+
+template <typename T>
+bool
+Point<T>::operator ==(const isx::Point<T>& other) const
+{
+    return (m_x == other.m_x) && (m_y == other.m_y);
+}
+
+template <typename T>
+void
+Point<T>::serialize(std::ostream& strm) const
+{
+    strm << "(" << m_x << ", " << m_y << ")";
+}
 
 } // namespace
 
