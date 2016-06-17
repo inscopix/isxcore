@@ -27,6 +27,7 @@ typedef std::shared_ptr<U16VideoFrame_t> SpU16VideoFrame_t;
 class Movie : public Object
 {
 public:
+    typedef std::function<void(SpU16VideoFrame_t inVideoFrame)> MovieGetFrameCB_t;
     /// Default constructor.  Is a valid C++ object but not a valid Movie.
     ///
     Movie();
@@ -90,6 +91,24 @@ public:
     ///
     SpU16VideoFrame_t
     getFrame(const Time & inTime);
+
+    /// Get the frame data for given frame number, asynchronously.
+    /// \param inFrameNumber 0-based index of frame for which to retrieve frame data
+    /// \param inCallback function used to return the retrieved video frame
+    /// \return a shared_ptr to a VideoFrame object containing the
+    ///         requested frame data
+    ///
+    void
+    getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback);
+
+    /// Get the frame data for given time.
+    /// \param inTime time of frame for which to retrieve frame data
+    /// \param inCallback function used to return the retrieved video frame
+    /// \return a shared_ptr to a VideoFrame object containing the
+    ///         requested frame data
+    ///
+    void
+    getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback);
 
     /// \return the duration of the movie in seconds
     /// 

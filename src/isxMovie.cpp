@@ -193,6 +193,15 @@ public:
         return getFrame(frameNumber);
     }
 
+    void
+    getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
+    {
+        return m_pImpl->getFrame(inFrameNumber, inCallback);
+    }
+
+    void
+    getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
+
     double 
     getDurationInSeconds() const
     {
@@ -473,6 +482,18 @@ SpU16VideoFrame_t
 Movie::getFrame(const Time & inTime)
 {
     return m_pImpl->getFrame(inTime);
+}
+
+void
+Movie::getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
+{
+    return m_pImpl->getFrame(inFrameNumber, inCallback);
+}
+
+void
+Movie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
+{
+    return m_pImpl->getFrame(inTime, inCallback);
 }
 
 double 
