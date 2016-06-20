@@ -90,9 +90,18 @@ namespace isx {
         /// Get the file handle
         ///
         SpHdf5FileHandle_t getHdf5FileHandle();
-
+        
+        
+        /// the path for the mosaic project in the HDF5 file
+        ///
         static const std::string projectPath;
+        
+        /// the path for the file header in the HDF5 file
+        ///
         static const std::string headerPath;
+        
+        /// the path for the movie series in the HDF5 file
+        ///
         static const std::string seriesPath;
         
         /// Get the number of recording series in the project file
