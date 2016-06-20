@@ -70,6 +70,10 @@ public:
         // TODO sweet 2016/06/06 : on Windows the type of m_dims is a uint64_t
         // so this needs some more thought
         m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]));
+
+        // TODO sweet 2016/06/20 : the spacing information should be read from
+        // the file, but just use dummy values for now
+        m_spacingInfo = createDummySpacingInfo(m_dims[1], m_dims[2]);
     }
     
     
@@ -98,6 +102,10 @@ public:
         // but we don't currently have a mechnanism for that
         m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]));
 
+        // TODO sweet 2016/06/20 : the spacing information should be fully
+        // specified, but just use dummy values for now
+        m_spacingInfo = createDummySpacingInfo(inFrameHeight, inFrameWidth);
+
         /* Create the dataspace */
         m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
 
@@ -122,6 +130,15 @@ public:
             ISX_THROW_EXCEPTION_DATAIO("Failure caused by the Group operations");
         }
  
+    }
+
+    // This uses the C++11 notion of a delegating constructor as described here:
+    // http://en.cppreference.com/w/cpp/language/initializer_list
+    Impl(const SpH5File_t & inHdf5File, const std::string & inPath, const TimingInfo& inTimingInfo, const SpacingInfo& inSpacingInfo)
+        : Impl(inHdf5File, inPath, inTimingInfo.getNumTimes(), inSpacingInfo.getNumColumns(), inSpacingInfo.getNumRows())
+    {
+        m_timingInfo = inTimingInfo;
+        m_spacingInfo = inSpacingInfo;
     }
 
     bool
@@ -183,12 +200,18 @@ public:
         return m_timingInfo.getDuration().toDouble();
     }
 
-    isx::TimingInfo
+    const isx::TimingInfo&
     getTimingInfo() const
     {
         return m_timingInfo;
     }
-    
+
+    const isx::SpacingInfo&
+    getSpacingInfo() const
+    {
+        return m_spacingInfo;
+    }
+
     void writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
 
     void
@@ -209,6 +232,17 @@ private:
         return isx::TimingInfo(start, step, numFrames);
     }
 
+    /// A method to create a dummy spacing information from the number of rows and columns.
+    ///
+    isx::SpacingInfo
+    createDummySpacingInfo(size_t numRows, size_t numColumns)
+    {
+        isx::Point<isx::Ratio> topLeft(0, 0);
+        isx::Point<isx::Ratio> pixelSize(isx::Ratio(22, 10), isx::Ratio(22, 10));
+        isx::Point<size_t> numPixels(numColumns, numRows);
+        return isx::SpacingInfo(topLeft, pixelSize, numPixels);
+    }
+
     bool m_isValid = false;
     SpH5File_t m_H5File;
     std::string m_path;
@@ -223,6 +257,7 @@ private:
     size_t m_frameSizeInBytes;
 
     isx::TimingInfo m_timingInfo;
+    isx::SpacingInfo m_spacingInfo;
 
     void createDataSet(const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space);
     std::vector<std::string> splitPath(const std::string &s);
@@ -252,6 +287,15 @@ Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & in
     }
     
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inNumFrames, inFrameWidth, inFrameHeight));
+}
+
+Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo)
+{
+    if (false == inHdf5FileHandle->isReadWrite())
+    {
+        ISX_THROW_EXCEPTION_FILEIO("File was opened with no write permission");
+    }
+    m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inTimingInfo, inSpacingInfo));
 }
 
 Movie::~Movie()
@@ -300,10 +344,16 @@ Movie::getDurationInSeconds() const
     return m_pImpl->getDurationInSeconds();
 }
 
-isx::TimingInfo
+const isx::TimingInfo&
 Movie::getTimingInfo() const
 {
     return m_pImpl->getTimingInfo();
+}
+
+const isx::SpacingInfo&
+Movie::getSpacingInfo() const
+{
+    return m_pImpl->getSpacingInfo();
 }
 
 void 

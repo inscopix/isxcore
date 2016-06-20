@@ -2,6 +2,7 @@
 #define ISX_TIMINGINFO_H
 
 #include <cstdint>
+#include "isxObject.h"
 #include "isxTime.h"
 
 namespace isx
@@ -13,7 +14,7 @@ namespace isx
 /// movies and traces. It also contains some utility methods to convert
 /// times to sample indices so that samples can be retrieved with respect
 /// to absolute time points.
-class TimingInfo
+class TimingInfo : public Object
 {
 public:
 
@@ -78,6 +79,13 @@ public:
     /// \param      inTime  The time to convert to an index.
     /// \return             The sample index closest to the given time.
     uint32_t convertTimeToIndex(const isx::Time& inTime) const;
+
+    /// \param  other   The other timing information with which to compare.
+    /// \return         True if this is exactly equal to other, false otherwise.
+    bool operator ==(const isx::TimingInfo& other) const;
+
+    // Overrides
+    virtual void serialize(std::ostream& strm) const;
 
 private:
 

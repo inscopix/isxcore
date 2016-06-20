@@ -51,4 +51,39 @@ TEST_CASE("SpacingInfoTest", "[core]")
         REQUIRE(spacingInfo.getBottomRight() == bottomRight);
     }
 
+    SECTION("Get the number of rows")
+    {
+        isx::Point<isx::Ratio> topLeft(0, 0);
+        isx::Point<isx::Ratio> pixelSize(1, 1);
+        isx::Point<size_t> numPixels(600, 500);
+
+        isx::SpacingInfo spacingInfo(topLeft, pixelSize, numPixels);
+
+        REQUIRE(spacingInfo.getNumRows() == 500);
+    }
+
+    SECTION("Get the number of columns")
+    {
+        isx::Point<isx::Ratio> topLeft(0, 0);
+        isx::Point<isx::Ratio> pixelSize(1, 1);
+        isx::Point<size_t> numPixels(600, 500);
+
+        isx::SpacingInfo spacingInfo(topLeft, pixelSize, numPixels);
+
+        REQUIRE(spacingInfo.getNumColumns() == 600);
+    }
+
+    SECTION("Convert to a string")
+    {
+        isx::Point<isx::Ratio> topLeft(isx::Ratio(22, 1), isx::Ratio(44, 1));
+        isx::Point<isx::Ratio> pixelSize(isx::Ratio(22, 10), isx::Ratio(44, 10));
+        isx::Point<size_t> numPixels(600, 500);
+
+        isx::SpacingInfo spacingInfo(topLeft, pixelSize, numPixels);
+
+        std::string expected = "SpacingInfo(TopLeft=(22 / 1, 44 / 1), "
+            "PixelSize=(22 / 10, 44 / 10), NumPixels=(600, 500))";
+        REQUIRE(spacingInfo.toString() == expected);
+    }
+
 }

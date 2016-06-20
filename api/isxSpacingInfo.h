@@ -29,32 +29,43 @@ public:
     /// Fully specified constructor.
     ///
     /// \param topLeft      The top left corner in microns.
-    /// \param pixelSize    The length of a pixel in each dimension in microns.
+    /// \param pixelSize    The size of a pixel in each dimension in microns.
     /// \param numPixels    The number of pixels in each dimension.
     SpacingInfo(
         const Point<Coord_t>& topLeft,
         const Point<Coord_t>& pixelSize,
         const Point<size_t>& numPixels);
 
-    /// \return The start time of the samples.
+    /// \return The top left corner of the top left pixel in microns.
     ///
     const Point<Coord_t>& getTopLeft() const;
 
-    /// \return The end time of the samples.
+    /// \return The bottom right corner of the bottom right corner in microns.
     ///
     Point<Coord_t> getBottomRight() const;
 
-    /// \return The duration of one sample in seconds.
+    /// \return The size of a pixel in each dimension in microns.
     ///
     const Point<Coord_t>& getPixelSize() const;
 
-    /// \return The number of time samples.
+    /// \return The number of pixels in each dimension.
     ///
     const Point<size_t>& getNumPixels() const;
+
+    /// \return The number of rows of pixels.
+    ///
+    size_t getNumRows() const;
+
+    /// \return The number of columns of pixels.
+    size_t getNumColumns() const;
 
     /// \return The total size in each dimension of the field of view in microns.
     ///
     Point<Coord_t> getTotalSize() const;
+
+    /// \param  other   The other spacing information with which to compare.
+    /// \return         True if this is exactly equal to other, false otherwise.
+    bool operator ==(const isx::SpacingInfo& other) const;
 
     // Overrides
     virtual void serialize(std::ostream& strm) const;

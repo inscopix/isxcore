@@ -2,6 +2,7 @@
 #define ISX_MOVIE_H
 
 #include "isxTimingInfo.h"
+#include "isxSpacingInfo.h"
 #include "isxCoreFwd.h"
 #include "isxObject.h"
 
@@ -35,6 +36,14 @@ public:
     /// \param inFrameHeight number of rows in the frame
     ///
     Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight);
+
+    /// Construct movie to be written to a Mosaic Project File.
+    /// \param inHdf5FileHandle opaque HDF5 file handle from ProjectFile.
+    /// \param inPath the path for the movie within the file. It will be created if it doesn't exist
+    /// \param inTimingInfo     The timing information associated with the frames of the movie.
+    /// \param inSpacingInfo    The spacing information associated with each frame of the movie.
+    ///
+    Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo);
 
     /// Destructor
     /// 
@@ -72,7 +81,6 @@ public:
     /// 
     double getDurationInSeconds() const;
  
-
     /// Writes a new frame to the movie dataset
     /// The file needs to be opened with write permission and the defined path for the 
     /// the movie needs to exist within the file structure for this to succeed
@@ -84,7 +92,11 @@ public:
 
     /// \return     The timing information of a movie.
     ///
-    isx::TimingInfo getTimingInfo() const;
+    const isx::TimingInfo& getTimingInfo() const;
+
+    /// \return     The spacing information of the movie.
+    ///
+    const isx::SpacingInfo& getSpacingInfo() const;
 
     /// Serialize the object into an output stream.
     ///

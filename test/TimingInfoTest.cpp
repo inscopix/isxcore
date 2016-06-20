@@ -130,4 +130,14 @@ TEST_CASE("TimingInfoTest", "[core]")
         REQUIRE(index == 4);
     }
 
+    SECTION("Convert to string")
+    {
+        isx::Time start(2016, 6, 20, 11, 10);
+        isx::Ratio step(50, 1000);
+        isx::TimingInfo timingInfo(start, step, 100);
+        std::string expected = "TimingInfo(Start=20160620-111000 0 / 1 UTC, "
+            "Step=50 / 1000, NumTimes=100)";
+        REQUIRE(timingInfo.toString() == expected);
+    }
+
 }

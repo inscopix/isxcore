@@ -44,18 +44,38 @@ SpacingInfo::getNumPixels() const
     return m_numPixels;
 }
 
+size_t
+SpacingInfo::getNumRows() const
+{
+    return m_numPixels.getY();
+}
+
+size_t
+SpacingInfo::getNumColumns() const
+{
+    return m_numPixels.getX();
+}
+
 Point<SpacingInfo::Coord_t>
 SpacingInfo::getTotalSize() const
 {
     return m_pixelSize * m_numPixels;
 }
 
+bool
+SpacingInfo::operator ==(const isx::SpacingInfo& other) const
+{
+    return (m_topLeft == other.m_topLeft)
+        && (m_pixelSize == other.m_pixelSize)
+        && (m_numPixels == other.m_numPixels);
+}
+
 void
 SpacingInfo::serialize(std::ostream& strm) const
 {
     strm << "SpacingInfo("
-            << "TopLeft=" << m_topLeft
-            << "PixelSize=" << m_pixelSize
+            << "TopLeft=" << m_topLeft << ", "
+            << "PixelSize=" << m_pixelSize << ", "
             << "NumPixels=" << m_numPixels
          << ")";
 }
