@@ -225,19 +225,23 @@ public:
         // Make sure the movie is valid
         if (!m_isValid)
         {
-            ISX_THROW_EXCEPTION_FILEIO("Writing frame to invalid movie");
+            ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie.");
         }
              
         // Check that buffer size matches dataspace definition
         if (inBufferSize != m_frameSizeInBytes)
         {
-            ISX_THROW_EXCEPTION_USRINPUT("The buffer size does not match the the frame size in the file");
+            ISX_THROW(isx::ExceptionUserInput,
+                "The buffer size (", inBufferSize, " B) does not match the frame size (",
+                m_frameSizeInBytes, " B).");
         }
             
         // Check that frame number is within range
         if (inFrameNumber > m_maxdims[0])
         {
-            ISX_THROW_EXCEPTION_USRINPUT("Frame number exceeds the total number of frames in the movie");
+            ISX_THROW(isx::ExceptionUserInput,
+                "Frame number (", inFrameNumber, ") exceeds the total number of frames (",
+                m_maxdims[0], ") in the movie.");
         }
                
         // Define file space.
@@ -256,13 +260,13 @@ public:
         {
            m_dataSet.write(inBuffer, m_dataType, memSpace, fileSpace);
         }
-       
+   
         // Catch failure caused by the DataSet operations
         catch (H5::DataSetIException error)
         {
-           ISX_THROW_EXCEPTION_DATAIO("Failed to write frame to movie");
-        }     
-     
+           ISX_THROW(isx::ExceptionDataIO,
+                "Failed to write frame to movie.\n", error.getDetailMsg());
+        }
     }
 
 private:
@@ -366,19 +370,19 @@ private:
         // user is trying to write out
         if(nDims != m_ndims)
         {
-            ISX_THROW_EXCEPTION_DATAIO("Dataset dimension mismatch");
+            ISX_THROW(isx::ExceptionDataIO, "Dataset dimension mismatch");
         }
             
         for (int i(0); i < nDims; i++)
         {
             if(dims[i] != m_dims[i])
             {
-                ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
+                ISX_THROW(isx::ExceptionDataIO, "Dataset size mismatch");
             }
                 
             if(maxdims[i] != m_maxdims[i])
             {
-                ISX_THROW_EXCEPTION_DATAIO("Dataset size mismatch");
+                ISX_THROW(isx::ExceptionDataIO, "Dataset size mismatch");
             }
         }
             
@@ -507,178 +511,5 @@ Movie::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
     m_pImpl->writeFrame(inFrameNumber, inBuffer, inBufferSize);
 }
 
-<<<<<<< HEAD
-void
-Movie::Impl::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
-{
-    // Make sure the movie is valid
-    if (!m_isValid)
-    {
-        ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie.");
-    }
-         
-    // Check that buffer size matches dataspace definition
-    if (inBufferSize != m_frameSizeInBytes)
-    {
-        ISX_THROW(isx::ExceptionUserInput,
-            "The buffer size (", inBufferSize, " B) does not match the frame size (",
-            m_frameSizeInBytes, " B).");
-    }
-        
-    // Check that frame number is within range
-    if (inFrameNumber > m_maxdims[0])
-    {
-        ISX_THROW(isx::ExceptionUserInput,
-            "Frame number (", inFrameNumber, ") exceeds the total number of frames (",
-            m_maxdims[0], ") in the movie.");
-    }
-           
-    // Define file space.
-    H5::DataSpace fileSpace(m_dataSpace);
-    hsize_t fileOffset[3] = { inFrameNumber, 0, 0 };
-    hsize_t dims[3] = { 1, m_dims[1], m_dims[2] };
-    fileSpace.selectHyperslab(H5S_SELECT_SET, dims, fileOffset);
-
-    // Define memory space.
-    H5::DataSpace memSpace = H5::DataSpace(3, dims, NULL);
-    hsize_t memOffset[3] = { 0, 0, 0 };
-    memSpace.selectHyperslab(H5S_SELECT_SET, dims, memOffset);
-
-    // Write data to the dataset.
-    try
-    {
-       m_dataSet.write(inBuffer, m_dataType, memSpace, fileSpace);
-    }
-   
-    // Catch failure caused by the DataSet operations
-    catch (H5::DataSetIException error)
-    {
-       ISX_THROW(isx::ExceptionDataIO,
-            "Failed to write frame to movie.\n", error.getDetailMsg());
-    }
- 
-}
-
-void 
-Movie::Impl::createDataSet (const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space)
-{
-    // Parse name and create the hierarchy tree (if not in the file already). 
-    // Every level other than the last one is created as a group. The last level is the dataset
-    std::vector<std::string> tree = splitPath(name); 
- 
-    std::string currentObjName("/");
-    H5::Group currentGroup = m_H5File->openGroup(currentObjName);
-    hsize_t nObjInGroup = currentGroup.getNumObjs();
-    
-    
-    
-    unsigned int nCreateFromIdx = 0;
-    
-    while((nObjInGroup > 0) && (nCreateFromIdx < tree.size()))
-    {
-        std::string targetObjName = currentObjName + "/" + tree[nCreateFromIdx];
-        bool bTargetFound = false;
-        
-        for(hsize_t obj(0); obj < nObjInGroup; ++obj)
-        {
-            std::string objName = currentGroup.getObjnameByIdx(obj);
-            if(objName == tree[nCreateFromIdx])
-            {
-                bTargetFound = true;
-                break;
-            }
-        }
-
-        if(bTargetFound)
-        {
-            nCreateFromIdx += 1;
-            
-            if(nCreateFromIdx < tree.size())
-            {
-                currentGroup = m_H5File->openGroup(targetObjName);
-                currentObjName = targetObjName;
-                nObjInGroup = currentGroup.getNumObjs(); 
-            }           
-        }
-        else
-        {
-            break;
-        }
-    }
-    
-       
-    for ( ; nCreateFromIdx < tree.size(); ++nCreateFromIdx)
-    {
-        if(nCreateFromIdx == (tree.size() - 1))
-        {
-            m_dataSet = m_H5File->createDataSet(name, data_type, data_space);           
-            return;
-        }
-        
-        std::string targetObjName = currentObjName + "/" + tree[nCreateFromIdx]; 
-        m_H5File->createGroup(targetObjName); 
-        currentObjName = targetObjName;
-    }
-    
-    // If we get here, the dataset exists in the file and we don't need to create it
-    m_dataSet = m_H5File->openDataSet(name);
-    H5::DataType type = m_dataSet.getDataType();
-    H5::DataSpace space = m_dataSet.getSpace();
-    int nDims = space.getSimpleExtentNdims();;
-    std::vector<hsize_t> dims(nDims);
-    std::vector<hsize_t> maxdims(nDims);
-    space.getSimpleExtentDims(&dims[0], &maxdims[0]);
-        
-    // Check that the size of the file dataset is the same as the one the 
-    // user is trying to write out
-    if(nDims != m_ndims)
-    {
-        ISX_THROW(isx::ExceptionDataIO, "Dataset dimension mismatch");
-    }
-        
-    for (int i(0); i < nDims; i++)
-    {
-        if(dims[i] != m_dims[i])
-        {
-            ISX_THROW(isx::ExceptionDataIO, "Dataset size mismatch");
-        }
-            
-        if(maxdims[i] != m_maxdims[i])
-        {
-            ISX_THROW(isx::ExceptionDataIO, "Dataset size mismatch");
-        }
-    }
-        
-    // Dataset is valid if we get here
-    m_dataType = type;
-    m_dataSpace = space;
-        
-    if (m_dataType == H5::PredType::STD_U16LE)
-    {
-        m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
-    }    
-}
-
-
-std::vector<std::string> 
-Movie::Impl::splitPath(const std::string &s)
-{
-    using namespace std;
-    char delim = '/';
-    stringstream ss(s);
-    string item;
-    vector<string> tokens;
-    while (getline(ss, item, delim)) 
-    {
-        if(!item.empty())
-        {
-            tokens.push_back(item);
-        }
-    }
-    return tokens;
-}
-
-=======
->>>>>>> develop
 } // namespace isx
 
