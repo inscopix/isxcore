@@ -24,10 +24,14 @@ typedef std::shared_ptr<U16VideoFrame_t> SpU16VideoFrame_t;
 ///
 /// A class encapsulating an nVista movie file.
 ///
+
 class Movie : public Object
 {
 public:
+    /// Type of callback function to use to return video frames asynchronously
+    ///
     typedef std::function<void(SpU16VideoFrame_t inVideoFrame)> MovieGetFrameCB_t;
+
     /// Default constructor.  Is a valid C++ object but not a valid Movie.
     ///
     Movie();
@@ -139,7 +143,7 @@ public:
 
 private:
     class Impl;
-    std::unique_ptr<Impl> m_pImpl;
+    std::shared_ptr<Impl> m_pImpl;
 };
 
 } // namespace isx

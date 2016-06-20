@@ -1,6 +1,7 @@
 #include "isxMovie.h"
 #include "isxHdf5FileHandle.h"
 #include "isxException.h"
+#include "isxIoQueue.h"
 #include "H5Cpp.h"
 #include <iostream>
 #include <vector>
@@ -8,8 +9,10 @@
 #include <cassert>
 
 namespace isx {
-class Movie::Impl
+class Movie::Impl : public std::enable_shared_from_this<Movie::Impl>
 {
+    typedef std::shared_ptr<Movie::Impl> SpImpl_t;
+    typedef std::weak_ptr<Movie::Impl> WpImpl_t;
 public:
     ~Impl(){};
     Impl(){};
@@ -196,11 +199,32 @@ public:
     void
     getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
     {
-        return m_pImpl->getFrame(inFrameNumber, inCallback);
+        WpImpl_t weakThis = shared_from_this();
+        IoQueue::instance()->dispatch([weakThis, this, inFrameNumber, inCallback]()
+            {
+                SpImpl_t sharedThis = weakThis.lock();
+                if (!sharedThis)
+                {
+                    return;
+                }
+                inCallback(getFrame(inFrameNumber));
+            });
     }
 
     void
     getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
+    {
+        WpImpl_t weakThis = shared_from_this();
+        IoQueue::instance()->dispatch([weakThis, this, inTime, inCallback]()
+            {
+                SpImpl_t sharedThis = weakThis.lock();
+                if (!sharedThis)
+                {
+                    return;
+                }
+                inCallback(getFrame(inTime));
+            });
+    }
 
     double 
     getDurationInSeconds() const
@@ -487,13 +511,13 @@ Movie::getFrame(const Time & inTime)
 void
 Movie::getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
-    return m_pImpl->getFrame(inFrameNumber, inCallback);
+    return m_pImpl->getFrameAsync(inFrameNumber, inCallback);
 }
 
 void
 Movie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
 {
-    return m_pImpl->getFrame(inTime, inCallback);
+    return m_pImpl->getFrameAsync(inTime, inCallback);
 }
 
 double 

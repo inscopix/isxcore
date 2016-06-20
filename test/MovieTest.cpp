@@ -1,10 +1,13 @@
 #include "isxRecording.h"
 #include "isxMovie.h"
 #include "isxProjectFile.h"
+#include "isxCore.h"
 #include "catch.hpp"
 
 #include "isxTest.h"
 #include <vector>
+#include <thread>
+#include <chrono>
 
 TEST_CASE("MovieTest", "[core]") {
     std::string testFile = g_resources["testDataPath"] + "/recording_20160426_145041.hdf5";
@@ -130,5 +133,66 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(inputFrameBuffer[idx+1] == outputFrameBuffer[idx+1]);        
 
     } 
+}
 
+TEST_CASE("MovieTestAsync", "[core]") {
+    std::string testFile = g_resources["testDataPath"] + "/recording_20160426_145041.hdf5";
+
+    isx::CoreInitialize();
+
+    SECTION("get frame for time asynchronously") {
+        bool taskRan = false;
+        bool isDataCorrect = false;
+
+        isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
+        REQUIRE(r->isValid());
+        isx::Movie m(r->getHdf5FileHandle(), "/images");
+        REQUIRE(m.isValid());
+        m.getFrameAsync(m.getTimingInfo().getStart(), [&](isx::SpU16VideoFrame_t inFrame){
+            unsigned char * t = reinterpret_cast<unsigned char *>(inFrame->getPixels());
+            isDataCorrect = (t[0] == 0x43 && t[1] == 0x3);
+            taskRan = true;
+        });
+
+        for (int i = 0; i < 250; ++i)
+        {
+            if (taskRan)
+            {
+                break;
+            }
+            std::chrono::milliseconds d(2);
+            std::this_thread::sleep_for(d);
+        }
+        REQUIRE(taskRan);
+        REQUIRE(isDataCorrect);
+    }
+
+    SECTION("get frame for frame number asynchronously") {
+        bool taskRan = false;
+        bool isDataCorrect = false;
+
+        isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
+        REQUIRE(r->isValid());
+        isx::Movie m(r->getHdf5FileHandle(), "/images");
+        REQUIRE(m.isValid());
+        m.getFrameAsync(0, [&](isx::SpU16VideoFrame_t inFrame){
+            unsigned char * t = reinterpret_cast<unsigned char *>(inFrame->getPixels());
+            isDataCorrect = (t[0] == 0x43 && t[1] == 0x3);
+            taskRan = true;
+        });
+
+        for (int i = 0; i < 250; ++i)
+        {
+            if (taskRan)
+            {
+                break;
+            }
+            std::chrono::milliseconds d(2);
+            std::this_thread::sleep_for(d);
+        }
+        REQUIRE(taskRan);
+        REQUIRE(isDataCorrect);
+    }
+
+    isx::CoreShutdown();
 }

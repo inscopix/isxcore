@@ -11,27 +11,48 @@
 
 namespace isx {
 
+/// A class implementing a singleton IoQueue to be used
+/// application-wide for file I/O.
+///
 class IoQueue
 {
 public:
-    void
-    Initialize();
+    /// destructor
+    ///
+    ~IoQueue();
 
+    /// Singleton initializer
+    ///
+    static
     void
-    Shutdown();
+    initialize();
 
+    /// Singleton destroy
+    ///
+    static
+    void
+    destroy();
+
+    /// Check if singleton has been initialized
+    /// \return bool indicating the above
+    ///
+    static
     bool 
     isInitialized();
 
-    IoQueue *
-    Instance();
+    /// \return pointer to the contained worker's dispatch queue
+    ///
+    static
+    DispatchQueueInterface *
+    instance();
+
 private:
     IoQueue();
-    IoQueue(const IoQueue & other);
-    const IoQueue & operator=(const IoQueue & other);
-    ~IoQueue();
+    IoQueue(const IoQueue & other) = delete;
+    const IoQueue & operator=(const IoQueue & other) = delete;
 
-    isx::SpDispatchQueueWorker_t m_worker;
+    SpDispatchQueueWorker_t m_worker;
+    static std::unique_ptr<IoQueue> s_instance;
 };
 
 } // namespace isx

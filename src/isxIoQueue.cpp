@@ -1,41 +1,54 @@
-#include "isxIoThread.h"
+#include "isxIoQueue.h"
+#include "assert.h"
 
-
+namespace isx
+{
+std::unique_ptr<IoQueue> IoQueue::s_instance;
 
 
 IoQueue::IoQueue()
 {
+    m_worker = std::make_shared<DispatchQueueWorker>();
+}
 
+IoQueue::~IoQueue()
+{
+    m_worker.reset();
 }
 
 void
-IoQueue::Initialize()
+IoQueue::initialize()
 {
-
+    if (!isInitialized())
+    {
+        s_instance.reset(new IoQueue());
+    }
 }
 
 void
-IoQueue::Shutdown()
+IoQueue::destroy()
 {
-
+    if (isInitialized())
+    {
+        s_instance->m_worker->destroy();
+        s_instance.reset();
+    }
 }
 
 bool 
 IoQueue::isInitialized()
 {
-
+    return !!s_instance;
 }
 
-IoQueue *
-IoQueue::Instance()
+DispatchQueueInterface *
+IoQueue::instance()
 {
-    return 
+    assert(isInitialized());
+    if (isInitialized())
+    {
+        return s_instance->m_worker.get();
+    }
+    return 0;
 }
-
-private:
-    IoQueue();
-    IoQueue(const IoQueue & other);
-    const IoQueue & operator=(const IoQueue & other);
-    ~IoQueue();
-
-    static isx::SpDispatchQueueWorker_t m_worker;
+} // namespace isx
