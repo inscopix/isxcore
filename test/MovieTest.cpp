@@ -138,7 +138,7 @@ TEST_CASE("MovieTest", "[core]") {
 
         isx::Time start(2016, 6, 20, 10, 32);
         isx::Ratio step(50, 1000);
-        size_t numTimes = 5;
+        uint32_t numTimes = 5;
         isx::TimingInfo timingInfo(start, step, numTimes);
 
         isx::Point<isx::Ratio> topLeft(0, 0);
