@@ -65,10 +65,22 @@ Time::secsFrom(const isx::Time& from) const
     return m_secsSinceEpoch - from.m_secsSinceEpoch;
 }
 
+int32_t
+Time::getUtcOffset() const
+{
+    return m_utcOffset;
+}
+    
 bool
 Time::operator ==(const isx::Time& other) const
 {
     return m_secsSinceEpoch == other.m_secsSinceEpoch;
+}
+    
+bool
+Time::operator !=(const isx::Time& other) const
+{
+    return m_secsSinceEpoch != other.m_secsSinceEpoch;
 }
 
 bool
@@ -77,6 +89,24 @@ Time::operator <(const isx::Time& other) const
     return m_secsSinceEpoch < other.m_secsSinceEpoch;
 }
 
+bool
+Time::operator <=(const isx::Time& other) const
+{
+    return m_secsSinceEpoch <= other.m_secsSinceEpoch;
+}
+
+bool
+Time::operator >(const isx::Time& other) const
+{
+    return m_secsSinceEpoch > other.m_secsSinceEpoch;
+}
+    
+bool
+Time::operator >=(const isx::Time& other) const
+{
+    return m_secsSinceEpoch >= other.m_secsSinceEpoch;
+}
+    
 void
 Time::serialize(std::ostream& strm) const
 {
@@ -110,6 +140,12 @@ Time::now()
             nowTime.second(),
             secsOffset,
             utcOffset);
+}
+
+Time
+Time::floorToDenomOf(const isx::Ratio & inRatio) const
+{
+    return Time(m_secsSinceEpoch.floorToDenomOf(inRatio), m_utcOffset);
 }
 
 } // namespace
