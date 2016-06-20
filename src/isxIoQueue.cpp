@@ -38,7 +38,7 @@ IoQueue::destroy()
 bool 
 IoQueue::isInitialized()
 {
-    return s_instance != 0;
+    return !!s_instance;
 }
 
 DispatchQueueInterface *

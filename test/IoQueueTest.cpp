@@ -13,7 +13,7 @@ TEST_CASE("IoQueue", "[core]") {
     isx::CoreInitialize();
 
     SECTION("queue instance") {
-        REQUIRE(isx::IoQueue::instance());
+        REQUIRE(!!isx::IoQueue::instance());
     }
 
     SECTION("dispatch task to IoQueue") {
