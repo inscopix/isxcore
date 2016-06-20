@@ -1,5 +1,5 @@
 #include "isxIoQueue.h"
-#include "assert.h"
+#include "isxAssert.h"
 
 namespace isx
 {
@@ -44,7 +44,7 @@ IoQueue::isInitialized()
 DispatchQueueInterface *
 IoQueue::instance()
 {
-    assert(isInitialized());
+    ISX_ASSERT(isInitialized());
     if (isInitialized())
     {
         return s_instance->m_worker.get();

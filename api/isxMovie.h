@@ -40,7 +40,8 @@ public:
     /// Construct movie from a dataset in a Recording.
     /// \param inHdf5FileHandle opaque HDF5 file handle from Recording.
     /// \param inPath Path to dataset in Recording.
-    ///
+    /// \throw isx::ExceptionFileIO     If the file cannot be read.
+    /// \throw isx::ExceptionDataIO     If the dataset cannot be read.
     Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath);
     
     /// Construct movie to be written to a Mosaic Project File.
@@ -49,7 +50,8 @@ public:
     /// \param inNumFrames number of frames
     /// \param inFrameWidth number of columns in the frame
     /// \param inFrameHeight number of rows in the frame
-    ///
+    /// \throw isx::ExceptionFileIO     If the file cannot be written.
+    /// \throw isx::ExceptionDataIO     If the dataset cannot be written.
     Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight);
 
     /// Destructor
@@ -119,14 +121,20 @@ public:
     /// 
     double 
     getDurationInSeconds() const;
- 
+
     /// Writes a new frame to the movie dataset
+    ///
     /// The file needs to be opened with write permission and the defined path for the 
     /// the movie needs to exist within the file structure for this to succeed
+    ///
     /// \param inFrameNumber the frame number to insert
     /// \param inBuffer the buffer containing frame data
     /// \param inBufferSize size of inBuffer
     /// \return true if it succeeds
+    ///
+    /// \throw isx::ExceptionFileIO     If the movie is invalid.
+    /// \throw isx::ExceptionUserInput  If the arguments are not compatible with the movie.
+    /// \throw isx::ExceptionDataIO     If write access to the dataset fails.
     void 
     writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
 

@@ -97,11 +97,6 @@ public:
 
 private:
 
-    /// Throws an exception if utcOffset is not in the acceptable range.
-    ///
-    /// \param  utcOffset   The time zone offset from UTC in seconds.
-    static void verifyUtcOffset(int32_t utcOffset);
-
     /// The rational number of seconds since the Unix epoch.
     isx::Ratio m_secsSinceEpoch;
 
