@@ -6,7 +6,8 @@
 
 #include <chrono>
 #include <thread>
-#include <assert.h>
+
+#include "isxAssert.h"
 
 namespace isx
 {
@@ -57,12 +58,11 @@ public:
             std::chrono::milliseconds d(m_numThreadedWaitMs);
             std::this_thread::sleep_for(d);
         }
-        assert(isFinished());
-        if (!isFinished())
-        {
-            ISX_LOG_ERROR("Worker thread failed to finish");
-            //m_pWorkerThread->terminate();
-        }
+        ISX_ASSERT(isFinished(), "Worker thread failed to finish.");
+        //if (!isFinished())
+        //{
+        //    m_pWorkerThread->terminate();
+        //}
     }
 private:
     std::shared_ptr<DispatchQueueDispatcher> m_dispatcher;
@@ -82,11 +82,7 @@ DispatchQueueWorker::DispatchQueueWorker()
         std::chrono::milliseconds d(m_numThreadedWaitMs);
         std::this_thread::sleep_for(d);
     }
-    assert(m_dispatcher);
-    if (!m_dispatcher)
-    {
-        ISX_LOG_ERROR("Error: Worker thread did not provide dispatcher.");
-    }
+    ISX_ASSERT(m_dispatcher, "Worker thread did not provide dispatcher.");
 }
 
 DispatchQueueWorker::~DispatchQueueWorker(){}

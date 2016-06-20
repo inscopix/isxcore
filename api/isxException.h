@@ -7,78 +7,74 @@
 
 #include "isxLog.h"
 
-#define ISX_THROW_EXCEPTION_FILEIO(MSG) throw isx::ExceptionFileIO(__FILE__, __LINE__, MSG)
-#define ISX_THROW_EXCEPTION_DATAIO(MSG) throw isx::ExceptionDataIO(__FILE__, __LINE__, MSG)
-#define ISX_THROW_EXCEPTION_USRINPUT(MSG) throw isx::ExceptionUserInput(__FILE__, __LINE__, MSG)
+/// \def ISX_THROW(TYPE, ...)
+///
+/// Throws a type of exception with a message consisting of the variadic
+/// arguments converted to strings.
+#define ISX_THROW(TYPE, ...)\
+    std::string msg = isx::internal::varArgsToString(__VA_ARGS__);\
+    std::string file = isx::internal::baseName(__FILE__);\
+    ISX_LOG_ERROR(file, ":", __LINE__, ": Exception - ", msg);\
+    throw TYPE(file, __LINE__, msg)
 
 namespace isx
 {
-    /// The base class for exceptions
+    /// The base class for exceptions.
     ///
+    /// Avoid throwing this type of exception, and use one its subclasses
+    /// instead.
     class Exception : public std::exception
     {
     public:
-        
-        /// Default message for exceptions
-        static const std::string DEFAULT_MSG;
 
         /// Constructor
         ///
-        explicit Exception(const char* file, int line, const std::string& message) :
-            m_msg(message),
-            m_fileName(file)            
-        {
-            m_line = std::to_string(line);
-            ISX_LOG_ERROR("Exception in line " + m_line + " of file " + m_fileName + " - " + m_msg);
-        }
+        /// \param  file    The name of the file from where the exception is thrown.
+        /// \param  line    The line in the file from where the exception is thrown.
+        /// \param  message The error message.
+        explicit Exception(const std::string& file, int line, const std::string& message);
 
         /// Destructor
         ///
-        virtual ~Exception() throw () {}
+        virtual ~Exception();
 
         /// Retrieves the error message
-        virtual const char* what() const throw () 
-        {
-            return m_msg.c_str();
-        }
+        ///
+        /// \return         The error message.
+        virtual const char* what() const noexcept;
 
         /// Retrieves the file name in which failure occurs
         ///
-        const char* getFileName() const
-        {
-            return m_fileName.c_str();
-        }
-        
+        /// \return         The name of the file from where the exception was thrown.
+        const std::string& getFileName() const;
+
         /// Return the line where failure occurs
         ///
-        int getLine()
-        {
-            return std::atoi(m_line.c_str());
-        }
+        /// \return         The line in the file from where the exception was thrown.
+        int getLine();
 
- 
     protected:
-        
-        std::string m_msg;           //!< Detailed message
-        std::string m_fileName;      //!< Failing file
-        std::string m_line;          //!< Failing line within the file
+
+        std::string m_msg;          //!< Detailed message
+        std::string m_fileName;     //!< Failing file
+        int m_line;                 //!< Failing line within the file
      };
 
     /// File I/O exception class
     ///
+    /// Throw this when access to the file system fails, either to due
+    /// non-existence of a file or due to lack of access permissions.
     class ExceptionFileIO : public Exception
     {
     public:
-        
+
         /// Constructor
         ///
-        explicit ExceptionFileIO(const char* file, int line, const std::string& message = DEFAULT_MSG) :
-            Exception(file, line, message)
-        {}
-        
+        explicit ExceptionFileIO(const std::string& file, int line, const std::string& message);
+
         /// Destructor
         ///
-        ~ExceptionFileIO() {}
+        virtual ~ExceptionFileIO();
     };
 
     /// Data I/O exception class
@@ -89,32 +85,36 @@ namespace isx
 
         /// Constructor
         ///
-        explicit ExceptionDataIO(const char* file, int line, const std::string& message = DEFAULT_MSG) :
-            Exception(file, line, message)
-        {}
-        
+        /// \param  file    The name of the file from where the exception is thrown.
+        /// \param  line    The line in the file from where the exception is thrown.
+        /// \param  message The error message.
+        explicit ExceptionDataIO(const std::string& file, int line, const std::string& message);
+
         /// Destructor
         ///
-        ~ExceptionDataIO() {}
+        virtual ~ExceptionDataIO();
     };
-    
+
     /// User input exception class
     ///
+    /// Throw this when the user provides invalid input and can adjust
+    /// to provide valid input.
     class ExceptionUserInput : public Exception
     {
     public:
 
         /// Constructor
         ///
-        explicit ExceptionUserInput(const char* file, int line, const std::string& message = DEFAULT_MSG) :
-            Exception(file, line, message)
-        {}
-        
+        /// \param  file    The name of the file from where the exception is thrown.
+        /// \param  line    The line in the file from where the exception is thrown.
+        /// \param  message The error message.
+        explicit ExceptionUserInput(const std::string& file, int line, const std::string& message);
+
         /// Destructor
         ///
-        ~ExceptionUserInput() {}
+        virtual ~ExceptionUserInput();
     };
-}
 
+} // namespace isx
 
 #endif //ISX_EXCEPTION_H

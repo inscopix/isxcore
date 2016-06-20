@@ -1,5 +1,6 @@
 #include "isxRecording.h"
-#include "isxLog.h"
+#include "isxException.h"
+#include "isxAssert.h"
 #include "isxHdf5FileHandle.h"
 
 #include "H5Cpp.h"
@@ -34,21 +35,21 @@ public:
             m_isValid = true;
         }  // end of try block
         
-        // catch failure caused by the H5File operations
-        catch(H5::FileIException error)
+        catch (const H5::FileIException& error)
         {
-            error.printError();
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failure caused by H5 File operations.\n", error.getDetailMsg());
         }
         
-        // catch failure caused by the DataSet operations
-        catch(H5::DataSetIException error)
+        catch (const H5::DataSetIException& error)
         {
-            error.printError();
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failure caused by H5 Dataset operations.\n", error.getDetailMsg());
         }
         
         catch(...)
         {
-            ISX_LOG_ERROR("Unhandled exception.");
+            ISX_ASSERT(false, "Unhandled exception.");
         }
     }
 

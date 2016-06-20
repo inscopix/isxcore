@@ -52,28 +52,50 @@ public:
     /// \param   from   The time to start counting from.
     /// \return  The seconds from the given time to this.
     isx::Ratio secsFrom(const isx::Time& from) const;
+    
+    /// \return the utcOffset
+    ///
+    int32_t
+    getUtcOffset() const;
 
     /// \return     True if this is exactly equal to another time, false otherwise.
     ///
     bool operator ==(const isx::Time& other) const;
 
+    /// \return     True if this is not exactly equal to another time, false otherwise.
+    ///
+    bool operator !=(const isx::Time& other) const;
+
     /// \return     True if this is earlier than another time, false other.
     ///
     bool operator <(const isx::Time& other) const;
 
+    /// \return     True if this is earlier than or equal to another time, false other.
+    ///
+    bool operator <=(const isx::Time& other) const;
+
+    /// \return     True if this is later than another time, false other.
+    ///
+    bool operator >(const isx::Time& other) const;
+
+    /// \return     True if this is later than or equal to another time, false other.
+    ///
+    bool operator >=(const isx::Time& other) const;
+    
     /// \return     The current time.
     ///
     static isx::Time now();
+
+    /// This method works on the Ratio contained in Time objects. 
+    /// \return     A time with its Ratio set to the largest ratio with inRatio's denom
+    ///             that is not greater than the other ratio in value
+    Time
+    floorToDenomOf(const isx::Ratio & inRatio) const;
 
     // Overrides
     virtual void serialize(std::ostream& strm) const;
 
 private:
-
-    /// Throws an exception if utcOffset is not in the acceptable range.
-    ///
-    /// \param  utcOffset   The time zone offset from UTC in seconds.
-    static void verifyUtcOffset(int32_t utcOffset);
 
     /// The rational number of seconds since the Unix epoch.
     isx::Ratio m_secsSinceEpoch;

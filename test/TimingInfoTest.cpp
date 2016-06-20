@@ -54,7 +54,7 @@ TEST_CASE("TimingInfoTest", "[core]")
 
     SECTION("Convert time before the start to index")
     {
-        isx::Time start;
+        isx::Time start(1970, 1, 1, 0, 0, 10);
         isx::Ratio step(50, 1000);
         isx::TimingInfo timingInfo(start, step, 100);
         isx::Time time = start.addSecs(-2);

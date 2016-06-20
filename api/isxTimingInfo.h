@@ -27,22 +27,22 @@ public:
     /// \param start    The start time of the samples.
     /// \param step     The duration of one sample in seconds.
     /// \param numTimes The number of samples.
-    TimingInfo(const isx::Time& start, const isx::Ratio& step, uint32_t numTimes);
+    TimingInfo(const Time& start, const Ratio& step, uint32_t numTimes);
 
     /// Get the start time of the samples.
     ///
     /// \return         The start time of the samples.
-    isx::Time getStart() const;
+    Time getStart() const;
 
     /// Get the end time of the samples.
     ///
     /// \return         The end time of the samples.
-    isx::Time getEnd() const;
+    Time getEnd() const;
 
     /// Get the duration of one sample in seconds.
     ///
     /// \return         The duration of one sample in seconds.
-    isx::Ratio getStep() const;
+    Ratio getStep() const;
 
     /// Get the number of time samples.
     ///
@@ -52,7 +52,7 @@ public:
     /// Get the duration of all samples in seconds.
     ///
     /// \return         The duration of all samples in seconds.
-    isx::Ratio getDuration() const;
+    Ratio getDuration() const;
 
     /// Converts an absolute time to the corresponding index within this.
     ///
@@ -80,6 +80,12 @@ public:
     /// \return             The sample index closest to the given time.
     uint32_t convertTimeToIndex(const isx::Time& inTime) const;
 
+    /// Converts an index to an absolute time
+    /// \param inIndex index to convert, will be clamped to range of valid
+    ///        indexes in this movie.
+    /// \return absolute time of the frame for inIndex
+    Time convertIndexToTime(size_t inIndex) const;
+
     /// \param  other   The other timing information with which to compare.
     /// \return         True if this is exactly equal to other, false otherwise.
     bool operator ==(const isx::TimingInfo& other) const;
@@ -90,10 +96,10 @@ public:
 private:
 
     /// The start time of the samples.
-    isx::Time m_start;
+    Time m_start;
 
     /// The duration of one sample in seconds.
-    isx::Ratio m_step;
+    Ratio m_step;
 
     /// The number of time samples.
     uint32_t m_numTimes;
