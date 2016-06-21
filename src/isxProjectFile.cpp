@@ -42,7 +42,6 @@ namespace isx {
         
         ~Impl()
         {
-            m_file->close();
 
             m_file.reset();
             m_fileHandle.reset();
