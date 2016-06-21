@@ -12,7 +12,8 @@
 #include <vector>
 #include <memory>
 
-namespace isx {
+namespace isx
+{
 
 /// type for an nvista movie video frame
 ///
@@ -73,12 +74,12 @@ public:
 
     /// \return the width of the frames in this movie.
     ///
-    int32_t
+    size_t
     getFrameWidth() const;
 
     /// \return the height of the frames in this movie.
     ///
-    int32_t
+    size_t
     getFrameHeight() const;
 
     /// \return the size of each frame in bytes.

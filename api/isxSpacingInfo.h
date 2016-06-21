@@ -59,6 +59,9 @@ public:
     /// \return The number of columns of pixels.
     size_t getNumColumns() const;
 
+    /// \return The total number of pixels.
+    size_t getTotalNumPixels() const;
+
     /// \return The total size in each dimension of the field of view in microns.
     ///
     Point<Coord_t> getTotalSize() const;

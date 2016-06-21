@@ -56,6 +56,12 @@ SpacingInfo::getNumColumns() const
     return m_numPixels.getX();
 }
 
+size_t
+SpacingInfo::getTotalNumPixels() const
+{
+    return m_numPixels.getX() * m_numPixels.getY();
+}
+
 Point<SpacingInfo::Coord_t>
 SpacingInfo::getTotalSize() const
 {

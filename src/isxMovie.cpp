@@ -7,10 +7,18 @@
 #include <vector>
 #include <sstream>
 
-namespace isx {
+namespace isx
+{
 class Movie::Impl
 {
 public:
+
+    // Only three dimensions are support (frames, rows, columns).
+    const static size_t s_numDims = 3;
+
+    // The type of vector used to store sizes of dimensions of data set.
+    typedef std::vector<hsize_t> SizeVec_t;
+
     ~Impl(){};
 
     Impl(){};
@@ -29,14 +37,19 @@ public:
             m_dataType = m_dataSet.getDataType();
             m_dataSpace = m_dataSet.getSpace();
 
-            m_ndims = m_dataSpace.getSimpleExtentNdims();
-            m_dims.resize(m_ndims);
-            m_maxdims.resize(m_ndims);
-            m_dataSpace.getSimpleExtentDims(&m_dims[0], &m_maxdims[0]);
+            int numDims = m_dataSpace.getSimpleExtentNdims();
+            if (numDims != s_numDims)
+            {
+                ISX_THROW(isx::ExceptionDataIO,
+                    "Unsupported number of dimensions ", numDims);
+            }
+
+            SizeVec_t dims(numDims);
+            SizeVec_t maxDims(numDims);
+            m_dataSpace.getSimpleExtentDims(&dims[0], &maxDims[0]);
 
             if (m_dataType == H5::PredType::STD_U16LE)
             {
-                m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
                 m_isValid = true;
             }
             else
@@ -44,8 +57,18 @@ public:
                 ISX_THROW(isx::ExceptionDataIO,
                     "Unsupported data type ", m_dataType.getTag());
             }
-            
-            
+
+            // TODO sweet 2016/05/31 : the start and step should be read from
+            // the file but it doesn't currently contain these, so picking some
+            // dummy values
+            isx::Time start = isx::Time();
+            isx::Ratio step(1, 30);
+            m_timingInfo = createDummyTimingInfo(dims[0]);
+
+            // TODO sweet 2016/06/20 : the spacing information should be read from
+            // the file, but just use dummy values for now
+            m_spacingInfo = createDummySpacingInfo(dims[1], dims[2]);
+
         }  // end of try block
         
         catch (const H5::FileIException& error)
@@ -64,19 +87,6 @@ public:
         {
             ISX_ASSERT(false, "Unhandled exception.");
         }
-        
-        // TODO sweet 2016/05/31 : the start and step should be read from
-        // the file but it doesn't currently contain these, so picking some
-        // dummy values
-        isx::Time start = isx::Time();
-        isx::Ratio step(1, 30);
-        // TODO sweet 2016/06/06 : on Windows the type of m_dims is a uint64_t
-        // so this needs some more thought
-        m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]));
-
-        // TODO sweet 2016/06/20 : the spacing information should be read from
-        // the file, but just use dummy values for now
-        m_spacingInfo = createDummySpacingInfo(m_dims[1], m_dims[2]);
     }
     
     
@@ -88,31 +98,19 @@ public:
         ISX_ASSERT(inNumFrames > 0);
         ISX_ASSERT(inFrameWidth > 0);
         ISX_ASSERT(inFrameHeight > 0);
- 
-        /* Set rank, dimensions and max dimensions */
-        m_ndims = 3;
-        m_dims.resize(m_ndims);
-        m_maxdims.resize(m_ndims);
-
-        m_dims[0] = inNumFrames;
-        m_maxdims[0] = inNumFrames;
-
-        m_dims[1] = inFrameHeight;
-        m_maxdims[1] = inFrameHeight;
-
-        m_dims[2] = inFrameWidth;
-        m_maxdims[2] = inFrameWidth;
 
         // TODO sweet 2016/09/31 : the start and step should also be specified
         // but we don't currently have a mechnanism for that
-        m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]));
+        m_timingInfo = createDummyTimingInfo(inNumFrames);
 
         // TODO sweet 2016/06/20 : the spacing information should be fully
         // specified, but just use dummy values for now
         m_spacingInfo = createDummySpacingInfo(inFrameHeight, inFrameWidth);
 
         /* Create the dataspace */
-        m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
+        SizeVec_t dims = getDims();
+        SizeVec_t maxDims = getMaxDims();
+        m_dataSpace = H5::DataSpace(s_numDims, dims.data(), maxDims.data());
 
         /* Create a new dataset within the file */
         m_dataType = H5::PredType::STD_U16LE;
@@ -120,7 +118,6 @@ public:
         {
             createDataSet(m_path, m_dataType, m_dataSpace);
             m_isValid = true;
-            m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
         }
         catch (const H5::DataSetIException& error)
         {
@@ -140,13 +137,40 @@ public:
 
     }
 
-    // This uses the C++11 notion of a delegating constructor as described here:
-    // http://en.cppreference.com/w/cpp/language/initializer_list
     Impl(const SpH5File_t & inHdf5File, const std::string & inPath, const TimingInfo& inTimingInfo, const SpacingInfo& inSpacingInfo)
-        : Impl(inHdf5File, inPath, inTimingInfo.getNumTimes(), inSpacingInfo.getNumColumns(), inSpacingInfo.getNumRows())
+        : m_isValid(false)
+        , m_H5File(inHdf5File)
+        , m_path(inPath)
+        , m_timingInfo(inTimingInfo)
+        , m_spacingInfo(inSpacingInfo)
     {
-        m_timingInfo = inTimingInfo;
-        m_spacingInfo = inSpacingInfo;
+        /* Create the dataspace */
+        SizeVec_t dims = getDims();
+        SizeVec_t maxDims = getMaxDims();
+        m_dataSpace = H5::DataSpace(s_numDims, dims.data(), maxDims.data());
+
+        /* Create a new dataset within the file */
+        m_dataType = H5::PredType::STD_U16LE;
+        try
+        {
+            createDataSet(m_path, m_dataType, m_dataSpace);
+            m_isValid = true;
+        }
+        catch (const H5::DataSetIException& error)
+        {
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failure caused by H5 DataSet operations.\n", error.getDetailMsg());
+        }
+        catch (const H5::FileIException& error)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failure caused by H5 File operations.\n", error.getDetailMsg());
+        }
+        catch (const H5::GroupIException& error)
+        {
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failure caused by H5 Group operations.\n", error.getDetailMsg());
+        }
     }
 
     bool
@@ -155,28 +179,34 @@ public:
         return m_isValid;
     }
 
-    size_t 
+    size_t
     getNumFrames() const
     {
         return m_timingInfo.getNumTimes();
     }
 
-    int32_t
+    size_t
     getFrameWidth() const
     {
-        return int32_t(m_dims[2]);
+        return m_spacingInfo.getNumColumns();
     }
 
-    int32_t 
+    size_t
     getFrameHeight() const
     {
-        return int32_t(m_dims[1]);
+        return m_spacingInfo.getNumRows();
     }
 
-    size_t 
+    size_t
+    getPixelSizeInBytes() const
+    {
+        return sizeof(uint16_t);
+    }
+
+    size_t
     getFrameSizeInBytes() const
     {
-        return m_frameSizeInBytes;
+        return getPixelSizeInBytes() * m_spacingInfo.getTotalNumPixels();
     }
 
     SpU16VideoFrame_t
@@ -189,16 +219,16 @@ public:
             int32_t(sizeof(uint16_t)) * getFrameWidth(),
             1, // numChannels
             frameTime, inFrameNumber);
-        try {
+        try
+        {
+            H5::DataSpace fileSpace(m_dataSpace);
+            SizeVec_t fileStart = {inFrameNumber, 0, 0};
+            SizeVec_t fileCount = {1, getFrameHeight(), getFrameWidth()};
+            fileSpace.selectHyperslab(H5S_SELECT_SET, fileCount.data(), fileStart.data());
             
-            H5::DataSpace fileSpace(m_dataSpace);            
-            hsize_t fileStart[3] = {inFrameNumber, 0, 0};
-            hsize_t fileCount[3] = {1, m_dims[1], m_dims[2]};            
-            fileSpace.selectHyperslab(H5S_SELECT_SET, fileCount, fileStart);
-            
-            H5::DataSpace bufferSpace(3, fileCount);
-            hsize_t bufferStart[3] = { 0, 0, 0 };
-            bufferSpace.selectHyperslab(H5S_SELECT_SET, fileCount, bufferStart);
+            H5::DataSpace bufferSpace(s_numDims, fileCount.data());
+            SizeVec_t bufferStart = { 0, 0, 0 };
+            bufferSpace.selectHyperslab(H5S_SELECT_SET, fileCount.data(), bufferStart.data());
             
             m_dataSet.read(nvf->getPixels(), m_dataType, bufferSpace, fileSpace);
         }
@@ -218,7 +248,7 @@ public:
         return getFrame(frameNumber);
     }
 
-    double 
+    double
     getDurationInSeconds() const
     {
         return m_timingInfo.getDuration().toDouble();
@@ -250,40 +280,42 @@ public:
         {
             ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie.");
         }
-             
+
         // Check that buffer size matches dataspace definition
-        if (inBufferSize != m_frameSizeInBytes)
+        size_t frameSizeInBytes = getFrameSizeInBytes();
+        if (inBufferSize != frameSizeInBytes)
         {
             ISX_THROW(isx::ExceptionUserInput,
                 "The buffer size (", inBufferSize, " B) does not match the frame size (",
-                m_frameSizeInBytes, " B).");
+                frameSizeInBytes, " B).");
         }
-            
+
         // Check that frame number is within range
-        if (inFrameNumber > m_maxdims[0])
+        size_t numFrames = getNumFrames();
+        if (inFrameNumber > numFrames)
         {
             ISX_THROW(isx::ExceptionUserInput,
                 "Frame number (", inFrameNumber, ") exceeds the total number of frames (",
-                m_maxdims[0], ") in the movie.");
+                numFrames, ") in the movie.");
         }
-               
+
         // Define file space.
         H5::DataSpace fileSpace(m_dataSpace);
-        hsize_t fileOffset[3] = { inFrameNumber, 0, 0 };
-        hsize_t dims[3] = { 1, m_dims[1], m_dims[2] };
-        fileSpace.selectHyperslab(H5S_SELECT_SET, dims, fileOffset);
+        SizeVec_t fileOffset = { inFrameNumber, 0, 0 };
+        SizeVec_t dims = { 1, getFrameHeight(), getFrameWidth() };
+        fileSpace.selectHyperslab(H5S_SELECT_SET, dims.data(), fileOffset.data());
 
         // Define memory space.
-        H5::DataSpace memSpace = H5::DataSpace(3, dims, NULL);
-        hsize_t memOffset[3] = { 0, 0, 0 };
-        memSpace.selectHyperslab(H5S_SELECT_SET, dims, memOffset);
+        H5::DataSpace memSpace = H5::DataSpace(s_numDims, dims.data(), NULL);
+        SizeVec_t memOffset = { 0, 0, 0 };
+        memSpace.selectHyperslab(H5S_SELECT_SET, dims.data(), memOffset.data());
 
         // Write data to the dataset.
         try
         {
            m_dataSet.write(inBuffer, m_dataType, memSpace, fileSpace);
         }
-   
+
         // Catch failure caused by the DataSet operations
         catch (H5::DataSetIException error)
         {
@@ -293,6 +325,17 @@ public:
     }
 
 private:
+
+    bool m_isValid = false;
+    SpH5File_t m_H5File;
+    std::string m_path;
+    
+    H5::DataSet m_dataSet;
+    H5::DataSpace m_dataSpace;
+    H5::DataType m_dataType;
+    
+    isx::TimingInfo m_timingInfo;
+    isx::SpacingInfo m_spacingInfo;
 
     /// A method to create a dummy TimingInfo object from the number of frames.
     ///
@@ -315,21 +358,17 @@ private:
         return isx::SpacingInfo(topLeft, pixelSize, numPixels);
     }
 
-    bool m_isValid = false;
-    SpH5File_t m_H5File;
-    std::string m_path;
-    
-    H5::DataSet m_dataSet;
-    H5::DataSpace m_dataSpace;
-    H5::DataType m_dataType;
-    
-    int m_ndims;
-    std::vector<hsize_t> m_dims;
-    std::vector<hsize_t> m_maxdims;
-    size_t m_frameSizeInBytes;
+    SizeVec_t
+    getDims() const
+    {
+        return {getNumFrames(), getFrameHeight(), getFrameWidth()};
+    }
 
-    isx::TimingInfo m_timingInfo;
-    isx::SpacingInfo m_spacingInfo;
+    SizeVec_t
+    getMaxDims() const
+    {
+        return getDims();
+    }
 
     void 
     createDataSet (const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space)
@@ -397,25 +436,28 @@ private:
         H5::DataType type = m_dataSet.getDataType();
         H5::DataSpace space = m_dataSet.getSpace();
         int nDims = space.getSimpleExtentNdims();;
-        std::vector<hsize_t> dims(nDims);
-        std::vector<hsize_t> maxdims(nDims);
-        space.getSimpleExtentDims(&dims[0], &maxdims[0]);
+        SizeVec_t dims(nDims);
+        SizeVec_t maxDims(nDims);
+        space.getSimpleExtentDims(&dims[0], &maxDims[0]);
             
         // Check that the size of the file dataset is the same as the one the 
         // user is trying to write out
-        if(nDims != m_ndims)
+        if(nDims != s_numDims)
         {
             ISX_THROW(isx::ExceptionDataIO, "Dataset dimension mismatch");
         }
             
+
+        SizeVec_t thisDims = getDims();
+        SizeVec_t thisMaxDims = getMaxDims();
         for (int i(0); i < nDims; i++)
         {
-            if(dims[i] != m_dims[i])
+            if (dims[i] != thisDims[i])
             {
                 ISX_THROW(isx::ExceptionDataIO, "Dataset size mismatch");
             }
-                
-            if(maxdims[i] != m_maxdims[i])
+
+            if (maxDims[i] != thisMaxDims[i])
             {
                 ISX_THROW(isx::ExceptionDataIO, "Dataset size mismatch");
             }
@@ -424,11 +466,6 @@ private:
         // Dataset is valid if we get here
         m_dataType = type;
         m_dataSpace = space;
-            
-        if (m_dataType == H5::PredType::STD_U16LE)
-        {
-            m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
-        }    
     }
 
     std::vector<std::string> 
@@ -501,13 +538,13 @@ Movie::getNumFrames() const
     return m_pImpl->getNumFrames();
 }
 
-int32_t 
+size_t
 Movie::getFrameWidth() const
 {
     return m_pImpl->getFrameWidth();
 }
 
-int32_t
+size_t
 Movie::getFrameHeight() const
 {
     return m_pImpl->getFrameHeight();
