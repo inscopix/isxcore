@@ -6,6 +6,7 @@
 #include "isxCoreFwd.h"
 #include "isxObject.h"
 #include "isxVideoFrame.h"
+#include "isxMutex.h"
 
 #include <string>
 #include <vector>
@@ -31,7 +32,7 @@ class Movie : public Object
 public:
     /// Type of callback function to use to return video frames asynchronously
     ///
-    typedef std::function<void(SpU16VideoFrame_t inVideoFrame)> MovieGetFrameCB_t;
+    typedef std::function<void(const SpU16VideoFrame_t & inVideoFrame)> MovieGetFrameCB_t;
 
     /// Default constructor.  Is a valid C++ object but not a valid Movie.
     ///

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <queue>
 
 namespace isx {
 class Movie::Impl : public std::enable_shared_from_this<Movie::Impl>
@@ -207,31 +208,50 @@ public:
     void
     getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
     {
-        WpImpl_t weakThis = shared_from_this();
-        IoQueue::instance()->dispatch([weakThis, this, inFrameNumber, inCallback]()
-            {
-                SpImpl_t sharedThis = weakThis.lock();
-                if (!sharedThis)
-                {
-                    return;
-                }
-                inCallback(getFrame(inFrameNumber));
-            });
+        {
+            isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
+            m_frameRequestQueue.push(FrameRequest(inFrameNumber, inCallback));
+        }
+        processFrameQueue();
     }
 
     void
     getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
     {
-        WpImpl_t weakThis = shared_from_this();
-        IoQueue::instance()->dispatch([weakThis, this, inTime, inCallback]()
-            {
-                SpImpl_t sharedThis = weakThis.lock();
-                if (!sharedThis)
+        hsize_t frameNumber = hsize_t(m_timingInfo.convertTimeToIndex(inTime));
+        return getFrameAsync(frameNumber, inCallback);
+    }
+
+    void
+    processFrameQueue()
+    {
+        isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
+        if (!m_frameRequestQueue.empty())
+        {
+            FrameRequest fr = m_frameRequestQueue.front();
+            m_frameRequestQueue.pop();
+            WpImpl_t weakThis = shared_from_this();
+            IoQueue::instance()->dispatch([weakThis, this, fr]()
                 {
-                    return;
-                }
-                inCallback(getFrame(inTime));
-            });
+                    SpImpl_t sharedThis = weakThis.lock();
+                    if (!sharedThis)
+                    {
+                        return;
+                    }
+                    fr.m_callback(getFrame(fr.m_frameNumber));
+                    processFrameQueue();
+                });
+        }
+    }
+
+    void
+    purgeFrameQueue()
+    {
+        isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
+        while (!m_frameRequestQueue.empty())
+        {
+            m_frameRequestQueue.pop();
+        }
     }
 
     double 
@@ -303,6 +323,16 @@ public:
     }
 
 private:
+    class FrameRequest
+    {
+    public:
+        FrameRequest(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
+        : m_frameNumber(inFrameNumber)
+        , m_callback(inCallback){}
+
+        size_t              m_frameNumber;
+        MovieGetFrameCB_t   m_callback;
+    };
 
     /// A method to create a dummy TimingInfo object from the number of frames.
     ///
@@ -313,21 +343,6 @@ private:
         isx::Ratio step(1, 30);
         return isx::TimingInfo(start, step, numFrames);
     }
-
-    bool m_isValid = false;
-    SpH5File_t m_H5File;
-    std::string m_path;
-    
-    H5::DataSet m_dataSet;
-    H5::DataSpace m_dataSpace;
-    H5::DataType m_dataType;
-    
-    int m_ndims;
-    std::vector<hsize_t> m_dims;
-    std::vector<hsize_t> m_maxdims;
-    size_t m_frameSizeInBytes;
-
-    isx::TimingInfo m_timingInfo;
 
     void 
     createDataSet (const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space)
@@ -446,6 +461,24 @@ private:
         }
         return tokens;
     }
+
+    bool m_isValid = false;
+    SpH5File_t m_H5File;
+    std::string m_path;
+    
+    H5::DataSet m_dataSet;
+    H5::DataSpace m_dataSpace;
+    H5::DataType m_dataType;
+    
+    int m_ndims;
+    std::vector<hsize_t> m_dims;
+    std::vector<hsize_t> m_maxdims;
+    size_t m_frameSizeInBytes;
+
+    isx::TimingInfo m_timingInfo;
+    std::queue<FrameRequest>    m_frameRequestQueue;
+    isx::Mutex                  m_frameRequestQueueMutex;
+
 };
 
 
