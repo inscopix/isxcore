@@ -80,6 +80,10 @@ namespace isx {
     class ProjectFile
     {
     public:
+
+        /// constructor - valid c++ object but invalid file
+        ProjectFile();
+
         /// constructor - open existing file
         /// \param inFileName the file to open
         ProjectFile(const std::string & inFileName);
@@ -97,7 +101,10 @@ namespace isx {
         ///
         SpHdf5FileHandle_t getHdf5FileHandle();
         
-        
+        /// \return whether the file is valid or not
+        ///
+        bool isValid();
+
         /// the path for the mosaic project in the HDF5 file
         ///
         static const std::string projectPath;

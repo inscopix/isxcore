@@ -13,9 +13,15 @@ namespace isx {
     class ProjectFile::Impl
     {
     public:
+        Impl() :
+            m_bValid(false)
+        {
+        }
+
         /// Constructor
         ///
-        Impl(const std::string & inFileName) 
+        Impl(const std::string & inFileName) :
+            m_bValid(false)
         {
             // H5F_ACC_RDWR fails if the file doesn't exist. 
             int openFlag = H5F_ACC_RDWR;   
@@ -25,7 +31,8 @@ namespace isx {
             initialize();
         }
 
-        Impl(const std::string & inFileName, const std::string & inInputFileName)
+        Impl(const std::string & inFileName, const std::string & inInputFileName) :
+            m_bValid(false)
         {
             int openFlag = H5F_ACC_TRUNC;
             m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
@@ -47,6 +54,12 @@ namespace isx {
         getHdf5FileHandle() const
         {
             return m_fileHandle;
+        }
+
+        bool 
+        isValid()
+        {
+            return m_bValid;
         }
         
         uint16_t 
@@ -78,6 +91,8 @@ namespace isx {
         H5::Group  m_grCells;
         
         std::vector<SpMovieSeries_t> m_movieSeries;
+
+        bool m_bValid;
         
 
     };
@@ -90,6 +105,11 @@ namespace isx {
     ///////////////////////////////////////////////////////////////////////////////
     //  PROJECT FILE
     ///////////////////////////////////////////////////////////////////////////////
+    ProjectFile::ProjectFile()
+    {
+        m_pImpl.reset(new Impl());
+    }
+
     ProjectFile::ProjectFile(const std::string & inFileName) 
     {
         m_pImpl.reset(new Impl(inFileName));
@@ -110,6 +130,13 @@ namespace isx {
     {
         return m_pImpl->getHdf5FileHandle();
     }
+
+    bool
+    ProjectFile::isValid()
+    {
+        return m_pImpl->isValid();
+    }
+
     
     uint16_t 
     ProjectFile::getNumMovieSeries()
@@ -166,6 +193,8 @@ namespace isx {
                 m_movieSeries[rs].reset(new MovieSeries(getHdf5FileHandle(), rs_name));
             }
         }
+
+        m_bValid = true;
         
     }
     
@@ -183,6 +212,8 @@ namespace isx {
         H5::StrType strdatatype(H5::PredType::C_S1, 256); // of length 256 characters
         H5::Attribute inputfile_attribute = m_grFileHeader.createAttribute("Input File", strdatatype, inputfile_dataspace);
         inputfile_attribute.write(strdatatype, inInputFileName.c_str());
+
+        m_bValid = true;
                 
     }
  
