@@ -95,34 +95,12 @@ TEST_CASE("MovieTest", "[core]") {
         timeStep = timingInfo.getStep();
         frameRate = timeStep.invert();
 
-        // Outputs
+        // Create the output
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
-        isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename);
+        isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename, testFile);
         
-        uint16_t nSeries = outputFile->getNumMovieSeries();
-        isx::SpMovieSeries_t rs;
-        isx::SpMovie_t outputMovie; 
-        
-        if(nSeries == 0)
-        {
-            // Create it
-            rs = outputFile->addMovieSeries("RecSeries0");
-            outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);
-        }
-        else
-        {
-            // Read it
-            rs = outputFile->getMovieSeries(0);
-            uint16_t nMovies = rs->getNumMovies();
-            if(nMovies == 0)
-            {
-                outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);
-            }
-            else
-            {
-                outputMovie = rs->getMovie(0);
-            }            
-        }        
+        isx::SpMovieSeries_t rs = outputFile->addMovieSeries("RecSeries0");
+        isx::SpMovie_t outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);             
         
         REQUIRE(nFrames == outputMovie->getNumFrames());
         REQUIRE(nCols == outputMovie->getFrameWidth());
