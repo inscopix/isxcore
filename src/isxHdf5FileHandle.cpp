@@ -1,7 +1,5 @@
 #include "isxHdf5FileHandle.h"
 #include "isxCoreFwd.h"
-#include "H5Cpp.h"
-
 #include <memory>
 
 namespace isx
@@ -42,26 +40,6 @@ bool
 Hdf5FileHandle::isReadWrite() const
 {
     return ((m_accessMode == H5F_ACC_RDWR) || (m_accessMode == H5F_ACC_TRUNC));
-}
-
-void
-Hdf5FileHandle::getObjNames(std::vector<std::string> & outNames)
-{
-    std::string rootObjName("/");
-    H5::Group rootGroup = m_H5File->openGroup(rootObjName);
-    hsize_t nObjInGroup = rootGroup.getNumObjs();
-    
-    if (0 == nObjInGroup)
-    {
-        return;
-    }
-
-    outNames.resize((size_t)nObjInGroup);
-    for (unsigned int i(0); i < nObjInGroup; ++i)
-    {
-        outNames[i] = rootGroup.getObjnameByIdx(i);
-    }
-
 }
 
 } // namespace isx

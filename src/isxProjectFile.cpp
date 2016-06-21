@@ -17,21 +17,20 @@ namespace isx {
         ///
         Impl(const std::string & inFileName) 
         {
-            // H5F_ACC_RDWR fails if the file doesn't exist. If it exists we open 
-            // it with Read/Write permission and everything works. H5F_ACC_TRUNC 
-            // opens it also with Read/Write permission but it creates the file if
-            // it doesn't exist.This means that the file opening will always succeed,
-            // whether you are opening an existing file or trying to create one from scratch
-            int openFlag = H5F_ACC_RDWR;
-            if ( false == exists(inFileName))
-            {
-                openFlag = H5F_ACC_TRUNC;                
-            }
-        
+            // H5F_ACC_RDWR fails if the file doesn't exist. 
+            int openFlag = H5F_ACC_RDWR;   
             m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
             m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, openFlag);
                 
             initialize();
+        }
+
+        Impl(const std::string & inFileName, const std::string & inInputFileName)
+        {
+            int openFlag = H5F_ACC_TRUNC;
+            m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
+            m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, openFlag);
+            createDataModel(inInputFileName);
         }
         
         ~Impl()
@@ -41,9 +40,7 @@ namespace isx {
             m_file.reset();
             m_fileHandle.reset();
         }
-         
-        bool exists(const std::string & inFileName);
-        
+                
         /// \return Hdf5FileHandle
         ///
         SpHdf5FileHandle_t
@@ -68,7 +65,7 @@ namespace isx {
         
     private:
         void initialize();
-        void initDataModel();
+        void createDataModel(const std::string & inInputFileName);
         
         SpH5File_t m_file;
         SpHdf5FileHandle_t m_fileHandle;
@@ -96,6 +93,11 @@ namespace isx {
     ProjectFile::ProjectFile(const std::string & inFileName) 
     {
         m_pImpl.reset(new Impl(inFileName));
+    }
+
+    ProjectFile::ProjectFile(const std::string & inFileName, const std::string & inInputFileName)
+    {
+        m_pImpl.reset(new Impl(inFileName, inInputFileName));
     }
 
     ProjectFile::~ProjectFile() 
@@ -149,49 +151,41 @@ namespace isx {
         // Get the number of objects and initialize series
         std::string rootObjName("/");
         H5::Group rootGroup = m_file->openGroup(rootObjName);
-        hsize_t nObjInGroup = rootGroup.getNumObjs();
-        
-        if(nObjInGroup == 0)
-        {
-            initDataModel();
-        }
-        else
-        {
-            m_grProject    = m_file->openGroup(projectPath);
-            m_grFileHeader = m_file->openGroup(headerPath);
-            m_grSeries  = m_file->openGroup(seriesPath);
+
+        m_grProject    = m_file->openGroup(projectPath);
+        m_grFileHeader = m_file->openGroup(headerPath);
+        m_grSeries  = m_file->openGroup(seriesPath);
             
-            nObjInGroup = m_grSeries.getNumObjs();
-            if(nObjInGroup != 0)
+        hsize_t nObjInGroup = m_grSeries.getNumObjs();
+        if(nObjInGroup != 0)
+        {
+            m_movieSeries.resize(nObjInGroup);
+            for (hsize_t rs(0); rs < nObjInGroup; ++rs)
             {
-                m_movieSeries.resize(nObjInGroup);
-                for (hsize_t rs(0); rs < nObjInGroup; ++rs)
-                {
-                    std::string rs_name = seriesPath + "/" + m_grSeries.getObjnameByIdx(rs);
-                    m_movieSeries[rs].reset(new MovieSeries(getHdf5FileHandle(), rs_name));
-                }
+                std::string rs_name = seriesPath + "/" + m_grSeries.getObjnameByIdx(rs);
+                m_movieSeries[rs].reset(new MovieSeries(getHdf5FileHandle(), rs_name));
             }
-            
         }
+        
     }
     
     
     void 
-    ProjectFile::Impl::initDataModel()
+    ProjectFile::Impl::createDataModel(const std::string & inInputFileName)
     { 
         
         m_grProject    = m_file->createGroup(projectPath);
         m_grFileHeader = m_file->createGroup(headerPath);
         m_grSeries  = m_file->createGroup(seriesPath);
+
+        // Add the name of the input file to the file header
+        H5::DataSpace inputfile_dataspace = H5::DataSpace(H5S_SCALAR);
+        H5::StrType strdatatype(H5::PredType::C_S1, 256); // of length 256 characters
+        H5::Attribute inputfile_attribute = m_grFileHeader.createAttribute("Input File", strdatatype, inputfile_dataspace);
+        inputfile_attribute.write(strdatatype, inInputFileName.c_str());
                 
     }
  
  
-    bool 
-    ProjectFile::Impl::exists(const std::string & inFileName)
-    {
-        std::ifstream infile(inFileName.c_str());
-        return infile.good();
-    }
- 
+
 }

@@ -4,8 +4,7 @@
 #include "H5Cpp.h"
 
 #include <memory>
-#include <vector>
-#include <string>
+
 
 namespace isx
 {
@@ -41,9 +40,7 @@ public:
     ///
     bool isReadWrite() const;
 
-    /// \param outNames a vector of objects under the hdf5 root
-    ///
-    void getObjNames(std::vector<std::string> & outNames);
+    
 
 private:
     SpH5File_t m_H5File;

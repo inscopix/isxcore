@@ -9,6 +9,7 @@
     /FileHeader
         /Mosaic Version
         /Operating System
+        /Original Input File
     /History
         /History item 1
             /Type
@@ -79,9 +80,14 @@ namespace isx {
     class ProjectFile
     {
     public:
-        /// constructor
-        ///
+        /// constructor - open existing file
+        /// \param inFileName the file to open
         ProjectFile(const std::string & inFileName);
+
+        /// constructor - create new file
+        /// \param inFileName the name of the project file to create
+        /// \param inInputFileName the name of the original data set used to initialize this file
+        ProjectFile(const std::string & inFileName, const std::string & inInputFileName);
         
         /// destructor
         ///
