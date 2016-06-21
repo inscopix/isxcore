@@ -9,6 +9,12 @@ namespace isx {
     const std::string ProjectFile::headerPath = "/MosaicProject/FileHeader";
     /* static */
     const std::string ProjectFile::seriesPath = "/MosaicProject/Series";
+    /* static */
+    const std::string ProjectFile::historyPath = "/MosaicProject/History";
+    /* static */
+    const std::string ProjectFile::annotationsPath = "/MosaicProject/Annotations";
+    /* static */
+    const std::string ProjectFile::cellsPath = "/MosaicProject/Cells";
 
     class ProjectFile::Impl
     {
@@ -178,9 +184,12 @@ namespace isx {
         std::string rootObjName("/");
         H5::Group rootGroup = m_file->openGroup(rootObjName);
 
-        m_grProject    = m_file->openGroup(projectPath);
-        m_grFileHeader = m_file->openGroup(headerPath);
-        m_grSeries  = m_file->openGroup(seriesPath);
+        m_grProject     = m_file->openGroup(projectPath);
+        m_grFileHeader  = m_file->openGroup(headerPath);
+        m_grSeries      = m_file->openGroup(seriesPath);
+        m_grHistory     = m_file->openGroup(historyPath);
+        m_grAnnotations = m_file->openGroup(annotationsPath);
+        m_grCells       = m_file->openGroup(cellsPath);
             
         hsize_t nObjInGroup = m_grSeries.getNumObjs();
         if(nObjInGroup != 0)
@@ -202,9 +211,12 @@ namespace isx {
     ProjectFile::Impl::createDataModel(const std::string & inInputFileName)
     { 
         
-        m_grProject    = m_file->createGroup(projectPath);
-        m_grFileHeader = m_file->createGroup(headerPath);
-        m_grSeries  = m_file->createGroup(seriesPath);
+        m_grProject     = m_file->createGroup(projectPath);
+        m_grFileHeader  = m_file->createGroup(headerPath);
+        m_grSeries      = m_file->createGroup(seriesPath);
+        m_grHistory     = m_file->createGroup(historyPath);
+        m_grAnnotations = m_file->createGroup(annotationsPath);
+        m_grCells       = m_file->createGroup(cellsPath);
 
         // Add the name of the input file to the file header
         H5::DataSpace inputfile_dataspace = H5::DataSpace(H5S_SCALAR);

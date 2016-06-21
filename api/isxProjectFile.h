@@ -116,6 +116,18 @@ namespace isx {
         /// the path for the movie series in the HDF5 file
         ///
         static const std::string seriesPath;
+
+        /// the path for the history in the HDF5 file
+        ///
+        static const std::string historyPath;
+
+        /// the path for the annotations in the HDF5 file
+        ///
+        static const std::string annotationsPath;
+
+        /// the path for the cell traces in the HDF5 file
+        ///
+        static const std::string cellsPath;
         
         /// Get the number of recording series in the project file
         ///
