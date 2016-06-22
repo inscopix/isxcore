@@ -69,17 +69,19 @@ public:
         // the file but it doesn't currently contain these, so picking some
         // dummy values
         isx::Time start = isx::Time();
-        isx::Ratio step(1, 30);
+        isx::Ratio frameRate(30, 1);
         // TODO sweet 2016/06/06 : on Windows the type of m_dims is a uint64_t
         // so this needs some more thought
-        m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]));
+        m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]), frameRate);
+
+
     }
     
     
-    Impl(const SpH5File_t & inHdf5File, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight)
+    Impl(const SpH5File_t & inHdf5File, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate)
     : m_isValid(false) 
     , m_H5File(inHdf5File)
-    , m_path(inPath)   
+    , m_path(inPath) 
     {
         ISX_ASSERT(inNumFrames > 0);
         ISX_ASSERT(inFrameWidth > 0);
@@ -101,7 +103,7 @@ public:
 
         // TODO sweet 2016/09/31 : the start and step should also be specified
         // but we don't currently have a mechnanism for that
-        m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]));
+        m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]), inFrameRate);
 
         /* Create the dataspace */
         m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
@@ -218,6 +220,11 @@ public:
     {
         strm << m_path;
     }
+    
+    std::string getName()
+    {
+        return m_path.substr(m_path.find_last_of("/")+1);
+    }
 
     void
     writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
@@ -274,10 +281,10 @@ private:
     /// A method to create a dummy TimingInfo object from the number of frames.
     ///
     isx::TimingInfo
-    createDummyTimingInfo(uint32_t numFrames)
+    createDummyTimingInfo(uint32_t numFrames, isx::Ratio inFrameRate)
     {
         isx::Time start = isx::Time();
-        isx::Ratio step(1, 30);
+        isx::Ratio step = inFrameRate.invert();
         return isx::TimingInfo(start, step, numFrames);
     }
 
@@ -422,23 +429,18 @@ Movie::Movie()
 }
 
 Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath)
-{
-    if (false == inHdf5FileHandle->isReadOnly())
-    {
-        ISX_THROW(isx::ExceptionFileIO, "File was opened with no read permission.");
-    }
-    
+{    
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
 }
 
-Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight)
+Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate)
 {
     if (false == inHdf5FileHandle->isReadWrite())
     {
         ISX_THROW(isx::ExceptionFileIO, "File was opened with no write permission.");
     }
     
-    m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inNumFrames, inFrameWidth, inFrameHeight));
+    m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate));
 }
 
 Movie::~Movie()
@@ -503,6 +505,12 @@ void
 Movie::serialize(std::ostream& strm) const
 {
     m_pImpl->serialize(strm);
+}
+
+std::string 
+Movie::getName()
+{
+    return m_pImpl->getName();
 }
 
 void 
