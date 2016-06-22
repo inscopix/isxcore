@@ -102,28 +102,37 @@ TEST_CASE("MovieTest", "[core]") {
         size_t nFrames = inputMovie.getNumFrames();
         int32_t nCols  = inputMovie.getFrameWidth();
         int32_t nRows  = inputMovie.getFrameHeight();
+ 		isx::TimingInfo timingInfo = inputMovie.getTimingInfo();
+        isx::Ratio timeStep = timingInfo.getStep();
+		isx::Ratio frameRate = timeStep.invert();
 
-        // Outputs
+        // Create the output
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
-        isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename);
+        isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename, testFile);
         
-        isx::Movie outputMovie(outputFile->getHdf5FileHandle(), "/MosaicProject/Schedules/Schedule1/Recording1/Movie", nFrames, nCols, nRows); 
-        REQUIRE(nFrames == outputMovie.getNumFrames());
-        REQUIRE(nCols == outputMovie.getFrameWidth());
-        REQUIRE(nRows == outputMovie.getFrameHeight());
+        isx::SpMovieSeries_t rs = outputFile->addMovieSeries("RecSeries0");
+        isx::SpMovie_t outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);             
+        
+        REQUIRE(nFrames == outputMovie->getNumFrames());
+        REQUIRE(nCols == outputMovie->getFrameWidth());
+        REQUIRE(nRows == outputMovie->getFrameHeight());
+        
+        timingInfo = outputMovie->getTimingInfo();
+        timeStep = timingInfo.getStep();
+        isx::Ratio outpuFrameRate = timeStep.invert();
+        REQUIRE(frameRate == outpuFrameRate);
 
         // Write a frame from the input movie to the output movie
         int nFrame = 15;
         size_t inputSize = inputMovie.getFrameSizeInBytes();
         isx::Time frame15Time = inputMovie.getTimingInfo().getStart();
-        frame15Time.addSecs(isx::Ratio(15, 1) * inputMovie.getTimingInfo().getStep());
+        frame15Time = frame15Time.addSecs(isx::Ratio(nFrame, 1) * inputMovie.getTimingInfo().getStep());
         auto nvf = inputMovie.getFrame(frame15Time);
         unsigned char * inputFrameBuffer = reinterpret_cast<unsigned char *>(nvf->getPixels());
-        outputMovie.writeFrame(nFrame, &inputFrameBuffer[0], inputSize); 
+        outputMovie->writeFrame(nFrame, inputFrameBuffer, inputSize); 
         
         // Read dataset from output
-        size_t outputSize = outputMovie.getFrameSizeInBytes();
-        auto outputNvf = inputMovie.getFrame(frame15Time);
+        auto outputNvf = outputMovie->getFrame(frame15Time);
         unsigned char * outputFrameBuffer = reinterpret_cast<unsigned char *>(outputNvf->getPixels());
 
         int nCol = 35;

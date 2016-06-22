@@ -51,9 +51,10 @@ public:
     /// \param inNumFrames number of frames
     /// \param inFrameWidth number of columns in the frame
     /// \param inFrameHeight number of rows in the frame
+	/// \param inFrameRate default frame rate
     /// \throw isx::ExceptionFileIO     If the file cannot be written.
     /// \throw isx::ExceptionDataIO     If the dataset cannot be written.
-    Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight);
+    Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate);
 
     /// Destructor
     /// 
@@ -150,6 +151,11 @@ public:
     virtual 
     void 
     serialize(std::ostream& strm) const;
+
+    /// Get movie name
+    ///
+    std::string getName();
+
 
 private:
     class Impl;
