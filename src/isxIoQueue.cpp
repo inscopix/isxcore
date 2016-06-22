@@ -41,13 +41,13 @@ IoQueue::isInitialized()
     return !!s_instance;
 }
 
-DispatchQueueInterface *
+SpDispatchQueueInterface_t
 IoQueue::instance()
 {
     ISX_ASSERT(isInitialized());
     if (isInitialized())
     {
-        return s_instance->m_worker.get();
+        return std::dynamic_pointer_cast<DispatchQueueInterface>(s_instance->m_worker);
     }
     return 0;
 }

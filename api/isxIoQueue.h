@@ -43,7 +43,7 @@ public:
     /// \return pointer to the contained worker's dispatch queue
     ///
     static
-    DispatchQueueInterface *
+    SpDispatchQueueInterface_t
     instance();
 
 private:

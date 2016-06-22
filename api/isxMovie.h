@@ -104,8 +104,6 @@ public:
     /// Get the frame data for given frame number, asynchronously.
     /// \param inFrameNumber 0-based index of frame for which to retrieve frame data
     /// \param inCallback function used to return the retrieved video frame
-    /// \return a shared_ptr to a VideoFrame object containing the
-    ///         requested frame data
     ///
     void
     getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback);
@@ -113,8 +111,6 @@ public:
     /// Get the frame data for given time.
     /// \param inTime time of frame for which to retrieve frame data
     /// \param inCallback function used to return the retrieved video frame
-    /// \return a shared_ptr to a VideoFrame object containing the
-    ///         requested frame data
     ///
     void
     getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback);
