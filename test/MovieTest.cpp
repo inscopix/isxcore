@@ -123,10 +123,10 @@ TEST_CASE("MovieTest", "[core]") {
         int nFrame = 15;
         size_t inputSize = inputMovie.getFrameSizeInBytes();
         isx::Time frame15Time = inputMovie.getTimingInfo().getStart();
-        frame15Time.addSecs(isx::Ratio(15, 1) * inputMovie.getTimingInfo().getStep());
+        frame15Time.addSecs(isx::Ratio(nFrame, 1) * inputMovie.getTimingInfo().getStep());
         auto nvf = inputMovie.getFrame(frame15Time);
         unsigned char * inputFrameBuffer = reinterpret_cast<unsigned char *>(nvf->getPixels());
-        outputMovie->writeFrame(nFrame, &inputFrameBuffer[0], inputSize); 
+        outputMovie->writeFrame(nFrame, inputFrameBuffer, inputSize); 
         
         // Read dataset from output
         auto outputNvf = outputMovie->getFrame(frame15Time);

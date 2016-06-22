@@ -53,7 +53,7 @@ TimingInfo::convertTimeToIndex(const Time& inTime) const
 {
     Ratio secsFromStart = inTime.secsFrom(m_start);
     double index = std::floor((secsFromStart / m_step).toDouble());
-
+    
     if (index < 0)
     {
         return 0;
