@@ -1,5 +1,6 @@
 #include "isxHdf5FileHandle.h" 
 #include "isxProjectFile.h"
+#include "isxLog.h"
 #include <fstream>
 namespace isx {
     

@@ -53,14 +53,24 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(m.getFrameSizeInBytes() == 500000);
     }
 
-    SECTION("getFrame") {
+    SECTION("getFrame for time") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
         isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
-        size_t s = m.getFrameSizeInBytes();
-        std::vector<unsigned char> t(s);
-        m.getFrame(0, &t[0], s);
+        auto nvf = m.getFrame(m.getTimingInfo().getStart());
+        unsigned char * t = reinterpret_cast<unsigned char *>(nvf->getPixels());
+        REQUIRE(t[0] == 0x43);
+        REQUIRE(t[1] == 0x3);
+    }
+
+    SECTION("getFrame for frame number") {
+        isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
+        REQUIRE(r->isValid());
+        isx::Movie m(r->getHdf5FileHandle(), "/images");
+        REQUIRE(m.isValid());
+        auto nvf = m.getFrame(0);
+        unsigned char * t = reinterpret_cast<unsigned char *>(nvf->getPixels());
         REQUIRE(t[0] == 0x43);
         REQUIRE(t[1] == 0x3);
     }
@@ -79,21 +89,19 @@ TEST_CASE("MovieTest", "[core]") {
         isx::Movie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.toString() == "/images");
     }
+
     SECTION("Write frames to new movie", "[core]") {
         // Inputs
         isx::SpRecording_t inputFile = std::make_shared<isx::Recording>(testFile);
         isx::Movie inputMovie(inputFile->getHdf5FileHandle(), "/images");
         
         // Get sizes from input
-        int nFrames, nCols, nRows;
-        isx::TimingInfo timingInfo;
-        isx::Ratio timeStep, frameRate;
-        nFrames = inputMovie.getNumFrames();
-        nCols   = inputMovie.getFrameWidth();
-        nRows   = inputMovie.getFrameHeight();
-        timingInfo = inputMovie.getTimingInfo();
-        timeStep = timingInfo.getStep();
-        frameRate = timeStep.invert();
+        size_t nFrames = inputMovie.getNumFrames();
+        int32_t nCols  = inputMovie.getFrameWidth();
+        int32_t nRows  = inputMovie.getFrameHeight();
+ 		isx::TimingInfo timingInfo = inputMovie.getTimingInfo();
+        isx::Ratio timeStep = timingInfo.getStep();
+		isx::Ratio frameRate = timeStep.invert();
 
         // Create the output
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
@@ -114,14 +122,15 @@ TEST_CASE("MovieTest", "[core]") {
         // Write a frame from the input movie to the output movie
         int nFrame = 15;
         size_t inputSize = inputMovie.getFrameSizeInBytes();
-        std::vector<unsigned char> inputFrameBuffer(inputSize);
-        inputMovie.getFrame(nFrame, &inputFrameBuffer[0], inputSize);
+        isx::Time frame15Time = inputMovie.getTimingInfo().getStart();
+        frame15Time.addSecs(isx::Ratio(15, 1) * inputMovie.getTimingInfo().getStep());
+        auto nvf = inputMovie.getFrame(frame15Time);
+        unsigned char * inputFrameBuffer = reinterpret_cast<unsigned char *>(nvf->getPixels());
         outputMovie->writeFrame(nFrame, &inputFrameBuffer[0], inputSize); 
         
         // Read dataset from output
-        size_t outputSize = outputMovie->getFrameSizeInBytes();
-        std::vector<unsigned char> outputFrameBuffer(outputSize);        
-        outputMovie->getFrame(nFrame, &outputFrameBuffer[0], outputSize);
+        auto outputNvf = outputMovie->getFrame(frame15Time);
+        unsigned char * outputFrameBuffer = reinterpret_cast<unsigned char *>(outputNvf->getPixels());
 
         int nCol = 35;
         int nRow = 3;

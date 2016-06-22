@@ -183,5 +183,21 @@ TEST_CASE("RatioTest", "[core]")
         std::string expected("3 / 7");
         REQUIRE(actual == expected);
     }
+    
+    SECTION("floorToDenomOf")
+    {
+        isx::Ratio r1(3, 7);
+        isx::Ratio r2(20, 23);
+        isx::Ratio f = r1.floorToDenomOf(r2);
+        REQUIRE(f.getDen() == r2.getDen());
+        
+        double r1Value = r1.toDouble();
+        double fvBelow = f.toDouble();
+        double fvAbove = double(f.getNum() + 1) / double(f.getDen());
+        
+        REQUIRE(fvBelow <= r1Value);
+        REQUIRE(fvAbove > r1Value);
+        REQUIRE(f.getNum() == 9);
+    }
 
 }
