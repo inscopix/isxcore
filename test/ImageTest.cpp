@@ -51,4 +51,19 @@ TEST_CASE("ImageTest", "[core]") {
         REQUIRE(0 == memcmp(p, &buf[0], buf.size()));
     }
 
+    SECTION("constructor with spacing information")
+    {
+        const int32_t r = 8640;
+        const int32_t c = 3;
+
+        isx::Point<isx::Ratio> topLeft(22, 44);
+        isx::Point<isx::Ratio> pixelSize(isx::Ratio(22, 10), isx::Ratio(44, 10));
+        isx::Point<size_t> numPixels(1440, 1080);
+        isx::SpacingInfo spacingInfo(topLeft, pixelSize, numPixels);
+
+        isx::Image<uint16_t> i(spacingInfo, r, c);
+
+        REQUIRE(i.getSpacingInfo() == spacingInfo);
+    }
+
 }

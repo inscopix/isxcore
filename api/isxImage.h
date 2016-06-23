@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <memory>
 
+#include "isxSpacingInfo.h"
 #include "isxAssert.h"
 
 namespace isx
@@ -19,7 +20,10 @@ class Image
 public:
     /// Default constructor
     ///
-    Image(){}
+    Image()
+        : m_spacingInfo(Point<Ratio>(0, 0), Point<Ratio>(0, 0), Point<size_t>(0, 0))
+    {
+    }
 
     /// Constructor for an image
     /// \param inWidth width of the image in pixels
@@ -29,8 +33,7 @@ public:
     /// \param inNumChannels number of data channels
     ///        of type T per pixel (eg. RGBA would be 4)
     Image(int32_t inWidth, int32_t inHeight, int32_t inRowBytes, int32_t inNumChannels)
-        : m_width(inWidth)
-        , m_height(inHeight)
+        : m_spacingInfo(Point<Ratio>(0, 0), Point<Ratio>(Ratio(22, 10), Ratio(22, 10)), Point<size_t>(inWidth, inHeight))
         , m_rowBytes(inRowBytes)
         , m_numChannels(inNumChannels)
     {
@@ -38,8 +41,33 @@ public:
         ISX_ASSERT(inHeight > 0);
         ISX_ASSERT(inRowBytes > 0);
         ISX_ASSERT(inNumChannels > 0);
-        ISX_ASSERT(size_t(m_rowBytes) >= m_width * getPixelSizeInBytes());
+        ISX_ASSERT(size_t(m_rowBytes) >= getWidth() * getPixelSizeInBytes());
         m_pixels.reset(new T[getImageSizeInBytes()]);
+    }
+
+    /// Constructor for an image
+    /// \param inSpacingInfo spacing info of the image
+    /// \param inRowBytes number of bytes between 
+    ///        column 0 of any two subsequent rows
+    /// \param inNumChannels number of data channels
+    ///        of type T per pixel (eg. RGBA would be 4)
+    Image(const SpacingInfo & inSpacingInfo, int32_t inRowBytes, int32_t inNumChannels)
+        : m_spacingInfo(inSpacingInfo)
+        , m_rowBytes(inRowBytes)
+        , m_numChannels(inNumChannels)
+    {
+        ISX_ASSERT(inRowBytes > 0);
+        ISX_ASSERT(inNumChannels > 0);
+        ISX_ASSERT(size_t(m_rowBytes) >= getWidth() * getPixelSizeInBytes());
+        m_pixels.reset(new T[getImageSizeInBytes()]);
+    }
+
+    /// \return the spacing information of this image
+    ///
+    const SpacingInfo &
+    getSpacingInfo() const
+    {
+        return m_spacingInfo;
     }
 
     /// \return the width of this image
@@ -47,7 +75,7 @@ public:
     int32_t
     getWidth() const
     {
-        return m_width;
+        return m_spacingInfo.getNumColumns();
     }
 
     /// \return the height of this image
@@ -55,7 +83,7 @@ public:
     int32_t
     getHeight() const
     {
-        return m_height;
+        return m_spacingInfo.getNumRows();
     }
 
     /// \return the number of bytes between the first pixels of two neighboring rows
@@ -106,8 +134,7 @@ public:
 
 private:
     std::unique_ptr<T[]> m_pixels = 0;
-    int32_t m_width = 0;
-    int32_t m_height = 0;
+    SpacingInfo m_spacingInfo;
     int32_t m_rowBytes = 0;
     int32_t m_numChannels = 0;
 };

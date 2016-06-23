@@ -39,6 +39,23 @@ public:
         , m_timeStamp(inTimeStamp)
         , m_frameIndex(inFrameIndex){}
 
+    /// Constructor
+    /// \param inSpacingInfo spacing info of the image
+    /// \param inRowBytes number of bytes between 
+    ///        column 0 of any two subsequent rows
+    /// \param inNumChannels number of data channels
+    ///        of type T per pixel (eg. RGBA would be 4)
+    /// \param inTimeStamp timestamp of this frame
+    /// \param inFrameIndex index of this frame in its movie
+    ///
+    VideoFrame(
+        const SpacingInfo & inSpacingInfo,
+        int32_t inRowBytes, int32_t inNumChannels,
+        Time inTimeStamp, size_t inFrameIndex)
+        : m_image(inSpacingInfo, inRowBytes, inNumChannels)
+        , m_timeStamp(inTimeStamp)
+        , m_frameIndex(inFrameIndex){}
+
     /// \return the timestamp for this videoframe
     ///
     const Time &
