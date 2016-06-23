@@ -87,9 +87,6 @@ public:
         }
     }
 
-    }
-    
-    
     Impl(const SpH5File_t & inHdf5File, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
     : m_isValid(false) 
     , m_H5File(inHdf5File)
