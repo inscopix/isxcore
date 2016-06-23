@@ -19,7 +19,7 @@ namespace isx {
 
         /// Constructs instance of algorithm class with movie
         /// type = SpMovie_t
-        Algorithm(SpMovie_t movie);
+        Algorithm(const SpMovie_t & movie);
 
         /// Does this class have a valid movie object
         /// returns bool
@@ -45,19 +45,19 @@ namespace isx {
         /// type = double
         void ScaleValues16(const std::vector<double> &input, double &min, double &max, std::vector<uint16_t> &output, size_t nLength);
 
-        /// Adds two vectors of equal length
+        /// Adds two vectors of equal length: output = inputA + inputB
         /// type = std::vector<unsigned int>
         void Add_V(const std::vector<double> &inputA, uint16_t * inputB, std::vector<double> &output, size_t nLength);
         
-        /// Adds two vectors of equal length
+        /// Subtracts two vectors of equal length: output = inputA - inputB
         /// type = std::vector<unsigned int>
         void Subtract_V(uint16_t * inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength);
         
-        /// Adds two vectors of equal length
+        /// Divides elements of a vector by a scalar: output = inputA / num
         /// type = std::vector<unsigned int>
         void Divide_C(const std::vector<double> &inputA, double num, std::vector<double> &output, size_t nLength);
         
-        /// Adds two vectors of equal length
+        /// Divides two vectors of equal length: output = inputA / inputB
         /// type = std::vector<unsigned int>
         void Divide_V(const std::vector<double> &inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength);
 

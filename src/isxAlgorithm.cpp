@@ -1,10 +1,11 @@
 #include "isxAlgorithm.h"
 #include "isxMovie.h"
-#include "H5Cpp.h"
 #include "isxCoreFwd.h"
 #include "isxProjectFile.h"
 
 #include <iostream>
+#include <limits>
+#include <algorithm>
 
 namespace isx
 {
@@ -13,7 +14,7 @@ namespace isx
 
     }
 
-    Algorithm::Algorithm(SpMovie_t movie)
+    Algorithm::Algorithm(const SpMovie_t & movie)
     {
         m_movie = movie;
     }
@@ -35,18 +36,9 @@ namespace isx
 
     void Algorithm::FindMinMax(const std::vector<double> &input, double &min, double &max, size_t nLength)
     {
-        for (size_t i = 0; i < nLength; i++)
-        {
-            if (input[i] < min)
-            {
-                min = input[i];
-            }
-
-            if (input[i] > max)
-            {
-                max = input[i];
-            }
-        }
+        auto localMinMax = std::minmax_element(input.begin(), input.end());
+        min = std::min(min, *localMinMax.first);
+        max = std::max(max, *localMinMax.second);
     }
 
     void Algorithm::ScaleValues16(const std::vector<double> &input, double &min, double &max, std::vector<uint16_t> &output, size_t nLength)
@@ -80,7 +72,7 @@ namespace isx
     {
         for (size_t i = 0; i < nLength; i++)
         {
-            if (inputA[i] != 0)
+            if (inputB[i] != 0)
             {
                 output[i] = double(inputA[i]) / inputB[i];
             }
@@ -101,7 +93,10 @@ namespace isx
                 output[i] = (double)inputA[i] / num;
             }
         }
-        // else error
+        else
+        {
+            output.assign(nLength, 0);
+        }
     }
 
     void Algorithm::ApplyApp()
@@ -129,8 +124,8 @@ namespace isx
             std::vector<double> temp(nLength);
             std::vector<uint16_t> output(nLength);
 
-            double min = 0;
-            double max = 0;
+            double min = std::numeric_limits<double>::max();
+            double max = std::numeric_limits<double>::min();
             for (int i = 0; i < nFrames; i++)
             {
                 auto f = m_movie->getFrame(i);
