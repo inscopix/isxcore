@@ -2,14 +2,18 @@
 #include "isxHdf5FileHandle.h"
 #include "isxException.h"
 #include "isxAssert.h"
+#include "isxIoQueue.h"
 #include "H5Cpp.h"
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <queue>
 
 namespace isx {
-class Movie::Impl
+class Movie::Impl : public std::enable_shared_from_this<Movie::Impl>
 {
+    typedef std::shared_ptr<Movie::Impl> SpImpl_t;
+    typedef std::weak_ptr<Movie::Impl> WpImpl_t;
 public:
     ~Impl(){};
 
@@ -203,6 +207,58 @@ public:
         return getFrame(frameNumber);
     }
 
+    void
+    getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
+    {
+        {
+            isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
+            m_frameRequestQueue.push(FrameRequest(inFrameNumber, inCallback));
+        }
+        processFrameQueue();
+    }
+
+    void
+    getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
+    {
+        hsize_t frameNumber = hsize_t(m_timingInfo.convertTimeToIndex(inTime));
+        return getFrameAsync(frameNumber, inCallback);
+    }
+
+    void
+    processFrameQueue()
+    {
+        isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
+        if (!m_frameRequestQueue.empty())
+        {
+            FrameRequest fr = m_frameRequestQueue.front();
+            m_frameRequestQueue.pop();
+            WpImpl_t weakThis = shared_from_this();
+            IoQueue::instance()->dispatch([weakThis, this, fr]()
+                {
+                    SpImpl_t sharedThis = weakThis.lock();
+                    if (!sharedThis)
+                    {
+                        fr.m_callback(nullptr);
+                    }
+                    else
+                    {
+                        fr.m_callback(getFrame(fr.m_frameNumber));
+                        processFrameQueue();
+                    }
+                });
+        }
+    }
+
+    void
+    purgeFrameQueue()
+    {
+        isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
+        while (!m_frameRequestQueue.empty())
+        {
+            m_frameRequestQueue.pop();
+        }
+    }
+
     double 
     getDurationInSeconds() const
     {
@@ -277,6 +333,16 @@ public:
     }
 
 private:
+    class FrameRequest
+    {
+    public:
+        FrameRequest(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
+        : m_frameNumber(inFrameNumber)
+        , m_callback(inCallback){}
+
+        size_t              m_frameNumber;
+        MovieGetFrameCB_t   m_callback;
+    };
 
     /// A method to create a dummy TimingInfo object from the number of frames.
     ///
@@ -287,21 +353,6 @@ private:
         isx::Ratio step = inFrameRate.invert();
         return isx::TimingInfo(start, step, numFrames);
     }
-
-    bool m_isValid = false;
-    SpH5File_t m_H5File;
-    std::string m_path;
-    
-    H5::DataSet m_dataSet;
-    H5::DataSpace m_dataSpace;
-    H5::DataType m_dataType;
-    
-    int m_ndims;
-    std::vector<hsize_t> m_dims;
-    std::vector<hsize_t> m_maxdims;
-    size_t m_frameSizeInBytes;
-
-    isx::TimingInfo m_timingInfo;
 
     void 
     createDataSet (const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space)
@@ -420,6 +471,24 @@ private:
         }
         return tokens;
     }
+
+    bool m_isValid = false;
+    SpH5File_t m_H5File;
+    std::string m_path;
+    
+    H5::DataSet m_dataSet;
+    H5::DataSpace m_dataSpace;
+    H5::DataType m_dataType;
+    
+    int m_ndims;
+    std::vector<hsize_t> m_dims;
+    std::vector<hsize_t> m_maxdims;
+    size_t m_frameSizeInBytes;
+
+    isx::TimingInfo m_timingInfo;
+    std::queue<FrameRequest>    m_frameRequestQueue;
+    isx::Mutex                  m_frameRequestQueueMutex;
+
 };
 
 
@@ -487,6 +556,18 @@ SpU16VideoFrame_t
 Movie::getFrame(const Time & inTime)
 {
     return m_pImpl->getFrame(inTime);
+}
+
+void
+Movie::getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
+{
+    return m_pImpl->getFrameAsync(inFrameNumber, inCallback);
+}
+
+void
+Movie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
+{
+    return m_pImpl->getFrameAsync(inTime, inCallback);
 }
 
 double 

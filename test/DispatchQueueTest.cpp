@@ -14,13 +14,6 @@ TEST_CASE("DispatchQueue", "[core]") {
 
     isx::CoreInitialize();
 
-    SECTION("initialize") {
-        REQUIRE(isx::CoreIsInitialized());
-        isx::CoreShutdown();
-        REQUIRE(!isx::CoreIsInitialized());
-        isx::CoreInitialize();
-    }
-
     SECTION("default queues") {
         REQUIRE(isx::DispatchQueue::poolQueue());
         REQUIRE(isx::DispatchQueue::mainQueue());
