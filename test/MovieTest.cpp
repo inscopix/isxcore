@@ -113,7 +113,7 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(nFrames == outputMovie->getNumFrames());
         REQUIRE(nCols == outputMovie->getFrameWidth());
         REQUIRE(nRows == outputMovie->getFrameHeight());
-        
+
         timingInfo = outputMovie->getTimingInfo();
         timeStep = timingInfo.getStep();
         isx::Ratio outpuFrameRate = timeStep.invert();

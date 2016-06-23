@@ -56,7 +56,6 @@ public:
     /// \param inPath the path for the movie within the file. It will be created if it doesn't exist
     /// \param inTimingInfo     The timing information associated with the frames of the movie.
     /// \param inSpacingInfo    The spacing information associated with each frame of the movie.
-    ///
     /// \throw isx::ExceptionFileIO     If the file cannot be written.
     /// \throw isx::ExceptionDataIO     If the dataset cannot be written.
     Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo);

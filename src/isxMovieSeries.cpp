@@ -29,7 +29,11 @@ namespace isx {
                 m_movies.resize(nObjInGroup);
                 
                 // Initialize movies
+<<<<<<< HEAD
                 for (isize_t m(0); m < nObjInGroup; ++m)
+=======
+                for (uint16_t m(0); m < nObjInGroup; ++m)
+>>>>>>> develop
                 {
                     std::string objName = MovieSeriesGroup.getObjnameByIdx(m);
                     std::string path = m_path + "/" + objName;
@@ -42,6 +46,7 @@ namespace isx {
         ///
         ~Impl(){}
         
+<<<<<<< HEAD
         isize_t 
         getNumMovies()
         {
@@ -50,6 +55,16 @@ namespace isx {
         
         SpMovie_t 
         getMovie(isize_t inIndex)
+=======
+        uint16_t 
+        getNumMovies()
+        {
+            return (uint16_t)m_movies.size();
+        }
+        
+        SpMovie_t 
+        getMovie(uint16_t inIndex)
+>>>>>>> develop
         {
             return m_movies[inIndex];
         }
@@ -61,7 +76,11 @@ namespace isx {
         }
         
         SpMovie_t 
+<<<<<<< HEAD
         addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
+=======
+        addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate)
+>>>>>>> develop
         {
             std::string path = m_path + "/" + inName;
             // Create the properties group
@@ -98,14 +117,22 @@ namespace isx {
         
     }
         
+<<<<<<< HEAD
     isize_t 
+=======
+    uint16_t 
+>>>>>>> develop
     MovieSeries::getNumMovies()
     {
         return m_pImpl->getNumMovies();
     }
         
     SpMovie_t
+<<<<<<< HEAD
     MovieSeries::getMovie(isize_t inIndex)
+=======
+    MovieSeries::getMovie(uint16_t inIndex)
+>>>>>>> develop
     {
         return m_pImpl->getMovie(inIndex);
     }
@@ -117,9 +144,17 @@ namespace isx {
     }
     
     SpMovie_t 
+<<<<<<< HEAD
     MovieSeries::addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
+=======
+    MovieSeries::addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate)
+>>>>>>> develop
     {
         return m_pImpl->addMovie(inName, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate);
     }
     
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> develop
