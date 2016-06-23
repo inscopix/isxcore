@@ -90,19 +90,28 @@ DispatchQueueWorker::~DispatchQueueWorker(){}
 void 
 DispatchQueueWorker::destroy()
 {
+    m_dispatcher.reset();
     m_worker->destroy();
 }
 
 void
 DispatchQueueWorker::dispatch(Task_t inTask)
 {
-    emit m_dispatcher->dispatch(inTask);
+    ISX_ASSERT(m_dispatcher, "Tried to dispatch task after worker was destroyed.");
+    if (m_dispatcher)
+    {
+        emit m_dispatcher->dispatch(inTask);
+    }
 }
     
 void
 DispatchQueueWorker::dispatch(void * inContext, ContextTask_t inContextTask)
 {
-    emit m_dispatcher->dispatchWithContext(inContext, inContextTask);
+    ISX_ASSERT(m_dispatcher, "Tried to dispatch task after worker was destroyed.");
+    if (m_dispatcher)
+    {
+        emit m_dispatcher->dispatchWithContext(inContext, inContextTask);
+    }
 }
 
 } // namespace isx
