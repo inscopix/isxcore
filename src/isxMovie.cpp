@@ -208,7 +208,7 @@ public:
     }
 
     void
-    getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
+    getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
     {
         {
             isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
@@ -220,7 +220,7 @@ public:
     void
     getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
     {
-        hsize_t frameNumber = hsize_t(m_timingInfo.convertTimeToIndex(inTime));
+        isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
         return getFrameAsync(frameNumber, inCallback);
     }
 
@@ -336,11 +336,11 @@ private:
     class FrameRequest
     {
     public:
-        FrameRequest(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
+        FrameRequest(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
         : m_frameNumber(inFrameNumber)
         , m_callback(inCallback){}
 
-        size_t              m_frameNumber;
+        isize_t             m_frameNumber;
         MovieGetFrameCB_t   m_callback;
     };
 
@@ -559,7 +559,7 @@ Movie::getFrame(const Time & inTime)
 }
 
 void
-Movie::getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
+Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
     return m_pImpl->getFrameAsync(inFrameNumber, inCallback);
 }
