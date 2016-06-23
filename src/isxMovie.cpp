@@ -74,11 +74,7 @@ public:
         // dummy values
         isx::Time start = isx::Time();
         isx::Ratio frameRate(30, 1);
-        // TODO sweet 2016/06/06 : on Windows the type of m_dims is a uint64_t
-        // so this needs some more thought
         m_timingInfo = createDummyTimingInfo(m_dims[0], frameRate);
-
-
     }
     
     
