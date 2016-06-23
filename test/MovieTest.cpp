@@ -8,6 +8,7 @@
 #include <vector>
 #include <thread>
 #include <chrono>
+#include <atomic>
 
 TEST_CASE("MovieTest", "[core]") {
     std::string testFile = g_resources["testDataPath"] + "/recording_20160426_145041.hdf5";
