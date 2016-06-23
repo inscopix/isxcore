@@ -131,11 +131,11 @@ namespace isx {
         
         /// Get the number of recording series in the project file
         ///
-        uint16_t getNumMovieSeries();
+        isize_t getNumMovieSeries();
         
         /// Get a recording series by index
         ///
-        SpMovieSeries_t getMovieSeries(uint16_t inIndex);
+        SpMovieSeries_t getMovieSeries(isize_t inIndex);
         
         /// Add a recording series to the project file
         ///

@@ -72,13 +72,13 @@ public:
         isx::Ratio frameRate(30, 1);
         // TODO sweet 2016/06/06 : on Windows the type of m_dims is a uint64_t
         // so this needs some more thought
-        m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]), frameRate);
+        m_timingInfo = createDummyTimingInfo(m_dims[0], frameRate);
 
 
     }
     
     
-    Impl(const SpH5File_t & inHdf5File, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate)
+    Impl(const SpH5File_t & inHdf5File, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
     : m_isValid(false) 
     , m_H5File(inHdf5File)
     , m_path(inPath) 
@@ -103,7 +103,7 @@ public:
 
         // TODO sweet 2016/09/31 : the start and step should also be specified
         // but we don't currently have a mechnanism for that
-        m_timingInfo = createDummyTimingInfo(static_cast<uint32_t>(m_dims[0]), inFrameRate);
+        m_timingInfo = createDummyTimingInfo(m_dims[0], inFrameRate);
 
         /* Create the dataspace */
         m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
@@ -140,38 +140,38 @@ public:
         return m_isValid;
     }
 
-    size_t 
+    isize_t 
     getNumFrames() const
     {
         return m_timingInfo.getNumTimes();
     }
 
-    int32_t
+    isize_t
     getFrameWidth() const
     {
-        return int32_t(m_dims[2]);
+        return m_dims[2];
     }
 
-    int32_t 
+    isize_t
     getFrameHeight() const
     {
-        return int32_t(m_dims[1]);
+        return m_dims[1];
     }
 
-    size_t 
+    isize_t 
     getFrameSizeInBytes() const
     {
         return m_frameSizeInBytes;
     }
 
     SpU16VideoFrame_t
-    getFrame(size_t inFrameNumber)
+    getFrame(isize_t inFrameNumber)
     {
         Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
         
         auto nvf = std::make_shared<U16VideoFrame_t>(
             getFrameWidth(), getFrameHeight(),
-            int32_t(sizeof(uint16_t)) * getFrameWidth(),
+            sizeof(uint16_t) * getFrameWidth(),
             1, // numChannels
             frameTime, inFrameNumber);
         try {
@@ -199,7 +199,7 @@ public:
     SpU16VideoFrame_t
     getFrame(const Time & inTime)
     {
-        hsize_t frameNumber = hsize_t(m_timingInfo.convertTimeToIndex(inTime));
+        isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
         return getFrame(frameNumber);
     }
 
@@ -227,7 +227,7 @@ public:
     }
 
     void
-    writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
+    writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
     {
         // Make sure the movie is valid
         if (!m_isValid)
@@ -281,7 +281,7 @@ private:
     /// A method to create a dummy TimingInfo object from the number of frames.
     ///
     isx::TimingInfo
-    createDummyTimingInfo(uint32_t numFrames, isx::Ratio inFrameRate)
+    createDummyTimingInfo(isize_t numFrames, isx::Ratio inFrameRate)
     {
         isx::Time start = isx::Time();
         isx::Ratio step = inFrameRate.invert();
@@ -299,7 +299,7 @@ private:
     int m_ndims;
     std::vector<hsize_t> m_dims;
     std::vector<hsize_t> m_maxdims;
-    size_t m_frameSizeInBytes;
+    isize_t m_frameSizeInBytes;
 
     isx::TimingInfo m_timingInfo;
 
@@ -433,7 +433,7 @@ Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & in
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
 }
 
-Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate)
+Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
 {
     if (false == inHdf5FileHandle->isReadWrite())
     {
@@ -453,32 +453,32 @@ Movie::isValid() const
     return m_pImpl->isValid();
 }
 
-size_t 
+isize_t 
 Movie::getNumFrames() const
 {
     return m_pImpl->getNumFrames();
 }
 
-int32_t 
+isize_t
 Movie::getFrameWidth() const
 {
     return m_pImpl->getFrameWidth();
 }
 
-int32_t
+isize_t
 Movie::getFrameHeight() const
 {
     return m_pImpl->getFrameHeight();
 }
 
-size_t 
+isize_t 
 Movie::getFrameSizeInBytes() const
 {
     return m_pImpl->getFrameSizeInBytes();
 }
 
 SpU16VideoFrame_t
-Movie::getFrame(size_t inFrameNumber)
+Movie::getFrame(isize_t inFrameNumber)
 {
     return m_pImpl->getFrame(inFrameNumber);
 }
@@ -514,7 +514,7 @@ Movie::getName()
 }
 
 void 
-Movie::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
+Movie::writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
 {
     m_pImpl->writeFrame(inFrameNumber, inBuffer, inBufferSize);
 }

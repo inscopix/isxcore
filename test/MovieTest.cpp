@@ -96,9 +96,9 @@ TEST_CASE("MovieTest", "[core]") {
         isx::Movie inputMovie(inputFile->getHdf5FileHandle(), "/images");
         
         // Get sizes from input
-        size_t nFrames = inputMovie.getNumFrames();
-        int32_t nCols  = inputMovie.getFrameWidth();
-        int32_t nRows  = inputMovie.getFrameHeight();
+        isx::isize_t nFrames = inputMovie.getNumFrames();
+        isx::isize_t nCols  = inputMovie.getFrameWidth();
+        isx::isize_t nRows  = inputMovie.getFrameHeight();
  		isx::TimingInfo timingInfo = inputMovie.getTimingInfo();
         isx::Ratio timeStep = timingInfo.getStep();
 		isx::Ratio frameRate = timeStep.invert();
@@ -120,8 +120,8 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(frameRate == outpuFrameRate);
 
         // Write a frame from the input movie to the output movie
-        int nFrame = 15;
-        size_t inputSize = inputMovie.getFrameSizeInBytes();
+        isx::isize_t nFrame = 15;
+        isx::isize_t inputSize = inputMovie.getFrameSizeInBytes();
         isx::Time frame15Time = inputMovie.getTimingInfo().getStart();
         frame15Time = frame15Time.addSecs(isx::Ratio(nFrame, 1) * inputMovie.getTimingInfo().getStep());
         auto nvf = inputMovie.getFrame(frame15Time);
@@ -132,9 +132,9 @@ TEST_CASE("MovieTest", "[core]") {
         auto outputNvf = outputMovie->getFrame(frame15Time);
         unsigned char * outputFrameBuffer = reinterpret_cast<unsigned char *>(outputNvf->getPixels());
 
-        int nCol = 35;
-        int nRow = 3;
-        int idx = (nRows * nCol + nRow) * 2;
+        isx::isize_t nCol = 35;
+        isx::isize_t nRow = 3;
+        isx::isize_t idx = (nRows * nCol + nRow) * 2;
         REQUIRE(inputFrameBuffer[idx] == outputFrameBuffer[idx]);  
         REQUIRE(inputFrameBuffer[idx+1] == outputFrameBuffer[idx+1]);        
 

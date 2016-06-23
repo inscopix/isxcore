@@ -32,11 +32,11 @@ namespace isx {
         
         /// Get the number of movies in the recording series
         ///
-        uint16_t getNumMovies();
+        isize_t getNumMovies();
         
         /// Get a movie by index
         ///
-        SpMovie_t getMovie(uint16_t inIndex);
+        SpMovie_t getMovie(isize_t inIndex);
         
         /// Get recording series name
         ///
@@ -44,7 +44,7 @@ namespace isx {
         
         /// Add a movie to the recording series
         ///
-        SpMovie_t addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate);
+        SpMovie_t addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate);
         
     private:
         class Impl;
