@@ -2,15 +2,18 @@
 #include "isxHdf5FileHandle.h"
 #include "isxException.h"
 #include "isxAssert.h"
+#include "isxIoQueue.h"
 #include "H5Cpp.h"
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <queue>
 
-namespace isx
+namespace isx {
+class Movie::Impl : public std::enable_shared_from_this<Movie::Impl>
 {
-class Movie::Impl
-{
+    typedef std::shared_ptr<Movie::Impl> SpImpl_t;
+    typedef std::weak_ptr<Movie::Impl> WpImpl_t;
 public:
 
     // Only three dimensions are support (frames, rows, columns).
@@ -86,7 +89,8 @@ public:
             ISX_ASSERT(false, "Unhandled exception.");
         }
     }
-
+    
+    
     Impl(const SpH5File_t & inHdf5File, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
     : m_isValid(false) 
     , m_H5File(inHdf5File)
@@ -200,7 +204,7 @@ public:
         return sizeof(uint16_t);
     }
 
-    isize_t
+    isize_t 
     getFrameSizeInBytes() const
     {
         return getPixelSizeInBytes() * m_spacingInfo.getTotalNumPixels();
@@ -245,7 +249,59 @@ public:
         return getFrame(frameNumber);
     }
 
-    double
+    void
+    getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
+    {
+        {
+            isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
+            m_frameRequestQueue.push(FrameRequest(inFrameNumber, inCallback));
+        }
+        processFrameQueue();
+    }
+
+    void
+    getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
+    {
+        hsize_t frameNumber = hsize_t(m_timingInfo.convertTimeToIndex(inTime));
+        return getFrameAsync(frameNumber, inCallback);
+    }
+
+    void
+    processFrameQueue()
+    {
+        isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
+        if (!m_frameRequestQueue.empty())
+        {
+            FrameRequest fr = m_frameRequestQueue.front();
+            m_frameRequestQueue.pop();
+            WpImpl_t weakThis = shared_from_this();
+            IoQueue::instance()->dispatch([weakThis, this, fr]()
+                {
+                    SpImpl_t sharedThis = weakThis.lock();
+                    if (!sharedThis)
+                    {
+                        fr.m_callback(nullptr);
+                    }
+                    else
+                    {
+                        fr.m_callback(getFrame(fr.m_frameNumber));
+                        processFrameQueue();
+                    }
+                });
+        }
+    }
+
+    void
+    purgeFrameQueue()
+    {
+        isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
+        while (!m_frameRequestQueue.empty())
+        {
+            m_frameRequestQueue.pop();
+        }
+    }
+
+    double 
     getDurationInSeconds() const
     {
         return m_timingInfo.getDuration().toDouble();
@@ -327,17 +383,16 @@ public:
     }
 
 private:
+    class FrameRequest
+    {
+    public:
+        FrameRequest(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
+        : m_frameNumber(inFrameNumber)
+        , m_callback(inCallback){}
 
-    bool m_isValid = false;
-    SpH5File_t m_H5File;
-    std::string m_path;
-    
-    H5::DataSet m_dataSet;
-    H5::DataSpace m_dataSpace;
-    H5::DataType m_dataType;
-    
-    isx::TimingInfo m_timingInfo;
-    isx::SpacingInfo m_spacingInfo;
+        size_t              m_frameNumber;
+        MovieGetFrameCB_t   m_callback;
+    };
 
     /// A method to create a dummy TimingInfo object from the number of frames.
     ///
@@ -487,6 +542,21 @@ private:
         }
         return tokens;
     }
+
+    bool m_isValid = false;
+    SpH5File_t m_H5File;
+    std::string m_path;
+    
+    H5::DataSet m_dataSet;
+    H5::DataSpace m_dataSpace;
+    H5::DataType m_dataType;
+
+    isx::TimingInfo m_timingInfo;
+    isx::SpacingInfo m_spacingInfo;
+
+    std::queue<FrameRequest>    m_frameRequestQueue;
+    isx::Mutex                  m_frameRequestQueueMutex;
+
 };
 
 
@@ -563,6 +633,18 @@ SpU16VideoFrame_t
 Movie::getFrame(const Time & inTime)
 {
     return m_pImpl->getFrame(inTime);
+}
+
+void
+Movie::getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback)
+{
+    return m_pImpl->getFrameAsync(inFrameNumber, inCallback);
+}
+
+void
+Movie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
+{
+    return m_pImpl->getFrameAsync(inTime, inCallback);
 }
 
 double 

@@ -122,4 +122,4 @@ namespace isx {
         return m_pImpl->addMovie(inName, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate);
     }
     
-} // namespace isx
+}

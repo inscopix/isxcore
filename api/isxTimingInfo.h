@@ -93,7 +93,6 @@ public:
     // Overrides
     virtual void serialize(std::ostream& strm) const;
 
-
 private:
 
     /// The start time of the samples.
