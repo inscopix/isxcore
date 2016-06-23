@@ -25,8 +25,10 @@ public:
     ~Recording();
 
     /// Construct recording from a given file.
+    ///
     /// \param inPath Path to recording file.
-     ///
+    /// \throw isx::ExceptionFileIO     If the file cannot be read.
+    /// \throw isx::ExceptionDataIO     If the dataset cannot be read.
     Recording(const std::string & inPath);
 
     /// \return whether this is a valid recording object.
@@ -45,6 +47,10 @@ public:
     ///
     /// \param   strm    The output stream.
     virtual void serialize(std::ostream& strm) const;
+
+    /// \return a pointer to a movie inside the recording
+    ///
+    SpMovie_t getMovie();
 
 private:
     /// Do not copy Recordings

@@ -30,6 +30,9 @@ public:
     /// \return         The denominator.
     int64_t getDen() const;
 
+    /// Invert the rational number
+    Ratio invert() const;
+
     /// Return the floating point evaluation of this.
     ///
     /// \return         The floating point evaluation of this.
@@ -94,6 +97,12 @@ public:
     /// \param   other  The rational number with which to compare.
     /// \return         True, if this is greater than or equal to the other rational number.
     bool operator >=(const isx::Ratio& other) const;
+    
+    /// \return the largest ratio with other's denom that is not greater than
+    ///         the this ratio in value
+    /// \param other The rational number for which to return the above
+    ///
+    Ratio floorToDenomOf(const isx::Ratio& other) const;
 
     // Overrides
     virtual void serialize(std::ostream& strm) const;
@@ -107,6 +116,7 @@ private:
     int64_t m_den;
 
 }; // class
+
 
 } // namespace
 

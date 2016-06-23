@@ -25,13 +25,13 @@ namespace isx {
         /// returns bool
         bool IsValid();
 
-        /// Gets output filename
-        /// returns string
-        std::string GetOutputFileName();
+        /// Gets output movie
+        /// \return The output Movie
+        const SpMovie_t & getOutputMovie() const;
 
         /// Sets output filename
         /// type = string
-        void SetOutputFileName(std::string outputFile);
+        void SetOutputMovie(const SpMovie_t & inMovie);
 
         /// Applies algorithm
         /// (currently DF/F)
@@ -47,11 +47,11 @@ namespace isx {
 
         /// Adds two vectors of equal length
         /// type = std::vector<unsigned int>
-        void Add_V(const std::vector<double> &inputA, const std::vector<uint16_t> &inputB, std::vector<double> &output, size_t nLength);
+        void Add_V(const std::vector<double> &inputA, uint16_t * inputB, std::vector<double> &output, size_t nLength);
         
         /// Adds two vectors of equal length
         /// type = std::vector<unsigned int>
-        void Subtract_V(const std::vector<uint16_t> &inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength);
+        void Subtract_V(uint16_t * inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength);
         
         /// Adds two vectors of equal length
         /// type = std::vector<unsigned int>
@@ -64,11 +64,10 @@ namespace isx {
     private:
         /// Movie which the algorithm is affecting
         /// 
-        SpMovie_t m_Movie;
+        SpMovie_t m_movie;
 
-        /// Output file name
+        /// Output Movie
         ///
-        std::string m_OutputFileName;
-
+        SpMovie_t m_outputMovie;
     };
 }

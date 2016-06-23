@@ -5,6 +5,7 @@
 
 #include <memory>
 
+
 namespace isx
 {
 typedef std::shared_ptr<H5::H5File> SpH5File_t;
@@ -38,6 +39,8 @@ public:
     /// \return whether this is a handle to a file opened with Read Write permissions
     ///
     bool isReadWrite() const;
+
+    
 
 private:
     SpH5File_t m_H5File;

@@ -5,7 +5,6 @@
 #include "isxImage.h"
 
 #include <vector>
-#include <assert.h>
 #include <cstdint>
 #include <cstddef>
 
@@ -56,12 +55,70 @@ public:
         return m_frameIndex;
     }
 
-    /// \return the iamge data for this videoframe
+    /// \return the image data for this videoframe
     ///
     Image<T> &
     getImage()
     {
         return m_image;
+    }
+
+    /// \return the width of this image
+    ///
+    int32_t
+    getWidth() const
+    {
+        return m_image.getWidth();
+    }
+
+    /// \return the height of this image
+    ///
+    int32_t
+    getHeight() const
+    {
+        return m_image.getHeight();
+    }
+
+    /// \return the number of bytes between the first pixels of two neighboring rows
+    /// note that this could be different from getPixelSizeInBytes() * getWidth()
+    ///
+    int32_t
+    getRowBytes() const
+    {
+        return m_image.getRowBytes();
+    }
+
+    /// \return the number of bytes between the first pixels of two neighboring rows
+    /// note that this could be different from getPixelSizeInBytes() * getWidth()
+    ///
+    int32_t
+    getNumChannels() const
+    {
+        return m_image.getNumChannels();
+    }
+
+    /// \return the size of one pixel in bytes
+    ///
+    size_t
+    getPixelSizeInBytes() const
+    {
+        return m_image.getPixelSizeInBytes();
+    }
+
+    /// \return the size of this image in bytes
+    ///
+    size_t
+    getImageSizeInBytes() const
+    {
+        return m_image.getImageSizeInBytes();
+    }
+
+    /// \return the address of the first pixel in memory
+    ///
+    T *
+    getPixels()
+    {
+        return m_image.getPixels();
     }
 
 private:
