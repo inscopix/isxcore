@@ -96,36 +96,45 @@ TEST_CASE("MovieTest", "[core]") {
         isx::Movie inputMovie(inputFile->getHdf5FileHandle(), "/images");
         
         // Get sizes from input
-        size_t nFrames = inputMovie.getNumFrames();
-        int32_t nCols  = inputMovie.getFrameWidth();
-        int32_t nRows  = inputMovie.getFrameHeight();
+        isx::isize_t nFrames = inputMovie.getNumFrames();
+        isx::isize_t nCols  = inputMovie.getFrameWidth();
+        isx::isize_t nRows  = inputMovie.getFrameHeight();
+ 		isx::TimingInfo timingInfo = inputMovie.getTimingInfo();
+        isx::Ratio timeStep = timingInfo.getStep();
+		isx::Ratio frameRate = timeStep.invert();
 
-        // Outputs
+        // Create the output
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
-        isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename);
+        isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename, testFile);
         
-        isx::Movie outputMovie(outputFile->getHdf5FileHandle(), "/MosaicProject/Schedules/Schedule1/Recording1/Movie", nFrames, nCols, nRows); 
-        REQUIRE(nFrames == outputMovie.getNumFrames());
-        REQUIRE(nCols == outputMovie.getFrameWidth());
-        REQUIRE(nRows == outputMovie.getFrameHeight());
+        isx::SpMovieSeries_t rs = outputFile->addMovieSeries("RecSeries0");
+        isx::SpMovie_t outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);             
+        
+        REQUIRE(nFrames == outputMovie->getNumFrames());
+        REQUIRE(nCols == outputMovie->getFrameWidth());
+        REQUIRE(nRows == outputMovie->getFrameHeight());
+        
+        timingInfo = outputMovie->getTimingInfo();
+        timeStep = timingInfo.getStep();
+        isx::Ratio outpuFrameRate = timeStep.invert();
+        REQUIRE(frameRate == outpuFrameRate);
 
         // Write a frame from the input movie to the output movie
-        int nFrame = 15;
-        size_t inputSize = inputMovie.getFrameSizeInBytes();
+        isx::isize_t nFrame = 15;
+        isx::isize_t inputSize = inputMovie.getFrameSizeInBytes();
         isx::Time frame15Time = inputMovie.getTimingInfo().getStart();
-        frame15Time.addSecs(isx::Ratio(15, 1) * inputMovie.getTimingInfo().getStep());
+        frame15Time = frame15Time.addSecs(isx::Ratio(nFrame, 1) * inputMovie.getTimingInfo().getStep());
         auto nvf = inputMovie.getFrame(frame15Time);
         unsigned char * inputFrameBuffer = reinterpret_cast<unsigned char *>(nvf->getPixels());
-        outputMovie.writeFrame(nFrame, &inputFrameBuffer[0], inputSize); 
+        outputMovie->writeFrame(nFrame, inputFrameBuffer, inputSize); 
         
         // Read dataset from output
-        size_t outputSize = outputMovie.getFrameSizeInBytes();
-        auto outputNvf = inputMovie.getFrame(frame15Time);
+        auto outputNvf = outputMovie->getFrame(frame15Time);
         unsigned char * outputFrameBuffer = reinterpret_cast<unsigned char *>(outputNvf->getPixels());
 
-        int nCol = 35;
-        int nRow = 3;
-        int idx = (nRows * nCol + nRow) * 2;
+        isx::isize_t nCol = 35;
+        isx::isize_t nRow = 3;
+        isx::isize_t idx = (nRows * nCol + nRow) * 2;
         REQUIRE(inputFrameBuffer[idx] == outputFrameBuffer[idx]);  
         REQUIRE(inputFrameBuffer[idx+1] == outputFrameBuffer[idx+1]);        
 
@@ -134,16 +143,16 @@ TEST_CASE("MovieTest", "[core]") {
     SECTION("Create movie with timing and spacing info", "[core]") {
 
         std::string outFileName = g_resources["testDataPath"] + "/MovieTest-createWithTimingSpacingInfo.hdf5";
-        isx::SpProjectFile_t outFile = std::make_shared<isx::ProjectFile>(outFileName);
+        isx::SpProjectFile_t outFile = std::make_shared<isx::ProjectFile>(outFileName, testFile);
 
         isx::Time start(2016, 6, 20, 10, 32);
         isx::Ratio step(50, 1000);
-        uint32_t numTimes = 5;
+        isx::isize_t numTimes = 5;
         isx::TimingInfo timingInfo(start, step, numTimes);
 
         isx::Point<isx::Ratio> topLeft(0, 0);
         isx::Point<isx::Ratio> pixelSize(isx::Ratio(22, 10), isx::Ratio(22, 10));
-        isx::Point<size_t> numPixels(24, 16);
+        isx::Point<isx::isize_t> numPixels(24, 16);
         isx::SpacingInfo spacingInfo(topLeft, pixelSize, numPixels);
 
         isx::Movie movie(outFile->getHdf5FileHandle(),

@@ -1,7 +1,5 @@
 #include "isxHdf5FileHandle.h"
 #include "isxCoreFwd.h"
-#include "H5Cpp.h"
-
 #include <memory>
 
 namespace isx

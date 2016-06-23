@@ -60,10 +60,8 @@ public:
 
             // TODO sweet 2016/05/31 : the start and step should be read from
             // the file but it doesn't currently contain these, so picking some
-            // dummy values
-            isx::Time start = isx::Time();
-            isx::Ratio step(1, 30);
-            m_timingInfo = createDummyTimingInfo(dims[0]);
+            // dummy values (30Hz)
+            m_timingInfo = createDummyTimingInfo(dims[0], 30);
 
             // TODO sweet 2016/06/20 : the spacing information should be read from
             // the file, but just use dummy values for now
@@ -90,10 +88,10 @@ public:
     }
     
     
-    Impl(const SpH5File_t & inHdf5File, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight)
+    Impl(const SpH5File_t & inHdf5File, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
     : m_isValid(false) 
     , m_H5File(inHdf5File)
-    , m_path(inPath)   
+    , m_path(inPath) 
     {
         ISX_ASSERT(inNumFrames > 0);
         ISX_ASSERT(inFrameWidth > 0);
@@ -101,7 +99,7 @@ public:
 
         // TODO sweet 2016/09/31 : the start and step should also be specified
         // but we don't currently have a mechnanism for that
-        m_timingInfo = createDummyTimingInfo(inNumFrames);
+        m_timingInfo = createDummyTimingInfo(inNumFrames, inFrameRate);
 
         // TODO sweet 2016/06/20 : the spacing information should be fully
         // specified, but just use dummy values for now
@@ -179,44 +177,44 @@ public:
         return m_isValid;
     }
 
-    size_t
+    isize_t 
     getNumFrames() const
     {
         return m_timingInfo.getNumTimes();
     }
 
-    size_t
+    isize_t
     getFrameWidth() const
     {
         return m_spacingInfo.getNumColumns();
     }
 
-    size_t
+    isize_t
     getFrameHeight() const
     {
         return m_spacingInfo.getNumRows();
     }
 
-    size_t
+    isize_t
     getPixelSizeInBytes() const
     {
         return sizeof(uint16_t);
     }
 
-    size_t
+    isize_t
     getFrameSizeInBytes() const
     {
         return getPixelSizeInBytes() * m_spacingInfo.getTotalNumPixels();
     }
 
     SpU16VideoFrame_t
-    getFrame(size_t inFrameNumber)
+    getFrame(isize_t inFrameNumber)
     {
         Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
         
         auto nvf = std::make_shared<U16VideoFrame_t>(
             getFrameWidth(), getFrameHeight(),
-            int32_t(sizeof(uint16_t)) * getFrameWidth(),
+            sizeof(uint16_t) * getFrameWidth(),
             1, // numChannels
             frameTime, inFrameNumber);
         try
@@ -244,7 +242,7 @@ public:
     SpU16VideoFrame_t
     getFrame(const Time & inTime)
     {
-        hsize_t frameNumber = hsize_t(m_timingInfo.convertTimeToIndex(inTime));
+        isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
         return getFrame(frameNumber);
     }
 
@@ -271,9 +269,14 @@ public:
     {
         strm << m_path;
     }
+    
+    std::string getName()
+    {
+        return m_path.substr(m_path.find_last_of("/")+1);
+    }
 
     void
-    writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
+    writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
     {
         // Make sure the movie is valid
         if (!m_isValid)
@@ -340,10 +343,10 @@ private:
     /// A method to create a dummy TimingInfo object from the number of frames.
     ///
     isx::TimingInfo
-    createDummyTimingInfo(uint32_t numFrames)
+    createDummyTimingInfo(isize_t numFrames, isx::Ratio inFrameRate)
     {
         isx::Time start = isx::Time();
-        isx::Ratio step(1, 30);
+        isx::Ratio step = inFrameRate.invert();
         return isx::TimingInfo(start, step, numFrames);
     }
 
@@ -494,23 +497,18 @@ Movie::Movie()
 }
 
 Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath)
-{
-    if (false == inHdf5FileHandle->isReadOnly())
-    {
-        ISX_THROW(isx::ExceptionFileIO, "File was opened with no read permission.");
-    }
-    
+{    
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
 }
 
-Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight)
+Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
 {
     if (false == inHdf5FileHandle->isReadWrite())
     {
         ISX_THROW(isx::ExceptionFileIO, "File was opened with no write permission.");
     }
     
-    m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inNumFrames, inFrameWidth, inFrameHeight));
+    m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate));
 }
 
 Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo)
@@ -532,32 +530,32 @@ Movie::isValid() const
     return m_pImpl->isValid();
 }
 
-size_t 
+isize_t 
 Movie::getNumFrames() const
 {
     return m_pImpl->getNumFrames();
 }
 
-size_t
+isize_t
 Movie::getFrameWidth() const
 {
     return m_pImpl->getFrameWidth();
 }
 
-size_t
+isize_t
 Movie::getFrameHeight() const
 {
     return m_pImpl->getFrameHeight();
 }
 
-size_t 
+isize_t 
 Movie::getFrameSizeInBytes() const
 {
     return m_pImpl->getFrameSizeInBytes();
 }
 
 SpU16VideoFrame_t
-Movie::getFrame(size_t inFrameNumber)
+Movie::getFrame(isize_t inFrameNumber)
 {
     return m_pImpl->getFrame(inFrameNumber);
 }
@@ -592,8 +590,14 @@ Movie::serialize(std::ostream& strm) const
     m_pImpl->serialize(strm);
 }
 
+std::string 
+Movie::getName()
+{
+    return m_pImpl->getName();
+}
+
 void 
-Movie::writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize)
+Movie::writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
 {
     m_pImpl->writeFrame(inFrameNumber, inBuffer, inBufferSize);
 }

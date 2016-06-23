@@ -6,14 +6,14 @@ namespace isx
 SpacingInfo::SpacingInfo()
     : m_topLeft(Point<SpacingInfo::Coord_t>(0, 0))
     , m_pixelSize(Point<SpacingInfo::Coord_t>(isx::Ratio(22, 10), isx::Ratio(22, 10)))
-    , m_numPixels(Point<size_t>(1440, 1080))
+    , m_numPixels(Point<isize_t>(1440, 1080))
 {
 }
 
 SpacingInfo::SpacingInfo(
     const Point<SpacingInfo::Coord_t>& topLeft,
     const Point<SpacingInfo::Coord_t>& pixelSize,
-    const Point<size_t>& numPixels)
+    const Point<isize_t>& numPixels)
     : m_topLeft(topLeft)
     , m_pixelSize(pixelSize)
     , m_numPixels(numPixels)
@@ -38,25 +38,25 @@ SpacingInfo::getPixelSize() const
     return m_pixelSize;
 }
 
-const Point<size_t>&
+const Point<isize_t>&
 SpacingInfo::getNumPixels() const
 {
     return m_numPixels;
 }
 
-size_t
+isize_t
 SpacingInfo::getNumRows() const
 {
     return m_numPixels.getY();
 }
 
-size_t
+isize_t
 SpacingInfo::getNumColumns() const
 {
     return m_numPixels.getX();
 }
 
-size_t
+isize_t
 SpacingInfo::getTotalNumPixels() const
 {
     return m_numPixels.getX() * m_numPixels.getY();

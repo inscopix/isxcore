@@ -32,9 +32,9 @@ public:
     /// \param inFrameIndex index of this frame in its movie
     ///
     VideoFrame(
-        int32_t inWidth, int32_t inHeight,
-        int32_t inRowBytes, int32_t inNumChannels,
-        Time inTimeStamp, size_t inFrameIndex)
+        isize_t inWidth, isize_t inHeight,
+        isize_t inRowBytes, isize_t inNumChannels,
+        Time inTimeStamp, isize_t inFrameIndex)
         : m_image(inWidth, inHeight, inRowBytes, inNumChannels)
         , m_timeStamp(inTimeStamp)
         , m_frameIndex(inFrameIndex){}
@@ -66,7 +66,7 @@ public:
 
     /// \return the frame index for this videoframe
     ///
-    size_t
+    isize_t
     getFrameIndex() const
     {
         return m_frameIndex;
@@ -82,7 +82,7 @@ public:
 
     /// \return the width of this image
     ///
-    int32_t
+    isize_t
     getWidth() const
     {
         return m_image.getWidth();
@@ -90,7 +90,7 @@ public:
 
     /// \return the height of this image
     ///
-    int32_t
+    isize_t
     getHeight() const
     {
         return m_image.getHeight();
@@ -99,7 +99,7 @@ public:
     /// \return the number of bytes between the first pixels of two neighboring rows
     /// note that this could be different from getPixelSizeInBytes() * getWidth()
     ///
-    int32_t
+    isize_t
     getRowBytes() const
     {
         return m_image.getRowBytes();
@@ -108,7 +108,7 @@ public:
     /// \return the number of bytes between the first pixels of two neighboring rows
     /// note that this could be different from getPixelSizeInBytes() * getWidth()
     ///
-    int32_t
+    isize_t
     getNumChannels() const
     {
         return m_image.getNumChannels();
@@ -116,7 +116,7 @@ public:
 
     /// \return the size of one pixel in bytes
     ///
-    size_t
+    isize_t
     getPixelSizeInBytes() const
     {
         return m_image.getPixelSizeInBytes();
@@ -124,7 +124,7 @@ public:
 
     /// \return the size of this image in bytes
     ///
-    size_t
+    isize_t
     getImageSizeInBytes() const
     {
         return m_image.getImageSizeInBytes();
@@ -141,7 +141,7 @@ public:
 private:
     Image<T>    m_image;
     Time        m_timeStamp;
-    size_t      m_frameIndex = 0;
+    isize_t      m_frameIndex = 0;
 
 };
 } // namespace isx

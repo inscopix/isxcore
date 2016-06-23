@@ -1,7 +1,7 @@
 #ifndef ISX_SPACINGINFO_H
 #define ISX_SPACINGINFO_H
 
-#include <cstdint>
+#include "isxCore.h"
 #include "isxObject.h"
 #include "isxPoint.h"
 #include "isxRatio.h"
@@ -34,7 +34,7 @@ public:
     SpacingInfo(
         const Point<Coord_t>& topLeft,
         const Point<Coord_t>& pixelSize,
-        const Point<size_t>& numPixels);
+        const Point<isize_t>& numPixels);
 
     /// \return The top left corner of the top left pixel in microns.
     ///
@@ -50,17 +50,17 @@ public:
 
     /// \return The number of pixels in each dimension.
     ///
-    const Point<size_t>& getNumPixels() const;
+    const Point<isize_t>& getNumPixels() const;
 
     /// \return The number of rows of pixels.
     ///
-    size_t getNumRows() const;
+    isize_t getNumRows() const;
 
     /// \return The number of columns of pixels.
-    size_t getNumColumns() const;
+    isize_t getNumColumns() const;
 
     /// \return The total number of pixels.
-    size_t getTotalNumPixels() const;
+    isize_t getTotalNumPixels() const;
 
     /// \return The total size in each dimension of the field of view in microns.
     ///
@@ -82,7 +82,7 @@ private:
     Point<Coord_t> m_pixelSize;
 
     /// The number of pixels in each dimension.
-    Point<size_t> m_numPixels;
+    Point<isize_t> m_numPixels;
 
 }; // class
 
