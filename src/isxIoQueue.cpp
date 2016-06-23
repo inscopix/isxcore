@@ -38,7 +38,7 @@ IoQueue::destroy()
 bool 
 IoQueue::isInitialized()
 {
-    return !!s_instance;
+    return s_instance != nullptr;
 }
 
 SpDispatchQueueInterface_t
