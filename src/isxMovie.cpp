@@ -238,10 +238,13 @@ public:
                     SpImpl_t sharedThis = weakThis.lock();
                     if (!sharedThis)
                     {
-                        return;
+                        fr.m_callback(nullptr);
                     }
-                    fr.m_callback(getFrame(fr.m_frameNumber));
-                    processFrameQueue();
+                    else
+                    {
+                        fr.m_callback(getFrame(fr.m_frameNumber));
+                        processFrameQueue();
+                    }
                 });
         }
     }
