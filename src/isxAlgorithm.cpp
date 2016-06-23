@@ -108,7 +108,7 @@ namespace isx
             int nCols = m_movie->getFrameWidth();
             int nRows = m_movie->getFrameHeight();
             int nLength = nCols * nRows;
-            int nFrames = m_movie->getNumFrames();
+            int nFrames = int(m_movie->getNumFrames());
 
             std::vector<double> F0Image(nLength);
             for (int i = 0; i < nFrames; i++)
