@@ -1,7 +1,7 @@
 #include "isxHdf5FileHandle.h" 
 #include "isxProjectFile.h"
 #include "isxLog.h"
-#include <fstream>
+
 namespace isx {
     
     /* static */
@@ -28,6 +28,7 @@ namespace isx {
         /// Constructor
         ///
         Impl(const std::string & inFileName) :
+            m_filename(inFileName),
             m_bValid(false)
         {
             // H5F_ACC_RDWR fails if the file doesn't exist. 
@@ -39,12 +40,14 @@ namespace isx {
         }
 
         Impl(const std::string & inFileName, const std::string & inInputFileName) :
+            m_filename(inFileName),
+            m_originalFilename(inInputFileName),
             m_bValid(false)
         {
             int openFlag = H5F_ACC_TRUNC;
             m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
             m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, openFlag);
-            createDataModel(inInputFileName);
+            createDataModel();
         }
         
         ~Impl()
@@ -81,11 +84,26 @@ namespace isx {
         }
         
         SpMovieSeries_t addMovieSeries(const std::string & inName);
-        
+
+
+        std::string 
+        getName()
+        {
+            return m_filename;
+        }
+
+        std::string getOriginalName()
+        {
+            return m_originalFilename;
+        }
+
     private:
         void initialize();
-        void createDataModel(const std::string & inInputFileName);
+        void createDataModel();
         
+
+        std::string m_filename;
+        std::string m_originalFilename;
         SpH5File_t m_file;
         SpHdf5FileHandle_t m_fileHandle;
         
@@ -163,6 +181,18 @@ namespace isx {
         return m_pImpl->addMovieSeries(inName);
     }
 
+    std::string 
+    ProjectFile::getName()
+    {
+        return m_pImpl->getName();
+    }
+
+    std::string
+    ProjectFile::getOriginalName()
+    {
+        return m_pImpl->getOriginalName();
+    }
+
  
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -191,6 +221,11 @@ namespace isx {
         m_grHistory     = m_file->openGroup(historyPath);
         m_grAnnotations = m_file->openGroup(annotationsPath);
         m_grCells       = m_file->openGroup(cellsPath);
+
+        // Read header
+        H5::Attribute inputfile_attribute = m_grFileHeader.openAttribute("Input File");
+        H5::StrType strdatatype(H5::PredType::C_S1, 256); // of length 256 characters
+        inputfile_attribute.read(strdatatype, m_originalFilename);
             
         hsize_t nObjInGroup = m_grSeries.getNumObjs();
         if(nObjInGroup != 0)
@@ -209,7 +244,7 @@ namespace isx {
     
     
     void 
-    ProjectFile::Impl::createDataModel(const std::string & inInputFileName)
+    ProjectFile::Impl::createDataModel()
     { 
         
         m_grProject     = m_file->createGroup(projectPath);
@@ -223,7 +258,7 @@ namespace isx {
         H5::DataSpace inputfile_dataspace = H5::DataSpace(H5S_SCALAR);
         H5::StrType strdatatype(H5::PredType::C_S1, 256); // of length 256 characters
         H5::Attribute inputfile_attribute = m_grFileHeader.createAttribute("Input File", strdatatype, inputfile_dataspace);
-        inputfile_attribute.write(strdatatype, inInputFileName.c_str());
+        inputfile_attribute.write(strdatatype, m_originalFilename.c_str());
 
         m_bValid = true;
                 
