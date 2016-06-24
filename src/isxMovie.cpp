@@ -406,13 +406,13 @@ private:
 
     /// A method to create a dummy spacing information from the number of rows and columns.
     ///
-    isx::SpacingInfo
+    SpacingInfo
     createDummySpacingInfo(size_t numRows, size_t numColumns)
     {
-        isx::Point<isx::Ratio> topLeft(0, 0);
-        isx::Point<isx::Ratio> pixelSize(isx::Ratio(22, 10), isx::Ratio(22, 10));
-        isx::Point<size_t> numPixels(numColumns, numRows);
-        return isx::SpacingInfo(topLeft, pixelSize, numPixels);
+        Point<Ratio> topLeft(0, 0);
+        Point<Ratio> pixelSize(Ratio(22, 10), Ratio(22, 10));
+        Point<size_t> numPixels(numColumns, numRows);
+        return SpacingInfo(numPixels, pixelSize, topLeft);
     }
 
     SizeVec_t
@@ -551,8 +551,8 @@ private:
     H5::DataSpace m_dataSpace;
     H5::DataType m_dataType;
 
-    isx::TimingInfo m_timingInfo;
-    isx::SpacingInfo m_spacingInfo;
+    TimingInfo m_timingInfo;
+    SpacingInfo m_spacingInfo;
 
     std::queue<FrameRequest>    m_frameRequestQueue;
     isx::Mutex                  m_frameRequestQueueMutex;
@@ -659,7 +659,7 @@ Movie::getTimingInfo() const
     return m_pImpl->getTimingInfo();
 }
 
-const isx::SpacingInfo&
+const SpacingInfo&
 Movie::getSpacingInfo() const
 {
     return m_pImpl->getSpacingInfo();

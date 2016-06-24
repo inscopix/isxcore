@@ -20,7 +20,7 @@ public:
     /// Default constructor
     ///
     Image()
-        : m_spacingInfo(Point<Ratio>(0, 0), Point<Ratio>(0, 0), Point<isize_t>(0, 0))
+        : m_spacingInfo(Point<isize_t>(0, 0), Point<Ratio>(0, 0), Point<Ratio>(0, 0))
     {
     }
 
@@ -32,7 +32,7 @@ public:
     /// \param inNumChannels number of data channels
     ///        of type T per pixel (eg. RGBA would be 4)
     Image(isize_t inWidth, isize_t inHeight, isize_t inRowBytes, isize_t inNumChannels)
-        : m_spacingInfo(Point<Ratio>(0, 0), Point<Ratio>(Ratio(22, 10), Ratio(22, 10)), Point<isize_t>(inWidth, inHeight))
+        : m_spacingInfo(Point<isize_t>(inWidth, inHeight), Point<Ratio>(0, 0), Point<Ratio>(Ratio(22, 10), Ratio(22, 10)))
         , m_rowBytes(inRowBytes)
         , m_numChannels(inNumChannels)
     {

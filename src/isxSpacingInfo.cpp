@@ -4,19 +4,19 @@ namespace isx
 {
 
 SpacingInfo::SpacingInfo()
-    : m_topLeft(Point<SpacingInfo::Coord_t>(0, 0))
-    , m_pixelSize(Point<SpacingInfo::Coord_t>(isx::Ratio(22, 10), isx::Ratio(22, 10)))
-    , m_numPixels(Point<isize_t>(1440, 1080))
+    : m_numPixels(Point<isize_t>(1440, 1080))
+    , m_pixelSize(Point<SpacingInfo::Coord_t>(Ratio(22, 10), Ratio(22, 10)))
+    , m_topLeft(Point<SpacingInfo::Coord_t>(0, 0))
 {
 }
 
 SpacingInfo::SpacingInfo(
-    const Point<SpacingInfo::Coord_t>& topLeft,
+    const Point<isize_t>& numPixels,
     const Point<SpacingInfo::Coord_t>& pixelSize,
-    const Point<isize_t>& numPixels)
-    : m_topLeft(topLeft)
+    const Point<SpacingInfo::Coord_t>& topLeft)
+    : m_numPixels(numPixels)
     , m_pixelSize(pixelSize)
-    , m_numPixels(numPixels)
+    , m_topLeft(topLeft)
 {
 }
 
@@ -69,7 +69,7 @@ SpacingInfo::getTotalSize() const
 }
 
 bool
-SpacingInfo::operator ==(const isx::SpacingInfo& other) const
+SpacingInfo::operator ==(const SpacingInfo& other) const
 {
     return (m_topLeft == other.m_topLeft)
         && (m_pixelSize == other.m_pixelSize)
@@ -80,9 +80,9 @@ void
 SpacingInfo::serialize(std::ostream& strm) const
 {
     strm << "SpacingInfo("
-            << "TopLeft=" << m_topLeft << ", "
+            << "NumPixels=" << m_numPixels << ", "
             << "PixelSize=" << m_pixelSize << ", "
-            << "NumPixels=" << m_numPixels
+            << "TopLeft=" << m_topLeft
          << ")";
 }
 

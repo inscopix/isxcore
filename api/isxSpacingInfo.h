@@ -28,13 +28,13 @@ public:
 
     /// Fully specified constructor.
     ///
-    /// \param topLeft      The top left corner in microns.
-    /// \param pixelSize    The size of a pixel in each dimension in microns.
     /// \param numPixels    The number of pixels in each dimension.
+    /// \param pixelSize    The size of a pixel in each dimension in microns.
+    /// \param topLeft      The top left corner in microns.
     SpacingInfo(
-        const Point<Coord_t>& topLeft,
+        const Point<isize_t>& numPixels,
         const Point<Coord_t>& pixelSize,
-        const Point<isize_t>& numPixels);
+        const Point<Coord_t>& topLeft);
 
     /// \return The top left corner of the top left pixel in microns.
     ///
@@ -75,14 +75,14 @@ public:
 
 private:
 
-    /// The top left corner of the field of view.
-    Point<Coord_t> m_topLeft;
+    /// The number of pixels in each dimension.
+    Point<isize_t> m_numPixels;
 
     /// The size of a pixel in each dimension in microns.
     Point<Coord_t> m_pixelSize;
 
-    /// The number of pixels in each dimension.
-    Point<isize_t> m_numPixels;
+    /// The top left corner of the field of view.
+    Point<Coord_t> m_topLeft;
 
 }; // class
 
