@@ -203,7 +203,6 @@ TEST_CASE("MovieTestAsync", "[core]") {
     };
 
     SECTION("get frame for time asynchronously") {
-
         isx::Time fetchTime = m.getTimingInfo().getStart();
         for (size_t i = 0; i < numTestFrames; ++i)
         {
