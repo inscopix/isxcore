@@ -126,7 +126,7 @@ namespace isx
 
             double min = std::numeric_limits<double>::max();
             double max = std::numeric_limits<double>::min();
-            for (int i = 0; i < nFrames; i++)
+            for (isize_t i = 0; i < nFrames; i++)
             {
                 auto f = m_movie->getFrame(i);
 
