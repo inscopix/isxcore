@@ -117,7 +117,7 @@ namespace isx
                 Add_V(F0Image, f->getPixels(), F0Image, nLength);
             }
 
-            Divide_C(F0Image, nFrames, F0Image, nLength);
+            Divide_C(F0Image, static_cast<double>(nFrames), F0Image, nLength);
 
             //apply df/f
             std::vector<double> DFF(nLength);
