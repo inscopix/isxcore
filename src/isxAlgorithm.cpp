@@ -104,14 +104,14 @@ namespace isx
         if (m_movie != nullptr && m_outputMovie != nullptr)
         {
             //calculate F0
-            size_t nFrameSize = m_movie->getFrameSizeInBytes();
-            int nCols = m_movie->getFrameWidth();
-            int nRows = m_movie->getFrameHeight();
-            int nLength = nCols * nRows;
-            int nFrames = int(m_movie->getNumFrames());
+            isize_t nFrameSize = m_movie->getFrameSizeInBytes();
+            isize_t nCols = m_movie->getFrameWidth();
+            isize_t nRows = m_movie->getFrameHeight();
+            isize_t nLength = nCols * nRows;
+            isize_t nFrames = m_movie->getNumFrames();
 
             std::vector<double> F0Image(nLength);
-            for (int i = 0; i < nFrames; i++)
+            for (isize_t i = 0; i < nFrames; i++)
             {
                 auto f = m_movie->getFrame(i);
                 Add_V(F0Image, f->getPixels(), F0Image, nLength);
@@ -137,7 +137,7 @@ namespace isx
             }
 
             //output
-            for (int i = 0; i < nFrames; i++)
+            for (isize_t i = 0; i < nFrames; i++)
             {
                 auto f = m_movie->getFrame(i);
 
