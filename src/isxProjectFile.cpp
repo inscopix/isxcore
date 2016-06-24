@@ -68,14 +68,14 @@ namespace isx {
             return m_bValid;
         }
         
-        uint16_t 
+        isize_t
         getNumMovieSeries()
         {
-            return (uint16_t)m_movieSeries.size();
+            return m_movieSeries.size();
         }
         
         SpMovieSeries_t 
-        getMovieSeries(uint16_t inIndex)
+        getMovieSeries(isize_t inIndex)
         {
             return m_movieSeries[inIndex];
         }
@@ -144,7 +144,7 @@ namespace isx {
     }
 
     
-    uint16_t 
+    isize_t
     ProjectFile::getNumMovieSeries()
     {
         return m_pImpl->getNumMovieSeries();
@@ -152,7 +152,7 @@ namespace isx {
         
 
     SpMovieSeries_t 
-    ProjectFile::getMovieSeries(uint16_t inIndex)
+    ProjectFile::getMovieSeries(isize_t inIndex)
     {
         return m_pImpl->getMovieSeries(inIndex);
     }

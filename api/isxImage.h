@@ -2,10 +2,9 @@
 #define ISX_IMAGE_H
 
 #include <vector>
-#include <cstdint>
-#include <cstddef>
 #include <memory>
 
+#include "isxCore.h"
 #include "isxAssert.h"
 
 namespace isx
@@ -28,7 +27,7 @@ public:
     ///        column 0 of any two subsequent rows
     /// \param inNumChannels number of data channels
     ///        of type T per pixel (eg. RGBA would be 4)
-    Image(int32_t inWidth, int32_t inHeight, int32_t inRowBytes, int32_t inNumChannels)
+    Image(isize_t inWidth, isize_t inHeight, isize_t inRowBytes, isize_t inNumChannels)
         : m_width(inWidth)
         , m_height(inHeight)
         , m_rowBytes(inRowBytes)
@@ -38,13 +37,13 @@ public:
         ISX_ASSERT(inHeight > 0);
         ISX_ASSERT(inRowBytes > 0);
         ISX_ASSERT(inNumChannels > 0);
-        ISX_ASSERT(size_t(m_rowBytes) >= m_width * getPixelSizeInBytes());
+        ISX_ASSERT(m_rowBytes >= m_width * getPixelSizeInBytes());
         m_pixels.reset(new T[getImageSizeInBytes()]);
     }
 
     /// \return the width of this image
     ///
-    int32_t
+    isize_t
     getWidth() const
     {
         return m_width;
@@ -52,7 +51,7 @@ public:
 
     /// \return the height of this image
     ///
-    int32_t
+    isize_t
     getHeight() const
     {
         return m_height;
@@ -61,7 +60,7 @@ public:
     /// \return the number of bytes between the first pixels of two neighboring rows
     /// note that this could be different from getPixelSizeInBytes() * getWidth()
     ///
-    int32_t
+    isize_t
     getRowBytes() const
     {
         return m_rowBytes;
@@ -70,7 +69,7 @@ public:
     /// \return the number of bytes between the first pixels of two neighboring rows
     /// note that this could be different from getPixelSizeInBytes() * getWidth()
     ///
-    int32_t
+    isize_t
     getNumChannels() const
     {
         return m_numChannels;
@@ -78,7 +77,7 @@ public:
 
     /// \return the size of one pixel in bytes
     ///
-    size_t
+    isize_t
     getPixelSizeInBytes() const
     {
         return sizeof(T) * m_numChannels;
@@ -86,7 +85,7 @@ public:
 
     /// \return the size of this image in bytes
     ///
-    size_t
+    isize_t
     getImageSizeInBytes() const
     {
         return getRowBytes() * getHeight();
@@ -106,10 +105,10 @@ public:
 
 private:
     std::unique_ptr<T[]> m_pixels = 0;
-    int32_t m_width = 0;
-    int32_t m_height = 0;
-    int32_t m_rowBytes = 0;
-    int32_t m_numChannels = 0;
+    isize_t m_width = 0;
+    isize_t m_height = 0;
+    isize_t m_rowBytes = 0;
+    isize_t m_numChannels = 0;
 };
 
 } // namespace isx

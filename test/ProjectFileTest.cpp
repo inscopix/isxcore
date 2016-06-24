@@ -22,7 +22,7 @@ TEST_CASE("ProjectFileTest", "[core]") {
 
     SECTION("get number of movie series") {
         isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(testFile);
-        int nMovieSeries = outputFile->getNumMovieSeries();
+        isx::isize_t nMovieSeries = outputFile->getNumMovieSeries();
         REQUIRE(nMovieSeries == 0);
     }
 
@@ -30,7 +30,7 @@ TEST_CASE("ProjectFileTest", "[core]") {
         isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(testFile);
         isx::SpMovieSeries_t ms = outputFile->addMovieSeries("dummyMovieSeries");
         REQUIRE(ms);
-        int nMovieSeries = outputFile->getNumMovieSeries();
+        isx::isize_t nMovieSeries = outputFile->getNumMovieSeries();
         REQUIRE(nMovieSeries == 1);
     }
 
