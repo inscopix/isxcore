@@ -6,10 +6,12 @@
 #include "isxCoreFwd.h"
 #include "isxObject.h"
 #include "isxVideoFrame.h"
+#include "isxMutex.h"
 
 #include <string>
 #include <vector>
 #include <memory>
+#include <functional>
 
 namespace isx {
 
@@ -24,9 +26,14 @@ typedef std::shared_ptr<U16VideoFrame_t> SpU16VideoFrame_t;
 ///
 /// A class encapsulating an nVista movie file.
 ///
+
 class Movie : public Object
 {
 public:
+    /// Type of callback function to use to return video frames asynchronously
+    ///
+    typedef std::function<void(const SpU16VideoFrame_t & inVideoFrame)> MovieGetFrameCB_t;
+
     /// Default constructor.  Is a valid C++ object but not a valid Movie.
     ///
     Movie();
@@ -47,7 +54,7 @@ public:
 	/// \param inFrameRate default frame rate
     /// \throw isx::ExceptionFileIO     If the file cannot be written.
     /// \throw isx::ExceptionDataIO     If the dataset cannot be written.
-    Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate);
+    Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate);
 
     /// Destructor
     /// 
@@ -60,22 +67,22 @@ public:
 
     /// \return the number of frames in this movie.
     ///
-    size_t
+    isize_t
     getNumFrames() const;
 
     /// \return the width of the frames in this movie.
     ///
-    int32_t
+    isize_t
     getFrameWidth() const;
 
     /// \return the height of the frames in this movie.
     ///
-    int32_t
+    isize_t
     getFrameHeight() const;
 
     /// \return the size of each frame in bytes.
     ///
-    size_t
+    isize_t
     getFrameSizeInBytes() const;
 
     /// Get the frame data for given frame number.
@@ -84,7 +91,7 @@ public:
     ///         requested frame data
     ///
     SpU16VideoFrame_t
-    getFrame(size_t inFrameNumber);
+    getFrame(isize_t inFrameNumber);
 
     /// Get the frame data for given time.
     /// \param inTime time of frame for which to retrieve frame data
@@ -93,6 +100,20 @@ public:
     ///
     SpU16VideoFrame_t
     getFrame(const Time & inTime);
+
+    /// Get the frame data for given frame number, asynchronously.
+    /// \param inFrameNumber 0-based index of frame for which to retrieve frame data
+    /// \param inCallback function used to return the retrieved video frame
+    ///
+    void
+    getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback);
+
+    /// Get the frame data for given time.
+    /// \param inTime time of frame for which to retrieve frame data
+    /// \param inCallback function used to return the retrieved video frame
+    ///
+    void
+    getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback);
 
     /// \return the duration of the movie in seconds
     /// 
@@ -113,7 +134,7 @@ public:
     /// \throw isx::ExceptionUserInput  If the arguments are not compatible with the movie.
     /// \throw isx::ExceptionDataIO     If write access to the dataset fails.
     void 
-    writeFrame(size_t inFrameNumber, void * inBuffer, size_t inBufferSize);
+    writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize);
 
     /// \return     The timing information of a movie.
     ///
@@ -134,7 +155,7 @@ public:
 
 private:
     class Impl;
-    std::unique_ptr<Impl> m_pImpl;
+    std::shared_ptr<Impl> m_pImpl;
 };
 
 } // namespace isx

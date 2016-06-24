@@ -23,10 +23,10 @@ TEST_CASE("ImageTest", "[core]") {
 
     SECTION("constructor") 
     {
-        const int32_t w = 10;
-        const int32_t h = 10;
-        const int32_t r = 128;
-        const int32_t c = 6;
+        const isx::isize_t w = 10;
+        const isx::isize_t h = 10;
+        const isx::isize_t r = 128;
+        const isx::isize_t c = 6;
 
         isx::Image<uint16_t> i(w, h, r, c);
         REQUIRE(i.getWidth() == w);

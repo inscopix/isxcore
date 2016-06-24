@@ -29,7 +29,7 @@ namespace isx {
                 m_movies.resize(nObjInGroup);
                 
                 // Initialize movies
-                for (uint16_t m(0); m < nObjInGroup; ++m)
+                for (isize_t m(0); m < nObjInGroup; ++m)
                 {
                     std::string objName = MovieSeriesGroup.getObjnameByIdx(m);
                     std::string path = m_path + "/" + objName;
@@ -42,14 +42,14 @@ namespace isx {
         ///
         ~Impl(){}
         
-        uint16_t 
+        isize_t 
         getNumMovies()
         {
-            return (uint16_t)m_movies.size();
+            return m_movies.size();
         }
         
         SpMovie_t 
-        getMovie(uint16_t inIndex)
+        getMovie(isize_t inIndex)
         {
             return m_movies[inIndex];
         }
@@ -61,7 +61,7 @@ namespace isx {
         }
         
         SpMovie_t 
-        addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate)
+        addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
         {
             std::string path = m_path + "/" + inName;
             // Create the properties group
@@ -98,14 +98,14 @@ namespace isx {
         
     }
         
-    uint16_t 
+    isize_t 
     MovieSeries::getNumMovies()
     {
         return m_pImpl->getNumMovies();
     }
         
     SpMovie_t
-    MovieSeries::getMovie(uint16_t inIndex)
+    MovieSeries::getMovie(isize_t inIndex)
     {
         return m_pImpl->getMovie(inIndex);
     }
@@ -117,7 +117,7 @@ namespace isx {
     }
     
     SpMovie_t 
-    MovieSeries::addMovie(const std::string & inName, size_t inNumFrames, size_t inFrameWidth, size_t inFrameHeight, isx::Ratio inFrameRate)
+    MovieSeries::addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
     {
         return m_pImpl->addMovie(inName, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate);
     }

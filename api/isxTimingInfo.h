@@ -1,7 +1,7 @@
 #ifndef ISX_TIMINGINFO_H
 #define ISX_TIMINGINFO_H
 
-#include <cstdint>
+#include "isxCore.h"
 #include "isxTime.h"
 
 namespace isx
@@ -26,7 +26,7 @@ public:
     /// \param start    The start time of the samples.
     /// \param step     The duration of one sample in seconds.
     /// \param numTimes The number of samples.
-    TimingInfo(const Time& start, const Ratio& step, uint32_t numTimes);
+    TimingInfo(const Time& start, const Ratio& step, isize_t numTimes);
 
     /// Get the start time of the samples.
     ///
@@ -46,7 +46,7 @@ public:
     /// Get the number of time samples.
     ///
     /// \return         The number of time samples.
-    uint32_t getNumTimes() const;
+    isize_t getNumTimes() const;
 
     /// Get the duration of all samples in seconds.
     ///
@@ -77,14 +77,14 @@ public:
     ///
     /// \param      inTime  The time to convert to an index.
     /// \return             The sample index closest to the given time.
-    uint32_t convertTimeToIndex(const Time& inTime) const;
+    isize_t convertTimeToIndex(const Time& inTime) const;
 
     /// Converts an index to an absolute time
     /// \param inIndex index to convert, will be clamped to range of valid
     ///        indexes in this movie.
     /// \return absolute time of the frame for inIndex
     Time
-    convertIndexToTime(size_t inIndex) const;
+    convertIndexToTime(isize_t inIndex) const;
     
 private:
 
@@ -95,7 +95,7 @@ private:
     Ratio m_step;
 
     /// The number of time samples.
-    uint32_t m_numTimes;
+    isize_t m_numTimes;
 
 }; // class
 
