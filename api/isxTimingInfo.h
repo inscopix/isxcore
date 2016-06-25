@@ -88,7 +88,7 @@ public:
 
     /// \param  other   The other timing information with which to compare.
     /// \return         True if this is exactly equal to other, false otherwise.
-    bool operator ==(const isx::TimingInfo& other) const;
+    bool operator ==(const TimingInfo& other) const;
 
     // Overrides
     virtual void serialize(std::ostream& strm) const;

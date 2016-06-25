@@ -86,7 +86,7 @@ TimingInfo::convertIndexToTime(isize_t inIndex) const
 }
 
 bool
-TimingInfo::operator ==(const isx::TimingInfo& other) const
+TimingInfo::operator ==(const TimingInfo& other) const
 {
     return (m_start == other.m_start)
         && (m_step == other.m_step)

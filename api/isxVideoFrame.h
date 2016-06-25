@@ -50,8 +50,8 @@ public:
     ///
     VideoFrame(
         const SpacingInfo & inSpacingInfo,
-        int32_t inRowBytes, int32_t inNumChannels,
-        Time inTimeStamp, size_t inFrameIndex)
+        isize_t inRowBytes, isize_t inNumChannels,
+        Time inTimeStamp, isize_t inFrameIndex)
         : m_image(inSpacingInfo, inRowBytes, inNumChannels)
         , m_timeStamp(inTimeStamp)
         , m_frameIndex(inFrameIndex){}
@@ -141,7 +141,7 @@ public:
 private:
     Image<T>    m_image;
     Time        m_timeStamp;
-    isize_t      m_frameIndex = 0;
+    isize_t     m_frameIndex = 0;
 
 };
 } // namespace isx

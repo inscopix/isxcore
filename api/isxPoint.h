@@ -13,7 +13,7 @@ namespace isx
 /// and numbers of pixels, but still consistently refer to the x and
 /// y dimensions.
 template <typename T>
-class Point : public isx::Object
+class Point : public Object
 {
 public:
 
@@ -40,20 +40,20 @@ public:
     ///
     /// \param   other  The point to add.
     /// \return         The result of adding other to this.
-    isx::Point<T> operator +(const isx::Point<T>& other) const;
+    Point<T> operator +(const Point<T>& other) const;
 
     /// Point multiplication where coordinate type can be different to this.
     ///
     /// \param   other  The point with which to multiply.
     /// \return         The result of multiplying this with other.
     template <typename TOther>
-    isx::Point<T> operator *(const isx::Point<TOther>& other) const;
+    Point<T> operator *(const Point<TOther>& other) const;
 
     /// Exact comparison.
     ///
     /// param   other   The point with which to compare.
     /// \return         True if this is exactly equal to the other point.
-    bool operator ==(const isx::Point<T>& other) const;
+    bool operator ==(const Point<T>& other) const;
 
     // Overrides
     virtual void serialize(std::ostream& strm) const;
@@ -98,23 +98,23 @@ Point<T>::getY() const
 }
 
 template <typename T>
-isx::Point<T>
-Point<T>::operator +(const isx::Point<T>& other) const
+Point<T>
+Point<T>::operator +(const Point<T>& other) const
 {
     return isx::Point<T>(m_x + other.m_x, m_y + other.m_y);
 }
 
 template <typename T>
 template <typename TOther>
-isx::Point<T>
-Point<T>::operator *(const isx::Point<TOther>& other) const
+Point<T>
+Point<T>::operator *(const Point<TOther>& other) const
 {
     return isx::Point<T>(m_x * other.getX(), m_y * other.getY());
 }
 
 template <typename T>
 bool
-Point<T>::operator ==(const isx::Point<T>& other) const
+Point<T>::operator ==(const Point<T>& other) const
 {
     return (m_x == other.m_x) && (m_y == other.m_y);
 }

@@ -20,7 +20,7 @@ class SpacingInfo : public Object
 public:
 
     /// Definition of coorindate type.
-    typedef isx::Ratio Coord_t;
+    typedef Ratio Coord_t;
 
     /// Default constructor.
     ///
@@ -68,7 +68,7 @@ public:
 
     /// \param  other   The other spacing information with which to compare.
     /// \return         True if this is exactly equal to other, false otherwise.
-    bool operator ==(const isx::SpacingInfo& other) const;
+    bool operator ==(const SpacingInfo& other) const;
 
     // Overrides
     virtual void serialize(std::ostream& strm) const;
