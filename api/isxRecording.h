@@ -52,6 +52,10 @@ public:
     ///
     SpMovie_t getMovie();
 
+    /// Get file name
+    ///
+    std::string getName();
+
 private:
     /// Do not copy Recordings
     ///

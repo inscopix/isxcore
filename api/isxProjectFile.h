@@ -140,6 +140,14 @@ namespace isx {
         /// Add a recording series to the project file
         ///
         SpMovieSeries_t addMovieSeries(const std::string & inName);
+
+        /// Get file name
+        ///
+        std::string getName();
+
+        /// Get Original file name (from where the data was obtained)
+        ///
+        std::string getOriginalName();
        
     private:        
         class Impl;
