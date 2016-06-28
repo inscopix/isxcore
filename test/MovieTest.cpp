@@ -154,9 +154,9 @@ TEST_CASE("MovieTest", "[core]") {
         isx::isize_t numTimes = 5;
         isx::TimingInfo timingInfo(start, step, numTimes);
 
-        isx::Point<isx::isize_t> numPixels(24, 16);
-        isx::Point<isx::Ratio> pixelSize(isx::Ratio(22, 10), isx::Ratio(22, 10));
-        isx::Point<isx::Ratio> topLeft(0, 0);
+        isx::SizeInPixels_t numPixels(24, 16);
+        isx::SizeInMicrons_t pixelSize(isx::Ratio(22, 10), isx::Ratio(22, 10));
+        isx::PointInMicrons_t topLeft(0, 0);
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
         isx::Movie movie(outFile->getHdf5FileHandle(),

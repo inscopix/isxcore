@@ -409,9 +409,9 @@ private:
     SpacingInfo
     createDummySpacingInfo(size_t numRows, size_t numColumns)
     {
-        Point<Ratio> topLeft(0, 0);
-        Point<Ratio> pixelSize(Ratio(22, 10), Ratio(22, 10));
-        Point<size_t> numPixels(numColumns, numRows);
+        SizeInPixels_t numPixels(numColumns, numRows);
+        SizeInMicrons_t pixelSize(Ratio(22, 10), Ratio(22, 10));
+        PointInMicrons_t topLeft(0, 0);
         return SpacingInfo(numPixels, pixelSize, topLeft);
     }
 

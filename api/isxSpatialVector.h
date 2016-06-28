@@ -1,32 +1,36 @@
-#ifndef ISX_POINT_H
-#define ISX_POINT_H
+#ifndef ISX_SPATIAL_VECTOR_H
+#define ISX_SPATIAL_VECTOR_H
 
-#include <string>
 #include "isxObject.h"
+#include "isxCore.h"
 
 namespace isx
 {
 
-/// A point in 2D space defined by x and y coorindates.
+/// A vector in 2D space defined by x and y coorindates.
 ///
 /// This class is templated so that it can also be used to store sizes
 /// and numbers of pixels, but still consistently refer to the x and
 /// y dimensions.
+///
+/// You should likely not used this class directly, but use one of the
+/// public typedefs like SizeInPixels_t, SizeInMicrons_t,
+/// PointInMicrons_t, etc.
 template <typename T>
-class Point : public Object
+class SpatialVector : public Object
 {
 public:
 
     /// Default constructor.
     ///
     /// Initially the coordinates are (0, 0).
-    Point();
+    SpatialVector();
 
     /// Constructor that allows for specification of (x, y) coordinates.
     ///
     /// \param   x      The x coordinate.
     /// \param   y      The y coordinate.
-    Point(T x, T y);
+    SpatialVector(T x, T y);
 
     /// \return         The x coordinate.
     ///
@@ -36,24 +40,23 @@ public:
     ///
     T getY() const;
 
-    /// Point addition where coordinate type must be the same as this.
+    /// SpatialVector addition where coordinate type must be the same as this.
     ///
     /// \param   other  The point to add.
     /// \return         The result of adding other to this.
-    Point<T> operator +(const Point<T>& other) const;
+    SpatialVector<T> operator +(const SpatialVector<T> & other) const;
 
-    /// Point multiplication where coordinate type can be different to this.
+    /// SpatialVector multiplication where the coordinate type is an integer.
     ///
     /// \param   other  The point with which to multiply.
     /// \return         The result of multiplying this with other.
-    template <typename TOther>
-    Point<T> operator *(const Point<TOther>& other) const;
+    SpatialVector<T> operator *(const SpatialVector<isize_t> & other) const;
 
     /// Exact comparison.
     ///
     /// param   other   The point with which to compare.
     /// \return         True if this is exactly equal to the other point.
-    bool operator ==(const Point<T>& other) const;
+    bool operator ==(const SpatialVector<T> & other) const;
 
     // Overrides
     virtual void serialize(std::ostream& strm) const;
@@ -70,14 +73,14 @@ private:
 
 // Implementation
 template <typename T>
-Point<T>::Point()
+SpatialVector<T>::SpatialVector()
     : m_x(0)
     , m_y(0)
 {
 }
 
 template <typename T>
-Point<T>::Point(T x, T y)
+SpatialVector<T>::SpatialVector(T x, T y)
     : m_x(x)
     , m_y(y)
 {
@@ -85,47 +88,46 @@ Point<T>::Point(T x, T y)
 
 template <typename T>
 T
-Point<T>::getX() const
+SpatialVector<T>::getX() const
 {
     return m_x;
 }
 
 template <typename T>
 T
-Point<T>::getY() const
+SpatialVector<T>::getY() const
 {
     return m_y;
 }
 
 template <typename T>
-Point<T>
-Point<T>::operator +(const Point<T>& other) const
+SpatialVector<T>
+SpatialVector<T>::operator +(const SpatialVector<T> & other) const
 {
-    return isx::Point<T>(m_x + other.m_x, m_y + other.m_y);
+    return isx::SpatialVector<T>(m_x + other.m_x, m_y + other.m_y);
 }
 
 template <typename T>
-template <typename TOther>
-Point<T>
-Point<T>::operator *(const Point<TOther>& other) const
+SpatialVector<T>
+SpatialVector<T>::operator *(const SpatialVector<isize_t> & other) const
 {
-    return isx::Point<T>(m_x * other.getX(), m_y * other.getY());
+    return isx::SpatialVector<T>(m_x * other.getX(), m_y * other.getY());
 }
 
 template <typename T>
 bool
-Point<T>::operator ==(const Point<T>& other) const
+SpatialVector<T>::operator ==(const SpatialVector<T> & other) const
 {
     return (m_x == other.m_x) && (m_y == other.m_y);
 }
 
 template <typename T>
 void
-Point<T>::serialize(std::ostream& strm) const
+SpatialVector<T>::serialize(std::ostream & strm) const
 {
     strm << "(" << m_x << ", " << m_y << ")";
 }
 
 } // namespace
 
-#endif // ISX_POINT_H
+#endif // ISX_SPATIAL_VECTOR_H

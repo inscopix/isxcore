@@ -9,16 +9,16 @@ TEST_CASE("SpacingInfoTest", "[core]")
     {
         isx::SpacingInfo spacingInfo;
 
-        REQUIRE(spacingInfo.getNumPixels() == isx::Point<isx::isize_t>(1440, 1080));
-        REQUIRE(spacingInfo.getPixelSize() == isx::Point<isx::Ratio>(isx::Ratio(22, 10), isx::Ratio(22, 10)));
-        REQUIRE(spacingInfo.getTopLeft() == isx::Point<isx::Ratio>(0, 0));
+        REQUIRE(spacingInfo.getNumPixels() == isx::SizeInPixels_t(1440, 1080));
+        REQUIRE(spacingInfo.getPixelSize() == isx::SizeInMicrons_t(isx::Ratio(22, 10), isx::Ratio(22, 10)));
+        REQUIRE(spacingInfo.getTopLeft() == isx::PointInMicrons_t(0, 0));
     }
 
     SECTION("Constructor with all arguments")
     {
-        isx::Point<isx::isize_t> numPixels(720, 540);
-        isx::Point<isx::Ratio> pixelSize(isx::Ratio(44, 10), isx::Ratio(44, 10));
-        isx::Point<isx::Ratio> topLeft(0, 0);
+        isx::SizeInPixels_t numPixels(720, 540);
+        isx::SizeInMicrons_t pixelSize(isx::Ratio(44, 10), isx::Ratio(44, 10));
+        isx::PointInMicrons_t topLeft(0, 0);
 
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
@@ -29,33 +29,33 @@ TEST_CASE("SpacingInfoTest", "[core]")
 
     SECTION("Get the total size")
     {
-        isx::Point<isx::isize_t> numPixels(600, 500);
-        isx::Point<isx::Ratio> pixelSize(isx::Ratio(44, 10), isx::Ratio(44, 10));
-        isx::Point<isx::Ratio> topLeft(22, 44);
+        isx::SizeInPixels_t numPixels(600, 500);
+        isx::SizeInMicrons_t pixelSize(isx::Ratio(44, 10), isx::Ratio(44, 10));
+        isx::PointInMicrons_t topLeft(22, 44);
 
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
-        isx::Point<isx::Ratio> totalSize(2640, 2200);
+        isx::SizeInMicrons_t totalSize(2640, 2200);
         REQUIRE(spacingInfo.getTotalSize() == totalSize);
     }
 
     SECTION("Get the bottom right corner")
     {
-        isx::Point<isx::isize_t> numPixels(600, 500);
-        isx::Point<isx::Ratio> pixelSize(isx::Ratio(44, 10), isx::Ratio(44, 10));
-        isx::Point<isx::Ratio> topLeft(22, 44);
+        isx::SizeInPixels_t numPixels(600, 500);
+        isx::SizeInMicrons_t pixelSize(isx::Ratio(44, 10), isx::Ratio(44, 10));
+        isx::PointInMicrons_t topLeft(22, 44);
 
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
-        isx::Point<isx::Ratio> bottomRight(2662, 2244);
+        isx::PointInMicrons_t bottomRight(2662, 2244);
         REQUIRE(spacingInfo.getBottomRight() == bottomRight);
     }
 
     SECTION("Get the number of rows")
     {
-        isx::Point<isx::isize_t> numPixels(600, 500);
-        isx::Point<isx::Ratio> pixelSize(1, 1);
-        isx::Point<isx::Ratio> topLeft(0, 0);
+        isx::SizeInPixels_t numPixels(600, 500);
+        isx::SizeInMicrons_t pixelSize(1, 1);
+        isx::PointInMicrons_t topLeft(0, 0);
 
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
@@ -64,9 +64,9 @@ TEST_CASE("SpacingInfoTest", "[core]")
 
     SECTION("Get the number of columns")
     {
-        isx::Point<isx::isize_t> numPixels(600, 500);
-        isx::Point<isx::Ratio> pixelSize(1, 1);
-        isx::Point<isx::Ratio> topLeft(0, 0);
+        isx::SizeInPixels_t numPixels(600, 500);
+        isx::SizeInMicrons_t pixelSize(1, 1);
+        isx::PointInMicrons_t topLeft(0, 0);
 
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
@@ -75,9 +75,9 @@ TEST_CASE("SpacingInfoTest", "[core]")
 
     SECTION("Convert to a string")
     {
-        isx::Point<isx::isize_t> numPixels(600, 500);
-        isx::Point<isx::Ratio> pixelSize(isx::Ratio(22, 10), isx::Ratio(44, 10));
-        isx::Point<isx::Ratio> topLeft(isx::Ratio(22, 1), isx::Ratio(44, 1));
+        isx::SizeInPixels_t numPixels(600, 500);
+        isx::SizeInMicrons_t pixelSize(isx::Ratio(22, 10), isx::Ratio(44, 10));
+        isx::PointInMicrons_t topLeft(22, 44);
 
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 

@@ -1,56 +1,73 @@
-#ifndef ISX_SPACINGINFO_H
-#define ISX_SPACINGINFO_H
+#ifndef ISX_SPACING_INFO_H
+#define ISX_SPACING_INFO_H
 
 #include "isxCore.h"
 #include "isxObject.h"
-#include "isxPoint.h"
+#include "isxSpatialVector.h"
 #include "isxRatio.h"
 
 namespace isx
 {
 
+/// The size of some spatial samples in pixels.
+typedef SpatialVector<isize_t> SizeInPixels_t;
+
+/// The size of some spatial samples in microns.
+typedef SpatialVector<Ratio> SizeInMicrons_t;
+
+/// The coordinates of a spatial sample in microns w.r.t. to a (0, 0) origin.
+typedef SpatialVector<Ratio> PointInMicrons_t;
+
 /// The spacing info associated with spatial samples.
 ///
 /// This class is used to store spacing info about samples associated with
-/// movies and images. It also contains some utility methods to convert
-/// continuous points to pixel indices so that samples can be retrieved with
-/// respect to continuous points.
+/// movies and images.
+/// It is assumed that samples are 2-dimensional, that their coordinates are
+/// defined w.r.t. the top left corner as a origin and that coordinates
+/// increase from left to right and top to bottom.
+/// It also contains some utility methods to convert continuous points to
+/// pixel indices so that samples can be retrieved with respect to continuous
+/// points.
 class SpacingInfo : public Object
 {
 public:
 
-    /// Definition of coorindate type.
-    typedef Ratio Coord_t;
-
     /// Default constructor.
     ///
+    /// Initially the number of pixels is (1440, 1080), the pixel size is
+    /// (22/10, 22/10) and the top left corner is (0, 0).
+    /// These defaults correspond to those of the nVista sensor.
     SpacingInfo();
 
     /// Fully specified constructor.
+    ///
+    /// The default pixel size is the same as that of the nVista sensor.
+    /// The default top left corner is (0, 0) which represents the top left
+    /// corner or origin of the nVista sensor.
     ///
     /// \param numPixels    The number of pixels in each dimension.
     /// \param pixelSize    The size of a pixel in each dimension in microns.
     /// \param topLeft      The top left corner in microns.
     SpacingInfo(
-        const Point<isize_t>& numPixels,
-        const Point<Coord_t>& pixelSize,
-        const Point<Coord_t>& topLeft);
+        const SizeInPixels_t & numPixels,
+        const SizeInMicrons_t & pixelSize = SizeInMicrons_t(Ratio(22, 10), Ratio(22, 10)),
+        const PointInMicrons_t & topLeft = PointInMicrons_t(0, 0));
 
     /// \return The top left corner of the top left pixel in microns.
     ///
-    const Point<Coord_t>& getTopLeft() const;
+    PointInMicrons_t getTopLeft() const;
 
     /// \return The bottom right corner of the bottom right corner in microns.
     ///
-    Point<Coord_t> getBottomRight() const;
+    PointInMicrons_t getBottomRight() const;
 
     /// \return The size of a pixel in each dimension in microns.
     ///
-    const Point<Coord_t>& getPixelSize() const;
+    SizeInMicrons_t getPixelSize() const;
 
     /// \return The number of pixels in each dimension.
     ///
-    const Point<isize_t>& getNumPixels() const;
+    SizeInPixels_t getNumPixels() const;
 
     /// \return The number of rows of pixels.
     ///
@@ -64,7 +81,7 @@ public:
 
     /// \return The total size in each dimension of the field of view in microns.
     ///
-    Point<Coord_t> getTotalSize() const;
+    SizeInMicrons_t getTotalSize() const;
 
     /// \param  other   The other spacing information with which to compare.
     /// \return         True if this is exactly equal to other, false otherwise.
@@ -76,16 +93,16 @@ public:
 private:
 
     /// The number of pixels in each dimension.
-    Point<isize_t> m_numPixels;
+    SizeInPixels_t m_numPixels;
 
     /// The size of a pixel in each dimension in microns.
-    Point<Coord_t> m_pixelSize;
+    SizeInMicrons_t m_pixelSize;
 
     /// The top left corner of the field of view.
-    Point<Coord_t> m_topLeft;
+    PointInMicrons_t m_topLeft;
 
 }; // class
 
 } // namespace
 
-#endif // ISX_SPACINGINFO_H
+#endif // ISX_SPACING_INFO_H

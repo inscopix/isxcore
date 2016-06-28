@@ -4,41 +4,41 @@ namespace isx
 {
 
 SpacingInfo::SpacingInfo()
-    : m_numPixels(Point<isize_t>(1440, 1080))
-    , m_pixelSize(Point<SpacingInfo::Coord_t>(Ratio(22, 10), Ratio(22, 10)))
-    , m_topLeft(Point<SpacingInfo::Coord_t>(0, 0))
+    : m_numPixels(SizeInPixels_t(1440, 1080))
+    , m_pixelSize(SizeInMicrons_t(Ratio(22, 10), Ratio(22, 10)))
+    , m_topLeft(PointInMicrons_t(0, 0))
 {
 }
 
 SpacingInfo::SpacingInfo(
-    const Point<isize_t>& numPixels,
-    const Point<SpacingInfo::Coord_t>& pixelSize,
-    const Point<SpacingInfo::Coord_t>& topLeft)
+    const SizeInPixels_t & numPixels,
+    const SizeInMicrons_t & pixelSize,
+    const PointInMicrons_t & topLeft)
     : m_numPixels(numPixels)
     , m_pixelSize(pixelSize)
     , m_topLeft(topLeft)
 {
 }
 
-const Point<SpacingInfo::Coord_t>&
+PointInMicrons_t
 SpacingInfo::getTopLeft() const
 {
     return m_topLeft;
 }
 
-Point<SpacingInfo::Coord_t>
+PointInMicrons_t
 SpacingInfo::getBottomRight() const
 {
     return m_topLeft + getTotalSize();
 }
 
-const Point<SpacingInfo::Coord_t>&
+SizeInMicrons_t
 SpacingInfo::getPixelSize() const
 {
     return m_pixelSize;
 }
 
-const Point<isize_t>&
+SizeInPixels_t
 SpacingInfo::getNumPixels() const
 {
     return m_numPixels;
@@ -62,7 +62,7 @@ SpacingInfo::getTotalNumPixels() const
     return m_numPixels.getX() * m_numPixels.getY();
 }
 
-Point<SpacingInfo::Coord_t>
+SizeInMicrons_t
 SpacingInfo::getTotalSize() const
 {
     return m_pixelSize * m_numPixels;
