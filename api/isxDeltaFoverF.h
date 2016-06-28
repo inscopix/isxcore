@@ -10,16 +10,16 @@ namespace isx {
     ///
     /// A class encapsulating an nVista movie file.
     ///
-    class Algorithm
+    class DeltaFoverF
     {
     public:
         /// Default constructor.  Is a valid C++ object but not usable.
         ///
-        Algorithm();
+        DeltaFoverF();
 
         /// Constructs instance of algorithm class with movie
         /// type = SpMovie_t
-        Algorithm(const SpMovie_t & movie);
+        DeltaFoverF(const SpMovie_t & movie);
 
         /// Does this class have a valid movie object
         /// returns bool

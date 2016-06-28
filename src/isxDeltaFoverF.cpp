@@ -1,4 +1,4 @@
-#include "isxAlgorithm.h"
+#include "isxDeltaFoverF.h"
 #include "isxMovie.h"
 #include "isxCoreFwd.h"
 #include "isxProjectFile.h"
@@ -9,39 +9,39 @@
 
 namespace isx
 {
-    Algorithm::Algorithm()
+    DeltaFoverF::DeltaFoverF()
     {
 
     }
 
-    Algorithm::Algorithm(const SpMovie_t & movie)
+    DeltaFoverF::DeltaFoverF(const SpMovie_t & movie)
     {
         m_movie = movie;
     }
 
-    bool Algorithm::IsValid()
+    bool DeltaFoverF::IsValid()
     {
         return m_movie->isValid();
     }
 
-    const SpMovie_t & Algorithm::getOutputMovie() const
+    const SpMovie_t & DeltaFoverF::getOutputMovie() const
     {
         return m_outputMovie;
     }
 
-    void Algorithm::SetOutputMovie(const SpMovie_t & inMovie)
+    void DeltaFoverF::SetOutputMovie(const SpMovie_t & inMovie)
     {
         m_outputMovie = inMovie;
     }
 
-    void Algorithm::FindMinMax(const std::vector<double> &input, double &min, double &max, size_t nLength)
+    void DeltaFoverF::FindMinMax(const std::vector<double> &input, double &min, double &max, size_t nLength)
     {
         auto localMinMax = std::minmax_element(input.begin(), input.end());
         min = std::min(min, *localMinMax.first);
         max = std::max(max, *localMinMax.second);
     }
 
-    void Algorithm::ScaleValues16(const std::vector<double> &input, double &min, double &max, std::vector<uint16_t> &output, size_t nLength)
+    void DeltaFoverF::ScaleValues16(const std::vector<double> &input, double &min, double &max, std::vector<uint16_t> &output, size_t nLength)
     {
         if (min != max)
         {
@@ -52,7 +52,7 @@ namespace isx
         }
     }
 
-    void Algorithm::Add_V(const std::vector<double> &inputA, uint16_t * inputB, std::vector<double> &output, size_t nLength)
+    void DeltaFoverF::Add_V(const std::vector<double> &inputA, uint16_t * inputB, std::vector<double> &output, size_t nLength)
     {
         for (size_t i = 0; i < nLength; i++)
         {
@@ -60,7 +60,7 @@ namespace isx
         }
     }
 
-    void Algorithm::Subtract_V(uint16_t * inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength)
+    void DeltaFoverF::Subtract_V(uint16_t * inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength)
     {
         for (size_t i = 0; i < nLength; i++)
         {
@@ -68,7 +68,7 @@ namespace isx
         }
     }
 
-    void Algorithm::Divide_V(const std::vector<double> &inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength)
+    void DeltaFoverF::Divide_V(const std::vector<double> &inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength)
     {
         for (size_t i = 0; i < nLength; i++)
         {
@@ -84,7 +84,7 @@ namespace isx
         }
     }
 
-    void Algorithm::Divide_C(const std::vector<double> &inputA, double num, std::vector<double> &output, size_t nLength)
+    void DeltaFoverF::Divide_C(const std::vector<double> &inputA, double num, std::vector<double> &output, size_t nLength)
     {
         if (num != 0)
         {
@@ -99,7 +99,7 @@ namespace isx
         }
     }
 
-    void Algorithm::ApplyApp()
+    void DeltaFoverF::ApplyApp()
     {
         if (m_movie != nullptr && m_outputMovie != nullptr)
         {
