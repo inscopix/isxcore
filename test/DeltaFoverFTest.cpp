@@ -27,8 +27,8 @@ TEST_CASE("DeltaFoverFTest", "[!hide][core]") {
             m->getTimingInfo().getStep().invert());
 
         isx::DeltaFoverF algo = isx::DeltaFoverF(m);
-        REQUIRE(algo.IsValid());
-        algo.SetOutputMovie(outputMovie);
-        algo.ApplyApp();
+        REQUIRE(algo.isValid());
+        algo.setOutputMovie(outputMovie);
+        algo.run();
     }
 }
