@@ -10,6 +10,9 @@ namespace isx
 namespace internal
 {
 
+/// The type of the size of the array.
+typedef std::vector<hsize_t> HSizeArray_t;
+
 /// Create a data set in an HDF5 file or open it if it already exists.
 ///
 /// \param  file        The HDF5 file in which to create the data set.
@@ -37,6 +40,24 @@ void getHdf5ObjNames(
     const std::string & inPath,
     std::vector<std::string> & outNames
 );
+
+/// Creates an HDF5 subspace as a hyperslab selected from an existing data space.
+///
+/// \param  space   The data space in which to select the hyperslab.
+/// \param  offset  The offset of the hyperslab in the data space.
+/// \param  size    The size of the hyperslab in the data space.
+/// \return         The subspace selected from the existing data space.
+H5::DataSpace createHdf5SubSpace(
+    const H5::DataSpace & space,
+    const HSizeArray_t & offset,
+    const HSizeArray_t & size);
+
+/// Creates an HDF5 space for a data buffer.
+///
+/// \param  size    The size of the hyperslab in the data space.
+/// \return         The subspace selected from the existing data space.
+H5::DataSpace createHdf5BufferSpace(
+    const HSizeArray_t & size);
 
 } // namespace internal
 

@@ -133,7 +133,8 @@ createHdf5DataSet(
     return dataSet;
 }
 
-void getHdf5ObjNames(
+void
+getHdf5ObjNames(
     const std::string & inFileName,
     const std::string & inPath,
     std::vector<std::string> & outNames)
@@ -152,6 +153,27 @@ void getHdf5ObjNames(
     {
         outNames[i] = rootGroup.getObjnameByIdx(i);
     }
+}
+
+H5::DataSpace
+createHdf5SubSpace(
+    const H5::DataSpace & space,
+    const HSizeArray_t & offset,
+    const HSizeArray_t & size)
+{
+    H5::DataSpace outSpace(space);
+    outSpace.selectHyperslab(H5S_SELECT_SET, size.data(), offset.data());
+    return outSpace;
+}
+
+H5::DataSpace
+createHdf5BufferSpace(
+    const HSizeArray_t & size)
+{
+    H5::DataSpace outSpace(3, size.data());
+    HSizeArray_t offset = {0, 0, 0};
+    outSpace.selectHyperslab(H5S_SELECT_SET, size.data(), offset.data());
+    return outSpace;
 }
 
 } // namespace internal

@@ -30,7 +30,6 @@ public:
             // handle the errors appropriately
             H5::Exception::dontPrint();  
             m_dataSet = m_H5File->openDataSet(m_path); 
-
             m_dataType = m_dataSet.getDataType();
             m_dataSpace = m_dataSet.getSpace();
 
@@ -176,16 +175,13 @@ public:
             1, // numChannels
             frameTime, inFrameNumber);
         try {
-            
-            H5::DataSpace fileSpace(m_dataSpace);            
-            hsize_t fileStart[3] = {inFrameNumber, 0, 0};
-            hsize_t fileCount[3] = {1, m_dims[1], m_dims[2]};            
-            fileSpace.selectHyperslab(H5S_SELECT_SET, fileCount, fileStart);
-            
-            H5::DataSpace bufferSpace(3, fileCount);
-            hsize_t bufferStart[3] = { 0, 0, 0 };
-            bufferSpace.selectHyperslab(H5S_SELECT_SET, fileCount, bufferStart);
-            
+            isx::internal::HSizeArray_t size = {1, m_dims[1], m_dims[2]};
+            isx::internal::HSizeArray_t offset = {inFrameNumber, 0, 0};
+            H5::DataSpace fileSpace = isx::internal::createHdf5SubSpace(
+                    m_dataSpace, offset, size);
+            H5::DataSpace bufferSpace = isx::internal::createHdf5BufferSpace(
+                    size);
+
             m_dataSet.read(nvf->getPixels(), m_dataType, bufferSpace, fileSpace);
         }
         catch (const H5::DataSetIException& error)
@@ -303,22 +299,18 @@ public:
                 "Frame number (", inFrameNumber, ") exceeds the total number of frames (",
                 m_maxdims[0], ") in the movie.");
         }
-               
-        // Define file space.
-        H5::DataSpace fileSpace(m_dataSpace);
-        hsize_t fileOffset[3] = { inFrameNumber, 0, 0 };
-        hsize_t dims[3] = { 1, m_dims[1], m_dims[2] };
-        fileSpace.selectHyperslab(H5S_SELECT_SET, dims, fileOffset);
 
-        // Define memory space.
-        H5::DataSpace memSpace = H5::DataSpace(3, dims, NULL);
-        hsize_t memOffset[3] = { 0, 0, 0 };
-        memSpace.selectHyperslab(H5S_SELECT_SET, dims, memOffset);
+        isx::internal::HSizeArray_t size = {1, m_dims[1], m_dims[2]};
+        isx::internal::HSizeArray_t offset = {inFrameNumber, 0, 0};
+        H5::DataSpace fileSpace = isx::internal::createHdf5SubSpace(
+            m_dataSpace, offset, size);
+        H5::DataSpace bufferSpace = isx::internal::createHdf5BufferSpace(
+            size);
 
         // Write data to the dataset.
         try
         {
-           m_dataSet.write(inBuffer, m_dataType, memSpace, fileSpace);
+           m_dataSet.write(inBuffer, m_dataType, bufferSpace, fileSpace);
         }
    
         // Catch failure caused by the DataSet operations
