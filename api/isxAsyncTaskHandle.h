@@ -20,7 +20,7 @@ public:
     {
         COMPLETE,               ///< task completed successfully
         CANCELLED,              ///< task was cancelled
-        ERROR,                  ///< an error occurred while processing the task
+        UNKNOWN_ERROR,          ///< an error occurred while processing the task
         ERROR_EXCEPTION         ///< an exception occurred while processing the task
     };
     
