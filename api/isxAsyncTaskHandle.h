@@ -15,6 +15,10 @@ namespace isx
 class AsyncTaskHandle : public std::enable_shared_from_this<isx::AsyncTaskHandle>
 {
 public:
+    /// type of callback function that an asynchronous task has to call periodically
+    typedef std::function<bool(float)> CheckInCB_t;
+    /// type of function that implements the asynchronous task
+    typedef std::function<AsyncTaskFinishedStatus(CheckInCB_t)> AsyncTask_t;
     /// type of progress callback function
     typedef std::function<void(float)> ProgressCB_t;
     /// type of finished callback function
@@ -27,7 +31,7 @@ public:
     /// \param inTask task to run asynchronously
     /// \param inProgressCB callback function to call with current progress (0.0: not started, 1.0: complete)
     /// \param inFinishedCB callback function to call when task finished
-    AsyncTaskHandle(Task_t inTask, ProgressCB_t inProgressCB, FinishedCB_t inFinishedCB);
+    AsyncTaskHandle(AsyncTask_t inTask, ProgressCB_t inProgressCB, FinishedCB_t inFinishedCB);
 
     /// cancel this task
     /// cancellation is complete when m_finishedCB is called with FinishedStatus CANCELLED
@@ -39,8 +43,10 @@ public:
     process();
 
 private:
+    bool checkIn(float inProgress);
+    
     bool            m_cancelPending = false;
-    Task_t          m_task;
+    AsyncTask_t     m_task;
     ProgressCB_t    m_progressCB;
     FinishedCB_t    m_finishedCB;
 };

@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include "isxCoreFwd.h"
+#include "isxAsyncTaskHandle.h"
 
 namespace isx {
 
@@ -34,7 +35,8 @@ namespace isx {
         void setOutputMovie(const SpMovie_t & inMovie);
 
         /// Applies DF/F
-        void run();
+        /// \param inCheckInCB callback to invoke periodically
+        AsyncTaskFinishedStatus run(AsyncTaskHandle::CheckInCB_t inCheckInCB);
 
         /// Finds min and max elements in an array
         /// type = double
@@ -68,5 +70,8 @@ namespace isx {
         /// Output Movie
         ///
         SpMovie_t m_outputMovie;
+
+        AsyncTaskHandle::CheckInCB_t m_checkInCB;
+
     };
 }

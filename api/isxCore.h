@@ -16,7 +16,8 @@ namespace isx
     {
         COMPLETE,               ///< task completed successfully
         CANCELLED,              ///< task was cancelled
-        ERROR_EXCEPTION         ///< an error occurred while processing the task
+        ERROR,                  ///< an error occurred while processing the task
+        ERROR_EXCEPTION         ///< an exception occurred while processing the task
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
