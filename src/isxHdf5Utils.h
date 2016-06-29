@@ -11,7 +11,7 @@ namespace internal
 {
 
 /// The type of the size of the array.
-typedef std::vector<hsize_t> HSizeArray_t;
+typedef std::vector<hsize_t> HSizeVector_t;
 
 /// Create a data set in an HDF5 file or open it if it already exists.
 ///
@@ -49,15 +49,25 @@ void getHdf5ObjNames(
 /// \return         The subspace selected from the existing data space.
 H5::DataSpace createHdf5SubSpace(
     const H5::DataSpace & space,
-    const HSizeArray_t & offset,
-    const HSizeArray_t & size);
+    const HSizeVector_t & offset,
+    const HSizeVector_t & size);
 
 /// Creates an HDF5 space for a data buffer.
 ///
 /// \param  size    The size of the hyperslab in the data space.
 /// \return         The subspace selected from the existing data space.
 H5::DataSpace createHdf5BufferSpace(
-    const HSizeArray_t & size);
+    const HSizeVector_t & size);
+
+/// Gets the dimensions of an HDF5 data space.
+///
+/// \param  space   The HDF5 data space of which to get dimensions.
+/// \param  dims    This is updated to store the dimensions of the space.
+/// \param  maxDims This is updated to store the maximum dimensions of the space.
+void getHdf5SpaceDims(
+    const H5::DataSpace & space,
+    HSizeVector_t & dims,
+    HSizeVector_t & maxDims);
 
 } // namespace internal
 

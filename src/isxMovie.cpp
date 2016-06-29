@@ -33,10 +33,8 @@ public:
             m_dataType = m_dataSet.getDataType();
             m_dataSpace = m_dataSet.getSpace();
 
-            m_ndims = m_dataSpace.getSimpleExtentNdims();
-            m_dims.resize(m_ndims);
-            m_maxdims.resize(m_ndims);
-            m_dataSpace.getSimpleExtentDims(&m_dims[0], &m_maxdims[0]);
+            isx::internal::getHdf5SpaceDims(m_dataSpace, m_dims, m_maxdims);
+            m_ndims = m_dims.size();
 
             if (m_dataType == H5::PredType::STD_U16LE)
             {
@@ -175,8 +173,8 @@ public:
             1, // numChannels
             frameTime, inFrameNumber);
         try {
-            isx::internal::HSizeArray_t size = {1, m_dims[1], m_dims[2]};
-            isx::internal::HSizeArray_t offset = {inFrameNumber, 0, 0};
+            isx::internal::HSizeVector_t size = {1, m_dims[1], m_dims[2]};
+            isx::internal::HSizeVector_t offset = {inFrameNumber, 0, 0};
             H5::DataSpace fileSpace = isx::internal::createHdf5SubSpace(
                     m_dataSpace, offset, size);
             H5::DataSpace bufferSpace = isx::internal::createHdf5BufferSpace(
@@ -300,8 +298,8 @@ public:
                 m_maxdims[0], ") in the movie.");
         }
 
-        isx::internal::HSizeArray_t size = {1, m_dims[1], m_dims[2]};
-        isx::internal::HSizeArray_t offset = {inFrameNumber, 0, 0};
+        isx::internal::HSizeVector_t size = {1, m_dims[1], m_dims[2]};
+        isx::internal::HSizeVector_t offset = {inFrameNumber, 0, 0};
         H5::DataSpace fileSpace = isx::internal::createHdf5SubSpace(
             m_dataSpace, offset, size);
         H5::DataSpace bufferSpace = isx::internal::createHdf5BufferSpace(

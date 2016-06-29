@@ -94,18 +94,14 @@ createHdf5DataSet(
     H5::DataType readType = dataSet.getDataType();
     H5::DataSpace readSpace = dataSet.getSpace();
 
-    int readNDims = readSpace.getSimpleExtentNdims();;
-    std::vector<hsize_t> readDims(readNDims);
-    std::vector<hsize_t> readMaxDims(readNDims);
-    readSpace.getSimpleExtentDims(&readDims[0], &readMaxDims[0]);
-
-    int nDims = dataSpace.getSimpleExtentNdims();
-    std::vector<hsize_t> dims(nDims);
-    std::vector<hsize_t> maxDims(nDims);
-    dataSpace.getSimpleExtentDims(&dims[0], &maxDims[0]);
+    HSizeVector_t dims, maxDims, readDims, readMaxDims;
+    getHdf5SpaceDims(dataSpace, dims, maxDims);
+    getHdf5SpaceDims(readSpace, readDims, readMaxDims);
 
     // Check that the size of the file dataset is the same as the one the
     // user is trying to write out
+    hsize_t nDims = dims.size();
+    hsize_t readNDims = readDims.size();
     if(nDims != readNDims)
     {
         ISX_THROW(isx::ExceptionDataIO,
@@ -113,7 +109,7 @@ createHdf5DataSet(
             "does not match that in the read dataset (", readNDims, ").");
     }
 
-    for (int i(0); i < nDims; i++)
+    for (hsize_t i(0); i < nDims; i++)
     {
         if(dims[i] != readDims[i])
         {
@@ -158,8 +154,8 @@ getHdf5ObjNames(
 H5::DataSpace
 createHdf5SubSpace(
     const H5::DataSpace & space,
-    const HSizeArray_t & offset,
-    const HSizeArray_t & size)
+    const HSizeVector_t & offset,
+    const HSizeVector_t & size)
 {
     H5::DataSpace outSpace(space);
     outSpace.selectHyperslab(H5S_SELECT_SET, size.data(), offset.data());
@@ -168,12 +164,23 @@ createHdf5SubSpace(
 
 H5::DataSpace
 createHdf5BufferSpace(
-    const HSizeArray_t & size)
+    const HSizeVector_t & size)
 {
     H5::DataSpace outSpace(3, size.data());
-    HSizeArray_t offset = {0, 0, 0};
+    HSizeVector_t offset = {0, 0, 0};
     outSpace.selectHyperslab(H5S_SELECT_SET, size.data(), offset.data());
     return outSpace;
+}
+
+void getHdf5SpaceDims(
+    const H5::DataSpace & space,
+    HSizeVector_t & dims,
+    HSizeVector_t & maxDims)
+{
+    hsize_t numDims = space.getSimpleExtentNdims();
+    dims.resize(numDims);
+    maxDims.resize(numDims);
+    space.getSimpleExtentDims(dims.data(), maxDims.data());
 }
 
 } // namespace internal
