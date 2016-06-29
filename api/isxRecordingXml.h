@@ -21,7 +21,8 @@ namespace isx {
         /// Destructor.
         ///
         ~RecordingXml();
-
+        
+        /// \return the filenames of hdf5 files included in the XML
         const std::vector<std::string> & getFileNames();
         
 
