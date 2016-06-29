@@ -23,13 +23,13 @@ public:
     : m_H5File(inHdf5File)    
     , m_path(inPath)
     {
-        std::string movie_path = m_path;
-        std::string property_path;
+        std::string moviePath = m_path;
+        std::string propertyPath;
 
         if (isInProjectFile())
         {
-            movie_path += "/Movie";
-            property_path = m_path + "/Properties";
+            moviePath += "/Movie";
+            propertyPath = m_path + "/Properties";
         }
 
         try
@@ -37,7 +37,7 @@ public:
             // Turn off the auto-printing when failure occurs so that we can
             // handle the errors appropriately
             H5::Exception::dontPrint();  
-            m_dataSet = m_H5File->openDataSet(movie_path);
+            m_dataSet = m_H5File->openDataSet(moviePath);
 
             m_dataType = m_dataSet.getDataType();
             m_dataSpace = m_dataSet.getSpace();
@@ -83,7 +83,7 @@ public:
         // dummy values
         isx::Ratio frameRate(30, 1);
         m_timingInfo = createDummyTimingInfo(m_dims[0], frameRate);
-        readProperties(property_path);
+        readProperties(propertyPath);
     }
     
     
@@ -96,7 +96,7 @@ public:
         ISX_ASSERT(inFrameWidth > 0);
         ISX_ASSERT(inFrameHeight > 0);
 
-        std::string movie_path = m_path + "/Movie";
+        std::string moviePath = m_path + "/Movie";
  
         /* Set rank, dimensions and max dimensions */
         m_ndims = 3;
@@ -119,7 +119,7 @@ public:
         m_dataType = H5::PredType::STD_U16LE;
         try
         {
-            createDataSet(movie_path, m_dataType, m_dataSpace);
+            createDataSet(moviePath, m_dataType, m_dataSpace);
             m_isValid = true;
             m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
         }
