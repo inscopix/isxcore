@@ -1,4 +1,4 @@
-#include "isxAlgorithm.h"
+#include "isxDeltaFoverF.h"
 #include "isxMovie.h"
 #include "isxCoreFwd.h"
 #include "isxProjectFile.h"
@@ -9,39 +9,39 @@
 
 namespace isx
 {
-    Algorithm::Algorithm()
+    DeltaFoverF::DeltaFoverF()
     {
 
     }
 
-    Algorithm::Algorithm(const SpMovie_t & movie)
+    DeltaFoverF::DeltaFoverF(const SpMovie_t & movie)
     {
         m_movie = movie;
     }
 
-    bool Algorithm::IsValid()
+    bool DeltaFoverF::isValid()
     {
         return m_movie->isValid();
     }
 
-    const SpMovie_t & Algorithm::getOutputMovie() const
+    const SpMovie_t & DeltaFoverF::getOutputMovie() const
     {
         return m_outputMovie;
     }
 
-    void Algorithm::SetOutputMovie(const SpMovie_t & inMovie)
+    void DeltaFoverF::setOutputMovie(const SpMovie_t & inMovie)
     {
         m_outputMovie = inMovie;
     }
 
-    void Algorithm::FindMinMax(const std::vector<double> &input, double &min, double &max, size_t nLength)
+    void DeltaFoverF::findMinMax(const std::vector<double> &input, double &min, double &max, size_t nLength)
     {
         auto localMinMax = std::minmax_element(input.begin(), input.end());
         min = std::min(min, *localMinMax.first);
         max = std::max(max, *localMinMax.second);
     }
 
-    void Algorithm::ScaleValues16(const std::vector<double> &input, double &min, double &max, std::vector<uint16_t> &output, size_t nLength)
+    void DeltaFoverF::scaleValues16(const std::vector<double> &input, double &min, double &max, std::vector<uint16_t> &output, size_t nLength)
     {
         if (min != max)
         {
@@ -52,7 +52,7 @@ namespace isx
         }
     }
 
-    void Algorithm::Add_V(const std::vector<double> &inputA, uint16_t * inputB, std::vector<double> &output, size_t nLength)
+    void DeltaFoverF::add_V(const std::vector<double> &inputA, uint16_t * inputB, std::vector<double> &output, size_t nLength)
     {
         for (size_t i = 0; i < nLength; i++)
         {
@@ -60,7 +60,7 @@ namespace isx
         }
     }
 
-    void Algorithm::Subtract_V(uint16_t * inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength)
+    void DeltaFoverF::subtract_V(uint16_t * inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength)
     {
         for (size_t i = 0; i < nLength; i++)
         {
@@ -68,7 +68,7 @@ namespace isx
         }
     }
 
-    void Algorithm::Divide_V(const std::vector<double> &inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength)
+    void DeltaFoverF::divide_V(const std::vector<double> &inputA, const std::vector<double> &inputB, std::vector<double> &output, size_t nLength)
     {
         for (size_t i = 0; i < nLength; i++)
         {
@@ -84,7 +84,7 @@ namespace isx
         }
     }
 
-    void Algorithm::Divide_C(const std::vector<double> &inputA, double num, std::vector<double> &output, size_t nLength)
+    void DeltaFoverF::divide_C(const std::vector<double> &inputA, double num, std::vector<double> &output, size_t nLength)
     {
         if (num != 0)
         {
@@ -99,7 +99,7 @@ namespace isx
         }
     }
 
-    void Algorithm::ApplyApp()
+    void DeltaFoverF::run()
     {
         if (m_movie != nullptr && m_outputMovie != nullptr)
         {
@@ -114,10 +114,10 @@ namespace isx
             for (isize_t i = 0; i < nFrames; i++)
             {
                 auto f = m_movie->getFrame(i);
-                Add_V(F0Image, f->getPixels(), F0Image, nLength);
+                add_V(F0Image, f->getPixels(), F0Image, nLength);
             }
 
-            Divide_C(F0Image, static_cast<double>(nFrames), F0Image, nLength);
+            divide_C(F0Image, static_cast<double>(nFrames), F0Image, nLength);
 
             //apply df/f
             std::vector<double> DFF(nLength);
@@ -130,10 +130,10 @@ namespace isx
             {
                 auto f = m_movie->getFrame(i);
 
-                Subtract_V(f->getPixels(), F0Image, DFF, nLength);
-                Divide_V(DFF, F0Image, temp, nLength);
+                subtract_V(f->getPixels(), F0Image, DFF, nLength);
+                divide_V(DFF, F0Image, temp, nLength);
 
-                FindMinMax(temp, min, max, nLength);              
+                findMinMax(temp, min, max, nLength);
             }
 
             //output
@@ -141,10 +141,10 @@ namespace isx
             {
                 auto f = m_movie->getFrame(i);
 
-                Subtract_V(f->getPixels(), F0Image, DFF, nLength);
-                Divide_V(DFF, F0Image, temp, nLength);
+                subtract_V(f->getPixels(), F0Image, DFF, nLength);
+                divide_V(DFF, F0Image, temp, nLength);
 
-                ScaleValues16(temp, min, max, output, nLength);
+                scaleValues16(temp, min, max, output, nLength);
 
                 m_outputMovie->writeFrame(i, &output[0], nFrameSize);
             }          

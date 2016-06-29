@@ -4,6 +4,7 @@
 namespace isx
 {
 std::unique_ptr<IoQueue> IoQueue::s_instance;
+Mutex IoQueue::s_mutex;
 
 
 IoQueue::IoQueue()
@@ -51,4 +52,11 @@ IoQueue::instance()
     }
     return 0;
 }
+
+Mutex &
+IoQueue::getMutex()
+{
+    return s_mutex;
+}
+
 } // namespace isx

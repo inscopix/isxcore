@@ -178,6 +178,7 @@ public:
     SpU16VideoFrame_t
     getFrame(isize_t inFrameNumber)
     {
+        ScopedMutex locker(IoQueue::getMutex(), "getFrame");
         Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
         
         auto nvf = std::make_shared<U16VideoFrame_t>(
@@ -231,7 +232,7 @@ public:
     void
     processFrameQueue()
     {
-        isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
+        isx::ScopedMutex locker(m_frameRequestQueueMutex, "processFrameQueue");
         if (!m_frameRequestQueue.empty())
         {
             FrameRequest fr = m_frameRequestQueue.front();
@@ -289,7 +290,7 @@ public:
     void
     writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
     {
-        // Make sure the movie is valid
+        ScopedMutex locker(IoQueue::getMutex(), "writeFrame");
         if (!m_isValid)
         {
             ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie.");
