@@ -104,7 +104,7 @@ public:
         m_timingInfo = createDummyTimingInfo(m_dims[0], inFrameRate);
 
         /* Create the dataspace */
-        m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
+        m_dataSpace = H5::DataSpace(static_cast<int>(m_ndims), m_dims.data(), m_maxdims.data());
 
         /* Create a new dataset within the file */
         m_dataType = H5::PredType::STD_U16LE;
@@ -349,7 +349,7 @@ private:
     H5::DataSpace m_dataSpace;
     H5::DataType m_dataType;
     
-    int m_ndims;
+    hsize_t m_ndims;
     std::vector<hsize_t> m_dims;
     std::vector<hsize_t> m_maxdims;
     size_t m_frameSizeInBytes;
