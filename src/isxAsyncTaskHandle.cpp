@@ -36,7 +36,7 @@ AsyncTaskHandle::process()
             {
                 return;
             }
-            m_finishedCB(AsyncTaskFinishedStatus::COMPLETE);
+            m_finishedCB(FinishedStatus::COMPLETE);
         });
     });
 }

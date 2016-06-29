@@ -201,7 +201,7 @@ public:
             ISX_LOG_ERROR("Exception in ", error.getFuncName(), ":\n", error.getDetailMsg());
             m_isValid = false;
         }
-        
+
         return nvf;
     }
 

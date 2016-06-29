@@ -15,10 +15,18 @@ namespace isx
 class AsyncTaskHandle : public std::enable_shared_from_this<isx::AsyncTaskHandle>
 {
 public:
+    /// return status of an asynchronous task
+    enum class FinishedStatus
+    {
+        COMPLETE,               ///< task completed successfully
+        CANCELLED,              ///< task was cancelled
+        ERROR_EXCEPTION         ///< an error occurred while processing the task
+    };
+    
     /// type of progress callback function
     typedef std::function<void(float)> ProgressCB_t;
     /// type of finished callback function
-    typedef std::function<void(AsyncTaskFinishedStatus inStatus)> FinishedCB_t;
+    typedef std::function<void(FinishedStatus inStatus)> FinishedCB_t;
 
     /// default constructor
     AsyncTaskHandle();
