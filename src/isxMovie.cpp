@@ -351,6 +351,20 @@ private:
         isize_t             m_frameNumber;
         MovieGetFrameCB_t   m_callback;
     };
+    
+    H5::CompType 
+    getTimingInfoType()
+    {
+        H5::CompType timingInfoType(sizeof(sTimingInfo_t));
+        timingInfoType.insertMember(sTimingInfoTimeSecsNum, HOFFSET(sTimingInfo_t, timeSecsNum), H5::PredType::NATIVE_INT64);
+        timingInfoType.insertMember(sTimingInfoTimeSecsDen, HOFFSET(sTimingInfo_t, timeSecsDen), H5::PredType::NATIVE_INT64);
+        timingInfoType.insertMember(sTimingInfoTimeOffset, HOFFSET(sTimingInfo_t, timeOffset), H5::PredType::NATIVE_INT32);
+        timingInfoType.insertMember(sTimingInfoStepNum, HOFFSET(sTimingInfo_t, stepNum), H5::PredType::NATIVE_INT64);
+        timingInfoType.insertMember(sTimingInfoStepDen, HOFFSET(sTimingInfo_t, stepDen), H5::PredType::NATIVE_INT64);
+        timingInfoType.insertMember(sTimingInfoNumTimes, HOFFSET(sTimingInfo_t, numTimes), H5::PredType::NATIVE_HSIZE);
+        
+        return timingInfoType;
+    }
 
     void 
     readProperties(const std::string & property_path)
@@ -378,7 +392,7 @@ private:
         }
         
         sTimingInfo_t t;
-        dataset.read(&t, sTimingInfoType);
+        dataset.read(&t, getTimingInfoType());
 
         Ratio secSinceEpoch(t.timeSecsNum, t.timeSecsDen);
         Time start(secSinceEpoch, t.timeOffset);
@@ -416,11 +430,11 @@ private:
             std::string grName = m_path + "/Properties";
             H5::Group grProperties = m_H5File->createGroup(grName);
             std::string dataset_name = "TimingInfo";
-            H5::DataSet dataset = H5::DataSet(grProperties.createDataSet(dataset_name, sTimingInfoType, space));
+            H5::DataSet dataset = H5::DataSet(grProperties.createDataSet(dataset_name, getTimingInfoType(), space));
             /*
             * Write data to the dataset;
             */
-            dataset.write(&t, sTimingInfoType);
+            dataset.write(&t, getTimingInfoType());
         }
         
         catch (const H5::DataSetIException &error)
@@ -618,8 +632,6 @@ private:
     static const std::string sTimingInfoStepNum;
     static const std::string sTimingInfoStepDen;
     static const std::string sTimingInfoNumTimes;
-    
-    static H5::CompType sTimingInfoType(sizeof(sTimingInfo_t));
 
 };
 
@@ -629,14 +641,6 @@ const std::string Movie::Impl::sTimingInfoTimeOffset = "TimeOffset";
 const std::string Movie::Impl::sTimingInfoStepNum = "StepNum";
 const std::string Movie::Impl::sTimingInfoStepDen = "StepDen";
 const std::string Movie::Impl::sTimingInfoNumTimes = "NumTimes";
-
-Movie::Impl::sTimingInfoType.insertMember(Movie::Impl::sTimingInfoTimeSecsNum, HOFFSET(sTimingInfo_t, timeSecsNum), H5::PredType::NATIVE_INT64);
-Movie::Impl::sTimingInfoType.insertMember(Movie::Impl::sTimingInfoTimeSecsDen, HOFFSET(sTimingInfo_t, timeSecsDen), H5::PredType::NATIVE_INT64);
-Movie::Impl::sTimingInfoType.insertMember(Movie::Impl::sTimingInfoTimeOffset, HOFFSET(sTimingInfo_t, timeOffset), H5::PredType::NATIVE_INT32);
-Movie::Impl::sTimingInfoType.insertMember(Movie::Impl::sTimingInfoStepNum, HOFFSET(sTimingInfo_t, stepNum), H5::PredType::NATIVE_INT64);
-Movie::Impl::sTimingInfoType.insertMember(Movie::Impl::sTimingInfoStepDen, HOFFSET(sTimingInfo_t, stepDen), H5::PredType::NATIVE_INT64);
-Movie::Impl::sTimingInfoType.insertMember(Movie::Impl::sTimingInfoNumTimes, HOFFSET(sTimingInfo_t, numTimes), H5::PredType::NATIVE_HSIZE);
-
 
 Movie::Movie()
 {
