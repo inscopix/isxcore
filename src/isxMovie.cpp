@@ -167,39 +167,34 @@ public:
     SpU16VideoFrame_t
     getFrame(isize_t inFrameNumber)
     {
-        {
-//            ScopedMutex(m_fileMutex, "getFrame");
-            std::lock_guard<std::mutex> locker(m_fileMutex);
-//            ISX_LOG_DEBUG("m_fileMutex taken");
-            Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
+        ScopedMutex locker(IoQueue::getMutex(), "getFrame");
+        Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
+        
+        auto nvf = std::make_shared<U16VideoFrame_t>(
+            getFrameWidth(), getFrameHeight(),
+            sizeof(uint16_t) * getFrameWidth(),
+            1, // numChannels
+            frameTime, inFrameNumber);
+        try {
             
-            auto nvf = std::make_shared<U16VideoFrame_t>(
-                getFrameWidth(), getFrameHeight(),
-                sizeof(uint16_t) * getFrameWidth(),
-                1, // numChannels
-                frameTime, inFrameNumber);
-            try {
-                
-                H5::DataSpace fileSpace(m_dataSpace);
-                hsize_t fileStart[3] = {inFrameNumber, 0, 0};
-                hsize_t fileCount[3] = {1, m_dims[1], m_dims[2]};
-                fileSpace.selectHyperslab(H5S_SELECT_SET, fileCount, fileStart);
-                
-                H5::DataSpace bufferSpace(3, fileCount);
-                hsize_t bufferStart[3] = { 0, 0, 0 };
-                bufferSpace.selectHyperslab(H5S_SELECT_SET, fileCount, bufferStart);
-                
-                m_dataSet.read(nvf->getPixels(), m_dataType, bufferSpace, fileSpace);
-            }
-            catch (const H5::DataSetIException& error)
-            {
-                ISX_LOG_ERROR("Exception in ", error.getFuncName(), ":\n", error.getDetailMsg());
-                m_isValid = false;
-            }
+            H5::DataSpace fileSpace(m_dataSpace);
+            hsize_t fileStart[3] = {inFrameNumber, 0, 0};
+            hsize_t fileCount[3] = {1, m_dims[1], m_dims[2]};
+            fileSpace.selectHyperslab(H5S_SELECT_SET, fileCount, fileStart);
             
-//            ISX_LOG_DEBUG("releasing m_fileMutex");
-            return nvf;
+            H5::DataSpace bufferSpace(3, fileCount);
+            hsize_t bufferStart[3] = { 0, 0, 0 };
+            bufferSpace.selectHyperslab(H5S_SELECT_SET, fileCount, bufferStart);
+            
+            m_dataSet.read(nvf->getPixels(), m_dataType, bufferSpace, fileSpace);
         }
+        catch (const H5::DataSetIException& error)
+        {
+            ISX_LOG_ERROR("Exception in ", error.getFuncName(), ":\n", error.getDetailMsg());
+            m_isValid = false;
+        }
+        
+        return nvf;
     }
 
     SpU16VideoFrame_t
@@ -287,9 +282,7 @@ public:
     void
     writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
     {
-//            ScopedMutex(m_fileMutex, "writeFrame");
-        std::lock_guard<std::mutex> locker(m_fileMutex);
-        // Make sure the movie is valid
+        ScopedMutex locker(IoQueue::getMutex(), "writeFrame");
         if (!m_isValid)
         {
             ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie.");

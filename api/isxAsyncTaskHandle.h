@@ -2,6 +2,7 @@
 #define ISX_ASYNC_TASK_HANDLE_H
 
 #include "isxDispatchQueue.h"
+#include "isxCore.h"
 
 #include <functional>
 #include <memory>
@@ -14,18 +15,10 @@ namespace isx
 class AsyncTaskHandle : public std::enable_shared_from_this<isx::AsyncTaskHandle>
 {
 public:
-    /// Enum for status indicating how / why a task finished
-    ///
-    enum class FinishedStatus
-    {
-        COMPLETE,
-        CANCELLED,
-        ERROR_EXCEPTION
-    };
     /// type of progress callback function
     typedef std::function<void(float)> ProgressCB_t;
     /// type of finished callback function
-    typedef std::function<void(FinishedStatus inStatus)> FinishedCB_t;
+    typedef std::function<void(AsyncTaskFinishedStatus inStatus)> FinishedCB_t;
 
     /// default constructor
     AsyncTaskHandle();
