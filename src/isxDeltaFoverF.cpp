@@ -99,7 +99,7 @@ namespace isx
         }
     }
 
-    AsyncTaskFinishedStatus DeltaFoverF::run(AsyncTaskHandle::CheckInCB_t inCheckInCB)
+    AsyncTaskHandle::FinishedStatus DeltaFoverF::run(AsyncTaskHandle::CheckInCB_t inCheckInCB)
     {
         float progress = 0.f;
         const size_t progressNumLoops = 3;
@@ -108,7 +108,7 @@ namespace isx
         
         if (m_checkInCB(progress))
         {
-            return AsyncTaskFinishedStatus::CANCELLED;
+            return AsyncTaskHandle::FinishedStatus::CANCELLED;
         }
         if (m_movie != nullptr && m_outputMovie != nullptr)
         {
@@ -127,7 +127,7 @@ namespace isx
                 progress = ((float(i) / float(nFrames - 1)) + float(progressCurLoop)) / float(progressNumLoops);
                 if (m_checkInCB(progress))
                 {
-                    return AsyncTaskFinishedStatus::CANCELLED;
+                    return AsyncTaskHandle::FinishedStatus::CANCELLED;
                 }
             }
             ++progressCurLoop;
@@ -152,14 +152,14 @@ namespace isx
                 progress = ((float(i) / float(nFrames - 1)) + float(progressCurLoop)) / float(progressNumLoops);
                 if (m_checkInCB(progress))
                 {
-                    return AsyncTaskFinishedStatus::CANCELLED;
+                    return AsyncTaskHandle::FinishedStatus::CANCELLED;
                 }
             }
             ++progressCurLoop;
 
             if (m_checkInCB(0.66f))
             {
-                return AsyncTaskFinishedStatus::CANCELLED;
+                return AsyncTaskHandle::FinishedStatus::CANCELLED;
             }
 
             //output
@@ -176,12 +176,12 @@ namespace isx
                 progress = ((float(i) / float(nFrames - 1)) + float(progressCurLoop)) / float(progressNumLoops);
                 if (m_checkInCB(progress))
                 {
-                    return AsyncTaskFinishedStatus::CANCELLED;
+                    return AsyncTaskHandle::FinishedStatus::CANCELLED;
                 }
             }
             ++progressCurLoop;
         }
         m_checkInCB(1.f);
-        return AsyncTaskFinishedStatus::COMPLETE;
+        return AsyncTaskHandle::FinishedStatus::COMPLETE;
     }
 }

@@ -36,7 +36,7 @@ namespace isx {
 
         /// Applies DF/F
         /// \param inCheckInCB callback to invoke periodically
-        AsyncTaskFinishedStatus run(AsyncTaskHandle::CheckInCB_t inCheckInCB);
+        AsyncTaskHandle::FinishedStatus run(AsyncTaskHandle::CheckInCB_t inCheckInCB);
 
         /// Finds min and max elements in an array
         /// type = double

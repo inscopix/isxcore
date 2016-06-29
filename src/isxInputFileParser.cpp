@@ -1,5 +1,5 @@
 #include "isxInputFileParser.h"
-#include "isxHdf5File.h"
+#include "isxHdf5Utils.h"
 #include "isxProjectFile.h"
 
 
@@ -10,8 +10,7 @@ InputFileParser::isMosaicProject(const std::string & inFileName)
 {
     // Figure out if the input is a recording from nVista or a Mosaic Project 
     std::vector<std::string> objInRoot;
-    Hdf5File::getObjNames(inFileName, "/", objInRoot);
-
+    isx::internal::getHdf5ObjNames(inFileName, "/", objInRoot);
 
     bool bMosaicProject = false;
     for (unsigned int obj(0); obj < objInRoot.size(); ++obj)
@@ -19,7 +18,7 @@ InputFileParser::isMosaicProject(const std::string & inFileName)
         if (objInRoot.at(obj) == "MosaicProject")
         {
             std::vector<std::string> objInMosaicProject;
-            Hdf5File::getObjNames(inFileName, "/MosaicProject", objInMosaicProject);
+            isx::internal::getHdf5ObjNames(inFileName, "/MosaicProject", objInMosaicProject);
 
             int counter = 0;
             for (size_t i(0); i < objInMosaicProject.size(); ++i)

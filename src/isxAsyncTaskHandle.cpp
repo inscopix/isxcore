@@ -48,7 +48,7 @@ AsyncTaskHandle::process()
         {
             return;
         }
-        AsyncTaskFinishedStatus status = m_task(ci);
+        FinishedStatus status = m_task(ci);
         DispatchQueue::mainQueue()->dispatch([weakThis, this, status](){
             SpAsyncTaskHandle_t sharedThis = weakThis.lock();
             if (!sharedThis)

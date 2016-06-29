@@ -29,6 +29,6 @@ TEST_CASE("DeltaFoverFTest", "[!hide][core]") {
         isx::DeltaFoverF algo = isx::DeltaFoverF(m);
         REQUIRE(algo.isValid());
         algo.setOutputMovie(outputMovie);
-        algo.run();
+        algo.run([](float){return false;});
     }
 }
