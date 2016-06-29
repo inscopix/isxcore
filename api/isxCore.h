@@ -3,18 +3,22 @@
 
 #include <stddef.h>
 
+
 namespace isx
 {
+
     /// The type of all sizes, lengths and indices
     typedef size_t isize_t;
 
-    /// Status reported back by asynchronous tasks
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// return status of an asynchronous task
     enum class AsyncTaskFinishedStatus
     {
-        COMPLETE,
-        CANCELLED,
-        ERROR_EXCEPTION
+        COMPLETE,               ///< task completed successfully
+        CANCELLED,              ///< task was cancelled
+        ERROR_EXCEPTION         ///< an error occurred while processing the task
     };
+    /// \endcond doxygen chokes on enum class inside of namespace
 
     void CoreInitialize();
     bool CoreIsInitialized();
