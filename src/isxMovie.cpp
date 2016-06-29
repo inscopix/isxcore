@@ -1,5 +1,6 @@
 #include "isxMovie.h"
 #include "isxHdf5FileHandle.h"
+#include "isxHdf5Utils.h"
 #include "isxException.h"
 #include "isxAssert.h"
 #include "isxIoQueue.h"
@@ -42,10 +43,8 @@ public:
             m_dataType = m_dataSet.getDataType();
             m_dataSpace = m_dataSet.getSpace();
 
-            m_ndims = m_dataSpace.getSimpleExtentNdims();
-            m_dims.resize(m_ndims);
-            m_maxdims.resize(m_ndims);
-            m_dataSpace.getSimpleExtentDims(&m_dims[0], &m_maxdims[0]);
+            isx::internal::getHdf5SpaceDims(m_dataSpace, m_dims, m_maxdims);
+            m_ndims = m_dims.size();
 
             if (m_dataType == H5::PredType::STD_U16LE)
             {
@@ -113,13 +112,13 @@ public:
         m_maxdims[2] = inFrameWidth;
 
         /* Create the dataspace */
-        m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
+        m_dataSpace = H5::DataSpace(static_cast<int>(m_ndims), m_dims.data(), m_maxdims.data());
 
         /* Create a new dataset within the file */
         m_dataType = H5::PredType::STD_U16LE;
         try
         {
-            createDataSet(moviePath, m_dataType, m_dataSpace);
+            m_dataSet = isx::internal::createHdf5DataSet(m_H5File, moviePath, m_dataType, m_dataSpace);
             m_isValid = true;
             m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
         }
@@ -187,16 +186,13 @@ public:
             1, // numChannels
             frameTime, inFrameNumber);
         try {
-            
-            H5::DataSpace fileSpace(m_dataSpace);            
-            hsize_t fileStart[3] = {inFrameNumber, 0, 0};
-            hsize_t fileCount[3] = {1, m_dims[1], m_dims[2]};            
-            fileSpace.selectHyperslab(H5S_SELECT_SET, fileCount, fileStart);
-            
-            H5::DataSpace bufferSpace(3, fileCount);
-            hsize_t bufferStart[3] = { 0, 0, 0 };
-            bufferSpace.selectHyperslab(H5S_SELECT_SET, fileCount, bufferStart);
-            
+            isx::internal::HSizeVector_t size = {1, m_dims[1], m_dims[2]};
+            isx::internal::HSizeVector_t offset = {inFrameNumber, 0, 0};
+            H5::DataSpace fileSpace = isx::internal::createHdf5SubSpace(
+                    m_dataSpace, offset, size);
+            H5::DataSpace bufferSpace = isx::internal::createHdf5BufferSpace(
+                    size);
+
             m_dataSet.read(nvf->getPixels(), m_dataType, bufferSpace, fileSpace);
         }
         catch (const H5::DataSetIException& error)
@@ -314,22 +310,18 @@ public:
                 "Frame number (", inFrameNumber, ") exceeds the total number of frames (",
                 m_maxdims[0], ") in the movie.");
         }
-               
-        // Define file space.
-        H5::DataSpace fileSpace(m_dataSpace);
-        hsize_t fileOffset[3] = { inFrameNumber, 0, 0 };
-        hsize_t dims[3] = { 1, m_dims[1], m_dims[2] };
-        fileSpace.selectHyperslab(H5S_SELECT_SET, dims, fileOffset);
 
-        // Define memory space.
-        H5::DataSpace memSpace = H5::DataSpace(3, dims, NULL);
-        hsize_t memOffset[3] = { 0, 0, 0 };
-        memSpace.selectHyperslab(H5S_SELECT_SET, dims, memOffset);
+        isx::internal::HSizeVector_t size = {1, m_dims[1], m_dims[2]};
+        isx::internal::HSizeVector_t offset = {inFrameNumber, 0, 0};
+        H5::DataSpace fileSpace = isx::internal::createHdf5SubSpace(
+            m_dataSpace, offset, size);
+        H5::DataSpace bufferSpace = isx::internal::createHdf5BufferSpace(
+            size);
 
         // Write data to the dataset.
         try
         {
-           m_dataSet.write(inBuffer, m_dataType, memSpace, fileSpace);
+           m_dataSet.write(inBuffer, m_dataType, bufferSpace, fileSpace);
         }
    
         // Catch failure caused by the DataSet operations
@@ -465,128 +457,10 @@ private:
         return isx::TimingInfo(start, step, numFrames);
     }
 
-    void 
-    createDataSet (const std::string &name, const H5::DataType &data_type, const H5::DataSpace &data_space)
-    {
-        // Parse name and create the hierarchy tree (if not in the file already). 
-        // Every level other than the last one is created as a group. The last level is the dataset
-        std::vector<std::string> tree = splitPath(name); 
-     
-        std::string currentObjName("/");
-        H5::Group currentGroup = m_H5File->openGroup(currentObjName);
-        hsize_t nObjInGroup = currentGroup.getNumObjs();
-        
-        
-        
-        unsigned int nCreateFromIdx = 0;
-        
-        while((nObjInGroup > 0) && (nCreateFromIdx < tree.size()))
-        {
-            std::string targetObjName = currentObjName + "/" + tree[nCreateFromIdx];
-            bool bTargetFound = false;
-            
-            for(hsize_t obj(0); obj < nObjInGroup; ++obj)
-            {
-                std::string objName = currentGroup.getObjnameByIdx(obj);
-                if(objName == tree[nCreateFromIdx])
-                {
-                    bTargetFound = true;
-                    break;
-                }
-            }
-
-            if(bTargetFound)
-            {
-                nCreateFromIdx += 1;
-                
-                if(nCreateFromIdx < tree.size())
-                {
-                    currentGroup = m_H5File->openGroup(targetObjName);
-                    currentObjName = targetObjName;
-                    nObjInGroup = currentGroup.getNumObjs(); 
-                }           
-            }
-            else
-            {
-                break;
-            }
-        }
-        
-           
-        for ( ; nCreateFromIdx < tree.size(); ++nCreateFromIdx)
-        {
-            if(nCreateFromIdx == (tree.size() - 1))
-            {
-                m_dataSet = m_H5File->createDataSet(name, data_type, data_space);           
-                return;
-            }
-            
-            std::string targetObjName = currentObjName + "/" + tree[nCreateFromIdx]; 
-            m_H5File->createGroup(targetObjName); 
-            currentObjName = targetObjName;
-        }
-        
-        // If we get here, the dataset exists in the file and we don't need to create it
-        m_dataSet = m_H5File->openDataSet(name);
-        H5::DataType type = m_dataSet.getDataType();
-        H5::DataSpace space = m_dataSet.getSpace();
-        int nDims = space.getSimpleExtentNdims();;
-        std::vector<hsize_t> dims(nDims);
-        std::vector<hsize_t> maxdims(nDims);
-        space.getSimpleExtentDims(&dims[0], &maxdims[0]);
-            
-        // Check that the size of the file dataset is the same as the one the 
-        // user is trying to write out
-        if(nDims != m_ndims)
-        {
-            ISX_THROW(isx::ExceptionDataIO, "Dataset dimension mismatch");
-        }
-            
-        for (int i(0); i < nDims; i++)
-        {
-            if(dims[i] != m_dims[i])
-            {
-                ISX_THROW(isx::ExceptionDataIO, "Dataset size mismatch");
-            }
-                
-            if(maxdims[i] != m_maxdims[i])
-            {
-                ISX_THROW(isx::ExceptionDataIO, "Dataset size mismatch");
-            }
-        }
-            
-        // Dataset is valid if we get here
-        m_dataType = type;
-        m_dataSpace = space;
-            
-        if (m_dataType == H5::PredType::STD_U16LE)
-        {
-            m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
-        }    
-    }
-
-    std::vector<std::string> 
-    splitPath(const std::string &s)
-    {
-        using namespace std;
-        char delim = '/';
-        stringstream ss(s);
-        string item;
-        vector<string> tokens;
-        while (getline(ss, item, delim)) 
-        {
-            if(!item.empty())
-            {
-                tokens.push_back(item);
-            }
-        }
-        return tokens;
-    }
-
-    bool 
+    bool
     isInProjectFile()
     {
-        std::vector<std::string> tokens = splitPath(m_path);
+        std::vector<std::string> tokens = isx::internal::splitPath(m_path);
         bool res = false;
 
         if (tokens.size() && tokens[0] == "MosaicProject")
@@ -604,7 +478,7 @@ private:
     H5::DataSpace m_dataSpace;
     H5::DataType m_dataType;
     
-    int m_ndims;
+    hsize_t m_ndims;
     std::vector<hsize_t> m_dims;
     std::vector<hsize_t> m_maxdims;
     size_t m_frameSizeInBytes;
