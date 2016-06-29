@@ -12,8 +12,8 @@
 namespace isx {
 class Movie::Impl : public std::enable_shared_from_this<Movie::Impl>
 {
-    typedef std::shared_ptr<Movie::Impl> SpImpl_t;
-    typedef std::weak_ptr<Movie::Impl> WpImpl_t;
+    
+
 public:
     ~Impl(){};
 
@@ -23,12 +23,21 @@ public:
     : m_H5File(inHdf5File)    
     , m_path(inPath)
     {
+        std::string moviePath = m_path;
+        std::string propertyPath;
+
+        if (isInProjectFile())
+        {
+            moviePath += "/Movie";
+            propertyPath = m_path + "/Properties";
+        }
+
         try
         {
             // Turn off the auto-printing when failure occurs so that we can
             // handle the errors appropriately
             H5::Exception::dontPrint();  
-            m_dataSet = m_H5File->openDataSet(m_path); 
+            m_dataSet = m_H5File->openDataSet(moviePath);
 
             m_dataType = m_dataSet.getDataType();
             m_dataSpace = m_dataSet.getSpace();
@@ -72,9 +81,9 @@ public:
         // TODO sweet 2016/05/31 : the start and step should be read from
         // the file but it doesn't currently contain these, so picking some
         // dummy values
-        isx::Time start = isx::Time();
         isx::Ratio frameRate(30, 1);
         m_timingInfo = createDummyTimingInfo(m_dims[0], frameRate);
+        readProperties(propertyPath);
     }
     
     
@@ -86,6 +95,8 @@ public:
         ISX_ASSERT(inNumFrames > 0);
         ISX_ASSERT(inFrameWidth > 0);
         ISX_ASSERT(inFrameHeight > 0);
+
+        std::string moviePath = m_path + "/Movie";
  
         /* Set rank, dimensions and max dimensions */
         m_ndims = 3;
@@ -101,10 +112,6 @@ public:
         m_dims[2] = inFrameWidth;
         m_maxdims[2] = inFrameWidth;
 
-        // TODO sweet 2016/09/31 : the start and step should also be specified
-        // but we don't currently have a mechnanism for that
-        m_timingInfo = createDummyTimingInfo(m_dims[0], inFrameRate);
-
         /* Create the dataspace */
         m_dataSpace = H5::DataSpace(m_ndims, m_dims.data(), m_maxdims.data()); 
 
@@ -112,7 +119,7 @@ public:
         m_dataType = H5::PredType::STD_U16LE;
         try
         {
-            createDataSet(m_path, m_dataType, m_dataSpace);
+            createDataSet(moviePath, m_dataType, m_dataSpace);
             m_isValid = true;
             m_frameSizeInBytes = m_dims[1] * m_dims[2] * 2;
         }
@@ -131,6 +138,11 @@ public:
             ISX_THROW(isx::ExceptionDataIO,
                 "Failure caused by H5 Group operations.\n", error.getDetailMsg());
         }
+
+        // TODO sweet 2016/09/31 : the start and step should also be specified
+        // but we don't currently have a mechnanism for that
+        m_timingInfo = createDummyTimingInfo(m_dims[0], inFrameRate);
+        writeProperties();
 
     }
 
@@ -321,7 +333,7 @@ public:
         }
    
         // Catch failure caused by the DataSet operations
-        catch (H5::DataSetIException error)
+        catch (const H5::DataSetIException &error)
         {
            ISX_THROW(isx::ExceptionDataIO,
                 "Failed to write frame to movie.\n", error.getDetailMsg());
@@ -339,6 +351,109 @@ private:
         isize_t             m_frameNumber;
         MovieGetFrameCB_t   m_callback;
     };
+    
+    H5::CompType 
+    getTimingInfoType()
+    {
+        H5::CompType timingInfoType(sizeof(sTimingInfo_t));
+        timingInfoType.insertMember(sTimingInfoTimeSecsNum, HOFFSET(sTimingInfo_t, timeSecsNum), H5::PredType::NATIVE_INT64);
+        timingInfoType.insertMember(sTimingInfoTimeSecsDen, HOFFSET(sTimingInfo_t, timeSecsDen), H5::PredType::NATIVE_INT64);
+        timingInfoType.insertMember(sTimingInfoTimeOffset, HOFFSET(sTimingInfo_t, timeOffset), H5::PredType::NATIVE_INT32);
+        timingInfoType.insertMember(sTimingInfoStepNum, HOFFSET(sTimingInfo_t, stepNum), H5::PredType::NATIVE_INT64);
+        timingInfoType.insertMember(sTimingInfoStepDen, HOFFSET(sTimingInfo_t, stepDen), H5::PredType::NATIVE_INT64);
+        timingInfoType.insertMember(sTimingInfoNumTimes, HOFFSET(sTimingInfo_t, numTimes), H5::PredType::NATIVE_HSIZE);
+        
+        return timingInfoType;
+    }
+
+    void 
+    readProperties(const std::string & property_path)
+    {
+        if (property_path.empty())
+        {
+            return;
+        }
+
+        H5::DataSet dataset;
+
+        try
+        {
+            dataset = m_H5File->openDataSet(property_path + "/TimingInfo");
+        }
+        catch (const H5::FileIException& error)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failure to read movie properties caused by H5 File operations.\n", error.getDetailMsg());
+        }
+        catch (const H5::GroupIException& error)
+        {
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failure to read movie properties caused by H5 Group operations.\n", error.getDetailMsg());
+        }
+        
+        sTimingInfo_t t;
+        dataset.read(&t, getTimingInfoType());
+
+        Ratio secSinceEpoch(t.timeSecsNum, t.timeSecsDen);
+        Time start(secSinceEpoch, t.timeOffset);
+        Ratio step(t.stepNum, t.stepDen);
+        isize_t numTimes = t.numTimes;
+        m_timingInfo = TimingInfo(start, step, numTimes);
+    }
+
+    void
+    writeProperties()
+    {
+        /*
+        * Initialize the data
+        */
+        Time time = m_timingInfo.getStart();
+        sTimingInfo_t t;
+        t.timeSecsNum = time.secsFrom(time).getNum();
+        t.timeSecsDen = time.secsFrom(time).getDen();
+        t.timeOffset = time.getUtcOffset();
+        t.stepNum = m_timingInfo.getStep().getNum();
+        t.stepDen = m_timingInfo.getStep().getDen();
+        t.numTimes = m_timingInfo.getNumTimes();
+        
+        /*
+        * Create the data space.
+        */
+        hsize_t dim[] = { 1 };   /* Dataspace dimensions */
+        H5::DataSpace space(1, dim);
+        
+        try
+        {
+            /*
+            * Create the dataset.
+            */
+            std::string grName = m_path + "/Properties";
+            H5::Group grProperties = m_H5File->createGroup(grName);
+            std::string dataset_name = "TimingInfo";
+            H5::DataSet dataset = H5::DataSet(grProperties.createDataSet(dataset_name, getTimingInfoType(), space));
+            /*
+            * Write data to the dataset;
+            */
+            dataset.write(&t, getTimingInfoType());
+        }
+        
+        catch (const H5::DataSetIException &error)
+        {
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failed to write movie properties.\n", error.getDetailMsg());
+        }
+        catch (const H5::FileIException& error)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failure to write movie properties caused by H5 File operations.\n", error.getDetailMsg());
+        }
+        catch (const H5::GroupIException& error)
+        {
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failure to write movie properties caused by H5 Group operations.\n", error.getDetailMsg());
+        }
+
+    }
 
     /// A method to create a dummy TimingInfo object from the number of frames.
     ///
@@ -468,6 +583,19 @@ private:
         return tokens;
     }
 
+    bool 
+    isInProjectFile()
+    {
+        std::vector<std::string> tokens = splitPath(m_path);
+        bool res = false;
+
+        if (tokens.size() && tokens[0] == "MosaicProject")
+        {
+            res = true;
+        }
+        return res;
+    }
+
     bool m_isValid = false;
     SpH5File_t m_H5File;
     std::string m_path;
@@ -484,9 +612,35 @@ private:
     isx::TimingInfo m_timingInfo;
     std::queue<FrameRequest>    m_frameRequestQueue;
     isx::Mutex                  m_frameRequestQueueMutex;
+    
+    typedef std::shared_ptr<Movie::Impl> SpImpl_t;
+    typedef std::weak_ptr<Movie::Impl> WpImpl_t;
+
+    typedef struct {
+        int64_t timeSecsNum;
+        int64_t timeSecsDen;
+        int32_t timeOffset;
+        int64_t stepNum;
+        int64_t stepDen;
+        isize_t numTimes;
+    } sTimingInfo_t;
+
+
+    static const std::string sTimingInfoTimeSecsNum;
+    static const std::string sTimingInfoTimeSecsDen;
+    static const std::string sTimingInfoTimeOffset;
+    static const std::string sTimingInfoStepNum;
+    static const std::string sTimingInfoStepDen;
+    static const std::string sTimingInfoNumTimes;
 
 };
 
+const std::string Movie::Impl::sTimingInfoTimeSecsNum = "TimeSecsNum";
+const std::string Movie::Impl::sTimingInfoTimeSecsDen = "TimeSecsDen";
+const std::string Movie::Impl::sTimingInfoTimeOffset = "TimeOffset";
+const std::string Movie::Impl::sTimingInfoStepNum = "StepNum";
+const std::string Movie::Impl::sTimingInfoStepDen = "StepDen";
+const std::string Movie::Impl::sTimingInfoNumTimes = "NumTimes";
 
 Movie::Movie()
 {
