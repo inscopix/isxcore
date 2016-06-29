@@ -13,6 +13,12 @@ namespace internal
 /// The type of the size of the array.
 typedef std::vector<hsize_t> HSizeVector_t;
 
+/// Split a path into its tokens with / as a delimiter.
+///
+/// \param  s       The path to split.
+/// \return         The tokens in the path.
+std::vector<std::string> splitPath(const std::string & s);
+
 /// Create a data set in an HDF5 file or open it if it already exists.
 ///
 /// \param  file        The HDF5 file in which to create the data set.

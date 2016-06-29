@@ -94,6 +94,45 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(m.toString() == "/images");
     }
 
+    SECTION("Write and read timing info", "[core]") {
+        // Write
+        isx::TimingInfo writtenTI, readTI;
+        std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
+
+        {
+            // Inputs
+            isx::SpRecording_t inputFile = std::make_shared<isx::Recording>(testFile);
+            isx::Movie inputMovie(inputFile->getHdf5FileHandle(), "/images");
+
+            // Get sizes from input
+            isx::isize_t nFrames = inputMovie.getNumFrames();
+            isx::isize_t nCols = inputMovie.getFrameWidth();
+            isx::isize_t nRows = inputMovie.getFrameHeight();
+            isx::TimingInfo timingInfo = inputMovie.getTimingInfo();
+            isx::Ratio timeStep = timingInfo.getStep();
+            isx::Ratio frameRate = timeStep.invert();
+
+            // Create the output
+            isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename, testFile);
+
+            isx::SpMovieSeries_t rs = outputFile->addMovieSeries("RecSeries0");
+            isx::SpMovie_t outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);
+            writtenTI = outputMovie->getTimingInfo();
+        }
+        
+        // Read
+        {
+            isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename);
+            isx::SpMovieSeries_t rs = outputFile->getMovieSeries(0);
+            isx::SpMovie_t outputMovie = rs->getMovie(0);
+            readTI = outputMovie->getTimingInfo();
+        }
+
+        REQUIRE(writtenTI.getStart() == readTI.getStart());
+        REQUIRE(writtenTI.getStep() == readTI.getStep());
+        REQUIRE(writtenTI.getNumTimes() == readTI.getNumTimes());
+    }
+
     SECTION("Write frames to new movie", "[core]") {
         // Inputs
         isx::SpRecording_t inputFile = std::make_shared<isx::Recording>(testFile);
