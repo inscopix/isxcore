@@ -8,6 +8,7 @@
 #include <vector>
 #include <sstream>
 #include <queue>
+#include <mutex>
 
 namespace isx {
 class Movie::Impl : public std::enable_shared_from_this<Movie::Impl>
