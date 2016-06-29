@@ -12,25 +12,7 @@
 namespace isx {
 class Movie::Impl : public std::enable_shared_from_this<Movie::Impl>
 {
-    typedef std::shared_ptr<Movie::Impl> SpImpl_t;
-    typedef std::weak_ptr<Movie::Impl> WpImpl_t;
-
-    typedef struct {
-        int64_t time_secs_num;
-        int64_t time_secs_den;
-        int32_t time_offset;
-        int64_t step_num;
-        int64_t step_den;
-        isize_t num_times;
-    } sTimingInfo_t;
-
-
-    static const std::string sTimingInfo_time_secs_num;
-    static const std::string sTimingInfo_time_secs_den;
-    static const std::string sTimingInfo_time_offset;
-    static const std::string sTimingInfo_step_num;
-    static const std::string sTimingInfo_step_den;
-    static const std::string sTimingInfo_num_times;
+    
 
 public:
     ~Impl(){};
@@ -395,22 +377,13 @@ private:
                 "Failure to read movie properties caused by H5 Group operations.\n", error.getDetailMsg());
         }
         
-
-        H5::CompType timinginfo_type(sizeof(sTimingInfo_t));
-        timinginfo_type.insertMember(sTimingInfo_time_secs_num, HOFFSET(sTimingInfo_t, time_secs_num), H5::PredType::NATIVE_INT64);
-        timinginfo_type.insertMember(sTimingInfo_time_secs_den, HOFFSET(sTimingInfo_t, time_secs_den), H5::PredType::NATIVE_INT64);
-        timinginfo_type.insertMember(sTimingInfo_time_offset, HOFFSET(sTimingInfo_t, time_offset), H5::PredType::NATIVE_INT32);
-        timinginfo_type.insertMember(sTimingInfo_step_num, HOFFSET(sTimingInfo_t, step_num), H5::PredType::NATIVE_INT64);
-        timinginfo_type.insertMember(sTimingInfo_step_den, HOFFSET(sTimingInfo_t, step_den), H5::PredType::NATIVE_INT64);
-        timinginfo_type.insertMember(sTimingInfo_num_times, HOFFSET(sTimingInfo_t, num_times), H5::PredType::NATIVE_HSIZE);
-        
         sTimingInfo_t t;
-        dataset.read(&t, timinginfo_type);
+        dataset.read(&t, sTimingInfoType);
 
-        Ratio secSinceEpoch(t.time_secs_num, t.time_secs_den);
-        Time start(secSinceEpoch, t.time_offset);
-        Ratio step(t.step_num, t.step_den);
-        isize_t numTimes = t.num_times;
+        Ratio secSinceEpoch(t.timeSecsNum, t.timeSecsDen);
+        Time start(secSinceEpoch, t.timeOffset);
+        Ratio step(t.stepNum, t.stepDen);
+        isize_t numTimes = t.numTimes;
         m_timingInfo = TimingInfo(start, step, numTimes);
     }
 
@@ -422,28 +395,18 @@ private:
         */
         Time time = m_timingInfo.getStart();
         sTimingInfo_t t;
-        t.time_secs_num = time.secsFrom(time).getNum();
-        t.time_secs_den = time.secsFrom(time).getDen();
-        t.time_offset = time.getUtcOffset();
-        t.step_num = m_timingInfo.getStep().getNum();
-        t.step_den = m_timingInfo.getStep().getDen();
-        t.num_times = m_timingInfo.getNumTimes();
+        t.timeSecsNum = time.secsFrom(time).getNum();
+        t.timeSecsDen = time.secsFrom(time).getDen();
+        t.timeOffset = time.getUtcOffset();
+        t.stepNum = m_timingInfo.getStep().getNum();
+        t.stepDen = m_timingInfo.getStep().getDen();
+        t.numTimes = m_timingInfo.getNumTimes();
         
         /*
         * Create the data space.
         */
         hsize_t dim[] = { 1 };   /* Dataspace dimensions */
         H5::DataSpace space(1, dim);
-        /*
-        * Create the memory datatype.
-        */
-        H5::CompType timinginfo_type(sizeof(sTimingInfo_t));
-        timinginfo_type.insertMember(sTimingInfo_time_secs_num, HOFFSET(sTimingInfo_t, time_secs_num), H5::PredType::NATIVE_INT64);
-        timinginfo_type.insertMember(sTimingInfo_time_secs_den, HOFFSET(sTimingInfo_t, time_secs_den), H5::PredType::NATIVE_INT64);
-        timinginfo_type.insertMember(sTimingInfo_time_offset, HOFFSET(sTimingInfo_t, time_offset), H5::PredType::NATIVE_INT32);
-        timinginfo_type.insertMember(sTimingInfo_step_num, HOFFSET(sTimingInfo_t, step_num), H5::PredType::NATIVE_INT64);
-        timinginfo_type.insertMember(sTimingInfo_step_den, HOFFSET(sTimingInfo_t, step_den), H5::PredType::NATIVE_INT64);
-        timinginfo_type.insertMember(sTimingInfo_num_times, HOFFSET(sTimingInfo_t, num_times), H5::PredType::NATIVE_HSIZE);
         
         try
         {
@@ -453,11 +416,11 @@ private:
             std::string grName = m_path + "/Properties";
             H5::Group grProperties = m_H5File->createGroup(grName);
             std::string dataset_name = "TimingInfo";
-            H5::DataSet dataset = H5::DataSet(grProperties.createDataSet(dataset_name, timinginfo_type, space));
+            H5::DataSet dataset = H5::DataSet(grProperties.createDataSet(dataset_name, sTimingInfoType, space));
             /*
             * Write data to the dataset;
             */
-            dataset.write(&t, timinginfo_type);
+            dataset.write(&t, sTimingInfoType);
         }
         
         catch (const H5::DataSetIException &error)
@@ -635,15 +598,44 @@ private:
     isx::TimingInfo m_timingInfo;
     std::queue<FrameRequest>    m_frameRequestQueue;
     isx::Mutex                  m_frameRequestQueueMutex;
+    
+    typedef std::shared_ptr<Movie::Impl> SpImpl_t;
+    typedef std::weak_ptr<Movie::Impl> WpImpl_t;
+
+    typedef struct {
+        int64_t timeSecsNum;
+        int64_t timeSecsDen;
+        int32_t timeOffset;
+        int64_t stepNum;
+        int64_t stepDen;
+        isize_t numTimes;
+    } sTimingInfo_t;
+
+
+    static const std::string sTimingInfoTimeSecsNum;
+    static const std::string sTimingInfoTimeSecsDen;
+    static const std::string sTimingInfoTimeOffset;
+    static const std::string sTimingInfoStepNum;
+    static const std::string sTimingInfoStepDen;
+    static const std::string sTimingInfoNumTimes;
+    
+    static H5::CompType sTimingInfoType(sizeof(sTimingInfo_t));
 
 };
 
-const std::string Movie::Impl::sTimingInfo_time_secs_num = "time_secs_num";
-const std::string Movie::Impl::sTimingInfo_time_secs_den = "time_secs_den";
-const std::string Movie::Impl::sTimingInfo_time_offset = "time_offset";
-const std::string Movie::Impl::sTimingInfo_step_num = "step_num";
-const std::string Movie::Impl::sTimingInfo_step_den = "step_den";
-const std::string Movie::Impl::sTimingInfo_num_times = "num_times";
+const std::string Movie::Impl::sTimingInfoTimeSecsNum = "TimeSecsNum";
+const std::string Movie::Impl::sTimingInfoTimeSecsDen = "TimeSecsDen";
+const std::string Movie::Impl::sTimingInfoTimeOffset = "TimeOffset";
+const std::string Movie::Impl::sTimingInfoStepNum = "StepNum";
+const std::string Movie::Impl::sTimingInfoStepDen = "StepDen";
+const std::string Movie::Impl::sTimingInfoNumTimes = "NumTimes";
+
+Movie::Impl::sTimingInfoType.insertMember(Movie::Impl::sTimingInfoTimeSecsNum, HOFFSET(sTimingInfo_t, timeSecsNum), H5::PredType::NATIVE_INT64);
+Movie::Impl::sTimingInfoType.insertMember(Movie::Impl::sTimingInfoTimeSecsDen, HOFFSET(sTimingInfo_t, timeSecsDen), H5::PredType::NATIVE_INT64);
+Movie::Impl::sTimingInfoType.insertMember(Movie::Impl::sTimingInfoTimeOffset, HOFFSET(sTimingInfo_t, timeOffset), H5::PredType::NATIVE_INT32);
+Movie::Impl::sTimingInfoType.insertMember(Movie::Impl::sTimingInfoStepNum, HOFFSET(sTimingInfo_t, stepNum), H5::PredType::NATIVE_INT64);
+Movie::Impl::sTimingInfoType.insertMember(Movie::Impl::sTimingInfoStepDen, HOFFSET(sTimingInfo_t, stepDen), H5::PredType::NATIVE_INT64);
+Movie::Impl::sTimingInfoType.insertMember(Movie::Impl::sTimingInfoNumTimes, HOFFSET(sTimingInfo_t, numTimes), H5::PredType::NATIVE_HSIZE);
 
 
 Movie::Movie()
