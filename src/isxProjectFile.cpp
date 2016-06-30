@@ -231,7 +231,7 @@ namespace isx {
         std::vector<const char*> namesC(strDims[0], NULL);        
         strDataset.read(namesC.data(), dataType);
         m_originalFilenames.resize(strDims[0]);
-        for (int i(0); i < strDims[0]; ++i)
+        for (isize_t i(0); i < strDims[0]; ++i)
         {
             m_originalFilenames[i] = namesC[i];
         }
