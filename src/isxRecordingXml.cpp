@@ -39,18 +39,21 @@ namespace isx
                 }
                 else
                 {
-                    while (!reader.atEnd())
+                    while (reader.readNextStartElement())
                     {
-                        reader.readNextStartElement();
                         name = reader.name();
                         if (name != "decompressed")
                         {
+                            reader.skipCurrentElement();
                             continue;
                         }
-                        while (reader.readNextStartElement())
+                        else
                         {
-                            QString filename = reader.readElementText();
-                            m_hdf5FileNames.push_back(filename.toStdString());
+                            while (reader.readNextStartElement())
+                            {
+                                QString filename = reader.readElementText();
+                                m_hdf5FileNames.push_back(filename.toStdString());
+                            }
                         }
                     }
                     break;
