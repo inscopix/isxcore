@@ -91,8 +91,8 @@ namespace isx {
 
         /// constructor - create new file
         /// \param inFileName the name of the project file to create
-        /// \param inInputFileName the name of the original data set used to initialize this file
-        ProjectFile(const std::string & inFileName, const std::string & inInputFileName);
+        /// \param inInputFileNames the names of the original data set used to initialize this file
+        ProjectFile(const std::string & inFileName, const std::vector<std::string> & inInputFileNames);
         
         /// destructor
         ///
@@ -146,9 +146,9 @@ namespace isx {
         ///
         std::string getName();
 
-        /// Get Original file name (from where the data was obtained)
+        /// Get filenames for the original files (from where the data was obtained)
         ///
-        std::string getOriginalName();
+        std::vector<std::string> & getOriginalNames();
        
     private:        
         class Impl;

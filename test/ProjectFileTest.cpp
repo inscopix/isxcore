@@ -11,7 +11,9 @@ TEST_CASE("ProjectFileTest", "[core]") {
     }
 
     SECTION("constructor - create new file") {
-        isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(testFile, "dummyTest");
+        std::vector<std::string> inputName(1);
+        inputName[0] = "dummyTest";
+        isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(testFile, inputName);
         REQUIRE(outputFile->isValid());
     }
 

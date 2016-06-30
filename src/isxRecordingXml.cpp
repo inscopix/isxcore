@@ -20,24 +20,42 @@ namespace isx
             {
                 ISX_THROW(isx::ExceptionFileIO, "The selected file does not exist.");
             }
+            
+            file.open(QIODevice::ReadOnly | QIODevice::Text);
+            QByteArray byteArray = file.readAll();
+            file.close();
 
-            QXmlStreamReader reader(&file);
+            QXmlStreamReader reader(byteArray);
+            reader.readNext();
+            QStringRef name = reader.name();
 
             while (!reader.atEnd())
             {
-                QStringRef name = reader.name();
-                if (name != "decompressed")
+                reader.readNextStartElement();
+                name = reader.name();
+                if (name != "recording")
                 {
                     continue;
                 }
-                
-                while (reader.readNextStartElement())
+                else
                 {
-                    QString filename = reader.readElementText();
-                    m_hdf5FileNames.push_back(filename.toStdString());
+                    while (!reader.atEnd())
+                    {
+                        reader.readNextStartElement();
+                        name = reader.name();
+                        if (name != "decompressed")
+                        {
+                            continue;
+                        }
+                        while (reader.readNextStartElement())
+                        {
+                            QString filename = reader.readElementText();
+                            m_hdf5FileNames.push_back(filename.toStdString());
+                        }
+                    }
+                    break;
                 }
-
-                break;
+                
             }
 
 
@@ -49,6 +67,15 @@ namespace isx
         const std::vector<std::string> & getFileNames()
         {
             return m_hdf5FileNames;
+        }
+
+        void
+        serialize(std::ostream& strm) const
+        {
+            for (int i(0); i < m_hdf5FileNames.size(); ++i)
+            {
+                strm << m_hdf5FileNames[i] << "\n";
+            }
         }
 
     private: 
@@ -72,5 +99,9 @@ namespace isx
         return m_pImpl->getFileNames();
     }
 
-
+    void
+    RecordingXml::serialize(std::ostream& strm) const
+    {
+        m_pImpl->serialize(strm);
+    }
 }

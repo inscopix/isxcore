@@ -113,7 +113,9 @@ TEST_CASE("MovieTest", "[core]") {
             isx::Ratio frameRate = timeStep.invert();
 
             // Create the output
-            isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename, testFile);
+            std::vector<std::string> inputName(1);
+            inputName[0] = testFile;
+            isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename, inputName);
 
             isx::SpMovieSeries_t rs = outputFile->addMovieSeries("RecSeries0");
             isx::SpMovie_t outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);
@@ -148,7 +150,9 @@ TEST_CASE("MovieTest", "[core]") {
 
         // Create the output
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
-        isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename, testFile);
+        std::vector<std::string> inputName(1);
+        inputName[0] = testFile;
+        isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename, inputName);
         
         isx::SpMovieSeries_t rs = outputFile->addMovieSeries("RecSeries0");
         isx::SpMovie_t outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);             
