@@ -68,6 +68,31 @@ SpacingInfo::getTotalSize() const
     return m_pixelSize * m_numPixels;
 }
 
+PointInMicrons_t
+SpacingInfo::convertPointInPixelsToMicrons(const PointInPixels_t inPoint) const
+{
+    // Clamp pixel indices that exceed range and protect against subtraction from 0
+    isize_t xPixels = inPoint.getX();
+    isize_t xNumPixels = m_numPixels.getX();
+    if (xNumPixels > 0 && xPixels >= xNumPixels)
+    {
+        xPixels = xNumPixels - 1;
+    }
+
+    isize_t yPixels = inPoint.getY();
+    isize_t yNumPixels = m_numPixels.getY();
+    if (yNumPixels > 0 && yPixels >= yNumPixels)
+    {
+        yPixels = yNumPixels - 1;
+    }
+
+    PointInPixels_t pointInPixels(xPixels, yPixels);
+
+    // Multiply by pixel size and offset by center
+    PointInMicrons_t offset = m_pixelSize * PointInMicrons_t(Ratio(1, 2), Ratio(1, 2));
+    return (m_pixelSize * pointInPixels) + offset;
+}
+
 bool
 SpacingInfo::operator ==(const SpacingInfo& other) const
 {

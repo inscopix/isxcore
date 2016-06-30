@@ -40,17 +40,19 @@ public:
     ///
     T getY() const;
 
-    /// SpatialVector addition where coordinate type must be the same as this.
+    /// Addition where coordinate type must be the same as this.
     ///
     /// \param   other  The point to add.
     /// \return         The result of adding other to this.
-    SpatialVector<T> operator +(const SpatialVector<T> & other) const;
+    template <typename TOther>
+    SpatialVector<T> operator +(const SpatialVector<TOther> & other) const;
 
-    /// SpatialVector multiplication where the coordinate type is an integer.
+    /// Multiplication where the coordinate type can be different to this.
     ///
     /// \param   other  The point with which to multiply.
     /// \return         The result of multiplying this with other.
-    SpatialVector<T> operator *(const SpatialVector<isize_t> & other) const;
+    template <typename TOther>
+    SpatialVector<T> operator *(const SpatialVector<TOther> & other) const;
 
     /// Exact comparison.
     ///
@@ -101,15 +103,17 @@ SpatialVector<T>::getY() const
 }
 
 template <typename T>
+template <typename TOther>
 SpatialVector<T>
-SpatialVector<T>::operator +(const SpatialVector<T> & other) const
+SpatialVector<T>::operator +(const SpatialVector<TOther> & other) const
 {
-    return isx::SpatialVector<T>(m_x + other.m_x, m_y + other.m_y);
+    return isx::SpatialVector<T>(m_x + other.getX(), m_y + other.getY());
 }
 
 template <typename T>
+template <typename TOther>
 SpatialVector<T>
-SpatialVector<T>::operator *(const SpatialVector<isize_t> & other) const
+SpatialVector<T>::operator *(const SpatialVector<TOther> & other) const
 {
     return isx::SpatialVector<T>(m_x * other.getX(), m_y * other.getY());
 }

@@ -15,6 +15,9 @@ typedef SpatialVector<isize_t> SizeInPixels_t;
 /// The size of some spatial samples in microns.
 typedef SpatialVector<Ratio> SizeInMicrons_t;
 
+/// The coordinates of a spatial sample in pixels w.r.t. to a (0, 0) origin.
+typedef SpatialVector<isize_t> PointInPixels_t;
+
 /// The coordinates of a spatial sample in microns w.r.t. to a (0, 0) origin.
 typedef SpatialVector<Ratio> PointInMicrons_t;
 
@@ -82,6 +85,24 @@ public:
     /// \return The total size in each dimension of the field of view in microns.
     ///
     SizeInMicrons_t getTotalSize() const;
+
+    /// Converts a point in pixel indices within these samples to a point in microns.
+    ///
+    /// The converted point in microns represents the center of the input pixel.
+    /// The conversion uses clamping so that the converted point always corresponds
+    /// to exactly one sample.
+    /// I.e. any pixel index that exceeds the number of pixels in that dimension
+    /// will set to that pixel index.
+    ///
+    /// \param  inPoint     The point in pixels to convert.
+    /// \return             The point in microns.
+    PointInMicrons_t convertPointInPixelsToMicrons(const PointInPixels_t inPoint) const;
+
+    ///// Converts a point in microns to a point in pixels.
+    /////
+    ///// \param  inPoint     The point in microns to convert.
+    ///// \return             The point in pixels.
+    //PointInMicrons_t convertPointInMicronsToPixels(const PointInMicrons_t inPoint) const;
 
     /// \param  other   The other spacing information with which to compare.
     /// \return         True if this is exactly equal to other, false otherwise.
