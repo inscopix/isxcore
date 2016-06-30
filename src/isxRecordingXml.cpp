@@ -1,5 +1,6 @@
 #include "isxRecordingXml.h"
 #include "isxException.h"
+#include "isxCore.h"
 #include <QFile>
 #include <QString>
 #include <QXmlStreamReader>
@@ -75,7 +76,7 @@ namespace isx
         void
         serialize(std::ostream& strm) const
         {
-            for (int i(0); i < m_hdf5FileNames.size(); ++i)
+            for (isize_t i(0); i < m_hdf5FileNames.size(); ++i)
             {
                 strm << m_hdf5FileNames[i] << "\n";
             }
