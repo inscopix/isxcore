@@ -99,8 +99,17 @@ namespace isx
         }
     }
 
-    void DeltaFoverF::run()
+    AsyncTaskHandle::FinishedStatus DeltaFoverF::run(AsyncTaskHandle::CheckInCB_t inCheckInCB)
     {
+        float progress = 0.f;
+        const size_t progressNumLoops = 3;
+        size_t progressCurLoop = 0;
+        m_checkInCB = inCheckInCB;
+        
+        if (m_checkInCB(progress))
+        {
+            return AsyncTaskHandle::FinishedStatus::CANCELLED;
+        }
         if (m_movie != nullptr && m_outputMovie != nullptr)
         {
             //calculate F0
@@ -115,7 +124,13 @@ namespace isx
             {
                 auto f = m_movie->getFrame(i);
                 add_V(F0Image, f->getPixels(), F0Image, nLength);
+                progress = ((float(i) / float(nFrames - 1)) + float(progressCurLoop)) / float(progressNumLoops);
+                if (m_checkInCB(progress))
+                {
+                    return AsyncTaskHandle::FinishedStatus::CANCELLED;
+                }
             }
+            ++progressCurLoop;
 
             divide_C(F0Image, static_cast<double>(nFrames), F0Image, nLength);
 
@@ -134,6 +149,17 @@ namespace isx
                 divide_V(DFF, F0Image, temp, nLength);
 
                 findMinMax(temp, min, max, nLength);
+                progress = ((float(i) / float(nFrames - 1)) + float(progressCurLoop)) / float(progressNumLoops);
+                if (m_checkInCB(progress))
+                {
+                    return AsyncTaskHandle::FinishedStatus::CANCELLED;
+                }
+            }
+            ++progressCurLoop;
+
+            if (m_checkInCB(0.66f))
+            {
+                return AsyncTaskHandle::FinishedStatus::CANCELLED;
             }
 
             //output
@@ -147,8 +173,15 @@ namespace isx
                 scaleValues16(temp, min, max, output, nLength);
 
                 m_outputMovie->writeFrame(i, &output[0], nFrameSize);
-            }          
-        }       
+                progress = ((float(i) / float(nFrames - 1)) + float(progressCurLoop)) / float(progressNumLoops);
+                if (m_checkInCB(progress))
+                {
+                    return AsyncTaskHandle::FinishedStatus::CANCELLED;
+                }
+            }
+            ++progressCurLoop;
+        }
+        m_checkInCB(1.f);
+        return AsyncTaskHandle::FinishedStatus::COMPLETE;
     }
-
 }

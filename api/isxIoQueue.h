@@ -60,7 +60,7 @@ private:
     SpDispatchQueueWorker_t m_worker;
     
     static std::unique_ptr<IoQueue> s_instance;
-    static Mutex s_mutex;
+    Mutex m_mutex;
 };
 
 } // namespace isx
