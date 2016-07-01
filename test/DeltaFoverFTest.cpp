@@ -1,5 +1,5 @@
 #include "isxRecording.h"
-#include "isxAlgorithm.h"
+#include "isxDeltaFoverF.h"
 #include "isxMovie.h"
 #include "isxProjectFile.h"
 #include "catch.hpp"
@@ -7,7 +7,7 @@
 #include "isxTest.h"
 #include <vector>
 
-TEST_CASE("AlgorithmTest", "[!hide][core]") {
+TEST_CASE("DeltaFoverFTest", "[!hide][core]") {
     std::string testFile = g_resources["testDataPath"] + "/recording_20160426_145041.hdf5";
 
     SECTION("applyAppDFF") {
@@ -28,9 +28,9 @@ TEST_CASE("AlgorithmTest", "[!hide][core]") {
             m->getFrameHeight(), 
             m->getTimingInfo().getStep().invert());
 
-        isx::Algorithm algo = isx::Algorithm(m);
-        REQUIRE(algo.IsValid());
-        algo.SetOutputMovie(outputMovie);
-        algo.ApplyApp();
+        isx::DeltaFoverF algo = isx::DeltaFoverF(m);
+        REQUIRE(algo.isValid());
+        algo.setOutputMovie(outputMovie);
+        algo.run([](float){return false;});
     }
 }

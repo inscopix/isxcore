@@ -13,6 +13,8 @@
 TEST_CASE("MovieTest", "[core]") {
     std::string testFile = g_resources["testDataPath"] + "/recording_20160426_145041.hdf5";
 
+    isx::CoreInitialize();
+
     SECTION("default constructor") {
         isx::Movie m;
         REQUIRE(!m.isValid());
@@ -185,7 +187,9 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(inputFrameBuffer[idx] == outputFrameBuffer[idx]);  
         REQUIRE(inputFrameBuffer[idx+1] == outputFrameBuffer[idx+1]);        
 
-    } 
+    }
+
+    isx::CoreShutdown();
 }
 
 TEST_CASE("MovieTestAsync", "[core]") {

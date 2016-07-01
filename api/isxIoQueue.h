@@ -4,9 +4,8 @@
 #include "isxCoreFwd.h"
 #include "isxObject.h"
 #include "isxDispatchQueueWorker.h"
+#include "isxMutex.h"
 
-#include <string>
-#include <vector>
 #include <memory>
 
 namespace isx {
@@ -46,13 +45,22 @@ public:
     SpDispatchQueueInterface_t
     instance();
 
+    /// Accessor for single global I/O mutex.
+    /// Use this for any I/O through HDF5.
+    /// \return Mutex for HDF5 I/O
+    static
+    Mutex &
+    getMutex();
+    
 private:
     IoQueue();
     IoQueue(const IoQueue & other) = delete;
     const IoQueue & operator=(const IoQueue & other) = delete;
 
     SpDispatchQueueWorker_t m_worker;
+    
     static std::unique_ptr<IoQueue> s_instance;
+    Mutex m_mutex;
 };
 
 } // namespace isx
