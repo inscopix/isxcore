@@ -135,8 +135,20 @@ getHdf5ObjNames(
     const std::string & inPath,
     std::vector<std::string> & outNames)
 {
-    H5::H5File file(inFileName.c_str(), H5F_ACC_RDONLY);
-    H5::Group rootGroup = file.openGroup(inPath);
+    H5::Group rootGroup;
+    
+    try
+    {
+        H5::H5File file(inFileName.c_str(), H5F_ACC_RDONLY);
+        rootGroup = file.openGroup(inPath);
+    }
+    catch (const H5::FileIException& error)
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Failure caused by H5File operations.\n", error.getDetailMsg());
+    }
+    
+    
     hsize_t nObjInGroup = rootGroup.getNumObjs();
 
     if (0 == nObjInGroup)

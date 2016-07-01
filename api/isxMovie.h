@@ -5,7 +5,6 @@
 #include "isxTime.h"
 #include "isxCoreFwd.h"
 #include "isxObject.h"
-#include "isxVideoFrame.h"
 #include "isxMutex.h"
 
 #include <string>
@@ -15,13 +14,7 @@
 
 namespace isx {
 
-/// type for an nvista movie video frame
-///
-typedef VideoFrame<uint16_t> U16VideoFrame_t;
 
-/// shared_ptr type for an nvista movie video frame
-///
-typedef std::shared_ptr<U16VideoFrame_t> SpU16VideoFrame_t;
 
 ///
 /// A class encapsulating an nVista movie file.
