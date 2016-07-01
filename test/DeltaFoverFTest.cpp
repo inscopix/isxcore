@@ -26,9 +26,6 @@ TEST_CASE("DeltaFoverFTest", "[!hide][core]") {
             m->getFrameHeight(), 
             m->getTimingInfo().getStep().invert());
 
-        isx::DeltaFoverF algo = isx::DeltaFoverF(m);
-        REQUIRE(algo.isValid());
-        algo.setOutputMovie(outputMovie);
-        algo.run([](float){return false;});
+        applyDff(m, outputMovie, [](float){return false;});
     }
 }
