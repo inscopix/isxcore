@@ -1,9 +1,6 @@
 #include "isxMovie.h"
-#include "isxHdf5FileHandle.h"
-#include "isxException.h"
-#include "isxAssert.h"
+#include "isxHdf5Movie.h"
 #include "isxIoQueue.h"
-#include "H5Cpp.h"
 #include <iostream>
 #include <vector>
 #include <sstream>
