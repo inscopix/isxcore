@@ -96,13 +96,19 @@ public:
     ///
     /// \param  inPoint     The point in pixels to convert.
     /// \return             The point in microns.
-    PointInMicrons_t convertPointInPixelsToMicrons(const PointInPixels_t inPoint) const;
+    PointInMicrons_t convertPointInPixelsToMicrons(const PointInPixels_t & inPoint) const;
 
-    ///// Converts a point in microns to a point in pixels.
-    /////
-    ///// \param  inPoint     The point in microns to convert.
-    ///// \return             The point in pixels.
-    //PointInMicrons_t convertPointInMicronsToPixels(const PointInMicrons_t inPoint) const;
+    /// Converts a point in microns to a point in pixel indices within these samples.
+    ///
+    /// The converted point in pixels is the pixel whose center is closest to the
+    /// input point in microns.
+    /// If the input point precedes or exceeds the bounds of these spatial samples
+    /// it will be effectively be clamped so that the converted point always
+    /// represents a pixel within these samples.
+    ///
+    /// \param  inPoint     The point in microns to convert.
+    /// \return             The point in pixels.
+    PointInPixels_t convertPointInMicronsToPixels(const PointInMicrons_t & inPoint) const;
 
     /// \param  other   The other spacing information with which to compare.
     /// \return         True if this is exactly equal to other, false otherwise.

@@ -7,7 +7,7 @@
 namespace isx
 {
 
-/// A vector in 2D space defined by x and y coorindates.
+/// A vector in 2D space defined by x and y coordinates.
 ///
 /// This class is templated so that it can also be used to store sizes
 /// and numbers of pixels, but still consistently refer to the x and
@@ -44,8 +44,13 @@ public:
     ///
     /// \param   other  The point to add.
     /// \return         The result of adding other to this.
-    template <typename TOther>
-    SpatialVector<T> operator +(const SpatialVector<TOther> & other) const;
+    SpatialVector<T> operator +(const SpatialVector<T> & other) const;
+
+    /// Subtraction where coordinate type must be the same as this.
+    ///
+    /// \param   other  The point to subtract.
+    /// \return         The result of subtracting other from this.
+    SpatialVector<T> operator -(const SpatialVector<T> & other) const;
 
     /// Multiplication where the coordinate type can be different to this.
     ///
@@ -53,6 +58,12 @@ public:
     /// \return         The result of multiplying this with other.
     template <typename TOther>
     SpatialVector<T> operator *(const SpatialVector<TOther> & other) const;
+
+    /// Division where the coordinate type must be as this.
+    ///
+    /// \param   other  The point with which to divide.
+    /// \return         The result of dividing this with other.
+    SpatialVector<T> operator /(const SpatialVector<T> & other) const;
 
     /// Exact comparison.
     ///
@@ -103,11 +114,17 @@ SpatialVector<T>::getY() const
 }
 
 template <typename T>
-template <typename TOther>
 SpatialVector<T>
-SpatialVector<T>::operator +(const SpatialVector<TOther> & other) const
+SpatialVector<T>::operator +(const SpatialVector<T> & other) const
 {
-    return isx::SpatialVector<T>(m_x + other.getX(), m_y + other.getY());
+    return isx::SpatialVector<T>(m_x + other.m_x, m_y + other.m_y);
+}
+
+template <typename T>
+SpatialVector<T>
+SpatialVector<T>::operator -(const SpatialVector<T> & other) const
+{
+    return isx::SpatialVector<T>(m_x - other.m_x, m_y - other.m_y);
 }
 
 template <typename T>
@@ -116,6 +133,13 @@ SpatialVector<T>
 SpatialVector<T>::operator *(const SpatialVector<TOther> & other) const
 {
     return isx::SpatialVector<T>(m_x * other.getX(), m_y * other.getY());
+}
+
+template <typename T>
+SpatialVector<T>
+SpatialVector<T>::operator /(const SpatialVector<T> & other) const
+{
+    return isx::SpatialVector<T>(m_x / other.m_x, m_y / other.m_y);
 }
 
 template <typename T>

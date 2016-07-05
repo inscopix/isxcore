@@ -1,4 +1,5 @@
 #include "isxSpacingInfo.h"
+#include <cmath>
 
 namespace isx
 {
@@ -69,28 +70,66 @@ SpacingInfo::getTotalSize() const
 }
 
 PointInMicrons_t
-SpacingInfo::convertPointInPixelsToMicrons(const PointInPixels_t inPoint) const
+SpacingInfo::convertPointInPixelsToMicrons(const PointInPixels_t & inPoint) const
 {
     // Clamp pixel indices that exceed range and protect against subtraction from 0
     isize_t xPixels = inPoint.getX();
     isize_t xNumPixels = m_numPixels.getX();
-    if (xNumPixels > 0 && xPixels >= xNumPixels)
+    if (xPixels >= xNumPixels && xNumPixels > 0)
     {
         xPixels = xNumPixels - 1;
     }
 
     isize_t yPixels = inPoint.getY();
     isize_t yNumPixels = m_numPixels.getY();
-    if (yNumPixels > 0 && yPixels >= yNumPixels)
+    if (yPixels >= yNumPixels && yNumPixels > 0)
     {
         yPixels = yNumPixels - 1;
     }
 
     PointInPixels_t pointInPixels(xPixels, yPixels);
 
-    // Multiply by pixel size and offset by center
-    PointInMicrons_t offset = m_pixelSize * PointInMicrons_t(Ratio(1, 2), Ratio(1, 2));
-    return (m_pixelSize * pointInPixels) + offset;
+    // Multiply by pixel size and offset by center and top left
+    PointInMicrons_t offset = m_pixelSize / SpatialVector<Ratio>(2, 2);
+    return (m_pixelSize * pointInPixels) + offset + m_topLeft;
+}
+
+PointInPixels_t
+SpacingInfo::convertPointInMicronsToPixels(const PointInMicrons_t & inPoint) const
+{
+    // Shift point by top left
+    PointInMicrons_t pointInMicrons = inPoint - m_topLeft;
+
+    // Divide by pixel size
+    SpatialVector<Ratio> pixelsRatio = pointInMicrons / m_pixelSize;
+
+    // Clamp and convert to positive indices
+    Ratio xPixelsRatio = pixelsRatio.getX();
+    Ratio xNumPixels = m_numPixels.getX();
+    if (xPixelsRatio < 0)
+    {
+        xPixelsRatio = 0;
+    }
+    else if (xPixelsRatio >= xNumPixels && xNumPixels > 0)
+    {
+        xPixelsRatio = xNumPixels - 1;
+    }
+
+    Ratio yPixelsRatio = pixelsRatio.getY();
+    Ratio yNumPixels = m_numPixels.getY();
+    if (yPixelsRatio < 0)
+    {
+        yPixelsRatio = 0;
+    }
+    else if (yPixelsRatio >= yNumPixels && yNumPixels > 0)
+    {
+        yPixelsRatio = yNumPixels - 1;
+    }
+
+    isize_t xPixels = static_cast<isize_t>(std::floor(xPixelsRatio.toDouble()));
+    isize_t yPixels = static_cast<isize_t>(std::floor(yPixelsRatio.toDouble()));
+
+    return PointInPixels_t(xPixels, yPixels);
 }
 
 bool
