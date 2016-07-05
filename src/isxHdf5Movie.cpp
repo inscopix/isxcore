@@ -1,4 +1,5 @@
 #include "isxHdf5Movie.h"
+#include "isxMovie.h"
 
 namespace isx
 {
@@ -181,7 +182,8 @@ namespace isx
 
     void Hdf5Movie::readProperties(TimingInfo & timingInfo)
     {
-        std::string propertyPath = m_path + "/Properties";
+        std::string basePath = m_path.substr(0, m_path.find_last_of("/"));
+        std::string propertyPath = basePath + "/Properties";
         H5::DataSet dataset;
 
         try
@@ -234,7 +236,8 @@ namespace isx
             /*
             * Create the dataset.
             */
-            std::string grName = m_path + "/Properties";
+            std::string basePath = m_path.substr(0, m_path.find_last_of("/"));
+            std::string grName = basePath + "/Properties";
             H5::Group grProperties = m_H5File->createGroup(grName);
             std::string dataset_name = "TimingInfo";
             H5::DataSet dataset = H5::DataSet(grProperties.createDataSet(dataset_name, getTimingInfoType(), space));

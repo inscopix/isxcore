@@ -9,15 +9,7 @@
 #include "isxHdf5Utils.h"
 #include "isxTimingInfo.h"
 
-namespace isx {
-
-    /// type for an nvista movie video frame
-    ///
-    typedef VideoFrame<uint16_t> U16VideoFrame_t;
-
-    /// shared_ptr type for an nvista movie video frame
-    ///
-    typedef std::shared_ptr<U16VideoFrame_t> SpU16VideoFrame_t;
+namespace isx {    
 
     class Hdf5Movie
     {

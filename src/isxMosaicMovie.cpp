@@ -1,14 +1,13 @@
+#include "isxMovieImpl.h"
 #include "isxMosaicMovie.h"
 #include "isxHdf5Utils.h"
 #include "isxHdf5Movie.h"
-#include "isxIoQueue.h"
 #include <iostream>
-#include <vector>
 #include <sstream>
 #include <queue>
 
 namespace isx {
-    class MosaicMovie::Impl : public std::enable_shared_from_this<MosaicMovie::Impl>
+    class MosaicMovie::Impl : public MovieImpl
     {
 
 
@@ -21,7 +20,6 @@ namespace isx {
         Impl(const SpH5File_t & inHdf5File, const std::string & inPath)
         {
             std::string moviePath = inPath + "/Movie";
-            std::string propertyPath = inPath + "/Properties";           
 
             m_movie = std::make_unique<Hdf5Movie>(inHdf5File, moviePath);            
 
@@ -52,12 +50,6 @@ namespace isx {
             isValid() const
         {
             return m_isValid;
-        }
-
-        isize_t
-            getNumFrames() const
-        {
-            return m_timingInfo.getNumTimes();
         }
 
         isize_t
@@ -96,77 +88,6 @@ namespace isx {
             return nvf;
         }
 
-        SpU16VideoFrame_t
-            getFrame(const Time & inTime)
-        {
-            isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
-            return getFrame(frameNumber);
-        }
-
-        void
-            getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
-        {
-            {
-                isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
-                m_frameRequestQueue.push(FrameRequest(inFrameNumber, inCallback));
-            }
-            processFrameQueue();
-        }
-
-        void
-            getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
-        {
-            isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
-            return getFrameAsync(frameNumber, inCallback);
-        }
-
-        void
-            processFrameQueue()
-        {
-            isx::ScopedMutex locker(m_frameRequestQueueMutex, "processFrameQueue");
-            if (!m_frameRequestQueue.empty())
-            {
-                FrameRequest fr = m_frameRequestQueue.front();
-                m_frameRequestQueue.pop();
-                WpImpl_t weakThis = shared_from_this();
-                IoQueue::instance()->dispatch([weakThis, this, fr]()
-                {
-                    SpImpl_t sharedThis = weakThis.lock();
-                    if (!sharedThis)
-                    {
-                        fr.m_callback(nullptr);
-                    }
-                    else
-                    {
-                        fr.m_callback(getFrame(fr.m_frameNumber));
-                        processFrameQueue();
-                    }
-                });
-            }
-        }
-
-        void
-            purgeFrameQueue()
-        {
-            isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
-            while (!m_frameRequestQueue.empty())
-            {
-                m_frameRequestQueue.pop();
-            }
-        }
-
-        double
-            getDurationInSeconds() const
-        {
-            return m_timingInfo.getDuration().toDouble();
-        }
-
-        const isx::TimingInfo &
-            getTimingInfo() const
-        {
-            return m_timingInfo;
-        }
-
         void
             serialize(std::ostream& strm) const
         {
@@ -193,18 +114,7 @@ namespace isx {
         }
 
     private:
-        class FrameRequest
-        {
-        public:
-            FrameRequest(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
-                : m_frameNumber(inFrameNumber)
-                , m_callback(inCallback) {}
-
-            isize_t             m_frameNumber;
-            MovieGetFrameCB_t   m_callback;
-        };
-
-        
+    
 
         /// A method to create a dummy TimingInfo object from the number of frames.
         ///
@@ -220,13 +130,6 @@ namespace isx {
         bool m_isValid = false;
 
         std::unique_ptr<Hdf5Movie> m_movie; 
-        isx::TimingInfo m_timingInfo;
-        std::queue<FrameRequest>    m_frameRequestQueue;
-        isx::Mutex                  m_frameRequestQueueMutex;
-
-        typedef std::shared_ptr<MosaicMovie::Impl> SpImpl_t;
-        typedef std::weak_ptr<MosaicMovie::Impl> WpImpl_t;
-
 
     };
 

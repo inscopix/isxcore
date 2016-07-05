@@ -4,17 +4,14 @@
 #include "isxTimingInfo.h"
 #include "isxTime.h"
 #include "isxCoreFwd.h"
-#include "isxObject.h"
-#include "isxMutex.h"
 #include "isxMovie.h"
 
 #include <string>
 #include <vector>
 #include <memory>
-#include <functional>
+
 
 namespace isx {
-
 
 
 ///
