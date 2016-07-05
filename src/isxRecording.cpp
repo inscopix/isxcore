@@ -1,5 +1,5 @@
 #include "isxRecording.h"
-#include "isxMovie.h"
+#include "isxNVistaMovie.h"
 #include "isxException.h"
 #include "isxAssert.h"
 #include "isxHdf5FileHandle.h"
@@ -33,7 +33,7 @@ public:
 
                 m_file = std::make_shared<H5::H5File>(m_path.c_str(), H5F_ACC_RDONLY);
                 m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, H5F_ACC_RDONLY);
-                m_movie = std::make_shared<Movie>(m_fileHandle, "/images");
+                m_movie = std::make_shared<NVistaMovie>(m_fileHandle, "/images");
 
                 // no exception until here --> this is a valid file
                 m_isValid = true;

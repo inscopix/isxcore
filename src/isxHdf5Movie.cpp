@@ -2,6 +2,15 @@
 
 namespace isx
 {
+
+    const std::string Hdf5Movie::sTimingInfoTimeSecsNum = "TimeSecsNum";
+    const std::string Hdf5Movie::sTimingInfoTimeSecsDen = "TimeSecsDen";
+    const std::string Hdf5Movie::sTimingInfoTimeOffset = "TimeOffset";
+    const std::string Hdf5Movie::sTimingInfoStepNum = "StepNum";
+    const std::string Hdf5Movie::sTimingInfoStepDen = "StepDen";
+    const std::string Hdf5Movie::sTimingInfoNumTimes = "NumTimes";
+
+
     Hdf5Movie::Hdf5Movie(const SpH5File_t & inHdf5File, const std::string & inPath)
         : m_H5File(inHdf5File)
         , m_path(inPath)
@@ -117,6 +126,138 @@ namespace isx
 
     void Hdf5Movie::writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
     {
+        
 
+        // Check that buffer size matches dataspace definition
+        if (inBufferSize != getFrameSizeInBytes())
+        {
+            ISX_THROW(isx::ExceptionUserInput,
+                "The buffer size (", inBufferSize, " B) does not match the frame size (",
+                getFrameSizeInBytes(), " B).");
+        }
+
+        // Check that frame number is within range
+        if (inFrameNumber > m_maxdims[0])
+        {
+            ISX_THROW(isx::ExceptionUserInput,
+                "Frame number (", inFrameNumber, ") exceeds the total number of frames (",
+                m_maxdims[0], ") in the movie.");
+        }
+
+        isx::internal::HSizeVector_t size = { 1, m_dims[1], m_dims[2] };
+        isx::internal::HSizeVector_t offset = { inFrameNumber, 0, 0 };
+        H5::DataSpace fileSpace = isx::internal::createHdf5SubSpace(
+            m_dataSpace, offset, size);
+        H5::DataSpace bufferSpace = isx::internal::createHdf5BufferSpace(
+            size);
+
+        // Write data to the dataset.
+        try
+        {
+            m_dataSet.write(inBuffer, m_dataType, bufferSpace, fileSpace);
+        }
+
+        // Catch failure caused by the DataSet operations
+        catch (const H5::DataSetIException &error)
+        {
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failed to write frame to movie.\n", error.getDetailMsg());
+        }
+    }
+
+    H5::CompType
+        Hdf5Movie::getTimingInfoType()
+    {
+        H5::CompType timingInfoType(sizeof(sTimingInfo_t));
+        timingInfoType.insertMember(sTimingInfoTimeSecsNum, HOFFSET(sTimingInfo_t, timeSecsNum), H5::PredType::NATIVE_INT64);
+        timingInfoType.insertMember(sTimingInfoTimeSecsDen, HOFFSET(sTimingInfo_t, timeSecsDen), H5::PredType::NATIVE_INT64);
+        timingInfoType.insertMember(sTimingInfoTimeOffset, HOFFSET(sTimingInfo_t, timeOffset), H5::PredType::NATIVE_INT32);
+        timingInfoType.insertMember(sTimingInfoStepNum, HOFFSET(sTimingInfo_t, stepNum), H5::PredType::NATIVE_INT64);
+        timingInfoType.insertMember(sTimingInfoStepDen, HOFFSET(sTimingInfo_t, stepDen), H5::PredType::NATIVE_INT64);
+        timingInfoType.insertMember(sTimingInfoNumTimes, HOFFSET(sTimingInfo_t, numTimes), H5::PredType::NATIVE_HSIZE);
+
+        return timingInfoType;
+    }
+
+    void Hdf5Movie::readProperties(TimingInfo & timingInfo)
+    {
+        std::string propertyPath = m_path + "/Properties";
+        H5::DataSet dataset;
+
+        try
+        {
+            dataset = m_H5File->openDataSet(propertyPath + "/TimingInfo");
+        }
+        catch (const H5::FileIException& error)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failure to read movie properties caused by H5 File operations.\n", error.getDetailMsg());
+        }
+        catch (const H5::GroupIException& error)
+        {
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failure to read movie properties caused by H5 Group operations.\n", error.getDetailMsg());
+        }
+
+        sTimingInfo_t t;
+        dataset.read(&t, getTimingInfoType());
+
+        Ratio secSinceEpoch(t.timeSecsNum, t.timeSecsDen);
+        Time start(secSinceEpoch, t.timeOffset);
+        Ratio step(t.stepNum, t.stepDen);
+        isize_t numTimes = t.numTimes;
+        timingInfo = TimingInfo(start, step, numTimes);
+    }
+
+    void Hdf5Movie::writeProperties(TimingInfo & timingInfo)
+    {
+        /*
+        * Initialize the data
+        */
+        Time time = timingInfo.getStart();
+        sTimingInfo_t t;
+        t.timeSecsNum = time.secsFrom(time).getNum();
+        t.timeSecsDen = time.secsFrom(time).getDen();
+        t.timeOffset = time.getUtcOffset();
+        t.stepNum = timingInfo.getStep().getNum();
+        t.stepDen = timingInfo.getStep().getDen();
+        t.numTimes = timingInfo.getNumTimes();
+
+        /*
+        * Create the data space.
+        */
+        hsize_t dim[] = { 1 };   /* Dataspace dimensions */
+        H5::DataSpace space(1, dim);
+
+        try
+        {
+            /*
+            * Create the dataset.
+            */
+            std::string grName = m_path + "/Properties";
+            H5::Group grProperties = m_H5File->createGroup(grName);
+            std::string dataset_name = "TimingInfo";
+            H5::DataSet dataset = H5::DataSet(grProperties.createDataSet(dataset_name, getTimingInfoType(), space));
+            /*
+            * Write data to the dataset;
+            */
+            dataset.write(&t, getTimingInfoType());
+        }
+
+        catch (const H5::DataSetIException &error)
+        {
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failed to write movie properties.\n", error.getDetailMsg());
+        }
+        catch (const H5::FileIException& error)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failure to write movie properties caused by H5 File operations.\n", error.getDetailMsg());
+        }
+        catch (const H5::GroupIException& error)
+        {
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failure to write movie properties caused by H5 Group operations.\n", error.getDetailMsg());
+        }
     }
 }

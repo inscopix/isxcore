@@ -7,6 +7,7 @@
 #include "isxAssert.h"
 #include "isxVideoFrame.h"
 #include "isxHdf5Utils.h"
+#include "isxTimingInfo.h"
 
 namespace isx {
 
@@ -51,8 +52,19 @@ namespace isx {
         {
             return m_dims[1];
         }
+        const std::string & 
+            getPath()
+        {
+            return m_path;
+        }
+
+        void readProperties(TimingInfo & timingInfo);
+        void writeProperties(TimingInfo & timingInfo);
 
     private:
+
+        H5::CompType getTimingInfoType();
+
         SpH5File_t m_H5File;
         std::string m_path;
 
@@ -63,6 +75,22 @@ namespace isx {
         int m_ndims;
         std::vector<hsize_t> m_dims;
         std::vector<hsize_t> m_maxdims;
+
+        typedef struct {
+            int64_t timeSecsNum;
+            int64_t timeSecsDen;
+            int32_t timeOffset;
+            int64_t stepNum;
+            int64_t stepDen;
+            isize_t numTimes;
+        } sTimingInfo_t;
+
+        static const std::string sTimingInfoTimeSecsNum;
+        static const std::string sTimingInfoTimeSecsDen;
+        static const std::string sTimingInfoTimeOffset;
+        static const std::string sTimingInfoStepNum;
+        static const std::string sTimingInfoStepDen;
+        static const std::string sTimingInfoNumTimes;
         
     };
 
