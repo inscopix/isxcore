@@ -18,7 +18,6 @@ namespace isx {
     {
     public:
         
-
         /// \return whether this is a valid movie object.
         ///
         virtual bool

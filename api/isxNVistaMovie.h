@@ -25,10 +25,15 @@ public:
     /// Default constructor.  Is a valid C++ object but not a valid Movie.
     ///
     NVistaMovie();
-
+    
+    /// Construct movie from a dataset in many HDF5 files from nVista.
+    /// \param inHdf5FileHandles vector of opaque HDF5 file handles from Recording.
+    /// \param inPaths Paths to dataset in each file in Recording.
+    /// \throw isx::ExceptionFileIO     If the file cannot be read.
+    /// \throw isx::ExceptionDataIO     If the dataset cannot be read.
     NVistaMovie(const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles, const std::vector<std::string> & inPaths);
 
-    /// Construct movie from a dataset in a Recording.
+    /// Construct movie from a dataset in one HDF5 file from nVista.
     /// \param inHdf5FileHandle opaque HDF5 file handle from Recording.
     /// \param inPath Path to dataset in Recording.
     /// \throw isx::ExceptionFileIO     If the file cannot be read.
