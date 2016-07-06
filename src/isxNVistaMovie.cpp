@@ -1,6 +1,6 @@
-#include "isxNVistaMovie.h"
-#include "isxHdf5Utils.h"
+#include "isxHdf5Movie.h"
 #include "isxMovieImpl.h"
+#include "isxNVistaMovie.h"
 #include <iostream>
 #include <vector>
 #include <sstream>
@@ -105,7 +105,7 @@ public:
         isize_t idx = getMovieIndex(inFrameNumber);
         if (idx > 0)
         {
-            isize_t newFrameNumber = inFrameNumber - m_cumulativeFrames[idx - 1];
+            newFrameNumber = inFrameNumber - m_cumulativeFrames[idx - 1];
         }        
 
         ScopedMutex locker(IoQueue::getMutex(), "getFrame");
@@ -230,7 +230,7 @@ NVistaMovie::getFrame(isize_t inFrameNumber)
 SpU16VideoFrame_t
 NVistaMovie::getFrame(const Time & inTime)
 {
-    return m_pImpl->getFrame(inTime);
+    return m_pImpl->getFrameByTime(inTime);
 }
 
 void

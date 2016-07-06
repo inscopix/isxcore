@@ -1,5 +1,5 @@
 #include "isxHdf5Movie.h"
-#include "isxMovie.h"
+#include "isxVideoFrame.h"
 
 namespace isx
 {

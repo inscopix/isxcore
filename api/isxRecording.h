@@ -3,7 +3,7 @@
 
 #include "isxCoreFwd.h"
 #include "isxObject.h"
-
+#include <vector>
 #include <string>
 #include <memory>
 
@@ -42,6 +42,13 @@ public:
     /// \return Opaque HDF5 file handle
     ///
     SpHdf5FileHandle_t getHdf5FileHandle();
+
+    /// Accessor for opaque HDF5 file handles
+    /// Can be used to create an isx::NVistaMovie instance
+    ///
+    /// \return Opaque HDF5 file handles
+    ///
+    std::vector<SpHdf5FileHandle_t> getHdf5FileHandles() const;
 
     /// Serialize the object into an output stream.
     ///

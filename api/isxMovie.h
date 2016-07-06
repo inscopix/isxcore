@@ -6,20 +6,9 @@
 #include "isxCore.h"
 #include "isxVideoFrame.h"
 #include "isxTimingInfo.h"
-#include <functional>
+#include "isxMovieDefs.h"
 
 namespace isx {
-    /// type for an nvista movie video frame
-    ///
-    typedef VideoFrame<uint16_t> U16VideoFrame_t;
-
-    /// shared_ptr type for an nvista movie video frame
-    ///
-    typedef std::shared_ptr<U16VideoFrame_t> SpU16VideoFrame_t;
-
-    /// Type of callback function to use to return video frames asynchronously
-    ///
-    typedef std::function<void(const SpU16VideoFrame_t & inVideoFrame)> MovieGetFrameCB_t;
 
     ///
     /// An API for a class encapsulating a movie.
@@ -95,6 +84,10 @@ namespace isx {
         ///
         virtual const isx::TimingInfo &
             getTimingInfo() const = 0;
+
+        /// \return     The name of the movie.
+        ///
+        virtual std::string getName() = 0;
 
     };
 

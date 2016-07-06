@@ -1,10 +1,11 @@
 #ifndef ISX_MOVIEIMPL_H
 #define ISX_MOVIEIMPL_H
-
-
+#include "isxCore.h"
+#include "isxMovieDefs.h"     // For MovieGetFrameCB_t & SpU16VideoFrame_t
 #include "isxIoQueue.h"
+#include "isxTimingInfo.h"
 #include <queue>
-#include "isxMovie.h"     // For MovieGetFrameCB_t & SpU16VideoFrame_t
+
 
 
 namespace isx 
@@ -12,18 +13,18 @@ namespace isx
     class MovieImpl : public std::enable_shared_from_this<MovieImpl>
     {
     public: 
+        
         virtual SpU16VideoFrame_t getFrame(isize_t inFrameNumber) = 0;
 
-
-        SpU16VideoFrame_t
-            getFrame(const Time & inTime)
+        virtual SpU16VideoFrame_t
+        getFrameByTime(const Time & inTime)
         {
             isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
             return getFrame(frameNumber);
         }
 
-        void
-            getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
+        virtual void
+        getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
         {
             {
                 isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
@@ -32,27 +33,27 @@ namespace isx
             processFrameQueue();
         }
 
-        void
-            getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
+        virtual void
+        getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
         {
             isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
             return getFrameAsync(frameNumber, inCallback);
         }
 
-        double
-            getDurationInSeconds() const
+        virtual double
+        getDurationInSeconds() const
         {
             return m_timingInfo.getDuration().toDouble();
         }
 
-        const isx::TimingInfo &
-            getTimingInfo() const
+        virtual const isx::TimingInfo &
+        getTimingInfo() const
         {
             return m_timingInfo;
         }
 
-        isize_t
-            getNumFrames() const
+        virtual isize_t
+        getNumFrames() const
         {
             return m_timingInfo.getNumTimes();
         }
@@ -70,7 +71,7 @@ namespace isx
         };
 
         void
-            processFrameQueue()
+        processFrameQueue()
         {
             isx::ScopedMutex locker(m_frameRequestQueueMutex, "processFrameQueue");
             if (!m_frameRequestQueue.empty())
@@ -95,7 +96,7 @@ namespace isx
         }
 
         void
-            purgeFrameQueue()
+        purgeFrameQueue()
         {
             isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
             while (!m_frameRequestQueue.empty())

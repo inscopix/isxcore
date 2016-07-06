@@ -1,5 +1,5 @@
 #include "isxRecording.h"
-#include "isxMovie.h"
+#include "isxNVistaMovie.h"
 #include "catch.hpp"
 #include "isxTest.h"
 
@@ -18,7 +18,7 @@ TEST_CASE("RecordingTest", "[core]") {
     SECTION("create movie from dataset in recording") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
-        isx::Movie m(r->getHdf5FileHandle(), "/images");
+        isx::NVistaMovie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
     }
 

@@ -14,6 +14,7 @@ namespace isx {
         /// Query whether the file described by the filename is a mosaic project or a recording file
         /// \param inFileName - file name of interest
         static bool isMosaicProject(const std::string & inFileName);
+        static std::string getExtension(const std::string & inFileName);
        
 
     };

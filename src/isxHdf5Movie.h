@@ -5,9 +5,10 @@
 #include "isxHdf5FileHandle.h"
 #include "isxException.h"
 #include "isxAssert.h"
-#include "isxVideoFrame.h"
 #include "isxHdf5Utils.h"
 #include "isxTimingInfo.h"
+#include "isxMovieDefs.h"
+
 
 namespace isx {    
 
@@ -64,7 +65,7 @@ namespace isx {
         H5::DataSpace m_dataSpace;
         H5::DataType m_dataType;
 
-        int m_ndims;
+        isize_t m_ndims;
         std::vector<hsize_t> m_dims;
         std::vector<hsize_t> m_maxdims;
 

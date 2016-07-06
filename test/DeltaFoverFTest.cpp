@@ -1,6 +1,6 @@
 #include "isxRecording.h"
 #include "isxDeltaFoverF.h"
-#include "isxMovie.h"
+#include "isxNVistaMovie.h"
 #include "isxProjectFile.h"
 #include "catch.hpp"
 
@@ -13,7 +13,7 @@ TEST_CASE("DeltaFoverFTest", "[!hide][core]") {
     SECTION("applyAppDFF") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
-        isx::SpMovie_t m = std::make_shared<isx::Movie>(r->getHdf5FileHandle(), "/images");
+        isx::SpMovie_t m = std::make_shared<isx::NVistaMovie>(r->getHdf5FileHandle(), "/images");
 
         std::string outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
         std::vector<std::string> inputName(1);

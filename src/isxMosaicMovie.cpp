@@ -1,4 +1,5 @@
 #include "isxMovieImpl.h"
+#include "isxVideoFrame.h"
 #include "isxMosaicMovie.h"
 #include "isxHdf5Utils.h"
 #include "isxHdf5Movie.h"
@@ -198,7 +199,7 @@ namespace isx {
     SpU16VideoFrame_t
         MosaicMovie::getFrame(const Time & inTime)
     {
-        return m_pImpl->getFrame(inTime);
+        return m_pImpl->getFrameByTime(inTime);
     }
 
     void

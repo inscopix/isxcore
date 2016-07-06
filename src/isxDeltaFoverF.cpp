@@ -2,6 +2,7 @@
 #include "isxMovie.h"
 #include "isxCoreFwd.h"
 #include "isxProjectFile.h"
+#include "isxMosaicMovie.h"
 
 #include <iostream>
 #include <limits>
@@ -162,6 +163,7 @@ namespace isx
                 return AsyncTaskHandle::FinishedStatus::CANCELLED;
             }
 
+            std::shared_ptr<isx::MosaicMovie> mosaicMovie = std::dynamic_pointer_cast<isx::MosaicMovie>(m_outputMovie);
             //output
             for (isize_t i = 0; i < nFrames; i++)
             {
@@ -172,7 +174,7 @@ namespace isx
 
                 scaleValues16(temp, min, max, output, nLength);
 
-                m_outputMovie->writeFrame(i, &output[0], nFrameSize);
+                mosaicMovie->writeFrame(i, &output[0], nFrameSize);
                 progress = ((float(i) / float(nFrames - 1)) + float(progressCurLoop)) / float(progressNumLoops);
                 if (m_checkInCB(progress))
                 {
