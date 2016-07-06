@@ -119,7 +119,11 @@ public:
     {
         for (isize_t m(0); m < m_movies.size(); ++m)
         {
-            strm << m_movies[m]->getPath() << std::endl;
+            if(m > 0)
+            {
+                strm << "\n";
+            }
+            strm << m_movies[m]->getPath();
         }
     }
     

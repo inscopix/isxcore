@@ -10,12 +10,19 @@
 
 namespace isx 
 {
+    /// A base class for the private implementation of movies
+    /// 
     class MovieImpl : public std::enable_shared_from_this<MovieImpl>
     {
     public: 
         
+        /// API for getting a frame from a movie
+        /// \param inFrameNumber the frame index
+        /// \return the video frame
         virtual SpU16VideoFrame_t getFrame(isize_t inFrameNumber) = 0;
 
+        /// \return the video frame with a time point as an input
+        /// \param inTime desired time point
         virtual SpU16VideoFrame_t
         getFrameByTime(const Time & inTime)
         {
@@ -23,6 +30,9 @@ namespace isx
             return getFrame(frameNumber);
         }
 
+        /// Get a frame asynchronously
+        /// \param inFrameNumber    frame number
+        /// \param inCallback   callback to execute when finished
         virtual void
         getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
         {
@@ -33,6 +43,9 @@ namespace isx
             processFrameQueue();
         }
 
+        /// Get frame asynchronously by time
+        /// \param inTime    time point
+        /// \param inCallback   callback to execute when finished
         virtual void
         getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
         {
@@ -40,18 +53,24 @@ namespace isx
             return getFrameAsync(frameNumber, inCallback);
         }
 
+        /// \return the duration of the movie in seconds
+        ///
         virtual double
         getDurationInSeconds() const
         {
             return m_timingInfo.getDuration().toDouble();
         }
 
+        /// \return timing information for the movie
+        ///
         virtual const isx::TimingInfo &
         getTimingInfo() const
         {
             return m_timingInfo;
         }
 
+        /// \return the total number of frames
+        ///
         virtual isize_t
         getNumFrames() const
         {
@@ -59,17 +78,25 @@ namespace isx
         }
 
     protected:
+    
+        /// a class representing a frame request
+        ///
         class FrameRequest
         {
         public:
+            /// constructor
+            /// \param inFrameNumber    frame number requested
+            /// \param inCallback       callback to execute when finished
             FrameRequest(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
                 : m_frameNumber(inFrameNumber)
                 , m_callback(inCallback) {}
 
-            isize_t             m_frameNumber;
-            MovieGetFrameCB_t   m_callback;
+            isize_t             m_frameNumber;  //!< frame index
+            MovieGetFrameCB_t   m_callback;     //!< callback to execute
         };
 
+        /// process next frame request
+        ///
         void
         processFrameQueue()
         {
@@ -95,6 +122,8 @@ namespace isx
             }
         }
 
+        /// Purge queue
+        ///
         void
         purgeFrameQueue()
         {
@@ -106,13 +135,13 @@ namespace isx
         }
 
 
-        isx::TimingInfo m_timingInfo;
+        isx::TimingInfo m_timingInfo;                   //!< Movie timing information
 
-        std::queue<FrameRequest>    m_frameRequestQueue;
-        isx::Mutex                  m_frameRequestQueueMutex;
+        std::queue<FrameRequest>    m_frameRequestQueue;        //!< Frame request queue
+        isx::Mutex                  m_frameRequestQueueMutex;   //!< Queue mutex
 
-        typedef std::shared_ptr<MovieImpl> SpImpl_t;
-        typedef std::weak_ptr<MovieImpl> WpImpl_t;
+        typedef std::shared_ptr<MovieImpl> SpImpl_t;    //!< shared pointer
+        typedef std::weak_ptr<MovieImpl> WpImpl_t;      //!< weak pointer
     };
 }
 
