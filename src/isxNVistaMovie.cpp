@@ -26,7 +26,8 @@ public:
 
         for (isize_t f(0); f < inHdf5Files.size(); ++f)
         {
-            m_movies.push_back(std::make_unique<Hdf5Movie>(inHdf5Files[f], inPaths[f]));
+            std::unique_ptr<Hdf5Movie> p( new Hdf5Movie(inHdf5Files[f], inPaths[f]) );
+            m_movies.push_back(std::move(p));
             
             if (f > 1)
             {
@@ -51,8 +52,8 @@ public:
 
     Impl(const SpH5File_t & inHdf5File, const std::string & inPath)
     {
-
-        m_movies.push_back(std::make_unique<Hdf5Movie>(inHdf5File, inPath));
+        std::unique_ptr<Hdf5Movie> p( new Hdf5Movie(inHdf5File, inPath) );
+        m_movies.push_back(std::move(p));
         m_cumulativeFrames.push_back(m_movies[0]->getNumFrames());
         
         // TODO sweet 2016/05/31 : the start and step should be read from

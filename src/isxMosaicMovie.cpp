@@ -22,7 +22,7 @@ namespace isx {
         {
             std::string moviePath = inPath + "/Movie";
 
-            m_movie = std::make_unique<Hdf5Movie>(inHdf5File, moviePath);            
+            m_movie.reset(new Hdf5Movie(inHdf5File, moviePath));            
 
             // TODO sweet 2016/05/31 : the start and step should be read from
             // the file but it doesn't currently contain these, so picking some
@@ -38,7 +38,7 @@ namespace isx {
             : m_isValid(false)
         {
 
-            m_movie = std::make_unique<Hdf5Movie>(inHdf5File, inPath + "/Movie", inNumFrames, inFrameWidth, inFrameHeight);            
+            m_movie.reset(new Hdf5Movie(inHdf5File, inPath + "/Movie", inNumFrames, inFrameWidth, inFrameHeight));            
             // TODO sweet 2016/09/31 : the start and step should also be specified
             // but we don't currently have a mechnanism for that
             m_timingInfo = createDummyTimingInfo(inNumFrames, inFrameRate);
