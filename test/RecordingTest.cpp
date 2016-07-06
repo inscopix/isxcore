@@ -29,9 +29,9 @@ TEST_CASE("RecordingTest", "[core]") {
     
     SECTION("Load recording XML", "[core]")
     {
-        std::string testXML = g_resources["testDataPath"] + "/xml/recording_20160706_132714.xml";
-        std::string testHDF5_0 = g_resources["testDataPath"] + "/xml/recording_20160706_132714.hdf5";
-        std::string testHDF5_1 = g_resources["testDataPath"] + "/xml/recording_20160706_132714-001.hdf5";
+        std::string testXML = g_resources["testDataPath"] + "/recording_20160706_132714.xml";
+        std::string testHDF5_0 = g_resources["testDataPath"] + "/recording_20160706_132714.hdf5";
+        std::string testHDF5_1 = g_resources["testDataPath"] + "/recording_20160706_132714-001.hdf5";
         
         isx::SpRecording_t rXml  = std::make_shared<isx::Recording>(testXML);
         isx::SpRecording_t rHdf0 = std::make_shared<isx::Recording>(testHDF5_0);
