@@ -42,6 +42,21 @@ public:
     /// \param inFinishedCB callback function to call when task finished
     AsyncTaskHandle(AsyncTask_t inTask, ProgressCB_t inProgressCB, FinishedCB_t inFinishedCB);
 
+    /// helper function template to create an async task
+    /// \param inFunc function to call as part of task
+    /// \param inSrc source data to pass into inFunc
+    /// \param outDst destination where inFunc should write its output
+    template <typename TF, typename TI, typename TO>
+    static
+    AsyncTask_t 
+    MakeAsyncTask(TF inFunc, TI inSrc, TO outDst)
+    {
+        return [inFunc, inSrc, outDst](isx::AsyncTaskHandle::CheckInCB_t inCheckInCB)
+            {
+                return inFunc(inSrc, outDst, inCheckInCB);
+            };
+    }
+
     /// cancel this task
     /// cancellation is complete when m_finishedCB is called with FinishedStatus CANCELLED
     void 
