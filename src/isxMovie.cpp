@@ -140,7 +140,7 @@ public:
 
         // TODO sweet 2016/09/31 : the start and step should also be specified
         // but we don't currently have a mechnanism for that
-        m_timingInfo = isx::TimingInfo(isx::Time(m_dims[0]), inFrameRate.invert(), m_dims[0]);
+        m_timingInfo = isx::TimingInfo(isx::Time(), inFrameRate.invert(), m_dims[0]);
         writeProperties();
     }
 

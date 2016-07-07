@@ -144,9 +144,9 @@ TEST_CASE("MovieTest", "[core]") {
         isx::isize_t nFrames = inputMovie.getNumFrames();
         isx::isize_t nCols  = inputMovie.getFrameWidth();
         isx::isize_t nRows  = inputMovie.getFrameHeight();
- 		isx::TimingInfo timingInfo = inputMovie.getTimingInfo();
+        isx::TimingInfo timingInfo = inputMovie.getTimingInfo();
         isx::Ratio timeStep = timingInfo.getStep();
-		isx::Ratio frameRate = timeStep.invert();
+        isx::Ratio frameRate = timeStep.invert();
 
         // Create the output
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
