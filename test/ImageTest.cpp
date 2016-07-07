@@ -12,8 +12,8 @@ TEST_CASE("ImageTest", "[core]") {
     {
         isx::Image<uint32_t> i;
         uint32_t * p = 0;
-        REQUIRE(i.getWidth() == 0);
-        REQUIRE(i.getHeight() == 0);
+        REQUIRE(i.getWidth() == 1);
+        REQUIRE(i.getHeight() == 1);
         REQUIRE(i.getRowBytes() == 0);
         REQUIRE(i.getNumChannels() == 0);
         REQUIRE(i.getPixelSizeInBytes() == 0);

@@ -10,6 +10,8 @@ namespace isx
 
 /// A point in 2D space defined by x and y coordindates w.r.t. an origin.
 ///
+/// A point contains a SpatialVector, but does not derive from because
+/// operators on points should be more restricted than operators on vectors.
 template <typename T>
 class SpatialPoint : public Object
 {

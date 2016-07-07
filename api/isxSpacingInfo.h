@@ -12,6 +12,9 @@ namespace isx
 {
 
 // Vectors, sizes and points in pixels.
+// Note that we use signed int for pixel vectors because we want to store
+// negative pixel differences for intermediate calculations and for things
+// like pixel translations.
 typedef SpatialVector<int64_t> VectorInPixels_t;
 typedef SpatialSize<isize_t> SizeInPixels_t;
 typedef SpatialPoint<isize_t> PointInPixels_t;

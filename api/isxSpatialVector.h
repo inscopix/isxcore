@@ -17,7 +17,7 @@ class SpatialVector : public Object
 {
 public:
 
-    /// Default constructor.
+    /// Empty constructor.
     ///
     /// Initially the coordinates are (0, 0).
     SpatialVector();

@@ -12,7 +12,7 @@ TEST_CASE("VideoFrameTest", "[core]") {
     {
         isx::VideoFrame<uint32_t> v;
         uint32_t * p = 0;
-        REQUIRE(v.getWidth() == 0);
+        REQUIRE(v.getWidth() == 1);
         REQUIRE(v.getPixels() == p);
         REQUIRE(v.getTimeStamp() == isx::Time());
         REQUIRE(v.getFrameIndex() == 0);

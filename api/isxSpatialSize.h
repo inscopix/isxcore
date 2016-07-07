@@ -9,16 +9,18 @@
 namespace isx
 {
 
-/// A size in 2D space defined by positive widths and heights.
+/// A size in 2D space defined by positive x and y coordinates.
 ///
+/// This class inherits from SpatialVector because a size really is a
+/// positive vector.
 template <typename T>
 class SpatialSize : public SpatialVector<T>
 {
 public:
 
-    /// Default constructor.
+    /// Empty constructor.
     ///
-    /// Initially the sizes are (1440, 1080).
+    /// Initially the sizes are (1, 1).
     SpatialSize();
 
     /// Constructor that allows for specification of (x, y) sizes.
@@ -48,16 +50,16 @@ public:
 // Implementation
 template <typename T>
 SpatialSize<T>::SpatialSize()
-    : SpatialVector<T>()
+    : SpatialVector<T>(1, 1)
 {
 }
 
 template <typename T>
-SpatialSize<T>::SpatialSize(T width, T height)
-    : SpatialVector<T>(width, height)
+SpatialSize<T>::SpatialSize(T x, T y)
+    : SpatialVector<T>(x, y)
 {
-    ISX_ASSERT(width > 0, "Width must be positive.");
-    ISX_ASSERT(height > 0, "Height must be positive.");
+    ISX_ASSERT(x > 0, "Width must be positive.");
+    ISX_ASSERT(y > 0, "Height must be positive.");
 }
 
 template <typename T>
