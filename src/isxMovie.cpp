@@ -77,11 +77,11 @@ public:
             ISX_ASSERT(false, "Unhandled exception.");
         }
         
-        // TODO sweet 2016/05/31 : the start and step should be read from
-        // the file but it doesn't currently contain these, so picking some
-        // dummy values
-        isx::Ratio frameRate(30, 1);
-        m_timingInfo = createDummyTimingInfo(m_dims[0], frameRate);
+        // TODO michele 2016/07/07 : pulling these values from HDF5 recording. 
+        // time since epoch comes from host machine and frame rate is calculated,
+        // so these values are not what we really want. probably want to pull these 
+        // from the xml eventually
+        m_timingInfo = readTimingInfo(m_H5File->openDataSet("/timeStamp"));
         readProperties(propertyPath);
     }
     
@@ -140,9 +140,8 @@ public:
 
         // TODO sweet 2016/09/31 : the start and step should also be specified
         // but we don't currently have a mechnanism for that
-        m_timingInfo = createDummyTimingInfo(m_dims[0], inFrameRate);
+        m_timingInfo = isx::TimingInfo(isx::Time(m_dims[0]), inFrameRate.invert(), m_dims[0]);
         writeProperties();
-
     }
 
     bool
@@ -451,11 +450,32 @@ private:
     /// A method to create a dummy TimingInfo object from the number of frames.
     ///
     isx::TimingInfo
-    createDummyTimingInfo(isize_t numFrames, isx::Ratio inFrameRate)
+    readTimingInfo(H5::DataSet timingInfoDataSet)
     {
-        isx::Time start = isx::Time();
-        isx::Ratio step = inFrameRate.invert();
-        return isx::TimingInfo(start, step, numFrames);
+        std::vector<hsize_t> timingInfoDims;
+        std::vector<hsize_t> timingInfoMaxDims;
+        isx::internal::getHdf5SpaceDims(timingInfoDataSet.getSpace(), timingInfoDims, timingInfoMaxDims);
+
+        //isx::internal::HSizeVector_t size = { 1, timingInfoDims[0] };
+        //isx::internal::HSizeVector_t offset = { 0, 0 };
+        //H5::DataSpace fileSpace = isx::internal::createHdf5SubSpace(m_dataSpace, offset, size);
+        //H5::DataSpace bufferSpace = isx::internal::createHdf5BufferSpace(size);
+
+        double *buffer = new double[timingInfoDims[0]];
+
+        timingInfoDataSet.read(buffer, timingInfoDataSet.getDataType());
+
+        // get isx::Ratio object (in ms)
+		double temp = 0;
+		for (int i = 0; i < timingInfoDims[0] - 1; i++)
+		{
+			temp += buffer[i + 1] - buffer[i];
+		}
+		temp *= 1000.0 / double(timingInfoDims[0]);
+
+        isx::Ratio step = isx::Ratio(int64_t(temp), 1000);
+        isx::Time start = isx::Time(int64_t(buffer[0]));
+        return isx::TimingInfo(start, step, timingInfoDims[0]);
     }
 
     bool
