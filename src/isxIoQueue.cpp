@@ -5,7 +5,6 @@ namespace isx
 {
 std::unique_ptr<IoQueue> IoQueue::s_instance;
 
-
 IoQueue::IoQueue()
 {
     m_worker = std::make_shared<DispatchQueueWorker>();
@@ -51,4 +50,11 @@ IoQueue::instance()
     }
     return 0;
 }
+
+Mutex &
+IoQueue::getMutex()
+{
+    return s_instance->m_mutex;
+}
+
 } // namespace isx

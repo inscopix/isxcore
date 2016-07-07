@@ -10,6 +10,7 @@
         /Mosaic Version
         /Operating System
         /Original Input File
+        /File Version
     /History
         /History item 1
             /Type
@@ -37,8 +38,8 @@
         /Series item 1
             /Recording item 1
                 /Properties
-                    /FrameRate
-                    /DateOfCreation
+                    /TimingInfo
+                    /SpacingInfo
                 /Movie
                 :
                 :

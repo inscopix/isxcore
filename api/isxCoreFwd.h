@@ -19,6 +19,7 @@ namespace isx
     FWD_DECLARE_WITH_PTRS(Hdf5FileHandle);
     FWD_DECLARE_WITH_PTRS(DispatchQueueInterface);
     FWD_DECLARE_WITH_PTRS(DispatchQueueWorker);
+    FWD_DECLARE_WITH_PTRS(AsyncTaskHandle);
 } // namespace isx
 
 

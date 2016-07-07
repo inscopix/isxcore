@@ -3,8 +3,10 @@
 
 #include <stddef.h>
 
+
 namespace isx
 {
+
     /// The type of all sizes, lengths and indices
     typedef size_t isize_t;
 
