@@ -27,8 +27,7 @@ namespace isx {
             // TODO sweet 2016/05/31 : the start and step should be read from
             // the file but it doesn't currently contain these, so picking some
             // dummy values
-            isx::Ratio frameRate(30, 1);
-            m_timingInfo = createDummyTimingInfo(m_movie->getNumFrames(), frameRate);
+            isx::Ratio frameRate(30, 1);            
             m_movie->readProperties(m_timingInfo);
             m_isValid = true;
         }
