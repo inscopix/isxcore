@@ -81,7 +81,7 @@ TEST_CASE("SpacingInfoTest", "[core]")
 
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
-        std::string expected = "SpacingInfo(NumPixels=(600, 500), PixelSize=(22 / 10, 44 / 10), TopLeft=(22 / 1, 44 / 1))";
+        std::string expected = "SpacingInfo(NumPixels=600 x 500, PixelSize=22 / 10 x 44 / 10, TopLeft=(22 / 1, 44 / 1))";
         REQUIRE(spacingInfo.toString() == expected);
     }
 
@@ -95,6 +95,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     isx::PointInMicrons_t topLeft(isx::Ratio(66, 10), isx::Ratio(44, 10));
     isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
+    // Pixels to microns
     SECTION("Convert a point in pixels to a point in microns (x equals 0)")
     {
         isx::PointInPixels_t pointInPixels(0, 3);
@@ -127,6 +128,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
         REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(165, 10), isx::Ratio(165, 10)));
     }
 
+    // Microns to pixels
     SECTION("Convert a point in microns to a point in pixels (x equals left)")
     {
         isx::PointInMicrons_t pointInMicrons(isx::Ratio(66, 10), isx::Ratio(121, 10));

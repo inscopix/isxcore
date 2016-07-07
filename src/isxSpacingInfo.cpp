@@ -1,4 +1,5 @@
 #include "isxSpacingInfo.h"
+#include <algorithm>
 #include <cmath>
 
 namespace isx
@@ -30,7 +31,7 @@ SpacingInfo::getTopLeft() const
 PointInMicrons_t
 SpacingInfo::getBottomRight() const
 {
-    return m_topLeft + getTotalSize();
+    return m_topLeft + getTotalSize().getVector();
 }
 
 SizeInMicrons_t
@@ -48,19 +49,19 @@ SpacingInfo::getNumPixels() const
 isize_t
 SpacingInfo::getNumRows() const
 {
-    return m_numPixels.getY();
+    return m_numPixels.getHeight();
 }
 
 isize_t
 SpacingInfo::getNumColumns() const
 {
-    return m_numPixels.getX();
+    return m_numPixels.getWidth();
 }
 
 isize_t
 SpacingInfo::getTotalNumPixels() const
 {
-    return m_numPixels.getX() * m_numPixels.getY();
+    return m_numPixels.getWidth() * m_numPixels.getHeight();
 }
 
 SizeInMicrons_t
@@ -72,64 +73,40 @@ SpacingInfo::getTotalSize() const
 PointInMicrons_t
 SpacingInfo::convertPointInPixelsToMicrons(const PointInPixels_t & inPoint) const
 {
-    // Clamp pixel indices that exceed range and protect against subtraction from 0
-    isize_t xPixels = inPoint.getX();
-    isize_t xNumPixels = m_numPixels.getX();
-    if (xPixels >= xNumPixels && xNumPixels > 0)
-    {
-        xPixels = xNumPixels - 1;
-    }
-
-    isize_t yPixels = inPoint.getY();
-    isize_t yNumPixels = m_numPixels.getY();
-    if (yPixels >= yNumPixels && yNumPixels > 0)
-    {
-        yPixels = yNumPixels - 1;
-    }
-
+    // Clamp pixel indices that exceed range
+    isize_t xPixels = std::min(inPoint.getX(), m_numPixels.getWidth() - 1);
+    isize_t yPixels = std::min(inPoint.getY(), m_numPixels.getHeight() - 1);
     PointInPixels_t pointInPixels(xPixels, yPixels);
 
-    // Multiply by pixel size and offset by center and top left
-    PointInMicrons_t offset = m_pixelSize / SpatialVector<Ratio>(2, 2);
-    return (m_pixelSize * pointInPixels) + offset + m_topLeft;
+    // Scale the point's vector by the pixel size
+    VectorInMicrons_t vectorInMicrons = m_pixelSize.getVector() * pointInPixels.getVector();
+
+    // Offset by the top left and the center of a pixel
+    SizeInMicrons_t centerOffset = m_pixelSize / SizeInPixels_t(2, 2);
+    return m_topLeft + centerOffset.getVector() + vectorInMicrons;
 }
 
 PointInPixels_t
 SpacingInfo::convertPointInMicronsToPixels(const PointInMicrons_t & inPoint) const
 {
-    // Shift point by top left
-    PointInMicrons_t pointInMicrons = inPoint - m_topLeft;
+    // Find vector from top left to this input point
+    VectorInMicrons_t vectorInMicrons = inPoint - m_topLeft;
 
-    // Divide by pixel size
-    SpatialVector<Ratio> pixelsRatio = pointInMicrons / m_pixelSize;
+    // Divide that vector by the pixel size
+    SpatialVector<Ratio> vectorInPixels = vectorInMicrons / m_pixelSize.getVector();
 
-    // Clamp and convert to positive indices
-    Ratio xPixelsRatio = pixelsRatio.getX();
-    Ratio xNumPixels = m_numPixels.getX();
-    if (xPixelsRatio < 0)
-    {
-        xPixelsRatio = 0;
-    }
-    else if (xPixelsRatio >= xNumPixels && xNumPixels > 0)
-    {
-        xPixelsRatio = xNumPixels - 1;
-    }
+    // Clamp and convert to indices
+    double xPixels = vectorInPixels.getX().toDouble();
+    xPixels = std::max(xPixels, double(0));
+    xPixels = std::min(xPixels, double(m_numPixels.getWidth() - 1));
+    xPixels = std::floor(xPixels);
 
-    Ratio yPixelsRatio = pixelsRatio.getY();
-    Ratio yNumPixels = m_numPixels.getY();
-    if (yPixelsRatio < 0)
-    {
-        yPixelsRatio = 0;
-    }
-    else if (yPixelsRatio >= yNumPixels && yNumPixels > 0)
-    {
-        yPixelsRatio = yNumPixels - 1;
-    }
+    double yPixels = vectorInPixels.getY().toDouble();
+    yPixels = std::max(yPixels, double(0));
+    yPixels = std::min(yPixels, double(m_numPixels.getHeight() - 1));
+    yPixels = std::floor(yPixels);
 
-    isize_t xPixels = static_cast<isize_t>(std::floor(xPixelsRatio.toDouble()));
-    isize_t yPixels = static_cast<isize_t>(std::floor(yPixelsRatio.toDouble()));
-
-    return PointInPixels_t(xPixels, yPixels);
+    return PointInPixels_t(static_cast<isize_t>(xPixels), static_cast<isize_t>(yPixels));
 }
 
 bool

@@ -20,7 +20,7 @@ public:
     /// Default constructor
     ///
     Image()
-        : m_spacingInfo(SizeInPixels_t(0, 0))
+        : m_spacingInfo(SizeInPixels_t())
     {
     }
 

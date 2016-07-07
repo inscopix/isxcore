@@ -4,22 +4,22 @@
 #include "isxCore.h"
 #include "isxObject.h"
 #include "isxSpatialVector.h"
+#include "isxSpatialSize.h"
+#include "isxSpatialPoint.h"
 #include "isxRatio.h"
 
 namespace isx
 {
 
-/// The size of some spatial samples in pixels.
-typedef SpatialVector<isize_t> SizeInPixels_t;
+// Vectors, sizes and points in pixels.
+typedef SpatialVector<int64_t> VectorInPixels_t;
+typedef SpatialSize<isize_t> SizeInPixels_t;
+typedef SpatialPoint<isize_t> PointInPixels_t;
 
-/// The size of some spatial samples in microns.
-typedef SpatialVector<Ratio> SizeInMicrons_t;
-
-/// The coordinates of a spatial sample in pixels w.r.t. to a (0, 0) origin.
-typedef SpatialVector<isize_t> PointInPixels_t;
-
-/// The coordinates of a spatial sample in microns w.r.t. to a (0, 0) origin.
-typedef SpatialVector<Ratio> PointInMicrons_t;
+// Vectors, sizes and points in microns.
+typedef SpatialVector<Ratio> VectorInMicrons_t;
+typedef SpatialPoint<Ratio> PointInMicrons_t;
+typedef SpatialSize<Ratio> SizeInMicrons_t;
 
 /// The spacing info associated with spatial samples.
 ///
