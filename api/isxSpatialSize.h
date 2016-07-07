@@ -12,7 +12,7 @@ namespace isx
 /// A size in 2D space defined by positive widths and heights.
 ///
 template <typename T>
-class SpatialSize : public Object
+class SpatialSize : public SpatialVector<T>
 {
 public:
 
@@ -21,11 +21,11 @@ public:
     /// Initially the sizes are (1440, 1080).
     SpatialSize();
 
-    /// Constructor that allows for specification of (x, y) coordinates.
+    /// Constructor that allows for specification of (x, y) sizes.
     ///
-    /// \param   width  The width.
-    /// \param   height The height.
-    SpatialSize(T width, T height);
+    /// \param  x       The x size or width.
+    /// \param  y       The y size of height.
+    SpatialSize(T x, T y);
 
     /// Constructor from a vector.
     ///
@@ -40,50 +40,21 @@ public:
     ///
     T getHeight() const;
 
-    /// \return         The vector containing the width and height.
-    ///
-    SpatialVector<T> getVector() const;
-
-    /// Multiplication with another size of any type.
-    ///
-    /// \param   other  The size with which to multiply.
-    /// \return         The result of multiplying this with other.
-    template <typename TOther>
-    SpatialSize<T> operator *(const SpatialSize<TOther> & other) const;
-
-    /// Division with another size of any type.
-    ///
-    /// \param   other  The size with which to divide.
-    /// \return         The result of dividing this with other.
-    template <typename TOther>
-    SpatialSize<T> operator /(const SpatialSize<TOther> & other) const;
-
-    /// Exact comparison.
-    ///
-    /// \param   other  The size with which to compare.
-    /// \return         True if this is exactly equal to the other size.
-    bool operator ==(const SpatialSize<T> & other) const;
-
     // Overrides
     virtual void serialize(std::ostream & strm) const;
-
-private:
-
-    /// This handles most of the implementation.
-    SpatialVector<T> m_vector;
 
 }; // class
 
 // Implementation
 template <typename T>
 SpatialSize<T>::SpatialSize()
-    : m_vector(SpatialVector<T>())
+    : SpatialVector<T>()
 {
 }
 
 template <typename T>
 SpatialSize<T>::SpatialSize(T width, T height)
-    : m_vector(SpatialVector<T>(width, height))
+    : SpatialVector<T>(width, height)
 {
     ISX_ASSERT(width > 0, "Width must be positive.");
     ISX_ASSERT(height > 0, "Height must be positive.");
@@ -91,7 +62,7 @@ SpatialSize<T>::SpatialSize(T width, T height)
 
 template <typename T>
 SpatialSize<T>::SpatialSize(const SpatialVector<T> & vector)
-    : m_vector(vector)
+    : SpatialVector<T>(vector)
 {
 }
 
@@ -99,51 +70,21 @@ template <typename T>
 T
 SpatialSize<T>::getWidth() const
 {
-    return m_vector.getX();
+    return this->getX();
 }
 
 template <typename T>
 T
 SpatialSize<T>::getHeight() const
 {
-    return m_vector.getY();
-}
-
-template <typename T>
-SpatialVector<T>
-SpatialSize<T>::getVector() const
-{
-    return m_vector;
-}
-
-template <typename T>
-template <typename TOther>
-SpatialSize<T>
-SpatialSize<T>::operator *(const SpatialSize<TOther> & other) const
-{
-    return SpatialSize<T>(getVector() * other.getVector());
-}
-
-template <typename T>
-template <typename TOther>
-SpatialSize<T>
-SpatialSize<T>::operator /(const SpatialSize<TOther> & other) const
-{
-    return SpatialSize<T>(getVector() / other.getVector());
-}
-
-template <typename T>
-bool
-SpatialSize<T>::operator ==(const SpatialSize<T> & other) const
-{
-    return getVector() == other.getVector();
+    return this->getY();
 }
 
 template <typename T>
 void
 SpatialSize<T>::serialize(std::ostream & strm) const
 {
-    strm << getWidth() << " x " << getHeight();
+    strm << this->getX() << " x " << this->getY();
 }
 
 } // namespace
