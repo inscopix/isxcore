@@ -45,5 +45,11 @@ InputFileParser::isMosaicProject(const std::string & inFileName)
     return bMosaicProject;
 }
 
+std::string 
+InputFileParser::getExtension(const std::string & inFileName)
+{
+    return inFileName.substr(inFileName.find_last_of(".") + 1);
+}
+
 
 }

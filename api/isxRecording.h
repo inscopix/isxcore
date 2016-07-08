@@ -3,7 +3,7 @@
 
 #include "isxCoreFwd.h"
 #include "isxObject.h"
-
+#include <vector>
 #include <string>
 #include <memory>
 
@@ -26,7 +26,7 @@ public:
 
     /// Construct recording from a given file.
     ///
-    /// \param inPath Path to recording file.
+    /// \param inPath Path to recording file (can be an XML or a HDF5).
     /// \throw isx::ExceptionFileIO     If the file cannot be read.
     /// \throw isx::ExceptionDataIO     If the dataset cannot be read.
     Recording(const std::string & inPath);
@@ -37,11 +37,17 @@ public:
     isValid() const;
 
     /// Accessor for opaque HDF5 file handle
-    /// Can be used to create an isx::Movie instance
     ///
     /// \return Opaque HDF5 file handle
     ///
     SpHdf5FileHandle_t getHdf5FileHandle();
+
+    /// Accessor for opaque HDF5 file handles
+    /// Can be used to create an isx::NVistaMovie instance
+    ///
+    /// \return Opaque HDF5 file handles
+    ///
+    std::vector<SpHdf5FileHandle_t> getHdf5FileHandles() const;
 
     /// Serialize the object into an output stream.
     ///
