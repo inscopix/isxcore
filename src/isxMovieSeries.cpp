@@ -1,6 +1,6 @@
 #include "isxHdf5FileHandle.h" 
 #include "isxMovieSeries.h"
-#include "isxMovie.h"
+#include "isxMosaicMovie.h"
 
 namespace isx {
 
@@ -33,7 +33,7 @@ namespace isx {
                 {
                     std::string objName = MovieSeriesGroup.getObjnameByIdx(m);
                     std::string path = m_path + "/" + objName;
-                    m_movies[m].reset(new Movie(m_fileHandle, path));
+                    m_movies[m].reset(new MosaicMovie(m_fileHandle, path));
                 }
             }
         }
@@ -64,7 +64,7 @@ namespace isx {
         addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
         {
             std::string path = m_path + "/" + inName;  
-            m_movies.push_back(std::make_shared<Movie>(m_fileHandle, path, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate));
+            m_movies.push_back(std::make_shared<MosaicMovie>(m_fileHandle, path, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate));
             return m_movies[m_movies.size()-1];
         }
         
