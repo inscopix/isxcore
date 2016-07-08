@@ -30,7 +30,7 @@ namespace isx
 
             isx::internal::getHdf5SpaceDims(m_dataSpace, m_dims, m_maxdims);
 
-            int numDims = m_dims.size();
+            hsize_t numDims = m_dims.size();
             if (numDims != s_numDims)
             {
                 ISX_THROW(isx::ExceptionDataIO,
