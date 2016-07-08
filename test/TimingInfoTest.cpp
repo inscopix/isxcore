@@ -42,18 +42,85 @@ TEST_CASE("TimingInfoTest", "[core]")
         REQUIRE(timingInfo.getDuration() == 1);
     }
 
+}
+
+TEST_CASE("TimingInfoConversionTest", "[core]")
+{
+
+    isx::Time start(1970, 1, 1, 0, 0, 0);
+    isx::DurationInSeconds step(50, 1000);
+    isx::isize_t numTimes = 100;
+    isx::TimingInfo timingInfo(start, step, numTimes);
+
+    // Index to time
+    SECTION("Convert the first index to a time")
+    {
+        isx::Time actual = timingInfo.convertIndexToTime(0);
+        isx::Time expected(1970, 1, 1, 0, 0, 0, isx::DurationInSeconds(25, 1000));
+        REQUIRE(actual == expected);
+    }
+
+    SECTION("Convert a valid index to a time")
+    {
+        isx::Time actual = timingInfo.convertIndexToTime(2);
+        isx::Time expected(1970, 1, 1, 0, 0, 0, isx::DurationInSeconds(125, 1000));
+        REQUIRE(actual == expected);
+    }
+
+    SECTION("Convert an index that exceeds the number of samples to a time")
+    {
+        isx::Time actual = timingInfo.convertIndexToTime(100);
+        isx::Time expected(1970, 1, 1, 0, 0, 4, isx::DurationInSeconds(975, 1000));
+        REQUIRE(actual == expected);
+    }
+
+    SECTION("Convert an index to a time when there are no samples")
+    {
+        numTimes = 0;
+        timingInfo = isx::TimingInfo(start, step, numTimes);
+        isx::Time actual = timingInfo.convertIndexToTime(2);
+        REQUIRE(actual == start);
+    }
+
+    // Index to start time of window
+    SECTION("Convert the first index to a start time")
+    {
+        isx::Time actual = timingInfo.convertIndexToStartTime(0);
+        REQUIRE(actual == start);
+    }
+
+    SECTION("Convert a valid index to a start time")
+    {
+        isx::Time actual = timingInfo.convertIndexToStartTime(2);
+        isx::Time expected(1970, 1, 1, 0, 0, 0, isx::DurationInSeconds(100, 1000));
+        REQUIRE(actual == expected);
+    }
+
+    SECTION("Convert an index that exceeds the number of samples to a time")
+    {
+        isx::Time actual = timingInfo.convertIndexToStartTime(100);
+        isx::Time expected(1970, 1, 1, 0, 0, 4, isx::DurationInSeconds(950, 1000));
+        REQUIRE(actual == expected);
+    }
+
+    SECTION("Convert an index to a time when there are no samples")
+    {
+        numTimes = 0;
+        timingInfo = isx::TimingInfo(start, step, numTimes);
+        isx::Time actual = timingInfo.convertIndexToStartTime(2);
+        REQUIRE(actual == start);
+    }
+
+    // Time to index
     SECTION("Convert start time to index")
     {
-        isx::Time start;
-        isx::DurationInSeconds step(50, 1000);
-        isx::TimingInfo timingInfo(start, step, 100);
         isx::isize_t index = timingInfo.convertTimeToIndex(start);
         REQUIRE(index == 0);
     }
 
     SECTION("Convert time before the start to index")
     {
-        isx::Time start(1970, 1, 1, 0, 0, 10);
+        start += isx::DurationInSeconds(10);
         isx::DurationInSeconds step(50, 1000);
         isx::TimingInfo timingInfo(start, step, 100);
         isx::Time time = start - 2;
@@ -63,9 +130,6 @@ TEST_CASE("TimingInfoTest", "[core]")
 
     SECTION("Convert time half a sample after start to an index")
     {
-        isx::Time start;
-        isx::DurationInSeconds step(50, 1000);
-        isx::TimingInfo timingInfo(start, step, 100);
         isx::Time time = start + isx::DurationInSeconds(25, 1000);
         isx::isize_t index = timingInfo.convertTimeToIndex(time);
         REQUIRE(index == 0);
@@ -73,9 +137,6 @@ TEST_CASE("TimingInfoTest", "[core]")
 
     SECTION("Convert time one sample after the start to an index")
     {
-        isx::Time start;
-        isx::DurationInSeconds step(50, 1000);
-        isx::TimingInfo timingInfo(start, step, 100);
         isx::Time time = start + isx::DurationInSeconds(50, 1000);
         isx::isize_t index = timingInfo.convertTimeToIndex(time);
         REQUIRE(index == 1);
@@ -83,9 +144,6 @@ TEST_CASE("TimingInfoTest", "[core]")
 
     SECTION("Convert time almost one and a half samples after the start to an index")
     {
-        isx::Time start;
-        isx::DurationInSeconds step(50, 1000);
-        isx::TimingInfo timingInfo(start, step, 100);
         isx::Time time = start + isx::DurationInSeconds(74, 1000);
         isx::isize_t index = timingInfo.convertTimeToIndex(time);
         REQUIRE(index == 1);
@@ -93,9 +151,6 @@ TEST_CASE("TimingInfoTest", "[core]")
 
     SECTION("Convert end time to index")
     {
-        isx::Time start;
-        isx::DurationInSeconds step(50, 1000);
-        isx::TimingInfo timingInfo(start, step, 100);
         isx::Time time = timingInfo.getEnd();
         isx::isize_t index = timingInfo.convertTimeToIndex(time);
         REQUIRE(index == 99);
@@ -103,7 +158,6 @@ TEST_CASE("TimingInfoTest", "[core]")
 
     SECTION("Convert time after end to index")
     {
-        isx::TimingInfo timingInfo;
         isx::Time time = timingInfo.getEnd() + 2;
         isx::isize_t index = timingInfo.convertTimeToIndex(time);
         REQUIRE(index == 99);
@@ -111,9 +165,6 @@ TEST_CASE("TimingInfoTest", "[core]")
 
     SECTION("Convert largest time value in a frame to an index")
     {
-        isx::Time start;
-        isx::DurationInSeconds step(50, 1000);
-        isx::TimingInfo timingInfo(start, step, 100);
         isx::Time time = start + isx::DurationInSeconds(199, 1000);
         isx::isize_t index = timingInfo.convertTimeToIndex(time);
         REQUIRE(index == 3);
@@ -121,12 +172,18 @@ TEST_CASE("TimingInfoTest", "[core]")
 
     SECTION("Convert smallest time value in a frame to an index")
     {
-        isx::Time start;
-        isx::DurationInSeconds step(50, 1000);
-        isx::TimingInfo timingInfo(start, step, 100);
         isx::Time time = start + isx::DurationInSeconds(200, 1000);
         isx::isize_t index = timingInfo.convertTimeToIndex(time);
         REQUIRE(index == 4);
+    }
+
+    SECTION("Convert time to index when there are no samples")
+    {
+        numTimes = 0;
+        timingInfo = isx::TimingInfo(start, step, numTimes);
+        isx::Time time = start + isx::DurationInSeconds(74, 1000);
+        isx::isize_t index = timingInfo.convertTimeToIndex(time);
+        REQUIRE(index == 0);
     }
 
 }

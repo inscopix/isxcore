@@ -75,17 +75,30 @@ public:
     /// If the time is later than the end time, then the last index is
     /// returned.
     ///
-    /// \param      inTime  The time to convert to an index.
-    /// \return             The sample index closest to the given time.
-    isize_t convertTimeToIndex(const Time& inTime) const;
+    /// \param  inTime  The time to convert to an index.
+    /// \return         The sample index closest to the given time.
+    isize_t convertTimeToIndex(const Time & inTime) const;
 
-    /// Converts an index to an absolute time
+    /// Converts an index to the absolute center time of its associated window.
+    ///
+    /// If the index exceeds the number of samples, it will effectively be
+    /// clamped to be less than the number of samples.
+    ///
+    /// If the number of samples is 0, this will return the start time of the samples.
+    ///
+    /// \param  inIndex The index of the sample/window.
+    /// \return         The absolute center of time of the window associated with inIndex.
+    Time convertIndexToTime(isize_t inIndex) const;
+
+    /// Converts an index to the absolute start time of its associated window.
+    ///
+    /// If the number of samples is 0, this will return the start time of the samples.
+    ///
     /// \param inIndex index to convert, will be clamped to range of valid
-    ///        indexes in this movie.
-    /// \return absolute time of the frame for inIndex
-    Time
-    convertIndexToTime(isize_t inIndex) const;
-    
+    ///        indices in this movie.
+    /// \return the start time of the window associated with inIndex
+    Time convertIndexToStartTime(isize_t inIndex) const;
+
 private:
 
     /// The start time of the samples.
