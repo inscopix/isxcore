@@ -112,7 +112,7 @@ TEST_CASE("MovieTest", "[core]") {
             isx::isize_t nRows = inputMovie.getFrameHeight();
             isx::TimingInfo timingInfo = inputMovie.getTimingInfo();
             isx::Ratio timeStep = timingInfo.getStep();
-            isx::Ratio frameRate = timeStep.invert();
+            isx::Ratio frameRate = timeStep.getInverse();
 
             // Create the output
             isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename, testFile);
@@ -146,7 +146,7 @@ TEST_CASE("MovieTest", "[core]") {
         isx::isize_t nRows  = inputMovie.getFrameHeight();
  		isx::TimingInfo timingInfo = inputMovie.getTimingInfo();
         isx::Ratio timeStep = timingInfo.getStep();
-		isx::Ratio frameRate = timeStep.invert();
+		isx::Ratio frameRate = timeStep.getInverse();
 
         // Create the output
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
@@ -161,14 +161,14 @@ TEST_CASE("MovieTest", "[core]") {
         
         timingInfo = outputMovie->getTimingInfo();
         timeStep = timingInfo.getStep();
-        isx::Ratio outpuFrameRate = timeStep.invert();
+        isx::Ratio outpuFrameRate = timeStep.getInverse();
         REQUIRE(frameRate == outpuFrameRate);
 
         // Write a frame from the input movie to the output movie
         isx::isize_t nFrame = 15;
         isx::isize_t inputSize = inputMovie.getFrameSizeInBytes();
         isx::Time frame15Time = inputMovie.getTimingInfo().getStart();
-        frame15Time = frame15Time.addSecs(isx::Ratio(nFrame, 1) * inputMovie.getTimingInfo().getStep());
+        frame15Time += inputMovie.getTimingInfo().getStep() * nFrame;
         auto nvf = inputMovie.getFrame(frame15Time);
         unsigned char * inputFrameBuffer = reinterpret_cast<unsigned char *>(nvf->getPixels());
         outputMovie->writeFrame(nFrame, inputFrameBuffer, inputSize); 
@@ -226,7 +226,7 @@ TEST_CASE("MovieTestAsync", "[core]") {
         for (size_t i = 0; i < numTestFrames; ++i)
         {
             m.getFrameAsync(fetchTime, cb);
-            fetchTime = fetchTime.addSecs(m.getTimingInfo().getStep());
+            fetchTime += m.getTimingInfo().getStep();
         }
 
         for (int i = 0; i < 250; ++i)

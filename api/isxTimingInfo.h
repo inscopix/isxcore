@@ -1,5 +1,5 @@
-#ifndef ISX_TIMINGINFO_H
-#define ISX_TIMINGINFO_H
+#ifndef ISX_TIMING_INFO_H
+#define ISX_TIMING_INFO_H
 
 #include "isxCore.h"
 #include "isxTime.h"
@@ -26,7 +26,7 @@ public:
     /// \param start    The start time of the samples.
     /// \param step     The duration of one sample in seconds.
     /// \param numTimes The number of samples.
-    TimingInfo(const Time& start, const Ratio& step, isize_t numTimes);
+    TimingInfo(const Time & start, const DurationInSeconds & step, isize_t numTimes);
 
     /// Get the start time of the samples.
     ///
@@ -41,7 +41,7 @@ public:
     /// Get the duration of one sample in seconds.
     ///
     /// \return         The duration of one sample in seconds.
-    Ratio getStep() const;
+    DurationInSeconds getStep() const;
 
     /// Get the number of time samples.
     ///
@@ -51,7 +51,7 @@ public:
     /// Get the duration of all samples in seconds.
     ///
     /// \return         The duration of all samples in seconds.
-    Ratio getDuration() const;
+    DurationInSeconds getDuration() const;
 
     /// Converts an absolute time to the corresponding index within this.
     ///
@@ -92,7 +92,7 @@ private:
     Time m_start;
 
     /// The duration of one sample in seconds.
-    Ratio m_step;
+    DurationInSeconds m_step;
 
     /// The number of time samples.
     isize_t m_numTimes;
@@ -101,4 +101,4 @@ private:
 
 } // namespace
 
-#endif // ISX_TIMINGINFO_H
+#endif // ISX_TIMING_INFO_H

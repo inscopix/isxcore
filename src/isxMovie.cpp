@@ -387,9 +387,9 @@ private:
         sTimingInfo_t t;
         dataset.read(&t, getTimingInfoType());
 
-        Ratio secSinceEpoch(t.timeSecsNum, t.timeSecsDen);
+        DurationInSeconds secSinceEpoch(t.timeSecsNum, t.timeSecsDen);
         Time start(secSinceEpoch, t.timeOffset);
-        Ratio step(t.stepNum, t.stepDen);
+        DurationInSeconds step(t.stepNum, t.stepDen);
         isize_t numTimes = t.numTimes;
         m_timingInfo = TimingInfo(start, step, numTimes);
     }
@@ -401,9 +401,10 @@ private:
         * Initialize the data
         */
         Time time = m_timingInfo.getStart();
+        DurationInSeconds timeSecs = time.getSecsSinceEpoch();
         sTimingInfo_t t;
-        t.timeSecsNum = time.secsFrom(time).getNum();
-        t.timeSecsDen = time.secsFrom(time).getDen();
+        t.timeSecsNum = timeSecs.getNum();
+        t.timeSecsDen = timeSecs.getDen();
         t.timeOffset = time.getUtcOffset();
         t.stepNum = m_timingInfo.getStep().getNum();
         t.stepDen = m_timingInfo.getStep().getDen();
@@ -454,7 +455,7 @@ private:
     createDummyTimingInfo(isize_t numFrames, isx::Ratio inFrameRate)
     {
         isx::Time start = isx::Time();
-        isx::Ratio step = inFrameRate.invert();
+        isx::DurationInSeconds step = inFrameRate.getInverse();
         return isx::TimingInfo(start, step, numFrames);
     }
 
