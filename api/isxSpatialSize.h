@@ -20,13 +20,13 @@ public:
 
     /// Empty constructor.
     ///
-    /// Initially the sizes are (1, 1).
+    /// Initially the sizes are (0, 0).
     SpatialSize();
 
     /// Constructor that allows for specification of (x, y) sizes.
     ///
     /// \param  x       The x size or width.
-    /// \param  y       The y size of height.
+    /// \param  y       The y size or height.
     SpatialSize(T x, T y);
 
     /// Constructor from a vector.
@@ -50,7 +50,7 @@ public:
 // Implementation
 template <typename T>
 SpatialSize<T>::SpatialSize()
-    : SpatialVector<T>(1, 1)
+    : SpatialVector<T>(0, 0)
 {
 }
 
@@ -58,8 +58,8 @@ template <typename T>
 SpatialSize<T>::SpatialSize(T x, T y)
     : SpatialVector<T>(x, y)
 {
-    ISX_ASSERT(x > 0, "Width must be positive.");
-    ISX_ASSERT(y > 0, "Height must be positive.");
+    ISX_ASSERT(x >= 0, "Width must be non-negative.");
+    ISX_ASSERT(y >= 0, "Height must be non-negative.");
 }
 
 template <typename T>

@@ -73,40 +73,53 @@ SpacingInfo::getTotalSize() const
 PointInMicrons_t
 SpacingInfo::convertPointInPixelsToMicrons(const PointInPixels_t & inPoint) const
 {
-    // Clamp pixel indices that exceed range
-    isize_t xPixels = std::min(inPoint.getX(), m_numPixels.getX() - 1);
-    isize_t yPixels = std::min(inPoint.getY(), m_numPixels.getY() - 1);
-    PointInPixels_t pointInPixels(xPixels, yPixels);
+    Ratio xMicrons = m_topLeft.getX();
+    if (m_numPixels.getX() > 0)
+    {
+        isize_t xPixels = std::min(inPoint.getX(), m_numPixels.getX() - 1);
+        xMicrons = xMicrons + (m_pixelSize.getX() / 2);
 
-    // Scale the point's vector by the pixel size
-    VectorInMicrons_t vectorInMicrons = m_pixelSize * pointInPixels.getVector();
+        // Offset by half pixel size to get to center.
+        xMicrons = xMicrons + (m_pixelSize.getX() * xPixels);
+    }
 
-    // Offset by the top left and the center of a pixel
-    SizeInMicrons_t centerOffset = m_pixelSize / SizeInPixels_t(2, 2);
-    return m_topLeft + centerOffset + vectorInMicrons;
+    Ratio yMicrons = m_topLeft.getY();
+    if (m_numPixels.getY() > 0)
+    {
+        isize_t yPixels = std::min(inPoint.getY(), m_numPixels.getY() - 1);
+        yMicrons = yMicrons + (m_pixelSize.getY() * yPixels);
+
+        // Offset by half pixel size to get to center.
+        yMicrons = yMicrons + (m_pixelSize.getY() / 2);
+    }
+
+    return PointInMicrons_t(xMicrons, yMicrons);
 }
 
 PointInPixels_t
 SpacingInfo::convertPointInMicronsToPixels(const PointInMicrons_t & inPoint) const
 {
-    // Find vector from top left to this input point
-    VectorInMicrons_t vectorInMicrons = inPoint - m_topLeft;
+    double xPixels = 0;
+    if (m_numPixels.getX() > 0)
+    {
+        Ratio xMicrons = inPoint.getX() - m_topLeft.getX();
+        xPixels = (xMicrons / m_pixelSize.getX()).toDouble();
+        xPixels = std::max(xPixels, double(0));
+        xPixels = std::min(xPixels, double(m_numPixels.getX() - 1));
+        xPixels = std::floor(xPixels);
+    }
 
-    // Divide that vector by the pixel size
-    SpatialVector<Ratio> vectorInPixels = vectorInMicrons / m_pixelSize;
+    double yPixels = 0;
+    if (m_numPixels.getY() > 0)
+    {
+        Ratio xMicrons = inPoint.getY() - m_topLeft.getY();
+        yPixels = (xMicrons / m_pixelSize.getY()).toDouble();
+        yPixels = std::max(yPixels, double(0));
+        yPixels = std::min(yPixels, double(m_numPixels.getY() - 1));
+        yPixels = std::floor(yPixels);
+    }
 
-    // Clamp and convert to indices
-    double xPixels = vectorInPixels.getX().toDouble();
-    xPixels = std::max(xPixels, double(0));
-    xPixels = std::min(xPixels, double(m_numPixels.getX() - 1));
-    xPixels = std::floor(xPixels);
-
-    double yPixels = vectorInPixels.getY().toDouble();
-    yPixels = std::max(yPixels, double(0));
-    yPixels = std::min(yPixels, double(m_numPixels.getY() - 1));
-    yPixels = std::floor(yPixels);
-
-    return PointInPixels_t(static_cast<isize_t>(xPixels), static_cast<isize_t>(yPixels));
+    return PointInPixels_t(isize_t(xPixels), isize_t(yPixels));
 }
 
 bool
