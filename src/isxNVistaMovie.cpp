@@ -148,7 +148,7 @@ private:
             // get start time
             if (f == 0)
             {
-                startTime = buffer[0];
+                startTime = int64_t(buffer[0]);
             }
 
             totalDurationInSecs += buffer[numFrames - 1] - buffer[0];
@@ -157,7 +157,7 @@ private:
 
         totalDurationInSecs *= 1000.0 / double(totalNumFrames);
 
-        isx::DurationInSeconds step = isx::DurationInSeconds(std::round(totalDurationInSecs), 1000);
+        isx::DurationInSeconds step = isx::DurationInSeconds(isize_t(std::round(totalDurationInSecs)), 1000);
         isx::Time start = isx::Time(startTime);
 
         return isx::TimingInfo(start, step, totalNumFrames);
