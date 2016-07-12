@@ -129,8 +129,8 @@ private:
     {
         H5::DataSet timingInfoDataSet;
         hsize_t totalNumFrames = 0;
-        double startTime = 0;
-        double temp = 0;
+        int64_t startTime = 0;
+        double totalDurationInSecs = 0;
 
         for (isize_t f(0); f < inHdf5Files.size(); ++f)
         {
@@ -141,9 +141,9 @@ private:
             isx::internal::getHdf5SpaceDims(timingInfoDataSet.getSpace(), timingInfoDims, timingInfoMaxDims);
 
             hsize_t numFrames = timingInfoDims[0];
-            double *buffer = new double[numFrames];
+            std::vector<double> buffer;
 
-            timingInfoDataSet.read(buffer, timingInfoDataSet.getDataType());
+            timingInfoDataSet.read(buffer.data(), timingInfoDataSet.getDataType());
 
             // get start time
             if (f == 0)
@@ -151,19 +151,14 @@ private:
                 startTime = buffer[0];
             }
 
-            // get isx::Ratio object (in ms)
-            for (int i = 0; i < numFrames - 1; i++)
-            {
-                temp += buffer[i + 1] - buffer[i];
-            }
-           
+            totalDurationInSecs += buffer[numFrames - 1] - buffer[0];
             totalNumFrames += numFrames;
         }
 
-        temp *= 1000.0 / double(totalNumFrames);
+        totalDurationInSecs *= 1000.0 / double(totalNumFrames);
 
-        isx::Ratio step = isx::Ratio(int64_t(temp), 1000);
-        isx::Time start = isx::Time(int64_t(startTime));
+        isx::DurationInSeconds step = isx::DurationInSeconds(std::round(totalDurationInSecs), 1000);
+        isx::Time start = isx::Time(startTime);
 
         return isx::TimingInfo(start, step, totalNumFrames);
     }
