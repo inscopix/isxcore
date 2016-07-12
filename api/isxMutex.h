@@ -37,6 +37,11 @@ namespace isx
         ///
         void unlock();
 
+        /// get handle to native mutex implementation
+        /// note: only to be used internally (you better know what you're doing)
+        ///
+        void * getNativeHandle();
+
         /// Serialize the object into an output stream.
         ///
         /// \param   strm    The output stream.
