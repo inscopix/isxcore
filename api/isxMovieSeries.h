@@ -57,4 +57,5 @@ namespace isx {
     
  
 }
+
 #endif // ISX_MOVIESERIES_H

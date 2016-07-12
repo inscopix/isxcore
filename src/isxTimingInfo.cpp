@@ -72,7 +72,6 @@ Time
 TimingInfo::convertIndexToTime(isize_t inIndex) const
 {
     isize_t index = inIndex;
-    
     if (index == 0)
     {
         return m_start;
@@ -84,6 +83,24 @@ TimingInfo::convertIndexToTime(isize_t inIndex) const
 
     Time ret = m_start.addSecs(Ratio(index, 1) * m_step);
     return ret;
+}
+
+bool
+TimingInfo::operator ==(const TimingInfo& other) const
+{
+    return (m_start == other.m_start)
+        && (m_step == other.m_step)
+        && (m_numTimes == other.m_numTimes);
+}
+
+void
+TimingInfo::serialize(std::ostream& strm) const
+{
+    strm << "TimingInfo("
+            << "Start=" << m_start << ", "
+            << "Step=" << m_step << ", "
+            << "NumTimes=" << m_numTimes
+         << ")";
 }
 
 } // namespace

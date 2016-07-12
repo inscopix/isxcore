@@ -11,6 +11,8 @@ namespace isx
     const std::string Hdf5Movie::sTimingInfoStepDen = "StepDen";
     const std::string Hdf5Movie::sTimingInfoNumTimes = "NumTimes";
 
+    // Only three dimensions are currently supported (frames, rows, columns).
+    const hsize_t Hdf5Movie::s_numDims = 3;
 
     Hdf5Movie::Hdf5Movie(const SpH5File_t & inHdf5File, const std::string & inPath)
         : m_H5File(inHdf5File)
@@ -27,7 +29,13 @@ namespace isx
             m_dataSpace = m_dataSet.getSpace();
 
             isx::internal::getHdf5SpaceDims(m_dataSpace, m_dims, m_maxdims);
-            m_ndims = m_dims.size();
+
+            hsize_t numDims = m_dims.size();
+            if (numDims != s_numDims)
+            {
+                ISX_THROW(isx::ExceptionDataIO,
+                    "Unsupported number of dimensions ", numDims);
+            }
 
             if (!(m_dataType == H5::PredType::STD_U16LE))
             {                
@@ -64,9 +72,8 @@ namespace isx
         ISX_ASSERT(inFrameHeight > 0);        
 
         /* Set rank, dimensions and max dimensions */
-        m_ndims = 3;
-        m_dims.resize(m_ndims);
-        m_maxdims.resize(m_ndims);
+        m_dims.resize(s_numDims);
+        m_maxdims.resize(s_numDims);
 
         m_dims[0] = inNumFrames;
         m_maxdims[0] = inNumFrames;
@@ -78,7 +85,7 @@ namespace isx
         m_maxdims[2] = inFrameWidth;
 
         /* Create the dataspace */
-        m_dataSpace = H5::DataSpace(static_cast<int>(m_ndims), m_dims.data(), m_maxdims.data());
+        m_dataSpace = H5::DataSpace(s_numDims, m_dims.data(), m_maxdims.data());
 
         /* Create a new dataset within the file */
         m_dataType = H5::PredType::STD_U16LE;

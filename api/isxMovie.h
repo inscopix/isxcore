@@ -6,9 +6,11 @@
 #include "isxCore.h"
 #include "isxVideoFrame.h"
 #include "isxTimingInfo.h"
+#include "isxSpacingInfo.h"
 #include "isxMovieDefs.h"
 
-namespace isx {
+namespace isx
+{
 
     ///
     /// An API for a class encapsulating a movie.
@@ -78,11 +80,15 @@ namespace isx {
         virtual double
             getDurationInSeconds() const = 0;
 
-
         /// \return     The timing information of a movie.
         ///
         virtual const isx::TimingInfo &
             getTimingInfo() const = 0;
+
+        /// \return     The spacing information of the movie.
+        ///
+        virtual const isx::SpacingInfo &
+        getSpacingInfo() const = 0;
 
         /// \return     The name of the movie.
         ///

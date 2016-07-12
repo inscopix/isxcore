@@ -1,6 +1,7 @@
 #ifndef ISX_TIMINGINFO_H
 #define ISX_TIMINGINFO_H
 
+#include "isxObject.h"
 #include "isxCore.h"
 #include "isxTime.h"
 
@@ -13,7 +14,7 @@ namespace isx
 /// movies and traces. It also contains some utility methods to convert
 /// times to sample indices so that samples can be retrieved with respect
 /// to absolute time points.
-class TimingInfo
+class TimingInfo : public Object
 {
 public:
 
@@ -83,9 +84,15 @@ public:
     /// \param inIndex index to convert, will be clamped to range of valid
     ///        indexes in this movie.
     /// \return absolute time of the frame for inIndex
-    Time
-    convertIndexToTime(isize_t inIndex) const;
-    
+    Time convertIndexToTime(isize_t inIndex) const;
+
+    /// \param  other   The other timing information with which to compare.
+    /// \return         True if this is exactly equal to other, false otherwise.
+    bool operator ==(const TimingInfo& other) const;
+
+    // Overrides
+    virtual void serialize(std::ostream& strm) const;
+
 private:
 
     /// The start time of the samples.
