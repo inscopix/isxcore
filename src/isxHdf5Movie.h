@@ -7,6 +7,7 @@
 #include "isxAssert.h"
 #include "isxHdf5Utils.h"
 #include "isxTimingInfo.h"
+#include "isxSpacingInfo.h"
 #include "isxMovieDefs.h"
 
 
@@ -30,7 +31,7 @@ namespace isx {
         /// \param inFrameWidth Width in pixels
         /// \param inFrameHeight Height in pixels
         Hdf5Movie(const SpH5File_t & inHdf5File, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight);
-        
+
         /// Destructor
         ///
         ~Hdf5Movie();
@@ -107,9 +108,9 @@ namespace isx {
         H5::DataSpace m_dataSpace;
         H5::DataType m_dataType;
 
-        isize_t m_ndims;
-        std::vector<hsize_t> m_dims;
-        std::vector<hsize_t> m_maxdims;
+        static const hsize_t s_numDims;
+        isx::internal::HSizeVector_t m_dims;
+        isx::internal::HSizeVector_t m_maxdims;
 
         typedef struct {
             int64_t timeSecsNum;

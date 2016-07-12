@@ -113,7 +113,7 @@ TEST_CASE("MovieTest", "[core]") {
             isx::isize_t nRows = inputMovie.getFrameHeight();
             isx::TimingInfo timingInfo = inputMovie.getTimingInfo();
             isx::Ratio timeStep = timingInfo.getStep();
-            isx::Ratio frameRate = timeStep.invert();
+            isx::Ratio frameRate = timeStep.getInverse();
 
             // Create the output
             std::vector<std::string> inputName(1);
@@ -152,7 +152,7 @@ TEST_CASE("MovieTest", "[core]") {
         isx::isize_t nRows  = inputMovie.getFrameHeight();
         isx::TimingInfo timingInfo = inputMovie.getTimingInfo();
         isx::Ratio timeStep = timingInfo.getStep();
-        isx::Ratio frameRate = timeStep.invert();
+		isx::Ratio frameRate = timeStep.getInverse();
 
         // Create the output
         std::string	outputFilename = g_resources["testDataPath"] + "/movieout.hdf5";
@@ -167,17 +167,17 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(nFrames == outputMovie->getNumFrames());
         REQUIRE(nCols == outputMovie->getFrameWidth());
         REQUIRE(nRows == outputMovie->getFrameHeight());
-        
+
         timingInfo = outputMovie->getTimingInfo();
         timeStep = timingInfo.getStep();
-        isx::Ratio outpuFrameRate = timeStep.invert();
+        isx::Ratio outpuFrameRate = timeStep.getInverse();
         REQUIRE(frameRate == outpuFrameRate);
 
         // Write a frame from the input movie to the output movie
         isx::isize_t nFrame = 15;
         isx::isize_t inputSize = inputMovie.getFrameSizeInBytes();
         isx::Time frame15Time = inputMovie.getTimingInfo().getStart();
-        frame15Time = frame15Time.addSecs(isx::Ratio(nFrame, 1) * inputMovie.getTimingInfo().getStep());
+        frame15Time += inputMovie.getTimingInfo().getStep() * nFrame;
         auto nvf = inputMovie.getFrame(frame15Time);
         unsigned char * inputFrameBuffer = reinterpret_cast<unsigned char *>(nvf->getPixels());
         mosaicMovie->writeFrame(nFrame, inputFrameBuffer, inputSize);
@@ -195,6 +195,31 @@ TEST_CASE("MovieTest", "[core]") {
         //REQUIRE(inputFrameBuffer[idx] == outputFrameBuffer[idx]);  
         //REQUIRE(inputFrameBuffer[idx+1] == outputFrameBuffer[idx+1]);        
 
+    }
+
+    SECTION("Create movie with timing and spacing info", "[core]")
+    {
+        std::string outFileName = g_resources["testDataPath"] + "/MovieTest-createWithTimingSpacingInfo.hdf5";
+        std::vector<std::string> inputName(1);
+        inputName[0] = testFile;
+        isx::SpProjectFile_t outFile = std::make_shared<isx::ProjectFile>(outFileName, inputName);
+
+        isx::Time start(2016, 6, 20, 10, 32);
+        isx::Ratio step(50, 1000);
+        isx::isize_t numTimes = 5;
+        isx::TimingInfo timingInfo(start, step, numTimes);
+
+        isx::SizeInPixels_t numPixels(24, 16);
+        isx::SizeInMicrons_t pixelSize(isx::Ratio(22, 10), isx::Ratio(22, 10));
+        isx::PointInMicrons_t topLeft(0, 0);
+        isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
+
+        isx::MosaicMovie movie(outFile->getHdf5FileHandle(),
+                "/MosaicProject/Schedules/Schedule1/Recording1/Movie",
+                timingInfo, spacingInfo);
+
+        REQUIRE(movie.getTimingInfo() == timingInfo);
+        REQUIRE(movie.getSpacingInfo() == spacingInfo);
     }
 
     isx::CoreShutdown();
@@ -238,7 +263,7 @@ TEST_CASE("MovieTestAsync", "[core]") {
         for (size_t i = 0; i < numTestFrames; ++i)
         {
             m.getFrameAsync(fetchTime, cb);
-            fetchTime = fetchTime.addSecs(m.getTimingInfo().getStep());
+            fetchTime += m.getTimingInfo().getStep();
         }
 
         for (int i = 0; i < 250; ++i)

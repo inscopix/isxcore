@@ -43,6 +43,15 @@ namespace isx {
         /// \throw isx::ExceptionDataIO     If the dataset cannot be written.
         MosaicMovie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate);
 
+        /// Construct movie to be written to a dataset.
+        /// \param inHdf5FileHandle opaque HDF5 file handle from ProjectFile.
+        /// \param inPath the path for the movie within the file. It will be created if it doesn't exist
+        /// \param inTimingInfo     The timing information associated with the frames of the movie.
+        /// \param inSpacingInfo    The spacing information associated with each frame of the movie.
+        /// \throw isx::ExceptionFileIO     If the file cannot be written.
+        /// \throw isx::ExceptionDataIO     If the dataset cannot be written.
+        MosaicMovie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo);
+
         /// Destructor
         /// 
         ~MosaicMovie();
@@ -127,6 +136,11 @@ namespace isx {
         ///
         const isx::TimingInfo &
             getTimingInfo() const;
+
+        /// \return     The spacing information of the movie.
+        ///
+        const isx::SpacingInfo &
+        getSpacingInfo() const;
 
         /// Serialize the object into an output stream.
         ///
