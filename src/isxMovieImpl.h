@@ -173,7 +173,7 @@ namespace isx
         createDummyTimingInfo(isize_t numFrames, Ratio inFrameRate)
         {
             isx::Time start = isx::Time();
-            isx::Ratio step = inFrameRate.invert();
+            isx::Ratio step = inFrameRate.getInverse();
             return isx::TimingInfo(start, step, numFrames);
         }
 

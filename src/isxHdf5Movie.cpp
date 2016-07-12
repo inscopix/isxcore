@@ -211,9 +211,9 @@ namespace isx
         sTimingInfo_t t;
         dataset.read(&t, getTimingInfoType());
 
-        Ratio secSinceEpoch(t.timeSecsNum, t.timeSecsDen);
+        DurationInSeconds secSinceEpoch(t.timeSecsNum, t.timeSecsDen);
         Time start(secSinceEpoch, t.timeOffset);
-        Ratio step(t.stepNum, t.stepDen);
+        DurationInSeconds step(t.stepNum, t.stepDen);
         isize_t numTimes = t.numTimes;
         timingInfo = TimingInfo(start, step, numTimes);
     }
@@ -224,12 +224,14 @@ namespace isx
         * Initialize the data
         */
         Time time = timingInfo.getStart();
+        DurationInSeconds timeSecs = time.getSecsSinceEpoch();
+        DurationInSeconds step = timingInfo.getStep();
         sTimingInfo_t t;
-        t.timeSecsNum = time.secsFrom(time).getNum();
-        t.timeSecsDen = time.secsFrom(time).getDen();
+        t.timeSecsNum = timeSecs.getNum();
+        t.timeSecsDen = timeSecs.getDen();
         t.timeOffset = time.getUtcOffset();
-        t.stepNum = timingInfo.getStep().getNum();
-        t.stepDen = timingInfo.getStep().getDen();
+        t.stepNum = step.getNum();
+        t.stepDen = step.getDen();
         t.numTimes = timingInfo.getNumTimes();
 
         /*

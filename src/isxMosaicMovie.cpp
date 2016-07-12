@@ -120,7 +120,18 @@ namespace isx {
         }
 
     private:
-    
+
+        /// A method to create a dummy TimingInfo object from the number of frames.
+        ///
+        isx::TimingInfo
+            createDummyTimingInfo(isize_t numFrames, isx::Ratio inFrameRate)
+        {
+            isx::Time start = isx::Time();
+            DurationInSeconds step = inFrameRate.getInverse();
+            return isx::TimingInfo(start, step, numFrames);
+        }
+
+
         bool m_isValid = false;
 
         std::unique_ptr<Hdf5Movie> m_movie; 

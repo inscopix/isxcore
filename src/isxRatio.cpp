@@ -25,7 +25,7 @@ Ratio::getDen() const
 }
 
 Ratio
-Ratio::invert() const
+Ratio::getInverse() const
 {
     return Ratio(m_den, m_num);
 }
@@ -36,8 +36,8 @@ Ratio::toDouble() const
     return double(m_num) / double(m_den);
 }
 
-isx::Ratio
-Ratio::operator +(const isx::Ratio& other) const
+Ratio
+Ratio::operator +(const Ratio & other) const
 {
     int64_t num, den;
     if (m_den == other.m_den)
@@ -50,11 +50,18 @@ Ratio::operator +(const isx::Ratio& other) const
         num = (m_num * other.m_den) + (m_den * other.m_num);
         den = m_den * other.m_den;
     }
-    return isx::Ratio(num, den);
+    return Ratio(num, den);
 }
 
-isx::Ratio
-Ratio::operator -(const isx::Ratio& other) const
+Ratio &
+Ratio::operator +=(const Ratio & other)
+{
+    *this = *this + other;
+    return *this;
+}
+
+Ratio
+Ratio::operator -(const Ratio & other) const
 {
     int64_t num, den;
     if (m_den == other.m_den)
@@ -67,63 +74,70 @@ Ratio::operator -(const isx::Ratio& other) const
         num = (m_num * other.m_den) - (m_den * other.m_num);
         den = m_den * other.m_den;
     }
-    return isx::Ratio(num, den);
+    return Ratio(num, den);
 }
 
-isx::Ratio
-Ratio::operator *(const isx::Ratio& other) const
+Ratio &
+Ratio::operator -=(const Ratio & other)
+{
+    *this = *this - other;
+    return *this;
+}
+
+Ratio
+Ratio::operator *(const Ratio & other) const
 {
     int64_t num = m_num * other.m_num;
     int64_t den = m_den * other.m_den;
-    return isx::Ratio(num, den);
+    return Ratio(num, den);
 }
 
-isx::Ratio
-Ratio::operator /(const isx::Ratio& other) const
+Ratio
+Ratio::operator /(const Ratio & other) const
 {
     int64_t num = m_num * other.m_den;
     int64_t den = m_den * other.m_num;
-    return isx::Ratio(num, den);
+    return Ratio(num, den);
 }
 
 bool
-Ratio::operator ==(const isx::Ratio& other) const
+Ratio::operator ==(const Ratio & other) const
 {
     return (m_num * other.m_den) == (m_den * other.m_num);
 }
 
 bool
-Ratio::operator !=(const isx::Ratio& other) const
+Ratio::operator !=(const Ratio & other) const
 {
     return !(*this == other);
 }
 
 bool
-Ratio::operator <(const isx::Ratio& other) const
+Ratio::operator <(const Ratio & other) const
 {
     return (m_num * other.m_den) < (m_den * other.m_num);
 }
 
 bool
-Ratio::operator <=(const isx::Ratio& other) const
+Ratio::operator <=(const Ratio & other) const
 {
     return (*this < other) || (*this == other);
 }
 
 bool
-Ratio::operator >(const isx::Ratio& other) const
+Ratio::operator >(const Ratio & other) const
 {
     return other < *this;
 }
 
 bool
-Ratio::operator >=(const isx::Ratio& other) const
+Ratio::operator >=(const Ratio & other) const
 {
     return (*this > other) || (*this == other);
 }
 
 Ratio
-Ratio::floorToDenomOf(const isx::Ratio& other) const
+Ratio::floorToDenomOf(const Ratio & other) const
 {
     double tv = toDouble();
     int64_t od = other.getDen();

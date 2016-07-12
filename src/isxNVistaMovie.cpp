@@ -124,6 +124,16 @@ public:
 
 private:
 
+    /// A method to create a dummy TimingInfo object from the number of frames.
+    ///
+    isx::TimingInfo
+    createDummyTimingInfo(isize_t numFrames, isx::Ratio inFrameRate)
+    {
+        isx::Time start = isx::Time();
+        DurationInSeconds step = inFrameRate.getInverse();
+        return isx::TimingInfo(start, step, numFrames);
+    }
+
     isize_t getMovieIndex(isize_t inFrameNumber)
     {
         isize_t idx = 0;
@@ -134,14 +144,12 @@ private:
 
         return idx;
     }
-    
 
     bool m_isValid = false;
 
 
     std::vector<std::unique_ptr<Hdf5Movie>> m_movies;
     std::vector<isize_t> m_cumulativeFrames;
-
 
 };
 
