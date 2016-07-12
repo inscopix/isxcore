@@ -110,42 +110,6 @@ namespace isx
         }
     }
 
-//    Hdf5Movie(const SpH5File_t & inHdf5File, const std::string & inPath, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo)
-//        : m_isValid(false)
-//        , m_H5File(inHdf5File)
-//        , m_path(inPath)
-//    {
-//        /* Create the dataspace */
-//        isize_t numTimes = inTimingInfo.getNumTimes();
-//        isx::SizeInPixels_t numPixels = inSpacingInfo.getNumPixels();
-//        m_dims = {numTimes, numPixels.getHeight(), numPixels.getWidth()};
-//        m_maxDims = {numTimes, numPixels.getHeight(), numPixels.getWidth()};
-//        m_dataSpace = H5::DataSpace(s_numDims, m_dims.data(), m_maxDims.data());
-//
-//        /* Create a new dataset within the file */
-//        m_dataType = H5::PredType::STD_U16LE;
-//        try
-//        {
-//            isx::internal::createHdf5DataSet(m_H5File, m_path, m_dataType, m_dataSpace);
-//            m_isValid = true;
-//        }
-//        catch (const H5::DataSetIException& error)
-//        {
-//            ISX_THROW(isx::ExceptionDataIO,
-//                "Failure caused by H5 DataSet operations.\n", error.getDetailMsg());
-//        }
-//        catch (const H5::FileIException& error)
-//        {
-//            ISX_THROW(isx::ExceptionFileIO,
-//                "Failure caused by H5 File operations.\n", error.getDetailMsg());
-//        }
-//        catch (const H5::GroupIException& error)
-//        {
-//            ISX_THROW(isx::ExceptionDataIO,
-//                "Failure caused by H5 Group operations.\n", error.getDetailMsg());
-//        }
-//    }
-
     Hdf5Movie::~Hdf5Movie()
     {
 
