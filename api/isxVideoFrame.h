@@ -39,6 +39,23 @@ public:
         , m_timeStamp(inTimeStamp)
         , m_frameIndex(inFrameIndex){}
 
+    /// Constructor
+    /// \param inSpacingInfo spacing info of the image
+    /// \param inRowBytes number of bytes between 
+    ///        column 0 of any two subsequent rows
+    /// \param inNumChannels number of data channels
+    ///        of type T per pixel (eg. RGBA would be 4)
+    /// \param inTimeStamp timestamp of this frame
+    /// \param inFrameIndex index of this frame in its movie
+    ///
+    VideoFrame(
+        const SpacingInfo & inSpacingInfo,
+        isize_t inRowBytes, isize_t inNumChannels,
+        Time inTimeStamp, isize_t inFrameIndex)
+        : m_image(inSpacingInfo, inRowBytes, inNumChannels)
+        , m_timeStamp(inTimeStamp)
+        , m_frameIndex(inFrameIndex){}
+
     /// \return the timestamp for this videoframe
     ///
     const Time &
@@ -124,7 +141,7 @@ public:
 private:
     Image<T>    m_image;
     Time        m_timeStamp;
-    isize_t      m_frameIndex = 0;
+    isize_t     m_frameIndex = 0;
 
 };
 } // namespace isx

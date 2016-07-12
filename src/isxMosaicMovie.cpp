@@ -29,6 +29,11 @@ namespace isx {
             // dummy values
             isx::Ratio frameRate(30, 1);            
             m_movie->readProperties(m_timingInfo);
+
+            // TODO sweet 2016/06/20 : the spacing information should be read from
+            // the file, but just use dummy values for now
+            m_spacingInfo = createDummySpacingInfo(m_movie->getFrameWidth(), m_movie->getFrameHeight());
+
             m_isValid = true;
         }
 
@@ -38,36 +43,37 @@ namespace isx {
         {
 
             m_movie.reset(new Hdf5Movie(inHdf5File, inPath + "/Movie", inNumFrames, inFrameWidth, inFrameHeight));            
+
             // TODO sweet 2016/09/31 : the start and step should also be specified
             // but we don't currently have a mechnanism for that
             m_timingInfo = createDummyTimingInfo(inNumFrames, inFrameRate);
             m_movie->writeProperties(m_timingInfo);
-            m_isValid = true;
 
+            // TODO sweet 2016/06/20 : the spacing information should be read from
+            // the file, but just use dummy values for now
+            m_spacingInfo = createDummySpacingInfo(inFrameWidth, inFrameHeight);
+
+            m_isValid = true;
+        }
+
+        Impl(const SpH5File_t & inHdf5File, const std::string & inPath, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo)
+            : m_isValid(false)
+        {
+            m_timingInfo = inTimingInfo;
+            m_spacingInfo = inSpacingInfo;
+
+            isize_t numFrames = inTimingInfo.getNumTimes();
+            SizeInPixels_t numPixels = inSpacingInfo.getNumPixels();
+
+            m_movie.reset(new Hdf5Movie(inHdf5File, inPath + "/Movie", numFrames, numPixels.getWidth(), numPixels.getHeight()));
+            m_movie->writeProperties(m_timingInfo);
+            m_isValid = true;
         }
 
         bool
             isValid() const
         {
             return m_isValid;
-        }
-
-        isize_t
-            getFrameWidth() const
-        {
-            return m_movie->getFrameWidth();
-        }
-
-        isize_t
-            getFrameHeight() const
-        {
-            return m_movie->getFrameHeight();
-        }
-
-        isize_t
-            getFrameSizeInBytes() const
-        {
-            return m_movie->getFrameSizeInBytes();
         }
 
         SpU16VideoFrame_t
@@ -114,7 +120,6 @@ namespace isx {
         }
 
     private:
-    
 
         /// A method to create a dummy TimingInfo object from the number of frames.
         ///
@@ -153,6 +158,16 @@ namespace isx {
         }
 
         m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate));
+    }
+
+    MosaicMovie::MosaicMovie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo)
+    {
+        if (false == inHdf5FileHandle->isReadWrite())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "File was opened with no write permission.");
+        }
+
+        m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inTimingInfo, inSpacingInfo));
     }
 
     MosaicMovie::~MosaicMovie()
@@ -223,6 +238,12 @@ namespace isx {
         MosaicMovie::getTimingInfo() const
     {
         return m_pImpl->getTimingInfo();
+    }
+
+    const isx::SpacingInfo &
+        MosaicMovie::getSpacingInfo() const
+    {
+        return m_pImpl->getSpacingInfo();
     }
 
     void

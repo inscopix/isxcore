@@ -117,4 +117,22 @@ TimingInfo::convertIndexToStartTime(isize_t inIndex) const
     return ret;
 }
 
+bool
+TimingInfo::operator ==(const TimingInfo& other) const
+{
+    return (m_start == other.m_start)
+        && (m_step == other.m_step)
+        && (m_numTimes == other.m_numTimes);
+}
+
+void
+TimingInfo::serialize(std::ostream& strm) const
+{
+    strm << "TimingInfo("
+            << "Start=" << m_start << ", "
+            << "Step=" << m_step << ", "
+            << "NumTimes=" << m_numTimes
+         << ")";
+}
+
 } // namespace

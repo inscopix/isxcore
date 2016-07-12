@@ -61,6 +61,11 @@ public:
         // dummy values
         isx::Ratio frameRate(30, 1);
         m_timingInfo = createDummyTimingInfo(m_movies[0]->getNumFrames(), frameRate);
+
+        // TODO sweet 2016/06/20 : the spacing information should be read from
+        // the file, but just use dummy values for now
+        m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
+
         m_isValid = true;
     }
     
@@ -69,25 +74,6 @@ public:
     isValid() const
     {
         return m_isValid;
-    }
-
-
-    isize_t
-    getFrameWidth() const
-    {
-        return m_movies[0]->getFrameWidth();
-    }
-
-    isize_t
-    getFrameHeight() const
-    {
-        return m_movies[0]->getFrameHeight();
-    }
-
-    isize_t 
-    getFrameSizeInBytes() const
-    {
-        return m_movies[0]->getFrameSizeInBytes();
     }
 
     SpU16VideoFrame_t
@@ -158,14 +144,12 @@ private:
 
         return idx;
     }
-    
 
     bool m_isValid = false;
 
 
     std::vector<std::unique_ptr<Hdf5Movie>> m_movies;
     std::vector<isize_t> m_cumulativeFrames;
-
 
 };
 
@@ -260,6 +244,12 @@ const isx::TimingInfo &
 NVistaMovie::getTimingInfo() const
 {
     return m_pImpl->getTimingInfo();
+}
+
+const isx::SpacingInfo &
+NVistaMovie::getSpacingInfo() const
+{
+    return m_pImpl->getSpacingInfo();
 }
 
 void 

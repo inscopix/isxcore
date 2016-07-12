@@ -110,6 +110,11 @@ public:
     const isx::TimingInfo &
     getTimingInfo() const;
 
+    /// \return     The spacing information of the movie.
+    ///
+    const isx::SpacingInfo &
+    getSpacingInfo() const;
+
     /// Serialize the object into an output stream.
     ///
     /// \param   strm    The output stream.

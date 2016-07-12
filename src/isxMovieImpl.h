@@ -4,6 +4,7 @@
 #include "isxMovieDefs.h"     // For MovieGetFrameCB_t & SpU16VideoFrame_t
 #include "isxIoQueue.h"
 #include "isxTimingInfo.h"
+#include "isxSpacingInfo.h"
 #include <queue>
 
 
@@ -69,12 +70,44 @@ namespace isx
             return m_timingInfo;
         }
 
+        /// \return timing information for the movie
+        ///
+        virtual const SpacingInfo &
+        getSpacingInfo() const
+        {
+            return m_spacingInfo;
+        }
+
         /// \return the total number of frames
         ///
         virtual isize_t
         getNumFrames() const
         {
             return m_timingInfo.getNumTimes();
+        }
+
+        /// \return     The width of a frame in pixels.
+        ///
+        virtual isize_t
+        getFrameWidth() const
+        {
+            return m_spacingInfo.getNumPixels().getWidth();
+        }
+
+        /// \return     The height of a frame in pixels.
+        ///
+        virtual isize_t
+        getFrameHeight() const
+        {
+            return m_spacingInfo.getNumPixels().getHeight();
+        }
+
+        /// \return     The size of a frame in bytes.
+        ///
+        virtual isize_t
+        getFrameSizeInBytes() const
+        {
+            return m_spacingInfo.getTotalNumPixels() * sizeof(uint16_t);
         }
 
     protected:
@@ -134,8 +167,29 @@ namespace isx
             }
         }
 
+        /// A method to create a dummy TimingInfo object from the number of frames.
+        ///
+        TimingInfo
+        createDummyTimingInfo(isize_t numFrames, Ratio inFrameRate)
+        {
+            isx::Time start = isx::Time();
+            isx::Ratio step = inFrameRate.getInverse();
+            return isx::TimingInfo(start, step, numFrames);
+        }
+
+        /// A method to create a dummy spacing information from the number of rows and columns.
+        ///
+        SpacingInfo
+        createDummySpacingInfo(isize_t width, isize_t height)
+        {
+            SizeInPixels_t numPixels(width, height);
+            SizeInMicrons_t pixelSize(Ratio(22, 10), Ratio(22, 10));
+            PointInMicrons_t topLeft(0, 0);
+            return SpacingInfo(numPixels, pixelSize, topLeft);
+        }
 
         isx::TimingInfo m_timingInfo;                   //!< Movie timing information
+        isx::SpacingInfo m_spacingInfo;                 //!< Movie spacing information
 
         std::queue<FrameRequest>    m_frameRequestQueue;        //!< Frame request queue
         isx::Mutex                  m_frameRequestQueueMutex;   //!< Queue mutex
