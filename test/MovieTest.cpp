@@ -87,7 +87,7 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(r->isValid());
         isx::NVistaMovie m(r->getHdf5FileHandle(), "/images");
         REQUIRE(m.isValid());
-        REQUIRE(m.getDurationInSeconds() == 3.135);
+        REQUIRE(m.getDurationInSeconds() == 3.168);
     }
 
     SECTION("toString") {
