@@ -1,6 +1,6 @@
 #include "isxHdf5FileHandle.h" 
 #include "isxMovieSeries.h"
-#include "isxMosaicMovie.h"
+#include "isxMovie.h"
 
 namespace isx {
 
@@ -33,7 +33,7 @@ namespace isx {
                 {
                     std::string objName = MovieSeriesGroup.getObjnameByIdx(m);
                     std::string path = m_path + "/" + objName;
-                    m_movies[m].reset(new MosaicMovie(m_fileHandle, path));
+                    m_movies[m].reset(new Movie(m_fileHandle, path));
                 }
             }
         }
@@ -48,7 +48,7 @@ namespace isx {
             return m_movies.size();
         }
         
-        SpMovie_t 
+        SpMovieInterface_t
         getMovie(isize_t inIndex)
         {
             return m_movies[inIndex];
@@ -60,19 +60,19 @@ namespace isx {
             return m_path.substr(m_path.find_last_of("/")+1);
         }
         
-        SpMovie_t 
+        SpMovieInterface_t
         addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
         {
             std::string path = m_path + "/" + inName;  
-            m_movies.push_back(std::make_shared<MosaicMovie>(m_fileHandle, path, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate));
+            m_movies.push_back(std::make_shared<Movie>(m_fileHandle, path, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate));
             return m_movies[m_movies.size()-1];
         }
         
     private:
-        SpH5File_t          m_file;
-        SpHdf5FileHandle_t  m_fileHandle;
-        std::string         m_path;
-        std::vector<SpMovie_t>  m_movies;
+        SpH5File_t                      m_file;
+        SpHdf5FileHandle_t              m_fileHandle;
+        std::string                     m_path;
+        std::vector<SpMovieInterface_t> m_movies;
         
     };  
 
@@ -100,7 +100,7 @@ namespace isx {
         return m_pImpl->getNumMovies();
     }
         
-    SpMovie_t
+    SpMovieInterface_t
     MovieSeries::getMovie(isize_t inIndex)
     {
         return m_pImpl->getMovie(inIndex);
@@ -112,7 +112,7 @@ namespace isx {
         return m_pImpl->getName();
     }
     
-    SpMovie_t 
+    SpMovieInterface_t
     MovieSeries::addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
     {
         return m_pImpl->addMovie(inName, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate);

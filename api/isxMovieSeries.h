@@ -1,7 +1,9 @@
 #ifndef ISX_MOVIESERIES_H
 #define ISX_MOVIESERIES_H
 
-#include "isxMovie.h"
+#include "isxCore.h"
+#include "isxCoreFwd.h"
+#include "isxRatio.h"
 #include <vector>
 #include <memory>
 
@@ -36,7 +38,7 @@ namespace isx {
         
         /// Get a movie by index
         ///
-        SpMovie_t getMovie(isize_t inIndex);
+        SpMovieInterface_t getMovie(isize_t inIndex);
         
         /// Get recording series name
         ///
@@ -44,7 +46,7 @@ namespace isx {
         
         /// Add a movie to the recording series
         ///
-        SpMovie_t addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate);
+        SpMovieInterface_t addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate);
         
     private:
         class Impl;
