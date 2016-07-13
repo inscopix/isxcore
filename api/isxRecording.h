@@ -52,7 +52,7 @@ public:
     /// Serialize the object into an output stream.
     ///
     /// \param   strm    The output stream.
-    virtual void serialize(std::ostream& strm) const;
+    void serialize(std::ostream& strm) const override;
 
     /// \return a pointer to a movie inside the recording
     ///

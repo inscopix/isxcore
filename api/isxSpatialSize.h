@@ -43,7 +43,7 @@ public:
     T getHeight() const;
 
     // Overrides
-    virtual void serialize(std::ostream & strm) const;
+    void serialize(std::ostream & strm) const override;
 
 }; // class
 

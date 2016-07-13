@@ -64,7 +64,7 @@ public:
     bool operator ==(const SpatialPoint<T> & other) const;
 
     // Overrides
-    virtual void serialize(std::ostream & strm) const;
+    void serialize(std::ostream & strm) const override;
 
 private:
 

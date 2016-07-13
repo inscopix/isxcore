@@ -59,27 +59,27 @@ namespace isx {
         /// \return whether this is a valid movie object.
         ///
         bool
-            isValid() const;
+        isValid() const override;
 
         /// \return the number of frames in this movie.
         ///
         isize_t
-            getNumFrames() const;
+        getNumFrames() const override;
 
         /// \return the width of the frames in this movie.
         ///
         isize_t
-            getFrameWidth() const;
+        getFrameWidth() const override;
 
         /// \return the height of the frames in this movie.
         ///
         isize_t
-            getFrameHeight() const;
+        getFrameHeight() const override;
 
         /// \return the size of each frame in bytes.
         ///
         isize_t
-            getFrameSizeInBytes() const;
+        getFrameSizeInBytes() const override;
 
         /// Get the frame data for given frame number.
         /// \param inFrameNumber 0-based index of frame for which to retrieve frame data
@@ -87,7 +87,7 @@ namespace isx {
         ///         requested frame data
         ///
         SpU16VideoFrame_t
-            getFrame(isize_t inFrameNumber);
+        getFrame(isize_t inFrameNumber) override;
 
         /// Get the frame data for given time.
         /// \param inTime time of frame for which to retrieve frame data
@@ -95,26 +95,26 @@ namespace isx {
         ///         requested frame data
         ///
         SpU16VideoFrame_t
-            getFrame(const Time & inTime);
+        getFrame(const Time & inTime) override;
 
         /// Get the frame data for given frame number, asynchronously.
         /// \param inFrameNumber 0-based index of frame for which to retrieve frame data
         /// \param inCallback function used to return the retrieved video frame
         ///
         void
-            getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback);
+        getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback) override;
 
         /// Get the frame data for given time.
         /// \param inTime time of frame for which to retrieve frame data
         /// \param inCallback function used to return the retrieved video frame
         ///
         void
-            getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback);
+        getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback) override;
 
         /// \return the duration of the movie in seconds
         /// 
         double
-            getDurationInSeconds() const;
+        getDurationInSeconds() const override;
 
         /// Writes a new frame to the movie dataset
         ///
@@ -130,28 +130,28 @@ namespace isx {
         /// \throw isx::ExceptionUserInput  If the arguments are not compatible with the movie.
         /// \throw isx::ExceptionDataIO     If write access to the dataset fails.
         void
-            writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize);
+        writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize);
 
         /// \return     The timing information of a movie.
         ///
         const isx::TimingInfo &
-            getTimingInfo() const;
+        getTimingInfo() const override;
 
         /// \return     The spacing information of the movie.
         ///
         const isx::SpacingInfo &
-        getSpacingInfo() const;
+        getSpacingInfo() const override;
 
         /// Serialize the object into an output stream.
         ///
         /// \param   strm    The output stream.
-        virtual
-            void
-            serialize(std::ostream& strm) const;
+        void
+        serialize(std::ostream& strm) const override;
 
         /// Get movie name
         ///
-        std::string getName();
+        std::string
+        getName() override;
 
 
     private:

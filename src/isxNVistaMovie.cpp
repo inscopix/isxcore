@@ -77,7 +77,7 @@ public:
     }
 
     SpU16VideoFrame_t
-    getFrame(isize_t inFrameNumber)
+    getFrame(isize_t inFrameNumber) override
     {
         
         Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);

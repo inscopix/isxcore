@@ -24,7 +24,7 @@ namespace isx
 
         /// \return the video frame with a time point as an input
         /// \param inTime desired time point
-        virtual SpU16VideoFrame_t
+        SpU16VideoFrame_t
         getFrameByTime(const Time & inTime)
         {
             isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
@@ -34,7 +34,7 @@ namespace isx
         /// Get a frame asynchronously
         /// \param inFrameNumber    frame number
         /// \param inCallback   callback to execute when finished
-        virtual void
+        void
         getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
         {
             {
@@ -47,7 +47,7 @@ namespace isx
         /// Get frame asynchronously by time
         /// \param inTime    time point
         /// \param inCallback   callback to execute when finished
-        virtual void
+        void
         getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
         {
             isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
@@ -56,7 +56,7 @@ namespace isx
 
         /// \return the duration of the movie in seconds
         ///
-        virtual double
+        double
         getDurationInSeconds() const
         {
             return m_timingInfo.getDuration().toDouble();
@@ -64,7 +64,7 @@ namespace isx
 
         /// \return timing information for the movie
         ///
-        virtual const isx::TimingInfo &
+        const isx::TimingInfo &
         getTimingInfo() const
         {
             return m_timingInfo;
@@ -72,7 +72,7 @@ namespace isx
 
         /// \return timing information for the movie
         ///
-        virtual const SpacingInfo &
+        const SpacingInfo &
         getSpacingInfo() const
         {
             return m_spacingInfo;
@@ -80,7 +80,7 @@ namespace isx
 
         /// \return the total number of frames
         ///
-        virtual isize_t
+        isize_t
         getNumFrames() const
         {
             return m_timingInfo.getNumTimes();
@@ -88,7 +88,7 @@ namespace isx
 
         /// \return     The width of a frame in pixels.
         ///
-        virtual isize_t
+        isize_t
         getFrameWidth() const
         {
             return m_spacingInfo.getNumPixels().getWidth();
@@ -96,7 +96,7 @@ namespace isx
 
         /// \return     The height of a frame in pixels.
         ///
-        virtual isize_t
+        isize_t
         getFrameHeight() const
         {
             return m_spacingInfo.getNumPixels().getHeight();
@@ -104,7 +104,7 @@ namespace isx
 
         /// \return     The size of a frame in bytes.
         ///
-        virtual isize_t
+        isize_t
         getFrameSizeInBytes() const
         {
             return m_spacingInfo.getTotalNumPixels() * sizeof(uint16_t);

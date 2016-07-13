@@ -25,7 +25,7 @@ namespace isx {
         /// \return the filenames of hdf5 files included in the XML
         const std::vector<std::string> & getFileNames();
 
-        virtual void serialize(std::ostream& strm) const;
+        void serialize(std::ostream& strm) const override;
         
 
     private:

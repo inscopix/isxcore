@@ -71,13 +71,13 @@ namespace isx {
         }
 
         bool
-            isValid() const
+        isValid() const
         {
             return m_isValid;
         }
 
         SpU16VideoFrame_t
-            getFrame(isize_t inFrameNumber)
+        getFrame(isize_t inFrameNumber) override
         {
 
             Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
@@ -95,12 +95,13 @@ namespace isx {
         }
 
         void
-            serialize(std::ostream& strm) const
+        serialize(std::ostream& strm) const
         {
             strm << m_movie->getPath();
         }
 
-        std::string getName()
+        std::string
+        getName()
         {
             std::string path = m_movie->getPath();
             std::string name = path.substr(path.find_last_of("/") + 1);
@@ -108,7 +109,7 @@ namespace isx {
         }
 
         void
-            writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
+        writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
         {
             if (!m_isValid)
             {
@@ -124,7 +125,7 @@ namespace isx {
         /// A method to create a dummy TimingInfo object from the number of frames.
         ///
         isx::TimingInfo
-            createDummyTimingInfo(isize_t numFrames, isx::Ratio inFrameRate)
+        createDummyTimingInfo(isize_t numFrames, isx::Ratio inFrameRate)
         {
             isx::Time start = isx::Time();
             DurationInSeconds step = inFrameRate.getInverse();

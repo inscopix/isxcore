@@ -19,17 +19,15 @@ public:
     /// dispatch a task into this queue for processing
     /// \param inTask the task to be processed
     ///
-    virtual
     void
-    dispatch(Task_t inTask);
+    dispatch(Task_t inTask) override;
     
     /// dispatch a task with context into this queue for processing
     /// \param inContext passed into the task function at processing time
     /// \param inContextTask the task accepting a context to be processed
     ///
-    virtual
     void
-    dispatch(void * inContext, ContextTask_t inContextTask);
+    dispatch(void * inContext, ContextTask_t inContextTask) override;
 private:
     DispatchQueuePool(const DispatchQueuePool & inOther) = delete;
     const DispatchQueuePool & operator=(const DispatchQueuePool & inOther) = delete;
