@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-
+#include <cmath>
 
 namespace isx {
 class NVistaMovie::Impl : public MovieImpl
@@ -100,7 +100,6 @@ public:
         return nvf;
     }
 
-
     void
     serialize(std::ostream& strm) const
     {
@@ -141,7 +140,7 @@ private:
             isx::internal::getHdf5SpaceDims(timingInfoDataSet.getSpace(), timingInfoDims, timingInfoMaxDims);
 
             hsize_t numFrames = timingInfoDims[0];
-            std::vector<double> buffer;
+            std::vector<double> buffer(numFrames);
 
             timingInfoDataSet.read(buffer.data(), timingInfoDataSet.getDataType());
 
