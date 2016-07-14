@@ -15,6 +15,8 @@
 namespace isx
 {
 
+/// Movie class, implements MovieInterface
+///
 class Movie : public MovieInterface
 {
 public:
