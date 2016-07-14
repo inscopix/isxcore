@@ -10,10 +10,12 @@
 #include "isxSpacingInfo.h"
 #include "isxMovieDefs.h"
 
+#include <memory>
+
 namespace isx
 {
 
-class Movie : public MovieInterface, public Object
+class Movie : public MovieInterface
 {
 public:
     
@@ -21,22 +23,20 @@ public:
     ///
     Movie();
     
-    /// Construct a new movie from vector of HDF5 files
+    /// Construct a new movie from vector of existing HDF5 datasets
+    /// \param inHdf5FileHandles vector of opaque HDF5 file handles
+    /// \param inPaths vecotr of paths to datasets
     ///
     Movie(const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles, const std::vector<std::string> & inPaths);
     
-    /// Construct a new movie from a single HDF5 file
-    ///
-    Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath);
-    
-    /// Construct movie to be read from a dataset.
+    /// Construct movie to be read from an existing dataset.
     /// \param inHdf5FileHandle opaque HDF5 file handle from Recording.
-    /// \param inPath Path to dataset in Recording.
+    /// \param inPath Path to dataset
     /// \throw isx::ExceptionFileIO     If the file cannot be read.
     /// \throw isx::ExceptionDataIO     If the dataset cannot be read.
     Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath);
 
-    /// Construct movie to be written to a dataset.
+    /// Construct movie to be written to a new dataset.
     /// \param inHdf5FileHandle opaque HDF5 file handle from ProjectFile.
     /// \param inPath the path for the movie within the file. It will be created if it doesn't exist
     /// \param inNumFrames number of frames
@@ -47,7 +47,7 @@ public:
     /// \throw isx::ExceptionDataIO     If the dataset cannot be written.
     Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate);
 
-    /// Construct movie to be written to a dataset.
+    /// Construct movie to be written to a new dataset.
     /// \param inHdf5FileHandle opaque HDF5 file handle from ProjectFile.
     /// \param inPath the path for the movie within the file. It will be created if it doesn't exist
     /// \param inTimingInfo     The timing information associated with the frames of the movie.
@@ -158,7 +158,7 @@ public:
 
 private:
     class Impl;
-    std::unique_ptr<Impl> m_pImpl;
+    std::shared_ptr<Impl> m_pImpl;
     
 };
 

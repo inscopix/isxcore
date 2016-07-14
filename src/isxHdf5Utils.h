@@ -75,6 +75,18 @@ void getHdf5SpaceDims(
     HSizeVector_t & dims,
     HSizeVector_t & maxDims);
 
+
+/// Checks whether HDF5 file has a given dataset at a given path
+///
+/// \param  inFile          HDF5 handle of file to check
+/// \param  inPath          Path at which to check for dataset
+/// \param  inDatasetName   Name of dataset to check for
+/// \return true if inDatasetName exists at inPath in inFile
+bool hasDatasetAtPath(
+    const SpH5File_t & inFile,
+    const std::string & inPath,
+    const std::string & inDatasetName);
+
 } // namespace internal
 
 } // namespace isx

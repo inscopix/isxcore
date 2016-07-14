@@ -1,5 +1,5 @@
 #include "isxRecording.h"
-#include "isxNVistaMovie.h"
+#include "isxMovieInterface.h"
 #include "catch.hpp"
 #include "isxTest.h"
 
@@ -18,8 +18,8 @@ TEST_CASE("RecordingTest", "[core]") {
     SECTION("create movie from dataset in recording") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
-        isx::NVistaMovie m(r->getHdf5FileHandle(), "/images");
-        REQUIRE(m.isValid());
+        isx::SpMovieInterface_t m(r->getMovie());
+        REQUIRE(m->isValid());
     }
 
     SECTION("toString") {
@@ -41,9 +41,9 @@ TEST_CASE("RecordingTest", "[core]") {
         REQUIRE(rHdf0->isValid());
         REQUIRE(rHdf1->isValid());
         
-        isx::SpMovie_t mXml  = rXml->getMovie();
-        isx::SpMovie_t mHdf0 = rHdf0->getMovie();
-        isx::SpMovie_t mHdf1 = rHdf1->getMovie();
+        isx::SpMovieInterface_t mXml  = rXml->getMovie();
+        isx::SpMovieInterface_t mHdf0 = rHdf0->getMovie();
+        isx::SpMovieInterface_t mHdf1 = rHdf1->getMovie();
         
         isx::isize_t nFramesXML = mXml->getNumFrames();
         isx::isize_t nFramesHdf0 = mHdf0->getNumFrames();

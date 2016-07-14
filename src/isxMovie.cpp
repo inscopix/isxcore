@@ -1,13 +1,17 @@
 #include "isxMovie.h"
 #include "isxHdf5Movie.h"
+#include "isxHdf5Utils.h"
+#include "isxMutex.h"
+#include "isxIoQueue.h"
 #include <iostream>
 #include <vector>
 #include <sstream>
 #include <queue>
 #include <mutex>
+#include <memory>
 
 namespace isx {
-class Movie::Impl
+class Movie::Impl : public std::enable_shared_from_this<Movie::Impl>
 {
     
 
@@ -23,9 +27,35 @@ public:
 
     Impl(const SpH5File_t & inHdf5File, const std::string & inPath)
     {
-        std::vector<SpH5File_t> hdf5Files(1, inHdf5File);
-        std::vector<std::string>> paths(1, inPath);
-        Initialize(hdf5Files, paths);
+        // Figure out if the input is a recording from nVista or a Mosaic Project
+//        if (isx::internal::hasDatasetAtPath(inHdf5File, inPath, "Properties"))
+        if (inPath != "/images")
+        {
+            // mosaic movie
+            std::string moviePath = inPath + "/Movie";
+
+            std::unique_ptr<Hdf5Movie> p(new Hdf5Movie(inHdf5File, moviePath));
+
+            // TODO sweet 2016/05/31 : the start and step should be read from
+            // the file but it doesn't currently contain these, so picking some
+            // dummy values
+            p->readProperties(m_timingInfo);
+
+            // TODO sweet 2016/06/20 : the spacing information should be read from
+            // the file, but just use dummy values for now
+            m_spacingInfo = createDummySpacingInfo(p->getFrameWidth(), p->getFrameHeight());
+            m_movies.push_back(std::move(p));
+
+            m_isValid = true;
+            
+        }
+        else
+        {
+            // nvista recording
+            std::vector<SpH5File_t> hdf5Files(1, inHdf5File);
+            std::vector<std::string> paths(1, inPath);
+            Initialize(hdf5Files, paths);
+        }
     }
 
     void
@@ -59,6 +89,7 @@ public:
 
         isx::Ratio frameRate(30, 1);
         m_timingInfo = createDummyTimingInfo(numFramesAccum, frameRate);
+        m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
         m_isValid = true;
     }
 
@@ -66,17 +97,18 @@ public:
         : m_isValid(false)
     {
 
-        m_movie.reset(new Hdf5Movie(inHdf5File, inPath + "/Movie", inNumFrames, inFrameWidth, inFrameHeight));            
+        std::unique_ptr<Hdf5Movie> p(new Hdf5Movie(inHdf5File, inPath + "/Movie", inNumFrames, inFrameWidth, inFrameHeight));
 
         // TODO sweet 2016/09/31 : the start and step should also be specified
         // but we don't currently have a mechnanism for that
         m_timingInfo = createDummyTimingInfo(inNumFrames, inFrameRate);
-        m_movie->writeProperties(m_timingInfo);
+        p->writeProperties(m_timingInfo);
 
         // TODO sweet 2016/06/20 : the spacing information should be read from
         // the file, but just use dummy values for now
         m_spacingInfo = createDummySpacingInfo(inFrameWidth, inFrameHeight);
-
+        m_movies.push_back(std::move(p));
+        m_cumulativeFrames.push_back(inNumFrames);
         m_isValid = true;
     }
 
@@ -89,8 +121,10 @@ public:
         isize_t numFrames = inTimingInfo.getNumTimes();
         SizeInPixels_t numPixels = inSpacingInfo.getNumPixels();
 
-        m_movie.reset(new Hdf5Movie(inHdf5File, inPath + "/Movie", numFrames, numPixels.getWidth(), numPixels.getHeight()));
-        m_movie->writeProperties(m_timingInfo);
+        std::unique_ptr<Hdf5Movie> p(new Hdf5Movie(inHdf5File, inPath + "/Movie", numFrames, numPixels.getWidth(), numPixels.getHeight()));
+        p->writeProperties(m_timingInfo);
+        m_movies.push_back(std::move(p));
+        m_cumulativeFrames.push_back(numFrames);
         m_isValid = true;
     }
 
@@ -211,6 +245,17 @@ public:
     }
 
     void
+    writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
+    {
+        if (!m_isValid)
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie.");
+        }
+        ScopedMutex locker(IoQueue::getMutex(), "writeFrame");
+        m_movies[0]->writeFrame(inFrameNumber, inBuffer, inBufferSize);
+    }
+
+    void
     serialize(std::ostream& strm) const
     {
         for (isize_t m(0); m < m_movies.size(); ++m)
@@ -232,15 +277,80 @@ public:
 
 
 private:
+    /// a class representing a frame request
+    ///
+    class FrameRequest
+    {
+    public:
+        /// constructor
+        /// \param inFrameNumber    frame number requested
+        /// \param inCallback       callback to execute when finished
+        FrameRequest(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
+            : m_frameNumber(inFrameNumber)
+            , m_callback(inCallback) {}
+
+        isize_t             m_frameNumber;  //!< frame index
+        MovieGetFrameCB_t   m_callback;     //!< callback to execute
+    };
+
+    /// process next frame request
+    ///
+    void
+    processFrameQueue()
+    {
+        isx::ScopedMutex locker(m_frameRequestQueueMutex, "processFrameQueue");
+        if (!m_frameRequestQueue.empty())
+        {
+            FrameRequest fr = m_frameRequestQueue.front();
+            m_frameRequestQueue.pop();
+            WpImpl_t weakThis = shared_from_this();
+            IoQueue::instance()->dispatch([weakThis, this, fr]()
+            {
+                SpImpl_t sharedThis = weakThis.lock();
+                if (!sharedThis)
+                {
+                    fr.m_callback(nullptr);
+                }
+                else
+                {
+                    fr.m_callback(getFrame(fr.m_frameNumber));
+                    processFrameQueue();
+                }
+            });
+        }
+    }
+
+    /// Purge queue
+    ///
+    void
+    purgeFrameQueue()
+    {
+        isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
+        while (!m_frameRequestQueue.empty())
+        {
+            m_frameRequestQueue.pop();
+        }
+    }
 
     /// A method to create a dummy TimingInfo object from the number of frames.
     ///
-    isx::TimingInfo
-    createDummyTimingInfo(isize_t numFrames, isx::Ratio inFrameRate)
+    TimingInfo
+    createDummyTimingInfo(isize_t numFrames, Ratio inFrameRate)
     {
         isx::Time start = isx::Time();
-        DurationInSeconds step = inFrameRate.getInverse();
+        isx::Ratio step = inFrameRate.getInverse();
         return isx::TimingInfo(start, step, numFrames);
+    }
+
+    /// A method to create a dummy spacing information from the number of rows and columns.
+    ///
+    SpacingInfo
+    createDummySpacingInfo(isize_t width, isize_t height)
+    {
+        SizeInPixels_t numPixels(width, height);
+        SizeInMicrons_t pixelSize(Ratio(22, 10), Ratio(22, 10));
+        PointInMicrons_t topLeft(0, 0);
+        return SpacingInfo(numPixels, pixelSize, topLeft);
     }
 
     isize_t getMovieIndex(isize_t inFrameNumber)
@@ -264,6 +374,8 @@ private:
     std::vector<std::unique_ptr<Hdf5Movie>> m_movies;
     std::vector<isize_t> m_cumulativeFrames;
 
+    typedef std::shared_ptr<Movie::Impl> SpImpl_t;
+    typedef std::weak_ptr<Movie::Impl> WpImpl_t;
 };
 
 
@@ -382,6 +494,12 @@ const isx::SpacingInfo &
 Movie::getSpacingInfo() const
 {
     return m_pImpl->getSpacingInfo();
+}
+
+void
+Movie::writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
+{
+    m_pImpl->writeFrame(inFrameNumber, inBuffer, inBufferSize);
 }
 
 void 

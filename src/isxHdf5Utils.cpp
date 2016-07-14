@@ -195,6 +195,41 @@ void getHdf5SpaceDims(
     space.getSimpleExtentDims(dims.data(), maxDims.data());
 }
 
+bool hasDatasetAtPath(
+    const SpH5File_t & inFile,
+    const std::string & inPath,
+    const std::string & inDatasetName)
+{
+    H5::Group rootGroup;
+    
+    try
+    {
+        rootGroup = inFile->openGroup(inPath);
+    }
+    catch (const H5::FileIException& error)
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Failure caused by H5File operation.\n", error.getDetailMsg());
+    }
+
+    hsize_t nObjInGroup = rootGroup.getNumObjs();
+
+    if (0 == nObjInGroup)
+    {
+        return false;
+    }
+
+    for (size_t i(0); i < nObjInGroup; ++i)
+    {
+        if (rootGroup.getObjnameByIdx(i) == inDatasetName)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 } // namespace internal
 
 } // namespace isx

@@ -18,7 +18,7 @@ namespace isx
 /// Interface for Movies
 ///
 
-class MovieInterface
+class MovieInterface : public Object
 {
 public:
     
