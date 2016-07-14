@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-
+#include <cmath>
 
 namespace isx {
 class NVistaMovie::Impl : public MovieImpl
@@ -44,8 +44,10 @@ public:
             m_cumulativeFrames.push_back(numFramesAccum);
         }
 
-        isx::Ratio frameRate(30, 1);
-        m_timingInfo = createDummyTimingInfo(numFramesAccum, frameRate);
+        // TODO michele 2016/07/08 : time since epoch comes from host machine and frame rate 
+        // is calculated, so these values are not what we really want. we should want to 
+        // pull these from the xml eventually
+        m_timingInfo = readTimingInfo(inHdf5Files);
         m_isValid = true;
 
     }
@@ -56,16 +58,14 @@ public:
         m_movies.push_back(std::move(p));
         m_cumulativeFrames.push_back(m_movies[0]->getNumFrames());
         
-        // TODO sweet 2016/05/31 : the start and step should be read from
-        // the file but it doesn't currently contain these, so picking some
-        // dummy values
-        isx::Ratio frameRate(30, 1);
-        m_timingInfo = createDummyTimingInfo(m_movies[0]->getNumFrames(), frameRate);
-
         // TODO sweet 2016/06/20 : the spacing information should be read from
         // the file, but just use dummy values for now
         m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
 
+        // TODO michele : see above
+        std::vector<SpH5File_t> vecFile;
+        vecFile.push_back(inHdf5File);
+        m_timingInfo = readTimingInfo(vecFile);
         m_isValid = true;
     }
     
@@ -100,7 +100,6 @@ public:
         return nvf;
     }
 
-
     void
     serialize(std::ostream& strm) const
     {
@@ -124,14 +123,43 @@ public:
 
 private:
 
-    /// A method to create a dummy TimingInfo object from the number of frames.
-    ///
     isx::TimingInfo
-    createDummyTimingInfo(isize_t numFrames, isx::Ratio inFrameRate)
+    readTimingInfo(std::vector<SpH5File_t> inHdf5Files)
     {
-        isx::Time start = isx::Time();
-        DurationInSeconds step = inFrameRate.getInverse();
-        return isx::TimingInfo(start, step, numFrames);
+        H5::DataSet timingInfoDataSet;
+        hsize_t totalNumFrames = 0;
+        int64_t startTime = 0;
+        double totalDurationInSecs = 0;
+
+        for (isize_t f(0); f < inHdf5Files.size(); ++f)
+        {
+            timingInfoDataSet = inHdf5Files[f]->openDataSet("/timeStamp");
+
+            std::vector<hsize_t> timingInfoDims;
+            std::vector<hsize_t> timingInfoMaxDims;
+            isx::internal::getHdf5SpaceDims(timingInfoDataSet.getSpace(), timingInfoDims, timingInfoMaxDims);
+
+            hsize_t numFrames = timingInfoDims[0];
+            std::vector<double> buffer(numFrames);
+
+            timingInfoDataSet.read(buffer.data(), timingInfoDataSet.getDataType());
+
+            // get start time
+            if (f == 0)
+            {
+                startTime = int64_t(buffer[0]);
+            }
+
+            totalDurationInSecs += buffer[numFrames - 1] - buffer[0];
+            totalNumFrames += numFrames;
+        }
+
+        totalDurationInSecs *= 1000.0 / double(totalNumFrames);
+
+        isx::DurationInSeconds step = isx::DurationInSeconds(isize_t(std::round(totalDurationInSecs)), 1000);
+        isx::Time start = isx::Time(startTime);
+
+        return isx::TimingInfo(start, step, totalNumFrames);
     }
 
     isize_t getMovieIndex(isize_t inFrameNumber)
