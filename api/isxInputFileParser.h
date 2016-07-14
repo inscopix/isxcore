@@ -18,6 +18,10 @@ namespace isx {
         /// \return the file extension 
         /// \param inFileName - file name of interest
         static std::string getExtension(const std::string & inFileName);
+
+        /// \return the file name without the path 
+        /// \param inAbsoluteFileName - file name of interest with path
+        static std::string getFileName(const std::string & inAbsoluteFileName);
        
 
     };
