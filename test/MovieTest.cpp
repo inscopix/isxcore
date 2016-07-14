@@ -22,28 +22,28 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(m->isValid());
     }
 
-    SECTION("getNumFrames") {
+    SECTION("getTimingInfo().getNumTimes()") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
         isx::SpMovieInterface_t m(r->getMovie());
         REQUIRE(m->isValid());
-        REQUIRE(m->getNumFrames() == 33);
+        REQUIRE(m->getTimingInfo().getNumTimes() == 33);
     }
 
-    SECTION("getFrameWidth") {
+    SECTION("getSpacingInfo().getNumColumns") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
         isx::SpMovieInterface_t m(r->getMovie());
         REQUIRE(m->isValid());
-        REQUIRE(m->getFrameWidth() == 500);
+        REQUIRE(m->getSpacingInfo().getNumColumns() == 500);
     }
 
-    SECTION("getFrameHeight") {
+    SECTION("getSpacingInfo().getNumRows") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
         isx::SpMovieInterface_t m(r->getMovie());
         REQUIRE(m->isValid());
-        REQUIRE(m->getFrameHeight() == 500);
+        REQUIRE(m->getSpacingInfo().getNumRows() == 500);
     }
 
     SECTION("getFrame for time") {
@@ -94,9 +94,9 @@ TEST_CASE("MovieTest", "[core]") {
             isx::SpMovieInterface_t inputMovie(inputFile->getMovie());
 
             // Get sizes from input
-            isx::isize_t nFrames = inputMovie->getNumFrames();
-            isx::isize_t nCols = inputMovie->getFrameWidth();
-            isx::isize_t nRows = inputMovie->getFrameHeight();
+            isx::isize_t nFrames = inputMovie->getTimingInfo().getNumTimes();
+            isx::isize_t nCols = inputMovie->getSpacingInfo().getNumColumns();
+            isx::isize_t nRows = inputMovie->getSpacingInfo().getNumRows();
             isx::TimingInfo timingInfo = inputMovie->getTimingInfo();
             isx::Ratio timeStep = timingInfo.getStep();
             isx::Ratio frameRate = timeStep.getInverse();
@@ -130,9 +130,9 @@ TEST_CASE("MovieTest", "[core]") {
         isx::SpMovieInterface_t inputMovie(inputFile->getMovie());
         
         // Get sizes from input
-        isx::isize_t nFrames = inputMovie->getNumFrames();
-        isx::isize_t nCols  = inputMovie->getFrameWidth();
-        isx::isize_t nRows  = inputMovie->getFrameHeight();
+        isx::isize_t nFrames = inputMovie->getTimingInfo().getNumTimes();
+        isx::isize_t nCols  = inputMovie->getSpacingInfo().getNumColumns();
+        isx::isize_t nRows  = inputMovie->getSpacingInfo().getNumRows();
  		isx::TimingInfo timingInfo = inputMovie->getTimingInfo();
         isx::Ratio timeStep = timingInfo.getStep();
 		isx::Ratio frameRate = timeStep.getInverse();
@@ -146,9 +146,9 @@ TEST_CASE("MovieTest", "[core]") {
         isx::SpMovieSeries_t rs = outputFile->addMovieSeries("RecSeries0");
         isx::SpMovieInterface_t outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);
         
-        REQUIRE(nFrames == outputMovie->getNumFrames());
-        REQUIRE(nCols == outputMovie->getFrameWidth());
-        REQUIRE(nRows == outputMovie->getFrameHeight());
+        REQUIRE(nFrames == outputMovie->getTimingInfo().getNumTimes());
+        REQUIRE(nCols == outputMovie->getSpacingInfo().getNumColumns());
+        REQUIRE(nRows == outputMovie->getSpacingInfo().getNumRows());
 
         timingInfo = outputMovie->getTimingInfo();
         timeStep = timingInfo.getStep();

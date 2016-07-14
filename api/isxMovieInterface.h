@@ -28,24 +28,6 @@ public:
     bool
     isValid() const = 0;
 
-    /// \return the number of frames in this movie.
-    ///
-    virtual
-    isize_t
-    getNumFrames() const = 0;
-
-    /// \return the width of the frames in this movie.
-    ///
-    virtual
-    isize_t
-    getFrameWidth() const = 0;
-
-    /// \return the height of the frames in this movie.
-    ///
-    virtual
-    isize_t
-    getFrameHeight() const = 0;
-
     /// Get the frame data for given frame number.
     /// \param inFrameNumber 0-based index of frame for which to retrieve frame data
     /// \return a shared_ptr to a VideoFrame object containing the

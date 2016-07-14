@@ -139,10 +139,10 @@ public:
     {
         
         Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
-        
+        SpacingInfo si = getSpacingInfo();
         auto nvf = std::make_shared<U16VideoFrame_t>(
-            getFrameWidth(), getFrameHeight(),
-            sizeof(uint16_t) * getFrameWidth(),
+            si.getNumColumns(), si.getNumRows(),
+            sizeof(uint16_t) * si.getNumColumns(),
             1, // numChannels
             frameTime, inFrameNumber);
 
@@ -210,30 +210,6 @@ public:
     getSpacingInfo() const
     {
         return m_spacingInfo;
-    }
-
-    /// \return the total number of frames
-    ///
-    isize_t
-    getNumFrames() const
-    {
-        return m_timingInfo.getNumTimes();
-    }
-
-    /// \return     The width of a frame in pixels.
-    ///
-    isize_t
-    getFrameWidth() const
-    {
-        return m_spacingInfo.getNumPixels().getWidth();
-    }
-
-    /// \return     The height of a frame in pixels.
-    ///
-    isize_t
-    getFrameHeight() const
-    {
-        return m_spacingInfo.getNumPixels().getHeight();
     }
 
     void
@@ -420,24 +396,6 @@ bool
 Movie::isValid() const
 {
     return m_pImpl->isValid();
-}
-
-isize_t 
-Movie::getNumFrames() const
-{
-    return m_pImpl->getNumFrames();
-}
-
-isize_t
-Movie::getFrameWidth() const
-{
-    return m_pImpl->getFrameWidth();
-}
-
-isize_t
-Movie::getFrameHeight() const
-{
-    return m_pImpl->getFrameHeight();
 }
 
 SpU16VideoFrame_t

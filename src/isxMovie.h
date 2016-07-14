@@ -67,21 +67,6 @@ public:
     bool
     isValid() const override;
 
-    /// \return the number of frames in this movie.
-    ///
-    isize_t
-    getNumFrames() const override;
-
-    /// \return the width of the frames in this movie.
-    ///
-    isize_t
-    getFrameWidth() const override;
-
-    /// \return the height of the frames in this movie.
-    ///
-    isize_t
-    getFrameHeight() const override;
-
     /// Get the frame data for given frame number.
     /// \param inFrameNumber 0-based index of frame for which to retrieve frame data
     /// \return a shared_ptr to a VideoFrame object containing the

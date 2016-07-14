@@ -45,9 +45,9 @@ TEST_CASE("RecordingTest", "[core]") {
         isx::SpMovieInterface_t mHdf0 = rHdf0->getMovie();
         isx::SpMovieInterface_t mHdf1 = rHdf1->getMovie();
         
-        isx::isize_t nFramesXML = mXml->getNumFrames();
-        isx::isize_t nFramesHdf0 = mHdf0->getNumFrames();
-        isx::isize_t nFramesHdf1 = mHdf1->getNumFrames();
+        isx::isize_t nFramesXML = mXml->getTimingInfo().getNumTimes();
+        isx::isize_t nFramesHdf0 = mHdf0->getTimingInfo().getNumTimes();
+        isx::isize_t nFramesHdf1 = mHdf1->getTimingInfo().getNumTimes();
         
         REQUIRE(nFramesXML == nFramesHdf0 + nFramesHdf1);
         
