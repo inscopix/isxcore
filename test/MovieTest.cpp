@@ -46,14 +46,6 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(m->getFrameHeight() == 500);
     }
 
-    SECTION("getFrameSizeInBytes") {
-        isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
-        REQUIRE(r->isValid());
-        isx::SpMovieInterface_t m(r->getMovie());
-        REQUIRE(m->isValid());
-        REQUIRE(m->getFrameSizeInBytes() == 500000);
-    }
-
     SECTION("getFrame for time") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
@@ -165,12 +157,20 @@ TEST_CASE("MovieTest", "[core]") {
 
         // Write a frame from the input movie to the output movie
         isx::isize_t nFrame = 15;
-        isx::isize_t inputSize = inputMovie->getFrameSizeInBytes();
         isx::Time frame15Time = inputMovie->getTimingInfo().getStart();
         frame15Time += inputMovie->getTimingInfo().getStep() * nFrame;
         auto nvf = inputMovie->getFrame(frame15Time);
+        isx::isize_t inputSize = nvf->getImageSizeInBytes();
         unsigned char * inputFrameBuffer = reinterpret_cast<unsigned char *>(nvf->getPixels());
-        outputMovie->writeFrame(nFrame, inputFrameBuffer, inputSize);
+
+        {
+            isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(nCols, nRows));
+            isx::isize_t rowBytes = nCols * sizeof(uint16_t);
+            isx::isize_t numChannels = 1;
+            auto outputFrame = std::make_shared<isx::U16VideoFrame_t>(spacingInfo, rowBytes, numChannels, isx::Time(), nFrame);
+            memcpy(outputFrame->getPixels(), nvf->getPixels(), inputSize);
+            outputMovie->writeFrame(outputFrame);
+        }
         
         // Read dataset from output
         auto outputNvf = outputMovie->getFrame(frame15Time);

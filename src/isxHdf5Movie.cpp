@@ -115,7 +115,8 @@ namespace isx
 
     }
 
-    void Hdf5Movie::getFrame(isize_t inFrameNumber, const SpU16VideoFrame_t & vf)
+    void
+    Hdf5Movie::getFrame(isize_t inFrameNumber, const SpU16VideoFrame_t & vf)
     {
         try 
         {
@@ -132,28 +133,27 @@ namespace isx
         }
     }
 
-    void Hdf5Movie::writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
+    void 
+    Hdf5Movie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
     {
-        
-
         // Check that buffer size matches dataspace definition
-        if (inBufferSize != getFrameSizeInBytes())
+        if (inVideoFrame->getImageSizeInBytes() != getFrameSizeInBytes())
         {
             ISX_THROW(isx::ExceptionUserInput,
-                "The buffer size (", inBufferSize, " B) does not match the frame size (",
+                "The buffer size (", inVideoFrame->getImageSizeInBytes(), " B) does not match the frame size (",
                 getFrameSizeInBytes(), " B).");
         }
 
         // Check that frame number is within range
-        if (inFrameNumber > m_maxdims[0])
+        if (inVideoFrame->getFrameIndex() > m_maxdims[0])
         {
             ISX_THROW(isx::ExceptionUserInput,
-                "Frame number (", inFrameNumber, ") exceeds the total number of frames (",
+                "Frame number (", inVideoFrame->getFrameIndex(), ") exceeds the total number of frames (",
                 m_maxdims[0], ") in the movie.");
         }
 
         isx::internal::HSizeVector_t size = { 1, m_dims[1], m_dims[2] };
-        isx::internal::HSizeVector_t offset = { inFrameNumber, 0, 0 };
+        isx::internal::HSizeVector_t offset = { inVideoFrame->getFrameIndex(), 0, 0 };
         H5::DataSpace fileSpace = isx::internal::createHdf5SubSpace(
             m_dataSpace, offset, size);
         H5::DataSpace bufferSpace = isx::internal::createHdf5BufferSpace(
@@ -162,7 +162,7 @@ namespace isx
         // Write data to the dataset.
         try
         {
-            m_dataSet.write(inBuffer, m_dataType, bufferSpace, fileSpace);
+            m_dataSet.write(inVideoFrame->getPixels(), m_dataType, bufferSpace, fileSpace);
         }
 
         // Catch failure caused by the DataSet operations
@@ -171,10 +171,11 @@ namespace isx
             ISX_THROW(isx::ExceptionDataIO,
                 "Failed to write frame to movie.\n", error.getDetailMsg());
         }
+
     }
 
     H5::CompType
-        Hdf5Movie::getTimingInfoType()
+    Hdf5Movie::getTimingInfoType()
     {
         H5::CompType timingInfoType(sizeof(sTimingInfo_t));
         timingInfoType.insertMember(sTimingInfoTimeSecsNum, HOFFSET(sTimingInfo_t, timeSecsNum), H5::PredType::NATIVE_INT64);
@@ -272,4 +273,35 @@ namespace isx
                 "Failure to write movie properties caused by H5 Group operations.\n", error.getDetailMsg());
         }
     }
+
+    isize_t 
+    Hdf5Movie::getFrameSizeInBytes() 
+    { 
+        return m_dims[1] * m_dims[2] * 2; 
+    }
+
+    isize_t 
+    Hdf5Movie::getNumFrames() const 
+    { 
+        return m_dims[0]; 
+    }
+
+    isize_t
+    Hdf5Movie::getFrameWidth() const
+    {
+        return m_dims[2];
+    }
+
+    isize_t
+    Hdf5Movie::getFrameHeight() const
+    {
+        return m_dims[1];
+    }
+    
+    const std::string & 
+    Hdf5Movie::getPath()
+    {
+        return m_path;
+    }
+
 }

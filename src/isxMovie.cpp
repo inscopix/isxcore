@@ -236,25 +236,17 @@ public:
         return m_spacingInfo.getNumPixels().getHeight();
     }
 
-    /// \return     The size of a frame in bytes.
-    ///
-    isize_t
-    getFrameSizeInBytes() const
-    {
-        return m_spacingInfo.getTotalNumPixels() * sizeof(uint16_t);
-    }
-
     void
-    writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
+    writeFrame(const SpU16VideoFrame_t & inVideoFrame)
     {
         if (!m_isValid)
         {
             ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie.");
         }
         ScopedMutex locker(IoQueue::getMutex(), "writeFrame");
-        m_movies[0]->writeFrame(inFrameNumber, inBuffer, inBufferSize);
+        m_movies[0]->writeFrame(inVideoFrame);
     }
-
+    
     void
     serialize(std::ostream& strm) const
     {
@@ -448,12 +440,6 @@ Movie::getFrameHeight() const
     return m_pImpl->getFrameHeight();
 }
 
-isize_t 
-Movie::getFrameSizeInBytes() const
-{
-    return m_pImpl->getFrameSizeInBytes();
-}
-
 SpU16VideoFrame_t
 Movie::getFrame(isize_t inFrameNumber)
 {
@@ -497,9 +483,9 @@ Movie::getSpacingInfo() const
 }
 
 void
-Movie::writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize)
+Movie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
 {
-    m_pImpl->writeFrame(inFrameNumber, inBuffer, inBufferSize);
+    m_pImpl->writeFrame(inVideoFrame);
 }
 
 void 

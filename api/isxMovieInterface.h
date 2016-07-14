@@ -46,12 +46,6 @@ public:
     isize_t
     getFrameHeight() const = 0;
 
-    /// \return the size of each frame in bytes.
-    ///
-    virtual
-    isize_t
-    getFrameSizeInBytes() const = 0;
-
     /// Get the frame data for given frame number.
     /// \param inFrameNumber 0-based index of frame for which to retrieve frame data
     /// \return a shared_ptr to a VideoFrame object containing the
@@ -91,16 +85,14 @@ public:
     /// The file needs to be opened with write permission and the defined path for the 
     /// the movie needs to exist within the file structure for this to succeed
     ///
-    /// \param inFrameNumber the frame number to insert
-    /// \param inBuffer the buffer containing frame data
-    /// \param inBufferSize size of inBuffer
+    /// \param inVideoFrame VideoFrame to write to this movie
     ///
     /// \throw isx::ExceptionFileIO     If the movie is invalid.
     /// \throw isx::ExceptionUserInput  If the arguments are not compatible with the movie.
     /// \throw isx::ExceptionDataIO     If write access to the dataset fails (eg when trying to write to nvista recordings).
     virtual
     void
-    writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize) = 0;
+    writeFrame(const SpU16VideoFrame_t & inVideoFrame) = 0;
 
     /// \return the duration of the movie in seconds
     /// 
