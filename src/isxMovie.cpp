@@ -285,27 +285,47 @@ private:
         int64_t startTime = 0;
         double totalDurationInSecs = 0;
 
-        for (isize_t f(0); f < inHdf5Files.size(); ++f)
+        try
         {
-            timingInfoDataSet = inHdf5Files[f]->openDataSet("/timeStamp");
 
-            std::vector<hsize_t> timingInfoDims;
-            std::vector<hsize_t> timingInfoMaxDims;
-            isx::internal::getHdf5SpaceDims(timingInfoDataSet.getSpace(), timingInfoDims, timingInfoMaxDims);
-
-            hsize_t numFrames = timingInfoDims[0];
-            std::vector<double> buffer(numFrames);
-
-            timingInfoDataSet.read(buffer.data(), timingInfoDataSet.getDataType());
-
-            // get start time
-            if (f == 0)
+            for (isize_t f(0); f < inHdf5Files.size(); ++f)
             {
-                startTime = int64_t(buffer[0]);
-            }
+                timingInfoDataSet = inHdf5Files[f]->openDataSet("/timeStamp");
 
-            totalDurationInSecs += buffer[numFrames - 1] - buffer[0];
-            totalNumFrames += numFrames;
+                std::vector<hsize_t> timingInfoDims;
+                std::vector<hsize_t> timingInfoMaxDims;
+                isx::internal::getHdf5SpaceDims(timingInfoDataSet.getSpace(), timingInfoDims, timingInfoMaxDims);
+
+                hsize_t numFrames = timingInfoDims[0];
+                std::vector<double> buffer(numFrames);
+
+                timingInfoDataSet.read(buffer.data(), timingInfoDataSet.getDataType());
+
+                // get start time
+                if (f == 0)
+                {
+                    startTime = int64_t(buffer[0]);
+                }
+
+                totalDurationInSecs += buffer[numFrames - 1] - buffer[0];
+                totalNumFrames += numFrames;
+            }
+        }
+        catch (const H5::FileIException& error)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failure caused by H5File operations.\n", error.getDetailMsg());
+        }
+
+        catch (const H5::DataSetIException& error)
+        {
+            ISX_THROW(isx::ExceptionDataIO,
+                "Failure caused by DataSet operations.\n", error.getDetailMsg());
+        }
+
+        catch (...)
+        {
+            ISX_ASSERT(false, "Unhandled exception.");
         }
 
         totalDurationInSecs *= 1000.0 / double(totalNumFrames);
