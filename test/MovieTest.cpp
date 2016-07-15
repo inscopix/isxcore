@@ -68,12 +68,12 @@ TEST_CASE("MovieTest", "[core]") {
         REQUIRE(t[1] == 0x3);
     }
 
-    SECTION("getDurationInSeconds") {
+    SECTION("getTimingInfo().getDuration()") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
         isx::SpMovieInterface_t m(r->getMovie());
         REQUIRE(m->isValid());
-        REQUIRE(m->getDurationInSeconds() == 3.168);
+        REQUIRE(m->getTimingInfo().getDuration().toDouble() == 3.168);
     }
 
     SECTION("toString") {

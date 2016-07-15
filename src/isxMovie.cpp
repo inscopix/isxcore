@@ -191,14 +191,6 @@ public:
         return getFrameAsync(frameNumber, inCallback);
     }
 
-    /// \return the duration of the movie in seconds
-    ///
-    double
-    getDurationInSeconds() const
-    {
-        return m_timingInfo.getDuration().toDouble();
-    }
-
     /// \return timing information for the movie
     ///
     const isx::TimingInfo &
@@ -462,12 +454,6 @@ void
 Movie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
 {
     return m_pImpl->getFrameAsync(inTime, inCallback);
-}
-
-double 
-Movie::getDurationInSeconds() const
-{
-    return m_pImpl->getDurationInSeconds();
 }
 
 const isx::TimingInfo &

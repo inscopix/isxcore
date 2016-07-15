@@ -76,12 +76,6 @@ public:
     void
     writeFrame(const SpU16VideoFrame_t & inVideoFrame) = 0;
 
-    /// \return the duration of the movie in seconds
-    /// 
-    virtual
-    double
-    getDurationInSeconds() const = 0;
-
     /// \return     The timing information of a movie.
     ///
     virtual

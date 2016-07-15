@@ -110,11 +110,6 @@ public:
     void
     writeFrame(const SpU16VideoFrame_t & inVideoFrame) override;
 
-    /// \return the duration of the movie in seconds
-    /// 
-    double
-    getDurationInSeconds() const override;
-
     /// \return     The timing information of a movie.
     ///
     const isx::TimingInfo &
