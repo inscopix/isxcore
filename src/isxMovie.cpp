@@ -23,7 +23,7 @@ public:
     
     Impl(const std::vector<SpH5File_t> & inHdf5Files, const std::vector<std::string> & inPaths)
     {
-        Initialize(inHdf5Files, inPaths);
+        initialize(inHdf5Files, inPaths);
     }
 
     Impl(const SpH5File_t & inHdf5File, const std::string & inPath)
@@ -55,12 +55,12 @@ public:
             // nvista recording
             std::vector<SpH5File_t> hdf5Files(1, inHdf5File);
             std::vector<std::string> paths(1, inPath);
-            Initialize(hdf5Files, paths);
+            initialize(hdf5Files, paths);
         }
     }
 
     void
-    Initialize(const std::vector<SpH5File_t> & inHdf5Files, const std::vector<std::string> & inPaths)
+    initialize(const std::vector<SpH5File_t> & inHdf5Files, const std::vector<std::string> & inPaths)
     {
         ISX_ASSERT(inHdf5Files.size());
         ISX_ASSERT(inHdf5Files.size() == inPaths.size());
