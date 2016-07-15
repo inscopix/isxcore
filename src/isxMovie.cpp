@@ -98,11 +98,9 @@ public:
     }
 
     Impl(const SpH5File_t & inHdf5File, const std::string & inPath, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo)
-        : m_isValid(false)
+        : m_timingInfo(inTimingInfo)
+        , m_spacingInfo(inSpacingInfo)
     {
-        m_timingInfo = inTimingInfo;
-        m_spacingInfo = inSpacingInfo;
-
         isize_t numFrames = inTimingInfo.getNumTimes();
         SizeInPixels_t numPixels = inSpacingInfo.getNumPixels();
 
