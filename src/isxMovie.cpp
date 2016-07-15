@@ -46,6 +46,7 @@ public:
             // the file, but just use dummy values for now
             m_spacingInfo = createDummySpacingInfo(p->getFrameWidth(), p->getFrameHeight());
             m_movies.push_back(std::move(p));
+            m_cumulativeFrames.push_back(m_timingInfo.getNumTimes());
 
             m_isValid = true;
             
@@ -93,25 +94,6 @@ public:
         // pull these from the xml eventually
         m_timingInfo = readTimingInfo(inHdf5Files);
         m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
-        m_isValid = true;
-    }
-
-    Impl(const SpH5File_t & inHdf5File, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
-        : m_isValid(false)
-    {
-
-        std::unique_ptr<Hdf5Movie> p(new Hdf5Movie(inHdf5File, inPath + "/Movie", inNumFrames, inFrameWidth, inFrameHeight));
-
-        // TODO sweet 2016/09/31 : the start and step should also be specified
-        // but we don't currently have a mechnanism for that
-        m_timingInfo = createDummyTimingInfo(inNumFrames, inFrameRate);
-        p->writeProperties(m_timingInfo);
-
-        // TODO sweet 2016/06/20 : the spacing information should be read from
-        // the file, but just use dummy values for now
-        m_spacingInfo = createDummySpacingInfo(inFrameWidth, inFrameHeight);
-        m_movies.push_back(std::move(p));
-        m_cumulativeFrames.push_back(inNumFrames);
         m_isValid = true;
     }
 
@@ -334,16 +316,6 @@ private:
         return isx::TimingInfo(start, step, totalNumFrames);
     }
 
-    /// A method to create a dummy TimingInfo object from the number of frames.
-    ///
-    TimingInfo
-    createDummyTimingInfo(isize_t numFrames, Ratio inFrameRate)
-    {
-        isx::Time start = isx::Time();
-        isx::Ratio step = inFrameRate.getInverse();
-        return isx::TimingInfo(start, step, numFrames);
-    }
-
     /// A method to create a dummy spacing information from the number of rows and columns.
     ///
     SpacingInfo
@@ -400,16 +372,6 @@ Movie::Movie(const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles, const st
 Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath)
 {    
     m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath));
-}
-
-Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
-{
-    if (false == inHdf5FileHandle->isReadWrite())
-    {
-        ISX_THROW(isx::ExceptionFileIO, "File was opened with no write permission.");
-    }
-
-    m_pImpl.reset(new Impl(inHdf5FileHandle->get(), inPath, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate));
 }
 
 Movie::Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, const std::string & inPath, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo)

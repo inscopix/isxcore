@@ -61,10 +61,10 @@ namespace isx {
         }
         
         SpMovieInterface_t
-        addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
+        addMovie(const std::string & inName, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo)
         {
             std::string path = m_path + "/" + inName;  
-            m_movies.push_back(std::make_shared<Movie>(m_fileHandle, path, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate));
+            m_movies.push_back(std::make_shared<Movie>(m_fileHandle, path, inTimingInfo, inSpacingInfo));
             return m_movies[m_movies.size()-1];
         }
         
@@ -113,9 +113,9 @@ namespace isx {
     }
     
     SpMovieInterface_t
-    MovieSeries::addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
+    MovieSeries::addMovie(const std::string & inName, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo)
     {
-        return m_pImpl->addMovie(inName, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate);
+        return m_pImpl->addMovie(inName, inTimingInfo, inSpacingInfo);
     }
     
 }

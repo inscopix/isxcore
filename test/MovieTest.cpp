@@ -107,7 +107,8 @@ TEST_CASE("MovieTest", "[core]") {
             isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename, inputName);
 
             isx::SpMovieSeries_t rs = outputFile->addMovieSeries("RecSeries0");
-            isx::SpMovieInterface_t outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);
+            isx::SpMovieInterface_t outputMovie = rs->addMovie(
+                "Movie0", inputMovie->getTimingInfo(), inputMovie->getSpacingInfo());
             writtenTI = outputMovie->getTimingInfo();
         }
         
@@ -147,7 +148,8 @@ TEST_CASE("MovieTest", "[core]") {
         isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(outputFilename, inputName);
         
         isx::SpMovieSeries_t rs = outputFile->addMovieSeries("RecSeries0");
-        isx::SpMovieInterface_t outputMovie = rs->addMovie("Movie0", nFrames, nCols, nRows, frameRate);
+        isx::SpMovieInterface_t outputMovie = rs->addMovie(
+            "Movie0", inputMovie->getTimingInfo(), inputMovie->getSpacingInfo());
         
         REQUIRE(nFrames == outputMovie->getTimingInfo().getNumTimes());
         REQUIRE(nCols == outputMovie->getSpacingInfo().getNumColumns());

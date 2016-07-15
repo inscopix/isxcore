@@ -4,6 +4,8 @@
 #include "isxCore.h"
 #include "isxCoreFwd.h"
 #include "isxRatio.h"
+#include "isxTimingInfo.h"
+#include "isxSpacingInfo.h"
 #include <vector>
 #include <memory>
 
@@ -46,7 +48,8 @@ namespace isx {
         
         /// Add a movie to the recording series
         ///
-        SpMovieInterface_t addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate);
+        SpMovieInterface_t
+        addMovie(const std::string & inName, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo);
         
     private:
         class Impl;
