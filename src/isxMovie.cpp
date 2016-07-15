@@ -9,6 +9,7 @@
 #include <queue>
 #include <mutex>
 #include <memory>
+#include <cmath>
 
 namespace isx {
 class Movie::Impl : public std::enable_shared_from_this<Movie::Impl>
@@ -87,8 +88,10 @@ public:
             m_cumulativeFrames.push_back(numFramesAccum);
         }
 
-        isx::Ratio frameRate(30, 1);
-        m_timingInfo = createDummyTimingInfo(numFramesAccum, frameRate);
+        // TODO michele 2016/07/08 : time since epoch comes from host machine and frame rate 
+        // is calculated, so these values are not what we really want. we should want to 
+        // pull these from the xml eventually
+        m_timingInfo = readTimingInfo(inHdf5Files);
         m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
         m_isValid = true;
     }
@@ -298,6 +301,45 @@ private:
         {
             m_frameRequestQueue.pop();
         }
+    }
+
+    isx::TimingInfo
+    readTimingInfo(std::vector<SpH5File_t> inHdf5Files)
+    {
+        H5::DataSet timingInfoDataSet;
+        hsize_t totalNumFrames = 0;
+        int64_t startTime = 0;
+        double totalDurationInSecs = 0;
+
+        for (isize_t f(0); f < inHdf5Files.size(); ++f)
+        {
+            timingInfoDataSet = inHdf5Files[f]->openDataSet("/timeStamp");
+
+            std::vector<hsize_t> timingInfoDims;
+            std::vector<hsize_t> timingInfoMaxDims;
+            isx::internal::getHdf5SpaceDims(timingInfoDataSet.getSpace(), timingInfoDims, timingInfoMaxDims);
+
+            hsize_t numFrames = timingInfoDims[0];
+            std::vector<double> buffer(numFrames);
+
+            timingInfoDataSet.read(buffer.data(), timingInfoDataSet.getDataType());
+
+            // get start time
+            if (f == 0)
+            {
+                startTime = int64_t(buffer[0]);
+            }
+
+            totalDurationInSecs += buffer[numFrames - 1] - buffer[0];
+            totalNumFrames += numFrames;
+        }
+
+        totalDurationInSecs *= 1000.0 / double(totalNumFrames);
+
+        isx::DurationInSeconds step = isx::DurationInSeconds(isize_t(std::round(totalDurationInSecs)), 1000);
+        isx::Time start = isx::Time(startTime);
+
+        return isx::TimingInfo(start, step, totalNumFrames);
     }
 
     /// A method to create a dummy TimingInfo object from the number of frames.
