@@ -42,50 +42,28 @@ namespace isx {
         void getFrame(isize_t inFrameNumber, const SpU16VideoFrame_t & vf);
         
         /// Write a new frame to the movie
-        /// \param inFrameNumber    frame index
-        /// \param inBuffer         data buffer
-        /// \param inBufferSize     buffer size
-        void writeFrame(isize_t inFrameNumber, void * inBuffer, isize_t inBufferSize);
-
-        /// \return the number of bytes per frame
-        ///
-        isize_t 
-            getFrameSizeInBytes() 
-        { 
-            return m_dims[1] * m_dims[2] * 2; 
-        }
+        /// \param inVideoFrame     video frame to write
+        void writeFrame(const SpU16VideoFrame_t & inVideoFrame);
 
         /// \return the total number of frames in the movie
         ///
         isize_t 
-            getNumFrames() const 
-        { 
-            return m_dims[0]; 
-        }
+        getNumFrames() const;
 
         /// return the width in pixels
         ///
         isize_t
-            getFrameWidth() const
-        {
-            return m_dims[2];
-        }
+        getFrameWidth() const;
 
         /// \return the height in pixels
         ///
         isize_t
-            getFrameHeight() const
-        {
-            return m_dims[1];
-        }
+        getFrameHeight() const;
         
         /// return the path of the movie within the file
         ///
         const std::string & 
-            getPath()
-        {
-            return m_path;
-        }
+        getPath();
 
         /// Read timing info properties
         /// \param timingInfo the timing information
@@ -96,6 +74,10 @@ namespace isx {
         void writeProperties(TimingInfo & timingInfo);
 
     private:
+        /// \return the number of bytes per frame
+        ///
+        isize_t 
+        getFrameSizeInBytes();
 
         /// \return the HDF5 timing structure
         ///
