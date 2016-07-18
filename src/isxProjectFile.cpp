@@ -31,10 +31,8 @@ namespace isx {
            
             // Read the json file if file exists
             if (ifs.good()) 
-            {
                 ifs >> m_fileContent;
                 // TODO Read original filenames from datafiles
-            }
 
             ifs.close();
             m_bValid = true;

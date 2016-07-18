@@ -1,10 +1,10 @@
 #include "isxRecording.h"
-#include "isxNVistaMovie.h"
 #include "isxException.h"
 #include "isxAssert.h"
 #include "isxHdf5FileHandle.h"
 
 #include "isxRecordingXml.h"
+#include "isxMovie.h"
 
 #include <iostream>
 #include <fstream>
@@ -57,7 +57,7 @@ public:
 
             m_files.push_back(std::make_shared<H5::H5File>(m_path.c_str(), H5F_ACC_RDONLY));
             m_fileHandles.push_back(std::make_shared<Hdf5FileHandle>(m_files[0], H5F_ACC_RDONLY));
-            m_movie = std::make_shared<NVistaMovie>(m_fileHandles[0], "/images");
+            m_movie = std::make_shared<Movie>(m_fileHandles[0], "/images");
 
             // no exception until here --> this is a valid file
             m_isValid = true;
@@ -110,7 +110,7 @@ public:
         }
         
 
-        m_movie = std::make_shared<NVistaMovie>(m_fileHandles, paths);
+        m_movie = std::make_shared<Movie>(m_fileHandles, paths);
 
         // no exception until here --> this is a valid file
         m_isValid = true;
@@ -147,7 +147,7 @@ public:
         strm << m_path;
     }
 
-    SpMovie_t 
+    SpMovieInterface_t
     getMovie()
     {
         return m_movie;
@@ -170,9 +170,9 @@ private:
     bool m_isValid = false;
     std::string m_path;
     
-    std::vector<SpH5File_t> m_files;
+    std::vector<SpH5File_t>         m_files;
     std::vector<SpHdf5FileHandle_t> m_fileHandles;
-    SpMovie_t  m_movie;
+    SpMovieInterface_t              m_movie;
 };
 
 Recording::Recording()
@@ -213,7 +213,7 @@ Recording::serialize(std::ostream& strm) const
     m_pImpl->serialize(strm);
 }
 
-SpMovie_t 
+SpMovieInterface_t
 Recording::getMovie()
 {
     return m_pImpl->getMovie();

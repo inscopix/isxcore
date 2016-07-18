@@ -22,5 +22,10 @@ InputFileParser::getExtension(const std::string & inFileName)
     return inFileName.substr(inFileName.find_last_of(".") + 1);
 }
 
+std::string 
+InputFileParser::getFileName(const std::string & inAbsoluteFileName)
+{
+    return inAbsoluteFileName.substr(inAbsoluteFileName.find_last_of("/") + 1);
+}
 
 }

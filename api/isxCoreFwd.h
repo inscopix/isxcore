@@ -13,7 +13,7 @@ typedef std::weak_ptr<C>    Wp##C##_t;
 namespace isx
 {
     FWD_DECLARE_WITH_PTRS(Recording);
-    FWD_DECLARE_WITH_PTRS(Movie);
+    FWD_DECLARE_WITH_PTRS(MovieInterface);
     FWD_DECLARE_WITH_PTRS(MovieSeries);
     FWD_DECLARE_WITH_PTRS(ProjectFile);
     FWD_DECLARE_WITH_PTRS(Hdf5FileHandle);
