@@ -13,6 +13,10 @@ namespace isx
     void CoreInitialize();
     bool CoreIsInitialized();
     void CoreShutdown();
+
+    int CoreVersionMajor();
+    int CoreVersionMinor();
+    int CoreVersionBuild();
 }
 
 

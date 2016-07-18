@@ -1,6 +1,7 @@
 #include "isxCore.h"
 #include "isxDispatchQueue.h"
 #include "isxIoQueue.h"
+#include "isxVersion.h"
 
 namespace isx
 {
@@ -18,5 +19,19 @@ namespace isx
     {
         IoQueue::destroy();
         DispatchQueue::destroyDefaultQueues();
+    }
+
+    int CoreVersionMajor()
+    {
+        return APP_VERSION_MAJOR;
+    }
+    int CoreVersionMinor()
+    {
+        return APP_VERSION_MINOR;
+    }
+
+    int CoreVersionBuild()
+    {
+        return APP_VERSION_BUILD;
     }
 }
