@@ -3,7 +3,6 @@
 
 #include "isxTime.h"
 #include "isxCoreFwd.h"
-#include "isxMovieSeries.h"
 #include <utility>
 #include <vector>
 #include <memory>
