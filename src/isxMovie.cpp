@@ -7,7 +7,6 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <queue>
 #include <mutex>
 #include <memory>
 #include <cmath>
@@ -151,11 +150,19 @@ public:
     void
     getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
     {
+        WpImpl_t weakThis = shared_from_this();
+        IoQueue::instance()->enqueue([weakThis, this, inFrameNumber, inCallback]()
         {
-            isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
-            m_frameRequestQueue.push(FrameRequest(inFrameNumber, inCallback));
-        }
-        processFrameQueue();
+            SpImpl_t sharedThis = weakThis.lock();
+            if (!sharedThis)
+            {
+                inCallback(nullptr);
+            }
+            else
+            {
+                inCallback(getFrameInternal(inFrameNumber));
+            }
+        });
     }
 
     /// Get frame asynchronously by time
@@ -217,61 +224,6 @@ public:
 
 
 private:
-    /// a class representing a frame request
-    ///
-    class FrameRequest
-    {
-    public:
-        /// constructor
-        /// \param inFrameNumber    frame number requested
-        /// \param inCallback       callback to execute when finished
-        FrameRequest(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
-            : m_frameNumber(inFrameNumber)
-            , m_callback(inCallback) {}
-
-        isize_t             m_frameNumber;  //!< frame index
-        MovieGetFrameCB_t   m_callback;     //!< callback to execute
-    };
-
-    /// process next frame request
-    ///
-    void
-    processFrameQueue()
-    {
-        isx::ScopedMutex locker(m_frameRequestQueueMutex, "processFrameQueue");
-        if (!m_frameRequestQueue.empty())
-        {
-            FrameRequest fr = m_frameRequestQueue.front();
-            m_frameRequestQueue.pop();
-            WpImpl_t weakThis = shared_from_this();
-            IoQueue::instance()->dispatch([weakThis, this, fr]()
-            {
-                SpImpl_t sharedThis = weakThis.lock();
-                if (!sharedThis)
-                {
-                    fr.m_callback(nullptr);
-                }
-                else
-                {
-                    fr.m_callback(getFrameInternal(fr.m_frameNumber));
-                    processFrameQueue();
-                }
-            });
-        }
-    }
-
-    /// Purge queue
-    ///
-    void
-    purgeFrameQueue()
-    {
-        isx::ScopedMutex locker(m_frameRequestQueueMutex, "purgeFrameQueue");
-        while (!m_frameRequestQueue.empty())
-        {
-            m_frameRequestQueue.pop();
-        }
-    }
-
     SpU16VideoFrame_t
     getFrameInternal(isize_t inFrameNumber)
     {
@@ -379,9 +331,6 @@ private:
     bool                        m_isValid = false;
     isx::TimingInfo             m_timingInfo;
     isx::SpacingInfo            m_spacingInfo;
-
-    std::queue<FrameRequest>    m_frameRequestQueue;
-    isx::Mutex                  m_frameRequestQueueMutex;
 
     std::vector<std::unique_ptr<Hdf5Movie>> m_movies;
     std::vector<isize_t> m_cumulativeFrames;

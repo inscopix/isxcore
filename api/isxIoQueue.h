@@ -39,11 +39,16 @@ public:
     bool 
     isInitialized();
 
-    /// \return pointer to the contained worker's dispatch queue
+    /// \return pointer to the IoQueue singleton instance
     ///
     static
-    SpDispatchQueueInterface_t
+    IoQueue *
     instance();
+
+    /// enqueue I/O task to be processed on IoQueue's thread
+    /// \param inTask task to be processed
+    void
+    enqueue(Task_t inTask);
 
     /// Accessor for single global I/O mutex.
     /// Use this for any I/O through HDF5.
@@ -57,7 +62,8 @@ private:
     IoQueue(const IoQueue & other) = delete;
     const IoQueue & operator=(const IoQueue & other) = delete;
 
-    SpDispatchQueueWorker_t m_worker;
+    class Impl;
+    std::shared_ptr<Impl> m_pImpl;
     
     static std::unique_ptr<IoQueue> s_instance;
     Mutex m_mutex;
