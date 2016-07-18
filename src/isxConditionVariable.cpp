@@ -1,4 +1,5 @@
 #include "isxConditionVariable.h"
+#include "isxMutex.h"
 
 #include <QMutex>
 #include <QWaitCondition>
@@ -13,16 +14,16 @@ public:
     ~Impl(){}
     
     void
-    wait(NativeMutex_t inLock)
+    wait(Mutex & inMutex)
     {
-        QMutex * m = static_cast<QMutex *>(inLock);
+        QMutex * m = static_cast<QMutex *>(inMutex.getNativeHandle());
         m_waitCondition.wait(m, ULONG_MAX);
     }
 
     bool
-    waitForMs(NativeMutex_t inLock, uint32_t inWaitForMs)
+    waitForMs(Mutex & inMutex, uint32_t inWaitForMs)
     {
-        QMutex * m = static_cast<QMutex *>(inLock);
+        QMutex * m = static_cast<QMutex *>(inMutex.getNativeHandle());
         return m_waitCondition.wait(m, inWaitForMs);
     }
 
@@ -49,15 +50,15 @@ ConditionVariable::ConditionVariable()
 ConditionVariable::~ConditionVariable() {}
 
 void
-ConditionVariable::wait(NativeMutex_t inLock)
+ConditionVariable::wait(Mutex & inMutex)
 {
-    m_pImpl->wait(inLock);
+    m_pImpl->wait(inMutex);
 }
 
 bool
-ConditionVariable::waitForMs(NativeMutex_t inLock, uint32_t inWaitForMs)
+ConditionVariable::waitForMs(Mutex & inMutex, uint32_t inWaitForMs)
 {
-    return m_pImpl->waitForMs(inLock, inWaitForMs);
+    return m_pImpl->waitForMs(inMutex, inWaitForMs);
 }
 
 void

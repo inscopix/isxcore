@@ -6,6 +6,9 @@
 namespace isx
 {
 
+/// forward declare Mutex class (isxMutex.h)
+class Mutex;
+
 ///
 /// A class implementing a Condition Variable.
 /// Modeled after std::condition_variable
@@ -29,19 +32,19 @@ public:
     ~ConditionVariable();
 
     /// Blocks the current thread until the condition variable is woken up
-    /// \param inLock native mutex type to use, must be locked by current thread
+    /// \param inMutex mutex to use, must be locked by current thread
     ///
     void
-    wait(NativeMutex_t inLock);
+    wait(Mutex & inMutex);
 
     /// Blocks the current thread until the condition variable is woken up 
     /// or after the specified timeout duration
-    /// \param inLock native mutex type to use, must be locked by current thread
+    /// \param inMutex mutex to use, must be locked by current thread
     /// \param inWaitForMs the maximum time to spend waiting
     /// \return false if the wait timed out
     ///
     bool
-    waitForMs(NativeMutex_t inLock, uint32_t inWaitForMs);
+    waitForMs(Mutex & inMutex, uint32_t inWaitForMs);
 
     /// notifies one waiting thread
     ///
