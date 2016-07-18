@@ -30,9 +30,11 @@ namespace isx {
             ifs.open(inFileName.c_str(), std::ifstream::in);
            
             // Read the json file if file exists
-            if (ifs.good()) 
+            if (ifs.good())
+            {
                 ifs >> m_fileContent;
                 // TODO Read original filenames from datafiles
+            }
 
             ifs.close();
             m_bValid = true;

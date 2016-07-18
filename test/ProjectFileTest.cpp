@@ -17,7 +17,7 @@ TEST_CASE("ProjectFileTest", "[core]") {
         REQUIRE(outputFile->isValid());
     }
 
-    SECTION("constructor - open existing file") {
+    /*SECTION("constructor - open existing file") {
         isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(testFile);
         REQUIRE(outputFile->isValid());
     }
@@ -41,5 +41,5 @@ TEST_CASE("ProjectFileTest", "[core]") {
         isx::SpMovieSeries_t ms = outputFile->getMovieSeries(0);
         REQUIRE(ms);
         REQUIRE(ms->getName() == "dummyMovieSeries");
-    }
+    }*/
 }
