@@ -57,6 +57,11 @@ public:
     isValid() const override;
 
     /// Get the frame data for given frame number.
+    /// Note 1: this is a synchronized version of getFrameAsync. The actual file I/O is done
+    ///         on a dedicated I/O thread.
+    /// Note 2: this method returns a shared pointer to a video frame containing the actual pixel
+    ///         data. Letting the returned shared pointer instance go out of scope means deleting
+    ///         the video frame object, so any pointers to the contained pixe data are no longer valid.
     /// \param inFrameNumber 0-based index of frame for which to retrieve frame data
     /// \return a shared_ptr to a VideoFrame object containing the
     ///         requested frame data
@@ -65,6 +70,11 @@ public:
     getFrame(isize_t inFrameNumber) override;
 
     /// Get the frame data for given time.
+    /// Note 1: this is a synchronized version of getFrameAsync. The actual file I/O is done
+    ///         on a dedicated I/O thread.
+    /// Note 2: this method returns a shared pointer to a video frame containing the actual pixel
+    ///         data. Letting the returned shared pointer instance go out of scope means deleting
+    ///         the video frame object, so any pointers to the contained pixe data are no longer valid.
     /// \param inTime time of frame for which to retrieve frame data
     /// \return a shared_ptr to a VideoFrame object containing the
     ///         requested frame data
@@ -87,6 +97,7 @@ public:
     getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback) override;
 
     /// Writes a new frame to the movie dataset
+    /// Note: this method synchronizes with the dedicated I/O thread.
     ///
     /// The file needs to be opened with write permission and the defined path for the 
     /// the movie needs to exist within the file structure for this to succeed

@@ -1,4 +1,5 @@
 #include "isxIoQueue.h"
+#include "isxDispatchQueueWorker.h"
 #include "isxAssert.h"
 #include "isxMutex.h"
 #include "isxConditionVariable.h"
@@ -140,13 +141,6 @@ IoQueue::enqueue(Task_t inTask)
     {
         m_pImpl->enqueue(inTask);
     }
-}
-
-
-Mutex &
-IoQueue::getMutex()
-{
-    return s_instance->m_mutex;
 }
 
 } // namespace isx

@@ -198,8 +198,26 @@ public:
         {
             ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie.");
         }
-        ScopedMutex locker(IoQueue::getMutex(), "writeFrame");
-        m_movies[0]->writeFrame(inVideoFrame);
+        Mutex mutex;
+        ConditionVariable cv;
+        WpImpl_t weakThis = shared_from_this();
+        IoQueue::instance()->enqueue([weakThis, this, &cv, inVideoFrame]()
+        {
+            SpImpl_t sharedThis = weakThis.lock();
+            if (!sharedThis)
+            {
+                return;
+            }
+            m_movies[0]->writeFrame(inVideoFrame);
+            cv.notifyOne();
+        });
+        mutex.lock("writeFrame");
+        bool didNotTimeOut = cv.waitForMs(mutex, 500);
+        mutex.unlock();
+        if (didNotTimeOut == false)
+        {
+            ISX_THROW(isx::ExceptionDataIO, "writeFrame timed out.\n");
+        }
     }
     
     void
@@ -242,7 +260,6 @@ private:
             newFrameNumber = inFrameNumber - m_cumulativeFrames[idx - 1];
         }        
 
-        ScopedMutex locker(IoQueue::getMutex(), "getFrameInternal");
         m_movies[idx]->getFrame(newFrameNumber, nvf);
         return nvf;
     }

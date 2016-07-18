@@ -2,9 +2,7 @@
 #define ISX_IO_QUEUE_H
 
 #include "isxCoreFwd.h"
-#include "isxObject.h"
-#include "isxDispatchQueueWorker.h"
-#include "isxMutex.h"
+#include "isxDispatchQueue.h"
 
 #include <memory>
 
@@ -50,13 +48,6 @@ public:
     void
     enqueue(Task_t inTask);
 
-    /// Accessor for single global I/O mutex.
-    /// Use this for any I/O through HDF5.
-    /// \return Mutex for HDF5 I/O
-    static
-    Mutex &
-    getMutex();
-    
 private:
     IoQueue();
     IoQueue(const IoQueue & other) = delete;
@@ -66,7 +57,6 @@ private:
     std::shared_ptr<Impl> m_pImpl;
     
     static std::unique_ptr<IoQueue> s_instance;
-    Mutex m_mutex;
 };
 
 } // namespace isx
