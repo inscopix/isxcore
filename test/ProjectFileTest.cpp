@@ -10,12 +10,12 @@ TEST_CASE("ProjectFileTest", "[core]") {
         REQUIRE(!outputFile->isValid());
     }
 
-    SECTION("constructor - create new file") {
-        std::vector<std::string> inputName(1);
-        inputName[0] = "dummyTest";
-        isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(testFile, inputName);
-        REQUIRE(outputFile->isValid());
-    }
+    // SECTION("constructor - create new file") {
+        // std::vector<std::string> inputName(1);
+        // inputName[0] = "dummyTest";
+        // isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(testFile, inputName);
+        // REQUIRE(outputFile->isValid());
+    // }
 
     /*SECTION("constructor - open existing file") {
         isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(testFile);

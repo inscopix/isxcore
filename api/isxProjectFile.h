@@ -17,24 +17,30 @@ namespace isx {
     {
     public:
 
+        /// The type of data file
+        /// 
         enum DataFileType
         {
-            PF_DATAFILETYPE_MOVIE = 0,
-            PF_DATAFILETYPE_CELLSET,
-            PF_DATAFILETYPE_IMAGE,
-            PF_DATAFILETYPE_TIMESERIES
+            PF_DATAFILETYPE_MOVIE = 0,  //!< a movie
+            PF_DATAFILETYPE_CELLSET,    //!< a cell set - contains segmented cell info and traces
+            PF_DATAFILETYPE_IMAGE,      //!< an image type
+            PF_DATAFILETYPE_TIMESERIES  //!< a timeseries
         };
 
+        /// Data file-related information
+        /// 
         struct DataFileDescriptor
         {
-            DataFileType type;
-            std::string  filename;
+            DataFileType type;      //!< the type of data contained in the file
+            std::string  filename;  //!< the file name
         };
 
+        /// Data Collection structure
+        /// 
         struct DataCollection
         {
-            std::string name;
-            std::vector<DataFileDescriptor> files;
+            std::string name;                       //!< collection name
+            std::vector<DataFileDescriptor> files;  //!< list of files in the collection
         };
 
         /// constructor - valid c++ object but invalid file

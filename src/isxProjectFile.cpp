@@ -90,7 +90,7 @@ namespace isx {
                     json fileObj = *it;
                     DataFileDescriptor fd;
                     fd.filename = fileObj["filename"].get<std::string>();
-                    fd.type = (DataFileType)fileObj["data type"];
+                    fd.type = (DataFileType)(fileObj["data type"].get<int>());
                     dc.files.push_back(fd);
                 }
 
