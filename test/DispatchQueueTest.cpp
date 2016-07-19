@@ -10,7 +10,7 @@
 #include <thread>
 #include <atomic>
 
-TEST_CASE("DispatchQueue", "[core]") {
+TEST_CASE("DispatchQueue", "[core internal]") {
 
     isx::CoreInitialize();
 
@@ -40,7 +40,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task with context") {
         int secret = 123;
         int revealed = -1;
-        isx::ContextTask_t t = [&](void * inP)
+        isx::DispatchQueueContextTask_t t = [&](void * inP)
         {
             int * p = (int *) inP;
             *p = secret;
@@ -83,7 +83,7 @@ TEST_CASE("DispatchQueue", "[core]") {
     SECTION("run task with context on new worker thread") {
         int secret = 123;
         int revealed = -1;
-        isx::ContextTask_t t = [&](void * inP)
+        isx::DispatchQueueContextTask_t t = [&](void * inP)
         {
             int * p = (int *) inP;
             *p = secret;
@@ -115,7 +115,7 @@ TEST_CASE("DispatchQueue", "[core]") {
         int32_t count = 0;
         bool doSleep = true;
         isx::Mutex countMutex;
-        isx::ContextTask_t incTask([&](void * inSleep)
+        isx::DispatchQueueContextTask_t incTask([&](void * inSleep)
         {
             std::string name = "task0";
             if (inSleep && *(bool *)inSleep)
@@ -140,7 +140,7 @@ TEST_CASE("DispatchQueue", "[core]") {
         });
 
         std::atomic_int doneCount(0);
-        isx::Task_t lastTask([&]()
+        isx::DispatchQueueTask_t lastTask([&]()
         {
             doneCount++;
         });

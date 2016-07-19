@@ -35,10 +35,19 @@ public:
                 {
                     while (!m_taskQueue.empty())
                     {
-                        Task_t t = m_taskQueue.front();
+                        Task t = m_taskQueue.front();
                         m_taskQueue.pop();
                         m_taskQueueMutex.unlock();
-                        t();
+                        AsyncTaskFinishedStatus status = AsyncTaskFinishedStatus::COMPLETE;
+                        try
+                        {
+                            t.m_task();
+                        }
+                        catch(...)
+                        {
+                            status = AsyncTaskFinishedStatus::ERROR_EXCEPTION;
+                        }
+                        t.m_finishedCB(status);
                         m_taskQueueMutex.lock("worker impl");
                     }
                     m_taskQueueCV.wait(m_taskQueueMutex);
@@ -70,7 +79,7 @@ public:
     }
 
     void
-    enqueue(Task_t inTask)
+    enqueue(Task inTask)
     {
         {
             ScopedMutex locker(m_taskQueueMutex, "enqueue");
@@ -80,11 +89,11 @@ public:
     }
 
 private:
-    UpDispatchQueueWorker_t     m_worker;
-    std::queue<Task_t>          m_taskQueue;
-    Mutex                       m_taskQueueMutex;
-    ConditionVariable           m_taskQueueCV;
-    bool                        m_destroy = false;
+    UpDispatchQueueWorker_t  m_worker;
+    std::queue<Task>         m_taskQueue;
+    Mutex                    m_taskQueueMutex;
+    ConditionVariable        m_taskQueueCV;
+    bool                     m_destroy = false;
 };
 
 IoQueue::IoQueue()
@@ -135,7 +144,7 @@ IoQueue::instance()
 }
 
 void
-IoQueue::enqueue(Task_t inTask)
+IoQueue::enqueue(Task inTask)
 {
     if (isInitialized())
     {

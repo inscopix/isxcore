@@ -95,7 +95,7 @@ DispatchQueueWorker::destroy()
 }
 
 void
-DispatchQueueWorker::dispatch(Task_t inTask)
+DispatchQueueWorker::dispatch(DispatchQueueTask_t inTask)
 {
     ISX_ASSERT(m_dispatcher, "Tried to dispatch task after worker was destroyed.");
     if (m_dispatcher)
@@ -105,7 +105,7 @@ DispatchQueueWorker::dispatch(Task_t inTask)
 }
     
 void
-DispatchQueueWorker::dispatch(void * inContext, ContextTask_t inContextTask)
+DispatchQueueWorker::dispatch(void * inContext, DispatchQueueContextTask_t inContextTask)
 {
     ISX_ASSERT(m_dispatcher, "Tried to dispatch task after worker was destroyed.");
     if (m_dispatcher)

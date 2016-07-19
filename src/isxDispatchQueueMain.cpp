@@ -20,13 +20,13 @@ DispatchQueueMain::DispatchQueueMain()
 }
 
 void
-DispatchQueueMain::dispatch(Task_t inTask)
+DispatchQueueMain::dispatch(DispatchQueueTask_t inTask)
 {
     emit m_dispatcher->dispatch(inTask);
 }
     
 void
-DispatchQueueMain::dispatch(void * inContext, ContextTask_t inContextTask)
+DispatchQueueMain::dispatch(void * inContext, DispatchQueueContextTask_t inContextTask)
 {
     emit m_dispatcher->dispatchWithContext(inContext, inContextTask);
 }

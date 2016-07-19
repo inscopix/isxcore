@@ -7,8 +7,8 @@
 #include <QObject>
 
 // these are needed by Qt so it can queue Task_t objects in its queues between threads
-Q_DECLARE_METATYPE(isx::Task_t);
-Q_DECLARE_METATYPE(isx::ContextTask_t);
+Q_DECLARE_METATYPE(isx::DispatchQueueTask_t);
+Q_DECLARE_METATYPE(isx::DispatchQueueContextTask_t);
 
 namespace isx
 {
@@ -27,26 +27,26 @@ public:
     /// \param inTask the task to be processed
     ///
     void
-    process(Task_t inTask);
+    process(DispatchQueueTask_t inTask);
 
     /// process a task with a context on this dispatcher's thread
     /// \param inContext the context to be passed in to the task
     /// \param inContexTask_t the task to be processed
     void
-    processWithContext(void * inContext, ContextTask_t inContexTask_t);
+    processWithContext(void * inContext, DispatchQueueContextTask_t inContexTask_t);
     
 signals:
     /// dispatch a task to this dispatcher's thread
     /// \param inTask the task to be processed
     ///
     void
-    dispatch(Task_t inTask);
+    dispatch(DispatchQueueTask_t inTask);
     
     /// dispatch a task with a context to this dispatcher's thread
     /// \param inContext the context to be passed in to the task
     /// \param inContexTask_t the task to be processed
     void
-    dispatchWithContext(void * inContext, ContextTask_t inContexTask_t);
+    dispatchWithContext(void * inContext, DispatchQueueContextTask_t inContexTask_t);
 private:
     DispatchQueueDispatcher(const DispatchQueueDispatcher & inOther) = delete;
     const DispatchQueueDispatcher & operator=(const DispatchQueueDispatcher & inOther) = delete;

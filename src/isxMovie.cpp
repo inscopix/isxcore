@@ -123,11 +123,13 @@ public:
         SpU16VideoFrame_t ret;
         Mutex mutex;
         ConditionVariable cv;
-        getFrameAsync(inFrameNumber, [&ret, &cv](const SpU16VideoFrame_t & inVideoFrame){
+        mutex.lock("getFrame");
+        getFrameAsync(inFrameNumber, [&ret, &cv, &mutex](const SpU16VideoFrame_t & inVideoFrame){
+            mutex.lock("getFrame async");
+            mutex.unlock();
             ret = inVideoFrame;
             cv.notifyOne();
         });
-        mutex.lock("getFrame");
         bool didNotTimeOut = cv.waitForMs(mutex, 500);
         mutex.unlock();
         if (didNotTimeOut == false)
@@ -151,18 +153,26 @@ public:
     getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
     {
         WpImpl_t weakThis = shared_from_this();
-        IoQueue::instance()->enqueue([weakThis, this, inFrameNumber, inCallback]()
+        IoQueue::instance()->enqueue(IoQueue::Task([weakThis, this, inFrameNumber, inCallback]()
         {
             SpImpl_t sharedThis = weakThis.lock();
-            if (!sharedThis)
-            {
-                inCallback(nullptr);
-            }
-            else
+            if (sharedThis)
             {
                 inCallback(getFrameInternal(inFrameNumber));
             }
-        });
+        },
+        [inCallback](AsyncTaskFinishedStatus inStatus)
+        {
+            if (inStatus == AsyncTaskFinishedStatus::ERROR_EXCEPTION)
+            {
+                ISX_LOG_ERROR("An exception occurred while writing to Movie file.");
+                inCallback(SpU16VideoFrame_t());
+            }
+            else if (inStatus != AsyncTaskFinishedStatus::COMPLETE)
+            {
+                ISX_LOG_ERROR("An error occurred while writing to Movie file.");
+            }
+        }));
     }
 
     /// Get frame asynchronously by time
@@ -200,8 +210,9 @@ public:
         }
         Mutex mutex;
         ConditionVariable cv;
+        mutex.lock("writeFrame");
         WpImpl_t weakThis = shared_from_this();
-        IoQueue::instance()->enqueue([weakThis, this, &cv, inVideoFrame]()
+        IoQueue::instance()->enqueue(IoQueue::Task([weakThis, this, inVideoFrame]()
         {
             SpImpl_t sharedThis = weakThis.lock();
             if (!sharedThis)
@@ -209,9 +220,18 @@ public:
                 return;
             }
             m_movies[0]->writeFrame(inVideoFrame);
+        },
+        [&cv, &mutex](AsyncTaskFinishedStatus inStatus)
+        {
+            if (inStatus != AsyncTaskFinishedStatus::COMPLETE)
+            {
+                ISX_LOG_ERROR("An error occurred while writing to Movie file.");
+            }
+            mutex.lock("writeFrame finished");  // will only be able to take lock when client reaches cv.waitForMs
+            mutex.unlock();
             cv.notifyOne();
-        });
-        mutex.lock("writeFrame");
+        }));
+        
         bool didNotTimeOut = cv.waitForMs(mutex, 500);
         mutex.unlock();
         if (didNotTimeOut == false)

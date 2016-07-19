@@ -1,5 +1,5 @@
-#ifndef ISX_DISPATCH_QUEUE
-#define ISX_DISPATCH_QUEUE
+#ifndef ISX_DISPATCH_QUEUE_H
+#define ISX_DISPATCH_QUEUE_H
 
 #include "isxCoreFwd.h"
 
@@ -19,11 +19,11 @@ namespace isx
     
 /// type of task dispatched into queue for processing
 ///
-typedef std::function<void()> Task_t;
+typedef std::function<void()> DispatchQueueTask_t;
 
 /// type of task with context dispatched into queue for processing
 ///
-typedef std::function<void(void *)> ContextTask_t;
+typedef std::function<void(void *)> DispatchQueueContextTask_t;
 
 ///
 /// An interface class defining a DispatchQueue API.
@@ -41,7 +41,7 @@ public:
     ///
     virtual
     void
-    dispatch(Task_t inTask) = 0;
+    dispatch(DispatchQueueTask_t inTask) = 0;
     
     /// dispatch a task with context into this queue for processing
     /// \param inContext passed into the task function at processing time
@@ -49,7 +49,7 @@ public:
     ///
     virtual
     void
-    dispatch(void * inContext, ContextTask_t inContextTask) = 0;
+    dispatch(void * inContext, DispatchQueueContextTask_t inContextTask) = 0;
 };
 
 
@@ -111,36 +111,6 @@ private:
     static bool s_isInitialized;
 };
 
-
-
 } // namespace isx
 
-
-
-
-// place for random planning ideas
-#if 0
-template<typename T>
-class future
-{
-public:
-    void cancel();
-    float progress();
-    T get();
-private:
-    T r;
-};
-
-template<typename T>
-class ITask
-{
-public:
-    virtual ~ITask();
-    virtual bool checkIn(float inProgress);
-};
-
-dispatch_async_f(std::function<void()> func);
-future f = dispatch_async_f(std::function<void()> func);
-#endif
-
-#endif // ISX_DISPATCH_QUEUE
+#endif // ISX_DISPATCH_QUEUE_H
