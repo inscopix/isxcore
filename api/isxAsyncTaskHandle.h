@@ -1,7 +1,6 @@
 #ifndef ISX_ASYNC_TASK_HANDLE_H
 #define ISX_ASYNC_TASK_HANDLE_H
 
-#include "isxDispatchQueue.h"
 #include "isxCore.h"
 
 #include <functional>
@@ -15,23 +14,15 @@ namespace isx
 class AsyncTaskHandle : public std::enable_shared_from_this<isx::AsyncTaskHandle>
 {
 public:
-    /// return status of an asynchronous task
-    enum class FinishedStatus
-    {
-        COMPLETE,               ///< task completed successfully
-        CANCELLED,              ///< task was cancelled
-        UNKNOWN_ERROR,          ///< an error occurred while processing the task
-        ERROR_EXCEPTION         ///< an exception occurred while processing the task
-    };
     
     /// type of callback function that an asynchronous task has to call periodically
     typedef std::function<bool(float)> CheckInCB_t;
     /// type of function that implements the asynchronous task
-    typedef std::function<FinishedStatus(CheckInCB_t)> AsyncTask_t;
+    typedef std::function<AsyncTaskFinishedStatus(CheckInCB_t)> AsyncTask_t;
     /// type of progress callback function
     typedef std::function<void(float)> ProgressCB_t;
     /// type of finished callback function
-    typedef std::function<void(FinishedStatus inStatus)> FinishedCB_t;
+    typedef std::function<void(AsyncTaskFinishedStatus inStatus)> FinishedCB_t;
 
     /// default constructor
     AsyncTaskHandle();
@@ -41,6 +32,11 @@ public:
     /// \param inProgressCB callback function to call with current progress (0.0: not started, 1.0: complete)
     /// \param inFinishedCB callback function to call when task finished
     AsyncTaskHandle(AsyncTask_t inTask, ProgressCB_t inProgressCB, FinishedCB_t inFinishedCB);
+
+    /// Constructor without progress callback
+    /// \param inTask task to run asynchronously
+    /// \param inFinishedCB callback function to call when task finished
+    AsyncTaskHandle::AsyncTaskHandle(AsyncTask_t inTask, FinishedCB_t inFinishedCB);
 
     /// helper function template to create an async task
     /// \param inFunc function to call as part of task

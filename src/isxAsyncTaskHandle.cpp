@@ -9,9 +9,12 @@ AsyncTaskHandle::AsyncTaskHandle(AsyncTask_t inTask, ProgressCB_t inProgressCB, 
 : m_task(inTask)
 , m_progressCB(inProgressCB)
 , m_finishedCB(inFinishedCB)
-{
+{}
 
-}
+AsyncTaskHandle::AsyncTaskHandle(AsyncTask_t inTask, FinishedCB_t inFinishedCB)
+: m_task(inTask)
+, m_finishedCB(inFinishedCB)
+{}
 
 void 
 AsyncTaskHandle::cancel() 
@@ -31,14 +34,17 @@ AsyncTaskHandle::process()
         {
             return false;
         }
-        DispatchQueue::mainQueue()->dispatch([weakThis, this, inProgress](){
-            SpAsyncTaskHandle_t sharedThis = weakThis.lock();
-            if (!sharedThis)
-            {
-                return;
-            }
-            m_progressCB(inProgress);
-        });
+        if (m_progressCB)
+        {
+            DispatchQueue::mainQueue()->dispatch([weakThis, this, inProgress](){
+                SpAsyncTaskHandle_t sharedThis = weakThis.lock();
+                if (!sharedThis)
+                {
+                    return;
+                }
+                m_progressCB(inProgress);
+            });
+        }
         return this->m_cancelPending;
     };
 
@@ -48,7 +54,12 @@ AsyncTaskHandle::process()
         {
             return;
         }
-        FinishedStatus status = m_task(ci);
+        AsyncTaskFinishedStatus status = AsyncTaskFinishedStatus::UNKNOWN_ERROR;
+        try {
+            status = m_task(ci);
+        } catch (...) {
+            status = AsyncTaskFinishedStatus::ERROR_EXCEPTION;
+        }
         DispatchQueue::mainQueue()->dispatch([weakThis, this, status](){
             SpAsyncTaskHandle_t sharedThis = weakThis.lock();
             if (!sharedThis)
