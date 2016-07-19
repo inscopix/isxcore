@@ -2,9 +2,7 @@
 #define ISX_IO_QUEUE_H
 
 #include "isxCoreFwd.h"
-#include "isxObject.h"
-#include "isxDispatchQueueWorker.h"
-#include "isxMutex.h"
+#include "isxDispatchQueue.h"
 
 #include <memory>
 
@@ -39,28 +37,26 @@ public:
     bool 
     isInitialized();
 
-    /// \return pointer to the contained worker's dispatch queue
+    /// \return pointer to the IoQueue singleton instance
     ///
     static
-    SpDispatchQueueInterface_t
+    IoQueue *
     instance();
 
-    /// Accessor for single global I/O mutex.
-    /// Use this for any I/O through HDF5.
-    /// \return Mutex for HDF5 I/O
-    static
-    Mutex &
-    getMutex();
-    
+    /// enqueue I/O task to be processed on IoQueue's thread
+    /// \param inTask task to be processed
+    void
+    enqueue(Task_t inTask);
+
 private:
     IoQueue();
     IoQueue(const IoQueue & other) = delete;
     const IoQueue & operator=(const IoQueue & other) = delete;
 
-    SpDispatchQueueWorker_t m_worker;
+    class Impl;
+    std::shared_ptr<Impl> m_pImpl;
     
     static std::unique_ptr<IoQueue> s_instance;
-    Mutex m_mutex;
 };
 
 } // namespace isx
