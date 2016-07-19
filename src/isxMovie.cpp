@@ -286,7 +286,7 @@ private:
             {
                 std::vector<hsize_t> timingInfoDims;
                 std::vector<hsize_t> timingInfoMaxDims;
-                hsize_t numFrames;
+                hsize_t numFrames = 0;
                 std::vector<double> buffer;
 
                 try
