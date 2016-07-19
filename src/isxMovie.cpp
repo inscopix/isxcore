@@ -92,7 +92,14 @@ public:
         // TODO michele 2016/07/08 : time since epoch comes from host machine and frame rate 
         // is calculated, so these values are not what we really want. we should want to 
         // pull these from the xml eventually
-        m_timingInfo = readTimingInfo(inHdf5Files);
+        if (readTimingInfo(inHdf5Files) == false)
+        {
+            // If we cannot read the timing info, use default values
+            Time start;                       // Default to Unix epoch
+            DurationInSeconds step(50, 1000); // Default to 20Hz
+            m_timingInfo = TimingInfo(start, step, numFramesAccum);
+            DurationInSeconds gstep = m_timingInfo.getStep();
+        }
         m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
         m_isValid = true;
     }
@@ -264,29 +271,50 @@ private:
         return nvf;
     }
 
-    isx::TimingInfo
+    bool
     readTimingInfo(std::vector<SpH5File_t> inHdf5Files)
     {
         H5::DataSet timingInfoDataSet;
         hsize_t totalNumFrames = 0;
         int64_t startTime = 0;
         double totalDurationInSecs = 0;
+        bool bInitializedFromFile = true;
 
-        try
+        for (isize_t f(0); f < inHdf5Files.size(); ++f)
         {
-
-            for (isize_t f(0); f < inHdf5Files.size(); ++f)
+            if (isx::internal::hasDatasetAtPath(inHdf5Files[f], "/", "timeStamp"))
             {
-                timingInfoDataSet = inHdf5Files[f]->openDataSet("/timeStamp");
-
                 std::vector<hsize_t> timingInfoDims;
                 std::vector<hsize_t> timingInfoMaxDims;
-                isx::internal::getHdf5SpaceDims(timingInfoDataSet.getSpace(), timingInfoDims, timingInfoMaxDims);
+                hsize_t numFrames;
+                std::vector<double> buffer;
 
-                hsize_t numFrames = timingInfoDims[0];
-                std::vector<double> buffer(numFrames);
+                try
+                {
+                    timingInfoDataSet = inHdf5Files[f]->openDataSet("/timeStamp");
+                    isx::internal::getHdf5SpaceDims(timingInfoDataSet.getSpace(), timingInfoDims, timingInfoMaxDims);
 
-                timingInfoDataSet.read(buffer.data(), timingInfoDataSet.getDataType());
+                    numFrames = timingInfoDims[0];
+                    buffer.resize(numFrames);
+
+                    timingInfoDataSet.read(buffer.data(), timingInfoDataSet.getDataType());
+                }
+                catch (const H5::FileIException& error)
+                {
+                    ISX_THROW(isx::ExceptionFileIO,
+                        "Failure caused by H5File operations.\n", error.getDetailMsg());
+                }
+
+                catch (const H5::DataSetIException& error)
+                {
+                    ISX_THROW(isx::ExceptionDataIO,
+                        "Failure caused by DataSet operations.\n", error.getDetailMsg());
+                }
+
+                catch (...)
+                {
+                    ISX_ASSERT(false, "Unhandled exception.");
+                }
 
                 // get start time
                 if (f == 0)
@@ -297,30 +325,23 @@ private:
                 totalDurationInSecs += buffer[numFrames - 1] - buffer[0];
                 totalNumFrames += numFrames;
             }
+            else
+            {
+                bInitializedFromFile = false;
+                break;                
+            }
         }
-        catch (const H5::FileIException& error)
+        
+        if (bInitializedFromFile)
         {
-            ISX_THROW(isx::ExceptionFileIO,
-                "Failure caused by H5File operations.\n", error.getDetailMsg());
+            totalDurationInSecs *= 1000.0 / double(totalNumFrames);
+
+            isx::DurationInSeconds step = isx::DurationInSeconds(isize_t(std::round(totalDurationInSecs)), 1000);
+            isx::Time start = isx::Time(startTime);
+            m_timingInfo = isx::TimingInfo(start, step, totalNumFrames);
         }
-
-        catch (const H5::DataSetIException& error)
-        {
-            ISX_THROW(isx::ExceptionDataIO,
-                "Failure caused by DataSet operations.\n", error.getDetailMsg());
-        }
-
-        catch (...)
-        {
-            ISX_ASSERT(false, "Unhandled exception.");
-        }
-
-        totalDurationInSecs *= 1000.0 / double(totalNumFrames);
-
-        isx::DurationInSeconds step = isx::DurationInSeconds(isize_t(std::round(totalDurationInSecs)), 1000);
-        isx::Time start = isx::Time(startTime);
-
-        return isx::TimingInfo(start, step, totalNumFrames);
+        
+        return bInitializedFromFile;
     }
 
     /// A method to create a dummy spacing information from the number of rows and columns.
