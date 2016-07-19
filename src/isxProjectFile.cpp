@@ -43,6 +43,18 @@ namespace isx {
         ~Impl()
         {
 
+            save();
+        }
+                
+        bool 
+        isValid()
+        {
+            return m_bValid;
+        }
+        
+        void 
+        save()
+        {
             std::ofstream ofs;
             ofs.open(m_filename.c_str(), std::ofstream::trunc);
 
@@ -53,12 +65,6 @@ namespace isx {
             }
 
             ofs.close();
-        }
-                
-        bool 
-        isValid()
-        {
-            return m_bValid;
         }
         
         isize_t
@@ -207,6 +213,12 @@ namespace isx {
     ProjectFile::isValid()
     {
         return m_pImpl->isValid();
+    }
+    
+    void 
+    ProjectFile::save()
+    {
+        m_pImpl->save();
     }
 
     

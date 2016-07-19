@@ -56,6 +56,10 @@ namespace isx {
         /// \return whether the file is valid or not
         ///
         bool isValid();
+        
+        /// Save the file
+        ///
+        void save();
 
         /// Get the number of file collections in the project file
         ///
