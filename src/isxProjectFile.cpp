@@ -33,7 +33,7 @@ namespace isx {
             if (ifs.good())
             {
                 ifs >> m_fileContent;
-                // TODO Read original filenames from datafiles
+                 // TODO Read original filenames from datafiles
             }
 
             ifs.close();
@@ -94,9 +94,7 @@ namespace isx {
                 for (json::iterator it = files.begin(); it != files.end(); ++it)
                 {
                     json fileObj = *it;
-                    DataFileDescriptor fd;
-                    fd.filename = fileObj["filename"].get<std::string>();
-                    fd.type = (DataFileType)(fileObj["data type"].get<int>());
+                    DataFileDescriptor fd((DataFileType)(fileObj["data type"].get<int>()), fileObj["filename"].get<std::string>());
                     dc.files.push_back(fd);
                 }
 
@@ -123,15 +121,15 @@ namespace isx {
             dataCollection["files"] = files;
 
             m_fileContent["data"].push_back(dataCollection);
-
+            
             // TODO Update original filenames list
+
         }
 
         void 
         removeDataCollection(isize_t inCollectionIndex)
         {
             m_fileContent["data"].erase(inCollectionIndex);
-            
             // TODO Update original filenames list
         }
 
@@ -142,7 +140,6 @@ namespace isx {
             fileObj["filename"] = inFileDesc.filename;
             fileObj["data type"] = (int)inFileDesc.type;
             m_fileContent["data"][inCollectionIndex]["files"].push_back(fileObj);
-            
             // TODO Update original filenames list
         }
 
@@ -150,7 +147,6 @@ namespace isx {
         removeFileFromDataCollection(isize_t inFileDescIndex, isize_t inCollectionIndex) 
         {
             m_fileContent["data"][inCollectionIndex]["files"].erase(inFileDescIndex);
-            
             // TODO Update original filenames list
         }
         
@@ -159,7 +155,7 @@ namespace isx {
         {
             return m_filename;
         }
-
+        
         std::vector<std::string> & getOriginalNames()
         {
             return m_originalFilenames;
@@ -179,8 +175,8 @@ namespace isx {
 
         }
 
-        std::string m_filename;
-        std::vector<std::string> m_originalFilenames;        
+        std::string m_filename;  
+        std::vector<std::string> m_originalFilenames; 
         json m_fileContent;
 
         bool m_bValid;
@@ -263,7 +259,7 @@ namespace isx {
     {
         return m_pImpl->getName();
     }
-
+    
     std::vector<std::string> & 
     ProjectFile::getOriginalNames()
     {

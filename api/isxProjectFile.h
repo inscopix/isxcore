@@ -30,6 +30,15 @@ namespace isx {
         /// 
         struct DataFileDescriptor
         {
+            /// Constructor
+            /// \param inType the type of data stored in the file
+            /// \param inFilename the filename 
+            DataFileDescriptor(DataFileType inType, const std::string & inFilename) : 
+                type(inType),
+                filename(inFilename)
+            {
+            }
+
             DataFileType type;      //!< the type of data contained in the file
             std::string  filename;  //!< the file name
         };
@@ -87,12 +96,11 @@ namespace isx {
 
         /// Get file name
         ///
-        std::string getName();
+        std::string getName();  
 
         /// Get filenames for the original files (from where the data was obtained)
         ///
-        std::vector<std::string> & getOriginalNames();
-        
+        std::vector<std::string> & getOriginalNames();        
        
     private:        
         class Impl;

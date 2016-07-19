@@ -32,9 +32,7 @@ TEST_CASE("ProjectFileTest", "[core]") {
         isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>(testFile);        
         isx::ProjectFile::DataCollection dc;
         dc.name = "dummyCollection";        
-        isx::ProjectFile::DataFileDescriptor dfd;
-        dfd.filename = "dummyFile";
-        dfd.type = isx::ProjectFile::DATAFILETYPE_MOVIE;        
+        isx::ProjectFile::DataFileDescriptor dfd(isx::ProjectFile::DATAFILETYPE_MOVIE, "dummyFile");     
         dc.files.push_back(dfd);        
         outputFile->addDataCollection(dc);
         isx::isize_t nDataCollections = outputFile->getNumDataCollections();
@@ -58,9 +56,7 @@ TEST_CASE("ProjectFileTest", "[core]") {
         isx::isize_t nDataCollections = outputFile->getNumDataCollections();
         REQUIRE(nDataCollections == 1);
 
-        isx::ProjectFile::DataFileDescriptor dfd;
-        dfd.filename = "addedDummyFile";
-        dfd.type = isx::ProjectFile::DATAFILETYPE_MOVIE;
+        isx::ProjectFile::DataFileDescriptor dfd(isx::ProjectFile::DATAFILETYPE_MOVIE, "addedDummyFile");
         outputFile->addFileToDataCollection(dfd, 0);
 
         isx::ProjectFile::DataCollection dc = outputFile->getDataCollection(0);
