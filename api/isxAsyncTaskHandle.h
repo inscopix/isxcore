@@ -36,7 +36,7 @@ public:
     /// Constructor without progress callback
     /// \param inTask task to run asynchronously
     /// \param inFinishedCB callback function to call when task finished
-    AsyncTaskHandle::AsyncTaskHandle(AsyncTask_t inTask, FinishedCB_t inFinishedCB);
+    AsyncTaskHandle(AsyncTask_t inTask, FinishedCB_t inFinishedCB);
 
     /// helper function template to create an async task
     /// \param inFunc function to call as part of task
@@ -65,8 +65,8 @@ public:
 private:
     bool            m_cancelPending = false;
     AsyncTask_t     m_task;
-    ProgressCB_t    m_progressCB;
-    FinishedCB_t    m_finishedCB;
+    ProgressCB_t    m_progressCB = nullptr;
+    FinishedCB_t    m_finishedCB = nullptr;
 };
     
 } // namespace isx
