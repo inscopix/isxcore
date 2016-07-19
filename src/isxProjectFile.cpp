@@ -1,4 +1,5 @@
 #include "isxProjectFile.h"
+#include "isxException.h"
 #include "isxLog.h"
 #include "json.hpp"
 #include <fstream>
@@ -32,7 +33,14 @@ namespace isx {
             // Read the json file if file exists
             if (ifs.good())
             {
-                ifs >> m_fileContent;
+                try
+                {
+                    ifs >> m_fileContent;
+                }
+                catch (const std::invalid_argument & error)
+                {
+                    ISX_THROW(isx::ExceptionDataIO, "Error parsing project file", error.what());
+                }
                  // TODO Read original filenames from datafiles
             }
 
