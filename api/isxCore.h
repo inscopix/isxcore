@@ -16,7 +16,7 @@ namespace isx
 
     int CoreVersionMajor();
     int CoreVersionMinor();
-    int CoreVersionBuild();
+    int CoreVersionPatch();
 }
 
 

@@ -30,8 +30,8 @@ namespace isx
         return APP_VERSION_MINOR;
     }
 
-    int CoreVersionBuild()
+    int CoreVersionPatch()
     {
-        return APP_VERSION_BUILD;
+        return APP_VERSION_PATCH;
     }
 }
