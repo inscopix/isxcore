@@ -275,6 +275,11 @@ public:
     {
         return m_timingInfo;
     }
+
+	void setTimingInfo(const isx::TimingInfo & ti)
+	{
+		m_timingInfo = ti;
+	}
     
     void
     serialize(std::ostream& strm) const
@@ -605,6 +610,11 @@ const isx::TimingInfo &
 Movie::getTimingInfo() const
 {
     return m_pImpl->getTimingInfo();
+}
+
+void Movie::setTimingInfo(const isx::TimingInfo & ti)
+{
+	m_pImpl->setTimingInfo(ti);
 }
 
 void 

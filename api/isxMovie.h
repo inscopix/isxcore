@@ -141,6 +141,10 @@ public:
     const isx::TimingInfo &
     getTimingInfo() const;
 
+	/// Set the timing info for the movie
+	/// \param   ti    input timing info
+	void setTimingInfo(const isx::TimingInfo & ti);
+
     /// Serialize the object into an output stream.
     ///
     /// \param   strm    The output stream.
