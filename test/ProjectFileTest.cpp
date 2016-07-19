@@ -3,7 +3,7 @@
 #include "isxTest.h"
 
 TEST_CASE("ProjectFileTest", "[core]") {
-    std::string testFile = g_resources["testDataPath"] + "/projectfile.hdf5";
+    std::string testFile = g_resources["testDataPath"] + "/projectfile.isxp";
 
     SECTION("default constructor") {
         isx::SpProjectFile_t outputFile = std::make_shared<isx::ProjectFile>();
