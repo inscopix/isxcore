@@ -33,7 +33,7 @@ public:
     ///         on a dedicated I/O thread.
     /// Note 2: this method returns a shared pointer to a video frame containing the actual pixel
     ///         data. Letting the returned shared pointer instance go out of scope means deleting
-    ///         the video frame object, so any pointers to the contained pixe data are no longer valid.
+    ///         the video frame object, so any pointers to the contained pixel data are no longer valid.
     /// \param inFrameNumber 0-based index of frame for which to retrieve frame data
     /// \return a shared_ptr to a VideoFrame object containing the
     ///         requested frame data
@@ -47,7 +47,7 @@ public:
     ///         on a dedicated I/O thread.
     /// Note 2: this method returns a shared pointer to a video frame containing the actual pixel
     ///         data. Letting the returned shared pointer instance go out of scope means deleting
-    ///         the video frame object, so any pointers to the contained pixe data are no longer valid.
+    ///         the video frame object, so any pointers to the contained pixel data are no longer valid.
     ///         
     /// \param inTime time of frame for which to retrieve frame data
     /// \return a shared_ptr to a VideoFrame object containing the

@@ -21,6 +21,10 @@ public:
         m_worker.reset(new DispatchQueueWorker());
     }
     
+    // this dispatches a single task that runs until m_destroy gets set from the
+    // outside (via the destroy() method)
+    // the tasks waits on m_taskQueueCV, when that gets notified (in enqueue() or destroy())
+    // it processes m_taskQueue until it is empty.
     void
     init()
     {
@@ -29,11 +33,10 @@ public:
             SpImpl_t sharedThis = weakThis.lock();
             if (sharedThis)
             {
-                m_taskQueueCV.notifyOne();
                 m_taskQueueMutex.lock("worker impl");
                 while (1)
                 {
-                    while (!m_taskQueue.empty())
+                    while (!m_taskQueue.empty())    // under lock, so enqueue can't push onto queue
                     {
                         Task t = m_taskQueue.front();
                         m_taskQueue.pop();
@@ -41,7 +44,7 @@ public:
                         AsyncTaskFinishedStatus status = AsyncTaskFinishedStatus::COMPLETE;
                         try
                         {
-                            t.m_task();
+                            t.m_task();             // execute without holding lock, eneuque can push onto queue
                         }
                         catch(...)
                         {
@@ -60,11 +63,6 @@ public:
                 m_taskQueueMutex.unlock();
             }
         });
-        
-        m_taskQueueMutex.lock("wait for worker");
-        bool didNotTimeout = m_taskQueueCV.waitForMs(m_taskQueueMutex, 250);
-        m_taskQueueMutex.unlock();
-        ISX_ASSERT(didNotTimeout);
     }
 
     void

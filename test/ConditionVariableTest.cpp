@@ -21,12 +21,14 @@ TEST_CASE("ConditionVariable", "[core]") {
         bool taskRan = false;
         isx::Mutex mutex;
         isx::ConditionVariable cv;
+        mutex.lock("main");
         worker->dispatch([&]()
         {
+            mutex.lock("worker");
             taskRan = true;
+            mutex.unlock();
             cv.notifyOne();
         });
-        mutex.lock("main");
         bool didNotTimeout = cv.waitForMs(mutex, 50);
         mutex.unlock();
 
