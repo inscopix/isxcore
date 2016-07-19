@@ -34,7 +34,7 @@ TEST_CASE("ProjectFileTest", "[core]") {
         dc.name = "dummyCollection";        
         isx::ProjectFile::DataFileDescriptor dfd;
         dfd.filename = "dummyFile";
-        dfd.type = isx::ProjectFile::PF_DATAFILETYPE_MOVIE;        
+        dfd.type = isx::ProjectFile::DATAFILETYPE_MOVIE;        
         dc.files.push_back(dfd);        
         outputFile->addDataCollection(dc);
         isx::isize_t nDataCollections = outputFile->getNumDataCollections();
@@ -50,7 +50,7 @@ TEST_CASE("ProjectFileTest", "[core]") {
         isx::ProjectFile::DataCollection dc = outputFile->getDataCollection(0);
         REQUIRE(dc.name == "dummyCollection");
         REQUIRE(dc.files[0].filename == "dummyFile");
-        REQUIRE(dc.files[0].type == isx::ProjectFile::PF_DATAFILETYPE_MOVIE);        
+        REQUIRE(dc.files[0].type == isx::ProjectFile::DATAFILETYPE_MOVIE);        
     }
 
     SECTION("add file to data collection") {
@@ -60,7 +60,7 @@ TEST_CASE("ProjectFileTest", "[core]") {
 
         isx::ProjectFile::DataFileDescriptor dfd;
         dfd.filename = "addedDummyFile";
-        dfd.type = isx::ProjectFile::PF_DATAFILETYPE_MOVIE;
+        dfd.type = isx::ProjectFile::DATAFILETYPE_MOVIE;
         outputFile->addFileToDataCollection(dfd, 0);
 
         isx::ProjectFile::DataCollection dc = outputFile->getDataCollection(0);

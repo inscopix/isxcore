@@ -20,10 +20,10 @@ namespace isx {
         /// 
         enum DataFileType
         {
-            PF_DATAFILETYPE_MOVIE = 0,  //!< a movie
-            PF_DATAFILETYPE_CELLSET,    //!< a cell set - contains segmented cell info and traces
-            PF_DATAFILETYPE_IMAGE,      //!< an image type
-            PF_DATAFILETYPE_TIMESERIES  //!< a timeseries
+            DATAFILETYPE_MOVIE = 0,  //!< a movie
+            DATAFILETYPE_CELLSET,    //!< a cell set - contains segmented cell info and traces
+            DATAFILETYPE_IMAGE,      //!< an image type
+            DATAFILETYPE_TIMESERIES  //!< a timeseries
         };
 
         /// Data file-related information
