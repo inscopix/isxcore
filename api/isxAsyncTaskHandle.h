@@ -33,11 +33,6 @@ public:
     /// \param inFinishedCB callback function to call when task finished
     AsyncTaskHandle(AsyncTask_t inTask, ProgressCB_t inProgressCB, FinishedCB_t inFinishedCB);
 
-    /// Constructor without progress callback
-    /// \param inTask task to run asynchronously
-    /// \param inFinishedCB callback function to call when task finished
-    AsyncTaskHandle(AsyncTask_t inTask, FinishedCB_t inFinishedCB);
-
     /// helper function template to create an async task
     /// \param inFunc function to call as part of task
     /// \param inSrc source data to pass into inFunc

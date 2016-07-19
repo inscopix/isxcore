@@ -11,11 +11,6 @@ AsyncTaskHandle::AsyncTaskHandle(AsyncTask_t inTask, ProgressCB_t inProgressCB, 
 , m_finishedCB(inFinishedCB)
 {}
 
-AsyncTaskHandle::AsyncTaskHandle(AsyncTask_t inTask, FinishedCB_t inFinishedCB)
-: m_task(inTask)
-, m_finishedCB(inFinishedCB)
-{}
-
 void 
 AsyncTaskHandle::cancel() 
 {
@@ -60,14 +55,17 @@ AsyncTaskHandle::process()
         } catch (...) {
             status = AsyncTaskFinishedStatus::ERROR_EXCEPTION;
         }
-        DispatchQueue::mainQueue()->dispatch([weakThis, this, status](){
-            SpAsyncTaskHandle_t sharedThis = weakThis.lock();
-            if (!sharedThis)
-            {
-                return;
-            }
-            m_finishedCB(status);
-        });
+        if (m_finishedCB)
+        {
+            DispatchQueue::mainQueue()->dispatch([weakThis, this, status](){
+                SpAsyncTaskHandle_t sharedThis = weakThis.lock();
+                if (!sharedThis)
+                {
+                    return;
+                }
+                m_finishedCB(status);
+            });
+        }
     });
 }
     
