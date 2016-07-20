@@ -197,11 +197,6 @@ public:
         ScopedMutex locker(IoQueue::getMutex(), "writeFrame");
         m_movies[0]->writeFrame(inVideoFrame);
     }
-
-	void setTimingInfo(const isx::TimingInfo & ti)
-	{
-		m_timingInfo = ti;
-	}
     
     void
     serialize(std::ostream& strm) const
