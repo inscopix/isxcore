@@ -1,6 +1,7 @@
 #include "isxHdf5FileHandle.h" 
 #include "isxProjectFile.h"
 #include "isxLog.h"
+#include "isxException.h"
 
 namespace isx {
     
@@ -32,20 +33,36 @@ namespace isx {
             m_bValid(false)
         {
             // H5F_ACC_RDWR fails if the file doesn't exist. 
-            int openFlag = H5F_ACC_RDWR;   
-            m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
+            int openFlag = H5F_ACC_RDWR;
+            try
+            {
+                m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
+            }
+            catch (const H5::FileIException & error)
+            {
+                ISX_THROW(isx::ExceptionFileIO,
+                    "Failure caused by H5File operations. Make sure the file exists and it is in a writable location.\n", error.getDetailMsg());
+            }
             m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, openFlag);
                 
             initialize();
         }
 
-        Impl(const std::string & inFileName, const std::string & inInputFileName) :
+        Impl(const std::string & inFileName, const std::vector<std::string> & inInputFileNames) :
             m_filename(inFileName),
-            m_originalFilename(inInputFileName),
+            m_originalFilenames(inInputFileNames),
             m_bValid(false)
         {
             int openFlag = H5F_ACC_TRUNC;
-            m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
+            try
+            {
+                m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
+            }
+            catch (const H5::FileIException & error)
+            {
+                ISX_THROW(isx::ExceptionFileIO,
+                    "Failure caused by H5File operations. Make sure the file exists and it is in a writable location.\n", error.getDetailMsg());
+            }
             m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, openFlag);
             createDataModel();
         }
@@ -92,9 +109,9 @@ namespace isx {
             return m_filename;
         }
 
-        std::string getOriginalName()
+        std::vector<std::string> & getOriginalNames()
         {
-            return m_originalFilename;
+            return m_originalFilenames;
         }
 
     private:
@@ -103,7 +120,7 @@ namespace isx {
         
 
         std::string m_filename;
-        std::string m_originalFilename;
+        std::vector<std::string> m_originalFilenames;
         SpH5File_t m_file;
         SpHdf5FileHandle_t m_fileHandle;
         
@@ -139,9 +156,9 @@ namespace isx {
         m_pImpl.reset(new Impl(inFileName));
     }
 
-    ProjectFile::ProjectFile(const std::string & inFileName, const std::string & inInputFileName)
+    ProjectFile::ProjectFile(const std::string & inFileName, const std::vector<std::string> & inInputFileNames)
     {
-        m_pImpl.reset(new Impl(inFileName, inInputFileName));
+        m_pImpl.reset(new Impl(inFileName, inInputFileNames));
     }
 
     ProjectFile::~ProjectFile() 
@@ -187,10 +204,10 @@ namespace isx {
         return m_pImpl->getName();
     }
 
-    std::string
-    ProjectFile::getOriginalName()
+    std::vector<std::string> & 
+    ProjectFile::getOriginalNames()
     {
-        return m_pImpl->getOriginalName();
+        return m_pImpl->getOriginalNames();
     }
 
  
@@ -223,9 +240,19 @@ namespace isx {
         m_grCells       = m_file->openGroup(cellsPath);
 
         // Read header
-        H5::Attribute inputfile_attribute = m_grFileHeader.openAttribute("Input File");
-        H5::StrType strdatatype(H5::PredType::C_S1, 256); // of length 256 characters
-        inputfile_attribute.read(strdatatype, m_originalFilename);
+        H5::DataSet strDataset = m_grFileHeader.openDataSet("InputFiles");
+        H5::DataSpace dataSpace = strDataset.getSpace();
+        H5::DataType  dataType = strDataset.getDataType();
+        hsize_t         strDims[1];
+        dataSpace.getSimpleExtentDims(strDims);
+        std::vector<const char*> namesC(strDims[0], NULL);        
+        strDataset.read(namesC.data(), dataType);
+        m_originalFilenames.resize(strDims[0]);
+        for (isize_t i(0); i < strDims[0]; ++i)
+        {
+            m_originalFilenames[i] = namesC[i];
+        }
+
             
         hsize_t nObjInGroup = m_grSeries.getNumObjs();
         if(nObjInGroup != 0)
@@ -254,11 +281,20 @@ namespace isx {
         m_grAnnotations = m_file->createGroup(annotationsPath);
         m_grCells       = m_file->createGroup(cellsPath);
 
-        // Add the name of the input file to the file header
-        H5::DataSpace inputfile_dataspace = H5::DataSpace(H5S_SCALAR);
-        H5::StrType strdatatype(H5::PredType::C_S1, 256); // of length 256 characters
-        H5::Attribute inputfile_attribute = m_grFileHeader.createAttribute("Input File", strdatatype, inputfile_dataspace);
-        inputfile_attribute.write(strdatatype, m_originalFilename.c_str());
+        // Add the name of the input files to the file header
+        std::vector<const char*> namesC;
+        for (unsigned i = 0; i < m_originalFilenames.size(); ++i)
+        {
+            namesC.push_back(m_originalFilenames[i].c_str());
+        }
+
+        hsize_t         strDims[1] = { namesC.size() };
+        H5::DataSpace   dataspace(1, strDims);
+
+        // Variable length string
+        H5::StrType datatype(H5::PredType::C_S1, H5T_VARIABLE);
+        H5::DataSet strDataset = m_grFileHeader.createDataSet("InputFiles", datatype, dataspace);
+        strDataset.write(namesC.data(), datatype);
 
         m_bValid = true;
                 

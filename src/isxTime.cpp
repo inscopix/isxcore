@@ -6,19 +6,28 @@
 #include "isxAssert.h"
 #include "isxTime.h"
 
-// The minimum and maximum UTC offsets in seconds.
-#define MIN_UTC_OFFSET -50400
-#define MAX_UTC_OFFSET 50400
-
 namespace isx
 {
 
-Time::Time(const isx::Ratio& secsSinceEpoch, int32_t utcOffset)
+DurationInSeconds::DurationInSeconds(isize_t num, isize_t den)
+    : Ratio(num, den)
+{
+}
+
+DurationInSeconds::DurationInSeconds(const Ratio & ratio)
+    : Ratio(ratio)
+{
+    ISX_ASSERT(ratio >= 0);
+}
+
+const int32_t Time::s_minUtcOffset = -50400;
+const int32_t Time::s_maxUtcOffset = 50400;
+
+Time::Time(const DurationInSeconds & secsSinceEpoch, int32_t utcOffset)
 : m_secsSinceEpoch(secsSinceEpoch)
 , m_utcOffset(utcOffset)
 {
-    ISX_ASSERT(secsSinceEpoch >= 0);
-    ISX_ASSERT(utcOffset >= MIN_UTC_OFFSET || utcOffset <= MAX_UTC_OFFSET);
+    ISX_ASSERT(utcOffset >= s_minUtcOffset || utcOffset <= s_maxUtcOffset);
 }
 
 Time::Time( uint16_t year,
@@ -27,7 +36,7 @@ Time::Time( uint16_t year,
             uint8_t hour,
             uint8_t mins,
             uint8_t secs,
-            const isx::Ratio& secsOffset,
+            const DurationInSeconds & secsOffset,
             int32_t utcOffset)
 {
     ISX_ASSERT(year >= 1970);
@@ -37,7 +46,7 @@ Time::Time( uint16_t year,
     ISX_ASSERT(mins <= 60);
     ISX_ASSERT(secs <= 60);
     ISX_ASSERT(secsOffset >= 0 || secsOffset < 1);
-    ISX_ASSERT(utcOffset >= MIN_UTC_OFFSET || utcOffset <= MAX_UTC_OFFSET);
+    ISX_ASSERT(utcOffset >= s_minUtcOffset || utcOffset <= s_maxUtcOffset);
 
     QDate date(year, mon, day);
     ISX_ASSERT(date.isValid());
@@ -52,15 +61,40 @@ Time::Time( uint16_t year,
     m_utcOffset = utcOffset;
 }
 
-isx::Time
-Time::addSecs(const isx::Ratio& secs) const
+DurationInSeconds
+Time::getSecsSinceEpoch() const
 {
-    isx::Ratio secsSinceEpoch = m_secsSinceEpoch + secs;
-    return isx::Time(secsSinceEpoch);
+    return m_secsSinceEpoch;
 }
 
-isx::Ratio
-Time::secsFrom(const isx::Time& from) const
+Time
+Time::operator +(const DurationInSeconds & duration) const
+{
+    return Time(m_secsSinceEpoch + duration);
+}
+
+Time &
+Time::operator +=(const DurationInSeconds & duration)
+{
+    m_secsSinceEpoch += duration;
+    return *this;
+}
+
+Time
+Time::operator -(const DurationInSeconds & duration) const
+{
+    return Time(m_secsSinceEpoch - duration);
+}
+
+Time &
+Time::operator -=(const DurationInSeconds & duration)
+{
+    m_secsSinceEpoch -= duration;
+    return *this;
+}
+
+Ratio
+Time::operator -(const Time & from) const
 {
     return m_secsSinceEpoch - from.m_secsSinceEpoch;
 }
@@ -72,37 +106,37 @@ Time::getUtcOffset() const
 }
     
 bool
-Time::operator ==(const isx::Time& other) const
+Time::operator ==(const Time & other) const
 {
     return m_secsSinceEpoch == other.m_secsSinceEpoch;
 }
     
 bool
-Time::operator !=(const isx::Time& other) const
+Time::operator !=(const Time & other) const
 {
     return m_secsSinceEpoch != other.m_secsSinceEpoch;
 }
 
 bool
-Time::operator <(const isx::Time& other) const
+Time::operator <(const Time & other) const
 {
     return m_secsSinceEpoch < other.m_secsSinceEpoch;
 }
 
 bool
-Time::operator <=(const isx::Time& other) const
+Time::operator <=(const Time & other) const
 {
     return m_secsSinceEpoch <= other.m_secsSinceEpoch;
 }
 
 bool
-Time::operator >(const isx::Time& other) const
+Time::operator >(const Time & other) const
 {
     return m_secsSinceEpoch > other.m_secsSinceEpoch;
 }
     
 bool
-Time::operator >=(const isx::Time& other) const
+Time::operator >=(const Time & other) const
 {
     return m_secsSinceEpoch >= other.m_secsSinceEpoch;
 }
@@ -117,21 +151,21 @@ Time::serialize(std::ostream& strm) const
     QDateTime dateTime = QDateTime::fromMSecsSinceEpoch(secsInt * 1000, timeZone);
 
     std::string dateTimeStr = dateTime.toString("yyyyMMdd-hhmmss").toStdString();
-    isx::Ratio secsOffset = m_secsSinceEpoch - secsInt;
+    DurationInSeconds secsOffset = m_secsSinceEpoch - secsInt;
     std::string timeZoneStr = timeZone.displayName(dateTime).toStdString();
 
     strm << dateTimeStr << " " << secsOffset << " " << timeZoneStr;
 }
 
-isx::Time
+Time
 Time::now()
 {
     QDateTime nowDateTime = QDateTime::currentDateTime();
     QDate nowDate = nowDateTime.date();
     QTime nowTime = nowDateTime.time();
-    isx::Ratio secsOffset(nowTime.msec(), 1000);
+    DurationInSeconds secsOffset(nowTime.msec(), 1000);
     int32_t utcOffset = nowDateTime.timeZone().offsetFromUtc(nowDateTime);
-    return isx::Time(
+    return Time(
             nowDate.year(),
             nowDate.month(),
             nowDate.day(),
@@ -143,7 +177,7 @@ Time::now()
 }
 
 Time
-Time::floorToDenomOf(const isx::Ratio & inRatio) const
+Time::floorToDenomOf(const Ratio & inRatio) const
 {
     return Time(m_secsSinceEpoch.floorToDenomOf(inRatio), m_utcOffset);
 }

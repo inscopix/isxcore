@@ -6,12 +6,12 @@ namespace isx
 
 TimingInfo::TimingInfo()
 : m_start(Time())
-, m_step(Ratio(50, 1000))
+, m_step(DurationInSeconds(50, 1000))
 , m_numTimes(100)
 {
 }
 
-TimingInfo::TimingInfo(const Time& start, const Ratio& step, isize_t numTimes)
+TimingInfo::TimingInfo(const Time & start, const DurationInSeconds & step, isize_t numTimes)
 : m_start(start)
 , m_step(step)
 , m_numTimes(numTimes)
@@ -27,10 +27,10 @@ TimingInfo::getStart() const
 Time
 TimingInfo::getEnd() const
 {
-    return m_start.addSecs(getDuration());
+    return m_start + getDuration();
 }
 
-Ratio
+DurationInSeconds
 TimingInfo::getStep() const
 {
     return m_step;
@@ -42,18 +42,23 @@ TimingInfo::getNumTimes() const
     return m_numTimes;
 }
 
-Ratio
+DurationInSeconds
 TimingInfo::getDuration() const
 {
     return m_step * m_numTimes;
 }
 
 isize_t
-TimingInfo::convertTimeToIndex(const Time& inTime) const
+TimingInfo::convertTimeToIndex(const Time & inTime) const
 {
-    Ratio secsFromStart = inTime.secsFrom(m_start);
+    if (m_numTimes == 0)
+    {
+        return 0;
+    }
+
+    Ratio secsFromStart = inTime - m_start;
     double index = std::floor((secsFromStart / m_step).toDouble());
-    
+
     if (index <= 0)
     {
         return 0;
@@ -64,15 +69,41 @@ TimingInfo::convertTimeToIndex(const Time& inTime) const
     }
     else
     {
-        return static_cast<isize_t>(index);
+        return isize_t(index);
     }
 }
 
 Time
 TimingInfo::convertIndexToTime(isize_t inIndex) const
 {
+    if (m_numTimes == 0)
+    {
+        return m_start;
+    }
+
+    isx::DurationInSeconds centerOffset = m_step / 2;
     isize_t index = inIndex;
-    
+    if (index == 0)
+    {
+        return m_start + centerOffset;
+    }
+    else if (index >= m_numTimes)
+    {
+         index = m_numTimes - 1;
+    }
+
+    return m_start + centerOffset + (m_step * index);
+}
+
+Time
+TimingInfo::convertIndexToStartTime(isize_t inIndex) const
+{
+    if (m_numTimes == 0)
+    {
+        return m_start;
+    }
+
+    isize_t index = inIndex;
     if (index == 0)
     {
         return m_start;
@@ -82,8 +113,26 @@ TimingInfo::convertIndexToTime(isize_t inIndex) const
          index = m_numTimes - 1;
     }
 
-    Time ret = m_start.addSecs(Ratio(index, 1) * m_step);
+    Time ret = m_start + (m_step * index);
     return ret;
+}
+
+bool
+TimingInfo::operator ==(const TimingInfo& other) const
+{
+    return (m_start == other.m_start)
+        && (m_step == other.m_step)
+        && (m_numTimes == other.m_numTimes);
+}
+
+void
+TimingInfo::serialize(std::ostream& strm) const
+{
+    strm << "TimingInfo("
+            << "Start=" << m_start << ", "
+            << "Step=" << m_step << ", "
+            << "NumTimes=" << m_numTimes
+         << ")";
 }
 
 } // namespace

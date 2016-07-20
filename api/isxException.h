@@ -36,12 +36,12 @@ namespace isx
 
         /// Destructor
         ///
-        virtual ~Exception();
+        ~Exception() override;
 
         /// Retrieves the error message
         ///
         /// \return         The error message.
-        virtual const char* what() const noexcept;
+        const char* what() const noexcept override;
 
         /// Retrieves the file name in which failure occurs
         ///
@@ -74,7 +74,7 @@ namespace isx
 
         /// Destructor
         ///
-        virtual ~ExceptionFileIO();
+        ~ExceptionFileIO() override;
     };
 
     /// Data I/O exception class
@@ -92,7 +92,7 @@ namespace isx
 
         /// Destructor
         ///
-        virtual ~ExceptionDataIO();
+        ~ExceptionDataIO() override;
     };
 
     /// User input exception class
@@ -112,7 +112,7 @@ namespace isx
 
         /// Destructor
         ///
-        virtual ~ExceptionUserInput();
+        ~ExceptionUserInput() override;
     };
 
 } // namespace isx

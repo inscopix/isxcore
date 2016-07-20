@@ -48,7 +48,7 @@ namespace isx {
             return m_movies.size();
         }
         
-        SpMovie_t 
+        SpMovieInterface_t
         getMovie(isize_t inIndex)
         {
             return m_movies[inIndex];
@@ -60,19 +60,19 @@ namespace isx {
             return m_path.substr(m_path.find_last_of("/")+1);
         }
         
-        SpMovie_t 
-        addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
+        SpMovieInterface_t
+        addMovie(const std::string & inName, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo)
         {
             std::string path = m_path + "/" + inName;  
-            m_movies.push_back(std::make_shared<Movie>(m_fileHandle, path, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate));
+            m_movies.push_back(std::make_shared<Movie>(m_fileHandle, path, inTimingInfo, inSpacingInfo));
             return m_movies[m_movies.size()-1];
         }
         
     private:
-        SpH5File_t          m_file;
-        SpHdf5FileHandle_t  m_fileHandle;
-        std::string         m_path;
-        std::vector<SpMovie_t>  m_movies;
+        SpH5File_t                      m_file;
+        SpHdf5FileHandle_t              m_fileHandle;
+        std::string                     m_path;
+        std::vector<SpMovieInterface_t> m_movies;
         
     };  
 
@@ -100,7 +100,7 @@ namespace isx {
         return m_pImpl->getNumMovies();
     }
         
-    SpMovie_t
+    SpMovieInterface_t
     MovieSeries::getMovie(isize_t inIndex)
     {
         return m_pImpl->getMovie(inIndex);
@@ -112,10 +112,10 @@ namespace isx {
         return m_pImpl->getName();
     }
     
-    SpMovie_t 
-    MovieSeries::addMovie(const std::string & inName, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight, isx::Ratio inFrameRate)
+    SpMovieInterface_t
+    MovieSeries::addMovie(const std::string & inName, const TimingInfo & inTimingInfo, const SpacingInfo & inSpacingInfo)
     {
-        return m_pImpl->addMovie(inName, inNumFrames, inFrameWidth, inFrameHeight, inFrameRate);
+        return m_pImpl->addMovie(inName, inTimingInfo, inSpacingInfo);
     }
     
 }

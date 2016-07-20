@@ -1,6 +1,7 @@
-#ifndef ISX_TIMINGINFO_H
-#define ISX_TIMINGINFO_H
+#ifndef ISX_TIMING_INFO_H
+#define ISX_TIMING_INFO_H
 
+#include "isxObject.h"
 #include "isxCore.h"
 #include "isxTime.h"
 
@@ -13,7 +14,7 @@ namespace isx
 /// movies and traces. It also contains some utility methods to convert
 /// times to sample indices so that samples can be retrieved with respect
 /// to absolute time points.
-class TimingInfo
+class TimingInfo : public Object
 {
 public:
 
@@ -26,7 +27,7 @@ public:
     /// \param start    The start time of the samples.
     /// \param step     The duration of one sample in seconds.
     /// \param numTimes The number of samples.
-    TimingInfo(const Time& start, const Ratio& step, isize_t numTimes);
+    TimingInfo(const Time & start, const DurationInSeconds & step, isize_t numTimes);
 
     /// Get the start time of the samples.
     ///
@@ -41,7 +42,7 @@ public:
     /// Get the duration of one sample in seconds.
     ///
     /// \return         The duration of one sample in seconds.
-    Ratio getStep() const;
+    DurationInSeconds getStep() const;
 
     /// Get the number of time samples.
     ///
@@ -51,7 +52,7 @@ public:
     /// Get the duration of all samples in seconds.
     ///
     /// \return         The duration of all samples in seconds.
-    Ratio getDuration() const;
+    DurationInSeconds getDuration() const;
 
     /// Converts an absolute time to the corresponding index within this.
     ///
@@ -75,24 +76,44 @@ public:
     /// If the time is later than the end time, then the last index is
     /// returned.
     ///
-    /// \param      inTime  The time to convert to an index.
-    /// \return             The sample index closest to the given time.
-    isize_t convertTimeToIndex(const Time& inTime) const;
+    /// \param  inTime  The time to convert to an index.
+    /// \return         The sample index closest to the given time.
+    isize_t convertTimeToIndex(const Time & inTime) const;
 
-    /// Converts an index to an absolute time
+    /// Converts an index to the absolute center time of its associated window.
+    ///
+    /// If the index exceeds the number of samples, it will effectively be
+    /// clamped to be less than the number of samples.
+    ///
+    /// If the number of samples is 0, this will return the start time of the samples.
+    ///
+    /// \param  inIndex The index of the sample/window.
+    /// \return         The absolute center of time of the window associated with inIndex.
+    Time convertIndexToTime(isize_t inIndex) const;
+
+    /// Converts an index to the absolute start time of its associated window.
+    ///
+    /// If the number of samples is 0, this will return the start time of the samples.
+    ///
     /// \param inIndex index to convert, will be clamped to range of valid
-    ///        indexes in this movie.
-    /// \return absolute time of the frame for inIndex
-    Time
-    convertIndexToTime(isize_t inIndex) const;
-    
+    ///        indices in this movie.
+    /// \return the start time of the window associated with inIndex
+    Time convertIndexToStartTime(isize_t inIndex) const;
+
+    /// \param  other   The other timing information with which to compare.
+    /// \return         True if this is exactly equal to other, false otherwise.
+    bool operator ==(const TimingInfo& other) const;
+
+    // Overrides
+    void serialize(std::ostream& strm) const override;
+
 private:
 
     /// The start time of the samples.
     Time m_start;
 
     /// The duration of one sample in seconds.
-    Ratio m_step;
+    DurationInSeconds m_step;
 
     /// The number of time samples.
     isize_t m_numTimes;
@@ -101,4 +122,4 @@ private:
 
 } // namespace
 
-#endif // ISX_TIMINGINFO_H
+#endif // ISX_TIMING_INFO_H
