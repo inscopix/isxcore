@@ -18,6 +18,7 @@ namespace isx
     /// return status of an asynchronous task
     enum class AsyncTaskFinishedStatus    
     {
+        PENDING,                ///< task is pending / not done processing
         COMPLETE,               ///< task completed successfully
         CANCELLED,              ///< task was cancelled
         UNKNOWN_ERROR,          ///< an error occurred while processing the task

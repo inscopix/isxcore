@@ -49,24 +49,29 @@ AsyncTaskHandle::process()
         {
             return;
         }
-        AsyncTaskFinishedStatus status = AsyncTaskFinishedStatus::UNKNOWN_ERROR;
         try {
-            status = m_task(ci);
+            m_taskStatus = m_task(ci);
         } catch (...) {
-            status = AsyncTaskFinishedStatus::ERROR_EXCEPTION;
+            m_taskStatus = AsyncTaskFinishedStatus::ERROR_EXCEPTION;
         }
         if (m_finishedCB)
         {
-            DispatchQueue::mainQueue()->dispatch([weakThis, this, status](){
+            DispatchQueue::mainQueue()->dispatch([weakThis, this](){
                 SpAsyncTaskHandle_t sharedThis = weakThis.lock();
                 if (!sharedThis)
                 {
                     return;
                 }
-                m_finishedCB(status);
+                m_finishedCB(m_taskStatus);
             });
         }
     });
+}
+
+AsyncTaskFinishedStatus
+AsyncTaskHandle::getTaskStatus() const
+{
+    return m_taskStatus;
 }
     
 } // namespace isx

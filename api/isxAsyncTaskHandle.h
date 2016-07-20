@@ -57,11 +57,17 @@ public:
     void
     process();
 
+    ///\return status of finished task. Use this if no finished callback was specified.
+    AsyncTaskFinishedStatus
+    getTaskStatus() const;
+
 private:
     bool            m_cancelPending = false;
     AsyncTask_t     m_task;
     ProgressCB_t    m_progressCB = nullptr;
     FinishedCB_t    m_finishedCB = nullptr;
+
+    AsyncTaskFinishedStatus m_taskStatus = AsyncTaskFinishedStatus::PENDING;
 };
     
 } // namespace isx
