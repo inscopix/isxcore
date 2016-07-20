@@ -18,7 +18,7 @@ TEST_CASE("IoQueue", "[core]") {
 
     SECTION("dispatch task to IoQueue") {
         bool taskRan = false;
-        isx::IoQueue::instance()->dispatch([&]()
+        isx::IoQueue::instance()->enqueue([&]()
         {
             taskRan = true;
         });

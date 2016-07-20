@@ -1,6 +1,7 @@
 #include "isxHdf5FileHandle.h" 
 #include "isxProjectFile.h"
 #include "isxLog.h"
+#include "isxException.h"
 
 namespace isx {
     
@@ -32,8 +33,16 @@ namespace isx {
             m_bValid(false)
         {
             // H5F_ACC_RDWR fails if the file doesn't exist. 
-            int openFlag = H5F_ACC_RDWR;   
-            m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
+            int openFlag = H5F_ACC_RDWR;
+            try
+            {
+                m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
+            }
+            catch (const H5::FileIException & error)
+            {
+                ISX_THROW(isx::ExceptionFileIO,
+                    "Failure caused by H5File operations. Make sure the file exists and it is in a writable location.\n", error.getDetailMsg());
+            }
             m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, openFlag);
                 
             initialize();
@@ -45,7 +54,15 @@ namespace isx {
             m_bValid(false)
         {
             int openFlag = H5F_ACC_TRUNC;
-            m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
+            try
+            {
+                m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
+            }
+            catch (const H5::FileIException & error)
+            {
+                ISX_THROW(isx::ExceptionFileIO,
+                    "Failure caused by H5File operations. Make sure the file exists and it is in a writable location.\n", error.getDetailMsg());
+            }
             m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, openFlag);
             createDataModel();
         }
