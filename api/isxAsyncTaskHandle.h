@@ -18,11 +18,11 @@ public:
     /// type of callback function that an asynchronous task has to call periodically
     typedef std::function<bool(float)> CheckInCB_t;
     /// type of function that implements the asynchronous task
-    typedef std::function<AsyncTaskFinishedStatus(CheckInCB_t)> AsyncTask_t;
+    typedef std::function<AsyncTaskStatus(CheckInCB_t)> AsyncTask_t;
     /// type of progress callback function
     typedef std::function<void(float)> ProgressCB_t;
     /// type of finished callback function
-    typedef std::function<void(AsyncTaskFinishedStatus inStatus)> FinishedCB_t;
+    typedef std::function<void(AsyncTaskStatus inStatus)> FinishedCB_t;
 
     /// default constructor
     AsyncTaskHandle();
@@ -58,7 +58,7 @@ public:
     process();
 
     ///\return status of finished task. Use this if no finished callback was specified.
-    AsyncTaskFinishedStatus
+    AsyncTaskStatus
     getTaskStatus() const;
 
 private:
@@ -67,7 +67,7 @@ private:
     ProgressCB_t    m_progressCB = nullptr;
     FinishedCB_t    m_finishedCB = nullptr;
 
-    AsyncTaskFinishedStatus m_taskStatus = AsyncTaskFinishedStatus::PENDING;
+    AsyncTaskStatus m_taskStatus = AsyncTaskStatus::PENDING;
 };
     
 } // namespace isx

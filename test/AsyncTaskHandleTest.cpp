@@ -18,15 +18,15 @@ TEST_CASE("AsyncTaskHandle", "[core]") {
 
     SECTION("exception on worker") {
         bool taskRanUpToException = false;
-        isx::AsyncTaskFinishedStatus status = isx::AsyncTaskFinishedStatus::COMPLETE;
+        isx::AsyncTaskStatus status = isx::AsyncTaskStatus::COMPLETE;
         isx::AsyncTaskHandle::ProgressCB_t progressCB;
         isx::AsyncTaskHandle::FinishedCB_t finishedCB;
 
         isx::SpAsyncTaskHandle_t asyncTask = std::make_shared<isx::AsyncTaskHandle>(
             [&](isx::AsyncTaskHandle::CheckInCB_t){
                 taskRanUpToException = true;
-                ISX_THROW(isx::Exception, "Expected exception on worker.\n");
-                return isx::AsyncTaskFinishedStatus::COMPLETE;
+                ISX_THROW(isx::Exception, "Expected exception - Exception occurred on worker thread.\n");
+                return isx::AsyncTaskStatus::COMPLETE;
             }, progressCB, finishedCB);
 
         asyncTask->process();
@@ -34,7 +34,7 @@ TEST_CASE("AsyncTaskHandle", "[core]") {
         for (int i = 0; i < 250; ++i)
         {
             if (taskRanUpToException
-                && asyncTask->getTaskStatus() == isx::AsyncTaskFinishedStatus::ERROR_EXCEPTION)
+                && asyncTask->getTaskStatus() == isx::AsyncTaskStatus::ERROR_EXCEPTION)
             {
                 break;
             }
@@ -43,7 +43,7 @@ TEST_CASE("AsyncTaskHandle", "[core]") {
         }
 
         REQUIRE(taskRanUpToException);
-        REQUIRE(asyncTask->getTaskStatus() == isx::AsyncTaskFinishedStatus::ERROR_EXCEPTION);
+        REQUIRE(asyncTask->getTaskStatus() == isx::AsyncTaskStatus::ERROR_EXCEPTION);
     }
 
     isx::CoreShutdown();

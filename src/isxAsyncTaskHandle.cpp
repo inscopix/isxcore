@@ -50,9 +50,10 @@ AsyncTaskHandle::process()
             return;
         }
         try {
+            m_taskStatus = AsyncTaskStatus::PROCESSING;
             m_taskStatus = m_task(ci);
         } catch (...) {
-            m_taskStatus = AsyncTaskFinishedStatus::ERROR_EXCEPTION;
+            m_taskStatus = AsyncTaskStatus::ERROR_EXCEPTION;
         }
         if (m_finishedCB)
         {
@@ -68,7 +69,7 @@ AsyncTaskHandle::process()
     });
 }
 
-AsyncTaskFinishedStatus
+AsyncTaskStatus
 AsyncTaskHandle::getTaskStatus() const
 {
     return m_taskStatus;

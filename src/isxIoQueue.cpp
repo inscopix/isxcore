@@ -41,14 +41,15 @@ public:
                         Task t = m_taskQueue.front();
                         m_taskQueue.pop();
                         m_taskQueueMutex.unlock();
-                        AsyncTaskFinishedStatus status = AsyncTaskFinishedStatus::COMPLETE;
+                        AsyncTaskStatus status = AsyncTaskStatus::PROCESSING;
                         try
                         {
                             t.m_task();             // execute without holding lock, eneuque can push onto queue
+                            status = AsyncTaskStatus::COMPLETE;
                         }
                         catch(...)
                         {
-                            status = AsyncTaskFinishedStatus::ERROR_EXCEPTION;
+                            status = AsyncTaskStatus::ERROR_EXCEPTION;
                         }
                         t.m_finishedCB(status);
                         m_taskQueueMutex.lock("worker impl");

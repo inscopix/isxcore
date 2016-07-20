@@ -161,14 +161,14 @@ public:
                 inCallback(getFrameInternal(inFrameNumber));
             }
         },
-        [inCallback](AsyncTaskFinishedStatus inStatus)
+        [inCallback](AsyncTaskStatus inStatus)
         {
-            if (inStatus == AsyncTaskFinishedStatus::ERROR_EXCEPTION)
+            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
             {
                 ISX_LOG_ERROR("An exception occurred while writing to Movie file.");
                 inCallback(SpU16VideoFrame_t());
             }
-            else if (inStatus != AsyncTaskFinishedStatus::COMPLETE)
+            else if (inStatus != AsyncTaskStatus::COMPLETE)
             {
                 ISX_LOG_ERROR("An error occurred while writing to Movie file.");
             }
@@ -221,9 +221,9 @@ public:
             }
             m_movies[0]->writeFrame(inVideoFrame);
         },
-        [&cv, &mutex](AsyncTaskFinishedStatus inStatus)
+        [&cv, &mutex](AsyncTaskStatus inStatus)
         {
-            if (inStatus != AsyncTaskFinishedStatus::COMPLETE)
+            if (inStatus != AsyncTaskStatus::COMPLETE)
             {
                 ISX_LOG_ERROR("An error occurred while writing to Movie file.");
             }

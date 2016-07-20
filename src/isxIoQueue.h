@@ -22,7 +22,7 @@ public:
         /// type of function that implements the asynchronous task
         typedef std::function<void()> Task_t;
         /// type of finished callback function
-        typedef std::function<void(AsyncTaskFinishedStatus inStatus)> FinishedCB_t;
+        typedef std::function<void(AsyncTaskStatus inStatus)> FinishedCB_t;
         /// constructor
         Task(Task_t inTask, FinishedCB_t inFinishedCB) : m_task(inTask), m_finishedCB(inFinishedCB){}
 

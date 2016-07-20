@@ -15,14 +15,15 @@ namespace isx
     void CoreShutdown();
 
     /// \cond doxygen chokes on enum class inside of namespace
-    /// return status of an asynchronous task
-    enum class AsyncTaskFinishedStatus    
+    /// status of an asynchronous task
+    enum class AsyncTaskStatus    
     {
         PENDING,                ///< task is pending / not done processing
+        PROCESSING,             ///< task is processing
         COMPLETE,               ///< task completed successfully
         CANCELLED,              ///< task was cancelled
-        UNKNOWN_ERROR,          ///< an error occurred while processing the task
-        ERROR_EXCEPTION         ///< an exception occurred while processing the task
+        ERROR_EXCEPTION,        ///< an exception occurred while processing the task
+        UNKNOWN_ERROR           ///< an error occurred while processing the task
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 

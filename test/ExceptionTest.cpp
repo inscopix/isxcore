@@ -25,12 +25,12 @@ TEST_CASE("ExceptionTest", "[core]") {
     {
         try
         {
-            ISX_THROW(isx::ExceptionDataIO, "There was a DataIO error");
+            ISX_THROW(isx::ExceptionDataIO, "Expected exception - There was a DataIO error");
             FAIL("Failed to throw an exception");
         }
         catch (const isx::ExceptionDataIO& error)
         {
-            REQUIRE(std::string(error.what()) == "There was a DataIO error");
+            REQUIRE(std::string(error.what()) == "Expected exception - There was a DataIO error");
         }
         catch (...)
         {
@@ -42,12 +42,12 @@ TEST_CASE("ExceptionTest", "[core]") {
     {
         try
         {
-            ISX_THROW(isx::ExceptionDataIO, "There was a DataIO error with input ", 1);
+            ISX_THROW(isx::ExceptionDataIO, "Expected exception - There was a DataIO error with input ", 1);
             FAIL("Failed to throw an exception");
         }
         catch (const isx::ExceptionDataIO& error)
         {
-            REQUIRE(std::string(error.what()) == "There was a DataIO error with input 1");
+            REQUIRE(std::string(error.what()) == "Expected exception - There was a DataIO error with input 1");
         }
         catch (...)
         {
