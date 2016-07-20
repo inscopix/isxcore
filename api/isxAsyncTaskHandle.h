@@ -61,13 +61,18 @@ public:
     AsyncTaskStatus
     getTaskStatus() const;
 
+    ///\return current exception, if one has occurred while processing this task
+    std::exception_ptr
+    getExceptionPtr() const;
+
 private:
     bool            m_cancelPending = false;
     AsyncTask_t     m_task;
-    ProgressCB_t    m_progressCB = nullptr;
-    FinishedCB_t    m_finishedCB = nullptr;
+    ProgressCB_t    m_progressCB;
+    FinishedCB_t    m_finishedCB;
 
     AsyncTaskStatus m_taskStatus = AsyncTaskStatus::PENDING;
+    std::exception_ptr  m_exception;
 };
     
 } // namespace isx

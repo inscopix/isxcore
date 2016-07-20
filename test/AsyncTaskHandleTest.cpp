@@ -11,6 +11,7 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
+#include <exception>
 
 TEST_CASE("AsyncTaskHandle", "[core]") {
 
@@ -25,7 +26,7 @@ TEST_CASE("AsyncTaskHandle", "[core]") {
         isx::SpAsyncTaskHandle_t asyncTask = std::make_shared<isx::AsyncTaskHandle>(
             [&](isx::AsyncTaskHandle::CheckInCB_t){
                 taskRanUpToException = true;
-                ISX_THROW(isx::Exception, "Expected exception - Exception occurred on worker thread.\n");
+                ISX_THROW(isx::Exception, "Expected: exception on worker.");
                 return isx::AsyncTaskStatus::COMPLETE;
             }, progressCB, finishedCB);
 
@@ -44,6 +45,14 @@ TEST_CASE("AsyncTaskHandle", "[core]") {
 
         REQUIRE(taskRanUpToException);
         REQUIRE(asyncTask->getTaskStatus() == isx::AsyncTaskStatus::ERROR_EXCEPTION);
+        try
+        {
+            std::rethrow_exception(asyncTask->getExceptionPtr());
+        }
+        catch(isx::Exception & e)
+        {
+            REQUIRE(std::string(e.what()) == "Expected: exception on worker.");
+        }
     }
 
     isx::CoreShutdown();

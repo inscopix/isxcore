@@ -53,6 +53,7 @@ AsyncTaskHandle::process()
             m_taskStatus = AsyncTaskStatus::PROCESSING;
             m_taskStatus = m_task(ci);
         } catch (...) {
+            m_exception = std::current_exception();
             m_taskStatus = AsyncTaskStatus::ERROR_EXCEPTION;
         }
         if (m_finishedCB)
@@ -73,6 +74,12 @@ AsyncTaskStatus
 AsyncTaskHandle::getTaskStatus() const
 {
     return m_taskStatus;
+}
+
+std::exception_ptr
+AsyncTaskHandle::getExceptionPtr() const
+{
+    return m_exception;
 }
     
 } // namespace isx
