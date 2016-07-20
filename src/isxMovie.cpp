@@ -93,7 +93,7 @@ public:
         // is calculated, so these values are not what we really want. we should want to 
         // pull these from the xml eventually
         m_timingInfo = readTimingInfo(inHdf5Files);
-        m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
+        m_spacingInfo = readSpacingInfo(inHdf5Files);
         m_isValid = true;
     }
 
@@ -320,7 +320,27 @@ private:
     ///
     SpacingInfo
     createDummySpacingInfo(isize_t width, isize_t height)
+    {     
+        SizeInPixels_t numPixels(width, height);
+        SizeInMicrons_t pixelSize(Ratio(22, 10), Ratio(22, 10));
+        PointInMicrons_t topLeft(0, 0);
+        return SpacingInfo(numPixels, pixelSize, topLeft);
+    }
+
+    /// Reads frame size from HDF5 and populates in default spacing info object
+    ///
+    SpacingInfo
+    readSpacingInfo(std::vector<SpH5File_t> inHdf5Files)
     {
+        H5::DataSet spacingInfoDataSet = inHdf5Files[0]->openDataSet("/images");
+
+        std::vector<hsize_t> spacingInfoDims;
+        std::vector<hsize_t> spacingInfoMaxDims;
+        isx::internal::getHdf5SpaceDims(spacingInfoDataSet.getSpace(), spacingInfoDims, spacingInfoMaxDims);
+
+        hsize_t height = spacingInfoDims[1];
+        hsize_t width = spacingInfoDims[2];
+
         SizeInPixels_t numPixels(width, height);
         SizeInMicrons_t pixelSize(Ratio(22, 10), Ratio(22, 10));
         PointInMicrons_t topLeft(0, 0);
