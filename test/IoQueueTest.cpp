@@ -19,7 +19,7 @@ TEST_CASE("IoQueue", "[core]") {
     SECTION("dispatch task to IoQueue") {
         bool taskRan = false;
         isx::AsyncTaskStatus status = isx::AsyncTaskStatus::UNKNOWN_ERROR;
-        isx::IoQueue::instance()->enqueue(isx::IoQueue::Task([&]()
+        isx::IoQueue::instance()->enqueue(isx::IoQueue::IoTask([&]()
         {
             taskRan = true;
         },

@@ -153,7 +153,7 @@ public:
     getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
     {
         WpImpl_t weakThis = shared_from_this();
-        IoQueue::instance()->enqueue(IoQueue::Task([weakThis, this, inFrameNumber, inCallback]()
+        IoQueue::instance()->enqueue(IoQueue::IoTask([weakThis, this, inFrameNumber, inCallback]()
         {
             SpImpl_t sharedThis = weakThis.lock();
             if (sharedThis)
@@ -212,7 +212,7 @@ public:
         ConditionVariable cv;
         mutex.lock("writeFrame");
         WpImpl_t weakThis = shared_from_this();
-        IoQueue::instance()->enqueue(IoQueue::Task([weakThis, this, inVideoFrame]()
+        IoQueue::instance()->enqueue(IoQueue::IoTask([weakThis, this, inVideoFrame]()
         {
             SpImpl_t sharedThis = weakThis.lock();
             if (!sharedThis)

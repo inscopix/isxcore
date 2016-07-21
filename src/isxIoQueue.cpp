@@ -38,7 +38,7 @@ public:
                 {
                     while (!m_taskQueue.empty())    // under lock, so enqueue can't push onto queue
                     {
-                        Task t = m_taskQueue.front();
+                        IoTask t = m_taskQueue.front();
                         m_taskQueue.pop();
                         m_taskQueueMutex.unlock();
                         AsyncTaskStatus status = AsyncTaskStatus::PROCESSING;
@@ -78,7 +78,7 @@ public:
     }
 
     void
-    enqueue(Task inTask)
+    enqueue(IoTask inTask)
     {
         {
             ScopedMutex locker(m_taskQueueMutex, "enqueue");
@@ -89,7 +89,7 @@ public:
 
 private:
     UpDispatchQueueWorker_t  m_worker;
-    std::queue<Task>         m_taskQueue;
+    std::queue<IoTask>       m_taskQueue;
     Mutex                    m_taskQueueMutex;
     ConditionVariable        m_taskQueueCV;
     bool                     m_destroy = false;
@@ -143,7 +143,7 @@ IoQueue::instance()
 }
 
 void
-IoQueue::enqueue(Task inTask)
+IoQueue::enqueue(IoTask inTask)
 {
     if (isInitialized())
     {

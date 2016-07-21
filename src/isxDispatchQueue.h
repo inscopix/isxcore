@@ -19,11 +19,11 @@ namespace isx
     
 /// type of task dispatched into queue for processing
 ///
-typedef std::function<void()> DispatchQueueTask_t;
+typedef std::function<void()> Task_t;
 
 /// type of task with context dispatched into queue for processing
 ///
-typedef std::function<void(void *)> DispatchQueueContextTask_t;
+typedef std::function<void(void *)> ContextTask_t;
 
 ///
 /// An interface class defining a DispatchQueue API.
@@ -41,7 +41,7 @@ public:
     ///
     virtual
     void
-    dispatch(DispatchQueueTask_t inTask) = 0;
+    dispatch(Task_t inTask) = 0;
     
     /// dispatch a task with context into this queue for processing
     /// \param inContext passed into the task function at processing time
@@ -49,7 +49,7 @@ public:
     ///
     virtual
     void
-    dispatch(void * inContext, DispatchQueueContextTask_t inContextTask) = 0;
+    dispatch(void * inContext, ContextTask_t inContextTask) = 0;
 };
 
 

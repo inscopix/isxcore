@@ -10,7 +10,7 @@ namespace
 class TaskWrapper : public QRunnable
 {
 public:
-    explicit TaskWrapper(DispatchQueueTask_t && inTask)
+    explicit TaskWrapper(Task_t && inTask)
     : m_Task(std::move(inTask))
     {}
 
@@ -20,7 +20,7 @@ public:
     }
 
 private:
-    DispatchQueueTask_t m_Task;
+    Task_t m_Task;
 };
 
 } // namespace
@@ -29,7 +29,7 @@ DispatchQueuePool::DispatchQueuePool()
 {}
     
 void
-DispatchQueuePool::dispatch(DispatchQueueTask_t inTask)
+DispatchQueuePool::dispatch(Task_t inTask)
 {
     // note: QRunnable::autoDelete is true by default,
     //       this means QThreadPool will delete the QRunnable
@@ -39,7 +39,7 @@ DispatchQueuePool::dispatch(DispatchQueueTask_t inTask)
 }
     
 void
-DispatchQueuePool::dispatch(void * inContext, DispatchQueueContextTask_t inContextTask)
+DispatchQueuePool::dispatch(void * inContext, ContextTask_t inContextTask)
 {
     // note: QRunnable::autoDelete is true by default,
     //       this means QThreadPool will delete the QRunnable

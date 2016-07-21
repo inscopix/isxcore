@@ -29,14 +29,14 @@ public:
     /// \param inTask the task to be processed
     ///
     void
-    dispatch(DispatchQueueTask_t inTask) override;
+    dispatch(Task_t inTask) override;
     
     /// dispatch a task with context into this queue for processing
     /// \param inContext passed into the task function at processing time
     /// \param inContextTask the task accepting a context to be processed
     ///
     void
-    dispatch(void * inContext, DispatchQueueContextTask_t inContextTask) override;
+    dispatch(void * inContext, ContextTask_t inContextTask) override;
 
     /// destroys this worker, tries to destroy thread which may fail
     /// call destroy before calling desctructor
