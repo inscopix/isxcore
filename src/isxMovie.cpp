@@ -66,7 +66,6 @@ public:
         ISX_ASSERT(inHdf5Files.size());
         ISX_ASSERT(inHdf5Files.size() == inPaths.size());
 
-        isize_t w, h;
         isize_t numFramesAccum = 0;
 
         for (isize_t f(0); f < inHdf5Files.size(); ++f)
@@ -76,13 +75,12 @@ public:
             
             if (f > 1)
             {
-                ISX_ASSERT(w == m_movies[f]->getFrameWidth());
-                ISX_ASSERT(h == m_movies[f]->getFrameHeight());
-            }
-            else
-            {
-                w = m_movies[f]->getFrameWidth();
-                h = m_movies[f]->getFrameHeight();
+                if (m_movies[0]->getFrameWidth() != m_movies[f]->getFrameWidth() ||
+                    m_movies[0]->getFrameHeight() != m_movies[f]->getFrameHeight())
+                {
+                    ISX_THROW(isx::ExceptionUserInput,
+                        "All input files must have the same frame dimensions");
+                }
             }
 
             numFramesAccum += m_movies[f]->getNumFrames();
@@ -103,7 +101,7 @@ public:
 
         if (readSpacingInfo(inHdf5Files) == false)
         {
-            m_spacingInfo = createDummySpacingInfo(w, h);
+            m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
         }
         
         m_isValid = true;
