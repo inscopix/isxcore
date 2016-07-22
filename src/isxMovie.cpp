@@ -170,14 +170,26 @@ public:
         },
         [inCallback](AsyncTaskStatus inStatus)
         {
-            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
+            switch (inStatus)
             {
-                ISX_LOG_ERROR("An exception occurred while writing to Movie file.");
-                inCallback(SpU16VideoFrame_t());
-            }
-            else if (inStatus != AsyncTaskStatus::COMPLETE)
-            {
-                ISX_LOG_ERROR("An error occurred while writing to Movie file.");
+                case AsyncTaskStatus::ERROR_EXCEPTION:
+                    ISX_LOG_ERROR("An exception occurred while reading from Movie file.");
+                    inCallback(SpU16VideoFrame_t());
+                    break;
+                    
+                case AsyncTaskStatus::UNKNOWN_ERROR:
+                    ISX_LOG_ERROR("An error occurred while reading from Movie file.");
+                    inCallback(SpU16VideoFrame_t());
+                    break;
+                    
+                case AsyncTaskStatus::CANCELLED:
+                    ISX_LOG_ERROR("getFrame request cancelled.");
+                    break;
+                    
+                case AsyncTaskStatus::COMPLETE:
+                case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
+                case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
+                    break;
             }
         }));
     }
