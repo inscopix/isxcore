@@ -71,7 +71,7 @@ TEST_CASE("MosaicMovie", "[core-internal]")
                 std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
                 for (isx::isize_t p = 0; p < numPixels; ++p)
                 {
-                    frameBuf[p] = (f * numPixels) + p;
+                    frameBuf[p] = uint16_t((f * numPixels) + p);
                 }
 
                 std::copy(frameBuf.data(), frameBuf.data() + numPixels, frame->getPixels());
