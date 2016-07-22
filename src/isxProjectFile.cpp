@@ -177,7 +177,7 @@ namespace isx {
         void initJson()
         {
             m_fileContent = json();
-            m_fileContent["header"]["mosaic version"] = { CoreVersionMajor() , CoreVersionMinor(), CoreVersionPatch() };          
+            m_fileContent["header"]["mosaic version"] = CoreVersionVector();
             m_fileContent["header"]["file version"] = { fileVersionMajor, fileVersionMinor };
             m_fileContent["data"] = json();
 

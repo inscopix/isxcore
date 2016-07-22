@@ -34,4 +34,10 @@ namespace isx
     {
         return APP_VERSION_PATCH;
     }
+
+    std::vector<int>
+    CoreVersionVector()
+    {
+        return { CoreVersionMajor() , CoreVersionMinor(), CoreVersionPatch() };
+    }
 }

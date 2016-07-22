@@ -2,7 +2,7 @@
 #define ISX_CORE_H
 
 #include <stddef.h>
-
+#include <vector>
 
 namespace isx
 {
@@ -17,6 +17,10 @@ namespace isx
     int CoreVersionMajor();
     int CoreVersionMinor();
     int CoreVersionPatch();
+
+    /// \return     The version numbers in a vector.
+    ///
+    std::vector<int> CoreVersionVector();
 }
 
 
