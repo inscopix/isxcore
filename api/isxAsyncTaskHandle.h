@@ -1,7 +1,6 @@
 #ifndef ISX_ASYNC_TASK_HANDLE_H
 #define ISX_ASYNC_TASK_HANDLE_H
 
-#include "isxDispatchQueue.h"
 #include "isxCore.h"
 
 #include <functional>
@@ -15,23 +14,15 @@ namespace isx
 class AsyncTaskHandle : public std::enable_shared_from_this<isx::AsyncTaskHandle>
 {
 public:
-    /// return status of an asynchronous task
-    enum class FinishedStatus
-    {
-        COMPLETE,               ///< task completed successfully
-        CANCELLED,              ///< task was cancelled
-        UNKNOWN_ERROR,          ///< an error occurred while processing the task
-        ERROR_EXCEPTION         ///< an exception occurred while processing the task
-    };
     
     /// type of callback function that an asynchronous task has to call periodically
     typedef std::function<bool(float)> CheckInCB_t;
     /// type of function that implements the asynchronous task
-    typedef std::function<FinishedStatus(CheckInCB_t)> AsyncTask_t;
+    typedef std::function<AsyncTaskStatus(CheckInCB_t)> AsyncTask_t;
     /// type of progress callback function
     typedef std::function<void(float)> ProgressCB_t;
     /// type of finished callback function
-    typedef std::function<void(FinishedStatus inStatus)> FinishedCB_t;
+    typedef std::function<void(AsyncTaskStatus inStatus)> FinishedCB_t;
 
     /// default constructor
     AsyncTaskHandle();
@@ -66,11 +57,22 @@ public:
     void
     process();
 
+    ///\return status of finished task. Use this if no finished callback was specified.
+    AsyncTaskStatus
+    getTaskStatus() const;
+
+    ///\return current exception, if one has occurred while processing this task
+    std::exception_ptr
+    getExceptionPtr() const;
+
 private:
     bool            m_cancelPending = false;
     AsyncTask_t     m_task;
     ProgressCB_t    m_progressCB;
     FinishedCB_t    m_finishedCB;
+
+    AsyncTaskStatus m_taskStatus = AsyncTaskStatus::PENDING;
+    std::exception_ptr  m_exception;
 };
     
 } // namespace isx

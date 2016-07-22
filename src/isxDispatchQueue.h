@@ -1,5 +1,5 @@
-#ifndef ISX_DISPATCH_QUEUE
-#define ISX_DISPATCH_QUEUE
+#ifndef ISX_DISPATCH_QUEUE_H
+#define ISX_DISPATCH_QUEUE_H
 
 #include "isxCoreFwd.h"
 
@@ -111,36 +111,6 @@ private:
     static bool s_isInitialized;
 };
 
-
-
 } // namespace isx
 
-
-
-
-// place for random planning ideas
-#if 0
-template<typename T>
-class future
-{
-public:
-    void cancel();
-    float progress();
-    T get();
-private:
-    T r;
-};
-
-template<typename T>
-class ITask
-{
-public:
-    virtual ~ITask();
-    virtual bool checkIn(float inProgress);
-};
-
-dispatch_async_f(std::function<void()> func);
-future f = dispatch_async_f(std::function<void()> func);
-#endif
-
-#endif // ISX_DISPATCH_QUEUE
+#endif // ISX_DISPATCH_QUEUE_H

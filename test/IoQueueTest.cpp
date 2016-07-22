@@ -18,10 +18,14 @@ TEST_CASE("IoQueue", "[core]") {
 
     SECTION("dispatch task to IoQueue") {
         bool taskRan = false;
-        isx::IoQueue::instance()->dispatch([&]()
+        isx::AsyncTaskStatus status = isx::AsyncTaskStatus::UNKNOWN_ERROR;
+        isx::IoQueue::instance()->enqueue(isx::IoQueue::IoTask([&]()
         {
             taskRan = true;
-        });
+        },
+        [&](isx::AsyncTaskStatus inStatus){
+            status = inStatus;
+        }));
         for (int i = 0; i < 250; ++i)
         {
             if (taskRan)
@@ -32,6 +36,7 @@ TEST_CASE("IoQueue", "[core]") {
             std::this_thread::sleep_for(d);
         }
         REQUIRE(taskRan);
+        REQUIRE(status == isx::AsyncTaskStatus::COMPLETE);
     }
 
     isx::CoreShutdown();

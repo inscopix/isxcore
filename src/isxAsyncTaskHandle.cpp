@@ -9,9 +9,7 @@ AsyncTaskHandle::AsyncTaskHandle(AsyncTask_t inTask, ProgressCB_t inProgressCB, 
 : m_task(inTask)
 , m_progressCB(inProgressCB)
 , m_finishedCB(inFinishedCB)
-{
-
-}
+{}
 
 void 
 AsyncTaskHandle::cancel() 
@@ -31,14 +29,17 @@ AsyncTaskHandle::process()
         {
             return false;
         }
-        DispatchQueue::mainQueue()->dispatch([weakThis, this, inProgress](){
-            SpAsyncTaskHandle_t sharedThis = weakThis.lock();
-            if (!sharedThis)
-            {
-                return;
-            }
-            m_progressCB(inProgress);
-        });
+        if (m_progressCB)
+        {
+            DispatchQueue::mainQueue()->dispatch([weakThis, this, inProgress](){
+                SpAsyncTaskHandle_t sharedThis = weakThis.lock();
+                if (!sharedThis)
+                {
+                    return;
+                }
+                m_progressCB(inProgress);
+            });
+        }
         return this->m_cancelPending;
     };
 
@@ -48,16 +49,37 @@ AsyncTaskHandle::process()
         {
             return;
         }
-        FinishedStatus status = m_task(ci);
-        DispatchQueue::mainQueue()->dispatch([weakThis, this, status](){
-            SpAsyncTaskHandle_t sharedThis = weakThis.lock();
-            if (!sharedThis)
-            {
-                return;
-            }
-            m_finishedCB(status);
-        });
+        try {
+            m_taskStatus = AsyncTaskStatus::PROCESSING;
+            m_taskStatus = m_task(ci);
+        } catch (...) {
+            m_exception = std::current_exception();
+            m_taskStatus = AsyncTaskStatus::ERROR_EXCEPTION;
+        }
+        if (m_finishedCB)
+        {
+            DispatchQueue::mainQueue()->dispatch([weakThis, this](){
+                SpAsyncTaskHandle_t sharedThis = weakThis.lock();
+                if (!sharedThis)
+                {
+                    return;
+                }
+                m_finishedCB(m_taskStatus);
+            });
+        }
     });
+}
+
+AsyncTaskStatus
+AsyncTaskHandle::getTaskStatus() const
+{
+    return m_taskStatus;
+}
+
+std::exception_ptr
+AsyncTaskHandle::getExceptionPtr() const
+{
+    return m_exception;
 }
     
 } // namespace isx

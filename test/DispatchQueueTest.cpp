@@ -10,7 +10,7 @@
 #include <thread>
 #include <atomic>
 
-TEST_CASE("DispatchQueue", "[core]") {
+TEST_CASE("DispatchQueue", "[core-internal]") {
 
     isx::CoreInitialize();
 
