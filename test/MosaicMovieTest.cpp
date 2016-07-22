@@ -2,6 +2,7 @@
 #include "catch.hpp"
 #include "isxTest.h"
 #include <stdio.h>
+#include <algorithm>
 
 TEST_CASE("MosaicMovie", "[core-internal]")
 {
@@ -73,7 +74,7 @@ TEST_CASE("MosaicMovie", "[core-internal]")
                     frameBuf[p] = (f * numPixels) + p;
                 }
 
-                std::memcpy(frame->getPixels(), frameBuf.data(), frameSizeInBytes);
+                std::copy(frameBuf.data(), frameBuf.data() + numPixels, frame->getPixels());
 
                 movie.writeFrame(frame);
             }
