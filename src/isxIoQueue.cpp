@@ -28,22 +28,30 @@ public:
     void
     init()
     {
-        m_taskQueueMutex.lock("wait for worker");
         WpImpl_t weakThis = shared_from_this();
         m_worker->dispatch([weakThis, this](){
             SpImpl_t sharedThis = weakThis.lock();
             if (sharedThis)
             {
-                m_taskQueueCV.notifyOne();
                 m_taskQueueMutex.lock("worker impl");
                 while (1)
                 {
                     while (!m_taskQueue.empty())    // under lock, so enqueue can't push onto queue
                     {
-                        Task_t t = m_taskQueue.front();
+                        IoTask t = m_taskQueue.front();
                         m_taskQueue.pop();
                         m_taskQueueMutex.unlock();
-                        t();                        // execute without holding lock, eneuque can push onto queue
+                        AsyncTaskStatus status = AsyncTaskStatus::PROCESSING;
+                        try
+                        {
+                            t.m_task();             // execute without holding lock, eneuque can push onto queue
+                            status = AsyncTaskStatus::COMPLETE;
+                        }
+                        catch(...)
+                        {
+                            status = AsyncTaskStatus::ERROR_EXCEPTION;
+                        }
+                        t.m_finishedCB(status);
                         m_taskQueueMutex.lock("worker impl");
                     }
                     m_taskQueueCV.wait(m_taskQueueMutex);
@@ -56,10 +64,6 @@ public:
                 m_taskQueueMutex.unlock();
             }
         });
-        
-        bool didNotTimeout = m_taskQueueCV.waitForMs(m_taskQueueMutex, 250);
-        m_taskQueueMutex.unlock();
-        ISX_ASSERT(didNotTimeout);
     }
 
     void
@@ -74,7 +78,7 @@ public:
     }
 
     void
-    enqueue(Task_t inTask)
+    enqueue(IoTask inTask)
     {
         {
             ScopedMutex locker(m_taskQueueMutex, "enqueue");
@@ -84,11 +88,11 @@ public:
     }
 
 private:
-    UpDispatchQueueWorker_t     m_worker;
-    std::queue<Task_t>          m_taskQueue;
-    Mutex                       m_taskQueueMutex;
-    ConditionVariable           m_taskQueueCV;
-    bool                        m_destroy = false;
+    UpDispatchQueueWorker_t  m_worker;
+    std::queue<IoTask>       m_taskQueue;
+    Mutex                    m_taskQueueMutex;
+    ConditionVariable        m_taskQueueCV;
+    bool                     m_destroy = false;
 };
 
 IoQueue::IoQueue()
@@ -139,7 +143,7 @@ IoQueue::instance()
 }
 
 void
-IoQueue::enqueue(Task_t inTask)
+IoQueue::enqueue(IoTask inTask)
 {
     if (isInitialized())
     {

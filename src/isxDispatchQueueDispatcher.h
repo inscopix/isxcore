@@ -31,9 +31,9 @@ public:
 
     /// process a task with a context on this dispatcher's thread
     /// \param inContext the context to be passed in to the task
-    /// \param inContexTask_t the task to be processed
+    /// \param inContextTask_t the task to be processed
     void
-    processWithContext(void * inContext, ContextTask_t inContexTask_t);
+    processWithContext(void * inContext, ContextTask_t inContextTask_t);
     
 signals:
     /// dispatch a task to this dispatcher's thread
@@ -44,9 +44,9 @@ signals:
     
     /// dispatch a task with a context to this dispatcher's thread
     /// \param inContext the context to be passed in to the task
-    /// \param inContexTask_t the task to be processed
+    /// \param inContextTask_t the task to be processed
     void
-    dispatchWithContext(void * inContext, ContextTask_t inContexTask_t);
+    dispatchWithContext(void * inContext, ContextTask_t inContextTask_t);
 private:
     DispatchQueueDispatcher(const DispatchQueueDispatcher & inOther) = delete;
     const DispatchQueueDispatcher & operator=(const DispatchQueueDispatcher & inOther) = delete;
