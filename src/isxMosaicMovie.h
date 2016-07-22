@@ -110,7 +110,7 @@ private:
     /// nothing.
     ///
     /// \throw  isx::ExceptionFileIO    If opening the movie file fails.
-    void openForRead();
+    void openForReadOnly();
 
     /// Opens the movie file for writing.
     ///

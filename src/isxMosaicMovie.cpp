@@ -18,6 +18,7 @@ MosaicMovie::MosaicMovie(const std::string & inFileName)
     , m_fileName(inFileName)
     , m_fileAccess(FileAccessType::NONE)
 {
+    openForReadOnly();
     readHeader();
     // TODO sweet : check that data if of expected size.
     m_valid = true;
@@ -33,6 +34,7 @@ MosaicMovie::MosaicMovie(
     , m_spacingInfo(inSpacingInfo)
     , m_fileAccess(FileAccessType::NONE)
 {
+    openForReadWrite();
     writeHeader();
     writeZeroData();
     m_valid = true;
@@ -51,6 +53,12 @@ MosaicMovie::isValid() const
 SpU16VideoFrame_t
 MosaicMovie::getFrame(isize_t inFrameNumber)
 {
+    if (!(m_fileAccess == FileAccessType::READ_ONLY
+            || m_fileAccess == FileAccessType::READ_WRITE))
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Movie file is not open for read access.");
+    }
+
     isize_t rowSizeInBytes = sizeof(uint16_t) * m_spacingInfo.getNumColumns();
     isize_t frameSizeInBytes = sizeof(uint16_t) * m_spacingInfo.getTotalNumPixels();
 
@@ -102,11 +110,16 @@ MosaicMovie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
 void
 MosaicMovie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
 {
+    if (m_fileAccess != FileAccessType::READ_WRITE)
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Movie file is not open for write access.");
+    }
+
     isize_t frameSizeInBytes = sizeof(uint16_t) * m_spacingInfo.getTotalNumPixels();
 
     Time frameTime = inVideoFrame->getTimeStamp();
     // TODO sweet : check to see if time is outside of sample window instead
-    // of overwriting first or last frame data.
+    // of overwriting first or last frame data?
     isize_t frameNumber = m_timingInfo.convertTimeToIndex(frameTime);
 
     isize_t offsetInBytes = frameNumber * frameSizeInBytes;
@@ -149,7 +162,7 @@ MosaicMovie::serialize(std::ostream & strm) const
 }
 
 void
-MosaicMovie::openForRead()
+MosaicMovie::openForReadOnly()
 {
     if (!m_file.is_open())
     {
@@ -165,11 +178,6 @@ MosaicMovie::openForRead()
 void
 MosaicMovie::openForReadWrite()
 {
-    if (m_fileAccess == FileAccessType::READ_ONLY)
-    {
-        m_file.close();
-        m_fileAccess = FileAccessType::NONE;
-    }
     if (!m_file.is_open())
     {
         m_file.open(m_fileName, std::ios_base::out | std::ios_base::binary);
@@ -184,7 +192,11 @@ MosaicMovie::openForReadWrite()
 void
 MosaicMovie::readHeader()
 {
-    openForRead();
+    if (!(m_fileAccess == FileAccessType::READ_ONLY
+            || m_fileAccess == FileAccessType::READ_WRITE))
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Movie file is not open for read access.");
+    }
 
     std::string jsonStr;
     m_file.seekg(std::ios_base::beg);
@@ -234,7 +246,10 @@ MosaicMovie::readHeader()
 void
 MosaicMovie::writeHeader()
 {
-    openForReadWrite();
+    if (m_fileAccess != FileAccessType::READ_WRITE)
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Movie file is not open for read/write access.");
+    }
 
     m_file.seekp(std::ios_base::beg);
     if (!m_file.good())
@@ -278,6 +293,11 @@ MosaicMovie::writeHeader()
 void
 MosaicMovie::writeZeroData()
 {
+    if (m_fileAccess != FileAccessType::READ_WRITE)
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Movie file is not open for write access.");
+    }
+
     // Create a zero frame buffer once.
     isize_t numPixels = m_spacingInfo.getTotalNumPixels();
     isize_t frameSizeInBytes = sizeof(uint16_t) * numPixels;
