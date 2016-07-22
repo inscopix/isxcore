@@ -46,7 +46,8 @@ namespace isx
 
     void Mutex::unlock()
     {
-         m_internal->unlock();
+        m_owner = std::string();
+        m_internal->unlock();
     }
 
     void * Mutex::getNativeHandle()
