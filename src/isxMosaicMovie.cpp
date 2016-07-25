@@ -1,4 +1,5 @@
 #include "isxMosaicMovie.h"
+#include "isxVideoFrame.h"
 #include "isxException.h"
 #include "isxLog.h"
 #include "isxJsonUtils.h"

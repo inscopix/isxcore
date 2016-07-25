@@ -1,7 +1,8 @@
 #ifndef ISX_JSON_UTILS_H
 #define ISX_JSON_UTILS_H
 
-#include "isxMovieInterface.h"
+#include "isxTimingInfo.h"
+#include "isxSpacingInfo.h"
 #include "json.hpp"
 
 namespace isx

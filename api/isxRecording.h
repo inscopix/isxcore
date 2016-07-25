@@ -3,7 +3,7 @@
 
 #include "isxCoreFwd.h"
 #include "isxObject.h"
-#include "isxMovieInterface.h"
+#include "isxMovie.h"
 #include <vector>
 #include <string>
 #include <memory>
@@ -57,7 +57,7 @@ public:
 
     /// \return a pointer to a movie inside the recording
     ///
-    SpMovieInterface_t getMovie();
+    SpMovie_t getMovie();
 
     /// Get file name
     ///

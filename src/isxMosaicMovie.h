@@ -1,7 +1,7 @@
 #ifndef ISX_MOSAIC_MOVIE_H
 #define ISX_MOSAIC_MOVIE_H
 
-#include "isxMovieInterface.h"
+#include "isxWritableMovie.h"
 #include <fstream>
 
 namespace isx
@@ -14,7 +14,7 @@ namespace isx
 /// string header.
 /// The file stores the movie frame data in uncompressed binary form
 /// after the header.
-class MosaicMovie : public MovieInterface
+class MosaicMovie : public WritableMovie
 {
 public:
 

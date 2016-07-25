@@ -1,24 +1,19 @@
-#ifndef ISX_MOVIE_INTERFACE_H
-#define ISX_MOVIE_INTERFACE_H
+#ifndef ISX_MOVIE_H
+#define ISX_MOVIE_H
 
-#include "isxCoreFwd.h"
 #include "isxObject.h"
 #include "isxCore.h"
-#include "isxVideoFrame.h"
+#include "isxMovieDefs.h"
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
-#include "isxMovieDefs.h"
-
-#include <string>
+#include "isxVideoFrame.h"
 
 namespace isx
 {
 
-///
 /// Interface for Movies
 ///
-
-class MovieInterface : public Object
+class Movie : public Object
 {
 public:
     
@@ -73,21 +68,6 @@ public:
     void
     getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback) = 0;
 
-    /// Writes a new frame to the movie dataset
-    /// Note: this method synchronizes with the dedicated I/O thread.
-    ///
-    /// The file needs to be opened with write permission and the defined path for the 
-    /// the movie needs to exist within the file structure for this to succeed
-    ///
-    /// \param inVideoFrame VideoFrame to write to this movie
-    ///
-    /// \throw isx::ExceptionFileIO     If the movie is invalid.
-    /// \throw isx::ExceptionUserInput  If the arguments are not compatible with the movie.
-    /// \throw isx::ExceptionDataIO     If write access to the dataset fails (eg when trying to write to nvista recordings).
-    virtual
-    void
-    writeFrame(const SpU16VideoFrame_t & inVideoFrame) = 0;
-
     /// \return     The timing information of a movie.
     ///
     virtual
@@ -110,5 +90,4 @@ public:
 
 } // namespace isx
 
-#endif // def ISX_MOVIE_INTERFACE_H
-
+#endif // ifndef ISX_MOVIE_H
