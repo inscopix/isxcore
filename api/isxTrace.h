@@ -2,9 +2,9 @@
 #define ISX_TRACE_H
 
 #include <cstdint>
-
-#include "isxTime.h"
+#include <memory>
 #include "isxTimingInfo.h"
+#include "isxAssert.h"
 
 namespace isx
 {
@@ -15,37 +15,77 @@ template <class T = float>
 class Trace
 {
 public:
+    /// Default constructor
+    ///
+    Trace() :
+        m_timingInfo(TimingInfo())
+    {
+       
+    }
 
     /// Fully specified constructor.
     ///
-    /// \param   start       The start time of the trace.
-    /// \param   step        The step time of the trace in milliseconds.
-    /// \param   numTimes    The number of time points in the trace.
-    Trace(isx::Time start, isx::Ratio step, isize_t numTimes);
+    /// \param   inTimingInfo       the timing information for the trace.
+    Trace(const TimingInfo & inTimingInfo)
+        : m_timingInfo(inTimingInfo)
+    {
+        isize_t numTimes = m_timingInfo.getNumTimes();
+        ISX_ASSERT(numTimes > 0);
+        m_values.reset(new T[numTimes]);
+    }
 
     /// Destructor.
     ///
-    ~Trace();
+    ~Trace()
+    {
+
+    }
+
+    /// Get the timing information for the trace
+    ///
+    const TimingInfo & getTimingInfo() const
+    {
+        return m_timingInfo;
+    }
+
+    /// \return a raw pointer to the first sample in memory
+    ///
+    T * 
+    getValues()
+    {
+        if (m_values)
+        {
+            return &m_values[0];
+        }
+        return 0;
+    }
 
     /// Read access to a range value by index.
     ///
     /// \param   index      The index.
     /// \return             The value at the index.
-    T getValue(isize_t index) const;
-
+    T getValue(isize_t index) const
+    {
+        return m_values[index];
+    }
+    
     /// Write access to a range value by index.
     ///
     /// \param   index      The index.
     /// \param   value      The new value.
-    void setValue(isize_t index, T value);
+    void setValue(isize_t index, T value)
+    {
+        m_values[index] = value;
+    }
+
+
 
 private:
 
     /// The temporal domain of the function.
-    isx::TimingInfo m_timingInfo;
+    TimingInfo m_timingInfo;
+    std::unique_ptr<T[]> m_values = 0;
 
-    /// The range of the function.
-    T* m_data;
 
 }; // class
 
