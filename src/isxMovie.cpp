@@ -2,11 +2,11 @@
 #include "isxHdf5Movie.h"
 #include "isxHdf5Utils.h"
 #include "isxMutex.h"
+#include "isxConditionVariable.h"
 #include "isxIoQueue.h"
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <queue>
 #include <mutex>
 #include <memory>
 #include <cmath>
@@ -92,7 +92,14 @@ public:
         // TODO michele 2016/07/08 : time since epoch comes from host machine and frame rate 
         // is calculated, so these values are not what we really want. we should want to 
         // pull these from the xml eventually
-        m_timingInfo = readTimingInfo(inHdf5Files);
+        if (readTimingInfo(inHdf5Files) == false)
+        {
+            // If we cannot read the timing info, use default values
+            Time start;                       // Default to Unix epoch
+            DurationInSeconds step(50, 1000); // Default to 20Hz
+            m_timingInfo = TimingInfo(start, step, numFramesAccum);
+            DurationInSeconds gstep = m_timingInfo.getStep();
+        }
         m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
         m_isValid = true;
     }
@@ -120,29 +127,27 @@ public:
     SpU16VideoFrame_t
     getFrame(isize_t inFrameNumber)
     {
-        
-        Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
-        SpacingInfo si = getSpacingInfo();
-        auto nvf = std::make_shared<U16VideoFrame_t>(
-            si.getNumColumns(), si.getNumRows(),
-            sizeof(uint16_t) * si.getNumColumns(),
-            1, // numChannels
-            frameTime, inFrameNumber);
-
-        isize_t newFrameNumber = inFrameNumber;
-        isize_t idx = getMovieIndex(inFrameNumber);
-        if (idx > 0)
+        SpU16VideoFrame_t ret;
+        Mutex mutex;
+        ConditionVariable cv;
+        mutex.lock("getFrame");
+        getFrameAsync(inFrameNumber, [&ret, &cv, &mutex](const SpU16VideoFrame_t & inVideoFrame){
+            mutex.lock("getFrame async");
+            mutex.unlock();
+            ret = inVideoFrame;
+            cv.notifyOne();
+        });
+        bool didNotTimeOut = cv.waitForMs(mutex, 500);
+        mutex.unlock();
+        if (didNotTimeOut == false)
         {
-            newFrameNumber = inFrameNumber - m_cumulativeFrames[idx - 1];
-        }        
-
-        ScopedMutex locker(IoQueue::getMutex(), "getFrame");
-        m_movies[idx]->getFrame(newFrameNumber, nvf);
-        return nvf;
+            ISX_THROW(isx::ExceptionDataIO, "getFrame timed out.\n");
+        }
+        return ret;
     }
 
     SpU16VideoFrame_t
-    getFrameByTime(const Time & inTime)
+    getFrame(const Time & inTime)
     {
         isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
         return getFrame(frameNumber);
@@ -154,11 +159,39 @@ public:
     void
     getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
     {
+        WpImpl_t weakThis = shared_from_this();
+        IoQueue::instance()->enqueue(IoQueue::IoTask([weakThis, this, inFrameNumber, inCallback]()
         {
-            isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
-            m_frameRequestQueue.push(FrameRequest(inFrameNumber, inCallback));
-        }
-        processFrameQueue();
+            SpImpl_t sharedThis = weakThis.lock();
+            if (sharedThis)
+            {
+                inCallback(getFrameInternal(inFrameNumber));
+            }
+        },
+        [inCallback](AsyncTaskStatus inStatus)
+        {
+            switch (inStatus)
+            {
+                case AsyncTaskStatus::ERROR_EXCEPTION:
+                    ISX_LOG_ERROR("An exception occurred while reading from Movie file.");
+                    inCallback(SpU16VideoFrame_t());
+                    break;
+                    
+                case AsyncTaskStatus::UNKNOWN_ERROR:
+                    ISX_LOG_ERROR("An error occurred while reading from Movie file.");
+                    inCallback(SpU16VideoFrame_t());
+                    break;
+                    
+                case AsyncTaskStatus::CANCELLED:
+                    ISX_LOG_ERROR("getFrame request cancelled.");
+                    break;
+                    
+                case AsyncTaskStatus::COMPLETE:
+                case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
+                case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
+                    break;
+            }
+        }));
     }
 
     /// Get frame asynchronously by time
@@ -194,8 +227,36 @@ public:
         {
             ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie.");
         }
-        ScopedMutex locker(IoQueue::getMutex(), "writeFrame");
-        m_movies[0]->writeFrame(inVideoFrame);
+        Mutex mutex;
+        ConditionVariable cv;
+        mutex.lock("writeFrame");
+        WpImpl_t weakThis = shared_from_this();
+        IoQueue::instance()->enqueue(IoQueue::IoTask([weakThis, this, inVideoFrame]()
+        {
+            SpImpl_t sharedThis = weakThis.lock();
+            if (!sharedThis)
+            {
+                return;
+            }
+            m_movies[0]->writeFrame(inVideoFrame);
+        },
+        [&cv, &mutex](AsyncTaskStatus inStatus)
+        {
+            if (inStatus != AsyncTaskStatus::COMPLETE)
+            {
+                ISX_LOG_ERROR("An error occurred while writing to Movie file.");
+            }
+            mutex.lock("writeFrame finished");  // will only be able to take lock when client reaches cv.waitForMs
+            mutex.unlock();
+            cv.notifyOne();
+        }));
+        
+        bool didNotTimeOut = cv.waitForMs(mutex, 500);
+        mutex.unlock();
+        if (didNotTimeOut == false)
+        {
+            ISX_THROW(isx::ExceptionDataIO, "writeFrame timed out.\n");
+        }
     }
     
     void
@@ -220,84 +281,72 @@ public:
 
 
 private:
-    /// a class representing a frame request
-    ///
-    class FrameRequest
+    SpU16VideoFrame_t
+    getFrameInternal(isize_t inFrameNumber)
     {
-    public:
-        /// constructor
-        /// \param inFrameNumber    frame number requested
-        /// \param inCallback       callback to execute when finished
-        FrameRequest(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
-            : m_frameNumber(inFrameNumber)
-            , m_callback(inCallback) {}
+        Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
+        SpacingInfo si = getSpacingInfo();
+        auto nvf = std::make_shared<U16VideoFrame_t>(
+            si.getNumColumns(), si.getNumRows(),
+            sizeof(uint16_t) * si.getNumColumns(),
+            1, // numChannels
+            frameTime, inFrameNumber);
 
-        isize_t             m_frameNumber;  //!< frame index
-        MovieGetFrameCB_t   m_callback;     //!< callback to execute
-    };
-
-    /// process next frame request
-    ///
-    void
-    processFrameQueue()
-    {
-        isx::ScopedMutex locker(m_frameRequestQueueMutex, "processFrameQueue");
-        if (!m_frameRequestQueue.empty())
+        isize_t newFrameNumber = inFrameNumber;
+        isize_t idx = getMovieIndex(inFrameNumber);
+        if (idx > 0)
         {
-            FrameRequest fr = m_frameRequestQueue.front();
-            m_frameRequestQueue.pop();
-            WpImpl_t weakThis = shared_from_this();
-            IoQueue::instance()->dispatch([weakThis, this, fr]()
-            {
-                SpImpl_t sharedThis = weakThis.lock();
-                if (!sharedThis)
-                {
-                    fr.m_callback(nullptr);
-                }
-                else
-                {
-                    fr.m_callback(getFrame(fr.m_frameNumber));
-                    processFrameQueue();
-                }
-            });
-        }
+            newFrameNumber = inFrameNumber - m_cumulativeFrames[idx - 1];
+        }        
+
+        m_movies[idx]->getFrame(newFrameNumber, nvf);
+        return nvf;
     }
 
-    /// Purge queue
-    ///
-    void
-    purgeFrameQueue()
-    {
-        isx::ScopedMutex locker(m_frameRequestQueueMutex, "getFrameAsync");
-        while (!m_frameRequestQueue.empty())
-        {
-            m_frameRequestQueue.pop();
-        }
-    }
-
-    isx::TimingInfo
+    bool
     readTimingInfo(std::vector<SpH5File_t> inHdf5Files)
     {
         H5::DataSet timingInfoDataSet;
         hsize_t totalNumFrames = 0;
         int64_t startTime = 0;
         double totalDurationInSecs = 0;
+        bool bInitializedFromFile = true;
 
-        try
+        for (isize_t f(0); f < inHdf5Files.size(); ++f)
         {
-
-            for (isize_t f(0); f < inHdf5Files.size(); ++f)
+            if (isx::internal::hasDatasetAtPath(inHdf5Files[f], "/", "timeStamp"))
             {
-                timingInfoDataSet = inHdf5Files[f]->openDataSet("/timeStamp");
-
                 std::vector<hsize_t> timingInfoDims;
                 std::vector<hsize_t> timingInfoMaxDims;
-                isx::internal::getHdf5SpaceDims(timingInfoDataSet.getSpace(), timingInfoDims, timingInfoMaxDims);
+                hsize_t numFrames = 0;
+                std::vector<double> buffer;
 
-                hsize_t numFrames = timingInfoDims[0];
-                std::vector<double> buffer(numFrames);
+                try
+                {
+                    timingInfoDataSet = inHdf5Files[f]->openDataSet("/timeStamp");
+                    isx::internal::getHdf5SpaceDims(timingInfoDataSet.getSpace(), timingInfoDims, timingInfoMaxDims);
 
-                timingInfoDataSet.read(buffer.data(), timingInfoDataSet.getDataType());
+                    numFrames = timingInfoDims[0];
+                    buffer.resize(numFrames);
+
+                    timingInfoDataSet.read(buffer.data(), timingInfoDataSet.getDataType());
+                }
+                catch (const H5::FileIException& error)
+                {
+                    ISX_THROW(isx::ExceptionFileIO,
+                        "Failure caused by H5File operations.\n", error.getDetailMsg());
+                }
+
+                catch (const H5::DataSetIException& error)
+                {
+                    ISX_THROW(isx::ExceptionDataIO,
+                        "Failure caused by DataSet operations.\n", error.getDetailMsg());
+                }
+
+                catch (...)
+                {
+                    ISX_ASSERT(false, "Unhandled exception.");
+                }
 
                 // get start time
                 if (f == 0)
@@ -308,30 +357,23 @@ private:
                 totalDurationInSecs += buffer[numFrames - 1] - buffer[0];
                 totalNumFrames += numFrames;
             }
+            else
+            {
+                bInitializedFromFile = false;
+                break;                
+            }
         }
-        catch (const H5::FileIException& error)
+        
+        if (bInitializedFromFile)
         {
-            ISX_THROW(isx::ExceptionFileIO,
-                "Failure caused by H5File operations.\n", error.getDetailMsg());
+            totalDurationInSecs *= 1000.0 / double(totalNumFrames);
+
+            isx::DurationInSeconds step = isx::DurationInSeconds(isize_t(std::round(totalDurationInSecs)), 1000);
+            isx::Time start = isx::Time(startTime);
+            m_timingInfo = isx::TimingInfo(start, step, totalNumFrames);
         }
-
-        catch (const H5::DataSetIException& error)
-        {
-            ISX_THROW(isx::ExceptionDataIO,
-                "Failure caused by DataSet operations.\n", error.getDetailMsg());
-        }
-
-        catch (...)
-        {
-            ISX_ASSERT(false, "Unhandled exception.");
-        }
-
-        totalDurationInSecs *= 1000.0 / double(totalNumFrames);
-
-        isx::DurationInSeconds step = isx::DurationInSeconds(isize_t(std::round(totalDurationInSecs)), 1000);
-        isx::Time start = isx::Time(startTime);
-
-        return isx::TimingInfo(start, step, totalNumFrames);
+        
+        return bInitializedFromFile;
     }
 
     /// A method to create a dummy spacing information from the number of rows and columns.
@@ -359,9 +401,6 @@ private:
     bool                        m_isValid = false;
     isx::TimingInfo             m_timingInfo;
     isx::SpacingInfo            m_spacingInfo;
-
-    std::queue<FrameRequest>    m_frameRequestQueue;
-    isx::Mutex                  m_frameRequestQueueMutex;
 
     std::vector<std::unique_ptr<Hdf5Movie>> m_movies;
     std::vector<isize_t> m_cumulativeFrames;
@@ -421,7 +460,7 @@ Movie::getFrame(isize_t inFrameNumber)
 SpU16VideoFrame_t
 Movie::getFrame(const Time & inTime)
 {
-    return m_pImpl->getFrameByTime(inTime);
+    return m_pImpl->getFrame(inTime);
 }
 
 void

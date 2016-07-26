@@ -20,10 +20,11 @@ namespace isx
         
         void lock() { m_mutex.lock();}
         void unlock() { m_mutex.unlock();}
+
+        void * getNativeHandle() { return &m_mutex; }
         
     private:
         QMutex m_mutex;
-
     };
     
     
@@ -45,7 +46,13 @@ namespace isx
 
     void Mutex::unlock()
     {
-         m_internal->unlock();
+        m_owner = std::string();
+        m_internal->unlock();
+    }
+
+    void * Mutex::getNativeHandle()
+    {
+        return m_internal->getNativeHandle();
     }
 
     void Mutex::serialize(std::ostream& strm) const
