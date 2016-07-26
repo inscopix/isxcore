@@ -2,7 +2,9 @@
 #define ISX_MOSAIC_MOVIE_H
 
 #include "isxWritableMovie.h"
-#include <fstream>
+#include "isxMosaicMovieFile.h"
+
+#include <memory>
 
 namespace isx
 {
@@ -15,16 +17,9 @@ namespace isx
 /// The file stores the movie frame data in uncompressed binary form
 /// after the header.
 class MosaicMovie : public WritableMovie
+                  , public std::enable_shared_from_this<MosaicMovie>
 {
 public:
-
-    /// The access type of the file (e.g. read only).
-    enum class FileAccessType
-    {
-        NONE,
-        READ_ONLY,
-        READ_WRITE
-    };
 
     /// Empty constructor.
     ///
@@ -77,7 +72,7 @@ public:
 
     const isx::SpacingInfo & getSpacingInfo() const override;
 
-    std::string getName() override;
+    std::string getName() const override;
 
     void serialize(std::ostream & strm) const override;
 
@@ -86,62 +81,13 @@ private:
     /// True if the movie file is valid, false otherwise.
     bool m_valid;
 
-    /// The name of the movie file.
-    std::string m_fileName;
+    /// The shared pointer to the movie file that stores data.
+    std::shared_ptr<MosaicMovieFile> m_file;
 
-    /// The timing information of the movie.
-    TimingInfo m_timingInfo;
-
-    /// The spacing information of the movie.
-    SpacingInfo m_spacingInfo;
-
-    /// The movie file handle.
-    std::fstream m_file;
-
-    /// The current access of the movie file.
-    FileAccessType m_fileAccess;
-
-    /// The header offset.
-    std::ios::pos_type m_headerOffset;
-
-    /// Opens the movie file for reading.
-    ///
-    /// If the file is already open (for reading or writing) this does
-    /// nothing.
-    ///
-    /// \throw  isx::ExceptionFileIO    If opening the movie file fails.
-    void openForReadOnly();
-
-    /// Opens the movie file for writing.
-    ///
-    /// If the file is already open for reading, this closes the file and
-    /// opens it in write mode.
-    /// If the file is already open for writing, this does nothing.
-    ///
-    /// \throw  isx::ExceptionFileIO    If opening the movie file fails.
-    void openForReadWrite();
-
-    /// Read the header to populate information about the movie.
-    ///
-    /// This leaves the file open where the get position is just after the
-    /// header.
-    ///
-    /// \throw  isx::ExceptionFileIO    If reading the header from the file fails.
-    /// \throw  isx::ExceptionDataIO    If parsing the header fails.
-    void readHeader();
-
-    /// Write the header containing information about the movie.
-    ///
-    /// This leaves the file open where the put position is just after the
-    /// header.
-    void writeHeader();
-
-    /// Writes zero data to a file for initialization purposes.
-    ///
-    /// This assumes the file is already open with write access with a put
-    /// position that is just after the header.
-    void writeZeroData();
 };
+
+typedef std::shared_ptr<MosaicMovie> SpMosaicMovie_t;
+typedef std::weak_ptr<MosaicMovie> WpMosaicMovie_t;
 
 }
 #endif // ISX_MOSAIC_MOVIE_H

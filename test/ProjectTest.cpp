@@ -8,16 +8,17 @@ TEST_CASE("ProjectTest", "[core]")
     std::string projectFileName = g_resources["testDataPath"] + "/projectFile.isxp";
     std::remove(projectFileName.c_str());
 
+    isx::CoreInitialize();
 
     SECTION("Empty constructor")
     {
-        std::shared_ptr<isx::Project> project = std::make_shared<isx::Project>();
+        auto project = std::make_shared<isx::Project>();
         REQUIRE(!project->isValid());
     }
 
     SECTION("Create a new empty project.")
     {
-        std::shared_ptr<isx::Project> project = std::make_shared<isx::Project>(projectFileName);
+        auto project = std::make_shared<isx::Project>(projectFileName);
         REQUIRE(project->isValid());
         isx::ProjectFile::DataCollection dc = project->getDataCollection(0);
         REQUIRE(dc.name == "root");
@@ -27,9 +28,9 @@ TEST_CASE("ProjectTest", "[core]")
     SECTION("Open an existing project.")
     {
         {
-            std::shared_ptr<isx::Project> project = std::make_shared<isx::Project>(projectFileName);
+            auto project = std::make_shared<isx::Project>(projectFileName);
         }
-        std::shared_ptr<isx::Project> project = std::make_shared<isx::Project>(projectFileName);
+        auto project = std::make_shared<isx::Project>(projectFileName);
         REQUIRE(project->isValid());
         isx::ProjectFile::DataCollection dc = project->getDataCollection(0);
         REQUIRE(dc.name == "root");
@@ -51,10 +52,11 @@ TEST_CASE("ProjectTest", "[core]")
         isx::PointInMicrons_t topLeft(0, 0);
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
-        std::shared_ptr<isx::Project> project = std::make_shared<isx::Project>(projectFileName);
+        auto project = std::make_shared<isx::Project>(projectFileName);
         REQUIRE(project->isValid());
         isx::SpWritableMovie_t movie = project->createMosaicMovie(movieFile, timingInfo, spacingInfo);
         REQUIRE(movie->isValid());
     }
 
+    isx::CoreShutdown();
 }

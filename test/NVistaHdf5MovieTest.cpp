@@ -1,8 +1,8 @@
 #include "isxNVistaHdf5Movie.h"
 #include "isxCore.h"
 #include "catch.hpp"
-
 #include "isxTest.h"
+
 #include <vector>
 #include <thread>
 #include <chrono>

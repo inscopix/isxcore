@@ -92,12 +92,12 @@ NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallba
     {
         if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
         {
-            ISX_LOG_ERROR("An exception occurred while writing to Movie file.");
+            ISX_LOG_ERROR("An exception occurred while reading a frame from an NVistaHdf5Movie file.");
             inCallback(SpU16VideoFrame_t());
         }
         else if (inStatus != AsyncTaskStatus::COMPLETE)
         {
-            ISX_LOG_ERROR("An error occurred while writing to Movie file.");
+            ISX_LOG_ERROR("An error occurred while reading a frame from a NVistaHdf5Movie file.");
         }
     }));
 }
@@ -122,7 +122,7 @@ NVistaHdf5Movie::getSpacingInfo() const
 }
 
 std::string
-NVistaHdf5Movie::getName()
+NVistaHdf5Movie::getName() const
 {
     std::string path = m_movies[0]->getPath();
     std::string name = path.substr(path.find_last_of("/") + 1);

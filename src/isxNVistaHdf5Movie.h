@@ -59,7 +59,7 @@ public:
     getSpacingInfo() const override;
 
     std::string
-    getName() override;
+    getName() const override;
 
     void
     serialize(std::ostream& strm) const override;

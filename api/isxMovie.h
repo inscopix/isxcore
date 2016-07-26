@@ -84,7 +84,7 @@ public:
     ///
     virtual
     std::string
-    getName() = 0;
+    getName() const = 0;
 
 };
 

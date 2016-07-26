@@ -1,12 +1,11 @@
-#include "isxCore.h"
-#include "isxMosaicMovie.h"
+#include "isxMosaicMovieFile.h"
 #include "catch.hpp"
 #include "isxTest.h"
 
 #include <stdio.h>
 #include <algorithm>
 
-TEST_CASE("MosaicMovieTest", "[core-internal]")
+TEST_CASE("MosaicMovieFileTest", "[core-internal]")
 {
     std::string fileName = g_resources["testDataPath"] + "/movie.isxd";
 
@@ -20,34 +19,32 @@ TEST_CASE("MosaicMovieTest", "[core-internal]")
     isx::PointInMicrons_t topLeft(0, 0);
     isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
-    isx::CoreInitialize();
-
     SECTION("Empty constructor")
     {
-        auto movie = std::make_shared<isx::MosaicMovie>();
-        REQUIRE(!movie->isValid());
+        isx::MosaicMovieFile movie;
+        REQUIRE(!movie.isValid());
     }
 
     SECTION("Write constructor.")
     {
-        auto movie = std::make_shared<isx::MosaicMovie>(fileName, timingInfo, spacingInfo);
-        REQUIRE(movie->isValid());
+        isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo);
+        REQUIRE(movie.isValid());
     }
 
     SECTION("Read constructor after writing.")
     {
         {
-            auto movie = std::make_shared<isx::MosaicMovie>(fileName, timingInfo, spacingInfo);
+            isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo);
         }
-        auto movie = std::make_shared<isx::MosaicMovie>(fileName);
-        REQUIRE(movie->isValid());
-        REQUIRE(movie->getTimingInfo() == timingInfo);
-        REQUIRE(movie->getSpacingInfo() == spacingInfo);
+        isx::MosaicMovieFile movie(fileName);
+        REQUIRE(movie.isValid());
+        REQUIRE(movie.getTimingInfo() == timingInfo);
+        REQUIRE(movie.getSpacingInfo() == spacingInfo);
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
         isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            frame = movie->getFrame(f);
+            frame = movie.readFrame(f);
             std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
@@ -62,7 +59,7 @@ TEST_CASE("MosaicMovieTest", "[core-internal]")
         isx::isize_t rowSizeInBytes = sizeof(uint16_t) * spacingInfo.getNumColumns();
         isx::isize_t frameSizeInBytes = sizeof(uint16_t) * spacingInfo.getTotalNumPixels();
         {
-            auto movie = std::make_shared<isx::MosaicMovie>(fileName, timingInfo, spacingInfo);
+            isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo);
             for (isx::isize_t f = 0; f < numFrames; ++f)
             {
                 isx::Time frameTime = timingInfo.convertIndexToTime(f);
@@ -80,18 +77,18 @@ TEST_CASE("MosaicMovieTest", "[core-internal]")
 
                 std::copy(frameBuf.data(), frameBuf.data() + numPixels, frame->getPixels());
 
-                movie->writeFrame(frame);
+                movie.writeFrame(frame);
             }
         }
 
-        auto movie = std::make_shared<isx::MosaicMovie>(fileName);
-        REQUIRE(movie->isValid());
-        REQUIRE(movie->getTimingInfo() == timingInfo);
-        REQUIRE(movie->getSpacingInfo() == spacingInfo);
+        isx::MosaicMovieFile movie(fileName);
+        REQUIRE(movie.isValid());
+        REQUIRE(movie.getTimingInfo() == timingInfo);
+        REQUIRE(movie.getSpacingInfo() == spacingInfo);
         isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            frame = movie->getFrame(f);
+            frame = movie.readFrame(f);
             std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
@@ -99,6 +96,4 @@ TEST_CASE("MosaicMovieTest", "[core-internal]")
             }
         }
     }
-
-    isx::CoreShutdown();
 }
