@@ -66,7 +66,6 @@ public:
         ISX_ASSERT(inHdf5Files.size());
         ISX_ASSERT(inHdf5Files.size() == inPaths.size());
 
-        isize_t w, h;
         isize_t numFramesAccum = 0;
 
         for (isize_t f(0); f < inHdf5Files.size(); ++f)
@@ -76,13 +75,12 @@ public:
             
             if (f > 1)
             {
-                ISX_ASSERT(w == m_movies[f]->getFrameWidth());
-                ISX_ASSERT(h == m_movies[f]->getFrameHeight());
-            }
-            else
-            {
-                w = m_movies[f]->getFrameWidth();
-                h = m_movies[f]->getFrameHeight();
+                if (m_movies[0]->getFrameWidth() != m_movies[f]->getFrameWidth() ||
+                    m_movies[0]->getFrameHeight() != m_movies[f]->getFrameHeight())
+                {
+                    ISX_THROW(isx::ExceptionUserInput,
+                        "All input files must have the same frame dimensions");
+                }
             }
 
             numFramesAccum += m_movies[f]->getNumFrames();
@@ -100,7 +98,12 @@ public:
             m_timingInfo = TimingInfo(start, step, numFramesAccum);
             DurationInSeconds gstep = m_timingInfo.getStep();
         }
-        m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
+
+        if (readSpacingInfo(inHdf5Files) == false)
+        {
+            m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
+        }
+        
         m_isValid = true;
     }
 
@@ -380,11 +383,59 @@ private:
     ///
     SpacingInfo
     createDummySpacingInfo(isize_t width, isize_t height)
-    {
+    {     
         SizeInPixels_t numPixels(width, height);
         SizeInMicrons_t pixelSize(Ratio(22, 10), Ratio(22, 10));
         PointInMicrons_t topLeft(0, 0);
         return SpacingInfo(numPixels, pixelSize, topLeft);
+    }
+
+    /// Reads frame size from HDF5 and populates in default spacing info object
+    ///
+    bool
+    readSpacingInfo(std::vector<SpH5File_t> inHdf5Files)
+    {
+        bool bInitializedFromFile = true;
+
+        if (isx::internal::hasDatasetAtPath(inHdf5Files[0], "/", "images"))
+        {
+            try
+            {
+                H5::DataSet spacingInfoDataSet = inHdf5Files[0]->openDataSet("/images");
+
+                std::vector<hsize_t> spacingInfoDims;
+                std::vector<hsize_t> spacingInfoMaxDims;
+                isx::internal::getHdf5SpaceDims(spacingInfoDataSet.getSpace(), spacingInfoDims, spacingInfoMaxDims);
+
+                hsize_t height = spacingInfoDims[1];
+                hsize_t width = spacingInfoDims[2];
+
+                SizeInPixels_t numPixels(width, height);
+                SizeInMicrons_t pixelSize(Ratio(22, 10), Ratio(22, 10));
+                PointInMicrons_t topLeft(0, 0);
+                m_spacingInfo = SpacingInfo(numPixels, pixelSize, topLeft);
+            }
+            catch (const H5::FileIException& error)
+            {
+                ISX_THROW(isx::ExceptionFileIO,
+                    "Failure caused by H5File operations.\n", error.getDetailMsg());
+            }
+            catch (const H5::DataSetIException& error)
+            {
+                ISX_THROW(isx::ExceptionDataIO,
+                    "Failure caused by DataSet operations.\n", error.getDetailMsg());
+            }
+            catch (...)
+            {
+                ISX_ASSERT(false, "Unhandled exception.");
+            }          
+        }
+        else
+        {
+            bInitializedFromFile = false;
+        }
+
+        return bInitializedFromFile;
     }
 
     isize_t getMovieIndex(isize_t inFrameNumber)
