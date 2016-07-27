@@ -148,7 +148,8 @@ NVistaHdf5Movie::initialize(
 {
     ISX_ASSERT(inHdf5Files.size());
 
-    isize_t w, h;
+    isize_t w = 0;
+    isize_t h = 0;
     isize_t numFramesAccum = 0;
 
     for (isize_t f(0); f < inHdf5Files.size(); ++f)
