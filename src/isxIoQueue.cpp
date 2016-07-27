@@ -41,27 +41,35 @@ public:
                         IoTask t = m_taskQueue.front();
                         m_taskQueue.pop();
                         m_taskQueueMutex.unlock();
-                        AsyncTaskStatus status = AsyncTaskStatus::PROCESSING;
-                        try
+                        if (m_destroy)
                         {
-                            t.m_task();             // execute without holding lock, eneuque can push onto queue
-                            status = AsyncTaskStatus::COMPLETE;
+                            t.m_finishedCB(AsyncTaskStatus::CANCELLED);
                         }
-                        catch(...)
+                        else
                         {
-                            status = AsyncTaskStatus::ERROR_EXCEPTION;
+                            AsyncTaskStatus status = AsyncTaskStatus::PROCESSING;
+                            try
+                            {
+                                t.m_task();             // execute without holding lock, eneuque can push onto queue
+                                status = AsyncTaskStatus::COMPLETE;
+                            }
+                            catch(...)
+                            {
+                                status = AsyncTaskStatus::ERROR_EXCEPTION;
+                            }
+                            t.m_finishedCB(status);
                         }
-                        t.m_finishedCB(status);
                         m_taskQueueMutex.lock("worker impl");
                     }
-                    m_taskQueueCV.wait(m_taskQueueMutex);
-                    // m_taskQueueMutex is taken
                     if (m_destroy)
                     {
                         break;
                     }
+                    m_taskQueueCV.wait(m_taskQueueMutex);
+                    // m_taskQueueMutex is taken
                 }
                 m_taskQueueMutex.unlock();
+                m_taskQueueCV.notifyOne();
             }
         });
     }
@@ -74,6 +82,12 @@ public:
             m_destroy = true;
         }
         m_taskQueueCV.notifyOne();
+        
+        // now wait for thread to respond to destroy
+        m_taskQueueMutex.lock("destroy wait");
+        m_taskQueueCV.waitForMs(m_taskQueueMutex, 250);
+        m_taskQueueMutex.unlock();
+
         m_worker->destroy();
     }
 

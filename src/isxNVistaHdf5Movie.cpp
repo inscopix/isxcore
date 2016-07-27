@@ -80,26 +80,41 @@ void
 NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
     WpNVistaHdf5Movie_t weakThis = shared_from_this();
-    IoQueue::instance()->enqueue(IoQueue::IoTask([weakThis, this, inFrameNumber, inCallback]()
-    {
-        SpNVistaHdf5Movie_t sharedThis = weakThis.lock();
-        if (sharedThis)
-        {
-            inCallback(getFrameInternal(inFrameNumber));
-        }
-    },
-    [inCallback](AsyncTaskStatus inStatus)
-    {
-        if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
-        {
-            ISX_LOG_ERROR("An exception occurred while reading a frame from an NVistaHdf5Movie file.");
-            inCallback(SpU16VideoFrame_t());
-        }
-        else if (inStatus != AsyncTaskStatus::COMPLETE)
-        {
-            ISX_LOG_ERROR("An error occurred while reading a frame from a NVistaHdf5Movie file.");
-        }
-    }));
+    IoQueue::instance()->enqueue(
+        IoQueue::IoTask(
+            [weakThis, this, inFrameNumber, inCallback]()
+            {
+                SpNVistaHdf5Movie_t sharedThis = weakThis.lock();
+                if (sharedThis)
+                {
+                    inCallback(getFrameInternal(inFrameNumber));
+                }
+            },
+            [inCallback](AsyncTaskStatus inStatus)
+            {
+                switch (inStatus)
+                {
+                    case AsyncTaskStatus::ERROR_EXCEPTION:
+                        ISX_LOG_ERROR("An exception occurred while reading a frame from an NVistaHdf5Movie file.");
+                        inCallback(SpU16VideoFrame_t());
+                        break;
+
+                    case AsyncTaskStatus::UNKNOWN_ERROR:
+                        ISX_LOG_ERROR("An error occurred while reading a frame from an NVistaHdf5Movie file");
+                        inCallback(SpU16VideoFrame_t());
+                        break;
+
+                    case AsyncTaskStatus::CANCELLED:
+                        ISX_LOG_ERROR("getFrameAsync request cancelled.");
+                        break;
+
+                    case AsyncTaskStatus::COMPLETE:
+                    case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
+                    case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
+                        break;
+                }
+            }
+    ));
 }
 
 void

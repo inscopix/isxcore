@@ -6,7 +6,7 @@
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
 
-#include <fstream>
+#include <ios>
 
 namespace isx
 {
@@ -21,14 +21,6 @@ namespace isx
 class MosaicMovieFile
 {
 public:
-
-    /// The access type of the file (e.g. read only).
-    enum class FileAccessType
-    {
-        NONE,
-        READ_ONLY,
-        READ_WRITE
-    };
 
     /// Empty constructor.
     ///
@@ -125,36 +117,10 @@ private:
     /// The spacing information of the movie.
     SpacingInfo m_spacingInfo;
 
-    /// The movie file handle.
-    std::fstream m_file;
-
-    /// The current access of the movie file.
-    FileAccessType m_fileAccess;
-
     /// The header offset.
     std::ios::pos_type m_headerOffset;
 
-    /// Opens the movie file for reading.
-    ///
-    /// If the file is already open (for reading or writing) this does
-    /// nothing.
-    ///
-    /// \throw  isx::ExceptionFileIO    If opening the movie file fails.
-    void openForReadOnly();
-
-    /// Opens the movie file for writing.
-    ///
-    /// If the file is already open for reading, this closes the file and
-    /// opens it in write mode.
-    /// If the file is already open for writing, this does nothing.
-    ///
-    /// \throw  isx::ExceptionFileIO    If opening the movie file fails.
-    void openForReadWrite();
-
     /// Read the header to populate information about the movie.
-    ///
-    /// This leaves the file open where the get position is just after the
-    /// header.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the header from the file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the header fails.
@@ -162,8 +128,7 @@ private:
 
     /// Write the header containing information about the movie.
     ///
-    /// This leaves the file open where the put position is just after the
-    /// header.
+    /// This truncates the file when opening it.
     void writeHeader();
 
     /// Writes zero data to a file for initialization purposes.
