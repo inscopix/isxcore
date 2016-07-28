@@ -40,12 +40,13 @@ Project::createMosaicMovie(
     std::string outFileBase = outFileName.substr(0, outFileName.size() - (extension.size() + 1));
     outFileName = outFileBase + ".isxd";
 
-    std::ifstream file(outFileName);
+    std::ifstream file;
+    file.open(outFileName);
     isize_t index;
     for (index = 0; index < 100 && file.good(); ++index)
     {
         outFileName = outFileBase + "-" + std::to_string(index) + ".isxd";
-        file = std::ifstream(outFileName);
+        file.open(outFileName);
     }
     if (index == 99 && file.good())
     {
