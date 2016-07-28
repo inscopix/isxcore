@@ -120,10 +120,6 @@ MosaicMovie::MosaicMovie(
     m_valid = true;
 }
 
-MosaicMovie::~MosaicMovie()
-{
-}
-
 bool
 MosaicMovie::isValid() const
 {
@@ -165,16 +161,12 @@ MosaicMovie::getFrame(const Time & inTime)
 void
 MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
-    WpMosaicMovie_t weakThis = shared_from_this();
+    std::shared_ptr<MosaicMovieFile> file = m_file;
     IoQueue::instance()->enqueue(
         IoQueue::IoTask(
-            [weakThis, this, inFrameNumber, inCallback]()
+            [file, inFrameNumber, inCallback]()
             {
-                SpMosaicMovie_t sharedThis = weakThis.lock();
-                if (sharedThis)
-                {
-                    inCallback(m_file->readFrame(inFrameNumber));
-                }
+                inCallback(file->readFrame(inFrameNumber));
             },
             [inCallback](AsyncTaskStatus inStatus)
             {
@@ -209,17 +201,12 @@ MosaicMovie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("writeFrame");
-    WpMosaicMovie_t weakThis = shared_from_this();
+    std::shared_ptr<MosaicMovieFile> file = m_file;
     IoQueue::instance()->enqueue(
         IoQueue::IoTask(
-            [weakThis, this, inVideoFrame]()
+            [file, inVideoFrame]()
             {
-                SpMosaicMovie_t sharedThis = weakThis.lock();
-                if (!sharedThis)
-                {
-                    return;
-                }
-                m_file->writeFrame(inVideoFrame);
+                file->writeFrame(inVideoFrame);
             },
             [&cv, &mutex](AsyncTaskStatus inStatus)
             {

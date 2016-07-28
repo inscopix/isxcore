@@ -14,7 +14,6 @@ namespace isx
 /// All information and data is read from and written to one file.
 /// All IO operations on that file are performed by the IoQueue.
 class MosaicMovie : public WritableMovie
-                  , public std::enable_shared_from_this<MosaicMovie>
 {
 public:
 
@@ -48,10 +47,6 @@ public:
                 const TimingInfo & inTimingInfo,
                 const SpacingInfo & inSpacingInfo);
 
-    /// Destructor.
-    ///
-    ~MosaicMovie();
-
     // Overrides - see base classes for documentation
     bool isValid() const override;
 
@@ -82,9 +77,6 @@ private:
     std::shared_ptr<MosaicMovieFile> m_file;
 
 };
-
-typedef std::shared_ptr<MosaicMovie> SpMosaicMovie_t;
-typedef std::weak_ptr<MosaicMovie> WpMosaicMovie_t;
 
 }
 #endif // ISX_MOSAIC_MOVIE_H
