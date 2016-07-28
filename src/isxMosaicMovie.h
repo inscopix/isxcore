@@ -11,11 +11,8 @@ namespace isx
 
 /// Encapsulates movie information and data.
 ///
-/// All information is read from and written to one file.
-/// The file stores the information or meta-data as a JSON formatted
-/// string header.
-/// The file stores the movie frame data in uncompressed binary form
-/// after the header.
+/// All information and data is read from and written to one file.
+/// All IO operations on that file are performed by the IoQueue.
 class MosaicMovie : public WritableMovie
                   , public std::enable_shared_from_this<MosaicMovie>
 {
@@ -28,7 +25,7 @@ public:
 
     /// Read constructor.
     ///
-    /// This opens an existing movie file for read access.
+    /// This opens an existing movie from a file.
     ///
     /// \param  inFileName  The name of the movie file.
     ///
@@ -38,8 +35,8 @@ public:
 
     /// Write constructor.
     ///
-    /// This opens a new file for read/write access and initializes the movie
-    /// data with zeros.
+    /// This creates a new movie in a file and initializes the data with
+    /// zeros.
     ///
     /// \param  inFileName      The name of the movie file.
     /// \param  inTimingInfo    The timing information of the movie.

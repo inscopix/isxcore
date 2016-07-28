@@ -24,12 +24,13 @@ public:
 
     /// Empty constructor.
     ///
-    /// This creates a valid c++ object but an invalid movie.
+    /// This creates a valid c++ object but an invalid movie file.
     MosaicMovieFile();
 
     /// Read constructor.
     ///
-    /// This opens an existing movie file for read access.
+    /// This opens an existing movie file and reads information from its
+    /// header.
     ///
     /// \param  inFileName  The name of the movie file.
     ///
@@ -39,8 +40,8 @@ public:
 
     /// Write constructor.
     ///
-    /// This opens a new file for read/write access and initializes the movie
-    /// data with zeros.
+    /// This opens a new file, writes header information and initializes the
+    /// movie data with zeros.
     ///
     /// \param  inFileName      The name of the movie file.
     /// \param  inTimingInfo    The timing information of the movie.
@@ -133,8 +134,8 @@ private:
 
     /// Writes zero data to a file for initialization purposes.
     ///
-    /// This assumes the file is already open with write access with a put
-    /// position that is just after the header.
+    /// This seeks to the location in the file just after the header and
+    /// writes from there.
     void writeZeroData();
 };
 

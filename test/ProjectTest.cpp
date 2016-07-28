@@ -21,8 +21,7 @@ TEST_CASE("ProjectTest", "[core]")
         auto project = std::make_shared<isx::Project>(projectFileName);
         REQUIRE(project->isValid());
         isx::ProjectFile::DataCollection dc = project->getDataCollection(0);
-        REQUIRE(dc.name == "root");
-        REQUIRE(dc.files.empty() == true);
+        REQUIRE(project->getNumDataCollections() == 0);
     }
 
     SECTION("Open an existing project.")
@@ -32,15 +31,13 @@ TEST_CASE("ProjectTest", "[core]")
         }
         auto project = std::make_shared<isx::Project>(projectFileName);
         REQUIRE(project->isValid());
-        isx::ProjectFile::DataCollection dc = project->getDataCollection(0);
-        REQUIRE(dc.name == "root");
-        REQUIRE(dc.files.empty() == true);
+        REQUIRE(project->getNumDataCollections() == 0);
     }
 
     SECTION("Create a mosaic movie in a project.")
     {
-        std::string movieFile = g_resources["testDataPath"] + "/movieFile.isxd";
-        std::remove(movieFile.c_str());
+        std::string movieFileName = g_resources["testDataPath"] + "/movieFileName.isxd";
+        std::remove(movieFileName.c_str());
 
         isx::Time start;
         isx::DurationInSeconds step(50, 1000);
@@ -54,7 +51,12 @@ TEST_CASE("ProjectTest", "[core]")
 
         auto project = std::make_shared<isx::Project>(projectFileName);
         REQUIRE(project->isValid());
-        isx::SpWritableMovie_t movie = project->createMosaicMovie(movieFile, timingInfo, spacingInfo);
+
+        isx::ProjectFile::DataCollection dc;
+        dc.name = "Movies";
+        project->addDataCollection(dc);
+
+        isx::SpWritableMovie_t movie = project->createMosaicMovie(0, movieFileName, timingInfo, spacingInfo);
         REQUIRE(movie->isValid());
     }
 
