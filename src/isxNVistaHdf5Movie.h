@@ -99,6 +99,14 @@ private:
     bool
     readTimingInfo(std::vector<SpH5File_t> inHdf5Files);
 
+    /// Read the spacing info of this from the HDF5 movie files.
+    ///
+    /// If some spacing info is missing, this will fail and return false.
+    ///
+    /// \return     True if successful, false otherwise.
+    bool
+    readSpacingInfo(std::vector<SpH5File_t> inHdf5Files);
+
     /// A method to create a dummy spacing information from the number of rows and columns.
     ///
     SpacingInfo
