@@ -12,8 +12,12 @@ namespace isx
 /// Encapsulates movie information and data.
 ///
 /// All information and data is read from and written to one file.
-/// All IO operations on that file are performed by the IoQueue.
+/// All data IO operations (e.g. read/write frames) on that file are
+/// performed by the IoQueue thread.
+/// All other IO operations (e.g. read/write header) are performed
+/// on the current thread.
 class MosaicMovie : public WritableMovie
+                  , public std::enable_shared_from_this<MosaicMovie>
 {
 public:
 

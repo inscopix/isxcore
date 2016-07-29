@@ -12,22 +12,6 @@
 namespace isx
 {
 
-// The number of milliseconds to wait for the read constructor.
-// This is short because this should only need to read the header.
-const uint32_t readConstructorWaitMs = 1000;
-
-// The number of milliseconds to wait for the write constructor.
-// This is long to allow for zero-ing out of large files.
-const uint32_t writeConstructorWaitMs = 10000;
-
-// The number of milliseconds to wait for getting one frame.
-// This is short because reading one frame should be fast.
-const uint32_t getFrameWaitMs = 1000;
-
-// The number of milliseconds to wait for writing a frame.
-// This is short because writing one frame should be fast.
-const uint32_t writeFrameWaitMs = 1000;
-
 MosaicMovie::MosaicMovie()
     : m_valid(false)
 {
@@ -36,42 +20,42 @@ MosaicMovie::MosaicMovie()
 MosaicMovie::MosaicMovie(const std::string & inFileName)
     : m_valid(false)
 {
-    std::shared_ptr<MosaicMovieFile> file = std::make_shared<MosaicMovieFile>();
+    // TODO sweet : decide if we want all IO on the IO thread or if
+    // it's okay to read the header on the current thread.
+    // If we decide on the former, use this code.
 
-    Mutex mutex;
-    ConditionVariable cv;
-    mutex.lock("MosaicMovie read");
-    IoQueue::instance()->enqueue(
-        IoQueue::IoTask(
-            [&file, &inFileName, &cv, &mutex]()
-            {
-                mutex.lock("MosaicMovieFile read initialize");
-                file->initialize(inFileName);
-                mutex.unlock();
-                cv.notifyOne();
-            }
-            ,
-            [](AsyncTaskStatus inStatus)
-            {
-                if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
-                {
-                    ISX_LOG_ERROR("An exception occurred while initializing a MosaicMovieFile for reading.");
-                }
-                else if (inStatus != AsyncTaskStatus::COMPLETE)
-                {
-                    ISX_LOG_ERROR("An error occurred while initializing a MosaicMovieFile for reading.");
-                }
-            }
-        )
-    );
-    bool didNotTimeOut = cv.waitForMs(mutex, readConstructorWaitMs);
-    mutex.unlock();
-    if (didNotTimeOut == false)
-    {
-        ISX_THROW(isx::ExceptionDataIO, "MosaicMovie read timed out.");
-    }
+    //std::shared_ptr<MosaicMovieFile> file = std::make_shared<MosaicMovieFile>();
+    //Mutex mutex;
+    //ConditionVariable cv;
+    //mutex.lock("MosaicMovie read");
+    //IoQueue::instance()->enqueue(
+    //    IoQueue::IoTask(
+    //        [&file, &inFileName, &cv, &mutex]()
+    //        {
+    //            mutex.lock("MosaicMovieFile read initialize");
+    //            file->initialize(inFileName);
+    //            mutex.unlock();
+    //            cv.notifyOne();
+    //        }
+    //        ,
+    //        [](AsyncTaskStatus inStatus)
+    //        {
+    //            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
+    //            {
+    //                ISX_LOG_ERROR("An exception occurred while initializing a MosaicMovieFile for reading.");
+    //            }
+    //            else if (inStatus != AsyncTaskStatus::COMPLETE)
+    //            {
+    //                ISX_LOG_ERROR("An error occurred while initializing a MosaicMovieFile for reading.");
+    //            }
+    //        }
+    //    )
+    //);
+    //cv.wait(mutex);
+    //mutex.unlock();
+    //m_file = file;
 
-    m_file = file;
+    m_file = std::make_shared<MosaicMovieFile>(inFileName);
     m_valid = true;
 }
 
@@ -81,42 +65,42 @@ MosaicMovie::MosaicMovie(
     const SpacingInfo & inSpacingInfo)
     : m_valid(false)
 {
-    std::shared_ptr<MosaicMovieFile> file = std::make_shared<MosaicMovieFile>();
+    // TODO sweet : decide if we want all IO on the IO thread or if
+    // it's okay to write the header on the current thread.
+    // If we decide on the former, use this code.
 
-    Mutex mutex;
-    ConditionVariable cv;
-    mutex.lock("MosaicMovie write");
-    IoQueue::instance()->enqueue(
-        IoQueue::IoTask(
-            [&file, &inFileName, &inTimingInfo, &inSpacingInfo, &cv, &mutex]()
-            {
-                mutex.lock("MosaicMovieFile write initialize");
-                file->initialize(inFileName, inTimingInfo, inSpacingInfo);
-                mutex.unlock();
-                cv.notifyOne();
-            }
-            ,
-            [](AsyncTaskStatus inStatus)
-            {
-                if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
-                {
-                    ISX_LOG_ERROR("An exception occurred while initializing a MosaicMovieFile for writing.");
-                }
-                else if (inStatus != AsyncTaskStatus::COMPLETE)
-                {
-                    ISX_LOG_ERROR("An error occurred while initializing a MosaicMovieFile for writing.");
-                }
-            }
-        )
-    );
-    bool didNotTimeOut = cv.waitForMs(mutex, writeConstructorWaitMs);
-    mutex.unlock();
-    if (didNotTimeOut == false)
-    {
-        ISX_THROW(isx::ExceptionDataIO, "MosaicMovie write timed out.");
-    }
+    //std::shared_ptr<MosaicMovieFile> file = std::make_shared<MosaicMovieFile>();
+    //Mutex mutex;
+    //ConditionVariable cv;
+    //mutex.lock("MosaicMovie write");
+    //IoQueue::instance()->enqueue(
+    //    IoQueue::IoTask(
+    //        [&file, &inFileName, &inTimingInfo, &inSpacingInfo, &cv, &mutex]()
+    //        {
+    //            mutex.lock("MosaicMovieFile write initialize");
+    //            file->initialize(inFileName, inTimingInfo, inSpacingInfo);
+    //            mutex.unlock();
+    //            cv.notifyOne();
+    //        }
+    //        ,
+    //        [](AsyncTaskStatus inStatus)
+    //        {
+    //            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
+    //            {
+    //                ISX_LOG_ERROR("An exception occurred while initializing a MosaicMovieFile for writing.");
+    //            }
+    //            else if (inStatus != AsyncTaskStatus::COMPLETE)
+    //            {
+    //                ISX_LOG_ERROR("An error occurred while initializing a MosaicMovieFile for writing.");
+    //            }
+    //        }
+    //    )
+    //);
+    //cv.wait(mutex);
+    //mutex.unlock();
+    //m_file = file;
 
-    m_file = file;
+    m_file = std::make_shared<MosaicMovieFile>(inFileName, inTimingInfo, inSpacingInfo);
     m_valid = true;
 }
 
@@ -142,12 +126,8 @@ MosaicMovie::getFrame(isize_t inFrameNumber)
             cv.notifyOne();
         }
     );
-    bool didNotTimeOut = cv.waitForMs(mutex, getFrameWaitMs);
+    cv.wait(mutex);
     mutex.unlock();
-    if (didNotTimeOut == false)
-    {
-        ISX_THROW(isx::ExceptionDataIO, "getFrame timed out.\n");
-    }
     return outVideoFrame;
 }
 
@@ -161,18 +141,26 @@ MosaicMovie::getFrame(const Time & inTime)
 void
 MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
-    std::shared_ptr<MosaicMovieFile> file = m_file;
+    // Only get a weak pointer to this, so that we don't bother reading
+    // if this has been deleted when the read gets executed.
+    std::weak_ptr<MosaicMovie> weakThis = shared_from_this();
     IoQueue::instance()->enqueue(
         IoQueue::IoTask(
-            [file, inFrameNumber, inCallback]()
+            [weakThis, this, inFrameNumber, inCallback]()
             {
-                inCallback(file->readFrame(inFrameNumber));
+                std::shared_ptr<MosaicMovie> sharedThis = weakThis.lock();
+                if (sharedThis)
+                {
+                    inCallback(m_file->readFrame(inFrameNumber));
+                }
             },
             [inCallback](AsyncTaskStatus inStatus)
             {
                 if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
                 {
                     ISX_LOG_ERROR("An exception occurred while reading a frame from a MosaicMovie file.");
+                    // TODO sweet : do we really want to process a frame
+                    // with all zeros if the read throws an exception?
                     inCallback(SpU16VideoFrame_t());
                 }
                 else if (inStatus != AsyncTaskStatus::COMPLETE)
@@ -194,14 +182,11 @@ MosaicMovie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
 void
 MosaicMovie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
 {
-    if (!m_valid)
-    {
-        ISX_THROW(isx::ExceptionFileIO, "Writing frame to invalid movie.");
-    }
+    // Get a new shared pointer to the file, so we can guarantee the write.
+    std::shared_ptr<MosaicMovieFile> file = m_file;
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("writeFrame");
-    std::shared_ptr<MosaicMovieFile> file = m_file;
     IoQueue::instance()->enqueue(
         IoQueue::IoTask(
             [file, inVideoFrame]()
@@ -220,12 +205,8 @@ MosaicMovie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
             }
         )
     );
-    bool didNotTimeOut = cv.waitForMs(mutex, writeFrameWaitMs);
+    cv.wait(mutex);
     mutex.unlock();
-    if (didNotTimeOut == false)
-    {
-        ISX_THROW(isx::ExceptionDataIO, "writeFrame timed out.\n");
-    }
 }
 
 const isx::TimingInfo &
