@@ -1,22 +1,14 @@
-#include "isxHdf5FileHandle.h" 
 #include "isxProjectFile.h"
-#include "isxLog.h"
 #include "isxException.h"
+#include "isxLog.h"
+#include "json.hpp"
+#include <fstream>
 
 namespace isx {
     
-    /* static */
-    const std::string ProjectFile::projectPath = "/MosaicProject";
-    /* static */
-    const std::string ProjectFile::headerPath = "/MosaicProject/FileHeader";
-    /* static */
-    const std::string ProjectFile::seriesPath = "/MosaicProject/Series";
-    /* static */
-    const std::string ProjectFile::historyPath = "/MosaicProject/History";
-    /* static */
-    const std::string ProjectFile::annotationsPath = "/MosaicProject/Annotations";
-    /* static */
-    const std::string ProjectFile::cellsPath = "/MosaicProject/Cells";
+
+    // for convenience
+    using json = nlohmann::json;
 
     class ProjectFile::Impl
     {
@@ -24,6 +16,7 @@ namespace isx {
         Impl() :
             m_bValid(false)
         {
+            initJson();
         }
 
         /// Constructor
@@ -32,115 +25,172 @@ namespace isx {
             m_filename(inFileName),
             m_bValid(false)
         {
-            // H5F_ACC_RDWR fails if the file doesn't exist. 
-            int openFlag = H5F_ACC_RDWR;
-            try
+            initJson();
+            
+            std::ifstream ifs;
+            ifs.open(inFileName.c_str(), std::ifstream::in);
+           
+            // Read the json file if file exists
+            if (ifs.good())
             {
-                m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
+                try
+                {
+                    ifs >> m_fileContent;
+                }
+                catch (const std::invalid_argument & error)
+                {
+                    ISX_THROW(isx::ExceptionDataIO, "Error parsing project file", error.what());
+                }
+                 // TODO Read original filenames from datafiles
             }
-            catch (const H5::FileIException & error)
-            {
-                ISX_THROW(isx::ExceptionFileIO,
-                    "Failure caused by H5File operations. Make sure the file exists and it is in a writable location.\n", error.getDetailMsg());
-            }
-            m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, openFlag);
-                
-            initialize();
-        }
 
-        Impl(const std::string & inFileName, const std::vector<std::string> & inInputFileNames) :
-            m_filename(inFileName),
-            m_originalFilenames(inInputFileNames),
-            m_bValid(false)
-        {
-            int openFlag = H5F_ACC_TRUNC;
-            try
-            {
-                m_file.reset(new H5::H5File(inFileName.c_str(), openFlag));
-            }
-            catch (const H5::FileIException & error)
-            {
-                ISX_THROW(isx::ExceptionFileIO,
-                    "Failure caused by H5File operations. Make sure the file exists and it is in a writable location.\n", error.getDetailMsg());
-            }
-            m_fileHandle = std::make_shared<Hdf5FileHandle>(m_file, openFlag);
-            createDataModel();
+            ifs.close();
+            m_bValid = true;
         }
-        
+       
         ~Impl()
         {
 
-            m_file.reset();
-            m_fileHandle.reset();
+            save();
         }
                 
-        /// \return Hdf5FileHandle
-        ///
-        SpHdf5FileHandle_t
-        getHdf5FileHandle() const
-        {
-            return m_fileHandle;
-        }
-
         bool 
         isValid()
         {
             return m_bValid;
         }
         
+        void 
+        save()
+        {
+            std::ofstream ofs;
+            ofs.open(m_filename.c_str(), std::ofstream::trunc);
+
+            // Write json using streams
+            if (ofs.good())
+            {
+                ofs << m_fileContent.dump(4);
+            }
+
+            ofs.close();
+        }
+        
         isize_t
-        getNumMovieSeries()
+        getNumDataCollections()
         {
-            return m_movieSeries.size();
+            json dataObj = m_fileContent["data"];
+            isize_t nCollections = dataObj.size();
+            return nCollections;
+        }
+
+        DataCollection
+        getDataCollection(isize_t inIndex)
+        {
+            isize_t nCollections = getNumDataCollections();
+            DataCollection dc;
+
+            if (inIndex < nCollections)
+            {
+                json dataObj = m_fileContent["data"];
+                json dataCollection = dataObj[inIndex];
+
+                dc.name = dataCollection["name"].get<std::string>();
+
+                json files = dataCollection["files"];
+                               
+                // iterate the array
+                for (json::iterator it = files.begin(); it != files.end(); ++it)
+                {
+                    json fileObj = *it;
+                    DataFileDescriptor fd((DataFileType)(fileObj["data type"].get<int>()), fileObj["filename"].get<std::string>());
+                    dc.files.push_back(fd);
+                }
+
+            }
+            return dc;
+
+        }
+
+        void 
+        addDataCollection(DataCollection & inData)
+        {
+            json dataCollection;
+            json files;
+            dataCollection["name"] = inData.name;
+
+            for (isize_t f(0); f < inData.files.size(); ++f)
+            {
+                json fileObj;
+                fileObj["filename"] = inData.files[f].filename;
+                fileObj["data type"] = (int)inData.files[f].type;
+                files.push_back(fileObj);
+            }
+
+            dataCollection["files"] = files;
+
+            m_fileContent["data"].push_back(dataCollection);
+            
+            // TODO Update original filenames list
+
+        }
+
+        void 
+        removeDataCollection(isize_t inCollectionIndex)
+        {
+            m_fileContent["data"].erase(inCollectionIndex);
+            // TODO Update original filenames list
+        }
+
+        void 
+        addFileToDataCollection(DataFileDescriptor & inFileDesc, isize_t inCollectionIndex)
+        {
+            json fileObj;
+            fileObj["filename"] = inFileDesc.filename;
+            fileObj["data type"] = (int)inFileDesc.type;
+            m_fileContent["data"][inCollectionIndex]["files"].push_back(fileObj);
+            // TODO Update original filenames list
+        }
+
+        void 
+        removeFileFromDataCollection(isize_t inFileDescIndex, isize_t inCollectionIndex) 
+        {
+            m_fileContent["data"][inCollectionIndex]["files"].erase(inFileDescIndex);
+            // TODO Update original filenames list
         }
         
-        SpMovieSeries_t 
-        getMovieSeries(isize_t inIndex)
-        {
-            return m_movieSeries[inIndex];
-        }
-        
-        SpMovieSeries_t addMovieSeries(const std::string & inName);
-
-
         std::string 
         getName()
         {
             return m_filename;
         }
-
+        
         std::vector<std::string> & getOriginalNames()
         {
             return m_originalFilenames;
         }
 
     private:
-        void initialize();
-        void createDataModel();
-        
 
-        std::string m_filename;
-        std::vector<std::string> m_originalFilenames;
-        SpH5File_t m_file;
-        SpHdf5FileHandle_t m_fileHandle;
-        
-        H5::Group  m_grProject;
-        H5::Group  m_grFileHeader;
-        H5::Group  m_grHistory;
-        H5::Group  m_grAnnotations;
-        H5::Group  m_grSeries;
-        H5::Group  m_grCells;
-        
-        std::vector<SpMovieSeries_t> m_movieSeries;
+        static const int fileVersionMajor = 1;
+        static const int fileVersionMinor = 0;
+     
+        void initJson()
+        {
+            m_fileContent = json();
+            m_fileContent["header"]["mosaic version"] = CoreVersionVector();
+            m_fileContent["header"]["file version"] = { fileVersionMajor, fileVersionMinor };
+            m_fileContent["data"] = json();
+
+        }
+
+        std::string m_filename;  
+        std::vector<std::string> m_originalFilenames; 
+        json m_fileContent;
 
         bool m_bValid;
         
 
     };
-    
-    
-    
-    
         
     
     ///////////////////////////////////////////////////////////////////////////////
@@ -156,46 +206,60 @@ namespace isx {
         m_pImpl.reset(new Impl(inFileName));
     }
 
-    ProjectFile::ProjectFile(const std::string & inFileName, const std::vector<std::string> & inInputFileNames)
-    {
-        m_pImpl.reset(new Impl(inFileName, inInputFileNames));
-    }
 
     ProjectFile::~ProjectFile() 
     {
+        m_pImpl.reset();
     } 
 
         
-    SpHdf5FileHandle_t 
-    ProjectFile::getHdf5FileHandle()
-    {
-        return m_pImpl->getHdf5FileHandle();
-    }
-
     bool
     ProjectFile::isValid()
     {
         return m_pImpl->isValid();
     }
+    
+    void 
+    ProjectFile::save()
+    {
+        m_pImpl->save();
+    }
 
     
     isize_t
-    ProjectFile::getNumMovieSeries()
+    ProjectFile::getNumDataCollections()
     {
-        return m_pImpl->getNumMovieSeries();
-    }
-        
-
-    SpMovieSeries_t 
-    ProjectFile::getMovieSeries(isize_t inIndex)
-    {
-        return m_pImpl->getMovieSeries(inIndex);
+        return m_pImpl->getNumDataCollections();
     }
     
-    SpMovieSeries_t 
-    ProjectFile::addMovieSeries(const std::string & inName)
+
+    ProjectFile::DataCollection ProjectFile::getDataCollection(isize_t inIndex)
     {
-        return m_pImpl->addMovieSeries(inName);
+        return m_pImpl->getDataCollection(inIndex);
+    }
+
+
+    void ProjectFile::addDataCollection(DataCollection & inData)
+    {
+        m_pImpl->addDataCollection(inData);
+    }
+
+
+    void ProjectFile::removeDataCollection(isize_t inCollectionIndex)
+    {
+        m_pImpl->removeDataCollection(inCollectionIndex);
+    }
+
+
+    void ProjectFile::addFileToDataCollection(DataFileDescriptor & inFileDesc, isize_t inCollectionIndex)
+    {
+        m_pImpl->addFileToDataCollection(inFileDesc, inCollectionIndex);
+    }
+
+
+    void ProjectFile::removeFileFromDataCollection(isize_t inFileDescIndex, isize_t inCollectionIndex)
+    {
+        m_pImpl->removeFileFromDataCollection(inFileDescIndex, inCollectionIndex);
     }
 
     std::string 
@@ -203,103 +267,13 @@ namespace isx {
     {
         return m_pImpl->getName();
     }
-
+    
     std::vector<std::string> & 
     ProjectFile::getOriginalNames()
     {
         return m_pImpl->getOriginalNames();
     }
 
- 
 
-    ///////////////////////////////////////////////////////////////////////////////
-    //  PROJECT FILE IMPLEMENTATION
-    ///////////////////////////////////////////////////////////////////////////////
-    
-    SpMovieSeries_t 
-    ProjectFile::Impl::addMovieSeries(const std::string & inName)
-    {
-        std::string path = seriesPath + "/" + inName;
-        m_file->createGroup(path);        
-        m_movieSeries.push_back(std::make_shared<MovieSeries>(m_fileHandle, path));
-        return m_movieSeries[m_movieSeries.size() - 1];
-    }
-    
-    void 
-    ProjectFile::Impl::initialize()
-    {
-        // Get the number of objects and initialize series
-        std::string rootObjName("/");
-        H5::Group rootGroup = m_file->openGroup(rootObjName);
-
-        m_grProject     = m_file->openGroup(projectPath);
-        m_grFileHeader  = m_file->openGroup(headerPath);
-        m_grSeries      = m_file->openGroup(seriesPath);
-        m_grHistory     = m_file->openGroup(historyPath);
-        m_grAnnotations = m_file->openGroup(annotationsPath);
-        m_grCells       = m_file->openGroup(cellsPath);
-
-        // Read header
-        H5::DataSet strDataset = m_grFileHeader.openDataSet("InputFiles");
-        H5::DataSpace dataSpace = strDataset.getSpace();
-        H5::DataType  dataType = strDataset.getDataType();
-        hsize_t         strDims[1];
-        dataSpace.getSimpleExtentDims(strDims);
-        std::vector<const char*> namesC(strDims[0], NULL);        
-        strDataset.read(namesC.data(), dataType);
-        m_originalFilenames.resize(strDims[0]);
-        for (isize_t i(0); i < strDims[0]; ++i)
-        {
-            m_originalFilenames[i] = namesC[i];
-        }
-
-            
-        hsize_t nObjInGroup = m_grSeries.getNumObjs();
-        if(nObjInGroup != 0)
-        {
-            m_movieSeries.resize(nObjInGroup);
-            for (hsize_t rs(0); rs < nObjInGroup; ++rs)
-            {
-                std::string rs_name = seriesPath + "/" + m_grSeries.getObjnameByIdx(rs);
-                m_movieSeries[rs].reset(new MovieSeries(getHdf5FileHandle(), rs_name));
-            }
-        }
-
-        m_bValid = true;
-        
-    }
-    
-    
-    void 
-    ProjectFile::Impl::createDataModel()
-    { 
-        
-        m_grProject     = m_file->createGroup(projectPath);
-        m_grFileHeader  = m_file->createGroup(headerPath);
-        m_grSeries      = m_file->createGroup(seriesPath);
-        m_grHistory     = m_file->createGroup(historyPath);
-        m_grAnnotations = m_file->createGroup(annotationsPath);
-        m_grCells       = m_file->createGroup(cellsPath);
-
-        // Add the name of the input files to the file header
-        std::vector<const char*> namesC;
-        for (unsigned i = 0; i < m_originalFilenames.size(); ++i)
-        {
-            namesC.push_back(m_originalFilenames[i].c_str());
-        }
-
-        hsize_t         strDims[1] = { namesC.size() };
-        H5::DataSpace   dataspace(1, strDims);
-
-        // Variable length string
-        H5::StrType datatype(H5::PredType::C_S1, H5T_VARIABLE);
-        H5::DataSet strDataset = m_grFileHeader.createDataSet("InputFiles", datatype, dataspace);
-        strDataset.write(namesC.data(), datatype);
-
-        m_bValid = true;
-                
-    }
- 
- 
 
 }

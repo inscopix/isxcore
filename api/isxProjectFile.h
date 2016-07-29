@@ -1,74 +1,8 @@
 #ifndef ISX_PROJECTFILE_H
 #define ISX_PROJECTFILE_H
 
-// This file describes the file specification for a Mosaic project file.
-// The project file is a HDF5 file with the following data model:
-/*
-
-/MosaicProject 
-    /FileHeader
-        /Mosaic Version
-        /Operating System
-        /Original Input File
-        /File Version
-    /History
-        /History item 1
-            /Type
-            /Parameters
-            /InputMovies         ---> to be saved only for the last history item (if needed to undo an operation)
-                /Series item 1
-                    /Movie 1
-                        :
-                        :
-                    /Movie L
-                    :
-                    :
-                /Series item P
-            :
-            :
-        /History item N
-    /Annotations
-        /Comment 1
-            /Text
-            /Timestamp
-            :
-            :
-        /Comment M
-    /Series
-        /Series item 1
-            /Recording item 1
-                /Properties
-                    /TimingInfo
-                    /SpacingInfo
-                /Movie
-                :
-                :
-            /Recording item L
-            :
-            :
-        /Series item P
-    /Cells
-        /Cell Set 1
-            /Cell set ID
-            /Cells
-                /Cell 1
-                    /Properties
-                        /isValid
-                        /Cell_ID
-                        /Comment
-                    /Contour
-                    /Trace
-                    :
-                    :
-                /Cell K
-            :
-            :
-        /Cell Set J
-        
-*/
 #include "isxTime.h"
 #include "isxCoreFwd.h"
-#include "isxMovieSeries.h"
 #include <utility>
 #include <vector>
 #include <memory>
@@ -82,73 +16,91 @@ namespace isx {
     {
     public:
 
+        /// The type of data file
+        /// 
+        enum DataFileType
+        {
+            DATAFILETYPE_MOVIE = 0,  //!< a movie
+            DATAFILETYPE_CELLSET,    //!< a cell set - contains segmented cell info and traces
+            DATAFILETYPE_IMAGE,      //!< an image type
+            DATAFILETYPE_TIMESERIES  //!< a timeseries
+        };
+
+        /// Data file-related information
+        /// 
+        struct DataFileDescriptor
+        {
+            /// Constructor
+            /// \param inType the type of data stored in the file
+            /// \param inFilename the filename 
+            DataFileDescriptor(DataFileType inType, const std::string & inFilename) : 
+                type(inType),
+                filename(inFilename)
+            {
+            }
+
+            DataFileType type;      //!< the type of data contained in the file
+            std::string  filename;  //!< the file name
+        };
+
+        /// Data Collection structure
+        /// 
+        struct DataCollection
+        {
+            std::string name;                       //!< collection name
+            std::vector<DataFileDescriptor> files;  //!< list of files in the collection
+        };
+
         /// constructor - valid c++ object but invalid file
         ProjectFile();
 
         /// constructor - open existing file
         /// \param inFileName the file to open
         ProjectFile(const std::string & inFileName);
-
-        /// constructor - create new file
-        /// \param inFileName the name of the project file to create
-        /// \param inInputFileNames the names of the original data set used to initialize this file
-        ProjectFile(const std::string & inFileName, const std::vector<std::string> & inInputFileNames);
         
         /// destructor
         ///
         ~ProjectFile();
 
-        /// Get the file handle
-        ///
-        SpHdf5FileHandle_t getHdf5FileHandle();
-        
         /// \return whether the file is valid or not
         ///
         bool isValid();
+        
+        /// Save the file
+        ///
+        void save();
 
-        /// the path for the mosaic project in the HDF5 file
+        /// Get the number of file collections in the project file
         ///
-        static const std::string projectPath;
-        
-        /// the path for the file header in the HDF5 file
-        ///
-        static const std::string headerPath;
-        
-        /// the path for the movie series in the HDF5 file
-        ///
-        static const std::string seriesPath;
+        isize_t getNumDataCollections();
 
-        /// the path for the history in the HDF5 file
+        /// Get the filenames of all the files within a file collection
         ///
-        static const std::string historyPath;
+        DataCollection getDataCollection(isize_t inIndex);
 
-        /// the path for the annotations in the HDF5 file
+        /// Add a file collection to the project by passing the filenames of all the files within a collection
         ///
-        static const std::string annotationsPath;
+        void addDataCollection(DataCollection & inData);
 
-        /// the path for the cell traces in the HDF5 file
+        /// Remove data collection from project
         ///
-        static const std::string cellsPath;
-        
-        /// Get the number of recording series in the project file
+        void removeDataCollection(isize_t inCollectionIndex);
+
+        /// Append a file to a data collection
         ///
-        isize_t getNumMovieSeries();
-        
-        /// Get a recording series by index
+        void addFileToDataCollection(DataFileDescriptor & inFileDesc, isize_t inCollectionIndex);
+
+        /// Remove a file from a data collection
         ///
-        SpMovieSeries_t getMovieSeries(isize_t inIndex);
-        
-        /// Add a recording series to the project file
-        ///
-        SpMovieSeries_t addMovieSeries(const std::string & inName);
+        void removeFileFromDataCollection(isize_t inFileDescIndex, isize_t inCollectionIndex);
 
         /// Get file name
         ///
-        std::string getName();
+        std::string getName();  
 
         /// Get filenames for the original files (from where the data was obtained)
         ///
-        std::vector<std::string> & getOriginalNames();
+        std::vector<std::string> & getOriginalNames();        
        
     private:        
         class Impl;

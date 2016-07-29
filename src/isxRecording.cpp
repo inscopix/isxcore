@@ -4,7 +4,7 @@
 #include "isxHdf5FileHandle.h"
 
 #include "isxRecordingXml.h"
-#include "isxMovie.h"
+#include "isxNVistaHdf5Movie.h"
 
 #include <iostream>
 #include <fstream>
@@ -77,7 +77,7 @@ public:
             ISX_ASSERT(false, "Unhandled exception.");
         }
         
-        m_movie = std::make_shared<Movie>(m_fileHandles[0], "/images");
+        m_movie = std::make_shared<NVistaHdf5Movie>(m_fileHandles[0]);
 
         // no exception until here --> this is a valid file
         m_isValid = true;
@@ -102,7 +102,6 @@ public:
                 hdf5files[i] = dir + hdf5files[i];
                 m_files.push_back(std::make_shared<H5::H5File>(hdf5files[i].c_str(), H5F_ACC_RDONLY));
                 m_fileHandles.push_back(std::make_shared<Hdf5FileHandle>(m_files[i], H5F_ACC_RDONLY));
-                paths.push_back("/images");
             }
         }
         catch (const H5::FileIException& error)
@@ -112,7 +111,7 @@ public:
         }
         
 
-        m_movie = std::make_shared<Movie>(m_fileHandles, paths);
+        m_movie = std::make_shared<NVistaHdf5Movie>(m_fileHandles);
 
         // no exception until here --> this is a valid file
         m_isValid = true;
@@ -149,7 +148,7 @@ public:
         strm << m_path;
     }
 
-    SpMovieInterface_t
+    SpMovie_t
     getMovie()
     {
         return m_movie;
@@ -174,7 +173,7 @@ private:
     
     std::vector<SpH5File_t>         m_files;
     std::vector<SpHdf5FileHandle_t> m_fileHandles;
-    SpMovieInterface_t              m_movie;
+    SpMovie_t              m_movie;
 };
 
 Recording::Recording()
@@ -215,7 +214,7 @@ Recording::serialize(std::ostream& strm) const
     m_pImpl->serialize(strm);
 }
 
-SpMovieInterface_t
+SpMovie_t
 Recording::getMovie()
 {
     return m_pImpl->getMovie();

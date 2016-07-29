@@ -1,5 +1,5 @@
 #include "isxRecording.h"
-#include "isxMovieInterface.h"
+#include "isxMovie.h"
 #include "catch.hpp"
 #include "isxTest.h"
 
@@ -18,7 +18,7 @@ TEST_CASE("RecordingTest", "[core]") {
     SECTION("create movie from dataset in recording") {
         isx::SpRecording_t r = std::make_shared<isx::Recording>(testFile);
         REQUIRE(r->isValid());
-        isx::SpMovieInterface_t m(r->getMovie());
+        isx::SpMovie_t m(r->getMovie());
         REQUIRE(m->isValid());
     }
 
@@ -41,9 +41,9 @@ TEST_CASE("RecordingTest", "[core]") {
         REQUIRE(rHdf0->isValid());
         REQUIRE(rHdf1->isValid());
         
-        isx::SpMovieInterface_t mXml  = rXml->getMovie();
-        isx::SpMovieInterface_t mHdf0 = rHdf0->getMovie();
-        isx::SpMovieInterface_t mHdf1 = rHdf1->getMovie();
+        isx::SpMovie_t mXml  = rXml->getMovie();
+        isx::SpMovie_t mHdf0 = rHdf0->getMovie();
+        isx::SpMovie_t mHdf1 = rHdf1->getMovie();
         
         isx::isize_t nFramesXML = mXml->getTimingInfo().getNumTimes();
         isx::isize_t nFramesHdf0 = mHdf0->getTimingInfo().getNumTimes();
