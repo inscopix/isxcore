@@ -87,14 +87,14 @@ TEST_CASE("MosaicMovieFileTest", "[core-internal]")
                 rowSizeInBytes,
                 1, // numChannels
                 frameTime, f);
-
-            std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
+            
+            uint16_t * pPixels = frame->getPixels();
+            
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
-                frameBuf[p] = uint16_t((f * numPixels) + p);
+                *pPixels = uint16_t((f * numPixels) + p);
+                pPixels++;
             }
-
-            std::copy(frameBuf.data(), frameBuf.data() + numPixels, frame->getPixels());
 
             movie.writeFrame(frame);
         }
