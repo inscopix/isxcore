@@ -64,9 +64,6 @@ namespace isx
         return m_spacingInfo;
     }
 
-    /// *****************************************************************
-    /// *************** Read and Write Functions ************************
-    /// *****************************************************************
     void 
     CellSetFile::readSamples(isize_t inCellId, std::vector<float> & ioData) 
     {
