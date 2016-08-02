@@ -30,8 +30,11 @@ namespace isx
 
     CellSetFile::~CellSetFile()
     {
-        // Overwrite the header to update the total number of cells
-        writeHeader(false);
+        if (m_valid)
+        {
+            // Overwrite the header to update the total number of cells
+            writeHeader(false);
+        }
     }
 
     bool 
@@ -79,7 +82,7 @@ namespace isx
         SizeInPixels_t nPixels = m_spacingInfo.getNumPixels();
         isize_t rows = nPixels.getHeight();
         isize_t cols = nPixels.getWidth();
-        isize_t offsetInBytes = sizeof(bool) + sizeof(float) * rows * cols;
+        isize_t offsetInBytes = sizeof(char) + sizeof(float) * rows * cols;
         
         file.seekg(offsetInBytes, std::ios_base::cur);
         if (!file.good())
@@ -111,7 +114,7 @@ namespace isx
         seekToCell(inCellId, file);    
         
         // Calculate bytes till beginning of the segmentation image
-        isize_t offsetInBytes = sizeof(bool);
+        isize_t offsetInBytes = sizeof(char);
         
         file.seekg(offsetInBytes, std::ios_base::cur);
         if (!file.good())
@@ -145,36 +148,43 @@ namespace isx
         isize_t fSamples = m_timingInfo.getNumTimes();
         ISX_ASSERT(inSamples == fSamples);
         
-        // Open stream and write        
-        std::fstream file(m_fileName, std::ios::binary | std::ios::in | std::ios::out);
-        if (!file.good())
-        {
-            ISX_THROW(isx::ExceptionFileIO,
-                "Failed to open cell set file for writing: ", m_fileName);
-        }
+        // Open stream and write  
+        std::fstream file;      
+        
         
         if (inCellId >= m_numCells)
         {
             // Append cell data
-            file.seekp(std::ios_base::end);
+            file.open(m_fileName, std::ios::binary | std::ios::app);
             if (!file.good())
             {
                 ISX_THROW(isx::ExceptionFileIO,
-                    "Failed to seek in cell set file for writing: ", m_fileName);
+                    "Failed to open cell set file for append: ", m_fileName);
             }
             uint32_t nextCellId = (uint32_t)m_numCells;
             file.write((char *) &nextCellId, sizeof(uint32_t));
+            if (!file.good())
+            {
+                ISX_THROW(isx::ExceptionFileIO,
+                    "Failed to write cell ID: ", m_fileName);
+            }
             
             ++m_numCells;
         }
         else
         {
             // Overwrite existing cell
+            file.open(m_fileName, std::ios::binary | std::ios::in | std::ios::out);
+            if (!file.good())
+            {
+                ISX_THROW(isx::ExceptionFileIO,
+                    "Failed to open cell set file for writing: ", m_fileName);
+            }
             seekToCell(inCellId, file);
         }
         
-        bool valid = true;
-        file.write((char *) &valid, sizeof(bool));
+        char valid = 1;
+        file.write(&valid, sizeof(char));
         file.write(reinterpret_cast<char*>(inSegmentationImage.getPixels()), inImageSizeInBytes);
         file.write((char *) inData.data(), inSamples * sizeof(float));
         if (!file.good())
@@ -195,13 +205,13 @@ namespace isx
         }
         seekToCell(inCellId, file); 
         
-        bool isValid = false;
-        file.read((char *) &isValid, sizeof(bool));
+        char isValid = 0;
+        file.read(&isValid, sizeof(char));
         if (!file.good())
         {
             ISX_THROW(isx::ExceptionFileIO, "Error reading cell information.");
         }
-        return isValid;
+        return isValid == 1 ? true : false;
     }
     
     void 
@@ -215,11 +225,12 @@ namespace isx
         }
         seekToCell(inCellId, file); 
         
-        file.write((char *) &inIsValid, sizeof(bool));
+        char isValid = inIsValid ? 1 : 0;
+        file.write((char *)&isValid, sizeof(char));
         if (!file.good())
         {
             ISX_THROW(isx::ExceptionFileIO, "Error writing cell information.");
-        }        
+        } 
     }
     
     void 
@@ -345,13 +356,12 @@ namespace isx
         isize_t imageSizeInBytes = nPixels.getWidth() * nPixels.getHeight() * sizeof(float);
         isize_t samplesInBytes = m_timingInfo.getNumTimes() * sizeof(float);
         
-        isize_t headerSize = sizeof(uint32_t) + sizeof(bool) + imageSizeInBytes;
+        isize_t headerSize = sizeof(uint32_t) + sizeof(char) + imageSizeInBytes;
         isize_t cellSize = headerSize + samplesInBytes;
         
         pos += cellSize * inCellId;
 
         file.seekg(pos, std::ios_base::beg);
-        file.seekp(pos, std::ios_base::beg);
         
         uint32_t currentId;
         file.read((char *) &currentId, sizeof(uint32_t));
@@ -360,6 +370,8 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO, "Error reading cell id.");
         }
         ISX_ASSERT(currentId == (uint32_t)inCellId);
+        file.seekp(file.tellg(), std::ios_base::beg);   // Make sure write and read pointers are tied together
+
     }
     
     
