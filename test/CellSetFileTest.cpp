@@ -134,4 +134,43 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         REQUIRE(file.isCellValid(0) == true);
     }
 
+    SECTION("Write 10 cells then read it back in")
+    {
+        {
+            isx::CellSetFile file(fileName, timingInfo, spacingInfo);
+            for (size_t i = 0; i < 10; ++i)
+            {
+                file.writeCellData(i, originalImage, originalTrace);
+            }
+        }
+
+        isx::CellSetFile file(fileName);
+        std::vector<float> trace;
+
+        REQUIRE(file.isValid());
+        REQUIRE(file.getTimingInfo() == timingInfo);
+        REQUIRE(file.getSpacingInfo() == spacingInfo);
+        REQUIRE(file.numberOfCells() == 10);
+
+        for (size_t i = 0; i < 10; ++i)
+        {
+            REQUIRE(file.isCellValid(i) == true);
+
+            file.readSamples(i, trace);
+
+            isx::SpFImage_t image = file.readSegmentationImage(i);
+            float * pixels = image->getPixels();
+
+            for (isx::isize_t i = 0; i < trace.size(); ++i)
+            {
+                REQUIRE(trace[i] == originalTrace[i]);
+            }
+
+            for (isx::isize_t i = 0; i < spacingInfo.getTotalNumPixels(); ++i)
+            {
+                REQUIRE(pixels[i] == originalPixels[i]);
+            }
+        }
+    }
+
 }
