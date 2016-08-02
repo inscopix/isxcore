@@ -156,7 +156,7 @@ namespace isx
         {
             // Append cell data
             file.open(m_fileName, std::ios::binary | std::ios::app);
-            if (!file.good())
+            if (!file.is_open() || !file.good())
             {
                 ISX_THROW(isx::ExceptionFileIO,
                     "Failed to open cell set file for append: ", m_fileName);
