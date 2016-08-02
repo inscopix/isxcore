@@ -19,7 +19,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
     // Set image
     isx::Image<float> originalImage(spacingInfo, sizeof(float) * spacingInfo.getNumColumns(), 1);
     float * originalPixels = originalImage.getPixels();
-    memset(originalPixels, 0, sizeof(originalPixels));
+    memset(originalPixels, 0, sizeof(float) * originalImage.getSpacingInfo().getTotalNumPixels());
     originalPixels[0] = 1.0f;
     originalPixels[1] = 2.5f;
 
