@@ -155,7 +155,7 @@ namespace isx
         if (inCellId >= m_numCells)
         {
             // Append cell data
-            file.open(m_fileName, std::ios::binary | std::ios::app | std::ios::out);
+            file.open(m_fileName, std::ios::binary | std::ios::app | std::ios::out);    // "Append" does not imply "out" in linux so it has to be explicitly set
             if (!file.is_open() || !file.good())
             {
                 ISX_THROW(isx::ExceptionFileIO,
