@@ -79,10 +79,8 @@ namespace isx
         seekToCell(inCellId, file);      
         
         // Calculate bytes till beginning of cell data
-        SizeInPixels_t nPixels = m_spacingInfo.getNumPixels();
-        isize_t rows = nPixels.getHeight();
-        isize_t cols = nPixels.getWidth();
-        isize_t offsetInBytes = sizeof(char) + sizeof(float) * rows * cols;
+        SizeInPixels_t nPixels = m_spacingInfo.getTotalNumPixels();
+        isize_t offsetInBytes = sizeof(char) + sizeof(float) * nPixels;
         
         file.seekg(offsetInBytes, std::ios_base::cur);
         if (!file.good())
@@ -121,8 +119,8 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell segmentation image.");
         }
         
-        SizeInPixels_t nPixels = m_spacingInfo.getNumPixels();
-        isize_t cols = nPixels.getWidth();
+
+        isize_t cols = m_spacingInfo.getNumColumns();
         SpFImage_t image = std::make_shared<FImage_t>(m_spacingInfo, cols * sizeof(float), 1);
         file.read(reinterpret_cast<char*>(image->getPixels()), image->getImageSizeInBytes());
         
@@ -139,8 +137,7 @@ namespace isx
     {
         // Input validity
         isize_t inImageSizeInBytes = inSegmentationImage.getImageSizeInBytes();
-        SizeInPixels_t nPixels = m_spacingInfo.getNumPixels();
-        isize_t fImageSizeInBytes = nPixels.getWidth() * nPixels.getHeight() * sizeof(float);
+        isize_t fImageSizeInBytes = m_spacingInfo.getTotalNumPixels() * sizeof(float);
         ISX_ASSERT(inImageSizeInBytes == fImageSizeInBytes);
         
         isize_t inSamples = inData.getTimingInfo().getNumTimes();

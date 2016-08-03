@@ -87,7 +87,7 @@ public:
     ///
     bool isCellValid(isize_t inCellId);
     
-    /// Set a cell in the set to be valid/invalid 
+    /// Set a cell in the set to be valid/invalid (used for rejecting or accepting segmented cell)
     ///
     void setCellValid(isize_t inCellId, bool inIsValid);
 
