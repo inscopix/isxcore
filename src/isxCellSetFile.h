@@ -129,6 +129,27 @@ private:
     void seekToCell(isize_t inCellId, std::fstream &file);
 
 
+    /// \return the size of the cell ID in bytes (in the cell header)
+    ///
+    isize_t cellCellIdSizeInBytes();
+
+    /// \return the size of the valid/invalid flag in bytes (in the cell header)
+    ///
+    isize_t cellValiditySizeInBytes();
+
+    /// \return the size of the segmentation image in bytes (in the cell header)
+    ///
+    isize_t segmentationImageSizeInBytes();
+
+    /// \return the size of the trace in bytes (in the cell header)
+    ///
+    isize_t traceSizeInBytes();
+
+    /// \return the size of the cell header in bytes (in the cell header)
+    ///
+    isize_t cellHeaderSizeInBytes();
+
+
 };
 }
 #endif // ISX_CELL_SET_FILE_H

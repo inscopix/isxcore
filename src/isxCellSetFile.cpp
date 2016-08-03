@@ -79,8 +79,7 @@ namespace isx
         seekToCell(inCellId, file);      
         
         // Calculate bytes till beginning of cell data
-        SizeInPixels_t nPixels = m_spacingInfo.getTotalNumPixels();
-        isize_t offsetInBytes = sizeof(char) + sizeof(float) * nPixels;
+        isize_t offsetInBytes = cellValiditySizeInBytes() + segmentationImageSizeInBytes();
         
         file.seekg(offsetInBytes, std::ios_base::cur);
         if (!file.good())
@@ -90,7 +89,7 @@ namespace isx
         
         // Prepare data vector
         SpFTrace_t trace = std::make_shared<FTrace_t>(m_timingInfo);        
-        file.read(reinterpret_cast<char*>(trace->getValues()), m_timingInfo.getNumTimes() * sizeof(float));        
+        file.read(reinterpret_cast<char*>(trace->getValues()), traceSizeInBytes());        
         if (!file.good())
         {
             ISX_THROW(isx::ExceptionFileIO, "Error reading cell trace.");
@@ -111,17 +110,15 @@ namespace isx
         seekToCell(inCellId, file);    
         
         // Calculate bytes till beginning of the segmentation image
-        isize_t offsetInBytes = sizeof(char);
+        isize_t offsetInBytes = cellValiditySizeInBytes();
         
         file.seekg(offsetInBytes, std::ios_base::cur);
         if (!file.good())
         {
             ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell segmentation image.");
-        }
-        
+        }        
 
-        isize_t cols = m_spacingInfo.getNumColumns();
-        SpFImage_t image = std::make_shared<FImage_t>(m_spacingInfo, cols * sizeof(float), 1);
+        SpFImage_t image = std::make_shared<FImage_t>(m_spacingInfo, segmentationImageSizeInBytes(), 1);
         file.read(reinterpret_cast<char*>(image->getPixels()), image->getImageSizeInBytes());
         
         if (!file.good())
@@ -137,7 +134,7 @@ namespace isx
     {
         // Input validity
         isize_t inImageSizeInBytes = inSegmentationImage.getImageSizeInBytes();
-        isize_t fImageSizeInBytes = m_spacingInfo.getTotalNumPixels() * sizeof(float);
+        isize_t fImageSizeInBytes = segmentationImageSizeInBytes();
         ISX_ASSERT(inImageSizeInBytes == fImageSizeInBytes);
         
         isize_t inSamples = inData.getTimingInfo().getNumTimes();
@@ -182,7 +179,7 @@ namespace isx
         char valid = 1;
         file.write(&valid, sizeof(char));
         file.write(reinterpret_cast<char*>(inSegmentationImage.getPixels()), inImageSizeInBytes);
-        file.write(reinterpret_cast<char*>(inData.getValues()), inSamples * sizeof(float));
+        file.write(reinterpret_cast<char*>(inData.getValues()), traceSizeInBytes());
         if (!file.good())
         {
             ISX_THROW(isx::ExceptionFileIO,
@@ -289,7 +286,7 @@ namespace isx
     void 
     CellSetFile::writeHeader(bool inTruncate)
     {
-        std::ios_base::openmode mode = std::ios::binary | std::ios::in | std::ios::out;
+        std::ios_base::openmode mode = std::ios::binary | std::ios::out;
         
         if(inTruncate)
         {
@@ -324,7 +321,7 @@ namespace isx
                 "Unknown error while generating cell set header.");
         }
         
-        file.seekg(std::ios_base::beg);
+        file.seekp(std::ios_base::beg);
         file << std::setw(4) << j;
         file << '\0';
         if (!file.good())
@@ -345,15 +342,9 @@ namespace isx
         {
             ISX_THROW(isx::ExceptionFileIO,
                 "Unable to seek to cell ID ", inCellId, " in file: ", m_fileName);
-        }
+        }        
         
-        
-        SizeInPixels_t nPixels = m_spacingInfo.getNumPixels();
-        isize_t imageSizeInBytes = nPixels.getWidth() * nPixels.getHeight() * sizeof(float);
-        isize_t samplesInBytes = m_timingInfo.getNumTimes() * sizeof(float);
-        
-        isize_t headerSize = sizeof(uint32_t) + sizeof(char) + imageSizeInBytes;
-        isize_t cellSize = headerSize + samplesInBytes;
+        isize_t cellSize = cellHeaderSizeInBytes() + traceSizeInBytes();
         
         pos += cellSize * inCellId;
 
@@ -368,6 +359,40 @@ namespace isx
         ISX_ASSERT(currentId == (uint32_t)inCellId);
         file.seekp(file.tellg(), std::ios_base::beg);   // Make sure write and read pointers are tied together
 
+    }
+
+    isize_t 
+    CellSetFile::cellCellIdSizeInBytes()
+    {
+        return sizeof(uint32_t);
+    }
+
+    isize_t 
+    CellSetFile::cellValiditySizeInBytes()
+    {
+        return sizeof(char);
+    }
+
+    
+    isize_t 
+    CellSetFile::segmentationImageSizeInBytes()
+    {
+        return m_spacingInfo.getTotalNumPixels() * sizeof(float);
+    }
+
+    
+    isize_t 
+    CellSetFile::traceSizeInBytes()
+    {
+        return m_timingInfo.getNumTimes() * sizeof(float);
+    }
+
+    
+    isize_t 
+    CellSetFile::cellHeaderSizeInBytes()
+    {
+        isize_t bytes = cellCellIdSizeInBytes() +  cellValiditySizeInBytes() + segmentationImageSizeInBytes();
+        return bytes;
     }
     
     
