@@ -72,27 +72,32 @@ public:
     const isx::SpacingInfo & getSpacingInfo() const;
     
     /// Read cell data for cell ID. 
+    /// \param inCellId the cell of interest
     /// \return a shared pointer to the trace data for the input cell. 
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     SpFTrace_t readTrace(isize_t inCellId);
     
     /// \return a shared pointer to the segmentation image for the input cell
-    ///
+    /// \param inCellId the cell of interest
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     SpFImage_t readSegmentationImage(isize_t inCellId);
     
     /// Write cell data
+    /// \param inCellId the cell of interest
+    /// \param inSegmentationImage the image to write
+    /// \param inData the trace to write
     /// If cell ID already exists, it will overwrite its data. Otherwise, it will be appended
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or writing fails.
     void writeCellData(isize_t inCellId, Image<float> & inSegmentationImage, Trace<float> & inData);
     
     /// \return if the cell is valid 
-    ///
+    /// \param inCellId the cell of interest
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     bool isCellValid(isize_t inCellId);
     
     /// Set a cell in the set to be valid/invalid (used for rejecting or accepting segmented cell)
-    ///
+    /// \param inCellId the cell of interest
+    /// \param inIsValid whether to reject or accept a cell in the set
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     void setCellValid(isize_t inCellId, bool inIsValid);
 
