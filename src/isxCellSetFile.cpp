@@ -67,8 +67,8 @@ namespace isx
         return m_spacingInfo;
     }
 
-    void 
-    CellSetFile::readSamples(isize_t inCellId, std::vector<float> & ioData) 
+    SpFTrace_t 
+    CellSetFile::readTrace(isize_t inCellId)      
     {
         std::fstream file(m_fileName, std::ios::binary | std::ios_base::in);
         if (!file.good())
@@ -91,14 +91,13 @@ namespace isx
         }
         
         // Prepare data vector
-        isize_t nSamples = m_timingInfo.getNumTimes();
-        ioData.resize(nSamples);
-        
-        file.read((char *)ioData.data(), nSamples * sizeof(float));        
+        SpFTrace_t trace = std::make_shared<FTrace_t>(m_timingInfo);        
+        file.read(reinterpret_cast<char*>(trace->getValues()), m_timingInfo.getNumTimes() * sizeof(float));        
         if (!file.good())
         {
             ISX_THROW(isx::ExceptionFileIO, "Error reading cell trace.");
         }
+        return trace;
         
     }
     

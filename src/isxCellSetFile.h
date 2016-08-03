@@ -5,7 +5,7 @@
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
 #include "isxImage.h"
-
+#include "isxTrace.h"
 
 
 namespace isx
@@ -72,8 +72,8 @@ public:
     const isx::SpacingInfo & getSpacingInfo() const;
     
     /// Read cell data for cell ID. 
-    /// If cell ID is not found, an empty vector is returned
-    void readSamples(isize_t inCellId, std::vector<float> & ioData);
+    /// \return a shared pointer to the trace data for the input cell. 
+    SpFTrace_t readTrace(isize_t inCellId);
     
     /// \return a shared pointer to the segmentation image for the input cell
     ///

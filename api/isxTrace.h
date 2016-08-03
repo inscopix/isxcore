@@ -89,6 +89,14 @@ private:
 
 }; // class
 
+    /// type for trace of floats
+    ///
+    typedef Trace<float> FTrace_t;
+
+    /// shared_ptr type an trace of floats
+    ///
+    typedef std::shared_ptr<FTrace_t> SpFTrace_t;
+
 } // namespace
 
 #endif // ISX_TRACE_H
