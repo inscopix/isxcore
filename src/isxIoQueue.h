@@ -3,6 +3,7 @@
 
 #include "isxCoreFwd.h"
 #include "isxCore.h"
+#include "isxAsync.h"
 #include "isxDispatchQueue.h"
 
 #include <memory>
