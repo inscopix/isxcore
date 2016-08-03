@@ -24,11 +24,12 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
     originalPixels[1] = 2.5f;
 
     // Set data
-    std::vector<float> originalTrace(timingInfo.getNumTimes(), 0);
+    isx::Trace<float> originalTrace(timingInfo);
+    float * originalValues = originalTrace->getValues();
     float val = 0.0f;
-    for (isx::isize_t i(0); i < originalTrace.size(); ++i)
+    for (isx::isize_t i(0); i < timingInfo.getNumTimes(); ++i)
     {
-        originalTrace[i] = val;
+        originalValues[i] = val;
         val += 0.01f;
     }
 
@@ -66,27 +67,27 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         REQUIRE(file.isCellValid(0) == true);
     }
 
-    SECTION("Read samples")
+    SECTION("Read trace")
     {
         isx::CellSetFile file(fileName);
         REQUIRE(file.isValid());
         REQUIRE(file.numberOfCells() == 1);
+        
+        SpFTrace_t trace = file.readTrace(0);
+        float * values = trace->getValues();
 
-        std::vector<float> trace;
-        file.readSamples(0, trace);
-
-        REQUIRE(trace.size() == originalTrace.size());
+        REQUIRE(trace->getTimingInfo().getNumTimes() == originalTrace.getTimingInfo().getNumTimes());
 
         bool valsAreEqual = false;
 
-        for (isx::isize_t i(0); i < trace.size(); ++i)
+        for (isx::isize_t i(0); i < trace->getTimingInfo().getNumTimes(); ++i)
         {
-            if (trace[i] != originalTrace[i])
+            if (values[i] != originalValues[i])
             {
                 break;
             }
 
-            if (i == trace.size() - 1)
+            if (i == trace->getTimingInfo().getNumTimes() - 1)
             {
                 valsAreEqual = true;
             }
@@ -145,7 +146,6 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         }
 
         isx::CellSetFile file(fileName);
-        std::vector<float> trace;
 
         REQUIRE(file.isValid());
         REQUIRE(file.getTimingInfo() == timingInfo);
@@ -156,14 +156,15 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         {
             REQUIRE(file.isCellValid(i) == true);
 
-            file.readSamples(i, trace);
+            isx::SpFTrace_t trace = file.readTrace(i);
+            float * values = trace->getValues();
 
             isx::SpFImage_t image = file.readSegmentationImage(i);
             float * pixels = image->getPixels();
 
-            for (isx::isize_t i = 0; i < trace.size(); ++i)
+            for (isx::isize_t i = 0; i < trace.getTimingInfo().getNumTimes(); ++i)
             {
-                REQUIRE(trace[i] == originalTrace[i]);
+                REQUIRE(values[i] == originalValues[i]);
             }
 
             for (isx::isize_t i = 0; i < spacingInfo.getTotalNumPixels(); ++i)

@@ -81,7 +81,7 @@ public:
     
     /// Write cell data
     /// If cell ID already exists, it will overwrite its data. Otherwise, it will be appended
-    void writeCellData(isize_t inCellId, Image<float> & inSegmentationImage, const std::vector<float> & inData);
+    void writeCellData(isize_t inCellId, Image<float> & inSegmentationImage, Trace<float> & inData);
     
     /// \return if the cell is valid 
     ///

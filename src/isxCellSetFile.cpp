@@ -135,7 +135,7 @@ namespace isx
     }
     
     void 
-    CellSetFile::writeCellData(isize_t inCellId, Image<float> & inSegmentationImage, const std::vector<float> & inData)
+    CellSetFile::writeCellData(isize_t inCellId, Image<float> & inSegmentationImage, const Trace<float> & inData)
     {
         // Input validity
         isize_t inImageSizeInBytes = inSegmentationImage.getImageSizeInBytes();
@@ -143,7 +143,7 @@ namespace isx
         isize_t fImageSizeInBytes = nPixels.getWidth() * nPixels.getHeight() * sizeof(float);
         ISX_ASSERT(inImageSizeInBytes == fImageSizeInBytes);
         
-        isize_t inSamples = inData.size();
+        isize_t inSamples = inData.getTimingInfo().getNumTimes();
         isize_t fSamples = m_timingInfo.getNumTimes();
         ISX_ASSERT(inSamples == fSamples);
         
@@ -185,7 +185,7 @@ namespace isx
         char valid = 1;
         file.write(&valid, sizeof(char));
         file.write(reinterpret_cast<char*>(inSegmentationImage.getPixels()), inImageSizeInBytes);
-        file.write((char *) inData.data(), inSamples * sizeof(float));
+        file.write(reinterpret_cast<char*>(inData.getValues()), inSamples * sizeof(float));
         if (!file.good())
         {
             ISX_THROW(isx::ExceptionFileIO,
