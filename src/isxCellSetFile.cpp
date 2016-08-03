@@ -271,7 +271,6 @@ namespace isx
             }
             m_timingInfo = convertJsonToTimingInfo(j["timingInfo"]);
             m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
-            m_numCells = j["numCells"].get<isize_t>();
         }
         catch (const std::exception & error)
         {
@@ -281,6 +280,18 @@ namespace isx
         {
             ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing cell set header.");
         }
+
+        file.seekg( 0, std::ios::end);
+        std::streamoff offsetInCells = file.tellg() - m_headerOffset;
+        isize_t bytesInCells = 0;
+
+        if(offsetInCells > 0)
+        {
+            bytesInCells = (isize_t) offsetInCells;
+        }
+
+
+        m_numCells = bytesInCells / (cellHeaderSizeInBytes() + traceSizeInBytes());
     }
     
     void 
@@ -307,7 +318,6 @@ namespace isx
             j["dataType"] = "float";
             j["timingInfo"] = convertTimingInfoToJson(m_timingInfo);
             j["spacingInfo"] = convertSpacingInfoToJson(m_spacingInfo);
-            j["numCells"] = m_numCells;
             j["mosaicVersion"] = CoreVersionVector();
         }
         catch (const std::exception & error)
@@ -362,7 +372,7 @@ namespace isx
     }
 
     isize_t 
-    CellSetFile::cellCellIdSizeInBytes()
+    CellSetFile::cellIdSizeInBytes()
     {
         return sizeof(uint32_t);
     }
@@ -391,7 +401,7 @@ namespace isx
     isize_t 
     CellSetFile::cellHeaderSizeInBytes()
     {
-        isize_t bytes = cellCellIdSizeInBytes() +  cellValiditySizeInBytes() + segmentationImageSizeInBytes();
+        isize_t bytes = cellIdSizeInBytes() +  cellValiditySizeInBytes() + segmentationImageSizeInBytes();
         return bytes;
     }
     

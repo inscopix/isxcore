@@ -131,7 +131,7 @@ private:
 
     /// \return the size of the cell ID in bytes (in the cell header)
     ///
-    isize_t cellCellIdSizeInBytes();
+    isize_t cellIdSizeInBytes();
 
     /// \return the size of the valid/invalid flag in bytes (in the cell header)
     ///
