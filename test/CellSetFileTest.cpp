@@ -25,7 +25,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
 
     // Set data
     isx::Trace<float> originalTrace(timingInfo);
-    float * originalValues = originalTrace->getValues();
+    float * originalValues = originalTrace.getValues();
     float val = 0.0f;
     for (isx::isize_t i(0); i < timingInfo.getNumTimes(); ++i)
     {
@@ -73,7 +73,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         REQUIRE(file.isValid());
         REQUIRE(file.numberOfCells() == 1);
         
-        SpFTrace_t trace = file.readTrace(0);
+        isx::SpFTrace_t trace = file.readTrace(0);
         float * values = trace->getValues();
 
         REQUIRE(trace->getTimingInfo().getNumTimes() == originalTrace.getTimingInfo().getNumTimes());
@@ -162,7 +162,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
             isx::SpFImage_t image = file.readSegmentationImage(i);
             float * pixels = image->getPixels();
 
-            for (isx::isize_t i = 0; i < trace.getTimingInfo().getNumTimes(); ++i)
+            for (isx::isize_t i = 0; i < trace->getTimingInfo().getNumTimes(); ++i)
             {
                 REQUIRE(values[i] == originalValues[i]);
             }

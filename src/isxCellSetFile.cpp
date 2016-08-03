@@ -30,11 +30,6 @@ namespace isx
 
     CellSetFile::~CellSetFile()
     {
-        if (m_valid)
-        {
-            // Overwrite the header to update the total number of cells
-            writeHeader(false);
-        }
     }
 
     bool 
@@ -118,7 +113,7 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell segmentation image.");
         }        
 
-        SpFImage_t image = std::make_shared<FImage_t>(m_spacingInfo, segmentationImageSizeInBytes(), 1);
+        SpFImage_t image = std::make_shared<FImage_t>(m_spacingInfo, sizeof(float) * m_spacingInfo.getNumColumns(), 1);
         file.read(reinterpret_cast<char*>(image->getPixels()), image->getImageSizeInBytes());
         
         if (!file.good())
@@ -130,7 +125,7 @@ namespace isx
     }
     
     void 
-    CellSetFile::writeCellData(isize_t inCellId, Image<float> & inSegmentationImage, const Trace<float> & inData)
+    CellSetFile::writeCellData(isize_t inCellId, Image<float> & inSegmentationImage, Trace<float> & inData)
     {
         // Input validity
         isize_t inImageSizeInBytes = inSegmentationImage.getImageSizeInBytes();
@@ -290,8 +285,8 @@ namespace isx
             bytesInCells = (isize_t) offsetInCells;
         }
 
-
-        m_numCells = bytesInCells / (cellHeaderSizeInBytes() + traceSizeInBytes());
+        isize_t bytesPerCell = cellHeaderSizeInBytes() + traceSizeInBytes();
+        m_numCells = bytesInCells / bytesPerCell;
     }
     
     void 
