@@ -73,22 +73,27 @@ public:
     
     /// Read cell data for cell ID. 
     /// \return a shared pointer to the trace data for the input cell. 
+    /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     SpFTrace_t readTrace(isize_t inCellId);
     
     /// \return a shared pointer to the segmentation image for the input cell
     ///
+    /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     SpFImage_t readSegmentationImage(isize_t inCellId);
     
     /// Write cell data
     /// If cell ID already exists, it will overwrite its data. Otherwise, it will be appended
+    /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or writing fails.
     void writeCellData(isize_t inCellId, Image<float> & inSegmentationImage, Trace<float> & inData);
     
     /// \return if the cell is valid 
     ///
+    /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     bool isCellValid(isize_t inCellId);
     
     /// Set a cell in the set to be valid/invalid (used for rejecting or accepting segmented cell)
     ///
+    /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     void setCellValid(isize_t inCellId, bool inIsValid);
 
 
@@ -121,11 +126,14 @@ private:
     /// Write the header containing information about the cell set.
     ///
     /// \param inTruncate - If true, the file will be truncated before writing the file.
+    /// \throw  isx::ExceptionFileIO    If writing the cell set file fails.
+    /// \throw  isx::ExceptionDataIO    If formatting the cell set data fails.
     void writeHeader(bool inTruncate);
     
     /// Seek to a specific cell in the file
     /// \param inCellId the cell ID
     /// \param file the file stream to use
+    /// \throw  isx::ExceptionFileIO    If seeking to a unexistent cell or reading fails.
     void seekToCell(isize_t inCellId, std::fstream &file);
 
 
