@@ -50,14 +50,16 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
 
     SECTION("Constructor for existing file")
     {
-        isx::CellSetFile file(fileName);
-        REQUIRE(file.isValid());
-        REQUIRE(file.numberOfCells() == 0);
+        isx::CellSetFile newFile(fileName, timingInfo, spacingInfo);
+        REQUIRE(newFile.isValid());
+        isx::CellSetFile existingFile(fileName);
+        REQUIRE(existingFile.isValid());
+        REQUIRE(existingFile.numberOfCells() == 0);
     }
 
     SECTION("Write cell data")
     {
-        isx::CellSetFile file(fileName);
+        isx::CellSetFile file(fileName, timingInfo, spacingInfo);
         REQUIRE(file.isValid());
         REQUIRE(file.numberOfCells() == 0);        
 
@@ -69,8 +71,9 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
 
     SECTION("Read trace")
     {
-        isx::CellSetFile file(fileName);
+        isx::CellSetFile file(fileName, timingInfo, spacingInfo);
         REQUIRE(file.isValid());
+        file.writeCellData(0, originalImage, originalTrace);  
         REQUIRE(file.numberOfCells() == 1);
         
         isx::SpFTrace_t trace = file.readTrace(0);
@@ -98,8 +101,9 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
 
     SECTION("Read segmentation image")
     {
-        isx::CellSetFile file(fileName);
+        isx::CellSetFile file(fileName, timingInfo, spacingInfo);
         REQUIRE(file.isValid());
+        file.writeCellData(0, originalImage, originalTrace);  
         REQUIRE(file.numberOfCells() == 1);
 
         isx::SpFImage_t im = file.readSegmentationImage(0);
@@ -125,8 +129,9 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
 
     SECTION("Validate/Invalidate cell")
     {
-        isx::CellSetFile file(fileName);
+        isx::CellSetFile file(fileName, timingInfo, spacingInfo);
         REQUIRE(file.isValid());
+        file.writeCellData(0, originalImage, originalTrace);  
         REQUIRE(file.numberOfCells() == 1);
         REQUIRE(file.isCellValid(0) == true);
         file.setCellValid(0, false);
