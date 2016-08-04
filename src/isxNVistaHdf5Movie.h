@@ -5,8 +5,10 @@
 #include "isxCoreFwd.h"
 #include "isxHdf5Movie.h"
 #include "isxVideoFrame.h"
+#include "isxMutex.h"
 
 #include <memory>
+#include <map>
 
 namespace isx
 {
@@ -51,6 +53,9 @@ public:
 
     void
     getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback) override;
+
+    void
+    cancelPendingReads() override;
 
     const isx::TimingInfo &
     getTimingInfo() const override;
@@ -115,6 +120,15 @@ private:
     /// \return The HDF5 movie file index associated with a frame number.
     ///
     isize_t getMovieIndex(isize_t inFrameNumber);
+    
+    /// remove read request from our pending reads
+    /// \param inReadRequestId Id of request to remove
+    void
+    unregisterReadRequest(uint64_t inReadRequestId);
+    
+    uint64_t m_readRequestCount = 0;
+    isx::Mutex m_pendingReadsMutex;
+    std::map<uint64_t, SpAsyncTaskHandle_t> m_pendingReads;
 };
 
 typedef std::shared_ptr<NVistaHdf5Movie>  SpNVistaHdf5Movie_t;

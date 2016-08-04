@@ -3,8 +3,12 @@
 
 #include "isxWritableMovie.h"
 #include "isxMosaicMovieFile.h"
+#include "isxAsyncTaskHandle.h"
+#include "isxMutex.h"
 
 #include <memory>
+#include <map>
+
 
 namespace isx
 {
@@ -25,6 +29,9 @@ public:
     ///
     /// This creates a valid c++ object but an invalid movie.
     MosaicMovie();
+
+    /// Destructor
+    ~MosaicMovie();
 
     /// Read constructor.
     ///
@@ -62,6 +69,8 @@ public:
 
     void getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback) override;
 
+    void cancelPendingReads() override;
+
     void writeFrame(const SpU16VideoFrame_t & inVideoFrame) override;
 
     const isx::TimingInfo & getTimingInfo() const override;
@@ -73,13 +82,19 @@ public:
     void serialize(std::ostream & strm) const override;
 
 private:
-
+    /// remove read request from our pending reads
+    /// \param inReadRequestId Id of request to remove
+    void
+    unregisterReadRequest(uint64_t inReadRequestId);
+    
     /// True if the movie file is valid, false otherwise.
     bool m_valid;
 
     /// The shared pointer to the movie file that stores data.
     std::shared_ptr<MosaicMovieFile> m_file;
-
+    uint64_t m_readRequestCount = 0;
+    isx::Mutex m_pendingReadsMutex;
+    std::map<uint64_t, SpAsyncTaskHandle_t> m_pendingReads;
 };
 
 }

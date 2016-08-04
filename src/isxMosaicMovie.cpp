@@ -104,6 +104,8 @@ MosaicMovie::MosaicMovie(
     m_valid = true;
 }
 
+MosaicMovie::~MosaicMovie(){}
+
 bool
 MosaicMovie::isValid() const
 {
@@ -144,32 +146,48 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
     // Only get a weak pointer to this, so that we don't bother reading
     // if this has been deleted when the read gets executed.
     std::weak_ptr<MosaicMovie> weakThis = shared_from_this();
-    IoQueue::instance()->enqueue(
-        IoQueue::IoTask(
-            [weakThis, this, inFrameNumber, inCallback]()
+    
+    uint64_t readRequestId = 0;
+    {
+        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
+        readRequestId = m_readRequestCount++;
+    }
+
+    auto readIoTask = std::make_shared<IoTask>(
+        [weakThis, this, inFrameNumber, inCallback]()
+        {
+            auto sharedThis = weakThis.lock();
+            if (sharedThis)
             {
-                std::shared_ptr<MosaicMovie> sharedThis = weakThis.lock();
-                if (sharedThis)
-                {
-                    inCallback(m_file->readFrame(inFrameNumber));
-                }
-            },
-            [inCallback](AsyncTaskStatus inStatus)
-            {
-                if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
-                {
-                    ISX_LOG_ERROR("An exception occurred while reading a frame from a MosaicMovie file.");
-                    // TODO sweet : do we really want to process a frame
-                    // with all zeros if the read throws an exception?
-                    inCallback(SpU16VideoFrame_t());
-                }
-                else if (inStatus != AsyncTaskStatus::COMPLETE)
-                {
-                    ISX_LOG_ERROR("An error occurred while reading a frame from a MosaicMovie file.");
-                }
+                inCallback(m_file->readFrame(inFrameNumber));
             }
-        )
+        },
+        [weakThis, this, readRequestId, inCallback](AsyncTaskStatus inStatus)
+        {
+            auto sharedThis = weakThis.lock();
+            if (!sharedThis)
+            {
+                return;
+            }
+
+            unregisterReadRequest(readRequestId);
+
+            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
+            {
+                ISX_LOG_ERROR("An exception occurred while reading a frame from a MosaicMovie file.");
+                // aschildan 8/4/2016:
+                // calling callback even if an error or exception occurred
+                // because the client of this method may be waiting for it.
+                inCallback(SpU16VideoFrame_t());
+            }
+            else if (inStatus != AsyncTaskStatus::COMPLETE)
+            {
+                ISX_LOG_ERROR("An error occurred while reading a frame from a MosaicMovie file.");
+            }
+        }
     );
+    m_pendingReads[readRequestId] = readIoTask;
+    readIoTask->schedule();
 }
 
 void
@@ -180,6 +198,24 @@ MosaicMovie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
 }
 
 void
+MosaicMovie::unregisterReadRequest(uint64_t inReadRequestId)
+{
+    ScopedMutex locker(m_pendingReadsMutex, "unregisterPendingRead");
+    m_pendingReads.erase(inReadRequestId);
+}
+    
+void
+MosaicMovie::cancelPendingReads()
+{
+    ScopedMutex locker(m_pendingReadsMutex, "cancelPendingReads");
+    for (auto & pr: m_pendingReads)
+    {
+        pr.second->cancel();
+    }
+    m_pendingReads.clear();
+}
+
+void
 MosaicMovie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
 {
     // Get a new shared pointer to the file, so we can guarantee the write.
@@ -187,24 +223,22 @@ MosaicMovie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("writeFrame");
-    IoQueue::instance()->enqueue(
-        IoQueue::IoTask(
-            [file, inVideoFrame]()
+    auto writeIoTask = std::make_shared<IoTask>(
+        [file, inVideoFrame]()
+        {
+            file->writeFrame(inVideoFrame);
+        },
+        [&cv, &mutex](AsyncTaskStatus inStatus)
+        {
+            if (inStatus != AsyncTaskStatus::COMPLETE)
             {
-                file->writeFrame(inVideoFrame);
-            },
-            [&cv, &mutex](AsyncTaskStatus inStatus)
-            {
-                if (inStatus != AsyncTaskStatus::COMPLETE)
-                {
-                    ISX_LOG_ERROR("An error occurred while writing a frame to a MosaicMovieFile.");
-                }
-                mutex.lock("writeFrame finished");  // will only be able to take lock when client reaches cv.waitForMs
-                mutex.unlock();
-                cv.notifyOne();
+                ISX_LOG_ERROR("An error occurred while writing a frame to a MosaicMovieFile.");
             }
-        )
-    );
+            mutex.lock("writeFrame finished");  // will only be able to take lock when client reaches cv.waitForMs
+            mutex.unlock();
+            cv.notifyOne();
+        });
+    writeIoTask->schedule();
     cv.wait(mutex);
     mutex.unlock();
 }

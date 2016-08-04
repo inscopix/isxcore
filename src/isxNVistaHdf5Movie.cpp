@@ -79,41 +79,57 @@ void
 NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
     WpNVistaHdf5Movie_t weakThis = shared_from_this();
-    IoQueue::instance()->enqueue(
-        IoQueue::IoTask(
-            [weakThis, this, inFrameNumber, inCallback]()
+    
+    uint64_t readRequestId = 0;
+    {
+        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
+        readRequestId = m_readRequestCount++;
+    }
+
+    auto readIoTask = std::make_shared<IoTask>(
+        [weakThis, this, inFrameNumber, inCallback]()
+        {
+            auto sharedThis = weakThis.lock();
+            if (sharedThis)
             {
-                SpNVistaHdf5Movie_t sharedThis = weakThis.lock();
-                if (sharedThis)
-                {
-                    inCallback(getFrameInternal(inFrameNumber));
-                }
-            },
-            [inCallback](AsyncTaskStatus inStatus)
-            {
-                switch (inStatus)
-                {
-                    case AsyncTaskStatus::ERROR_EXCEPTION:
-                        ISX_LOG_ERROR("An exception occurred while reading a frame from an NVistaHdf5Movie file.");
-                        inCallback(SpU16VideoFrame_t());
-                        break;
-
-                    case AsyncTaskStatus::UNKNOWN_ERROR:
-                        ISX_LOG_ERROR("An error occurred while reading a frame from an NVistaHdf5Movie file");
-                        inCallback(SpU16VideoFrame_t());
-                        break;
-
-                    case AsyncTaskStatus::CANCELLED:
-                        ISX_LOG_ERROR("getFrameAsync request cancelled.");
-                        break;
-
-                    case AsyncTaskStatus::COMPLETE:
-                    case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
-                    case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
-                        break;
-                }
+                inCallback(getFrameInternal(inFrameNumber));
             }
-    ));
+        },
+        [weakThis, this, readRequestId, inCallback](AsyncTaskStatus inStatus)
+        {
+            auto sharedThis = weakThis.lock();
+            if (!sharedThis)
+            {
+                return;
+            }
+
+            unregisterReadRequest(readRequestId);
+
+            switch (inStatus)
+            {
+                case AsyncTaskStatus::ERROR_EXCEPTION:
+                    ISX_LOG_ERROR("An exception occurred while reading a frame from an NVistaHdf5Movie file.");
+                    inCallback(SpU16VideoFrame_t());
+                    break;
+
+                case AsyncTaskStatus::UNKNOWN_ERROR:
+                    ISX_LOG_ERROR("An error occurred while reading a frame from an NVistaHdf5Movie file");
+                    inCallback(SpU16VideoFrame_t());
+                    break;
+
+                case AsyncTaskStatus::CANCELLED:
+                    ISX_LOG_ERROR("getFrameAsync request cancelled.");
+                    break;
+
+                case AsyncTaskStatus::COMPLETE:
+                case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
+                case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
+                    break;
+            }
+        }
+    );
+    m_pendingReads[readRequestId] = readIoTask;
+    readIoTask->schedule();
 }
 
 void
@@ -123,6 +139,24 @@ NVistaHdf5Movie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback
     return getFrameAsync(frameNumber, inCallback);
 }
 
+void
+NVistaHdf5Movie::unregisterReadRequest(uint64_t inReadRequestId)
+{
+    ScopedMutex locker(m_pendingReadsMutex, "unregisterPendingRead");
+    m_pendingReads.erase(inReadRequestId);
+}
+
+void
+NVistaHdf5Movie::cancelPendingReads()
+{
+    ScopedMutex locker(m_pendingReadsMutex, "cancelPendingReads");
+    for (auto & pr: m_pendingReads)
+    {
+        pr.second->cancel();
+    }
+    m_pendingReads.clear();
+}
+    
 const isx::TimingInfo &
 NVistaHdf5Movie::getTimingInfo() const
 {

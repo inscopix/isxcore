@@ -19,13 +19,15 @@ TEST_CASE("IoQueue", "[core]") {
     SECTION("dispatch task to IoQueue") {
         bool taskRan = false;
         isx::AsyncTaskStatus status = isx::AsyncTaskStatus::UNKNOWN_ERROR;
-        isx::IoQueue::instance()->enqueue(isx::IoQueue::IoTask([&]()
-        {
-            taskRan = true;
-        },
-        [&](isx::AsyncTaskStatus inStatus){
-            status = inStatus;
-        }));
+        auto ioTask = std::make_shared<isx::IoTask>(
+            [&]()
+            {
+                taskRan = true;
+            },
+            [&](isx::AsyncTaskStatus inStatus){
+                status = inStatus;
+            });
+        ioTask->schedule();
         for (int i = 0; i < 250; ++i)
         {
             if (taskRan)
