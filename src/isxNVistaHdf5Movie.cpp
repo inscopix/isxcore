@@ -118,7 +118,7 @@ NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallba
                     break;
 
                 case AsyncTaskStatus::CANCELLED:
-                    ISX_LOG_ERROR("getFrameAsync request cancelled.");
+                    ISX_LOG_INFO("getFrameAsync request cancelled.");
                     break;
 
                 case AsyncTaskStatus::COMPLETE:

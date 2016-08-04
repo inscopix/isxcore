@@ -172,17 +172,28 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 
             unregisterReadRequest(readRequestId);
 
-            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
+            switch (inStatus)
             {
-                ISX_LOG_ERROR("An exception occurred while reading a frame from a MosaicMovie file.");
-                // aschildan 8/4/2016:
-                // calling callback even if an error or exception occurred
-                // because the client of this method may be waiting for it.
-                inCallback(SpU16VideoFrame_t());
-            }
-            else if (inStatus != AsyncTaskStatus::COMPLETE)
-            {
-                ISX_LOG_ERROR("An error occurred while reading a frame from a MosaicMovie file.");
+                case AsyncTaskStatus::ERROR_EXCEPTION:
+                    ISX_LOG_ERROR("An exception occurred while reading a frame from a MosaicMovie file.");
+                    // aschildan 8/4/2016:
+                    // calling callback even if an error or exception occurred
+                    // because the client of this method may be waiting for it.
+                    inCallback(SpU16VideoFrame_t());
+                    break;
+
+                case AsyncTaskStatus::UNKNOWN_ERROR:
+                    ISX_LOG_ERROR("An error occurred while reading a frame from a MosaicMovie file");
+                    break;
+
+                case AsyncTaskStatus::CANCELLED:
+                    ISX_LOG_INFO("getFrameAsync request cancelled.");
+                    break;
+
+                case AsyncTaskStatus::COMPLETE:
+                case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
+                case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
+                    break;
             }
         }
     );
