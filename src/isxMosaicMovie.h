@@ -84,7 +84,8 @@ public:
 private:
     /// remove read request from our pending reads
     /// \param inReadRequestId Id of request to remove
-    void
+    /// \return AsyncTaskHandle for the removed read request
+    SpAsyncTaskHandle_t
     unregisterReadRequest(uint64_t inReadRequestId);
     
     /// True if the movie file is valid, false otherwise.

@@ -102,13 +102,20 @@ NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallba
             {
                 return;
             }
-
-            unregisterReadRequest(readRequestId);
+            
+            auto rt = unregisterReadRequest(readRequestId);
 
             switch (inStatus)
             {
                 case AsyncTaskStatus::ERROR_EXCEPTION:
-                    ISX_LOG_ERROR("An exception occurred while reading a frame from an NVistaHdf5Movie file.");
+                    try
+                    {
+                        std::rethrow_exception(rt->getExceptionPtr());
+                    }
+                    catch(std::exception & e)
+                    {
+                        ISX_LOG_ERROR("Exception occurred reading from NVistaHdf5Movie: ", e.what());
+                    }
                     inCallback(SpU16VideoFrame_t());
                     break;
 
@@ -139,11 +146,13 @@ NVistaHdf5Movie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback
     return getFrameAsync(frameNumber, inCallback);
 }
 
-void
+SpAsyncTaskHandle_t
 NVistaHdf5Movie::unregisterReadRequest(uint64_t inReadRequestId)
 {
     ScopedMutex locker(m_pendingReadsMutex, "unregisterPendingRead");
+    auto ret = m_pendingReads[inReadRequestId];
     m_pendingReads.erase(inReadRequestId);
+    return ret;
 }
 
 void
