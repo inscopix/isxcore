@@ -86,6 +86,8 @@ public:
     void initializeFromXml()
     {
         isx::RecordingXml xml(m_path);
+
+        /// TODO salpert 8/5/2016 - XML could contain TIFF filenames. We need to verify that these are actually hdf5
         std::vector<std::string> hdf5files = xml.getFileNames();
 
         if (hdf5files.empty())
@@ -110,8 +112,14 @@ public:
                 "Failure caused by H5 File operations.\n", error.getDetailMsg());
         }
         
+        // Get timingInfo and spacingInfo and use it to initialize movie
+        bool bTiming, bSpacing;
+        bTiming = xml.hasTimingInfo();
+        bSpacing = xml.hasSpacingInfo();
+        TimingInfo ti = xml.getTimingInfo();
+        SpacingInfo si = xml.getSpacingInfo();
 
-        m_movie = std::make_shared<NVistaHdf5Movie>(m_fileHandles);
+        m_movie = std::make_shared<NVistaHdf5Movie>(m_fileHandles, ti, si, bTiming, bSpacing);
 
         // no exception until here --> this is a valid file
         m_isValid = true;

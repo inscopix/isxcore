@@ -5,7 +5,6 @@
 #include "isxCoreFwd.h"
 #include "isxHdf5Movie.h"
 #include "isxVideoFrame.h"
-
 #include <memory>
 
 namespace isx
@@ -25,12 +24,20 @@ public:
     /// Construct a new movie from one HDF5 dataset.
     ///
     /// \param inHdf5FileHandle opaque HDF5 file handles
-    NVistaHdf5Movie(const SpHdf5FileHandle_t & inHdf5FileHandle);
+    NVistaHdf5Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, 
+        const TimingInfo & inTimingInfo = TimingInfo(),
+        const SpacingInfo & inSpacingInfo = SpacingInfo(), 
+        bool inTimingValid = false, 
+        bool inSpacingValid = false);
 
     /// Construct a new movie from vector of existing HDF5 datasets
     ///
     /// \param inHdf5FileHandles vector of opaque HDF5 file handles
-    NVistaHdf5Movie(const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles);
+    NVistaHdf5Movie(const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
+        const TimingInfo & inTimingInfo = TimingInfo(),
+        const SpacingInfo & inSpacingInfo = SpacingInfo(),
+        bool inTimingValid = false,
+        bool inSpacingValid = false);
 
     /// Destructor
     ///
@@ -83,7 +90,19 @@ private:
 
     /// Handles most of the initialization.
     ///
-    void initialize(const std::vector<SpH5File_t> & inHdf5Files);
+    void initialize(const std::vector<SpH5File_t> & inHdf5Files,
+        const TimingInfo & inTimingInfo,
+        const SpacingInfo & inSpacingInfo,
+        bool inTimingValid,
+        bool inSpacingValid);
+
+    /// Initialize timing info from the HDF5
+    ///
+    void initTimingInfo(const std::vector<SpH5File_t> & inHdf5Files);
+
+    /// Initialize timing info from the HDF5
+    ///
+    void initSpacingInfo(const std::vector<SpH5File_t> & inHdf5Files);
 
     /// Reads a frame directly from the associated file.
     ///

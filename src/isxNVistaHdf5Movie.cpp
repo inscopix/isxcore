@@ -19,21 +19,31 @@ NVistaHdf5Movie::NVistaHdf5Movie()
 }
 
 NVistaHdf5Movie::NVistaHdf5Movie(
-    const SpHdf5FileHandle_t & inHdf5FileHandle)
+    const SpHdf5FileHandle_t & inHdf5FileHandle,
+    const TimingInfo & inTimingInfo,
+    const SpacingInfo & inSpacingInfo,
+    bool inTimingValid,
+    bool inSpacingValid)
 {
     std::vector<SpH5File_t> files(1, inHdf5FileHandle->get());
-    initialize(files);
+
+    initialize(files, inTimingInfo, inSpacingInfo, inTimingValid, inSpacingValid);
 }
 
 NVistaHdf5Movie::NVistaHdf5Movie(
-    const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles)
+    const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
+    const TimingInfo & inTimingInfo,
+    const SpacingInfo & inSpacingInfo,
+    bool inTimingValid,
+    bool inSpacingValid)
 {
     std::vector<SpH5File_t> files;
     for (isize_t i(0); i < inHdf5FileHandles.size(); ++i)
     {
         files.push_back(inHdf5FileHandles[i]->get());
     }
-    initialize(files);
+
+    initialize(files, inTimingInfo, inSpacingInfo, inTimingValid, inSpacingValid);
 }
 
 NVistaHdf5Movie::~NVistaHdf5Movie()
@@ -158,7 +168,11 @@ NVistaHdf5Movie::serialize(std::ostream& strm) const
 
 void
 NVistaHdf5Movie::initialize(
-    const std::vector<SpH5File_t> & inHdf5Files)
+    const std::vector<SpH5File_t> & inHdf5Files,
+    const TimingInfo & inTimingInfo,
+    const SpacingInfo & inSpacingInfo,
+    bool inTimingValid,
+    bool inSpacingValid)
 {
     ISX_ASSERT(inHdf5Files.size());
 
@@ -182,6 +196,31 @@ NVistaHdf5Movie::initialize(
         m_cumulativeFrames.push_back(numFramesAccum);
     }
 
+    if (inTimingValid)
+    {
+        m_timingInfo = inTimingInfo;
+    }
+    else
+    {
+        initTimingInfo(inHdf5Files);
+    }
+
+    if (inSpacingValid)
+    {
+        m_spacingInfo = inSpacingInfo;
+    }
+    else
+    {
+        initSpacingInfo(inHdf5Files);
+    }
+
+    m_valid = true;
+    
+}
+
+void
+NVistaHdf5Movie::initTimingInfo(const std::vector<SpH5File_t> & inHdf5Files)
+{
     // TODO michele 2016/07/08 : time since epoch comes from host machine and frame rate 
     // is calculated, so these values are not what we really want. we should want to 
     // pull these from the xml eventually
@@ -190,16 +229,19 @@ NVistaHdf5Movie::initialize(
         // If we cannot read the timing info, use default values
         Time start;                       // Default to Unix epoch
         DurationInSeconds step(50, 1000); // Default to 20Hz
-        m_timingInfo = TimingInfo(start, step, numFramesAccum);
+        m_timingInfo = TimingInfo(start, step, m_cumulativeFrames[m_cumulativeFrames.size() - 1]);
         DurationInSeconds gstep = m_timingInfo.getStep();
-    }
+    }    
+}
 
+
+void
+NVistaHdf5Movie::initSpacingInfo(const std::vector<SpH5File_t> & inHdf5Files)
+{
     if (readSpacingInfo(inHdf5Files) == false)
     {
         m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
     }
-
-    m_valid = true;
 }
 
 SpU16VideoFrame_t
