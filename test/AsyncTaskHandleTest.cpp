@@ -1,4 +1,6 @@
 #include "isxCore.h"
+#include "isxAsync.h"
+#include "isxAsyncTask.h"
 #include "isxCoreFwd.h"
 #include "isxAsyncTaskHandle.h"
 #include "isxConditionVariable.h"
@@ -20,17 +22,17 @@ TEST_CASE("AsyncTaskHandle", "[core]") {
     SECTION("exception on worker") {
         bool taskRanUpToException = false;
         isx::AsyncTaskStatus status = isx::AsyncTaskStatus::COMPLETE;
-        isx::AsyncTaskHandle::ProgressCB_t progressCB;
-        isx::AsyncTaskHandle::FinishedCB_t finishedCB;
+        isx::AsyncProgressCB_t progressCB;
+        isx::AsyncFinishedCB_t finishedCB;
 
-        isx::SpAsyncTaskHandle_t asyncTask = std::make_shared<isx::AsyncTaskHandle>(
-            [&](isx::AsyncTaskHandle::CheckInCB_t){
+        isx::SpAsyncTaskHandle_t asyncTask = std::make_shared<isx::AsyncTask>(
+            [&](isx::AsyncCheckInCB_t){
                 taskRanUpToException = true;
                 ISX_THROW(isx::Exception, "Expected: exception on worker.");
                 return isx::AsyncTaskStatus::COMPLETE;
             }, progressCB, finishedCB);
 
-        asyncTask->process();
+        asyncTask->schedule();
         
         for (int i = 0; i < 250; ++i)
         {
