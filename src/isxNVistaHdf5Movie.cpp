@@ -135,7 +135,11 @@ NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallba
             }
         }
     );
-    m_pendingReads[readRequestId] = readIoTask;
+    
+    {
+        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
+        m_pendingReads[readRequestId] = readIoTask;
+    }
     readIoTask->schedule();
 }
 
