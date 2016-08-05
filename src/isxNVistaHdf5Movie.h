@@ -24,6 +24,10 @@ public:
     /// Construct a new movie from one HDF5 dataset.
     ///
     /// \param inHdf5FileHandle opaque HDF5 file handles
+    /// \param inTimingInfo the timing info for the movie (from external source such as xml)
+    /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
+    /// \param inTimingValid whether the provided timing info is valid
+    /// \param inSpacingValid whether the provided spacing info is valid
     NVistaHdf5Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, 
         const TimingInfo & inTimingInfo = TimingInfo(),
         const SpacingInfo & inSpacingInfo = SpacingInfo(), 
@@ -33,6 +37,10 @@ public:
     /// Construct a new movie from vector of existing HDF5 datasets
     ///
     /// \param inHdf5FileHandles vector of opaque HDF5 file handles
+    /// \param inTimingInfo the timing info for the movie (from external source such as xml)
+    /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
+    /// \param inTimingValid whether the provided timing info is valid
+    /// \param inSpacingValid whether the provided spacing info is valid
     NVistaHdf5Movie(const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
         const TimingInfo & inTimingInfo = TimingInfo(),
         const SpacingInfo & inSpacingInfo = SpacingInfo(),
@@ -89,7 +97,11 @@ private:
     std::vector<isize_t> m_cumulativeFrames;
 
     /// Handles most of the initialization.
-    ///
+    /// \param inHdf5Files List of files containing the movie data
+    /// \param inTimingInfo the timing info for the movie (from external source such as xml)
+    /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
+    /// \param inTimingValid  whether the provided timing info is valid
+    /// \param inSpacingValid whether the provided spacing info is valid
     void initialize(const std::vector<SpH5File_t> & inHdf5Files,
         const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo,
