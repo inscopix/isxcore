@@ -1,28 +1,31 @@
-#include "isxAsyncTaskHandle.h"
+#include "isxAsync.h"
+#include "isxAsyncTask.h"
 #include "isxDispatchQueue.h"
 
 namespace isx
 {
-AsyncTaskHandle::AsyncTaskHandle() {}
+AsyncTask::AsyncTask() {}
 
-AsyncTaskHandle::AsyncTaskHandle(AsyncTask_t inTask, ProgressCB_t inProgressCB, FinishedCB_t inFinishedCB)
+AsyncTask::AsyncTask(AsyncFunc_t inTask, AsyncProgressCB_t inProgressCB, AsyncFinishedCB_t inFinishedCB)
 : m_task(inTask)
 , m_progressCB(inProgressCB)
 , m_finishedCB(inFinishedCB)
 {}
 
+AsyncTask::~AsyncTask() {}
+
 void 
-AsyncTaskHandle::cancel() 
+AsyncTask::cancel() 
 {
     m_cancelPending = true;
 }
 
 void 
-AsyncTaskHandle::process() 
+AsyncTask::schedule() 
 {
     WpAsyncTaskHandle_t weakThis = shared_from_this();
 
-    CheckInCB_t ci =[weakThis, this](float inProgress)
+    AsyncCheckInCB_t ci =[weakThis, this](float inProgress)
     {
         SpAsyncTaskHandle_t sharedThis = weakThis.lock();
         if (!sharedThis)
@@ -71,15 +74,21 @@ AsyncTaskHandle::process()
 }
 
 AsyncTaskStatus
-AsyncTaskHandle::getTaskStatus() const
+AsyncTask::getTaskStatus() const
 {
     return m_taskStatus;
 }
 
 std::exception_ptr
-AsyncTaskHandle::getExceptionPtr() const
+AsyncTask::getExceptionPtr() const
 {
     return m_exception;
+}
+
+SpAsyncTaskHandle_t 
+CreateAsyncTask(AsyncFunc_t inTask, AsyncProgressCB_t inProgressCB, AsyncFinishedCB_t inFinishedCB)
+{
+    return std::make_shared<AsyncTask>(inTask, inProgressCB, inFinishedCB);
 }
     
 } // namespace isx

@@ -138,6 +138,15 @@ private:
     isize_t m_numChannels = 0;
 };
 
+
+    /// type for image of floats
+    ///
+    typedef Image<float> FImage_t;
+
+    /// shared_ptr type an image of floats
+    ///
+    typedef std::shared_ptr<FImage_t> SpFImage_t;
+
 } // namespace isx
 
 #endif // def ISX_IMAGE_H
