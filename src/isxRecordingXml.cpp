@@ -47,40 +47,41 @@ namespace isx
                         {
                             while (reader.readNextStartElement())
                             {
-                                name = reader.name();
-                                if (name == "width")
+                                QXmlStreamAttributes attrs = reader.attributes();
+
+                                if (attrs.value("name") == "width")
                                 {
                                     width = reader.readElementText();
                                 }
-                                else if (name == "height")
+                                else if (attrs.value("name") == "height")
                                 {
                                     height = reader.readElementText();
                                 }
-                                else if (name == "left")
+                                else if (attrs.value("name") == "left")
                                 {
                                     left = reader.readElementText();
                                 }
-                                else if (name == "top")
+                                else if (attrs.value("name") == "top")
                                 {
                                     top = reader.readElementText();
                                 }
-                                else if (name == "downsample")
+                                else if (attrs.value("name") == "downsample")
                                 {
                                     downsample = reader.readElementText();
                                 }
-                                else if (name == "fps")
+                                else if (attrs.value("name") == "fps")
                                 {
                                     fps = reader.readElementText();
                                 }
-                                else if (name == "frames")
+                                else if (attrs.value("name") == "frames")
                                 {
                                     frames = reader.readElementText();
                                 }
-                                else if (name == "record_start")
+                                else if (attrs.value("name") == "record_start")
                                 {
                                     start = reader.readElementText();
                                 }                           
-                                /*else if (name == "dropped")
+                                /*else if (attrs.value("name") == "dropped")
                                 {
                                     droppedFrames = reader.readElementText();
                                 } */                               
@@ -198,13 +199,13 @@ namespace isx
             {
                 fraction = inFps.section(".", -1, -1);            
                 int numDigits = fraction.size();
-                den = (isize_t) numDigits * 10;
+                den = (isize_t) std::pow(10, numDigits);
                 fnum = fraction.toULongLong();
             }
 
             isize_t inum = integer.toULongLong() * den;            
             isize_t num = inum + fnum;
-            step = DurationInSeconds(num, den);
+            step = DurationInSeconds(num, den).getInverse(); 
 
             // Convert number of frames
             numTimes = inNumFrames.toULongLong();
