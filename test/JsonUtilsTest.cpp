@@ -1,0 +1,106 @@
+#include "isxJsonUtils.h"
+#include "catch.hpp"
+#include "isxTest.h"
+
+#include <stdio.h>
+
+TEST_CASE("JsonUtilsTest", "[core-internal]")
+{
+    std::string movieFileName = g_resources["testDataPath"] + "/movie.isxd";
+    std::remove(movieFileName.c_str());
+
+    SECTION("Convert a movie data set to json")
+    {
+        isx::SpDataSet_t dataSet = std::make_shared<isx::DataSet>(
+                "myDataSet", isx::DataSet::Type::MOVIE, movieFileName);
+
+        isx::json jsonObject = isx::convertDataSetToJson(dataSet);
+        std::string type = jsonObject["type"];
+        isx::DataSet::Type dataSetType = isx::DataSet::Type(isx::isize_t(jsonObject["dataSetType"]));
+        std::string fileName = jsonObject["fileName"];
+
+        REQUIRE(type == "DataSet");
+        REQUIRE(dataSetType == isx::DataSet::Type::MOVIE);
+        REQUIRE(fileName == movieFileName);
+    }
+
+    SECTION("Convert json to a movie data set")
+    {
+        isx::json jsonObject;
+        jsonObject["type"] = "DataSet";
+        jsonObject["name"] = "myDataSet";
+        jsonObject["dataSetType"] = isx::isize_t(isx::DataSet::Type::MOVIE);
+        jsonObject["fileName"] = movieFileName;
+
+        isx::SpDataSet_t dataSet = isx::convertJsonToDataSet(jsonObject);
+
+        REQUIRE(dataSet->isValid());
+        REQUIRE(dataSet->getName() == "myDataSet");
+        REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
+        REQUIRE(dataSet->getFileName() == movieFileName);
+    }
+
+    SECTION("Convert an empty group to json")
+    {
+        std::string name = "myGroup";
+        isx::SpGroup_t group = std::make_shared<isx::Group>(name);
+
+        isx::json jsonObject = isx::convertGroupToJson(group);
+
+        std::string jsonType = jsonObject["type"];
+        std::string jsonName = jsonObject["name"];
+        std::vector<isx::json> jsonGroups = jsonObject["groups"];
+        std::vector<isx::json> jsonDataSets = jsonObject["dataSets"];
+        REQUIRE(jsonType == "Group");
+        REQUIRE(jsonName == name);
+        REQUIRE(jsonGroups.empty());
+        REQUIRE(jsonDataSets.empty());
+    }
+
+    SECTION("Convert json to an empty group")
+    {
+        std::string name = "myGroup";
+        isx::json jsonObject;
+        jsonObject["type"] = "Group";
+        jsonObject["name"] = name;
+        jsonObject["groups"] = isx::json::array();
+        jsonObject["dataSets"] = isx::json::array();
+
+        isx::SpGroup_t group = isx::convertJsonToGroup(jsonObject);
+
+        REQUIRE(group->isValid());
+        REQUIRE(group->getName() == name);
+        REQUIRE(group->getGroups().empty());
+        REQUIRE(group->getDataSets().empty());
+    }
+
+    SECTION("Convert an group containing other groups to json")
+    {
+        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
+        isx::SpGroup_t subGroup = std::make_shared<isx::Group>("mySubGroup");
+        group->addGroup(subGroup);
+
+        isx::json jsonObject = isx::convertGroupToJson(group);
+
+        std::string jsonType = jsonObject["type"];
+        std::string jsonName = jsonObject["name"];
+        std::vector<isx::json> jsonGroups = jsonObject["groups"];
+        std::vector<isx::json> jsonDataSets = jsonObject["dataSets"];
+        REQUIRE(jsonType == "Group");
+        REQUIRE(jsonName == "myGroup");
+
+        REQUIRE(jsonGroups.size() == 1);
+        isx::json jsonSubObject = jsonGroups[0];
+        std::string jsonSubType = jsonSubObject["type"];
+        std::string jsonSubName = jsonSubObject["name"];
+        std::vector<isx::json> jsonSubGroups = jsonSubObject["groups"];
+        std::vector<isx::json> jsonSubDataSets = jsonSubObject["dataSets"];
+        REQUIRE(jsonSubName == "mySubGroup");
+        REQUIRE(jsonSubType == "Group");
+        REQUIRE(jsonSubGroups.empty());
+        REQUIRE(jsonSubDataSets.empty());
+
+        REQUIRE(jsonDataSets.empty());
+    }
+
+}

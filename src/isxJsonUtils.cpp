@@ -133,4 +133,73 @@ convertJsonToSpacingInfo(const json & j)
     return SpacingInfo(numPixels, pixelSize, topLeft);
 }
 
+json
+convertGroupToJson(const SpGroup_t & inGroup)
+{
+    json outJson;
+    outJson["type"] = "Group";
+    outJson["name"] = inGroup->getName();
+
+    outJson["groups"] = json::array();
+    std::vector<SpGroup_t> groups = inGroup->getGroups();
+    for (size_t i = 0; i < groups.size(); ++i)
+    {
+        json group = convertGroupToJson(groups[i]);
+        outJson["groups"].push_back(group);
+    }
+
+    outJson["dataSets"] = json::array();
+    std::vector<SpDataSet_t> dataSets = inGroup->getDataSets();
+    for (size_t i = 0; i < dataSets.size(); ++i)
+    {
+        json dataSet = convertDataSetToJson(dataSets[i]);
+        outJson["dataSets"].push_back(dataSet);
+    }
+
+    return outJson;
+}
+
+SpGroup_t
+convertJsonToGroup(const json & inJson)
+{
+    std::string name = inJson["name"];
+
+    SpGroup_t outGroup = std::make_shared<Group>(name);
+
+    json groups = inJson["groups"];
+    for (json::iterator it = groups.begin(); it != groups.end(); ++it)
+    {
+        outGroup->addGroup(convertJsonToGroup(*it));
+    }
+
+    json dataSets = inJson["dataSets"];
+    for (json::iterator it = dataSets.begin(); it != dataSets.end(); ++it)
+    {
+        outGroup->addDataSet(convertJsonToDataSet(*it));
+    }
+
+    return outGroup;
+}
+
+json
+convertDataSetToJson(const SpDataSet_t & inDataSet)
+{
+    json outJson;
+    outJson["type"] = "DataSet";
+    outJson["name"] = inDataSet->getName();
+    outJson["dataSetType"] = isize_t(inDataSet->getType());
+    outJson["fileName"] = inDataSet->getFileName();
+    return outJson;
+}
+
+SpDataSet_t
+convertJsonToDataSet(const json & inJson)
+{
+    std::string name = inJson["name"];
+    DataSet::Type dataSetType = DataSet::Type(isize_t(inJson["dataSetType"]));
+    std::string fileName = inJson["fileName"];
+    SpDataSet_t dataSet = std::make_shared<DataSet>(name, dataSetType, fileName);
+    return dataSet;
+}
+
 }

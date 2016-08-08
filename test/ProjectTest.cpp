@@ -1,64 +1,69 @@
 #include "isxProject.h"
 #include "catch.hpp"
 #include "isxTest.h"
+
 #include <stdio.h>
 
 TEST_CASE("ProjectTest", "[core]")
 {
-    std::string projectFileName = g_resources["testDataPath"] + "/projectFile.isxp";
+    std::string projectFileName = g_resources["testDataPath"] + "/project.isxp";
     std::remove(projectFileName.c_str());
 
-    isx::CoreInitialize();
+    std::string projectName = "myProject";
 
     SECTION("Empty constructor")
     {
-        auto project = std::make_shared<isx::Project>();
+        isx::SpProject_t project = std::make_shared<isx::Project>();
         REQUIRE(!project->isValid());
     }
 
-    SECTION("Create a new empty project.")
+    SECTION("Create a new project.")
     {
-        auto project = std::make_shared<isx::Project>(projectFileName);
+        isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
         REQUIRE(project->isValid());
-        isx::ProjectFile::DataCollection dc = project->getDataCollection(0);
-        REQUIRE(project->getNumDataCollections() == 0);
+        REQUIRE(project->getGroup("/")->getGroups().size() == 2);
+        REQUIRE_NOTHROW(project->getGroup("/Original"));
+        REQUIRE_NOTHROW(project->getGroup("/Output"));
     }
 
-    SECTION("Open an existing project.")
+    SECTION("Open an existing project after adding a group.")
     {
+        isx::SpGroup_t origGroup = std::make_shared<isx::Group>("myGroup");
         {
-            auto project = std::make_shared<isx::Project>(projectFileName);
+            isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
+            isx::SpGroup_t group = project->getGroup("/");
+            group->addGroup(origGroup);
         }
-        auto project = std::make_shared<isx::Project>(projectFileName);
+        isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName);
         REQUIRE(project->isValid());
-        REQUIRE(project->getNumDataCollections() == 0);
+        REQUIRE(*(project->getGroup("/myGroup")) == *origGroup);
     }
 
-    SECTION("Create a mosaic movie in a project.")
+    SECTION("Open an existing project atfer adding some typical groups and data sets")
     {
-        std::string movieFileName = g_resources["testDataPath"] + "/movieFileName.isxd";
-        std::remove(movieFileName.c_str());
+        std::string baseName = "recording-20160808-133943";
+        std::string origMovieFileName = g_resources["testDataPath"] + "/" + baseName + ".isxd";
+        std::remove(origMovieFileName.c_str());
 
-        isx::Time start;
-        isx::DurationInSeconds step(50, 1000);
-        isx::isize_t numFrames = 5;
-        isx::TimingInfo timingInfo(start, step, numFrames);
+        std::string outMovieFileName = g_resources["testDataPath"] + "/" + baseName + "-pp.isxd";
+        std::remove(outMovieFileName.c_str());
 
-        isx::SizeInPixels_t numPixels(4, 3);
-        isx::SizeInMicrons_t pixelSize(isx::Ratio(22, 10), isx::Ratio(22, 10));
-        isx::PointInMicrons_t topLeft(0, 0);
-        isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
+        isx::SpDataSet_t origMovie = std::make_shared<isx::DataSet>(
+                baseName, isx::DataSet::Type::MOVIE, origMovieFileName);
+        isx::SpDataSet_t outMovie = std::make_shared<isx::DataSet>(
+                baseName + "-pp", isx::DataSet::Type::MOVIE, outMovieFileName);
+        {
+            isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
+            isx::SpGroup_t origGroup = project->getGroup("/Original");
+            origGroup->addDataSet(origMovie);
 
-        auto project = std::make_shared<isx::Project>(projectFileName);
+            isx::SpGroup_t outGroup = project->getGroup("/Output");
+            outGroup->addDataSet(outMovie);
+        }
+
+        isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName);
         REQUIRE(project->isValid());
-
-        isx::ProjectFile::DataCollection dc;
-        dc.name = "Movies";
-        project->addDataCollection(dc);
-
-        isx::SpWritableMovie_t movie = project->createMosaicMovie(0, movieFileName, timingInfo, spacingInfo);
-        REQUIRE(movie->isValid());
+        REQUIRE(*(project->getDataSet("/Original/" + baseName)) == *origMovie);
+        REQUIRE(*(project->getDataSet("/Output/" + baseName + "-pp")) == *outMovie);
     }
-
-    isx::CoreShutdown();
 }
