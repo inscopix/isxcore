@@ -69,12 +69,6 @@ TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
         REQUIRE(m->toString() == "/images");
     }
 
-    SECTION("Load from XML") {
-        
-    }
-
-
-
     isx::CoreShutdown();
 }
 
