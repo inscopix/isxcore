@@ -53,12 +53,12 @@ Group::getGroup(const std::string & inName) const
 void
 Group::removeGroup(const std::string & inName)
 {
-    std::vector<SpGroup_t>::const_iterator it;
+    std::vector<SpGroup_t>::iterator it;
     for (it = m_groups.begin(); it != m_groups.end(); ++it)
     {
         if ((*it)->m_name == inName)
         {
-            m_groups.erase(it);
+            it = m_groups.erase(it);
             return;
         }
     }
@@ -115,12 +115,12 @@ Group::getDataSet(const std::string & inName) const
 void
 Group::removeDataSet(const std::string & inName)
 {
-    std::vector<SpDataSet_t>::const_iterator it;
+    std::vector<SpDataSet_t>::iterator it;
     for (it = m_dataSets.begin(); it != m_dataSets.end(); ++it)
     {
         if ((*it)->getName() == inName)
         {
-            m_dataSets.erase(it);
+            it = m_dataSets.erase(it);
         }
     }
     ISX_THROW(isx::ExceptionDataIO, "Could not find data set with name: ", inName);
