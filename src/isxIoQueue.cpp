@@ -38,26 +38,28 @@ public:
                 {
                     while (!m_taskQueue.empty())    // under lock, so enqueue can't push onto queue
                     {
-                        IoTask t = m_taskQueue.front();
+                        SpIoTask_t t = m_taskQueue.front();
                         m_taskQueue.pop();
                         m_taskQueueMutex.unlock();
-                        if (m_destroy)
+                        if (m_destroy || t->isCancelPending())
                         {
-                            t.m_finishedCB(AsyncTaskStatus::CANCELLED);
+                            t->setTaskStatus(AsyncTaskStatus::CANCELLED);
+                            t->getFinishedCB()(t->getTaskStatus());
                         }
                         else
                         {
-                            AsyncTaskStatus status = AsyncTaskStatus::PROCESSING;
+                            t->setTaskStatus(AsyncTaskStatus::PROCESSING);
                             try
                             {
-                                t.m_task();             // execute without holding lock, eneuque can push onto queue
-                                status = AsyncTaskStatus::COMPLETE;
+                                t->getTask()();             // execute without holding lock, eneuque can push onto queue
+                                t->setTaskStatus(AsyncTaskStatus::COMPLETE);
                             }
                             catch(...)
                             {
-                                status = AsyncTaskStatus::ERROR_EXCEPTION;
+                                t->setExceptionPtr(std::current_exception());
+                                t->setTaskStatus(AsyncTaskStatus::ERROR_EXCEPTION);
                             }
-                            t.m_finishedCB(status);
+                            t->getFinishedCB()(t->getTaskStatus());
                         }
                         m_taskQueueMutex.lock("worker impl");
                     }
@@ -92,7 +94,7 @@ public:
     }
 
     void
-    enqueue(IoTask inTask)
+    enqueue(SpIoTask_t inTask)
     {
         {
             ScopedMutex locker(m_taskQueueMutex, "enqueue");
@@ -103,7 +105,7 @@ public:
 
 private:
     UpDispatchQueueWorker_t  m_worker;
-    std::queue<IoTask>       m_taskQueue;
+    std::queue<SpIoTask_t>   m_taskQueue;
     Mutex                    m_taskQueueMutex;
     ConditionVariable        m_taskQueueCV;
     bool                     m_destroy = false;
@@ -157,7 +159,7 @@ IoQueue::instance()
 }
 
 void
-IoQueue::enqueue(IoTask inTask)
+IoQueue::enqueue(SpIoTask_t inTask)
 {
     if (isInitialized())
     {

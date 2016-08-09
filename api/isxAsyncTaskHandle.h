@@ -2,6 +2,7 @@
 #define ISX_ASYNC_TASK_HANDLE_H
 
 #include "isxCore.h"
+#include "isxAsync.h"
 
 #include <functional>
 #include <memory>
@@ -11,69 +12,38 @@ namespace isx
 /// A class providing an interface for dealing with running tasks asynchronously.
 /// Provided cancellation and progressr reporting.
 ///
-class AsyncTaskHandle : public std::enable_shared_from_this<isx::AsyncTaskHandle>
+class AsyncTaskHandle
 {
 public:
-    
-    /// type of callback function that an asynchronous task has to call periodically
-    typedef std::function<bool(float)> CheckInCB_t;
-    /// type of function that implements the asynchronous task
-    typedef std::function<AsyncTaskStatus(CheckInCB_t)> AsyncTask_t;
-    /// type of progress callback function
-    typedef std::function<void(float)> ProgressCB_t;
-    /// type of finished callback function
-    typedef std::function<void(AsyncTaskStatus inStatus)> FinishedCB_t;
 
-    /// default constructor
-    AsyncTaskHandle();
-
-    /// Constructor
-    /// \param inTask task to run asynchronously
-    /// \param inProgressCB callback function to call with current progress (0.0: not started, 1.0: complete)
-    /// \param inFinishedCB callback function to call when task finished
-    AsyncTaskHandle(AsyncTask_t inTask, ProgressCB_t inProgressCB, FinishedCB_t inFinishedCB);
-
-    /// helper function template to create an async task
-    /// \param inFunc function to call as part of task
-    /// \param inSrc source data to pass into inFunc
-    /// \param outDst destination where inFunc should write its output
-    template <typename TF, typename TI, typename TO>
-    static
-    AsyncTask_t 
-    MakeAsyncTask(TF inFunc, TI inSrc, TO outDst)
-    {
-        return [inFunc, inSrc, outDst](isx::AsyncTaskHandle::CheckInCB_t inCheckInCB)
-            {
-                return inFunc(inSrc, outDst, inCheckInCB);
-            };
-    }
+    /// Destructor
+    ///
+    virtual
+    ~AsyncTaskHandle() = 0;
 
     /// cancel this task
-    /// cancellation is complete when m_finishedCB is called with FinishedStatus CANCELLED
+    /// cancellation is complete when the finished callback is called with FinishedStatus CANCELLED
+    virtual
     void 
-    cancel();
+    cancel() = 0;
 
-    /// start processing this task
+    /// schedule this task for processing
+    virtual
     void
-    process();
+    schedule() = 0;
 
     ///\return status of finished task. Use this if no finished callback was specified.
+    virtual
     AsyncTaskStatus
-    getTaskStatus() const;
+    getTaskStatus() const = 0;
 
     ///\return current exception, if one has occurred while processing this task
+    virtual
     std::exception_ptr
-    getExceptionPtr() const;
-
-private:
-    bool            m_cancelPending = false;
-    AsyncTask_t     m_task;
-    ProgressCB_t    m_progressCB;
-    FinishedCB_t    m_finishedCB;
-
-    AsyncTaskStatus m_taskStatus = AsyncTaskStatus::PENDING;
-    std::exception_ptr  m_exception;
+    getExceptionPtr() const = 0;
 };
+
+inline AsyncTaskHandle::~AsyncTaskHandle(){}
     
 } // namespace isx
 

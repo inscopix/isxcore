@@ -68,6 +68,12 @@ public:
     void
     getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback) = 0;
 
+    /// cancel all pending read requests (scheduled via getFrameAsync) for this movie
+    ///
+    virtual
+    void
+    cancelPendingReads() = 0;
+
     /// \return     The timing information of a movie.
     ///
     virtual

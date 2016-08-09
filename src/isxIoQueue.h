@@ -3,6 +3,8 @@
 
 #include "isxCoreFwd.h"
 #include "isxCore.h"
+#include "isxAsync.h"
+#include "isxIoTask.h"
 #include "isxDispatchQueue.h"
 
 #include <memory>
@@ -15,19 +17,6 @@ namespace isx {
 class IoQueue
 {
 public:
-    /// A class for a task to be processed by the IoQueue
-    ///
-    class IoTask{
-    public:
-        /// type of finished callback function
-        typedef std::function<void(AsyncTaskStatus inStatus)> FinishedCB_t;
-        /// constructor
-        IoTask(Task_t inTask, FinishedCB_t inFinishedCB) : m_task(inTask), m_finishedCB(inFinishedCB){}
-
-        Task_t       m_task;        ///< this instance's task to process on IoQueue
-        FinishedCB_t m_finishedCB;  ///< this instance's finished callback to call when task is done processing
-    };
-
     /// destructor
     ///
     ~IoQueue();
@@ -60,7 +49,7 @@ public:
     /// enqueue I/O task to be processed on IoQueue's thread
     /// \param inTask task to be processed
     void
-    enqueue(IoTask inTask);
+    enqueue(SpIoTask_t inTask);
 
 private:
     IoQueue();
