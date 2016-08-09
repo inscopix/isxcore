@@ -6,6 +6,8 @@
 #include <QXmlStreamReader>
 #include <QDateTime>
 
+#include <cmath>
+
 namespace isx
 {
     class RecordingXml::Impl
