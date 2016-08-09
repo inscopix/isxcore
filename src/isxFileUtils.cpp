@@ -55,6 +55,19 @@ getPathTokens(const std::string & inPath)
 }
 
 std::string
+createPath(const std::vector<std::string> & inPathTokens)
+{
+    std::string outPath = "";
+    std::vector<std::string>::const_iterator it;
+    for (it = inPathTokens.begin(); it != (inPathTokens.end() - 1); ++it)
+    {
+        outPath += *it + "/";
+    }
+    outPath += inPathTokens.back();
+    return outPath;
+}
+
+std::string
 getWritableDirName()
 {
     QString dirName = QStandardPaths::writableLocation(QStandardPaths::DataLocation);

@@ -1,6 +1,7 @@
 #include "isxProject.h"
 #include "catch.hpp"
 #include "isxTest.h"
+#include "isxException.h"
 
 #include <stdio.h>
 
@@ -22,48 +23,63 @@ TEST_CASE("ProjectTest", "[core]")
         isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
         REQUIRE(project->isValid());
         REQUIRE(project->getGroup("/")->getGroups().size() == 2);
-        REQUIRE_NOTHROW(project->getGroup("/Original"));
-        REQUIRE_NOTHROW(project->getGroup("/Output"));
+        REQUIRE_NOTHROW(project->getOriginalGroup());
+        REQUIRE_NOTHROW(project->getRootGroup());
     }
 
     SECTION("Open an existing project after adding a group.")
     {
-        isx::SpGroup_t origGroup = std::make_shared<isx::Group>("myGroup");
+        isx::SpGroup_t group;
         {
             isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
-            isx::SpGroup_t group = project->getGroup("/");
-            group->addGroup(origGroup);
+            group = project->getRootGroup()->createGroup("myGroup");
         }
         isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName);
         REQUIRE(project->isValid());
-        REQUIRE(*(project->getGroup("/myGroup")) == *origGroup);
+        REQUIRE(*(project->getGroup("/myGroup")) == *group);
     }
 
-    SECTION("Open an existing project atfer adding some typical groups and data sets")
+    SECTION("Open an existing project after adding some typical groups and data sets")
     {
         std::string baseName = "recording-20160808-133943";
-        std::string origMovieFileName = g_resources["testDataPath"] + "/" + baseName + ".isxd";
-        std::remove(origMovieFileName.c_str());
+        std::string origMovieName = baseName;
+        std::string outMovieName = baseName + "-pp";
 
-        std::string outMovieFileName = g_resources["testDataPath"] + "/" + baseName + "-pp.isxd";
-        std::remove(outMovieFileName.c_str());
-
-        isx::SpDataSet_t origMovie = std::make_shared<isx::DataSet>(
-                baseName, isx::DataSet::Type::MOVIE, origMovieFileName);
-        isx::SpDataSet_t outMovie = std::make_shared<isx::DataSet>(
-                baseName + "-pp", isx::DataSet::Type::MOVIE, outMovieFileName);
+        isx::SpDataSet_t origMovie, outMovie;
         {
             isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
-            isx::SpGroup_t origGroup = project->getGroup("/Original");
-            origGroup->addDataSet(origMovie);
-
-            isx::SpGroup_t outGroup = project->getGroup("/Output");
-            outGroup->addDataSet(outMovie);
+            origMovie = project->getOriginalGroup()->createDataSet(baseName,
+                    isx::DataSet::Type::MOVIE, baseName + ".isxd");
+            outMovie = project->getOutputGroup()->createDataSet(baseName + "-pp",
+                    isx::DataSet::Type::MOVIE, baseName + "-pp.isxd");
         }
 
         isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName);
         REQUIRE(project->isValid());
-        REQUIRE(*(project->getDataSet("/Original/" + baseName)) == *origMovie);
-        REQUIRE(*(project->getDataSet("/Output/" + baseName + "-pp")) == *outMovie);
+        REQUIRE(*(project->getOriginalGroup()->getDataSet(baseName)) == *origMovie);
+        REQUIRE(*(project->getOutputGroup()->getDataSet(baseName + "-pp")) == *outMovie);
     }
+
+    SECTION("Try to add a data set which has the same file name as a data set already in the project")
+    {
+        isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
+        project->getRootGroup()->createDataSet(
+                "/myDataSet1", isx::DataSet::Type::MOVIE, "myMovie.isxd");
+        try
+        {
+            project->getRootGroup()->createDataSet(
+                    "/myDataSet2", isx::DataSet::Type::MOVIE, "myMovie.isxd");
+            FAIL("Failed to throw an exception.");
+        }
+        catch (const isx::ExceptionFileIO & error)
+        {
+            REQUIRE(std::string(error.what()) ==
+                    "There is already a data set with the file name: myMovie.isxd");
+        }
+        catch (...)
+        {
+            FAIL("Failed to throw an isx::ExceptionDataIO");
+        }
+    }
+
 }

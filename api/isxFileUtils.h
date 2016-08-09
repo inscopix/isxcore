@@ -59,6 +59,12 @@ bool doesPathExist(const std::string & inPath);
 /// \return         The tokens of a path delimited by '/'.
 std::vector<std::string> getPathTokens(const std::string & inPath);
 
+/// Create a path from its tokens by inserting '/' in between each token.
+///
+/// \param  inPathTokens    The path tokens.
+/// \return                 The path name created from the given tokens.
+std::string createPath(const std::vector<std::string> & inPathTokens);
+
 /// Returns a writable directory name for Inscopix data.
 ///
 /// The directory will be created if it doesn't exist.

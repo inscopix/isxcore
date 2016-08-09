@@ -1,8 +1,6 @@
 #ifndef ISX_DATA_SET_H
 #define ISX_DATA_SET_H
 
-//#include "isxGroup.h"
-
 #include <string>
 #include <memory>
 

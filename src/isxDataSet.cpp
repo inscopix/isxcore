@@ -20,11 +20,6 @@ DataSet::DataSet(
     , m_type(inType)
     , m_fileName(inFileName)
 {
-    if (doesPathExist(inFileName))
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-                "The file name already exists: " + inFileName);
-    }
     m_valid = true;
 }
 

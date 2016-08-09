@@ -80,30 +80,30 @@ TEST_CASE("DataSetTest", "[core]")
         }
     }
 
-    SECTION("Try to create a movie data sets with a file name that already exists")
-    {
-        std::string fileName = g_resources["testDataPath"] + "/myMovie.isxd";
-        std::remove(fileName.c_str());
+    //SECTION("Try to create a movie data sets with a file name that already exists")
+    //{
+    //    std::string fileName = g_resources["testDataPath"] + "/myMovie.isxd";
+    //    std::remove(fileName.c_str());
 
-        {
-            std::ofstream outFile(fileName);
-            outFile << "DataSetTest";
-        }
+    //    {
+    //        std::ofstream outFile(fileName);
+    //        outFile << "DataSetTest";
+    //    }
 
-        try
-        {
-            isx::SpDataSet_t dataSet1 = std::make_shared<isx::DataSet>(
-                "myMovie", isx::DataSet::MOVIE, fileName);
-            FAIL("Failed to throw an exception.");
-        }
-        catch (isx::ExceptionFileIO & error)
-        {
-            REQUIRE(std::string(error.what()) ==
-                    "The file name already exists: " + fileName);
-        }
-        catch (...)
-        {
-            FAIL("Failed to throw an isx::ExceptionDataIO");
-        }
-    }
+    //    try
+    //    {
+    //        isx::SpDataSet_t dataSet1 = std::make_shared<isx::DataSet>(
+    //            "myMovie", isx::DataSet::MOVIE, fileName);
+    //        FAIL("Failed to throw an exception.");
+    //    }
+    //    catch (isx::ExceptionFileIO & error)
+    //    {
+    //        REQUIRE(std::string(error.what()) ==
+    //                "The file name already exists: " + fileName);
+    //    }
+    //    catch (...)
+    //    {
+    //        FAIL("Failed to throw an isx::ExceptionDataIO");
+    //    }
+    //}
 }
