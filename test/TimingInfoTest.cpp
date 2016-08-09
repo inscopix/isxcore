@@ -7,9 +7,7 @@ TEST_CASE("TimingInfoTest", "[core]")
     SECTION("Default constructor")
     {
         isx::TimingInfo timingInfo;
-        REQUIRE(timingInfo.getStart() == isx::Time());
-        REQUIRE(timingInfo.getStep() == isx::DurationInSeconds(50, 1000));
-        REQUIRE(timingInfo.getNumTimes() == 100);
+        REQUIRE(timingInfo.isValid() == false);
     }
 
     SECTION("Valid usage of constructor")

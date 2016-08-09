@@ -126,16 +126,6 @@ private:
     bool
     readSpacingInfo(std::vector<SpH5File_t> inHdf5Files);
 
-    /// A method to create dummy timing information from the number of frames.
-    ///
-    TimingInfo
-    createDummyTimingInfo(isize_t inFrames);
-
-    /// A method to create a dummy spacing information from the number of rows and columns.
-    ///
-    SpacingInfo
-    createDummySpacingInfo(isize_t width, isize_t height);
-
     /// \return The HDF5 movie file index associated with a frame number.
     ///
     isize_t getMovieIndex(isize_t inFrameNumber);

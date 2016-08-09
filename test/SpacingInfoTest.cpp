@@ -8,10 +8,7 @@ TEST_CASE("SpacingInfoTest", "[core]")
     SECTION("Constructor with no arguments")
     {
         isx::SpacingInfo spacingInfo;
-
-        REQUIRE(spacingInfo.getNumPixels() == isx::SizeInPixels_t(1440, 1080));
-        REQUIRE(spacingInfo.getPixelSize() == isx::SizeInMicrons_t(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE));
-        REQUIRE(spacingInfo.getTopLeft() == isx::PointInMicrons_t(0, 0));
+        REQUIRE(spacingInfo.isValid() == false);
     }
 
     SECTION("Constructor with all arguments")

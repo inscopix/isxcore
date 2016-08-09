@@ -131,6 +131,15 @@ public:
     ///
     bool isValid() const;
 
+
+    /// \return a SpacingInfo object initialized with default values
+    ///
+    static SpacingInfo getDefault();
+
+    /// \return a SpacingInfo object initialized with default values for the number of pixels provided
+    /// \param numPixels number of pixels in x and y directions
+    static SpacingInfo getDefault(const SizeInPixels_t & numPixels);
+
 private:
 
     /// The number of pixels in each dimension.

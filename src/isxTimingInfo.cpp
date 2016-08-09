@@ -5,9 +5,6 @@ namespace isx
 {
 
 TimingInfo::TimingInfo()
-: m_start(Time())
-, m_step(DurationInSeconds(50, 1000))
-, m_numTimes(100)
 {
 }
 
@@ -148,6 +145,14 @@ bool
 TimingInfo::isValid() const
 {
     return m_isValid;
+}
+
+TimingInfo 
+TimingInfo::getDefault(isize_t inFrames)
+{
+    Time start;                       // Default to Unix epoch
+    DurationInSeconds step(50, 1000); // Default to 20Hz
+    return TimingInfo(start, step, inFrames);
 }
 
 } // namespace

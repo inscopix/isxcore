@@ -218,7 +218,7 @@ NVistaHdf5Movie::initTimingInfo(const std::vector<SpH5File_t> & inHdf5Files)
     if (readTimingInfo(inHdf5Files) == false)
     {
         // If we cannot read the timing info, use default values
-        m_timingInfo = createDummyTimingInfo(m_cumulativeFrames[m_cumulativeFrames.size() - 1]);         
+        m_timingInfo = TimingInfo::getDefault(m_cumulativeFrames[m_cumulativeFrames.size() - 1]);         
     }    
 }
 
@@ -228,7 +228,7 @@ NVistaHdf5Movie::initSpacingInfo(const std::vector<SpH5File_t> & inHdf5Files)
 {
     if (readSpacingInfo(inHdf5Files) == false)
     {
-        m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
+        m_spacingInfo = SpacingInfo::getDefault(SizeInPixels_t(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight()));
     }
 }
 
@@ -325,23 +325,6 @@ NVistaHdf5Movie::readTimingInfo(std::vector<SpH5File_t> inHdf5Files)
     }
 
     return bInitializedFromFile;
-}
-
-TimingInfo
-NVistaHdf5Movie::createDummyTimingInfo(isize_t inFrames)
-{
-    Time start;                       // Default to Unix epoch
-    DurationInSeconds step(50, 1000); // Default to 20Hz
-    return TimingInfo(start, step, inFrames);
-}
-
-SpacingInfo
-NVistaHdf5Movie::createDummySpacingInfo(isize_t width, isize_t height)
-{
-    SizeInPixels_t numPixels(width, height);
-    SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
-    PointInMicrons_t topLeft(0, 0);
-    return SpacingInfo(numPixels, pixelSize, topLeft);
 }
 
 

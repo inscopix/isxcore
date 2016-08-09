@@ -5,10 +5,7 @@
 namespace isx
 {
 
-SpacingInfo::SpacingInfo()
-    : m_numPixels(SizeInPixels_t(1440, 1080))
-    , m_pixelSize(SizeInMicrons_t(DEFAULT_PIXEL_SIZE, DEFAULT_PIXEL_SIZE))
-    , m_topLeft(PointInMicrons_t(0, 0))
+SpacingInfo::SpacingInfo() 
 {
 }
 
@@ -153,6 +150,20 @@ bool
 SpacingInfo::isValid() const
 {
     return m_isValid;
+}
+
+SpacingInfo 
+SpacingInfo::getDefault()
+{
+    SpacingInfo defaultSpacingInfo(SizeInPixels_t(1440, 1080), SizeInMicrons_t(DEFAULT_PIXEL_SIZE, DEFAULT_PIXEL_SIZE), PointInMicrons_t(0, 0));
+    return defaultSpacingInfo;
+}
+
+SpacingInfo 
+SpacingInfo::getDefault(const SizeInPixels_t & numPixels)
+{
+    SpacingInfo defaultSpacingInfo(numPixels, SizeInMicrons_t(DEFAULT_PIXEL_SIZE, DEFAULT_PIXEL_SIZE), PointInMicrons_t(0, 0));
+    return defaultSpacingInfo;
 }
 
 } // namespace

@@ -116,6 +116,10 @@ public:
     ///
     bool isValid() const;
 
+    /// \return a TimingInfo object initialized with default values
+    /// \param inFrames
+    static TimingInfo getDefault(isize_t inFrames);
+
 private:
 
     /// The start time of the samples.
