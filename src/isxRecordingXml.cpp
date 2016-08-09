@@ -43,6 +43,7 @@ namespace isx
                 {
                     while (reader.readNextStartElement())
                     {
+                        
                         name = reader.name();
                         if (name == "attrs")
                         {
@@ -99,6 +100,10 @@ namespace isx
                                 QString filename = reader.readElementText();
                                 m_hdf5FileNames.push_back(filename.toStdString());
                             }
+                        }
+                        else
+                        {
+                            reader.skipCurrentElement();
                         }
                     }                    
                 }
