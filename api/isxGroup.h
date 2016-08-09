@@ -155,20 +155,16 @@ public:
     ///
     std::string getName() const;
 
-    /// \return     True if this has a parent.
-    ///
-    bool hasParent() const;
-
     /// \return     The parent of this group.
     ///
     SpGroup_t getParent() const;
 
     /// Set the parent of this group.
     ///
-    /// \param  inParent    The new parent of this group.
+    /// This simply updates the parent of this group and does not move
+    /// this group into the given parent group.
     ///
-    /// \throw  isx::ExceptionDataIO    If the parent already contains a group
-    ///                                 with the same name as this.
+    /// \param  inParent    The new parent of this group.
     void setParent(SpGroup_t & inParent);
 
     /// \return     The path of this group from the root group.
@@ -177,7 +173,7 @@ public:
 
     /// \return     The root parent of this group.
     ///
-    std::shared_ptr<const Group> getRootParent() const;
+    SpGroup_t getRootParent();
 
     /// Checks if the name is already taken by a group or data set.
     ///
@@ -191,7 +187,7 @@ public:
     /// \param  inFileName  The file name to check.
     /// \return             True if this group's tree contains a data set with
     ///                     given file name.
-    bool isFileName(const std::string & inFileName) const;
+    bool isFileName(const std::string & inFileName);
 
     /// Exact comparison.
     ///

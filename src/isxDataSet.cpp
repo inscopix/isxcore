@@ -47,12 +47,6 @@ DataSet::getFileName() const
     return m_fileName;
 }
 
-bool
-DataSet::hasParent() const
-{
-    return bool(m_parent);
-}
-
 SpGroup_t
 DataSet::getParent() const
 {
@@ -62,7 +56,6 @@ DataSet::getParent() const
 void
 DataSet::setParent(SpGroup_t & inParent)
 {
-    inParent->addDataSet(shared_from_this());
     m_parent = inParent;
 }
 

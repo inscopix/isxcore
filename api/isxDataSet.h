@@ -18,7 +18,7 @@ typedef std::shared_ptr<Group> SpGroup_t;
 /// Encapsulates a data set within a project.
 ///
 /// This is described by a data set type, a name and a file name.
-class DataSet : public std::enable_shared_from_this<DataSet>
+class DataSet
 {
 public:
 
@@ -61,15 +61,14 @@ public:
     ///
     std::string getFileName() const;
 
-    /// \return     True if this has a parent.
-    ///
-    bool hasParent() const;
-
     /// \return     The parent of this group.
     ///
     SpGroup_t getParent() const;
 
     /// Set the parent of this data set.
+    ///
+    /// This simply updates the parent of this data set and does not move
+    /// this data set into the given parent group,
     ///
     /// \param  inParent    The new parent of this data set.
     void setParent(SpGroup_t & inParent);

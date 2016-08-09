@@ -111,6 +111,8 @@ Group::addDataSet(const SpDataSet_t & inDataSet)
         ISX_THROW(isx::ExceptionFileIO,
                 "There is already a data set with the file name: ", fileName);
     }
+    SpGroup_t parent = shared_from_this();
+    inDataSet->setParent(parent);
     m_dataSets.push_back(inDataSet);
 }
 
@@ -203,20 +205,14 @@ Group::getName() const
     return m_name;
 }
 
-bool
-Group::hasParent() const
-{
-    return bool(m_parent);
-}
-
 SpGroup_t
 Group::getParent() const
 {
     return m_parent;
 }
 
-std::shared_ptr<const Group>
-Group::getRootParent() const
+SpGroup_t
+Group::getRootParent()
 {
     if (m_parent)
     {
@@ -266,7 +262,7 @@ Group::isName(const std::string & inName) const
 }
 
 bool
-Group::isFileName(const std::string & inFileName) const
+Group::isFileName(const std::string & inFileName)
 {
     std::shared_ptr<const Group> root = getRootParent();
     std::vector<SpDataSet_t> dataSets = root->getDataSets(true);

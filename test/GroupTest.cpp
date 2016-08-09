@@ -21,7 +21,7 @@ TEST_CASE("GroupTest", "[core]")
 
         REQUIRE(group->isValid());
         REQUIRE(group->getName() == "myGroup");
-        REQUIRE(!group->hasParent());
+        REQUIRE(!group->getParent());
     }
 
     SECTION("Create a group within another group")
