@@ -107,6 +107,19 @@ public:
     // Overrides
     void serialize(std::ostream& strm) const override;
 
+
+    /// Set the object valid/invalid
+    /// \param inValid validity flag
+    void setValid(bool inValid);
+
+    /// \return whether this is a valid object or not
+    ///
+    bool isValid() const;
+
+    /// \return a TimingInfo object initialized with default values
+    /// \param inFrames
+    static TimingInfo getDefault(isize_t inFrames);
+
 private:
 
     /// The start time of the samples.
@@ -117,6 +130,9 @@ private:
 
     /// The number of time samples.
     isize_t m_numTimes;
+
+    /// Whether the object is valid or not
+    bool m_isValid = false;
 
 }; // class
 

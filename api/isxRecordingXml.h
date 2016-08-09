@@ -1,4 +1,6 @@
 #include "isxObject.h"
+#include "isxTimingInfo.h"
+#include "isxSpacingInfo.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -23,8 +25,19 @@ namespace isx {
         ~RecordingXml();
         
         /// \return the filenames of hdf5 files included in the XML
+        ///
         const std::vector<std::string> & getFileNames();
-
+        
+        /// \return the timing Info
+        ///
+        TimingInfo getTimingInfo();
+        
+        /// \return the spacing info
+        ///
+        SpacingInfo getSpacingInfo();
+        
+        /// serialize to stream
+        ///
         void serialize(std::ostream& strm) const override;
         
 

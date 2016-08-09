@@ -5,9 +5,6 @@ namespace isx
 {
 
 TimingInfo::TimingInfo()
-: m_start(Time())
-, m_step(DurationInSeconds(50, 1000))
-, m_numTimes(100)
 {
 }
 
@@ -16,6 +13,7 @@ TimingInfo::TimingInfo(const Time & start, const DurationInSeconds & step, isize
 , m_step(step)
 , m_numTimes(numTimes)
 {
+    m_isValid = true;
 }
 
 Time
@@ -133,6 +131,28 @@ TimingInfo::serialize(std::ostream& strm) const
             << "Step=" << m_step << ", "
             << "NumTimes=" << m_numTimes
          << ")";
+}
+
+
+void 
+TimingInfo::setValid(bool inValid)
+{
+    m_isValid = inValid;
+}
+
+
+bool 
+TimingInfo::isValid() const
+{
+    return m_isValid;
+}
+
+TimingInfo 
+TimingInfo::getDefault(isize_t inFrames)
+{
+    Time start;                       // Default to Unix epoch
+    DurationInSeconds step(50, 1000); // Default to 20Hz
+    return TimingInfo(start, step, inFrames);
 }
 
 } // namespace
