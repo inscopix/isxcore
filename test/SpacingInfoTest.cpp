@@ -10,14 +10,14 @@ TEST_CASE("SpacingInfoTest", "[core]")
         isx::SpacingInfo spacingInfo;
 
         REQUIRE(spacingInfo.getNumPixels() == isx::SizeInPixels_t(1440, 1080));
-        REQUIRE(spacingInfo.getPixelSize() == isx::SizeInMicrons_t(isx::Ratio(22, 10), isx::Ratio(22, 10)));
+        REQUIRE(spacingInfo.getPixelSize() == isx::SizeInMicrons_t(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE));
         REQUIRE(spacingInfo.getTopLeft() == isx::PointInMicrons_t(0, 0));
     }
 
     SECTION("Constructor with all arguments")
     {
         isx::SizeInPixels_t numPixels(720, 540);
-        isx::SizeInMicrons_t pixelSize(isx::Ratio(44, 10), isx::Ratio(44, 10));
+        isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE * 2, isx::DEFAULT_PIXEL_SIZE * 2);
         isx::PointInMicrons_t topLeft(0, 0);
 
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
@@ -30,7 +30,7 @@ TEST_CASE("SpacingInfoTest", "[core]")
     SECTION("Get the total size")
     {
         isx::SizeInPixels_t numPixels(600, 500);
-        isx::SizeInMicrons_t pixelSize(isx::Ratio(44, 10), isx::Ratio(44, 10));
+        isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE * 2, isx::DEFAULT_PIXEL_SIZE * 2);
         isx::PointInMicrons_t topLeft(22, 44);
 
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
@@ -42,7 +42,7 @@ TEST_CASE("SpacingInfoTest", "[core]")
     SECTION("Get the bottom right corner")
     {
         isx::SizeInPixels_t numPixels(600, 500);
-        isx::SizeInMicrons_t pixelSize(isx::Ratio(44, 10), isx::Ratio(44, 10));
+        isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE * 2, isx::DEFAULT_PIXEL_SIZE * 2);
         isx::PointInMicrons_t topLeft(22, 44);
 
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
@@ -76,7 +76,7 @@ TEST_CASE("SpacingInfoTest", "[core]")
     SECTION("Convert to a string")
     {
         isx::SizeInPixels_t numPixels(600, 500);
-        isx::SizeInMicrons_t pixelSize(isx::Ratio(22, 10), isx::Ratio(44, 10));
+        isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE * 2);
         isx::PointInMicrons_t topLeft(22, 44);
 
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
@@ -91,7 +91,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
 {
 
     isx::SizeInPixels_t numPixels(8, 6);
-    isx::SizeInMicrons_t pixelSize(isx::Ratio(22, 10), isx::Ratio(22, 10));
+    isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
     isx::PointInMicrons_t topLeft(isx::Ratio(66, 10), isx::Ratio(44, 10));
     isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 

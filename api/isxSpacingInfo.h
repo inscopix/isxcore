@@ -24,6 +24,9 @@ typedef SpatialVector<Ratio> VectorInMicrons_t;
 typedef SpatialPoint<Ratio> PointInMicrons_t;
 typedef SpatialSize<Ratio> SizeInMicrons_t;
 
+
+const Ratio DEFAULT_PIXEL_SIZE(22, 10);
+
 /// The spacing info associated with spatial samples.
 ///
 /// This class is used to store spacing info about samples associated with
@@ -56,7 +59,7 @@ public:
     /// \param topLeft      The top left corner in microns.
     SpacingInfo(
         const SizeInPixels_t & numPixels,
-        const SizeInMicrons_t & pixelSize = SizeInMicrons_t(Ratio(22, 10), Ratio(22, 10)),
+        const SizeInMicrons_t & pixelSize = SizeInMicrons_t(DEFAULT_PIXEL_SIZE, DEFAULT_PIXEL_SIZE),
         const PointInMicrons_t & topLeft = PointInMicrons_t(0, 0));
 
     /// \return The top left corner of the top left pixel in microns.

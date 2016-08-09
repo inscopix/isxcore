@@ -87,7 +87,7 @@ TEST_CASE("RecordingTest", "[core]") {
 
         int64_t downsamplingFactor = 1;
         isx::SizeInPixels_t numPixels = isx::SizeInPixels_t(500, 500);
-        isx::SizeInMicrons_t pixelSize = isx::SizeInMicrons_t(isx::Ratio(22, 10)*downsamplingFactor, isx::Ratio(22, 10)*downsamplingFactor);
+        isx::SizeInMicrons_t pixelSize = isx::SizeInMicrons_t(isx::DEFAULT_PIXEL_SIZE*downsamplingFactor, isx::DEFAULT_PIXEL_SIZE*downsamplingFactor);
         isx::PointInMicrons_t topLeft = isx::PointInMicrons_t(0, 0);
 
         isx::SpacingInfo xmlSpacingInfo(numPixels, pixelSize, topLeft);

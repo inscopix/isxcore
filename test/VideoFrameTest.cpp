@@ -53,7 +53,7 @@ TEST_CASE("VideoFrameTest", "[core]") {
         const int32_t c = 3;
 
         isx::SizeInPixels_t numPixels(1440, 1080);
-        isx::SizeInMicrons_t pixelSize(isx::Ratio(22, 10), isx::Ratio(44, 10));
+        isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE * 2);
         isx::PointInMicrons_t topLeft(22, 44);
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 

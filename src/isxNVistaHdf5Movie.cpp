@@ -339,7 +339,7 @@ SpacingInfo
 NVistaHdf5Movie::createDummySpacingInfo(isize_t width, isize_t height)
 {
     SizeInPixels_t numPixels(width, height);
-    SizeInMicrons_t pixelSize(Ratio(22, 10), Ratio(22, 10));
+    SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
     PointInMicrons_t topLeft(0, 0);
     return SpacingInfo(numPixels, pixelSize, topLeft);
 }
@@ -364,7 +364,7 @@ NVistaHdf5Movie::readSpacingInfo(std::vector<SpH5File_t> inHdf5Files)
             hsize_t width = spacingInfoDims[2];
 
             SizeInPixels_t numPixels(width, height);
-            SizeInMicrons_t pixelSize(Ratio(22, 10), Ratio(22, 10));
+            SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
             PointInMicrons_t topLeft(0, 0);
             m_spacingInfo = SpacingInfo(numPixels, pixelSize, topLeft);
         }

@@ -7,7 +7,7 @@ namespace isx
 
 SpacingInfo::SpacingInfo()
     : m_numPixels(SizeInPixels_t(1440, 1080))
-    , m_pixelSize(SizeInMicrons_t(Ratio(22, 10), Ratio(22, 10)))
+    , m_pixelSize(SizeInMicrons_t(DEFAULT_PIXEL_SIZE, DEFAULT_PIXEL_SIZE))
     , m_topLeft(PointInMicrons_t(0, 0))
 {
 }

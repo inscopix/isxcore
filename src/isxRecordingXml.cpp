@@ -198,7 +198,7 @@ namespace isx
 
             isize_t inum = integer.toULongLong() * den;            
             isize_t num = inum + fnum;
-            step = DurationInSeconds(num, den).getInverse(); 
+            step = DurationInSeconds(den, num);     // The den and num correspond to sampling frequency, that's why they are inverted for the step
 
             // Convert number of frames
             numTimes = inNumFrames.toULongLong();
@@ -217,7 +217,7 @@ namespace isx
 
             // Pixel size
             int64_t dsFactor = inDownsampleFactor.left(1).toLongLong();
-            SizeInMicrons_t pixelSize = SizeInMicrons_t(Ratio(22 * dsFactor, 10), Ratio(22 * dsFactor, 10));
+            SizeInMicrons_t pixelSize = SizeInMicrons_t(DEFAULT_PIXEL_SIZE* dsFactor, DEFAULT_PIXEL_SIZE * dsFactor);
 
             // Top left corner
             PointInMicrons_t topLeft = PointInMicrons_t(inLeft.toLongLong(), inTop.toLongLong());
