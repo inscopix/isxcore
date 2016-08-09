@@ -116,13 +116,6 @@ public:
         TimingInfo ti = xml.getTimingInfo();
         SpacingInfo si = xml.getSpacingInfo();
 
-        Time start = ti.getStart();
-        DurationInSeconds secSinceEpoch = start.getSecsSinceEpoch();
-        isize_t num = secSinceEpoch.getNum();
-        isize_t den = secSinceEpoch.getDen();
-        DurationInSeconds dur = ti.getStep();
-        
-
         m_movie = std::make_shared<NVistaHdf5Movie>(m_fileHandles, ti, si);
 
         // no exception until here --> this is a valid file

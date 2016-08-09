@@ -178,10 +178,6 @@ namespace isx
             DurationInSeconds secsOffset = DurationInSeconds((isize_t)(dt.time().msec()), 1000);
             start = Time(year, mon, day, hour, mins, secs, secsOffset);
 
-            DurationInSeconds secSinceEpoch = start.getSecsSinceEpoch();
-            isize_t numsecSinceEpoch = secSinceEpoch.getNum();
-            isize_t densecSinceEpoch = secSinceEpoch.getDen();
-
             // Convert step
             QString integer, fraction;
             integer = inFps.section(".", 0, 0);
