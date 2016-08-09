@@ -20,6 +20,7 @@ SpacingInfo::SpacingInfo(
     , m_pixelSize(pixelSize)
     , m_topLeft(topLeft)
 {
+    m_isValid = true;
 }
 
 PointInMicrons_t
@@ -138,6 +139,20 @@ SpacingInfo::serialize(std::ostream& strm) const
             << "PixelSize=" << m_pixelSize << ", "
             << "TopLeft=" << m_topLeft
          << ")";
+}
+
+
+void 
+SpacingInfo::setValid(bool inValid)
+{
+    m_isValid = inValid;
+}
+
+
+bool 
+SpacingInfo::isValid() const
+{
+    return m_isValid;
 }
 
 } // namespace

@@ -120,6 +120,14 @@ public:
     // Overrides
     void serialize(std::ostream& strm) const override;
 
+    /// Set the object valid/invalid
+    /// \param inValid validity flag
+    void setValid(bool inValid);
+
+    /// \return whether this is a valid object or not
+    ///
+    bool isValid() const;
+
 private:
 
     /// The number of pixels in each dimension.
@@ -130,6 +138,9 @@ private:
 
     /// The top left corner of the field of view.
     PointInMicrons_t m_topLeft;
+
+    /// Whether the object is valid or not
+    bool m_isValid = false;
 
 }; // class
 

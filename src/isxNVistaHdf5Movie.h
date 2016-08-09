@@ -26,26 +26,18 @@ public:
     /// \param inHdf5FileHandle opaque HDF5 file handles
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
-    /// \param inTimingValid whether the provided timing info is valid
-    /// \param inSpacingValid whether the provided spacing info is valid
     NVistaHdf5Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, 
         const TimingInfo & inTimingInfo = TimingInfo(),
-        const SpacingInfo & inSpacingInfo = SpacingInfo(), 
-        bool inTimingValid = false, 
-        bool inSpacingValid = false);
+        const SpacingInfo & inSpacingInfo = SpacingInfo());
 
     /// Construct a new movie from vector of existing HDF5 datasets
     ///
     /// \param inHdf5FileHandles vector of opaque HDF5 file handles
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
-    /// \param inTimingValid whether the provided timing info is valid
-    /// \param inSpacingValid whether the provided spacing info is valid
     NVistaHdf5Movie(const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
         const TimingInfo & inTimingInfo = TimingInfo(),
-        const SpacingInfo & inSpacingInfo = SpacingInfo(),
-        bool inTimingValid = false,
-        bool inSpacingValid = false);
+        const SpacingInfo & inSpacingInfo = SpacingInfo());
 
     /// Destructor
     ///
@@ -100,13 +92,9 @@ private:
     /// \param inHdf5Files List of files containing the movie data
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
-    /// \param inTimingValid  whether the provided timing info is valid
-    /// \param inSpacingValid whether the provided spacing info is valid
     void initialize(const std::vector<SpH5File_t> & inHdf5Files,
         const TimingInfo & inTimingInfo,
-        const SpacingInfo & inSpacingInfo,
-        bool inTimingValid,
-        bool inSpacingValid);
+        const SpacingInfo & inSpacingInfo);
 
     /// Initialize timing info from the HDF5
     ///
@@ -137,6 +125,11 @@ private:
     /// \return     True if successful, false otherwise.
     bool
     readSpacingInfo(std::vector<SpH5File_t> inHdf5Files);
+
+    /// A method to create dummy timing information from the number of frames.
+    ///
+    TimingInfo
+    createDummyTimingInfo(isize_t inFrames);
 
     /// A method to create a dummy spacing information from the number of rows and columns.
     ///

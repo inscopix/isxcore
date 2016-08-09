@@ -27,14 +27,6 @@ namespace isx {
         /// \return the filenames of hdf5 files included in the XML
         ///
         const std::vector<std::string> & getFileNames();
-
-        /// \return whether timing info is described in the XML
-        ///
-        bool hasTimingInfo();
-        
-        /// \return whether spacing info is described in the XML
-        ///
-        bool hasSpacingInfo();
         
         /// \return the timing Info
         ///

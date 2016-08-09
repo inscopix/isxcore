@@ -16,6 +16,7 @@ TimingInfo::TimingInfo(const Time & start, const DurationInSeconds & step, isize
 , m_step(step)
 , m_numTimes(numTimes)
 {
+    m_isValid = true;
 }
 
 Time
@@ -133,6 +134,20 @@ TimingInfo::serialize(std::ostream& strm) const
             << "Step=" << m_step << ", "
             << "NumTimes=" << m_numTimes
          << ")";
+}
+
+
+void 
+TimingInfo::setValid(bool inValid)
+{
+    m_isValid = inValid;
+}
+
+
+bool 
+TimingInfo::isValid() const
+{
+    return m_isValid;
 }
 
 } // namespace

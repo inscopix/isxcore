@@ -16,6 +16,7 @@ namespace isx
         ///
         Impl(const std::string & inPath)
         {
+
             QFile file(QString::fromStdString(inPath));
 
             if (!file.exists())
@@ -125,16 +126,6 @@ namespace isx
 
         ~Impl() {}
 
-        bool hasTimingInfo()
-        {
-            return m_timingInfoInitialized;
-        }
-
-        bool hasSpacingInfo()
-        {
-            return m_spacingInfoInitialized;
-        }
-
         TimingInfo getTimingInfo()
         {
             return m_timingInfo;
@@ -162,9 +153,7 @@ namespace isx
     private: 
         std::vector<std::string> m_hdf5FileNames;
         TimingInfo m_timingInfo;
-        SpacingInfo m_spacingInfo;
-        bool m_timingInfoInitialized = false;
-        bool m_spacingInfoInitialized = false;
+        SpacingInfo m_spacingInfo;        
 
         void initTimingInfo(const QString & inStart, const QString & inFps, const QString & inNumFrames/*, const QString & inDroppedFrames*/)
         {
@@ -189,6 +178,10 @@ namespace isx
             DurationInSeconds secsOffset = DurationInSeconds((isize_t)(dt.time().msec()), 1000);
             start = Time(year, mon, day, hour, mins, secs, secsOffset);
 
+            DurationInSeconds secSinceEpoch = start.getSecsSinceEpoch();
+            isize_t numsecSinceEpoch = secSinceEpoch.getNum();
+            isize_t densecSinceEpoch = secSinceEpoch.getDen();
+
             // Convert step
             QString integer, fraction;
             integer = inFps.section(".", 0, 0);
@@ -211,7 +204,6 @@ namespace isx
             numTimes = inNumFrames.toULongLong();
 
             m_timingInfo = TimingInfo(start, step, numTimes);
-            m_timingInfoInitialized = true;
 
         }
 
@@ -231,7 +223,7 @@ namespace isx
             PointInMicrons_t topLeft = PointInMicrons_t(inLeft.toLongLong(), inTop.toLongLong());
 
             m_spacingInfo = SpacingInfo(numPixels, pixelSize, topLeft);
-            m_spacingInfoInitialized = true;
+
         }
     };
 
@@ -251,19 +243,7 @@ namespace isx
     {
         return m_pImpl->getFileNames();
     }
-
-    bool 
-    RecordingXml::hasTimingInfo()
-    {
-        return m_pImpl->hasTimingInfo();
-    }
-
-    bool 
-    RecordingXml::hasSpacingInfo()
-    {
-        return m_pImpl->hasSpacingInfo();
-    }
-
+    
     TimingInfo 
     RecordingXml::getTimingInfo()
     {

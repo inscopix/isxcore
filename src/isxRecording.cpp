@@ -113,13 +113,17 @@ public:
         }
         
         // Get timingInfo and spacingInfo and use it to initialize movie
-        bool bTiming, bSpacing;
-        bTiming = xml.hasTimingInfo();
-        bSpacing = xml.hasSpacingInfo();
         TimingInfo ti = xml.getTimingInfo();
         SpacingInfo si = xml.getSpacingInfo();
 
-        m_movie = std::make_shared<NVistaHdf5Movie>(m_fileHandles, ti, si, bTiming, bSpacing);
+        Time start = ti.getStart();
+        DurationInSeconds secSinceEpoch = start.getSecsSinceEpoch();
+        isize_t num = secSinceEpoch.getNum();
+        isize_t den = secSinceEpoch.getDen();
+        DurationInSeconds dur = ti.getStep();
+        
+
+        m_movie = std::make_shared<NVistaHdf5Movie>(m_fileHandles, ti, si);
 
         // no exception until here --> this is a valid file
         m_isValid = true;
