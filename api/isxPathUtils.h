@@ -1,5 +1,5 @@
-#ifndef ISX_FILE_UTILS_H
-#define ISX_FILE_UTILS_H
+#ifndef ISX_PATH_UTILS_H
+#define ISX_PATH_UTILS_H
 
 #include <string>
 #include <vector>
@@ -46,10 +46,6 @@ std::string getDirName(const std::string & inPath);
 /// \return         The extension of the path.
 std::string getExtension(const std::string & inPath);
 
-/// \return     True if path exists.
-///
-bool doesPathExist(const std::string & inPath);
-
 /// Get the tokens of a path delimited by '/'.
 ///
 /// If the first character is a '/' this will include that as the
@@ -59,19 +55,25 @@ bool doesPathExist(const std::string & inPath);
 /// \return         The tokens of a path delimited by '/'.
 std::vector<std::string> getPathTokens(const std::string & inPath);
 
-/// Create a path from its tokens by inserting '/' in between each token.
-///
-/// \param  inPathTokens    The path tokens.
-/// \return                 The path name created from the given tokens.
-std::string createPath(const std::vector<std::string> & inPathTokens);
-
-/// Returns a writable directory name for Inscopix data.
+/// Get the writable directory name for Inscopix data.
 ///
 /// The directory will be created if it doesn't exist.
 ///
 /// \return     A writable directory name for Inscopix data.
 std::string getWritableDirName();
 
+/// Get a path relative to a directory name.
+///
+/// If the path is on a Windows filesystem and is on a different drive
+/// than the directory, this does ... ?
+///
+/// \param  inPath      The path to make relative.
+/// \param  inDirName   The directory from which to get the relative path.
+/// \return             The relative path from the given directory.
+std::string getRelativePath(
+        const std::string & inPath,
+        const std::string & inDirName);
+
 } // namespace isx
 
-#endif // ISX_FILE_UTILS_H
+#endif // ISX_PATH_UTILS_H

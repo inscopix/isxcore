@@ -1,4 +1,4 @@
-#include "isxFileUtils.h"
+#include "isxPathUtils.h"
 
 #include <QFileInfo>
 #include <QDir>
@@ -30,13 +30,6 @@ getExtension(const std::string & inPath)
     return pathInfo.completeSuffix().toStdString();
 }
 
-bool
-doesPathExist(const std::string & inPath)
-{
-    QFileInfo pathInfo(QString::fromStdString(inPath));
-    return pathInfo.exists();
-}
-
 std::vector<std::string>
 getPathTokens(const std::string & inPath)
 {
@@ -55,19 +48,6 @@ getPathTokens(const std::string & inPath)
 }
 
 std::string
-createPath(const std::vector<std::string> & inPathTokens)
-{
-    std::string outPath = "";
-    std::vector<std::string>::const_iterator it;
-    for (it = inPathTokens.begin(); it != (inPathTokens.end() - 1); ++it)
-    {
-        outPath += *it + "/";
-    }
-    outPath += inPathTokens.back();
-    return outPath;
-}
-
-std::string
 getWritableDirName()
 {
     QString dirName = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
@@ -78,5 +58,16 @@ getWritableDirName()
     }
     return dirName.toStdString();
 }
+
+std::string getRelativePath(
+        const std::string & inPath,
+        const std::string & inDirName)
+{
+    QDir inDir(QString::fromStdString(inDirName));
+    QFileInfo pathInfo(QString::fromStdString(inPath));
+    QString relPath = inDir.relativeFilePath(pathInfo.absoluteFilePath());
+    return relPath.toStdString();
+}
+
 
 } // namespace isx

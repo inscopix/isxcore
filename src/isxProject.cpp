@@ -1,7 +1,7 @@
 #include "isxProject.h"
-#include "isxFileUtils.h"
 #include "isxException.h"
 #include "isxJsonUtils.h"
+#include "isxPathUtils.h"
 
 #include <fstream>
 
@@ -40,6 +40,31 @@ Project::~Project()
     {
         write();
     }
+}
+
+SpDataSet_t
+Project::createDataSet(
+        const std::string & inPath,
+        DataSet::Type inType,
+        const std::string & inFileName)
+{
+    std::string name = getBaseName(inPath) + getExtension(inPath);
+    std::string projectDirName = getDirName(m_fileName);
+    //std::string relFileName = getRelativePath(projectDirName, inFileName);
+    std::string groupPath = getDirName(inPath);
+    SpGroup_t group = getGroup(groupPath);
+    SpDataSet_t dataSet = group->createDataSet(name, inType, inFileName);
+    return dataSet;
+}
+
+SpDataSet_t
+Project::getDataSet(const std::string & inPath) const
+{
+    std::string groupPath = getDirName(inPath);
+    std::string name = getBaseName(inPath) + getExtension(inPath);
+    SpGroup_t group = getGroup(groupPath);
+    SpDataSet_t dataSet = group->getDataSet(name);
+    return dataSet;
 }
 
 SpGroup_t

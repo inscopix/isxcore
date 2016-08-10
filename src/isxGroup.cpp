@@ -227,7 +227,14 @@ Group::getPath() const
 {
     if (m_parent)
     {
-        return m_parent->getPath() + "/" + m_name;
+        if (m_parent->m_name == "/")
+        {
+            return m_parent->m_name + m_name;
+        }
+        else
+        {
+            return m_parent->getPath() + "/" + m_name;
+        }
     }
     return m_name;
 }

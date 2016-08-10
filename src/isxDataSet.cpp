@@ -1,5 +1,4 @@
 #include "isxDataSet.h"
-#include "isxFileUtils.h"
 #include "isxException.h"
 #include "isxGroup.h"
 
@@ -64,7 +63,14 @@ DataSet::getPath() const
 {
     if (m_parent)
     {
-        return m_parent->getPath() + "/" + m_name;
+        if (m_parent->getName() == "/")
+        {
+            return m_parent->getName() + m_name;
+        }
+        else
+        {
+            return m_parent->getPath() + "/" + m_name;
+        }
     }
     return m_name;
 }

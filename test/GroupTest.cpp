@@ -22,17 +22,28 @@ TEST_CASE("GroupTest", "[core]")
         REQUIRE(group->isValid());
         REQUIRE(group->getName() == "myGroup");
         REQUIRE(!group->getParent());
+        REQUIRE(group->getPath() == "myGroup");
     }
 
     SECTION("Create a group within another group")
     {
         isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
 
-        isx::SpGroup_t subGroup = group->createGroup("myGroup");
+        isx::SpGroup_t subGroup = group->createGroup("mySubGroup");
 
         REQUIRE(subGroup->isValid());
-        REQUIRE(subGroup->getName() == "myGroup");
+        REQUIRE(subGroup->getName() == "mySubGroup");
         REQUIRE(subGroup->getParent() == group);
+        REQUIRE(subGroup->getPath() == "myGroup/mySubGroup");
+    }
+
+    SECTION("Create a group within a root (/) group)")
+    {
+        isx::SpGroup_t group = std::make_shared<isx::Group>("/");
+
+        isx::SpGroup_t subGroup = group->createGroup("myGroup");
+
+        REQUIRE(subGroup->getPath() == "/myGroup");
     }
 
     SECTION("Try to create two groups with the same name in another group")

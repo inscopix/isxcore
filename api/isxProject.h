@@ -48,6 +48,36 @@ public:
     ///
     ~Project();
 
+    /// Create a data set in this project.
+    ///
+    /// If a data set with the given path already exists in this project,
+    /// this will fail.
+    /// If there is an existing data set in this project with the given
+    /// file name, this will fail.
+    ///
+    /// \param  inPath      The path of the data set to create.
+    /// \param  inType      The type of the data set to create.
+    /// \param  inFileName  The file name of the data set to create.
+    /// \return             The data set created.
+    ///
+    /// \throw  isx::ExceptionDataIO    If a data set with the given name
+    ///                                 already exists.
+    /// \throw  isx::ExceptionFileIO    If a data set with the given file
+    ///                                 name already exists in this group's tree.
+    SpDataSet_t createDataSet(
+            const std::string & inPath,
+            DataSet::Type inType,
+            const std::string & inFileName);
+
+    /// Get a data set by its project path.
+    ///
+    /// \param  inPath      The path of the data set to retrieve.
+    /// \return             The data set retrieved.
+    ///
+    /// \throw  isx::ExceptionDataIO    If there is no data set with the
+    ///                                 given name in this group.
+    SpDataSet_t getDataSet(const std::string & inPath) const;
+
     /// Get a data set by its project path.
     ///
     /// \param  inPath          The project path of the data set.
