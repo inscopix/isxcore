@@ -7,26 +7,21 @@
 
 #include "isxLog.h"
 
+#ifdef ISX_DONT_LOG_EXCEPTIONS
+#define ISX_LOG_EXCEPTION
+#else
+#define ISX_LOG_EXCEPTION ISX_LOG_ERROR
+#endif
+
 /// \def ISX_THROW(TYPE, ...)
 ///
 /// Throws a type of exception with a message consisting of the variadic
 /// arguments converted to strings.
-#ifdef ISX_DONT_LOG_EXCEPTIONS
-
 #define ISX_THROW(TYPE, ...)\
     std::string msg = isx::internal::varArgsToString(__VA_ARGS__);\
     std::string file = isx::internal::baseName(__FILE__);\
+    ISX_LOG_EXCEPTION(file, ":", __LINE__, ": Exception - ", msg);\
     throw TYPE(file, __LINE__, msg)
-
-#else
-
-#define ISX_THROW(TYPE, ...)\
-    std::string msg = isx::internal::varArgsToString(__VA_ARGS__);\
-    std::string file = isx::internal::baseName(__FILE__);\
-    ISX_LOG_ERROR(file, ":", __LINE__, ": Exception - ", msg);\
-    throw TYPE(file, __LINE__, msg)
-
-#endif
 
 namespace isx
 {
