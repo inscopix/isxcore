@@ -3,7 +3,6 @@
 #include "isxTest.h"
 #include "isxException.h"
 
-//#include <stdio.h>
 #include <fstream>
 
 TEST_CASE("ProjectTest", "[core]")

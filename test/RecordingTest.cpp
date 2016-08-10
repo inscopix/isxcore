@@ -27,7 +27,7 @@ TEST_CASE("RecordingTest", "[core]") {
         REQUIRE(r->toString() == testFile);
     }
     
-    SECTION("Load recording XML", "[core]")
+    SECTION("Load recording XML - Split movie", "[core]")
     {
         std::string testXML = g_resources["testDataPath"] + "/recording_20160706_132714.xml";
         std::string testHDF5_0 = g_resources["testDataPath"] + "/recording_20160706_132714.hdf5";
@@ -70,6 +70,30 @@ TEST_CASE("RecordingTest", "[core]") {
         uint16_t *p1_h = framesHDF5[1]->getPixels();
         REQUIRE(*p0_x == *p0_h);
         REQUIRE(*p1_x == *p1_h);
+    }
+
+    SECTION("Load recording XML - Read timing and spacing info from XML", "[core]")
+    {
+        std::string testXML = g_resources["testDataPath"] + "/recording_20160706_132714.xml";
+        isx::SpRecording_t rXml  = std::make_shared<isx::Recording>(testXML);
+        isx::SpMovie_t mov  = rXml->getMovie();
+
+        isx::Time start(2016, 7, 6, 13, 27, 23, isx::DurationInSeconds(999, 1000));
+        isx::DurationInSeconds step(100, 1001);
+        isx::isize_t numTimes = 82;
+        isx::TimingInfo xmlTimingInfo(start, step, numTimes);
+        isx::TimingInfo movTimingInfo = mov->getTimingInfo();
+        REQUIRE(movTimingInfo == xmlTimingInfo);
+
+        int64_t downsamplingFactor = 1;
+        isx::SizeInPixels_t numPixels = isx::SizeInPixels_t(500, 500);
+        isx::SizeInMicrons_t pixelSize = isx::SizeInMicrons_t(isx::DEFAULT_PIXEL_SIZE*downsamplingFactor, isx::DEFAULT_PIXEL_SIZE*downsamplingFactor);
+        isx::PointInMicrons_t topLeft = isx::PointInMicrons_t(0, 0);
+
+        isx::SpacingInfo xmlSpacingInfo(numPixels, pixelSize, topLeft);
+        isx::SpacingInfo movSpacingInfo = mov->getSpacingInfo();
+        REQUIRE(xmlSpacingInfo == movSpacingInfo);
+
     }
     isx::CoreShutdown();
 

@@ -10,6 +10,7 @@
 
 TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
     std::string testFileName = g_resources["testDataPath"] + "/recording_20160426_145041.hdf5";
+    std::string testFileNameXML = g_resources["testDataPath"] + "/recording_20160706_132714.xml";
 
     std::shared_ptr<H5::H5File> h5File = std::make_shared<H5::H5File>(testFileName, H5F_ACC_RDONLY);
     isx::SpHdf5FileHandle_t testFile = std::make_shared<isx::Hdf5FileHandle>(h5File, H5F_ACC_RDONLY);

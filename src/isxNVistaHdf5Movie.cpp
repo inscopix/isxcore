@@ -19,21 +19,27 @@ NVistaHdf5Movie::NVistaHdf5Movie()
 }
 
 NVistaHdf5Movie::NVistaHdf5Movie(
-    const SpHdf5FileHandle_t & inHdf5FileHandle)
+    const SpHdf5FileHandle_t & inHdf5FileHandle,
+    const TimingInfo & inTimingInfo,
+    const SpacingInfo & inSpacingInfo)
 {
     std::vector<SpH5File_t> files(1, inHdf5FileHandle->get());
-    initialize(files);
+
+    initialize(files, inTimingInfo, inSpacingInfo);
 }
 
 NVistaHdf5Movie::NVistaHdf5Movie(
-    const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles)
+    const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
+    const TimingInfo & inTimingInfo,
+    const SpacingInfo & inSpacingInfo)
 {
     std::vector<SpH5File_t> files;
     for (isize_t i(0); i < inHdf5FileHandles.size(); ++i)
     {
         files.push_back(inHdf5FileHandles[i]->get());
     }
-    initialize(files);
+
+    initialize(files, inTimingInfo, inSpacingInfo);
 }
 
 NVistaHdf5Movie::~NVistaHdf5Movie()
@@ -205,7 +211,9 @@ NVistaHdf5Movie::serialize(std::ostream& strm) const
 
 void
 NVistaHdf5Movie::initialize(
-    const std::vector<SpH5File_t> & inHdf5Files)
+    const std::vector<SpH5File_t> & inHdf5Files,
+    const TimingInfo & inTimingInfo,
+    const SpacingInfo & inSpacingInfo)
 {
     ISX_ASSERT(inHdf5Files.size());
 
@@ -229,24 +237,46 @@ NVistaHdf5Movie::initialize(
         m_cumulativeFrames.push_back(numFramesAccum);
     }
 
-    // TODO michele 2016/07/08 : time since epoch comes from host machine and frame rate 
-    // is calculated, so these values are not what we really want. we should want to 
-    // pull these from the xml eventually
-    if (readTimingInfo(inHdf5Files) == false)
+    if (inTimingInfo.isValid())
     {
-        // If we cannot read the timing info, use default values
-        Time start;                       // Default to Unix epoch
-        DurationInSeconds step(50, 1000); // Default to 20Hz
-        m_timingInfo = TimingInfo(start, step, numFramesAccum);
-        DurationInSeconds gstep = m_timingInfo.getStep();
+        m_timingInfo = inTimingInfo;
+    }
+    else
+    {
+        initTimingInfo(inHdf5Files);
     }
 
-    if (readSpacingInfo(inHdf5Files) == false)
+    if (inSpacingInfo.isValid())
     {
-        m_spacingInfo = createDummySpacingInfo(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
+        m_spacingInfo = inSpacingInfo;
+    }
+    else
+    {
+        initSpacingInfo(inHdf5Files);
     }
 
     m_valid = true;
+    
+}
+
+void
+NVistaHdf5Movie::initTimingInfo(const std::vector<SpH5File_t> & inHdf5Files)
+{
+    if (readTimingInfo(inHdf5Files) == false)
+    {
+        // If we cannot read the timing info, use default values
+        m_timingInfo = TimingInfo::getDefault(m_cumulativeFrames[m_cumulativeFrames.size() - 1]);         
+    }    
+}
+
+
+void
+NVistaHdf5Movie::initSpacingInfo(const std::vector<SpH5File_t> & inHdf5Files)
+{
+    if (readSpacingInfo(inHdf5Files) == false)
+    {
+        m_spacingInfo = SpacingInfo::getDefault(SizeInPixels_t(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight()));
+    }
 }
 
 SpU16VideoFrame_t
@@ -344,15 +374,6 @@ NVistaHdf5Movie::readTimingInfo(std::vector<SpH5File_t> inHdf5Files)
     return bInitializedFromFile;
 }
 
-SpacingInfo
-NVistaHdf5Movie::createDummySpacingInfo(isize_t width, isize_t height)
-{
-    SizeInPixels_t numPixels(width, height);
-    SizeInMicrons_t pixelSize(Ratio(22, 10), Ratio(22, 10));
-    PointInMicrons_t topLeft(0, 0);
-    return SpacingInfo(numPixels, pixelSize, topLeft);
-}
-
 
 bool
 NVistaHdf5Movie::readSpacingInfo(std::vector<SpH5File_t> inHdf5Files)
@@ -373,7 +394,7 @@ NVistaHdf5Movie::readSpacingInfo(std::vector<SpH5File_t> inHdf5Files)
             hsize_t width = spacingInfoDims[2];
 
             SizeInPixels_t numPixels(width, height);
-            SizeInMicrons_t pixelSize(Ratio(22, 10), Ratio(22, 10));
+            SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
             PointInMicrons_t topLeft(0, 0);
             m_spacingInfo = SpacingInfo(numPixels, pixelSize, topLeft);
         }

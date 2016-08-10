@@ -15,7 +15,7 @@ TEST_CASE("MosaicMovieFileTest", "[core-internal]")
     isx::TimingInfo timingInfo(start, step, numFrames);
 
     isx::SizeInPixels_t numPixels(4, 3);
-    isx::SizeInMicrons_t pixelSize(isx::Ratio(22, 10), isx::Ratio(22, 10));
+    isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
     isx::PointInMicrons_t topLeft(0, 0);
     isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 

@@ -27,12 +27,20 @@ public:
     /// Construct a new movie from one HDF5 dataset.
     ///
     /// \param inHdf5FileHandle opaque HDF5 file handles
-    NVistaHdf5Movie(const SpHdf5FileHandle_t & inHdf5FileHandle);
+    /// \param inTimingInfo the timing info for the movie (from external source such as xml)
+    /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
+    NVistaHdf5Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, 
+        const TimingInfo & inTimingInfo = TimingInfo(),
+        const SpacingInfo & inSpacingInfo = SpacingInfo());
 
     /// Construct a new movie from vector of existing HDF5 datasets
     ///
     /// \param inHdf5FileHandles vector of opaque HDF5 file handles
-    NVistaHdf5Movie(const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles);
+    /// \param inTimingInfo the timing info for the movie (from external source such as xml)
+    /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
+    NVistaHdf5Movie(const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
+        const TimingInfo & inTimingInfo = TimingInfo(),
+        const SpacingInfo & inSpacingInfo = SpacingInfo());
 
     /// Destructor
     ///
@@ -87,8 +95,20 @@ private:
     std::vector<isize_t> m_cumulativeFrames;
 
     /// Handles most of the initialization.
+    /// \param inHdf5Files List of files containing the movie data
+    /// \param inTimingInfo the timing info for the movie (from external source such as xml)
+    /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
+    void initialize(const std::vector<SpH5File_t> & inHdf5Files,
+        const TimingInfo & inTimingInfo,
+        const SpacingInfo & inSpacingInfo);
+
+    /// Initialize timing info from the HDF5
     ///
-    void initialize(const std::vector<SpH5File_t> & inHdf5Files);
+    void initTimingInfo(const std::vector<SpH5File_t> & inHdf5Files);
+
+    /// Initialize timing info from the HDF5
+    ///
+    void initSpacingInfo(const std::vector<SpH5File_t> & inHdf5Files);
 
     /// Reads a frame directly from the associated file.
     ///
@@ -111,11 +131,6 @@ private:
     /// \return     True if successful, false otherwise.
     bool
     readSpacingInfo(std::vector<SpH5File_t> inHdf5Files);
-
-    /// A method to create a dummy spacing information from the number of rows and columns.
-    ///
-    SpacingInfo
-    createDummySpacingInfo(isize_t width, isize_t height);
 
     /// \return The HDF5 movie file index associated with a frame number.
     ///

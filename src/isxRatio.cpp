@@ -1,5 +1,5 @@
 #include "isxRatio.h"
-
+#include "isxAssert.h"
 #include <iostream>
 #include <cmath>
 
@@ -10,6 +10,7 @@ Ratio::Ratio(int64_t num, int64_t den)
 : m_num(num)
 , m_den(den)
 {
+    ISX_ASSERT(den != 0);
 }
 
 int64_t
