@@ -41,6 +41,8 @@ Project::Project(const std::string & inFileName, const std::string & inName)
 
 Project::~Project()
 {
+    // TODO sweet : maybe we shouldn't always write when the project is
+    // destroyed, but this works for now
     if (m_valid)
     {
         write();

@@ -16,6 +16,13 @@ getBaseName(const std::string & inPath)
 }
 
 std::string
+getFileName(const std::string & inPath)
+{
+    QFileInfo pathInfo(QString::fromStdString(inPath));
+    return pathInfo.fileName().toStdString();
+}
+
+std::string
 getDirName(const std::string & inPath)
 {
     QFileInfo pathInfo(QString::fromStdString(inPath));

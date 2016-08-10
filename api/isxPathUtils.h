@@ -9,7 +9,7 @@ namespace isx
 
 /// Get the base name of a path.
 ///
-/// The base name does not include the extension nor the path.
+/// The base name does not include the extension nor the directory name.
 ///
 /// For example:
 /// - "movie.isxd" -> "movie"
@@ -20,6 +20,23 @@ namespace isx
 /// \param  inPath  The path from which to get the base name.
 /// \return         The base name of the path.
 std::string getBaseName(const std::string & inPath);
+
+/// Get the file name of a path.
+///
+/// The file name does not include the directory name, but does include the
+/// extension.
+/// This name is perhaps misleading because this will work for
+/// directories, but in that case should act as getBaseName.
+///
+/// For example:
+/// - "movie.isxd" -> "movie.isxd"
+/// - "outputs" -> "outputs"
+/// - "outputs/movie.isxd" -> "movie.isxd"
+/// - "outputs/day1" -> "outputs/day1"
+///
+/// \param  inPath  The path from which to get the file name.
+/// \return         The file name of the path.
+std::string getFileName(const std::string & inPath);
 
 /// Get the directory name of a path.
 ///
