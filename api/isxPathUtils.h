@@ -74,6 +74,12 @@ std::string getRelativePath(
         const std::string & inPath,
         const std::string & inDirName);
 
+/// Check if a patch exists on the file system.
+///
+/// \param  inPath      The path to check for existence.
+/// \return             True if the path exists on the file system.
+bool pathExists(const std::string & inPath);
+
 } // namespace isx
 
 #endif // ISX_PATH_UTILS_H

@@ -26,6 +26,11 @@ Project::Project(const std::string & inFileName, const std::string & inName)
     , m_name(inName)
     , m_fileName(inFileName)
 {
+    if (pathExists(inFileName))
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+                "The file name already exists: ", inFileName);
+    }
     m_root = std::make_shared<Group>("/");
     SpGroup_t originalGroup = std::make_shared<Group>("Original");
     SpGroup_t outputGroup = std::make_shared<Group>("Output");

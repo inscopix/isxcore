@@ -39,9 +39,14 @@ public:
     ///
     /// This will be written to disk either when calling write() or on
     /// destruction.
+    /// If a file with the given file name already exists on the file system,
+    /// this will fail.
     ///
     /// \param  inFileName  The file name of the project.
     /// \param  inName      The name of the project.
+    ///
+    /// \throw  isx::ExceptionFileIO    If the a file with the given file
+    ///                                 name already exists.
     Project(const std::string & inFileName, const std::string & inName);
 
     /// Destructor.

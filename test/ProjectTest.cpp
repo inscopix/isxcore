@@ -3,7 +3,8 @@
 #include "isxTest.h"
 #include "isxException.h"
 
-#include <stdio.h>
+//#include <stdio.h>
+#include <fstream>
 
 TEST_CASE("ProjectTest", "[core]")
 {
@@ -18,7 +19,7 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE(!project->isValid());
     }
 
-    SECTION("Create a new project.")
+    SECTION("Create a new project")
     {
         isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
 
@@ -29,6 +30,29 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE_NOTHROW(project->getRootGroup());
         REQUIRE_NOTHROW(project->getOriginalGroup());
         REQUIRE_NOTHROW(project->getOutputGroup());
+    }
+
+    SECTION("Create a new project in a file that already exists")
+    {
+        {
+            std::ofstream outStream(projectFileName);
+            outStream << "testing";
+        }
+
+        try
+        {
+            isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
+            FAIL("Failed to throw an exception.");
+        }
+        catch (isx::ExceptionFileIO & error)
+        {
+            REQUIRE(std::string(error.what()) ==
+                    "The file name already exists: " + projectFileName);
+        }
+        catch (...)
+        {
+            FAIL("Failed to throw an isx::ExceptionFileIO");
+        }
     }
 
     SECTION("Create a group in a project")

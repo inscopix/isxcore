@@ -59,7 +59,8 @@ getWritableDirName()
     return dirName.toStdString();
 }
 
-std::string getRelativePath(
+std::string
+getRelativePath(
         const std::string & inPath,
         const std::string & inDirName)
 {
@@ -69,5 +70,11 @@ std::string getRelativePath(
     return relPath.toStdString();
 }
 
+bool
+pathExists(const std::string & inPath)
+{
+    QFileInfo pathInfo(QString::fromStdString(inPath));
+    return pathInfo.exists();
+}
 
 } // namespace isx
