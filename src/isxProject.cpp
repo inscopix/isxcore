@@ -50,6 +50,8 @@ Project::createDataSet(
 {
     std::string name = getBaseName(inPath) + getExtension(inPath);
     std::string projectDirName = getDirName(m_fileName);
+    // TODO sweet : We really want to store a data set's file name as a
+    // relative path from the project file's directory
     //std::string relFileName = getRelativePath(projectDirName, inFileName);
     std::string groupPath = getDirName(inPath);
     SpGroup_t group = getGroup(groupPath);

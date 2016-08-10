@@ -17,17 +17,22 @@ TEST_CASE("PathUtils-getRelativePath", "[core-internal]")
         REQUIRE(relPath == "../../data/movie.isxd");
     }
 
-    SECTION("Windows file system different drive")
-    {
-        std::string path = "C:/inscopix/data/movie.isxd";
-        std::string dirName = "D:/inscopix/projects/myProject";
+    // TODO sweet : if we always want relative paths on Windows we need
+    // to deal with different drive names (as well as UNC paths for network
+    // drives)
+    //SECTION("Windows file system different drive")
+    //{
+    //    std::string path = "C:/inscopix/data/movie.isxd";
+    //    std::string dirName = "D:/inscopix/projects/myProject";
 
-        std::string relPath = isx::getRelativePath(path, dirName);
+    //    std::string relPath = isx::getRelativePath(path, dirName);
 
-        REQUIRE(relPath == "../../../data/movie.isxd");
-    }
+    //    REQUIRE(relPath == "../../../C:/data/movie.isxd");
+    //}
 
 #endif
+
+#if ISX_OS_LINUX || ISX_OS_MACOS
 
     SECTION("Unix file system - both absolute")
     {
@@ -38,5 +43,7 @@ TEST_CASE("PathUtils-getRelativePath", "[core-internal]")
 
         REQUIRE(relPath == "../../data/movie.isxd");
     }
+
+#endif
 
 }
