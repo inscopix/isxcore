@@ -142,17 +142,19 @@ convertGroupToJson(const SpGroup_t & inGroup)
 
     outJson["groups"] = json::array();
     std::vector<SpGroup_t> groups = inGroup->getGroups();
-    for (size_t i = 0; i < groups.size(); ++i)
+    std::vector<SpGroup_t>::const_iterator groupIt;
+    for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt)
     {
-        json group = convertGroupToJson(groups[i]);
+        json group = convertGroupToJson(*groupIt);
         outJson["groups"].push_back(group);
     }
 
     outJson["dataSets"] = json::array();
     std::vector<SpDataSet_t> dataSets = inGroup->getDataSets();
-    for (size_t i = 0; i < dataSets.size(); ++i)
+    std::vector<SpDataSet_t>::const_iterator dataSetIt;
+    for (dataSetIt = dataSets.begin(); dataSetIt != dataSets.end(); ++dataSetIt)
     {
-        json dataSet = convertDataSetToJson(dataSets[i]);
+        json dataSet = convertDataSetToJson(*dataSetIt);
         outJson["dataSets"].push_back(dataSet);
     }
 

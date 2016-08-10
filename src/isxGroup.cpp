@@ -270,20 +270,24 @@ Group::getRootParent()
 bool
 Group::isName(const std::string & inName) const
 {
-    for (size_t i = 0; i < m_groups.size(); ++i)
+    std::vector<SpGroup_t>::const_iterator groupIt;
+    for (groupIt = m_groups.begin(); groupIt != m_groups.end(); ++groupIt)
     {
-        if (m_groups[i]->getName() == inName)
+        if ((*groupIt)->getName() == inName)
         {
             return true;
         }
     }
-    for (size_t i = 0; i < m_dataSets.size(); ++i)
+
+    std::vector<SpDataSet_t>::const_iterator dataSetIt;
+    for (dataSetIt = m_dataSets.begin(); dataSetIt != m_dataSets.end(); ++dataSetIt)
     {
-        if (m_dataSets[i]->getName() == inName)
+        if ((*dataSetIt)->getName() == inName)
         {
             return true;
         }
     }
+
     return false;
 }
 
