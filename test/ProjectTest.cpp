@@ -60,26 +60,4 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE(*(project->getOutputGroup()->getDataSet(baseName + "-pp")) == *outMovie);
     }
 
-    SECTION("Try to add a data set which has the same file name as a data set already in the project")
-    {
-        isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
-        project->getRootGroup()->createDataSet(
-                "/myDataSet1", isx::DataSet::Type::MOVIE, "myMovie.isxd");
-        try
-        {
-            project->getRootGroup()->createDataSet(
-                    "/myDataSet2", isx::DataSet::Type::MOVIE, "myMovie.isxd");
-            FAIL("Failed to throw an exception.");
-        }
-        catch (const isx::ExceptionFileIO & error)
-        {
-            REQUIRE(std::string(error.what()) ==
-                    "There is already a data set with the file name: myMovie.isxd");
-        }
-        catch (...)
-        {
-            FAIL("Failed to throw an isx::ExceptionDataIO");
-        }
-    }
-
 }

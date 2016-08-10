@@ -42,6 +42,8 @@ public:
 
     /// Add a group to this group.
     ///
+    /// This will update the parent of the input to be this.
+    ///
     /// \param  inGroup     The group to add to this.
     ///
     /// \throw  isx::ExceptionDataIO    If a data set with the same name
@@ -65,6 +67,9 @@ public:
     SpGroup_t getGroup(const std::string & inName) const;
 
     /// Remove a sub-group with the given name.
+    ///
+    /// Before removing the group, this sets the parent of the input group
+    /// to null.
     ///
     /// \param  inName  The name of the group to remove.
     ///
@@ -98,6 +103,7 @@ public:
     ///
     /// This will fail if there is a data set in this group that has the
     /// same name as the the name of the given data set.
+    /// This will update the parent of the input to be this.
     ///
     /// \param  inDataSet   The data set to add.
     ///
@@ -141,6 +147,9 @@ public:
 
     /// Removes a data set from this group.
     ///
+    /// Before removing the group, this sets the parent of the input group
+    /// to null.
+    ///
     /// \param  inName      The name of the data set to remove.
     ///
     /// \throw  isx::ExceptionDataIO    If there is no data set with the
@@ -163,6 +172,7 @@ public:
     ///
     /// This simply updates the parent of this group and does not move
     /// this group into the given parent group.
+    /// Use removeDataSet and addDataSet for that.
     ///
     /// \param  inParent    The new parent of this group.
     void setParent(SpGroup_t & inParent);
@@ -170,24 +180,6 @@ public:
     /// \return     The path of this group from the root group.
     ///
     std::string getPath() const;
-
-    /// \return     The root parent of this group.
-    ///
-    SpGroup_t getRootParent();
-
-    /// Checks if the name is already taken by a group or data set.
-    ///
-    /// \param  inName  The name to check.
-    /// \return         True if there is already a group or data set with the given name.
-    ///
-    bool isName(const std::string & inName) const;
-
-    /// Checks if the file name is already used by a data set in this group's tree.
-    ///
-    /// \param  inFileName  The file name to check.
-    /// \return             True if this group's tree contains a data set with
-    ///                     given file name.
-    bool isFileName(const std::string & inFileName);
 
     /// Exact comparison.
     ///
@@ -211,6 +203,24 @@ private:
 
     /// The data sets in this group.
     std::vector<SpDataSet_t> m_dataSets;
+
+    /// \return     The root parent of this group.
+    ///
+    SpGroup_t getRootParent();
+
+    /// Checks if the name is already taken by a group or data set.
+    ///
+    /// \param  inName  The name to check.
+    /// \return         True if there is already a group or data set with the given name.
+    ///
+    bool isName(const std::string & inName) const;
+
+    /// Checks if the file name is already used by a data set in this group's tree.
+    ///
+    /// \param  inFileName  The file name to check.
+    /// \return             True if this group's tree contains a data set with
+    ///                     given file name.
+    bool isFileName(const std::string & inFileName);
 
 };
 

@@ -42,37 +42,6 @@ Project::~Project()
     }
 }
 
-//SpGroup_t
-//Project::createGroup(const std::string & inPath)
-//{
-//    if (isPath(inPath))
-//    {
-//        ISX_THROW(isx::ExceptionDataIO,
-//                "The requested path is already being used: ", inPath,
-//                ". Specify another one.");
-//    }
-//
-//    std::string parentPath = getDirName(inPath);
-//    if (!isPath(parentPath))
-//    {
-//        ISX_THROW(isx::ExceptionDataIO,
-//                "The requested parent path does not exist: ", inPath,
-//                ". Create it.");
-//    }
-//    if (isDataSet(parentPath))
-//    {
-//        ISX_THROW(isx::ExceptionDataIO,
-//                "The parent path contains a data set: ", parentPath,
-//                ". Specify a different path.");
-//    }
-//    SpGroup_t parent = getGroup(parentPath);
-//
-//    std::string groupName = getBaseName(inPath);
-//    SpGroup_t group = parent->createGroup(groupName);
-//
-//    return group;
-//}
-
 SpGroup_t
 Project::getGroup(const std::string & inPath) const
 {
@@ -104,53 +73,6 @@ Project::getOutputGroup() const
     return m_root->getGroup("Output");
 }
 
-//SpDataSet_t createDataSet(
-//        const std::string & inPath,
-//        DataSet::Type inType,
-//        const std::string & inFileName)
-//{
-//    if (isPath(inPath))
-//    {
-//        ISX_THROW(isx::ExceptionDataIO,
-//                "The requested path is already being used: ", inPath,
-//                ". Specify another one.");
-//    }
-//
-//    if (isFileName(inFileName))
-//    {
-//        ISX_THROW(isx::ExceptionFileIO,
-//                "The requested file name is already being used: ",
-//                inFileName, ". Specify another one.");
-//    }
-//
-//    std::string dirName = getDirName(inPath);
-//    if (isPath(dirName))
-//    {
-//        ISX_THROW(isx::ExceptionDataIO,
-//                "The requested parent path does not exist: ", inPath,
-//                ". Create it.");
-//    }
-//    SpGroup_t parent = getGroup(dirName);
-//
-//    std::string name = getBaseName(inPath);
-//    SpDataSet_t dataSet = parent->createDataSet(name, inType, inFileName);
-//
-//    return dataSet;
-//}
-//
-//SpDataSet_t
-//Project::getDataSet(const std::string & inPath) const
-//{
-//    std::vector<std::string> pathTokens = getPathTokens(inPath);
-//    SpGroup_t currentGroup = m_root;
-//    for (size_t i = 0; i < (pathTokens.size() - 1); ++i)
-//    {
-//        currentGroup = currentGroup->getGroup(pathTokens[i]);
-//    }
-//    SpDataSet_t dataSet = currentGroup->getDataSet(pathTokens.back());
-//    return dataSet;
-//}
-
 bool
 Project::isValid() const
 {
@@ -167,45 +89,6 @@ std::string
 Project::getFileName() const
 {
     return m_fileName;
-}
-
-bool
-Project::isPath(const std::string & inPath) const
-{
-    std::vector<SpGroup_t> groups = m_root->getGroups(true);
-    std::vector<SpGroup_t>::const_iterator groupIt;
-    for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt)
-    {
-        if ((*groupIt)->getPath() == inPath)
-        {
-            return true;
-        }
-    }
-    std::vector<SpDataSet_t> dataSets = m_root->getDataSets(true);
-    std::vector<SpDataSet_t>::const_iterator it;
-    for (it = dataSets.begin(); it != dataSets.end(); ++it)
-    {
-        if ((*it)->getPath() == inPath)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool
-Project::isFileName(const std::string & inFileName) const
-{
-    std::vector<SpDataSet_t> dataSets = m_root->getDataSets(true);
-    std::vector<SpDataSet_t>::const_iterator it;
-    for (it = dataSets.begin(); it != dataSets.end(); ++it)
-    {
-        if ((*it)->getFileName() == inFileName)
-        {
-            return true;
-        }
-    }
-    return false;
 }
 
 void

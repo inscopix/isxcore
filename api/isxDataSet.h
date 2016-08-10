@@ -69,6 +69,7 @@ public:
     ///
     /// This simply updates the parent of this data set and does not move
     /// this data set into the given parent group,
+    /// Use Group::removeDataSet and Group::addDataSet for that.
     ///
     /// \param  inParent    The new parent of this data set.
     void setParent(SpGroup_t & inParent);

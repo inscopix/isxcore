@@ -78,6 +78,7 @@ Group::removeGroup(const std::string & inName)
     {
         if ((*it)->m_name == inName)
         {
+            (*it)->m_parent = SpGroup_t();
             it = m_groups.erase(it);
             return;
         }
@@ -186,6 +187,8 @@ Group::removeDataSet(const std::string & inName)
     {
         if ((*it)->getName() == inName)
         {
+            SpGroup_t nullParent;
+            (*it)->setParent(nullParent);
             it = m_dataSets.erase(it);
             return;
         }
@@ -211,18 +214,6 @@ Group::getParent() const
     return m_parent;
 }
 
-SpGroup_t
-Group::getRootParent()
-{
-    if (m_parent)
-    {
-        return m_parent->getRootParent();
-    }
-    else
-    {
-        return shared_from_this();
-    }
-}
 
 void
 Group::setParent(SpGroup_t & inParent)
@@ -239,6 +230,34 @@ Group::getPath() const
         return m_parent->getPath() + "/" + m_name;
     }
     return m_name;
+}
+
+bool
+Group::operator ==(const Group & inOther) const
+{
+    bool sameParent = true;
+    if (m_parent)
+    {
+        if (!inOther.m_parent)
+        {
+            return false;
+        }
+        sameParent &= (*m_parent == *(inOther.m_parent));
+    }
+    return sameParent && (m_name == inOther.m_name);
+}
+
+SpGroup_t
+Group::getRootParent()
+{
+    if (m_parent)
+    {
+        return m_parent->getRootParent();
+    }
+    else
+    {
+        return shared_from_this();
+    }
 }
 
 bool
@@ -275,21 +294,6 @@ Group::isFileName(const std::string & inFileName)
         }
     }
     return false;
-}
-
-bool
-Group::operator ==(const Group & inOther) const
-{
-    bool sameParent = true;
-    if (m_parent)
-    {
-        if (!inOther.m_parent)
-        {
-            return false;
-        }
-        sameParent &= (*m_parent == *(inOther.m_parent));
-    }
-    return sameParent && (m_name == inOther.m_name);
 }
 
 } // namespace isx
