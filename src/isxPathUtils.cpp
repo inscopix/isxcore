@@ -42,10 +42,10 @@ getPathTokens(const std::string & inPath)
 {
     std::vector<std::string> outPathTokens;
     QString path = QString::fromStdString(inPath);
-    //if (path.size() > 0 && path[0] == QChar('/'))
-    //{
-    //    outPathTokens.push_back("/");
-    //}
+    if (path.size() > 0 && path[0] == QChar('/'))
+    {
+        outPathTokens.push_back("/");
+    }
     QStringList pathTokens = path.split('/', QString::SplitBehavior::SkipEmptyParts);
     for (int i = 0; i < pathTokens.size(); ++i)
     {

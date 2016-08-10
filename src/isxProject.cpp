@@ -55,7 +55,7 @@ Project::createDataSet(
         DataSet::Type inType,
         const std::string & inFileName)
 {
-    std::string name = getBaseName(inPath) + getExtension(inPath);
+    std::string name = isx::getFileName(inPath);
     std::string projectDirName = getDirName(m_fileName);
     // TODO sweet : We really want to store a data set's file name as a
     // relative path from the project file's directory
@@ -70,7 +70,7 @@ SpDataSet_t
 Project::getDataSet(const std::string & inPath) const
 {
     std::string groupPath = getDirName(inPath);
-    std::string name = getBaseName(inPath) + getExtension(inPath);
+    std::string name = isx::getFileName(inPath);
     SpGroup_t group = getGroup(groupPath);
     SpDataSet_t dataSet = group->getDataSet(name);
     return dataSet;
@@ -80,9 +80,14 @@ SpGroup_t
 Project::getGroup(const std::string & inPath) const
 {
     std::vector<std::string> groupNames = getPathTokens(inPath);
+    if (groupNames.front() != "/")
+    {
+        ISX_THROW(isx::ExceptionDataIO,
+                  "The project path does not start with the root character (/): ", inPath);
+    }
     SpGroup_t currentGroup = m_root;
     std::vector<std::string>::const_iterator it;
-    for (it = groupNames.begin(); it != groupNames.end(); ++it)
+    for (it = (groupNames.begin() + 1); it != groupNames.end(); ++it)
     {
         currentGroup = currentGroup->getGroup(*it);
     }
