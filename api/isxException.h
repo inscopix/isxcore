@@ -8,7 +8,7 @@
 #include "isxLog.h"
 
 #ifdef ISX_DONT_LOG_EXCEPTIONS
-#define ISX_LOG_EXCEPTION
+#define ISX_LOG_EXCEPTION(...)
 #else
 #define ISX_LOG_EXCEPTION ISX_LOG_ERROR
 #endif
