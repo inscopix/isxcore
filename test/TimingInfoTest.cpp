@@ -94,14 +94,14 @@ TEST_CASE("TimingInfoConversionTest", "[core]")
         REQUIRE(actual == expected);
     }
 
-    SECTION("Convert an index that exceeds the number of samples to a time")
+    SECTION("Convert an index that exceeds the number of samples to a start time")
     {
         isx::Time actual = timingInfo.convertIndexToStartTime(100);
         isx::Time expected(1970, 1, 1, 0, 0, 4, isx::DurationInSeconds(950, 1000));
         REQUIRE(actual == expected);
     }
 
-    SECTION("Convert an index to a time when there are no samples")
+    SECTION("Convert an index to a start time when there are no samples")
     {
         numTimes = 0;
         timingInfo = isx::TimingInfo(start, step, numTimes);
