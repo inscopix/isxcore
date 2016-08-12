@@ -30,12 +30,6 @@ public:
     ///
     virtual Group * getParent() const = 0;
 
-    /// \return     The path of this group from the root group.
-    ///
-    virtual std::string getPath() const = 0;
-
-protected:
-
     /// Set the parent of this data set.
     ///
     /// This simply updates the parent of this data set and does not move
@@ -44,6 +38,10 @@ protected:
     ///
     /// \param  inParent    The new parent of this data set.
     virtual void setParent(Group * inParent) = 0;
+
+    /// \return     The path of this group from the root group.
+    ///
+    virtual std::string getPath() const = 0;
 
 }; // class ProjectItem
 

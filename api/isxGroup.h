@@ -148,9 +148,9 @@ public:
 
     Group * getParent() const override;
 
-    std::string getPath() const override;
-
     void setParent(Group * inParent) override;
+
+    std::string getPath() const override;
 
 private:
 
