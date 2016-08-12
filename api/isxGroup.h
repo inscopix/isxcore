@@ -15,7 +15,7 @@ namespace isx
 ///
 /// All data sets are initially ordered by their time of creation and
 /// allgroups are initially ordered by their time of creation.
-class Group
+class Group : public ProjectItem
 {
 public:
 
@@ -135,36 +135,22 @@ public:
     ///                                 given name in this group.
     void removeDataSet(const std::string & inName);
 
-    /// \return     True if this group is valid.
-    ///
-    bool isValid() const;
-
-    /// \return     The name of this group.
-    ///
-    std::string getName() const;
-
-    /// \return     The parent of this group.
-    ///
-    Group * getParent() const;
-
-    /// Set the parent of this group.
-    ///
-    /// This simply updates the parent of this group and does not move
-    /// this group into the given parent group.
-    /// Use removeDataSet and addDataSet for that.
-    ///
-    /// \param  inParent    The new parent of this group.
-    void setParent(Group * inParent);
-
-    /// \return     The path of this group from the root group.
-    ///
-    std::string getPath() const;
-
     /// Exact comparison.
     ///
     /// \param  inOther     The group with which to compare.
     /// \return             True if the groups are exactly equal.
     bool operator==(const Group & inOther) const;
+
+    // Overrides
+    bool isValid() const override;
+
+    std::string getName() const override;
+
+    Group * getParent() const override;
+
+    std::string getPath() const override;
+
+    void setParent(Group * inParent) override;
 
 private:
 

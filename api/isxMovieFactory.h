@@ -25,6 +25,24 @@ SpWritableMovie_t writeMosaicMovie(
         const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo);
 
+/// Read an existing movie from a file.
+///
+/// The actual type of movie to import (e.g. MosaicMovie, NVistaHdf5Movie)
+/// is determined by the file extension.
+///
+/// - isxd: MosaicMovie
+/// - hdf5: NVistaHdf5Movie
+///
+/// If the extension is not recognized, this fails.
+///
+/// \param  inFileName      The name of the nVista movie file to read.
+/// \return                 The imported movie.
+///
+/// \throw  isx::ExceptionFileIO    If reading the movie file fails.
+/// \throw  isx::ExceptionDataIO    If parsing the movie file fails or
+///                                 if the extension is not recognized.
+SpMovie_t readMovie(const std::string & inFileName);
+
 /// Read an existing mosaic movie from a file.
 ///
 /// \param  inFileName      The name of the mosaic movie file to read.

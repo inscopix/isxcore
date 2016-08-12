@@ -2,6 +2,7 @@
 #include "isxMosaicMovie.h"
 #include "isxNVistaHdf5Movie.h"
 #include "isxRecording.h"
+#include "isxPathUtils.h"
 
 namespace isx
 {
@@ -15,6 +16,25 @@ writeMosaicMovie(
     SpWritableMovie_t movie = std::make_shared<MosaicMovie>(
             inFileName, inTimingInfo, inSpacingInfo);
     return movie;
+}
+
+SpMovie_t
+readMovie(const std::string & inFileName)
+{
+    const std::string extension = getExtension(inFileName);
+    if (extension == "isxd")
+    {
+        return readMosaicMovie(inFileName);
+    }
+    else if (extension == "hdf5")
+    {
+        return readNVistaHdf5Movie(inFileName);
+    }
+    else
+    {
+        ISX_THROW(isx::ExceptionDataIO,
+                "Movie extension not recognized: ", extension);
+    }
 }
 
 SpMovie_t

@@ -1,12 +1,13 @@
 #ifndef ISX_DATA_SET_H
 #define ISX_DATA_SET_H
 
+#include "isxProjectItem.h"
+
 #include <string>
 #include <memory>
 
 namespace isx
 {
-
 
 // Need forward declare because declaration of DataSet needs knowledge
 // of Group and declaration of Group needs knowledge of DataSet.
@@ -15,7 +16,7 @@ class Group;
 /// Encapsulates a data set within a project.
 ///
 /// This is described by a data set type, a name and a file name.
-class DataSet
+class DataSet : public ProjectItem
 {
 public:
 
@@ -24,7 +25,8 @@ public:
     /// TODO sweet : add image and trace when we have files for them.
     enum Type
     {
-        MOVIE = 0,
+        INVALID = 0,
+        MOVIE,
         CELLSET,
     };
 
@@ -42,44 +44,30 @@ public:
             Type inType,
             const std::string & inFileName);
 
-    /// \return     True if this is valid.
-    ///
-    bool isValid() const;
-
     /// \return     The type of this data set.
     ///
     Type getType() const;
 
-    /// \return     The name of this data set.
-    ///
-    std::string getName() const;
-
     /// \return     The file name of this data set.
     ///
     std::string getFileName() const;
-
-    /// \return     The parent of this group.
-    ///
-    Group * getParent() const;
-
-    /// Set the parent of this data set.
-    ///
-    /// This simply updates the parent of this data set and does not move
-    /// this data set into the given parent group,
-    /// Use Group::removeDataSet and Group::addDataSet for that.
-    ///
-    /// \param  inParent    The new parent of this data set.
-    void setParent(Group * inParent);
-
-    /// \return     The path of this group from the root group.
-    ///
-    std::string getPath() const;
 
     /// Exact comparison.
     ///
     /// \param  inOther     The data set with which to compare.
     /// \return             True if the data sets are exactly equal.
     bool operator==(const DataSet & inOther) const;
+
+    // Overrides
+    bool isValid() const override;
+
+    std::string getName() const override;
+
+    Group * getParent() const override;
+
+    void setParent(Group * inParent) override;
+
+    std::string getPath() const override;
 
 private:
 
