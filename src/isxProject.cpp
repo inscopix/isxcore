@@ -31,11 +31,9 @@ Project::Project(const std::string & inFileName, const std::string & inName)
         ISX_THROW(isx::ExceptionFileIO,
                 "The file name already exists: ", inFileName);
     }
-    m_root = std::make_shared<Group>("/");
-    SpGroup_t originalGroup = std::make_shared<Group>("Original");
-    SpGroup_t outputGroup = std::make_shared<Group>("Output");
-    m_root->addGroup(originalGroup);
-    m_root->addGroup(outputGroup);
+    m_root.reset(new Group("/"));
+    m_root->addGroup(std::unique_ptr<Group>(new Group("Original")));
+    m_root->addGroup(std::unique_ptr<Group>(new Group("Output")));
     m_valid = true;
 }
 
@@ -49,43 +47,50 @@ Project::~Project()
     }
 }
 
-SpDataSet_t
+DataSet *
 Project::createDataSet(
         const std::string & inPath,
         DataSet::Type inType,
         const std::string & inFileName)
 {
-    std::string name = isx::getFileName(inPath);
-    std::string projectDirName = getDirName(m_fileName);
+    const std::string name = isx::getFileName(inPath);
     // TODO sweet : We really want to store a data set's file name as a
     // relative path from the project file's directory
+    //std::string projectDirName = getDirName(m_fileName);
     //std::string relFileName = getRelativePath(projectDirName, inFileName);
-    std::string groupPath = getDirName(inPath);
-    SpGroup_t group = getGroup(groupPath);
-    SpDataSet_t dataSet = group->createDataSet(name, inType, inFileName);
-    return dataSet;
+    const std::string groupPath = getDirName(inPath);
+    Group * parent = getGroup(groupPath);
+    return parent->addDataSet(std::unique_ptr<DataSet>(
+                new DataSet(name, inType, inFileName)));
 }
 
-SpDataSet_t
+DataSet *
 Project::getDataSet(const std::string & inPath) const
 {
-    std::string groupPath = getDirName(inPath);
-    std::string name = isx::getFileName(inPath);
-    SpGroup_t group = getGroup(groupPath);
-    SpDataSet_t dataSet = group->getDataSet(name);
-    return dataSet;
+    const std::string name = isx::getFileName(inPath);
+    const std::string groupPath = getDirName(inPath);
+    return getGroup(groupPath)->getDataSet(name);
 }
 
-SpGroup_t
+Group *
+Project::createGroup(const std::string & inPath)
+{
+    const std::string name = isx::getFileName(inPath);
+    const std::string parentPath = getDirName(inPath);
+    Group * parent = getGroup(parentPath);
+    return parent->addGroup(std::unique_ptr<Group>(new Group(name)));
+}
+
+Group *
 Project::getGroup(const std::string & inPath) const
 {
-    std::vector<std::string> groupNames = getPathTokens(inPath);
+    const std::vector<std::string> groupNames = getPathTokens(inPath);
     if (groupNames.front() != "/")
     {
         ISX_THROW(isx::ExceptionDataIO,
                   "The project path does not start with the root character (/): ", inPath);
     }
-    SpGroup_t currentGroup = m_root;
+    Group * currentGroup = m_root.get();
     std::vector<std::string>::const_iterator it;
     for (it = (groupNames.begin() + 1); it != groupNames.end(); ++it)
     {
@@ -94,19 +99,19 @@ Project::getGroup(const std::string & inPath) const
     return currentGroup;
 }
 
-SpGroup_t
+Group *
 Project::getRootGroup() const
 {
-    return m_root;
+    return m_root.get();
 }
 
-SpGroup_t
+Group *
 Project::getOriginalGroup() const
 {
     return m_root->getGroup("Original");
 }
 
-SpGroup_t
+Group *
 Project::getOutputGroup() const
 {
     return m_root->getGroup("Output");
@@ -189,7 +194,7 @@ Project::write() const
         jsonObject["type"] = "Project";
         jsonObject["name"] = m_name;
         jsonObject["mosaicVersion"] = CoreVersionVector();
-        jsonObject["rootGroup"] = convertGroupToJson(m_root);
+        jsonObject["rootGroup"] = convertGroupToJson(m_root.get());
     }
     catch (const std::exception & error)
     {

@@ -35,11 +35,11 @@ json convertPointInMicronsToJson(const PointInMicrons_t & inPointInMicrons);
 json convertSpacingInfoToJson(const SpacingInfo & inSpacingInfo);
 SpacingInfo convertJsonToSpacingInfo(const json & j);
 
-json convertGroupToJson(const SpGroup_t & inGroup);
-SpGroup_t convertJsonToGroup(const json & inJson);
+json convertGroupToJson(const Group * inGroup);
+std::unique_ptr<Group> convertJsonToGroup(const json & inJson);
 
-json convertDataSetToJson(const SpDataSet_t & inDataSet);
-SpDataSet_t convertJsonToDataSet(const json & inJson);
+json convertDataSetToJson(const DataSet * inDataSet);
+std::unique_ptr<DataSet> convertJsonToDataSet(const json & inJson);
 
 }
 

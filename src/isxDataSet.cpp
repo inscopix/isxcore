@@ -14,12 +14,12 @@ DataSet::DataSet(
         const std::string & inName,
         Type inType,
         const std::string & inFileName)
-    : m_valid(false)
+    : m_valid(true)
     , m_name(inName)
     , m_type(inType)
     , m_fileName(inFileName)
+    , m_parent(nullptr)
 {
-    m_valid = true;
 }
 
 bool
@@ -46,14 +46,14 @@ DataSet::getFileName() const
     return m_fileName;
 }
 
-SpGroup_t
+Group *
 DataSet::getParent() const
 {
     return m_parent;
 }
 
 void
-DataSet::setParent(SpGroup_t & inParent)
+DataSet::setParent(Group * inParent)
 {
     m_parent = inParent;
 }

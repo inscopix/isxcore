@@ -12,9 +12,6 @@ namespace isx
 // of Group and declaration of Group needs knowledge of DataSet.
 class Group;
 
-/// The type of a shared pointer to a data set.
-typedef std::shared_ptr<Group> SpGroup_t;
-
 /// Encapsulates a data set within a project.
 ///
 /// This is described by a data set type, a name and a file name.
@@ -24,11 +21,11 @@ public:
 
     /// The type of data item.
     ///
-    /// TODO sweet : add image, trace and cell set when we have files
-    /// for them.
+    /// TODO sweet : add image and trace when we have files for them.
     enum Type
     {
         MOVIE = 0,
+        CELLSET,
     };
 
     /// Empty constructor.
@@ -63,7 +60,7 @@ public:
 
     /// \return     The parent of this group.
     ///
-    SpGroup_t getParent() const;
+    Group * getParent() const;
 
     /// Set the parent of this data set.
     ///
@@ -72,7 +69,7 @@ public:
     /// Use Group::removeDataSet and Group::addDataSet for that.
     ///
     /// \param  inParent    The new parent of this data set.
-    void setParent(SpGroup_t & inParent);
+    void setParent(Group * inParent);
 
     /// \return     The path of this group from the root group.
     ///
@@ -99,12 +96,9 @@ private:
     std::string m_fileName;
 
     /// The parent group to which this belongs.
-    SpGroup_t m_parent;
+    Group * m_parent;
 
 }; // class DataSet
-
-/// The type of a shared pointer to a data set.
-typedef std::shared_ptr<DataSet> SpDataSet_t;
 
 } // namespace isx
 

@@ -3,60 +3,56 @@
 #include "isxTest.h"
 #include "isxException.h"
 
-#include <stdio.h>
-
 TEST_CASE("GroupTest", "[core]")
 {
 
     SECTION("Empty constructor")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>();
+        isx::Group group;
 
-        REQUIRE(!group->isValid());
+        REQUIRE(!group.isValid());
     }
 
     SECTION("Construct a group")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
+        isx::Group group("myGroup");
 
-        REQUIRE(group->isValid());
-        REQUIRE(group->getName() == "myGroup");
-        REQUIRE(!group->getParent());
-        REQUIRE(group->getPath() == "myGroup");
+        REQUIRE(group.isValid());
+        REQUIRE(group.getName() == "myGroup");
+        REQUIRE(!group.getParent());
+        REQUIRE(group.getPath() == "myGroup");
     }
 
-    SECTION("Create a group within another group")
+    SECTION("Add a group to another group")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
+        isx::Group group("myGroup");
 
-        isx::SpGroup_t subGroup = group->createGroup("mySubGroup");
+        isx::Group * subGroup = group.addGroup(
+                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup")));
 
-        REQUIRE(subGroup->isValid());
-        REQUIRE(subGroup->getName() == "mySubGroup");
-        REQUIRE(subGroup->getParent() == group);
-        REQUIRE(subGroup->getPath() == "myGroup/mySubGroup");
+        REQUIRE(group.getGroup("mySubGroup") == subGroup);
     }
 
-    SECTION("Create a group within a root (/) group)")
+    SECTION("Add a group within a root (/) group)")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("/");
+        isx::Group group("/");
 
-        isx::SpGroup_t subGroup = group->createGroup("myGroup");
+        isx::Group * subGroup = group.addGroup(
+                std::unique_ptr<isx::Group>(new isx::Group("myGroup")));
 
-        REQUIRE(subGroup->getPath() == "/myGroup");
+        REQUIRE(group.getGroup("myGroup") == subGroup);
     }
 
-    SECTION("Try to create two groups with the same name in another group")
+    SECTION("Try to add two groups with the same name in another group")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
-        isx::SpGroup_t subGroup1 = group->createGroup("mySubGroup");
-
+        isx::Group group("myGroup");
+        group.addGroup(std::unique_ptr<isx::Group>(new isx::Group("mySubGroup")));
         try
         {
-            isx::SpGroup_t subGroup2 = group->createGroup("mySubGroup");
+            group.addGroup(std::unique_ptr<isx::Group>(new isx::Group("mySubGroup")));
             FAIL("Failed to throw an exception.");
         }
-        catch (isx::ExceptionDataIO & error)
+        catch (const isx::ExceptionDataIO & error)
         {
             REQUIRE(std::string(error.what()) ==
                     "There is already an item with the name: mySubGroup");
@@ -67,53 +63,67 @@ TEST_CASE("GroupTest", "[core]")
         }
     }
 
-    SECTION("Get a group by name")
+    SECTION("Add two groups with different names to another group")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
-        isx::SpGroup_t subGroup1 = group->createGroup("mySubGroup1");
-        isx::SpGroup_t subGroup2 = group->createGroup("mySubGroup2");
+        isx::Group group("myGroup");
+        isx::Group * subGroup1 = group.addGroup(
+                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup1")));
+        isx::Group * subGroup2 = group.addGroup(
+                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup2")));
 
-        REQUIRE(group->getGroup("mySubGroup1") == subGroup1);
+        REQUIRE(group.getGroup("mySubGroup1") == subGroup1);
+        REQUIRE(group.getGroup("mySubGroup2") == subGroup2);
     }
 
     SECTION("Remove a group by name")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
-        isx::SpGroup_t subGroup1 = group->createGroup("mySubGroup1");
-        isx::SpGroup_t subGroup2 = group->createGroup("mySubGroup2");
+        isx::Group group("myGroup");
+        isx::Group * subGroup1 = group.addGroup(
+                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup1")));
+        isx::Group * subGroup2 = group.addGroup(
+                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup2")));
 
-        group->removeGroup("mySubGroup1");
+        group.removeGroup("mySubGroup1");
 
-        REQUIRE(group->getGroups().size() == 1);
-        REQUIRE(group->getGroup("mySubGroup2") == subGroup2);
+        REQUIRE(group.getGroups().size() == 1);
+        REQUIRE(group.getGroup("mySubGroup2") == subGroup2);
+        try
+        {
+            group.getGroup("mySubGroup1");
+            FAIL("Failed to throw an exception.");
+        }
+        catch (const isx::ExceptionDataIO & error)
+        {
+            REQUIRE(std::string(error.what()) ==
+                    "Could not find group with the name: mySubGroup1");
+        }
+        catch (...)
+        {
+            FAIL("Failed to throw an isx::ExceptionDataIO");
+        }
     }
 
-    SECTION("Create a data set in a group")
+    SECTION("Add a data set to a group")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
-        isx::SpDataSet_t dataSet = group->createDataSet(
-                "myDataSet", isx::DataSet::Type::MOVIE, "myMovie.isxd");
+        isx::Group group("myGroup");
+        isx::DataSet * dataSet = group.addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie.isxd")));
 
-        REQUIRE(dataSet->isValid());
-        REQUIRE(dataSet->getName() == "myDataSet");
-        REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
-        REQUIRE(dataSet->getFileName() == "myMovie.isxd");
-        REQUIRE(dataSet->getParent() == group);
+        REQUIRE(group.getDataSet("myDataSet") == dataSet);
     }
-
 
     SECTION("Try to create two data sets with the same name in a group")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
-        isx::SpDataSet_t dataSet1 = group->createDataSet(
-                "myDataSet", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
+        isx::Group group("myGroup");
+        group.addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie1.isxd")));
         try
         {
-            isx::SpDataSet_t dataSet2 = group->createDataSet(
-                "myDataSet", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
+            group.addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie2.isxd")));
             FAIL("Failed to throw an exception.");
         }
-        catch (isx::ExceptionDataIO & error)
+        catch (const isx::ExceptionDataIO & error)
         {
             REQUIRE(std::string(error.what()) ==
                     "There is already an item with the name: myDataSet");
@@ -126,16 +136,16 @@ TEST_CASE("GroupTest", "[core]")
 
     SECTION("Try to create two data sets with the same file name in a group")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
-        isx::SpDataSet_t dataSet1 = group->createDataSet(
-                "myDataSet1", isx::DataSet::Type::MOVIE, "myMovie.isxd");
+        isx::Group group("myGroup");
+        group.addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie.isxd")));
         try
         {
-            isx::SpDataSet_t dataSet2 = group->createDataSet(
-                "myDataSet2", isx::DataSet::Type::MOVIE, "myMovie.isxd");
+            group.addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie.isxd")));
             FAIL("Failed to throw an exception.");
         }
-        catch (isx::ExceptionFileIO & error)
+        catch (const isx::ExceptionFileIO & error)
         {
             REQUIRE(std::string(error.what()) ==
                     "There is already a data set with the file name: myMovie.isxd");
@@ -146,61 +156,80 @@ TEST_CASE("GroupTest", "[core]")
         }
     }
 
-    SECTION("Get a data set by name")
+    SECTION("Add two data sets")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
-        isx::SpDataSet_t dataSet1 = group->createDataSet(
-                "myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
-        isx::SpDataSet_t dataSet2 = group->createDataSet(
-                "myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
+        isx::Group group("myGroup");
 
-        isx::SpDataSet_t actualDataSet = group->getDataSet("myDataSet1");
+        isx::DataSet * dataSet1 = group.addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd")));
+        isx::DataSet * dataSet2 = group.addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd")));
 
-        REQUIRE(group->getDataSet("myDataSet1") == dataSet1);
+        REQUIRE(group.getDataSet("myDataSet1") == dataSet1);
+        REQUIRE(group.getDataSet("myDataSet1") == dataSet1);
     }
 
     SECTION("Remove a data set by name")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
-        isx::SpDataSet_t dataSet1 = group->createDataSet(
-                "myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
-        isx::SpDataSet_t dataSet2 = group->createDataSet(
-                "myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
+        isx::Group group("myGroup");
 
-        group->removeDataSet("myDataSet1");
-        isx::SpDataSet_t actualDataSet = group->getDataSet("myDataSet2");
+        isx::DataSet * dataSet1 = group.addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd")));
+        isx::DataSet * dataSet2 = group.addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd")));
 
-        REQUIRE(group->getDataSets().size() == 1);
-        REQUIRE(actualDataSet == dataSet2);
+        group.removeDataSet("myDataSet1");
+
+        REQUIRE(group.getDataSets().size() == 1);
+        REQUIRE(group.getDataSet("myDataSet2") == dataSet2);
+        try
+        {
+            group.getGroup("myDataSet1");
+            FAIL("Failed to throw an exception.");
+        }
+        catch (const isx::ExceptionDataIO & error)
+        {
+            REQUIRE(std::string(error.what()) ==
+                    "Could not find group with the name: myDataSet1");
+        }
+        catch (...)
+        {
+            FAIL("Failed to throw an isx::ExceptionDataIO");
+        }
     }
 
     SECTION("Get data sets in a group")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
-        isx::SpDataSet_t dataSet1 = group->createDataSet(
-                "myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
-        isx::SpDataSet_t dataSet2 = group->createDataSet(
-                "myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
+        isx::Group group("myGroup");
 
-        std::vector<isx::SpDataSet_t> actualDataSets = group->getDataSets();
+        isx::DataSet * dataSet1 = group.addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd")));
+        isx::DataSet * dataSet2 = group.addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd")));
 
-        std::vector<isx::SpDataSet_t> expectedDataSets = {dataSet1, dataSet2};
+        std::vector<isx::DataSet *> actualDataSets = group.getDataSets();
+
+        std::vector<isx::DataSet *> expectedDataSets = {dataSet1, dataSet2};
         REQUIRE(actualDataSets == expectedDataSets);
     }
 
     SECTION("Get data sets in a group recursively")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
-        isx::SpGroup_t subGroup1 = group->createGroup("mySubGroup1");
-        isx::SpGroup_t subGroup2 = group->createGroup("mySubGroup2");
-        isx::SpDataSet_t dataSet1 = group->createDataSet(
-                "myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
-        isx::SpDataSet_t dataSet2 = subGroup2->createDataSet(
-                "myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
+        isx::Group group("myGroup");
 
-        std::vector<isx::SpDataSet_t> actualDataSets = group->getDataSets(true);
+        isx::Group * subGroup1 = group.addGroup(
+                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup1")));
+        isx::Group * subGroup2 = group.addGroup(
+                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup2")));
 
-        std::vector<isx::SpDataSet_t> expectedDataSets = {dataSet1, dataSet2};
+        isx::DataSet * dataSet1 = group.addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd")));
+        isx::DataSet * dataSet2 = subGroup2->addDataSet(std::unique_ptr<isx::DataSet>(
+                    new isx::DataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd")));
+
+        std::vector<isx::DataSet *> actualDataSets = group.getDataSets(true);
+
+        std::vector<isx::DataSet *> expectedDataSets = {dataSet1, dataSet2};
         REQUIRE(actualDataSets == expectedDataSets);
     }
 

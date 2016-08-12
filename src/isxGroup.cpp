@@ -6,28 +6,18 @@ namespace isx
 
 Group::Group()
     : m_valid(false)
-    , m_parent(SpGroup_t())
 {
 }
 
 Group::Group(const std::string & inName)
-    : m_valid(false)
+    : m_valid(true)
     , m_name(inName)
-    , m_parent(SpGroup_t())
+    , m_parent(nullptr)
 {
-    m_valid = true;
 }
 
-SpGroup_t
-Group::createGroup(const std::string & inName)
-{
-    SpGroup_t group = std::make_shared<Group>(inName);
-    addGroup(group);
-    return group;
-}
-
-void
-Group::addGroup(const SpGroup_t & inGroup)
+Group *
+Group::addGroup(std::unique_ptr<Group> inGroup)
 {
     const std::string name = inGroup->getName();
     if (isName(name))
@@ -35,70 +25,62 @@ Group::addGroup(const SpGroup_t & inGroup)
         ISX_THROW(isx::ExceptionDataIO,
                 "There is already an item with the name: ", name);
     }
-    inGroup->m_parent = shared_from_this();
-    m_groups.push_back(inGroup);
+    inGroup->m_parent = this;
+    m_groups.push_back(std::move(inGroup));
+    return m_groups.back().get();
 }
 
-std::vector<SpGroup_t>
+std::vector<Group *>
 Group::getGroups(bool inRecurse) const
 {
-    std::vector<SpGroup_t> outGroups;
-    std::vector<SpGroup_t>::const_iterator it;
+    std::vector<Group *> outGroups;
+    std::vector<std::unique_ptr<Group>>::const_iterator it;
     for (it = m_groups.begin(); it != m_groups.end(); ++it)
     {
-        outGroups.push_back(*it);
+        outGroups.push_back((*it).get());
         if (inRecurse)
         {
-            std::vector<SpGroup_t> subGroups = (*it)->getGroups(true);
-            outGroups.insert(outGroups.end(), subGroups.begin(), subGroups.end());
+            std::vector<Group *> groups = (*it)->getGroups(true);
+            outGroups.insert(outGroups.end(), groups.begin(), groups.end());
         }
     }
-    return m_groups;
+    return outGroups;
 }
 
-SpGroup_t
+Group *
 Group::getGroup(const std::string & inName) const
 {
-    std::vector<SpGroup_t>::const_iterator it;
+    std::vector<std::unique_ptr<Group>>::const_iterator it;
     for (it = m_groups.begin(); it != m_groups.end(); ++it)
     {
         if ((*it)->m_name == inName)
         {
-            return *it;
+            return (*it).get();
         }
     }
-    ISX_THROW(isx::ExceptionDataIO, "Could not find group with name: ", inName);
+    ISX_THROW(isx::ExceptionDataIO,
+            "Could not find group with the name: ", inName);
 }
 
 void
 Group::removeGroup(const std::string & inName)
 {
-    std::vector<SpGroup_t>::iterator it;
+    std::vector<std::unique_ptr<Group>>::iterator it;
     for (it = m_groups.begin(); it != m_groups.end(); ++it)
     {
         if ((*it)->m_name == inName)
         {
-            (*it)->m_parent = SpGroup_t();
+            (*it)->m_parent = nullptr;
             it = m_groups.erase(it);
             return;
         }
     }
-    ISX_THROW(isx::ExceptionDataIO, "Could not find group with name: ", inName);
+    ISX_THROW(isx::ExceptionDataIO,
+            "Could not find group with the name: ", inName);
 }
 
-SpDataSet_t
-Group::createDataSet(
-        const std::string & inName,
-        DataSet::Type inType,
-        const std::string & inFileName)
-{
-    SpDataSet_t dataSet = std::make_shared<DataSet>(inName, inType, inFileName);
-    addDataSet(dataSet);
-    return dataSet;
-}
-
-void
-Group::addDataSet(const SpDataSet_t & inDataSet)
+DataSet *
+Group::addDataSet(std::unique_ptr<DataSet> inDataSet)
 {
     const std::string name = inDataSet->getName();
     if (isName(name))
@@ -112,23 +94,28 @@ Group::addDataSet(const SpDataSet_t & inDataSet)
         ISX_THROW(isx::ExceptionFileIO,
                 "There is already a data set with the file name: ", fileName);
     }
-    SpGroup_t parent = shared_from_this();
-    inDataSet->setParent(parent);
-    m_dataSets.push_back(inDataSet);
+    inDataSet->setParent(this);
+    m_dataSets.push_back(std::move(inDataSet));
+    return m_dataSets.back().get();
 }
 
-std::vector<SpDataSet_t>
+std::vector<DataSet *>
 Group::getDataSets(bool inRecurse) const
 {
-    std::vector<SpDataSet_t> outDataSets;
-    outDataSets.insert(outDataSets.end(), m_dataSets.begin(), m_dataSets.end());
+    std::vector<DataSet *> outDataSets;
+
+    std::vector<std::unique_ptr<DataSet>>::const_iterator it;
+    for (it = m_dataSets.begin(); it != m_dataSets.end(); ++it)
+    {
+        outDataSets.push_back((*it).get());
+    }
 
     if (inRecurse)
     {
-        std::vector<SpGroup_t>::const_iterator it;
+        std::vector<std::unique_ptr<Group>>::const_iterator it;
         for (it = m_groups.begin(); it != m_groups.end(); ++it)
         {
-            std::vector<SpDataSet_t> dataSets = (*it)->getDataSets(true);
+            std::vector<DataSet *> dataSets = (*it)->getDataSets(true);
             outDataSets.insert(outDataSets.end(), dataSets.begin(), dataSets.end());
         }
     }
@@ -136,28 +123,28 @@ Group::getDataSets(bool inRecurse) const
     return outDataSets;
 }
 
-std::vector<SpDataSet_t>
+std::vector<DataSet *>
 Group::getDataSets(
         DataSet::Type inType,
         bool inRecurse) const
 {
-    std::vector<SpDataSet_t> outDataSets;
+    std::vector<DataSet *> outDataSets;
 
-    std::vector<SpDataSet_t>::const_iterator it;
+    std::vector<std::unique_ptr<DataSet>>::const_iterator it;
     for (it = m_dataSets.begin(); it != m_dataSets.end(); ++it)
     {
         if ((*it)->getType() == inType)
         {
-            outDataSets.push_back(*it);
+            outDataSets.push_back((*it).get());
         }
     }
 
     if (inRecurse)
     {
-        std::vector<SpGroup_t>::const_iterator it;
+        std::vector<std::unique_ptr<Group>>::const_iterator it;
         for (it = m_groups.begin(); it != m_groups.end(); ++it)
         {
-            std::vector<SpDataSet_t> dataSets = (*it)->getDataSets(inType, true);
+            std::vector<DataSet *> dataSets = (*it)->getDataSets(inType, true);
             outDataSets.insert(outDataSets.end(), dataSets.begin(), dataSets.end());
         }
     }
@@ -165,15 +152,15 @@ Group::getDataSets(
     return outDataSets;
 }
 
-SpDataSet_t
+DataSet *
 Group::getDataSet(const std::string & inName) const
 {
-    std::vector<SpDataSet_t>::const_iterator it;
+    std::vector<std::unique_ptr<DataSet>>::const_iterator it;
     for (it = m_dataSets.begin(); it != m_dataSets.end(); ++it)
     {
         if ((*it)->getName() == inName)
         {
-            return *it;
+            return (*it).get();
         }
     }
     ISX_THROW(isx::ExceptionDataIO, "Could not find data set with name: ", inName);
@@ -182,13 +169,12 @@ Group::getDataSet(const std::string & inName) const
 void
 Group::removeDataSet(const std::string & inName)
 {
-    std::vector<SpDataSet_t>::iterator it;
+    std::vector<std::unique_ptr<DataSet>>::iterator it;
     for (it = m_dataSets.begin(); it != m_dataSets.end(); ++it)
     {
         if ((*it)->getName() == inName)
         {
-            SpGroup_t nullParent;
-            (*it)->setParent(nullParent);
+            (*it)->setParent(nullptr);
             it = m_dataSets.erase(it);
             return;
         }
@@ -208,17 +194,15 @@ Group::getName() const
     return m_name;
 }
 
-SpGroup_t
+Group *
 Group::getParent() const
 {
     return m_parent;
 }
 
-
 void
-Group::setParent(SpGroup_t & inParent)
+Group::setParent(Group * inParent)
 {
-    inParent->addGroup(shared_from_this());
     m_parent = inParent;
 }
 
@@ -254,7 +238,7 @@ Group::operator ==(const Group & inOther) const
     return sameParent && (m_name == inOther.m_name);
 }
 
-SpGroup_t
+Group *
 Group::getRootParent()
 {
     if (m_parent)
@@ -263,14 +247,14 @@ Group::getRootParent()
     }
     else
     {
-        return shared_from_this();
+        return this;
     }
 }
 
 bool
 Group::isName(const std::string & inName) const
 {
-    std::vector<SpGroup_t>::const_iterator groupIt;
+    std::vector<std::unique_ptr<Group>>::const_iterator groupIt;
     for (groupIt = m_groups.begin(); groupIt != m_groups.end(); ++groupIt)
     {
         if ((*groupIt)->getName() == inName)
@@ -279,7 +263,7 @@ Group::isName(const std::string & inName) const
         }
     }
 
-    std::vector<SpDataSet_t>::const_iterator dataSetIt;
+    std::vector<std::unique_ptr<DataSet>>::const_iterator dataSetIt;
     for (dataSetIt = m_dataSets.begin(); dataSetIt != m_dataSets.end(); ++dataSetIt)
     {
         if ((*dataSetIt)->getName() == inName)
@@ -294,9 +278,9 @@ Group::isName(const std::string & inName) const
 bool
 Group::isFileName(const std::string & inFileName)
 {
-    std::shared_ptr<const Group> root = getRootParent();
-    std::vector<SpDataSet_t> dataSets = root->getDataSets(true);
-    std::vector<SpDataSet_t>::const_iterator it;
+    Group * root = getRootParent();
+    std::vector<DataSet *> dataSets = root->getDataSets(true);
+    std::vector<DataSet *>::const_iterator it;
     for (it = dataSets.begin(); it != dataSets.end(); ++it)
     {
         if ((*it)->getFileName() == inFileName)

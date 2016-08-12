@@ -14,21 +14,21 @@ TEST_CASE("ProjectTest", "[core]")
 
     SECTION("Empty constructor")
     {
-        isx::SpProject_t project = std::make_shared<isx::Project>();
-        REQUIRE(!project->isValid());
+        isx::Project project;
+        REQUIRE(!project.isValid());
     }
 
     SECTION("Create a new project")
     {
-        isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
+        isx::Project project(projectFileName, projectName);
 
-        REQUIRE(project->isValid());
-        REQUIRE(project->getName() == projectName);
-        REQUIRE(project->getFileName() == projectFileName);
-        REQUIRE(project->getGroup("/")->getGroups().size() == 2);
-        REQUIRE_NOTHROW(project->getRootGroup());
-        REQUIRE_NOTHROW(project->getOriginalGroup());
-        REQUIRE_NOTHROW(project->getOutputGroup());
+        REQUIRE(project.isValid());
+        REQUIRE(project.getName() == projectName);
+        REQUIRE(project.getFileName() == projectFileName);
+        REQUIRE(project.getGroup("/")->getGroups().size() == 2);
+        REQUIRE_NOTHROW(project.getRootGroup());
+        REQUIRE_NOTHROW(project.getOriginalGroup());
+        REQUIRE_NOTHROW(project.getOutputGroup());
     }
 
     SECTION("Create a new project in a file that already exists")
@@ -40,7 +40,7 @@ TEST_CASE("ProjectTest", "[core]")
 
         try
         {
-            isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
+            isx::Project project(projectFileName, projectName);
             FAIL("Failed to throw an exception.");
         }
         catch (isx::ExceptionFileIO & error)
@@ -56,23 +56,24 @@ TEST_CASE("ProjectTest", "[core]")
 
     SECTION("Create a group in a project")
     {
-        isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
+        isx::Project project(projectFileName, projectName);
 
-        isx::SpGroup_t group = project->getRootGroup()->createGroup("myGroup");
+        isx::Group * group = project.createGroup("/myGroup");
 
-        REQUIRE(group->getParent() == project->getRootGroup());
+        REQUIRE(group->getParent() == project.getRootGroup());
         REQUIRE(group->getName() == "myGroup");
+        REQUIRE(group->getPath() == "/myGroup");
     }
 
     SECTION("Create a movie data set in a project")
     {
         std::string movieFileName = g_resources["testDataPath"] + "/movie.isxp";
-        isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
+        isx::Project project(projectFileName, projectName);
 
-        isx::SpDataSet_t dataSet = project->createDataSet("/myDataSet",
+        isx::DataSet * dataSet = project.createDataSet("/myDataSet",
                 isx::DataSet::Type::MOVIE, movieFileName);
 
-        REQUIRE(dataSet->getParent() == project->getRootGroup());
+        REQUIRE(dataSet->getParent() == project.getRootGroup());
         REQUIRE(dataSet->getName() == "myDataSet");
         REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(dataSet->getPath() == "/myDataSet");
@@ -81,38 +82,50 @@ TEST_CASE("ProjectTest", "[core]")
 
     SECTION("Open an existing project after adding a group.")
     {
-        isx::SpGroup_t group;
         {
-            isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
-            group = project->getRootGroup()->createGroup("myGroup");
+            isx::Project project(projectFileName, projectName);
+            project.createGroup("/myGroup");
         }
-        isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName);
-        REQUIRE(project->isValid());
-        REQUIRE(*(project->getGroup("/myGroup")) == *group);
+        isx::Project project(projectFileName);
+        REQUIRE(project.isValid());
+        isx::Group * group = project.getGroup("/myGroup");
+        REQUIRE(group->getName() == "myGroup");
+        REQUIRE(group->getPath() == "/myGroup");
+        REQUIRE(*(group->getParent()) == isx::Group("/"));
     }
 
     SECTION("Open an existing project after adding some typical groups and data sets")
     {
         std::string baseName = "recording-20160808-133943";
-        std::string origMoviePath = "/Original/" + baseName;
-        std::string outMoviePath = "/Output/" + baseName + "-pp";
+        std::string origMovieName = baseName;
+        std::string outMovieName = baseName + "-pp";
+        std::string origMoviePath = "/Original/" + origMovieName;
+        std::string outMoviePath = "/Output/" + outMovieName;
 
-        std::string origMovieFileName = "/inscopix/data/" + baseName + ".isxp";
-        std::string outMovieFileName = g_resources["testDataPath"] + "/" + baseName + ".isxp";
+        std::string origMovieFileName = "/inscopix/data/" + origMovieName + ".isxp";
+        std::string outMovieFileName = g_resources["testDataPath"] + "/" + outMovieName + ".isxp";
 
-        isx::SpDataSet_t origMovie, outMovie;
         {
-            isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName, projectName);
-            origMovie = project->createDataSet(origMoviePath,
-                    isx::DataSet::Type::MOVIE, origMovieFileName);
-            outMovie = project->createDataSet(outMoviePath,
-                    isx::DataSet::Type::MOVIE, outMovieFileName);
+            isx::Project project(projectFileName, projectName);
+            project.createDataSet(origMoviePath, isx::DataSet::Type::MOVIE, origMovieFileName);
+            project.createDataSet(outMoviePath, isx::DataSet::Type::MOVIE, outMovieFileName);
         }
 
-        isx::SpProject_t project = std::make_shared<isx::Project>(projectFileName);
-        REQUIRE(project->isValid());
-        REQUIRE(*(project->getOriginalGroup()->getDataSet(baseName)) == *origMovie);
-        REQUIRE(*(project->getOutputGroup()->getDataSet(baseName + "-pp")) == *outMovie);
+        isx::Group rootGroup = isx::Group("/");
+        isx::Group * origGroup = rootGroup.addGroup(
+                std::unique_ptr<isx::Group>(new isx::Group("Original")));
+        isx::Group * outGroup = rootGroup.addGroup(
+                std::unique_ptr<isx::Group>(new isx::Group("Output")));
+
+        isx::DataSet * expOrigMovie = origGroup->addDataSet(
+                std::unique_ptr<isx::DataSet>(new isx::DataSet(origMovieName, isx::DataSet::Type::MOVIE, origMovieFileName)));
+        isx::DataSet * expOutMovie = outGroup->addDataSet(
+                std::unique_ptr<isx::DataSet>(new isx::DataSet(outMovieName, isx::DataSet::Type::MOVIE, outMovieFileName)));
+
+        isx::Project project(projectFileName);
+        REQUIRE(project.isValid());
+        REQUIRE(*(project.getDataSet(origMoviePath)) == *expOrigMovie);
+        REQUIRE(*(project.getDataSet(outMoviePath)) == *expOutMovie);
     }
 
 }

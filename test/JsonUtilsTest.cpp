@@ -11,14 +11,13 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
 
     SECTION("Convert a movie data set to json")
     {
-        isx::SpDataSet_t dataSet = std::make_shared<isx::DataSet>(
-                "myDataSet", isx::DataSet::Type::MOVIE, movieFileName);
+        isx::DataSet dataSet("myDataSet", isx::DataSet::Type::MOVIE, movieFileName);
 
-        isx::json jsonObject = isx::convertDataSetToJson(dataSet);
+        isx::json jsonObject = isx::convertDataSetToJson(&dataSet);
+
         std::string type = jsonObject["type"];
         isx::DataSet::Type dataSetType = isx::DataSet::Type(isx::isize_t(jsonObject["dataSetType"]));
         std::string fileName = jsonObject["fileName"];
-
         REQUIRE(type == "DataSet");
         REQUIRE(dataSetType == isx::DataSet::Type::MOVIE);
         REQUIRE(fileName == movieFileName);
@@ -32,7 +31,7 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         jsonObject["dataSetType"] = isx::isize_t(isx::DataSet::Type::MOVIE);
         jsonObject["fileName"] = movieFileName;
 
-        isx::SpDataSet_t dataSet = isx::convertJsonToDataSet(jsonObject);
+        std::unique_ptr<isx::DataSet> dataSet = isx::convertJsonToDataSet(jsonObject);
 
         REQUIRE(dataSet->isValid());
         REQUIRE(dataSet->getName() == "myDataSet");
@@ -43,9 +42,9 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
     SECTION("Convert an empty group to json")
     {
         std::string name = "myGroup";
-        isx::SpGroup_t group = std::make_shared<isx::Group>(name);
+        isx::Group group(name);
 
-        isx::json jsonObject = isx::convertGroupToJson(group);
+        isx::json jsonObject = isx::convertGroupToJson(&group);
 
         std::string jsonType = jsonObject["type"];
         std::string jsonName = jsonObject["name"];
@@ -66,7 +65,7 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         jsonObject["groups"] = isx::json::array();
         jsonObject["dataSets"] = isx::json::array();
 
-        isx::SpGroup_t group = isx::convertJsonToGroup(jsonObject);
+        std::unique_ptr<isx::Group> group = isx::convertJsonToGroup(jsonObject);
 
         REQUIRE(group->isValid());
         REQUIRE(group->getName() == name);
@@ -74,13 +73,12 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         REQUIRE(group->getDataSets().empty());
     }
 
-    SECTION("Convert an group containing other groups to json")
+    SECTION("Convert a group containing other groups to json")
     {
-        isx::SpGroup_t group = std::make_shared<isx::Group>("myGroup");
-        isx::SpGroup_t subGroup = std::make_shared<isx::Group>("mySubGroup");
-        group->addGroup(subGroup);
+        isx::Group group("myGroup");
+        group.addGroup(std::unique_ptr<isx::Group>(new isx::Group("mySubGroup")));
 
-        isx::json jsonObject = isx::convertGroupToJson(group);
+        isx::json jsonObject = isx::convertGroupToJson(&group);
 
         std::string jsonType = jsonObject["type"];
         std::string jsonName = jsonObject["name"];

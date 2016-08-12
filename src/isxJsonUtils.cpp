@@ -134,15 +134,15 @@ convertJsonToSpacingInfo(const json & j)
 }
 
 json
-convertGroupToJson(const SpGroup_t & inGroup)
+convertGroupToJson(const Group * inGroup)
 {
     json outJson;
     outJson["type"] = "Group";
     outJson["name"] = inGroup->getName();
 
     outJson["groups"] = json::array();
-    std::vector<SpGroup_t> groups = inGroup->getGroups();
-    std::vector<SpGroup_t>::const_iterator groupIt;
+    std::vector<Group *> groups = inGroup->getGroups();
+    std::vector<Group *>::const_iterator groupIt;
     for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt)
     {
         json group = convertGroupToJson(*groupIt);
@@ -150,8 +150,8 @@ convertGroupToJson(const SpGroup_t & inGroup)
     }
 
     outJson["dataSets"] = json::array();
-    std::vector<SpDataSet_t> dataSets = inGroup->getDataSets();
-    std::vector<SpDataSet_t>::const_iterator dataSetIt;
+    std::vector<DataSet *> dataSets = inGroup->getDataSets();
+    std::vector<DataSet *>::const_iterator dataSetIt;
     for (dataSetIt = dataSets.begin(); dataSetIt != dataSets.end(); ++dataSetIt)
     {
         json dataSet = convertDataSetToJson(*dataSetIt);
@@ -161,12 +161,12 @@ convertGroupToJson(const SpGroup_t & inGroup)
     return outJson;
 }
 
-SpGroup_t
+std::unique_ptr<Group>
 convertJsonToGroup(const json & inJson)
 {
     std::string name = inJson["name"];
 
-    SpGroup_t outGroup = std::make_shared<Group>(name);
+    std::unique_ptr<Group> outGroup(new Group(name));
 
     json groups = inJson["groups"];
     for (json::iterator it = groups.begin(); it != groups.end(); ++it)
@@ -184,7 +184,7 @@ convertJsonToGroup(const json & inJson)
 }
 
 json
-convertDataSetToJson(const SpDataSet_t & inDataSet)
+convertDataSetToJson(const DataSet * inDataSet)
 {
     json outJson;
     outJson["type"] = "DataSet";
@@ -194,14 +194,13 @@ convertDataSetToJson(const SpDataSet_t & inDataSet)
     return outJson;
 }
 
-SpDataSet_t
+std::unique_ptr<DataSet>
 convertJsonToDataSet(const json & inJson)
 {
     std::string name = inJson["name"];
     DataSet::Type dataSetType = DataSet::Type(isize_t(inJson["dataSetType"]));
     std::string fileName = inJson["fileName"];
-    SpDataSet_t dataSet = std::make_shared<DataSet>(name, dataSetType, fileName);
-    return dataSet;
+    return std::unique_ptr<DataSet>(new DataSet(name, dataSetType, fileName));
 }
 
 }

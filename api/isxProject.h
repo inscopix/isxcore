@@ -65,11 +65,11 @@ public:
     /// \param  inFileName  The file name of the data set to create.
     /// \return             The data set created.
     ///
-    /// \throw  isx::ExceptionDataIO    If a data set with the given name
+    /// \throw  isx::ExceptionDataIO    If an item with the given path
     ///                                 already exists.
     /// \throw  isx::ExceptionFileIO    If a data set with the given file
-    ///                                 name already exists in this group's tree.
-    SpDataSet_t createDataSet(
+    ///                                 name already exists in this project.
+    DataSet * createDataSet(
             const std::string & inPath,
             DataSet::Type inType,
             const std::string & inFileName);
@@ -79,29 +79,39 @@ public:
     /// \param  inPath      The path of the data set to retrieve.
     /// \return             The data set retrieved.
     ///
-    /// \throw  isx::ExceptionDataIO    If there is no data set with the
-    ///                                 given name in this group.
-    SpDataSet_t getDataSet(const std::string & inPath) const;
+    /// \throw  isx::ExceptionDataIO    If there is no data set with the given path.
+    DataSet * getDataSet(const std::string & inPath) const;
 
-    /// Get a data set by its project path.
+    /// Create a group by it project path.
     ///
-    /// \param  inPath          The project path of the data set.
-    /// \return                 The retrieved data set.
+    /// If an item with the given path already exists in this project, this
+    /// will fail.
     ///
-    /// \throw  isx::ExceptionDataIO    If the data set does not exist.
-    SpGroup_t getGroup(const std::string & inPath) const;
+    /// \param  inPath      The path of the data set to create.
+    /// \return             The group created.
+    ///
+    /// \throw  isx::ExceptionDataIO    If an with the given path already exists.
+    Group * createGroup(const std::string & inPath);
+
+    /// Get a group by its project path.
+    ///
+    /// \param  inPath          The project path of the group to get.
+    /// \return                 The retrieved group.
+    ///
+    /// \throw  isx::ExceptionDataIO    If the group does not exist.
+    Group * getGroup(const std::string & inPath) const;
 
     /// \return     The root group.
     ///
-    SpGroup_t getRootGroup() const;
+    Group * getRootGroup() const;
 
     /// \return     The group of original data.
     ///
-    SpGroup_t getOriginalGroup() const;
+    Group * getOriginalGroup() const;
 
     /// \return     The group of output data.
     ///
-    SpGroup_t getOutputGroup() const;
+    Group * getOutputGroup() const;
 
     /// \return     True if this project is valid.
     ///
@@ -124,7 +134,7 @@ private:
     std::string m_name;
 
     /// The root group of the project.
-    SpGroup_t m_root;
+    std::unique_ptr<Group> m_root;
 
     /// The file name of the project file.
     std::string m_fileName;
@@ -139,10 +149,14 @@ private:
     /// This requires the file name to already be set.
     void write() const;
 
-};
+    /// Checks if the file name is already used by a data set in this group's tree.
+    ///
+    /// \param  inFileName  The file name to check.
+    /// \return             True if this group's tree contains a data set with
+    ///                     given file name.
+    bool isFileName(const std::string & inFileName);
 
-/// The type of a shared pointer to a project.
-typedef std::shared_ptr<Project> SpProject_t;
+};
 
 }
 #endif // ISX_PROJECT_H

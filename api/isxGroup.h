@@ -15,7 +15,7 @@ namespace isx
 ///
 /// All data sets are initially ordered by their time of creation and
 /// allgroups are initially ordered by their time of creation.
-class Group : public std::enable_shared_from_this<Group>
+class Group
 {
 public:
 
@@ -29,33 +29,29 @@ public:
     /// \param  inName      The name of this group.
     Group(const std::string & inName);
 
-    /// Create an empty group in this group.
+    /// Move a group into this group.
     ///
-    /// If a group with the given name exists in this group, this will fail.
+    /// You will need to transfer ownership of the unique_ptr to this
+    /// function using std::move.
+    /// This returns a raw pointer to the given group after ownership
+    /// has been taken by this group.
+    /// This will fail if a group with the same name as the given group
+    /// exists in this group.
     ///
-    /// \param  inName      The name of the group to create.
-    /// \return             The group created.
+    /// \param  inGroup     The group to add to this group.
+    /// \return             A raw pointer to the given group after
+    ///                     ownership has been taken by this group.
     ///
     /// \throw  isx::ExceptionDataIO    If a group with the given name
     ///                                 already exists.
-    SpGroup_t createGroup(const std::string & inName);
-
-    /// Add a group to this group.
-    ///
-    /// This will update the parent of the input to be this.
-    ///
-    /// \param  inGroup     The group to add to this.
-    ///
-    /// \throw  isx::ExceptionDataIO    If a data set with the same name
-    ///                                 already exists in this group.
-    void addGroup(const SpGroup_t & inGroup);
+    Group * addGroup(std::unique_ptr<Group> inGroup);
 
     /// Get the groups in this group.
     ///
     /// \param  inRecurse   If true, recursively get data sets from groups
     ///                     in this group.
     /// \return             The groups in this group.
-    std::vector<SpGroup_t> getGroups(bool inRecurse = false) const;
+    std::vector<Group *> getGroups(bool inRecurse = false) const;
 
     /// Get a group with the given name in this group.
     ///
@@ -64,7 +60,7 @@ public:
     ///
     /// \throw  isx::ExceptionDataIO    If there is no data set with the
     ///                                 given name in this group.
-    SpGroup_t getGroup(const std::string & inName) const;
+    Group * getGroup(const std::string & inName) const;
 
     /// Remove a sub-group with the given name.
     ///
@@ -77,39 +73,22 @@ public:
     ///                                 given name in this group.
     void removeGroup(const std::string & inName);
 
-    /// Create a data set in this group.
+    /// Move a data set into this group.
     ///
-    /// If a data set with the given name already exists in this group,
-    /// this will fail.
-    /// If there is an existing data set anywhere in this group's tree
-    /// (recursing down from its root ancestor) with the given file name
-    /// this will fail.
+    /// You will need to transfer ownership of the unique_ptr to this
+    /// function using std::move.
+    /// This returns a raw pointer to the data set after ownership has been
+    /// taken by this group.
+    /// This will fail if a data set with the given name already exists in
+    /// this group.
     ///
-    /// \param  inName      The name of the data set to create.
-    /// \param  inType      The type of the data set to create.
-    /// \param  inFileName  The file name of the data set to create.
-    /// \return             The data set created.
+    /// \param  inDataSet   The data set to add to this group.
+    /// \return             A raw pointer to the given data set after
+    ///                     ownership has been taken by this group.
     ///
     /// \throw  isx::ExceptionDataIO    If a data set with the given name
     ///                                 already exists.
-    /// \throw  isx::ExceptionFileIO    If a data set with the given file
-    ///                                 name already exists in this group's tree.
-    SpDataSet_t createDataSet(
-            const std::string & inName,
-            DataSet::Type inType,
-            const std::string & inFileName);
-
-    /// Adds a data set to this group.
-    ///
-    /// This will fail if there is a data set in this group that has the
-    /// same name as the the name of the given data set.
-    /// This will update the parent of the input to be this.
-    ///
-    /// \param  inDataSet   The data set to add.
-    ///
-    /// \throw  isx::ExceptionDataIO    If a data set with the same name
-    ///                                 already exists in this group.
-    void addDataSet(const SpDataSet_t & inDataSet);
+    DataSet * addDataSet(std::unique_ptr<DataSet> inDataSet);
 
     /// Get the data sets in this group.
     ///
@@ -120,7 +99,7 @@ public:
     /// \param  inRecurse   If true, recursively get data sets from groups
     ///                     in this group.
     /// \return             The data sets in this group.
-    std::vector<SpDataSet_t> getDataSets(bool inRecurse = false) const;
+    std::vector<DataSet *> getDataSets(bool inRecurse = false) const;
 
     /// Get the data sets of a given type in this group.
     ///
@@ -132,7 +111,7 @@ public:
     /// \param  inRecurse   If true, recursively get data sets from groups
     ///                     in this group.
     /// \return             The data sets of a given type in this group.
-    std::vector<SpDataSet_t> getDataSets(
+    std::vector<DataSet *> getDataSets(
             DataSet::Type inType,
             bool inRecurse = false) const;
 
@@ -143,7 +122,7 @@ public:
     ///
     /// \throw  isx::ExceptionDataIO    If there is no data set with the
     ///                                 given name in this group.
-    SpDataSet_t getDataSet(const std::string & inName) const;
+    DataSet * getDataSet(const std::string & inName) const;
 
     /// Removes a data set from this group.
     ///
@@ -166,7 +145,7 @@ public:
 
     /// \return     The parent of this group.
     ///
-    SpGroup_t getParent() const;
+    Group * getParent() const;
 
     /// Set the parent of this group.
     ///
@@ -175,7 +154,7 @@ public:
     /// Use removeDataSet and addDataSet for that.
     ///
     /// \param  inParent    The new parent of this group.
-    void setParent(SpGroup_t & inParent);
+    void setParent(Group * inParent);
 
     /// \return     The path of this group from the root group.
     ///
@@ -196,17 +175,17 @@ private:
     std::string m_name;
 
     /// The parent group to which this belongs.
-    SpGroup_t m_parent;
+    Group * m_parent;
 
     /// The groups in this group.
-    std::vector<SpGroup_t> m_groups;
+    std::vector<std::unique_ptr<Group>> m_groups;
 
     /// The data sets in this group.
-    std::vector<SpDataSet_t> m_dataSets;
+    std::vector<std::unique_ptr<DataSet>> m_dataSets;
 
     /// \return     The root parent of this group.
     ///
-    SpGroup_t getRootParent();
+    Group * getRootParent();
 
     /// Checks if the name is already taken by a group or data set.
     ///
