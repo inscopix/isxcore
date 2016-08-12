@@ -6,6 +6,7 @@ namespace isx
 
 Group::Group()
     : m_valid(false)
+    , m_parent(nullptr)
 {
 }
 

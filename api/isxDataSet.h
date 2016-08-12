@@ -25,7 +25,6 @@ public:
     /// TODO sweet : add image and trace when we have files for them.
     enum Type
     {
-        INVALID = 0,
         MOVIE,
         CELLSET,
     };

@@ -7,9 +7,6 @@ namespace isx
 
 DataSet::DataSet()
     : m_valid(false)
-    , m_name("")
-    , m_type(Type::INVALID)
-    , m_fileName("")
     , m_parent(nullptr)
 {
 }
