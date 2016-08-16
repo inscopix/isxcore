@@ -31,6 +31,20 @@ Group::addGroup(std::unique_ptr<Group> inGroup)
     return m_groups.back().get();
 }
 
+Group * 
+Group::createAndAddGroup(const std::string & inPath)
+{
+    if (isName(inPath))
+    {
+        ISX_THROW(isx::ExceptionDataIO,
+                "There is already an item with the name: ", inPath);
+    }
+    std::unique_ptr<Group> g(new Group(inPath));
+    g->m_parent = this;
+    m_groups.push_back(std::move(g));
+    return m_groups.back().get();
+}
+
 std::vector<Group *>
 Group::getGroups(bool inRecurse) const
 {
@@ -97,6 +111,28 @@ Group::addDataSet(std::unique_ptr<DataSet> inDataSet)
     }
     inDataSet->setParent(this);
     m_dataSets.push_back(std::move(inDataSet));
+    return m_dataSets.back().get();
+}
+
+DataSet * 
+Group::createAndAddDataSet(
+    const std::string & inName, 
+    DataSet::Type inType,
+    const std::string & inFileName)
+{
+    if (isName(inName))
+    {
+        ISX_THROW(isx::ExceptionDataIO,
+                "There is already an item with the name: ", inName);
+    }
+    if (isFileName(inFileName))
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+                "There is already a data set with the file name: ", inFileName);
+    }
+    std::unique_ptr<DataSet> ds(new DataSet(inName, inType, inFileName));
+    ds->setParent(this);
+    m_dataSets.push_back(std::move(ds));
     return m_dataSets.back().get();
 }
 

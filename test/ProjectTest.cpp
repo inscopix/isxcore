@@ -63,6 +63,7 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE(group->getParent() == project.getRootGroup());
         REQUIRE(group->getName() == "myGroup");
         REQUIRE(group->getPath() == "/myGroup");
+        REQUIRE(project.getGroup("/myGroup") == group);
     }
 
     SECTION("Create a movie data set in a project")
@@ -78,6 +79,7 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(dataSet->getPath() == "/myDataSet");
         REQUIRE(dataSet->getFileName() == movieFileName);
+        REQUIRE(project.getDataSet("/myDataSet") == dataSet);
     }
 
     SECTION("Open an existing project after adding a group.")

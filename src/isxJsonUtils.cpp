@@ -177,7 +177,7 @@ convertJsonToGroup(const json & inJson)
     json dataSets = inJson["dataSets"];
     for (json::iterator it = dataSets.begin(); it != dataSets.end(); ++it)
     {
-        outGroup->addDataSet(convertJsonToDataSet(*it));
+        createAndAddDataSetFromJson(outGroup.get(), *it);
     }
 
     return outGroup;
@@ -203,4 +203,13 @@ convertJsonToDataSet(const json & inJson)
     return std::unique_ptr<DataSet>(new DataSet(name, dataSetType, fileName));
 }
 
+DataSet *
+createAndAddDataSetFromJson(Group * inGroup, const json & inJson)
+{
+    std::string name = inJson["name"];
+    DataSet::Type dataSetType = DataSet::Type(isize_t(inJson["dataSetType"]));
+    std::string fileName = inJson["fileName"];
+    return inGroup->createAndAddDataSet(name, dataSetType, fileName);
 }
+
+} // namespace isx

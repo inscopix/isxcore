@@ -41,6 +41,9 @@ std::unique_ptr<Group> convertJsonToGroup(const json & inJson);
 json convertDataSetToJson(const DataSet * inDataSet);
 std::unique_ptr<DataSet> convertJsonToDataSet(const json & inJson);
 
-}
+DataSet *
+createAndAddDataSetFromJson(Group * inGroup, const json & inJson);
+
+} // namespace isx
 
 #endif // ISX_JSON_UTILS_H
