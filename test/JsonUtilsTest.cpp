@@ -58,7 +58,6 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         REQUIRE(jsonDataSets.empty());
     }
 
-#if 0
     SECTION("Convert json to an empty group")
     {
         std::string name = "myGroup";
@@ -68,14 +67,13 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         jsonObject["groups"] = isx::json::array();
         jsonObject["dataSets"] = isx::json::array();
 
-        std::unique_ptr<isx::Group> group = isx::convertJsonToGroup(jsonObject);
+        std::unique_ptr<isx::Group> group = isx::createProjectTreeFromJson(jsonObject);
 
         REQUIRE(group->isValid());
         REQUIRE(group->getName() == name);
         REQUIRE(group->getGroups().empty());
         REQUIRE(group->getDataSets().empty());
     }
-#endif
 
     SECTION("Convert a group containing other groups to json")
     {
