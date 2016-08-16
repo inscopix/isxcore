@@ -6,6 +6,7 @@
 #include <utility>
 
 #if ISX_OS_WIN32
+#define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
 #endif
@@ -79,7 +80,15 @@ void log_(Rest && ...rest)
 {
     std::string str = isx::internal::varArgsToString(std::forward<Rest>(rest)..., "\n");
 #if ISX_OS_WIN32
-    OutputDebugString(str.c_str());
+    if (IsDebuggerPresent())
+    {
+        OutputDebugString(str.c_str());
+    }
+    else
+    {
+        std::cout << str;
+        std::cout << std::flush;
+    }
 #else
     std::cout << str;
     std::cout << std::flush;
