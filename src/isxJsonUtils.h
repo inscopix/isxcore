@@ -36,13 +36,17 @@ json convertSpacingInfoToJson(const SpacingInfo & inSpacingInfo);
 SpacingInfo convertJsonToSpacingInfo(const json & j);
 
 json convertGroupToJson(const Group * inGroup);
-std::unique_ptr<Group> convertJsonToGroup(const json & inJson);
 
 json convertDataSetToJson(const DataSet * inDataSet);
-std::unique_ptr<DataSet> convertJsonToDataSet(const json & inJson);
 
-DataSet *
+std::unique_ptr<Group>
+createProjectTreeFromJson(const json & inJson);
+
+void
 createAndAddDataSetFromJson(Group * inGroup, const json & inJson);
+
+void
+createAndAddGroupTreeFromJson(Group * inGroup, const json & inJson);
 
 } // namespace isx
 

@@ -17,20 +17,6 @@ Group::Group(const std::string & inName)
 {
 }
 
-Group *
-Group::addGroup(std::unique_ptr<Group> inGroup)
-{
-    const std::string name = inGroup->getName();
-    if (isName(name))
-    {
-        ISX_THROW(isx::ExceptionDataIO,
-                "There is already an item with the name: ", name);
-    }
-    inGroup->m_parent = this;
-    m_groups.push_back(std::move(inGroup));
-    return m_groups.back().get();
-}
-
 Group * 
 Group::createAndAddGroup(const std::string & inPath)
 {
@@ -92,26 +78,6 @@ Group::removeGroup(const std::string & inName)
     }
     ISX_THROW(isx::ExceptionDataIO,
             "Could not find group with the name: ", inName);
-}
-
-DataSet *
-Group::addDataSet(std::unique_ptr<DataSet> inDataSet)
-{
-    const std::string name = inDataSet->getName();
-    if (isName(name))
-    {
-        ISX_THROW(isx::ExceptionDataIO,
-                "There is already an item with the name: ", name);
-    }
-    const std::string fileName = inDataSet->getFileName();
-    if (isFileName(fileName))
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-                "There is already a data set with the file name: ", fileName);
-    }
-    inDataSet->setParent(this);
-    m_dataSets.push_back(std::move(inDataSet));
-    return m_dataSets.back().get();
 }
 
 DataSet * 

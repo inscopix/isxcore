@@ -170,7 +170,7 @@ Project::read()
                     "Expected type to be Project. Instead got ", type);
         }
         m_name = jsonObject["name"];
-        m_root = convertJsonToGroup(jsonObject["rootGroup"]);
+        m_root = createProjectTreeFromJson(jsonObject["rootGroup"]);
     }
     catch (const std::exception & error)
     {
