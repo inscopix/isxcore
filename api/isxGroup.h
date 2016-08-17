@@ -29,22 +29,20 @@ public:
     /// \param  inName      The name of this group.
     Group(const std::string & inName);
 
-    /// Move a group into this group.
+    /// Create a new group and it to this group.
     ///
-    /// You will need to transfer ownership of the unique_ptr to this
-    /// function using std::move.
-    /// This returns a raw pointer to the given group after ownership
-    /// has been taken by this group.
+    /// This returns a raw pointer to the new created group after it
+    /// has been created and added to this group.
     /// This will fail if a group with the same name as the given group
     /// exists in this group.
     ///
-    /// \param  inGroup     The group to add to this group.
-    /// \return             A raw pointer to the given group after
-    ///                     ownership has been taken by this group.
+    /// \param  inPath      The path of the data set to create.
+    /// \return             A raw pointer to the new group after
+    ///                     it has been added to this group.
     ///
     /// \throw  isx::ExceptionDataIO    If a group with the given name
     ///                                 already exists.
-    Group * addGroup(std::unique_ptr<Group> inGroup);
+    Group * createAndAddGroup(const std::string & inPath);
 
     /// Get the groups in this group.
     ///
@@ -73,22 +71,25 @@ public:
     ///                                 given name in this group.
     void removeGroup(const std::string & inName);
 
-    /// Move a data set into this group.
+    /// Create a new data set and adds it to this group.
     ///
-    /// You will need to transfer ownership of the unique_ptr to this
-    /// function using std::move.
-    /// This returns a raw pointer to the data set after ownership has been
-    /// taken by this group.
+    /// This returns a raw pointer to the new data set after it has been
+    /// created and added to this group.
     /// This will fail if a data set with the given name already exists in
     /// this group.
     ///
-    /// \param  inDataSet   The data set to add to this group.
-    /// \return             A raw pointer to the given data set after
+    /// \param  inName      The name of the data set.
+    /// \param  inType      The type of the data set.
+    /// \param  inFileName  The file name of the data set.
+    /// \return             A raw pointer to the new data set after
     ///                     ownership has been taken by this group.
     ///
     /// \throw  isx::ExceptionDataIO    If a data set with the given name
     ///                                 already exists.
-    DataSet * addDataSet(std::unique_ptr<DataSet> inDataSet);
+    DataSet * createAndAddDataSet(
+        const std::string & inName, 
+        DataSet::Type inType,
+        const std::string & inFileName);
 
     /// Get the data sets in this group.
     ///
