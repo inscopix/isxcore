@@ -26,19 +26,23 @@ public:
 
     /// Construct a new movie from one HDF5 dataset.
     ///
+    /// \param inFileName name of movie file
     /// \param inHdf5FileHandle opaque HDF5 file handles
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
-    NVistaHdf5Movie(const SpHdf5FileHandle_t & inHdf5FileHandle, 
+    NVistaHdf5Movie(const std::string &inFileName,
+        const SpHdf5FileHandle_t & inHdf5FileHandle,
         const TimingInfo & inTimingInfo = TimingInfo(),
         const SpacingInfo & inSpacingInfo = SpacingInfo());
 
     /// Construct a new movie from vector of existing HDF5 datasets
     ///
+    /// \param inFileName name of movie file
     /// \param inHdf5FileHandles vector of opaque HDF5 file handles
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
-    NVistaHdf5Movie(const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
+    NVistaHdf5Movie(const std::string &inFileName,
+        const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
         const TimingInfo & inTimingInfo = TimingInfo(),
         const SpacingInfo & inSpacingInfo = SpacingInfo());
 
@@ -72,7 +76,7 @@ public:
     getSpacingInfo() const override;
 
     std::string
-    getName() const override;
+    getFileName() const override;
 
     void
     serialize(std::ostream& strm) const override;
@@ -93,12 +97,16 @@ private:
 
     /// The vector of cumulative frame indices.
     std::vector<isize_t> m_cumulativeFrames;
+    
+    std::string m_fileName;
 
     /// Handles most of the initialization.
+    /// \param inFileName name of movie file
     /// \param inHdf5Files List of files containing the movie data
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
-    void initialize(const std::vector<SpH5File_t> & inHdf5Files,
+    void initialize(const std::string & inFileName,
+        const std::vector<SpH5File_t> & inHdf5Files,
         const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo);
 

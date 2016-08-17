@@ -277,7 +277,7 @@ MosaicMovie::getSpacingInfo() const
 }
 
 std::string
-MosaicMovie::getName() const
+MosaicMovie::getFileName() const
 {
     return m_file->getFileName();
 }
@@ -285,7 +285,7 @@ MosaicMovie::getName() const
 void
 MosaicMovie::serialize(std::ostream & strm) const
 {
-    strm << getName();
+    strm << getFileName();
 }
 
 } // namespace isx

@@ -30,7 +30,8 @@ namespace isx {
         /// \param inNumFrames  Total number of frames
         /// \param inFrameWidth Width in pixels
         /// \param inFrameHeight Height in pixels
-        Hdf5Movie(const SpH5File_t & inHdf5File, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight);
+        Hdf5Movie(const SpH5File_t & inHdf5File, const std::string & inPath,
+                  isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight);
 
         /// Destructor
         ///
@@ -63,7 +64,7 @@ namespace isx {
         /// return the path of the movie within the file
         ///
         const std::string & 
-        getPath();
+        getPath() const;
 
         /// Read timing info properties
         /// \param timingInfo the timing information

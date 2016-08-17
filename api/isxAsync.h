@@ -32,16 +32,15 @@ typedef std::function<void(float)> AsyncProgressCB_t;
 
 /// helper function template to create an async task
 /// \param inFunc function to call as part of task
-/// \param inSrc source data to pass into inFunc
-/// \param outDst destination where inFunc should write its output
-template <typename TF, typename TI, typename TO>
+/// \param inParams parameters object to pass into inFunc
+template <typename TF, typename TP>
 static
 AsyncFunc_t
-MakeAsyncFunc(TF inFunc, TI inSrc, TO outDst)
+MakeAsyncFunc(TF inFunc, TP inParams)
 {
-    return [inFunc, inSrc, outDst](AsyncCheckInCB_t inCheckInCB)
+    return [inFunc, inParams](AsyncCheckInCB_t inCheckInCB)
         {
-            return inFunc(inSrc, outDst, inCheckInCB);
+            return inFunc(inParams, inCheckInCB);
         };
 }
 

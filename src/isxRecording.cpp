@@ -77,7 +77,7 @@ public:
             ISX_ASSERT(false, "Unhandled exception.");
         }
         
-        m_movie = std::make_shared<NVistaHdf5Movie>(m_fileHandles[0]);
+        m_movie = std::make_shared<NVistaHdf5Movie>(m_path, m_fileHandles[0]);
 
         // no exception until here --> this is a valid file
         m_isValid = true;
@@ -116,7 +116,7 @@ public:
         TimingInfo ti = xml.getTimingInfo();
         SpacingInfo si = xml.getSpacingInfo();
 
-        m_movie = std::make_shared<NVistaHdf5Movie>(m_fileHandles, ti, si);
+        m_movie = std::make_shared<NVistaHdf5Movie>(m_path, m_fileHandles, ti, si);
 
         // no exception until here --> this is a valid file
         m_isValid = true;
