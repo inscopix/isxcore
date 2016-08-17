@@ -23,7 +23,6 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         REQUIRE(fileName == movieFileName);
     }
 
-#if 0
     SECTION("Convert json to a movie data set")
     {
         isx::json jsonObject;
@@ -32,14 +31,15 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         jsonObject["dataSetType"] = isx::isize_t(isx::DataSet::Type::MOVIE);
         jsonObject["fileName"] = movieFileName;
 
-        std::unique_ptr<isx::DataSet> dataSet = isx::convertJsonToDataSet(jsonObject);
+        isx::Group group;
+        isx::createDataSetFromJson(&group, jsonObject);
+        isx::DataSet * dataSet = group.getDataSet("myDataSet");
 
         REQUIRE(dataSet->isValid());
         REQUIRE(dataSet->getName() == "myDataSet");
         REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(dataSet->getFileName() == movieFileName);
     }
-#endif
 
     SECTION("Convert an empty group to json")
     {
@@ -78,7 +78,7 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
     SECTION("Convert a group containing other groups to json")
     {
         isx::Group group("myGroup");
-        group.createAndAddGroup("mySubGroup");
+        group.createGroup("mySubGroup");
 
         isx::json jsonObject = isx::convertGroupToJson(&group);
 

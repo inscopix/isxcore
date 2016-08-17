@@ -32,8 +32,8 @@ Project::Project(const std::string & inFileName, const std::string & inName)
                 "The file name already exists: ", inFileName);
     }
     m_root.reset(new Group("/"));
-    m_root->createAndAddGroup("Original");
-    m_root->createAndAddGroup("Output");
+    m_root->createGroup("Original");
+    m_root->createGroup("Output");
     m_valid = true;
 }
 
@@ -60,7 +60,7 @@ Project::createDataSet(
     //std::string relFileName = getRelativePath(projectDirName, inFileName);
     const std::string groupPath = getDirName(inPath);
     Group * parent = getGroup(groupPath);
-    return parent->createAndAddDataSet(name, inType, inFileName);
+    return parent->createDataSet(name, inType, inFileName);
 }
 
 DataSet *
@@ -77,7 +77,7 @@ Project::createGroup(const std::string & inPath)
     const std::string name = isx::getFileName(inPath);
     const std::string parentPath = getDirName(inPath);
     Group * parent = getGroup(parentPath);
-    return parent->createAndAddGroup(name);
+    return parent->createGroup(name);
 }
 
 Group *

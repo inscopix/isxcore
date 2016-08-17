@@ -170,12 +170,12 @@ createProjectTreeFromJson(const json & inJson)
     json dataSets = inJson["dataSets"];
     for (json::iterator it = dataSets.begin(); it != dataSets.end(); ++it)
     {
-        createAndAddDataSetFromJson(root.get(), *it);
+        createDataSetFromJson(root.get(), *it);
     }
     json groups = inJson["groups"];
     for (json::iterator it = groups.begin(); it != groups.end(); ++it)
     {
-        createAndAddGroupTreeFromJson(root.get(), *it);
+        createGroupTreeFromJson(root.get(), *it);
     }
 
     return root;
@@ -193,28 +193,28 @@ convertDataSetToJson(const DataSet * inDataSet)
 }
 
 void
-createAndAddDataSetFromJson(Group * inGroup, const json & inJson)
+createDataSetFromJson(Group * inGroup, const json & inJson)
 {
     std::string name = inJson["name"];
     DataSet::Type dataSetType = DataSet::Type(isize_t(inJson["dataSetType"]));
     std::string fileName = inJson["fileName"];
-    inGroup->createAndAddDataSet(name, dataSetType, fileName);
+    inGroup->createDataSet(name, dataSetType, fileName);
 }
 
 void
-createAndAddGroupTreeFromJson(Group * inGroup, const json & inJson)
+createGroupTreeFromJson(Group * inGroup, const json & inJson)
 {
-    Group * group = inGroup->createAndAddGroup(inJson["name"]);
+    Group * group = inGroup->createGroup(inJson["name"]);
     json dataSets = inJson["dataSets"];
     for (json::iterator it = dataSets.begin(); it != dataSets.end(); ++it)
     {
-        createAndAddDataSetFromJson(group, *it);
+        createDataSetFromJson(group, *it);
     }
 
     json groups = inJson["groups"];
     for (json::iterator it = groups.begin(); it != groups.end(); ++it)
     {
-        createAndAddGroupTreeFromJson(group, *it);
+        createGroupTreeFromJson(group, *it);
     }
 }
 

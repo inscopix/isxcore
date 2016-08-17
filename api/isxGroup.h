@@ -42,7 +42,7 @@ public:
     ///
     /// \throw  isx::ExceptionDataIO    If a group with the given name
     ///                                 already exists.
-    Group * createAndAddGroup(const std::string & inPath);
+    Group * createGroup(const std::string & inPath);
 
     /// Get the groups in this group.
     ///
@@ -86,8 +86,8 @@ public:
     ///
     /// \throw  isx::ExceptionDataIO    If a data set with the given name
     ///                                 already exists.
-    DataSet * createAndAddDataSet(
-        const std::string & inName, 
+    DataSet * createDataSet(
+        const std::string & inName,
         DataSet::Type inType,
         const std::string & inFileName);
 

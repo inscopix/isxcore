@@ -43,10 +43,10 @@ std::unique_ptr<Group>
 createProjectTreeFromJson(const json & inJson);
 
 void
-createAndAddDataSetFromJson(Group * inGroup, const json & inJson);
+createDataSetFromJson(Group * inGroup, const json & inJson);
 
 void
-createAndAddGroupTreeFromJson(Group * inGroup, const json & inJson);
+createGroupTreeFromJson(Group * inGroup, const json & inJson);
 
 } // namespace isx
 

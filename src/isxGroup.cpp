@@ -17,8 +17,8 @@ Group::Group(const std::string & inName)
 {
 }
 
-Group * 
-Group::createAndAddGroup(const std::string & inPath)
+Group *
+Group::createGroup(const std::string & inPath)
 {
     if (isName(inPath))
     {
@@ -81,7 +81,7 @@ Group::removeGroup(const std::string & inName)
 }
 
 DataSet * 
-Group::createAndAddDataSet(
+Group::createDataSet(
     const std::string & inName, 
     DataSet::Type inType,
     const std::string & inFileName)

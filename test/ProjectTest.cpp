@@ -114,11 +114,11 @@ TEST_CASE("ProjectTest", "[core]")
         }
 
         isx::Group rootGroup = isx::Group("/");
-        isx::Group * origGroup = rootGroup.createAndAddGroup("Original");
-        isx::Group * outGroup = rootGroup.createAndAddGroup("Output");
+        isx::Group * origGroup = rootGroup.createGroup("Original");
+        isx::Group * outGroup = rootGroup.createGroup("Output");
 
-        isx::DataSet * expOrigMovie = origGroup->createAndAddDataSet(origMovieName, isx::DataSet::Type::MOVIE, origMovieFileName);
-        isx::DataSet * expOutMovie = outGroup->createAndAddDataSet(outMovieName, isx::DataSet::Type::MOVIE, outMovieFileName);
+        isx::DataSet * expOrigMovie = origGroup->createDataSet(origMovieName, isx::DataSet::Type::MOVIE, origMovieFileName);
+        isx::DataSet * expOutMovie = outGroup->createDataSet(outMovieName, isx::DataSet::Type::MOVIE, outMovieFileName);
 
         isx::Project project(projectFileName);
         REQUIRE(project.isValid());
