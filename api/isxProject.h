@@ -1,19 +1,26 @@
 #ifndef ISX_PROJECT_H
 #define ISX_PROJECT_H
 
-#include "isxWritableMovie.h"
-#include "isxProjectFile.h"
-#include "isxCoreFwd.h"
+#include "isxDataSet.h"
+#include "isxGroup.h"
 
-#include <utility>
-#include <vector>
+#include <string>
 #include <memory>
 
 namespace isx
 {
 
-/// The project model, through which all data read/write should occur.
+/// Encapsulates a mosaic project and owns all data objects associated with it.
 ///
+/// The project is similar to a filesystem that stores groups, which are like
+/// directories, that contain sub-groups and datasets, which are like files.
+///
+/// In the current state of the project (i.e. ignoring history) any group
+/// or dataset is also uniquely identified by its absolute path from the root
+/// of the project where the / character is used as a group delimiter.
+/// Any dataset is also uniquely identified by its file name on the actual
+/// filesystem - i.e. two or more datasets in a project cannot refer to the
+/// same file.
 class Project
 {
 public:
@@ -23,75 +30,132 @@ public:
     /// Creates a valid c++ object but invalid project.
     Project();
 
-    /// Constructor.
-    ///
-    /// If the file exists, this reads that project.
-    /// If not, this creates a new project with a root data collection.
+    /// Construct a project from an existing project file.
     ///
     /// \param  inFileName  The file name of the project.
     Project(const std::string & inFileName);
 
-    /// \return     True if the project is valid, false otherwise.
+    /// Construct a new project with the given file name and name.
     ///
-    bool isValid();
+    /// This will be written to disk either when calling write() or on
+    /// destruction.
+    /// If a file with the given file name already exists on the file system,
+    /// this will fail.
+    ///
+    /// \param  inFileName  The file name of the project.
+    /// \param  inName      The name of the project.
+    ///
+    /// \throw  isx::ExceptionFileIO    If the a file with the given file
+    ///                                 name already exists.
+    Project(const std::string & inFileName, const std::string & inName);
 
-    /// Create a movie in the root data collection of this project.
+    /// Destructor.
     ///
-    /// If the filename already exist, this will append a number until the
-    /// file name in place until it is unique.
-    ///
-    /// \param  inIndex         The index of the collection to which to add the movie.
-    /// \param  outFileName     The name of the file to store the new movie.
-    /// \param  inTimingInfo    The timing info of the movie to create.
-    /// \param  inSpacingInfo   The spacing info of the movie to create.
-    /// \return                 A shared pointer to the created movie.
-    ///
-    /// \throw  isx::ExceptionFileIO    If the file already exists.
-    /// \throw  isx::ExceptionDataIO    If formatting the movie file fails.
-    SpWritableMovie_t createMosaicMovie(
-        isize_t inIndex,
-        std::string & outFileName,
-        const TimingInfo & inTimingInfo,
-        const SpacingInfo & inSpacingInfo);
+    ~Project();
 
-    /// Get a movie from a data collection by index.
+    /// Create a data set in this project.
     ///
-    /// \param  inDc    The data collection from which to get a movie.
-    /// \param  inIndex The index of the movie in the data collection.
-    SpMovie_t getMovie(
-        const ProjectFile::DataCollection & inDc,
-        isize_t inIndex);
+    /// If a data set with the given path already exists in this project,
+    /// this will fail.
+    /// If there is an existing data set in this project with the given
+    /// file name, this will fail.
+    ///
+    /// \param  inPath      The path of the data set to create.
+    /// \param  inType      The type of the data set to create.
+    /// \param  inFileName  The file name of the data set to create.
+    /// \return             The data set created.
+    ///
+    /// \throw  isx::ExceptionDataIO    If an item with the given path
+    ///                                 already exists.
+    /// \throw  isx::ExceptionFileIO    If a data set with the given file
+    ///                                 name already exists in this project.
+    DataSet * createDataSet(
+            const std::string & inPath,
+            DataSet::Type inType,
+            const std::string & inFileName);
 
-    /// Get a data collection by index.
+    /// Get a data set by its project path.
     ///
-    /// \param  inIndex     The index of the data collection to get.
-    /// \return             The data collection at the given index.
-    ProjectFile::DataCollection getDataCollection(isize_t inIndex);
+    /// \param  inPath      The path of the data set to retrieve.
+    /// \return             The data set retrieved.
+    ///
+    /// \throw  isx::ExceptionDataIO    If there is no data set with the given path.
+    DataSet * getDataSet(const std::string & inPath) const;
 
-    /// Add a file collection to the project by passing the filenames of all the files within a collection
+    /// Create a group by it project path.
     ///
-    /// \param  inData      The collection to add.
-    void addDataCollection(ProjectFile::DataCollection & inData);
+    /// If an item with the given path already exists in this project, this
+    /// will fail.
+    ///
+    /// \param  inPath      The path of the data set to create.
+    /// \return             The group created.
+    ///
+    /// \throw  isx::ExceptionDataIO    If an with the given path already exists.
+    Group * createGroup(const std::string & inPath);
 
-    /// \return     The number of file collections in the project file.
+    /// Get a group by its project path.
     ///
-    isize_t getNumDataCollections();
+    /// \param  inPath          The project path of the group to get.
+    /// \return                 The retrieved group.
+    ///
+    /// \throw  isx::ExceptionDataIO    If the group does not exist.
+    Group * getGroup(const std::string & inPath) const;
 
-    /// \return     The filenames for the original files (from where the data was obtained).
+    /// \return     The root group.
     ///
-    const std::vector<std::string> & getOriginalNames();
+    Group * getRootGroup() const;
 
-    /// \return     The file name.
+    /// \return     The group of original data.
     ///
-    std::string getName();
+    Group * getOriginalGroup() const;
+
+    /// \return     The group of output data.
+    ///
+    Group * getOutputGroup() const;
+
+    /// \return     True if this project is valid.
+    ///
+    bool isValid() const;
+
+    /// \return     The name of the project.
+    ///
+    std::string getName() const;
+
+    /// \return The file name of this project's file.
+    ///
+    std::string getFileName() const;
 
 private:
 
     /// True if the project is valid, false otherwise.
     bool m_valid;
 
-    /// The file used to store information about the project.
-    std::unique_ptr<ProjectFile> m_file;
+    /// The name of the project.
+    std::string m_name;
+
+    /// The root group of the project.
+    std::unique_ptr<Group> m_root;
+
+    /// The file name of the project file.
+    std::string m_fileName;
+
+    /// Read this project from its file.
+    ///
+    /// This requires the file name to already be set.
+    void read();
+
+    /// Write this project to its file.
+    ///
+    /// This requires the file name to already be set.
+    void write() const;
+
+    /// Checks if the file name is already used by a data set in this group's tree.
+    ///
+    /// \param  inFileName  The file name to check.
+    /// \return             True if this group's tree contains a data set with
+    ///                     given file name.
+    bool isFileName(const std::string & inFileName);
+
 };
 
 }

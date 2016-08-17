@@ -3,6 +3,9 @@
 
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
+#include "isxGroup.h"
+#include "isxDataSet.h"
+
 #include "json.hpp"
 
 namespace isx
@@ -32,6 +35,19 @@ json convertPointInMicronsToJson(const PointInMicrons_t & inPointInMicrons);
 json convertSpacingInfoToJson(const SpacingInfo & inSpacingInfo);
 SpacingInfo convertJsonToSpacingInfo(const json & j);
 
-}
+json convertGroupToJson(const Group * inGroup);
+
+json convertDataSetToJson(const DataSet * inDataSet);
+
+std::unique_ptr<Group>
+createProjectTreeFromJson(const json & inJson);
+
+void
+createDataSetFromJson(Group * inGroup, const json & inJson);
+
+void
+createGroupTreeFromJson(Group * inGroup, const json & inJson);
+
+} // namespace isx
 
 #endif // ISX_JSON_UTILS_H

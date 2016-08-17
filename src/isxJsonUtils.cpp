@@ -133,4 +133,89 @@ convertJsonToSpacingInfo(const json & j)
     return SpacingInfo(numPixels, pixelSize, topLeft);
 }
 
+json
+convertGroupToJson(const Group * inGroup)
+{
+    json outJson;
+    outJson["type"] = "Group";
+    outJson["name"] = inGroup->getName();
+
+    outJson["groups"] = json::array();
+    std::vector<Group *> groups = inGroup->getGroups();
+    std::vector<Group *>::const_iterator groupIt;
+    for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt)
+    {
+        json group = convertGroupToJson(*groupIt);
+        outJson["groups"].push_back(group);
+    }
+
+    outJson["dataSets"] = json::array();
+    std::vector<DataSet *> dataSets = inGroup->getDataSets();
+    std::vector<DataSet *>::const_iterator dataSetIt;
+    for (dataSetIt = dataSets.begin(); dataSetIt != dataSets.end(); ++dataSetIt)
+    {
+        json dataSet = convertDataSetToJson(*dataSetIt);
+        outJson["dataSets"].push_back(dataSet);
+    }
+
+    return outJson;
 }
+
+std::unique_ptr<Group>
+createProjectTreeFromJson(const json & inJson)
+{
+    std::string name = inJson["name"];
+    std::unique_ptr<Group> root(new Group(name));
+
+    json dataSets = inJson["dataSets"];
+    for (json::iterator it = dataSets.begin(); it != dataSets.end(); ++it)
+    {
+        createDataSetFromJson(root.get(), *it);
+    }
+    json groups = inJson["groups"];
+    for (json::iterator it = groups.begin(); it != groups.end(); ++it)
+    {
+        createGroupTreeFromJson(root.get(), *it);
+    }
+
+    return root;
+}
+
+json
+convertDataSetToJson(const DataSet * inDataSet)
+{
+    json outJson;
+    outJson["type"] = "DataSet";
+    outJson["name"] = inDataSet->getName();
+    outJson["dataSetType"] = isize_t(inDataSet->getType());
+    outJson["fileName"] = inDataSet->getFileName();
+    return outJson;
+}
+
+void
+createDataSetFromJson(Group * inGroup, const json & inJson)
+{
+    std::string name = inJson["name"];
+    DataSet::Type dataSetType = DataSet::Type(isize_t(inJson["dataSetType"]));
+    std::string fileName = inJson["fileName"];
+    inGroup->createDataSet(name, dataSetType, fileName);
+}
+
+void
+createGroupTreeFromJson(Group * inGroup, const json & inJson)
+{
+    Group * group = inGroup->createGroup(inJson["name"]);
+    json dataSets = inJson["dataSets"];
+    for (json::iterator it = dataSets.begin(); it != dataSets.end(); ++it)
+    {
+        createDataSetFromJson(group, *it);
+    }
+
+    json groups = inJson["groups"];
+    for (json::iterator it = groups.begin(); it != groups.end(); ++it)
+    {
+        createGroupTreeFromJson(group, *it);
+    }
+}
+
+} // namespace isx
