@@ -32,8 +32,8 @@ Project::Project(const std::string & inFileName, const std::string & inName)
                 "The file name already exists: ", inFileName);
     }
     m_root.reset(new Group("/"));
-    m_root->addGroup(std::unique_ptr<Group>(new Group("Original")));
-    m_root->addGroup(std::unique_ptr<Group>(new Group("Output")));
+    m_root->createAndAddGroup("Original");
+    m_root->createAndAddGroup("Output");
     m_valid = true;
 }
 
@@ -60,8 +60,7 @@ Project::createDataSet(
     //std::string relFileName = getRelativePath(projectDirName, inFileName);
     const std::string groupPath = getDirName(inPath);
     Group * parent = getGroup(groupPath);
-    return parent->addDataSet(std::unique_ptr<DataSet>(
-                new DataSet(name, inType, inFileName)));
+    return parent->createAndAddDataSet(name, inType, inFileName);
 }
 
 DataSet *
@@ -78,7 +77,7 @@ Project::createGroup(const std::string & inPath)
     const std::string name = isx::getFileName(inPath);
     const std::string parentPath = getDirName(inPath);
     Group * parent = getGroup(parentPath);
-    return parent->addGroup(std::unique_ptr<Group>(new Group(name)));
+    return parent->createAndAddGroup(name);
 }
 
 Group *
@@ -171,7 +170,7 @@ Project::read()
                     "Expected type to be Project. Instead got ", type);
         }
         m_name = jsonObject["name"];
-        m_root = convertJsonToGroup(jsonObject["rootGroup"]);
+        m_root = createProjectTreeFromJson(jsonObject["rootGroup"]);
     }
     catch (const std::exception & error)
     {

@@ -27,8 +27,7 @@ TEST_CASE("GroupTest", "[core]")
     {
         isx::Group group("myGroup");
 
-        isx::Group * subGroup = group.addGroup(
-                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup")));
+        isx::Group * subGroup = group.createAndAddGroup("mySubGroup");
 
         REQUIRE(group.getGroup("mySubGroup") == subGroup);
     }
@@ -37,8 +36,7 @@ TEST_CASE("GroupTest", "[core]")
     {
         isx::Group group("/");
 
-        isx::Group * subGroup = group.addGroup(
-                std::unique_ptr<isx::Group>(new isx::Group("myGroup")));
+        isx::Group * subGroup = group.createAndAddGroup("myGroup");
 
         REQUIRE(group.getGroup("myGroup") == subGroup);
     }
@@ -46,10 +44,10 @@ TEST_CASE("GroupTest", "[core]")
     SECTION("Try to add two groups with the same name in another group")
     {
         isx::Group group("myGroup");
-        group.addGroup(std::unique_ptr<isx::Group>(new isx::Group("mySubGroup")));
+        group.createAndAddGroup("mySubGroup");
         try
         {
-            group.addGroup(std::unique_ptr<isx::Group>(new isx::Group("mySubGroup")));
+            group.createAndAddGroup("mySubGroup");
             FAIL("Failed to throw an exception.");
         }
         catch (const isx::ExceptionDataIO & error)
@@ -66,10 +64,8 @@ TEST_CASE("GroupTest", "[core]")
     SECTION("Add two groups with different names to another group")
     {
         isx::Group group("myGroup");
-        isx::Group * subGroup1 = group.addGroup(
-                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup1")));
-        isx::Group * subGroup2 = group.addGroup(
-                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup2")));
+        isx::Group * subGroup1 = group.createAndAddGroup("mySubGroup1");
+        isx::Group * subGroup2 = group.createAndAddGroup("mySubGroup2");
 
         REQUIRE(group.getGroup("mySubGroup1") == subGroup1);
         REQUIRE(group.getGroup("mySubGroup2") == subGroup2);
@@ -78,10 +74,8 @@ TEST_CASE("GroupTest", "[core]")
     SECTION("Remove a group by name")
     {
         isx::Group group("myGroup");
-        isx::Group * subGroup1 = group.addGroup(
-                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup1")));
-        isx::Group * subGroup2 = group.addGroup(
-                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup2")));
+        isx::Group * subGroup1 = group.createAndAddGroup("mySubGroup1");
+        isx::Group * subGroup2 = group.createAndAddGroup("mySubGroup2");
 
         group.removeGroup("mySubGroup1");
 
@@ -106,8 +100,7 @@ TEST_CASE("GroupTest", "[core]")
     SECTION("Add a data set to a group")
     {
         isx::Group group("myGroup");
-        isx::DataSet * dataSet = group.addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie.isxd")));
+        isx::DataSet * dataSet = group.createAndAddDataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie.isxd");
 
         REQUIRE(group.getDataSet("myDataSet") == dataSet);
     }
@@ -115,12 +108,10 @@ TEST_CASE("GroupTest", "[core]")
     SECTION("Try to create two data sets with the same name in a group")
     {
         isx::Group group("myGroup");
-        group.addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie1.isxd")));
+        group.createAndAddDataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
         try
         {
-            group.addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie2.isxd")));
+            group.createAndAddDataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
             FAIL("Failed to throw an exception.");
         }
         catch (const isx::ExceptionDataIO & error)
@@ -137,12 +128,10 @@ TEST_CASE("GroupTest", "[core]")
     SECTION("Try to create two data sets with the same file name in a group")
     {
         isx::Group group("myGroup");
-        group.addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie.isxd")));
+        group.createAndAddDataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie.isxd");
         try
         {
-            group.addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie.isxd")));
+            group.createAndAddDataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie.isxd");
             FAIL("Failed to throw an exception.");
         }
         catch (const isx::ExceptionFileIO & error)
@@ -160,10 +149,8 @@ TEST_CASE("GroupTest", "[core]")
     {
         isx::Group group("myGroup");
 
-        isx::DataSet * dataSet1 = group.addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd")));
-        isx::DataSet * dataSet2 = group.addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd")));
+        isx::DataSet * dataSet1 = group.createAndAddDataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
+        isx::DataSet * dataSet2 = group.createAndAddDataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
 
         REQUIRE(group.getDataSet("myDataSet1") == dataSet1);
         REQUIRE(group.getDataSet("myDataSet1") == dataSet1);
@@ -173,10 +160,8 @@ TEST_CASE("GroupTest", "[core]")
     {
         isx::Group group("myGroup");
 
-        isx::DataSet * dataSet1 = group.addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd")));
-        isx::DataSet * dataSet2 = group.addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd")));
+        isx::DataSet * dataSet1 = group.createAndAddDataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
+        isx::DataSet * dataSet2 = group.createAndAddDataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
 
         group.removeDataSet("myDataSet1");
 
@@ -202,10 +187,8 @@ TEST_CASE("GroupTest", "[core]")
     {
         isx::Group group("myGroup");
 
-        isx::DataSet * dataSet1 = group.addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd")));
-        isx::DataSet * dataSet2 = group.addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd")));
+        isx::DataSet * dataSet1 = group.createAndAddDataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
+        isx::DataSet * dataSet2 = group.createAndAddDataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
 
         std::vector<isx::DataSet *> actualDataSets = group.getDataSets();
 
@@ -217,15 +200,11 @@ TEST_CASE("GroupTest", "[core]")
     {
         isx::Group group("myGroup");
 
-        isx::Group * subGroup1 = group.addGroup(
-                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup1")));
-        isx::Group * subGroup2 = group.addGroup(
-                std::unique_ptr<isx::Group>(new isx::Group("mySubGroup2")));
+        isx::Group * subGroup1 = group.createAndAddGroup("mySubGroup1");
+        isx::Group * subGroup2 = group.createAndAddGroup("mySubGroup2");
 
-        isx::DataSet * dataSet1 = group.addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd")));
-        isx::DataSet * dataSet2 = subGroup2->addDataSet(std::unique_ptr<isx::DataSet>(
-                    new isx::DataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd")));
+        isx::DataSet * dataSet1 = group.createAndAddDataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
+        isx::DataSet * dataSet2 = subGroup2->createAndAddDataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
 
         std::vector<isx::DataSet *> actualDataSets = group.getDataSets(true);
 

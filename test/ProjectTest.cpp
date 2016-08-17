@@ -63,6 +63,7 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE(group->getParent() == project.getRootGroup());
         REQUIRE(group->getName() == "myGroup");
         REQUIRE(group->getPath() == "/myGroup");
+        REQUIRE(project.getGroup("/myGroup") == group);
     }
 
     SECTION("Create a movie data set in a project")
@@ -78,6 +79,7 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(dataSet->getPath() == "/myDataSet");
         REQUIRE(dataSet->getFileName() == movieFileName);
+        REQUIRE(project.getDataSet("/myDataSet") == dataSet);
     }
 
     SECTION("Open an existing project after adding a group.")
@@ -112,15 +114,11 @@ TEST_CASE("ProjectTest", "[core]")
         }
 
         isx::Group rootGroup = isx::Group("/");
-        isx::Group * origGroup = rootGroup.addGroup(
-                std::unique_ptr<isx::Group>(new isx::Group("Original")));
-        isx::Group * outGroup = rootGroup.addGroup(
-                std::unique_ptr<isx::Group>(new isx::Group("Output")));
+        isx::Group * origGroup = rootGroup.createAndAddGroup("Original");
+        isx::Group * outGroup = rootGroup.createAndAddGroup("Output");
 
-        isx::DataSet * expOrigMovie = origGroup->addDataSet(
-                std::unique_ptr<isx::DataSet>(new isx::DataSet(origMovieName, isx::DataSet::Type::MOVIE, origMovieFileName)));
-        isx::DataSet * expOutMovie = outGroup->addDataSet(
-                std::unique_ptr<isx::DataSet>(new isx::DataSet(outMovieName, isx::DataSet::Type::MOVIE, outMovieFileName)));
+        isx::DataSet * expOrigMovie = origGroup->createAndAddDataSet(origMovieName, isx::DataSet::Type::MOVIE, origMovieFileName);
+        isx::DataSet * expOutMovie = outGroup->createAndAddDataSet(outMovieName, isx::DataSet::Type::MOVIE, outMovieFileName);
 
         isx::Project project(projectFileName);
         REQUIRE(project.isValid());

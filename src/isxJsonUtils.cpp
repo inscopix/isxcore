@@ -162,25 +162,23 @@ convertGroupToJson(const Group * inGroup)
 }
 
 std::unique_ptr<Group>
-convertJsonToGroup(const json & inJson)
+createProjectTreeFromJson(const json & inJson)
 {
     std::string name = inJson["name"];
-
-    std::unique_ptr<Group> outGroup(new Group(name));
-
-    json groups = inJson["groups"];
-    for (json::iterator it = groups.begin(); it != groups.end(); ++it)
-    {
-        outGroup->addGroup(convertJsonToGroup(*it));
-    }
+    std::unique_ptr<Group> root(new Group(name));
 
     json dataSets = inJson["dataSets"];
     for (json::iterator it = dataSets.begin(); it != dataSets.end(); ++it)
     {
-        outGroup->addDataSet(convertJsonToDataSet(*it));
+        createAndAddDataSetFromJson(root.get(), *it);
+    }
+    json groups = inJson["groups"];
+    for (json::iterator it = groups.begin(); it != groups.end(); ++it)
+    {
+        createAndAddGroupTreeFromJson(root.get(), *it);
     }
 
-    return outGroup;
+    return root;
 }
 
 json
@@ -194,13 +192,30 @@ convertDataSetToJson(const DataSet * inDataSet)
     return outJson;
 }
 
-std::unique_ptr<DataSet>
-convertJsonToDataSet(const json & inJson)
+void
+createAndAddDataSetFromJson(Group * inGroup, const json & inJson)
 {
     std::string name = inJson["name"];
     DataSet::Type dataSetType = DataSet::Type(isize_t(inJson["dataSetType"]));
     std::string fileName = inJson["fileName"];
-    return std::unique_ptr<DataSet>(new DataSet(name, dataSetType, fileName));
+    inGroup->createAndAddDataSet(name, dataSetType, fileName);
 }
 
+void
+createAndAddGroupTreeFromJson(Group * inGroup, const json & inJson)
+{
+    Group * group = inGroup->createAndAddGroup(inJson["name"]);
+    json dataSets = inJson["dataSets"];
+    for (json::iterator it = dataSets.begin(); it != dataSets.end(); ++it)
+    {
+        createAndAddDataSetFromJson(group, *it);
+    }
+
+    json groups = inJson["groups"];
+    for (json::iterator it = groups.begin(); it != groups.end(); ++it)
+    {
+        createAndAddGroupTreeFromJson(group, *it);
+    }
 }
+
+} // namespace isx
