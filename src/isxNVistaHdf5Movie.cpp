@@ -74,13 +74,6 @@ NVistaHdf5Movie::getFrame(isize_t inFrameNumber)
     return ret;
 }
 
-SpU16VideoFrame_t
-NVistaHdf5Movie::getFrame(const Time & inTime)
-{
-    isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
-    return getFrame(frameNumber);
-}
-
 void
 NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
@@ -147,13 +140,6 @@ NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallba
         m_pendingReads[readRequestId] = readIoTask;
     }
     readIoTask->schedule();
-}
-
-void
-NVistaHdf5Movie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
-{
-    isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
-    return getFrameAsync(frameNumber, inCallback);
 }
 
 SpAsyncTaskHandle_t

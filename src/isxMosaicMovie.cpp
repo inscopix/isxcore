@@ -133,13 +133,6 @@ MosaicMovie::getFrame(isize_t inFrameNumber)
     return outVideoFrame;
 }
 
-SpU16VideoFrame_t
-MosaicMovie::getFrame(const Time & inTime)
-{
-    isize_t frameNum = getTimingInfo().convertTimeToIndex(inTime);
-    return getFrame(frameNum);
-}
-
 void
 MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
@@ -207,13 +200,6 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
         m_pendingReads[readRequestId] = readIoTask;
     }
     readIoTask->schedule();
-}
-
-void
-MosaicMovie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
-{
-    isize_t frameNumber = getTimingInfo().convertTimeToIndex(inTime);
-    getFrameAsync(frameNumber, inCallback);
 }
 
 SpAsyncTaskHandle_t

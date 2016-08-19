@@ -53,14 +53,8 @@ public:
     SpU16VideoFrame_t
     getFrame(isize_t inFrameNumber) override;
 
-    SpU16VideoFrame_t
-    getFrame(const Time & inTime) override;
-
     void
     getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback) override;
-
-    void
-    getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback) override;
 
     void
     cancelPendingReads() override;
