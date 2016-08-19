@@ -9,6 +9,15 @@ namespace isx
     /// The type of all sizes, lengths and indices
     typedef size_t isize_t;
 
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// The data types of values.
+    enum DataType
+    {
+        U16 = 0,
+        F32
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
     void CoreInitialize();
     bool CoreIsInitialized();
     void CoreShutdown();

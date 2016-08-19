@@ -1,6 +1,7 @@
 #ifndef ISX_MOSAIC_MOVIE_FILE_H
 #define ISX_MOSAIC_MOVIE_FILE_H
 
+#include "isxCore.h"
 #include "isxMovieDefs.h"
 #include "isxVideoFrame.h"
 #include "isxTimingInfo.h"
@@ -46,12 +47,14 @@ public:
     /// \param  inFileName      The name of the movie file.
     /// \param  inTimingInfo    The timing information of the movie.
     /// \param  inSpacingInfo   The spacing information of the movie.
+    /// \param  inDataType      The pixel value data type.
     ///
     /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the movie data fails.
     MosaicMovieFile(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
-                const SpacingInfo & inSpacingInfo);
+                const SpacingInfo & inSpacingInfo,
+                DataType inDataType = DataType::U16);
 
     /// Destructor.
     ///
@@ -85,12 +88,14 @@ public:
     /// \param  inFileName      The name of the movie file.
     /// \param  inTimingInfo    The timing information of the movie.
     /// \param  inSpacingInfo   The spacing information of the movie.
+    /// \param  inDataType      The pixel value data type.
     ///
     /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the movie data fails.
     void initialize(const std::string & inFileName,
                     const TimingInfo & inTimingInfo,
-                    const SpacingInfo & inSpacingInfo);
+                    const SpacingInfo & inSpacingInfo,
+                    DataType inDataType);
 
     /// \return     The name of the file.
     ///
@@ -103,6 +108,10 @@ public:
     /// \return     The spacing information read from the movie.
     ///
     const isx::SpacingInfo & getSpacingInfo() const;
+
+    /// \return     The data type of a pixel value.
+    ///
+    DataType getDataType() const;
 
 private:
 
@@ -121,6 +130,9 @@ private:
     /// The header offset.
     std::ios::pos_type m_headerOffset;
 
+    /// The data type of the pixel values.
+    DataType m_dataType;
+
     /// Read the header to populate information about the movie.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the header from the file fails.
@@ -137,6 +149,18 @@ private:
     /// This seeks to the location in the file just after the header and
     /// writes from there.
     void writeZeroData();
+
+    /// \return     The size of a pixel value in bytes.
+    ///
+    isize_t getPixelSizeInBytes() const;
+
+    /// \return     The size of a row in bytes.
+    ///
+    isize_t getRowSizeInBytes() const;
+
+    /// \return     The size of a frame in bytes.
+    ///
+    isize_t getFrameSizeInBytes() const;
 };
 
 }
