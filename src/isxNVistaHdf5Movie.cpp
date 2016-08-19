@@ -174,6 +174,12 @@ NVistaHdf5Movie::getSpacingInfo() const
     return m_spacingInfo;
 }
 
+DataType
+NVistaHdf5Movie::getDataType() const
+{
+    return DataType::U16;
+}
+
 std::string
 NVistaHdf5Movie::getName() const
 {

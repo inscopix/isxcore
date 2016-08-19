@@ -69,6 +69,12 @@ public:
     std::string
     getName() const = 0;
 
+    /// \return     The data type of a pixel value.
+    ///
+    virtual
+    DataType
+    getDataType() const = 0;
+
 };
 
 } // namespace isx

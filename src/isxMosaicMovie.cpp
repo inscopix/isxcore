@@ -62,7 +62,8 @@ MosaicMovie::MosaicMovie(const std::string & inFileName)
 MosaicMovie::MosaicMovie(
     const std::string & inFileName,
     const TimingInfo & inTimingInfo,
-    const SpacingInfo & inSpacingInfo)
+    const SpacingInfo & inSpacingInfo,
+    const DataType inDataType)
     : m_valid(false)
 {
     // TODO sweet : decide if we want all IO on the IO thread or if
@@ -100,7 +101,7 @@ MosaicMovie::MosaicMovie(
     //mutex.unlock();
     //m_file = file;
 
-    m_file = std::make_shared<MosaicMovieFile>(inFileName, inTimingInfo, inSpacingInfo);
+    m_file = std::make_shared<MosaicMovieFile>(inFileName, inTimingInfo, inSpacingInfo, inDataType);
     m_valid = true;
 }
 
@@ -260,6 +261,12 @@ const isx::SpacingInfo &
 MosaicMovie::getSpacingInfo() const
 {
     return m_file->getSpacingInfo();
+}
+
+DataType
+MosaicMovie::getDataType() const
+{
+    return m_file->getDataType();
 }
 
 std::string

@@ -51,12 +51,14 @@ public:
     /// \param  inFileName      The name of the movie file.
     /// \param  inTimingInfo    The timing information of the movie.
     /// \param  inSpacingInfo   The spacing information of the movie.
+    /// \param  inDataType      The pixel value data type.
     ///
     /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the movie data fails.
     MosaicMovie(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
-                const SpacingInfo & inSpacingInfo);
+                const SpacingInfo & inSpacingInfo,
+                DataType inDataType = DataType::U16);
 
     // Overrides - see base classes for documentation
     bool isValid() const override;
@@ -72,6 +74,8 @@ public:
     const isx::TimingInfo & getTimingInfo() const override;
 
     const isx::SpacingInfo & getSpacingInfo() const override;
+
+    DataType getDataType() const override;
 
     std::string getName() const override;
 

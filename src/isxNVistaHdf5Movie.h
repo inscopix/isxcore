@@ -65,6 +65,9 @@ public:
     const isx::SpacingInfo &
     getSpacingInfo() const override;
 
+    DataType
+    getDataType() const override;
+
     std::string
     getName() const override;
 
