@@ -20,6 +20,7 @@ TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
     SECTION("create movie from one dataset") {
         isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFile);
         REQUIRE(m->isValid());
+        REQUIRE(m->getDataType() == isx::DataType::U16);
     }
 
     SECTION("getTimingInfo().getNumTimes()") {
