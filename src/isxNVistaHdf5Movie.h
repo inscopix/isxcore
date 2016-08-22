@@ -156,6 +156,14 @@ private:
     isx::Mutex m_pendingReadsMutex;
     std::map<uint64_t, SpAsyncTaskHandle_t> m_pendingReads;
 
+    /// \return     The size of a pixel value in bytes.
+    ///
+    isize_t getPixelSizeInBytes() const;
+
+    /// \return     The size of a row in bytes.
+    ///
+    isize_t getRowSizeInBytes() const;
+
     /// The shared implementation of getting different frame types synchronously.
     ///
     /// \param  inFrameNumber   The number of the frame to read.

@@ -209,10 +209,9 @@ void
 NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame)
 {
     Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
-    SpacingInfo si = getSpacingInfo();
     outFrame = std::make_shared<U16VideoFrame_t>(
-        si,
-        sizeof(uint16_t) * si.getNumColumns(),
+        m_spacingInfo,
+        getRowSizeInBytes(),
         1, // numChannels
         frameTime,
         inFrameNumber);
@@ -235,16 +234,15 @@ NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber, SpF32VideoFrame_t & out
     getFrameInternal(inFrameNumber, u16Frame);
 
     // then cast it
-    SpacingInfo si = u16Frame->getImage().getSpacingInfo();
     Time frameTime = u16Frame->getTimeStamp();
     outFrame = std::make_shared<F32VideoFrame_t>(
-        si,
-        sizeof(float) * si.getNumColumns(),
+        m_spacingInfo,
+        getRowSizeInBytes(),
         1, // numChannels
         frameTime,
         inFrameNumber);
 
-    isize_t numPixels = si.getTotalNumPixels();
+    isize_t numPixels = m_spacingInfo.getTotalNumPixels();
     uint16_t * u16FrameArray = u16Frame->getPixels();
     float * outFrameArray = outFrame->getPixels();
     for (isize_t i = 0; i < numPixels; ++i)
@@ -381,6 +379,18 @@ NVistaHdf5Movie::getMovieIndex(isize_t inFrameNumber)
         ++idx;
     }
     return idx;
+}
+
+isize_t
+NVistaHdf5Movie::getPixelSizeInBytes() const
+{
+    return sizeof(uint16_t);
+}
+
+isize_t
+NVistaHdf5Movie::getRowSizeInBytes() const
+{
+    return (getPixelSizeInBytes() * m_spacingInfo.getNumColumns());
 }
 
 template <typename FrameType>

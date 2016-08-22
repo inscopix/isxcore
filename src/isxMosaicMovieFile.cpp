@@ -103,6 +103,8 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame)
         }
         case DataType::F32:
         {
+            // TODO sweet : we'll probably get lots of warning messages (one
+            // for each frame), so this probably shouldn't stay
             ISX_LOG_WARNING("Converting from float to uint16.");
 
             // Dump data into floating point array then convert to uint16
