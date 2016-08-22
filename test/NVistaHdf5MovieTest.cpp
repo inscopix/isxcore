@@ -50,6 +50,18 @@ TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
         REQUIRE(t[1] == 0x3);
     }
 
+    SECTION("getFrame with float pixels for frame number") {
+        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFile);
+        REQUIRE(m->isValid());
+
+        isx::SpF32VideoFrame_t nvf;
+        m->getFrame(0, nvf);
+
+        float * t = nvf->getPixels();
+        REQUIRE(t[0] == 835.f);
+        REQUIRE(t[1] == 792.f);
+    }
+
     SECTION("getTimingInfo().getDuration()") {
         isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFile);
         REQUIRE(m->isValid());

@@ -237,7 +237,7 @@ NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber, SpF32VideoFrame_t & out
     Time frameTime = u16Frame->getTimeStamp();
     outFrame = std::make_shared<F32VideoFrame_t>(
         m_spacingInfo,
-        getRowSizeInBytes(),
+        sizeof(float) * m_spacingInfo.getNumColumns(),
         1, // numChannels
         frameTime,
         inFrameNumber);

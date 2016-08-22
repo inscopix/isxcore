@@ -105,7 +105,7 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame)
         {
             // TODO sweet : we'll probably get lots of warning messages (one
             // for each frame), so this probably shouldn't stay
-            ISX_LOG_WARNING("Converting from float to uint16.");
+            ISX_LOG_WARNING("Reading float as uint16.");
 
             // Dump data into floating point array then convert to uint16
             isize_t numPixels = m_spacingInfo.getTotalNumPixels();
@@ -200,32 +200,9 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame)
 void
 MosaicMovieFile::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
 {
-    std::ofstream file(m_fileName, std::ios::binary | std::ios::in);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open movie file when writing frame: ", m_fileName);
-    }
-
-    // TODO sweet : check to see if time is outside of sample window instead
-    // of overwriting first or last frame data?
-    isize_t frameNumber = inVideoFrame->getFrameIndex();
-    isize_t numFrames = m_timingInfo.getNumTimes();
-    if (frameNumber >= numFrames)
-    {
-        frameNumber = numFrames - 1;
-    }
+    std::ofstream file = openForWriteFrame(inVideoFrame->getFrameIndex());
 
     isize_t frameSizeInBytes = getFrameSizeInBytes();
-    isize_t offsetInBytes = frameNumber * frameSizeInBytes;
-    file.seekp(m_headerOffset);
-    file.seekp(offsetInBytes, std::ios_base::cur);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Error seeking movie frame for write.", m_fileName);
-    }
-
     switch (m_dataType)
     {
         case DataType::U16:
@@ -236,7 +213,7 @@ MosaicMovieFile::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
         }
         case DataType::F32:
         {
-            // Dump bytes into char vector then write
+            // Cast pixel values into float buffer then write
             std::vector<float> frameBuf(frameSizeInBytes);
             uint16_t * inFrameArray = inVideoFrame->getPixels();
             isize_t numPixels = m_spacingInfo.getTotalNumPixels();
@@ -245,6 +222,51 @@ MosaicMovieFile::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
                 frameBuf[i] = float(inFrameArray[i]);
             }
             file.write(reinterpret_cast<char *>(frameBuf.data()), frameSizeInBytes);
+            break;
+        }
+        default:
+        {
+            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", m_dataType);
+            break;
+        }
+    }
+
+    if (!file.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Error writing movie frame.", m_fileName);
+    }
+}
+
+void
+MosaicMovieFile::writeFrame(const SpF32VideoFrame_t & inVideoFrame)
+{
+    std::ofstream file = openForWriteFrame(inVideoFrame->getFrameIndex());
+
+    isize_t frameSizeInBytes = getFrameSizeInBytes();
+    switch (m_dataType)
+    {
+        case DataType::U16:
+        {
+            // TODO sweet : we'll probably get lots of warning messages (one
+            // for each frame), so this probably shouldn't stay
+            ISX_LOG_WARNING("Writing float as uint16.");
+
+            // Cast pixel values into uint16 buffer then write
+            std::vector<uint16_t> frameBuf(frameSizeInBytes);
+            float * inFrameArray = inVideoFrame->getPixels();
+            isize_t numPixels = m_spacingInfo.getTotalNumPixels();
+            for (isize_t i = 0; i < numPixels; ++i)
+            {
+                frameBuf[i] = uint16_t(inFrameArray[i]);
+            }
+            file.write(reinterpret_cast<char *>(frameBuf.data()), frameSizeInBytes);
+            break;
+        }
+        case DataType::F32:
+        {
+            // No conversion needed
+            file.write(reinterpret_cast<char *>(inVideoFrame->getPixels()), frameSizeInBytes);
             break;
         }
         default:
@@ -452,6 +474,37 @@ isize_t
 MosaicMovieFile::getFrameSizeInBytes() const
 {
     return (getPixelSizeInBytes() * m_spacingInfo.getTotalNumPixels());
+}
+
+std::ofstream
+MosaicMovieFile::openForWriteFrame(isize_t inFrameNumber)
+{
+    std::ofstream file(m_fileName, std::ios::binary | std::ios::in);
+    if (!file.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Failed to open movie file when writing frame: ", m_fileName);
+    }
+
+    // TODO sweet : check to see if time is outside of sample window instead
+    // of overwriting last frame data
+    isize_t numFrames = m_timingInfo.getNumTimes();
+    if (inFrameNumber >= numFrames)
+    {
+        inFrameNumber = numFrames - 1;
+    }
+
+    isize_t frameSizeInBytes = getFrameSizeInBytes();
+    isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
+    file.seekp(m_headerOffset);
+    file.seekp(offsetInBytes, std::ios_base::cur);
+    if (!file.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Error seeking movie frame for write.", m_fileName);
+    }
+
+    return file;
 }
 
 } // namespace isx

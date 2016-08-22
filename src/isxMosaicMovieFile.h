@@ -76,10 +76,15 @@ public:
     /// \param  outFrame        The frame read from the file.
     void readFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame);
 
-    /// Write a frame to the file.
+    /// Write a uint16 frame to the file.
     ///
     /// \param  inVideoFrame    The frame to write to the file.
     void writeFrame(const SpU16VideoFrame_t & inVideoFrame);
+
+    /// Write a float frame to the file.
+    ///
+    /// \param  inVideoFrame    The frame to write to the file.
+    void writeFrame(const SpF32VideoFrame_t & inVideoFrame);
 
     /// Initialize for reading.
     ///
@@ -167,6 +172,13 @@ private:
     /// \return     The size of a frame in bytes.
     ///
     isize_t getFrameSizeInBytes() const;
+
+    /// Open this movie file for write access and seek to the location of a frame.
+    ///
+    /// \param  inFrameNumber   The number of the frame to which to seek.
+    /// \return                 The file opened with write access at the location
+    ///                         of the given frame index.
+    std::ofstream openForWriteFrame(isize_t inFrameNumber);
 };
 
 }
