@@ -44,7 +44,7 @@ TEST_CASE("MosaicMovieTest", "[core-internal]")
         isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            frame = movie->getFrame(f);
+            movie->getFrame(f, frame);
             std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
@@ -66,7 +66,7 @@ TEST_CASE("MosaicMovieTest", "[core-internal]")
         isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            frame = movie->getFrame(f);
+            movie->getFrame(f, frame);
             std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
@@ -107,7 +107,7 @@ TEST_CASE("MosaicMovieTest", "[core-internal]")
         isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            frame = movie->getFrame(f);
+            movie->getFrame(f, frame);
             std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {

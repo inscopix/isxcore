@@ -63,10 +63,9 @@ MosaicMovieFile::isValid() const
     return m_valid;
 }
 
-SpU16VideoFrame_t
-MosaicMovieFile::readFrame(isize_t inFrameNumber)
+void
+MosaicMovieFile::readFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame)
 {
-    //std::ifstream file = openForReadOnly();
     std::ifstream file(m_fileName, std::ios::binary);
     if (!file.good())
     {
@@ -77,7 +76,7 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
     // TODO sweet : check to see if frame number exceeds number of frames
     // instead of returning the last frame.
     Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
-    SpU16VideoFrame_t frame = std::make_shared<U16VideoFrame_t>(
+    outFrame = std::make_shared<U16VideoFrame_t>(
         m_spacingInfo,
         getRowSizeInBytes(),
         1, // numChannels
@@ -99,7 +98,7 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
         case DataType::U16:
         {
             // No conversion needed
-            file.read(reinterpret_cast<char*>(frame->getPixels()), frameSizeInBytes);
+            file.read(reinterpret_cast<char*>(outFrame->getPixels()), frameSizeInBytes);
             break;
         }
         case DataType::F32:
@@ -108,8 +107,12 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
             isize_t numPixels = m_spacingInfo.getTotalNumPixels();
             std::vector<float> frameBuf(numPixels, 0);
             file.read(reinterpret_cast<char*>(frameBuf.data()), frameSizeInBytes);
-            // TODO sweet : should this be done value by value?
-            std::memcpy(frame->getPixels(), frameBuf.data(), frameSizeInBytes);
+
+            uint16_t * frameArray = outFrame->getPixels();
+            for (isize_t i = 0; i < numPixels; ++i)
+            {
+                frameArray[i] = frameBuf[i];
+            }
             break;
         }
         default:
@@ -123,8 +126,73 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
     {
         ISX_THROW(isx::ExceptionFileIO, "Error reading movie frame.");
     }
+}
 
-    return frame;
+void
+MosaicMovieFile::readFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame)
+{
+    std::ifstream file(m_fileName, std::ios::binary);
+    if (!file.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Failed to open movie file when reading frame: ", m_fileName);
+    }
+
+    // TODO sweet : check to see if frame number exceeds number of frames
+    // instead of returning the last frame.
+    Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
+    outFrame = std::make_shared<F32VideoFrame_t>(
+        m_spacingInfo,
+        getRowSizeInBytes(),
+        1, // numChannels
+        frameTime,
+        inFrameNumber);
+
+    isize_t frameSizeInBytes = getFrameSizeInBytes();
+    isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
+    file.seekg(m_headerOffset);
+    file.seekg(offsetInBytes, std::ios_base::cur);
+    if (!file.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Error seeking movie frame for read.");
+    }
+
+    // Need to dump data first into a type dependent array then convert it
+    switch (m_dataType)
+    {
+        case DataType::U16:
+        {
+            ISX_LOG_WARNING("Converting from float to uint16.");
+
+            // Dump data into uint16 array then convert to float
+            isize_t numPixels = m_spacingInfo.getTotalNumPixels();
+            std::vector<uint16_t> frameBuf(numPixels, 0);
+            file.read(reinterpret_cast<char*>(frameBuf.data()), frameSizeInBytes);
+
+            float * frameArray = outFrame->getPixels();
+            for (isize_t i = 0; i < numPixels; ++i)
+            {
+                frameArray[i] = frameBuf[i];
+            }
+            break;
+        }
+        case DataType::F32:
+        {
+            // No conversion needed
+            file.read(reinterpret_cast<char*>(outFrame->getPixels()), frameSizeInBytes);
+            break;
+        }
+        default:
+        {
+            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", m_dataType);
+            break;
+        }
+    }
+
+    if (!file.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Error reading movie frame.");
+    }
 }
 
 void
@@ -167,9 +235,14 @@ MosaicMovieFile::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
         case DataType::F32:
         {
             // Dump bytes into char vector then write
-            std::vector<char> frameBuf(frameSizeInBytes);
-            std::memcpy(frameBuf.data(), inVideoFrame->getPixels(), frameSizeInBytes);
-            file.write(frameBuf.data(), frameSizeInBytes);
+            std::vector<float> frameBuf(frameSizeInBytes);
+            uint16_t * inFrameArray = inVideoFrame->getPixels();
+            isize_t numPixels = m_spacingInfo.getTotalNumPixels();
+            for (isize_t i = 0; i < numPixels; ++i)
+            {
+                frameBuf[i] = float(inFrameArray[i]);
+            }
+            file.write(reinterpret_cast<char *>(frameBuf.data()), frameSizeInBytes);
             break;
         }
         default:

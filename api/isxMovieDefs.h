@@ -8,17 +8,30 @@ namespace isx {
 
     template <typename T>
     class VideoFrame;
-    /// type for an nvista movie video frame
+
+    /// A video frame containing uint16 pixels.
     ///
     typedef VideoFrame<uint16_t> U16VideoFrame_t;
 
-    /// shared_ptr type for an nvista movie video frame
+    /// A shared pointer to a video frame containing uint16 pixels.
     ///
     typedef std::shared_ptr<U16VideoFrame_t> SpU16VideoFrame_t;
 
-    /// Type of callback function to use to return video frames asynchronously
+    /// A callback function to use to get a video frame containing uint16 pixels.
     ///
-    typedef std::function<void(const SpU16VideoFrame_t & inVideoFrame)> MovieGetFrameCB_t;
+    typedef std::function<void(const SpU16VideoFrame_t & inVideoFrame)> MovieGetU16FrameCB_t;
+
+    /// A video frame containing uint16 pixels.
+    ///
+    typedef VideoFrame<float> F32VideoFrame_t;
+
+    /// A shared pointer to a video frame containing uint16 pixels.
+    ///
+    typedef std::shared_ptr<F32VideoFrame_t> SpF32VideoFrame_t;
+
+    /// A callback function to use to get a video frame containing uint16 pixels.
+    ///
+    typedef std::function<void(const SpF32VideoFrame_t & inVideoFrame)> MovieGetF32FrameCB_t;
 }
 
 #endif

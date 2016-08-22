@@ -64,11 +64,17 @@ public:
     ///
     bool isValid() const;
 
-    /// Read a frame in the file by index.
+    /// Read a uint16 frame in the file by index.
     ///
     /// \param  inFrameNumber   The index of the frame.
-    /// \return                 The frame read from the file.
-    SpU16VideoFrame_t readFrame(isize_t inFrameNumber);
+    /// \param  outFrame        The frame read from the file.
+    void readFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame);
+
+    /// Read a float frame in the file by index.
+    ///
+    /// \param  inFrameNumber   The index of the frame.
+    /// \param  outFrame        The frame read from the file.
+    void readFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame);
 
     /// Write a frame to the file.
     ///

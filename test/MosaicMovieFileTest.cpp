@@ -41,7 +41,7 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
         isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            frame = movie.readFrame(f);
+            movie.readFrame(f, frame);
             std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
@@ -63,7 +63,7 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
         isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            frame = movie.readFrame(f);
+            movie.readFrame(f, frame);
             std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
@@ -104,7 +104,7 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
         isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            frame = movie.readFrame(f);
+            movie.readFrame(f, frame);
             std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
@@ -151,7 +151,7 @@ TEST_CASE("MosaicMovieFileF32AsU16", "[core-internal]")
         isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            frame = movie.readFrame(f);
+            movie.readFrame(f, frame);
             std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
@@ -174,7 +174,7 @@ TEST_CASE("MosaicMovieFileF32AsU16", "[core-internal]")
         isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            frame = movie.readFrame(f);
+            movie.readFrame(f, frame);
             std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
@@ -188,6 +188,8 @@ TEST_CASE("MosaicMovieFileF32AsU16", "[core-internal]")
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
         isx::isize_t rowSizeInBytes = sizeof(uint16_t) * spacingInfo.getNumColumns();
 
+        // Write movie, so that each pixel in the movie has a unique value
+        // that it easily calculated
         isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo, dataType);
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
@@ -207,14 +209,15 @@ TEST_CASE("MosaicMovieFileF32AsU16", "[core-internal]")
 
             movie.writeFrame(frame);
         }
-
         REQUIRE(movie.isValid());
         REQUIRE(movie.getTimingInfo() == timingInfo);
         REQUIRE(movie.getSpacingInfo() == spacingInfo);
+
+        // Check that frames can be read back in accurately
         isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            frame = movie.readFrame(f);
+            movie.readFrame(f, frame);
             std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
