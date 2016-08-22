@@ -173,12 +173,14 @@ private:
     ///
     isize_t getFrameSizeInBytes() const;
 
-    /// Open this movie file for write access and seek to the location of a frame.
+    /// Seek to the location of a frame for writing.
     ///
+    /// \param  inFile          The output file stream whose tell pointer
+    ///                         will be modified to be at the given frame number.
     /// \param  inFrameNumber   The number of the frame to which to seek.
-    /// \return                 The file opened with write access at the location
-    ///                         of the given frame index.
-    std::ofstream openForWriteFrame(isize_t inFrameNumber);
+    void seekForWriteFrame(
+            std::ofstream & inFile,
+            isize_t inFrameNumber);
 };
 
 }

@@ -200,7 +200,8 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame)
 void
 MosaicMovieFile::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
 {
-    std::ofstream file = openForWriteFrame(inVideoFrame->getFrameIndex());
+    std::ofstream file(m_fileName, std::ios::binary | std::ios::in);
+    seekForWriteFrame(file, inVideoFrame->getFrameIndex());
 
     isize_t frameSizeInBytes = getFrameSizeInBytes();
     switch (m_dataType)
@@ -241,7 +242,8 @@ MosaicMovieFile::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
 void
 MosaicMovieFile::writeFrame(const SpF32VideoFrame_t & inVideoFrame)
 {
-    std::ofstream file = openForWriteFrame(inVideoFrame->getFrameIndex());
+    std::ofstream file(m_fileName, std::ios::binary | std::ios::in);
+    seekForWriteFrame(file, inVideoFrame->getFrameIndex());
 
     isize_t frameSizeInBytes = getFrameSizeInBytes();
     switch (m_dataType)
@@ -476,11 +478,12 @@ MosaicMovieFile::getFrameSizeInBytes() const
     return (getPixelSizeInBytes() * m_spacingInfo.getTotalNumPixels());
 }
 
-std::ofstream
-MosaicMovieFile::openForWriteFrame(isize_t inFrameNumber)
+void
+MosaicMovieFile::seekForWriteFrame(
+        std::ofstream & inFile,
+        isize_t inFrameNumber)
 {
-    std::ofstream file(m_fileName, std::ios::binary | std::ios::in);
-    if (!file.good())
+    if (!inFile.good())
     {
         ISX_THROW(isx::ExceptionFileIO,
             "Failed to open movie file when writing frame: ", m_fileName);
@@ -496,15 +499,13 @@ MosaicMovieFile::openForWriteFrame(isize_t inFrameNumber)
 
     isize_t frameSizeInBytes = getFrameSizeInBytes();
     isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
-    file.seekp(m_headerOffset);
-    file.seekp(offsetInBytes, std::ios_base::cur);
-    if (!file.good())
+    inFile.seekp(m_headerOffset);
+    inFile.seekp(offsetInBytes, std::ios_base::cur);
+    if (!inFile.good())
     {
         ISX_THROW(isx::ExceptionFileIO,
             "Error seeking movie frame for write.", m_fileName);
     }
-
-    return file;
 }
 
 } // namespace isx
