@@ -55,9 +55,10 @@ getPathTokens(const std::string & inPath)
 }
 
 std::string
-getWritableDirName()
+getDefaultProjectPath()
 {
-    QString dirName = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    QString dirName = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    dirName += "/MosaicProjects";
     QDir dir(dirName);
     if (!dir.exists())
     {

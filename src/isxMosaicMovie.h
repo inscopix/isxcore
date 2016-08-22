@@ -80,7 +80,7 @@ public:
 
     DataType getDataType() const override;
 
-    std::string getName() const override;
+    std::string getFileName() const override;
 
     void serialize(std::ostream & strm) const override;
 

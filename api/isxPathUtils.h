@@ -72,12 +72,12 @@ std::string getExtension(const std::string & inPath);
 /// \return         The tokens of a path delimited by '/'.
 std::vector<std::string> getPathTokens(const std::string & inPath);
 
-/// Get the writable directory name for Inscopix data.
+/// Get the default project path where we'll write mosaic data.
 ///
 /// The directory will be created if it doesn't exist.
 ///
-/// \return     A writable directory name for Inscopix data.
-std::string getWritableDirName();
+/// \return     A writable directory name for Mosaic data.
+std::string getDefaultProjectPath();
 
 /// Get a path relative to a directory name.
 ///

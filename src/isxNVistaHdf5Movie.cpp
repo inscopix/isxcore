@@ -20,16 +20,18 @@ NVistaHdf5Movie::NVistaHdf5Movie()
 }
 
 NVistaHdf5Movie::NVistaHdf5Movie(
+    const std::string &inFileName,
     const SpHdf5FileHandle_t & inHdf5FileHandle,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo)
 {
     std::vector<SpH5File_t> files(1, inHdf5FileHandle->get());
 
-    initialize(files, inTimingInfo, inSpacingInfo);
+    initialize(inFileName, files, inTimingInfo, inSpacingInfo);
 }
 
 NVistaHdf5Movie::NVistaHdf5Movie(
+    const std::string &inFileName,
     const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo)
@@ -40,7 +42,7 @@ NVistaHdf5Movie::NVistaHdf5Movie(
         files.push_back(inHdf5FileHandles[i]->get());
     }
 
-    initialize(files, inTimingInfo, inSpacingInfo);
+    initialize(inFileName, files, inTimingInfo, inSpacingInfo);
 }
 
 NVistaHdf5Movie::~NVistaHdf5Movie()
@@ -116,11 +118,9 @@ NVistaHdf5Movie::getDataType() const
 }
 
 std::string
-NVistaHdf5Movie::getName() const
+NVistaHdf5Movie::getFileName() const
 {
-    std::string path = m_movies[0]->getPath();
-    std::string name = path.substr(path.find_last_of("/") + 1);
-    return name;
+    return m_fileName;
 }
 
 void
@@ -138,12 +138,14 @@ NVistaHdf5Movie::serialize(std::ostream& strm) const
 
 void
 NVistaHdf5Movie::initialize(
+    const std::string & inFileName,
     const std::vector<SpH5File_t> & inHdf5Files,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo)
 {
     ISX_ASSERT(inHdf5Files.size());
 
+    m_fileName = inFileName;
     isize_t numFramesAccum = 0;
 
     for (isize_t f(0); f < inHdf5Files.size(); ++f)

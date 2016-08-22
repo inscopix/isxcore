@@ -18,31 +18,31 @@ TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
     isx::CoreInitialize();
 
     SECTION("create movie from one dataset") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
         REQUIRE(m->isValid());
         REQUIRE(m->getDataType() == isx::DataType::U16);
     }
 
     SECTION("getTimingInfo().getNumTimes()") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
         REQUIRE(m->isValid());
         REQUIRE(m->getTimingInfo().getNumTimes() == 33);
     }
 
     SECTION("getSpacingInfo().getNumColumns") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
         REQUIRE(m->isValid());
         REQUIRE(m->getSpacingInfo().getNumColumns() == 500);
     }
 
     SECTION("getSpacingInfo().getNumRows") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
         REQUIRE(m->isValid());
         REQUIRE(m->getSpacingInfo().getNumRows() == 500);
     }
 
     SECTION("getFrame for frame number") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
         REQUIRE(m->isValid());
         isx::SpU16VideoFrame_t nvf;
         m->getFrame(0, nvf);
@@ -52,7 +52,7 @@ TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
     }
 
     SECTION("getFrame with float pixels for frame number") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
         REQUIRE(m->isValid());
 
         isx::SpF32VideoFrame_t nvf;
@@ -64,13 +64,13 @@ TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
     }
 
     SECTION("getTimingInfo().getDuration()") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
         REQUIRE(m->isValid());
         REQUIRE(m->getTimingInfo().getDuration().toDouble() == 3.168);
     }
 
     SECTION("toString") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
         REQUIRE(m->toString() == "/images");
     }
 
@@ -100,7 +100,7 @@ TEST_CASE("MovieTestAsync", "[core]") {
     size_t numTestFrames = expected.size();
     size_t numTestBytesPerFrame = sizeof(f0_data);
     
-    isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFile);
+    isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
     REQUIRE(m->isValid());
     isx::MovieGetU16FrameCB_t cb = [&](isx::SpU16VideoFrame_t inFrame){
         size_t index = inFrame->getFrameIndex();

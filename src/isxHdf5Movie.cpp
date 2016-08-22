@@ -63,7 +63,8 @@ namespace isx
         }
     }
 
-    Hdf5Movie::Hdf5Movie(const SpH5File_t & inHdf5File, const std::string & inPath, isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight)
+    Hdf5Movie::Hdf5Movie(const SpH5File_t & inHdf5File, const std::string & inPath,
+                         isize_t inNumFrames, isize_t inFrameWidth, isize_t inFrameHeight)
         : m_H5File(inHdf5File)
         , m_path(inPath)
     {
@@ -299,7 +300,7 @@ namespace isx
     }
     
     const std::string & 
-    Hdf5Movie::getPath()
+    Hdf5Movie::getPath() const
     {
         return m_path;
     }

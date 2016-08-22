@@ -82,11 +82,11 @@ public:
     const isx::SpacingInfo &
     getSpacingInfo() const = 0;
 
-    /// \return     The name of the movie.
+    /// \return     The name of the movie data file.
     ///
     virtual
     std::string
-    getName() const = 0;
+    getFileName() const = 0;
 
     /// \return     The data type of a pixel value.
     ///

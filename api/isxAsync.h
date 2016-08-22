@@ -30,21 +30,6 @@ typedef std::function<AsyncTaskStatus(AsyncCheckInCB_t)> AsyncFunc_t;
 /// type of progress callback function
 typedef std::function<void(float)> AsyncProgressCB_t;
 
-/// helper function template to create an async task
-/// \param inFunc function to call as part of task
-/// \param inSrc source data to pass into inFunc
-/// \param outDst destination where inFunc should write its output
-template <typename TF, typename TI, typename TO>
-static
-AsyncFunc_t
-MakeAsyncFunc(TF inFunc, TI inSrc, TO outDst)
-{
-    return [inFunc, inSrc, outDst](AsyncCheckInCB_t inCheckInCB)
-        {
-            return inFunc(inSrc, outDst, inCheckInCB);
-        };
-}
-
 SpAsyncTaskHandle_t 
 CreateAsyncTask(AsyncFunc_t inTask, AsyncProgressCB_t inProgressCB, AsyncFinishedCB_t inFinishedCB);
 
