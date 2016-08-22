@@ -1,5 +1,8 @@
 #include "isxNVistaHdf5Movie.h"
 #include "isxHdf5Utils.h"
+#include "isxMutex.h"
+#include "isxIoQueue.h"
+#include "isxConditionVariable.h"
 
 #include <iostream>
 #include <vector>
@@ -193,7 +196,6 @@ NVistaHdf5Movie::initTimingInfo(const std::vector<SpH5File_t> & inHdf5Files)
     }    
 }
 
-
 void
 NVistaHdf5Movie::initSpacingInfo(const std::vector<SpH5File_t> & inHdf5Files)
 {
@@ -228,25 +230,13 @@ NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber, SpU16VideoFrame_t & out
 void
 NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame)
 {
-    Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
-    SpacingInfo si = getSpacingInfo();
+    // Get the uint16 frame
+    SpU16VideoFrame_t u16Frame;
+    getFrameInternal(inFrameNumber, u16Frame);
 
-    SpU16VideoFrame_t u16Frame = std::make_shared<U16VideoFrame_t>(
-        si,
-        sizeof(uint16_t) * si.getNumColumns(),
-        1, // numChannels
-        frameTime,
-        inFrameNumber);
-
-    isize_t newFrameNumber = inFrameNumber;
-    isize_t idx = getMovieIndex(inFrameNumber);
-    if (idx > 0)
-    {
-        newFrameNumber = inFrameNumber - m_cumulativeFrames[idx - 1];
-    }
-
-    m_movies[idx]->getFrame(newFrameNumber, u16Frame);
-
+    // then cast it
+    SpacingInfo si = u16Frame->getImage().getSpacingInfo();
+    Time frameTime = u16Frame->getTimeStamp();
     outFrame = std::make_shared<F32VideoFrame_t>(
         si,
         sizeof(float) * si.getNumColumns(),
@@ -336,7 +326,6 @@ NVistaHdf5Movie::readTimingInfo(std::vector<SpH5File_t> inHdf5Files)
     return bInitializedFromFile;
 }
 
-
 bool
 NVistaHdf5Movie::readSpacingInfo(std::vector<SpH5File_t> inHdf5Files)
 {
@@ -392,6 +381,105 @@ NVistaHdf5Movie::getMovieIndex(isize_t inFrameNumber)
         ++idx;
     }
     return idx;
+}
+
+template <typename FrameType>
+void
+NVistaHdf5Movie::getFrameTemplate(
+        isize_t inFrameNumber,
+        std::shared_ptr<FrameType> & outFrame)
+{
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("getFrame");
+    getFrameAsync(inFrameNumber,
+        [&outFrame, &cv, &mutex](const std::shared_ptr<FrameType> & inFrame)
+        {
+            mutex.lock("getFrame async");
+            outFrame = inFrame;
+            mutex.unlock();
+            cv.notifyOne();
+        }
+    );
+    cv.wait(mutex);
+    mutex.unlock();
+}
+
+template <typename FrameType>
+void
+NVistaHdf5Movie::getFrameAsyncTemplate(
+        isize_t inFrameNumber,
+        MovieGetFrameCB_t<FrameType> inCallback)
+{
+    // Only get a weak pointer to this, so that we don't bother reading
+    // if this has been deleted when the read gets executed.
+    std::weak_ptr<NVistaHdf5Movie> weakThis = shared_from_this();
+
+    uint64_t readRequestId = 0;
+    {
+        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
+        readRequestId = m_readRequestCount++;
+    }
+
+    auto readIoTask = std::make_shared<IoTask>(
+        [weakThis, this, inFrameNumber, inCallback]()
+        {
+            auto sharedThis = weakThis.lock();
+            if (sharedThis)
+            {
+                std::shared_ptr<FrameType> frame;
+                getFrameInternal(inFrameNumber, frame);
+                inCallback(frame);
+            }
+        },
+        [weakThis, this, readRequestId, inCallback](AsyncTaskStatus inStatus)
+        {
+            auto sharedThis = weakThis.lock();
+            if (!sharedThis)
+            {
+                return;
+            }
+
+            auto rt = unregisterReadRequest(readRequestId);
+
+            switch (inStatus)
+            {
+                case AsyncTaskStatus::ERROR_EXCEPTION:
+                {
+                    try
+                    {
+                        std::rethrow_exception(rt->getExceptionPtr());
+                    }
+                    catch(std::exception & e)
+                    {
+                        ISX_LOG_ERROR("Exception occurred reading from NVistaHdf5Movie: ", e.what());
+                    }
+                    std::shared_ptr<FrameType> frame;
+                    inCallback(frame);
+                    break;
+                }
+
+                case AsyncTaskStatus::UNKNOWN_ERROR:
+                    ISX_LOG_ERROR("An error occurred while reading a frame from a NVistaHdf5Movie file");
+                    break;
+
+                case AsyncTaskStatus::CANCELLED:
+                    ISX_LOG_INFO("getFrameAsync request cancelled.");
+                    break;
+
+                case AsyncTaskStatus::COMPLETE:
+                case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
+                case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
+                    break;
+            }
+        }
+    );
+
+    {
+        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
+        m_pendingReads[readRequestId] = readIoTask;
+    }
+    readIoTask->schedule();
 }
 
 } // namespace isx
