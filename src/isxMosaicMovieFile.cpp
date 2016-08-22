@@ -103,6 +103,8 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame)
         }
         case DataType::F32:
         {
+            ISX_LOG_WARNING("Converting from float to uint16.");
+
             // Dump data into floating point array then convert to uint16
             isize_t numPixels = m_spacingInfo.getTotalNumPixels();
             std::vector<float> frameBuf(numPixels, 0);
@@ -111,7 +113,7 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame)
             uint16_t * frameArray = outFrame->getPixels();
             for (isize_t i = 0; i < numPixels; ++i)
             {
-                frameArray[i] = frameBuf[i];
+                frameArray[i] = uint16_t(frameBuf[i]);
             }
             break;
         }
@@ -162,8 +164,6 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame)
     {
         case DataType::U16:
         {
-            ISX_LOG_WARNING("Converting from float to uint16.");
-
             // Dump data into uint16 array then convert to float
             isize_t numPixels = m_spacingInfo.getTotalNumPixels();
             std::vector<uint16_t> frameBuf(numPixels, 0);
@@ -172,7 +172,7 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame)
             float * frameArray = outFrame->getPixels();
             for (isize_t i = 0; i < numPixels; ++i)
             {
-                frameArray[i] = frameBuf[i];
+                frameArray[i] = float(frameBuf[i]);
             }
             break;
         }
