@@ -67,32 +67,17 @@ void
 MosaicMovieFile::readFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame)
 {
     std::ifstream file(m_fileName, std::ios::binary);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open movie file when reading frame: ", m_fileName);
-    }
+    seekForReadFrame(file, inFrameNumber);
 
-    // TODO sweet : check to see if frame number exceeds number of frames
-    // instead of returning the last frame.
-    Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
     outFrame = std::make_shared<U16VideoFrame_t>(
         m_spacingInfo,
-        getRowSizeInBytes(),
+        sizeof(uint16_t) * m_spacingInfo.getNumColumns(),
         1, // numChannels
-        frameTime,
+        m_timingInfo.convertIndexToTime(inFrameNumber),
         inFrameNumber);
 
-    isize_t frameSizeInBytes = getFrameSizeInBytes();
-    isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
-    file.seekg(m_headerOffset);
-    file.seekg(offsetInBytes, std::ios_base::cur);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO, "Error seeking movie frame for read.");
-    }
-
     // Need to dump data first into a type dependent array then convert it
+    isize_t frameSizeInBytes = getFrameSizeInBytes();
     switch (m_dataType)
     {
         case DataType::U16:
@@ -136,32 +121,17 @@ void
 MosaicMovieFile::readFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame)
 {
     std::ifstream file(m_fileName, std::ios::binary);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open movie file when reading frame: ", m_fileName);
-    }
+    seekForReadFrame(file, inFrameNumber);
 
-    // TODO sweet : check to see if frame number exceeds number of frames
-    // instead of returning the last frame.
-    Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
     outFrame = std::make_shared<F32VideoFrame_t>(
         m_spacingInfo,
-        getRowSizeInBytes(),
+        sizeof(float) * m_spacingInfo.getNumColumns(),
         1, // numChannels
-        frameTime,
+        m_timingInfo.convertIndexToTime(inFrameNumber),
         inFrameNumber);
 
-    isize_t frameSizeInBytes = getFrameSizeInBytes();
-    isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
-    file.seekg(m_headerOffset);
-    file.seekg(offsetInBytes, std::ios_base::cur);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO, "Error seeking movie frame for read.");
-    }
-
     // Need to dump data first into a type dependent array then convert it
+    isize_t frameSizeInBytes = getFrameSizeInBytes();
     switch (m_dataType)
     {
         case DataType::U16:
@@ -467,15 +437,39 @@ MosaicMovieFile::getPixelSizeInBytes() const
 }
 
 isize_t
-MosaicMovieFile::getRowSizeInBytes() const
-{
-    return (getPixelSizeInBytes() * m_spacingInfo.getNumColumns());
-}
-
-isize_t
 MosaicMovieFile::getFrameSizeInBytes() const
 {
     return (getPixelSizeInBytes() * m_spacingInfo.getTotalNumPixels());
+}
+
+void
+MosaicMovieFile::seekForReadFrame(
+        std::ifstream & inFile,
+        isize_t inFrameNumber)
+{
+    if (!inFile.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Failed to open movie file when reading frame: ", m_fileName);
+    }
+
+    // TODO sweet : check to see if time is outside of sample window instead
+    // of reading last frame data
+    isize_t numFrames = m_timingInfo.getNumTimes();
+    if (inFrameNumber >= numFrames)
+    {
+        inFrameNumber = numFrames - 1;
+    }
+
+    isize_t frameSizeInBytes = getFrameSizeInBytes();
+    isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
+    inFile.seekg(m_headerOffset);
+    inFile.seekg(offsetInBytes, std::ios_base::cur);
+    if (!inFile.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Error seeking movie frame for read.", m_fileName);
+    }
 }
 
 void

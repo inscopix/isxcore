@@ -160,29 +160,13 @@ MosaicMovie::cancelPendingReads()
 void
 MosaicMovie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
 {
-    // Get a new shared pointer to the file, so we can guarantee the write.
-    std::shared_ptr<MosaicMovieFile> file = m_file;
-    Mutex mutex;
-    ConditionVariable cv;
-    mutex.lock("writeFrame");
-    auto writeIoTask = std::make_shared<IoTask>(
-        [file, inVideoFrame]()
-        {
-            file->writeFrame(inVideoFrame);
-        },
-        [&cv, &mutex](AsyncTaskStatus inStatus)
-        {
-            if (inStatus != AsyncTaskStatus::COMPLETE)
-            {
-                ISX_LOG_ERROR("An error occurred while writing a frame to a MosaicMovieFile.");
-            }
-            mutex.lock("writeFrame finished");  // will only be able to take lock when client reaches cv.waitForMs
-            mutex.unlock();
-            cv.notifyOne();
-        });
-    writeIoTask->schedule();
-    cv.wait(mutex);
-    mutex.unlock();
+    writeFrameTemplate<U16VideoFrame_t>(inVideoFrame);
+}
+
+void
+MosaicMovie::writeFrame(const SpF32VideoFrame_t & inVideoFrame)
+{
+    writeFrameTemplate<F32VideoFrame_t>(inVideoFrame);
 }
 
 const isx::TimingInfo &
@@ -312,6 +296,35 @@ MosaicMovie::getFrameAsyncTemplate(
         m_pendingReads[readRequestId] = readIoTask;
     }
     readIoTask->schedule();
+}
+
+template <typename FrameType>
+void
+MosaicMovie::writeFrameTemplate(const std::shared_ptr<FrameType> & inVideoFrame)
+{
+    // Get a new shared pointer to the file, so we can guarantee the write.
+    std::shared_ptr<MosaicMovieFile> file = m_file;
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("writeFrame");
+    auto writeIoTask = std::make_shared<IoTask>(
+        [file, inVideoFrame]()
+        {
+            file->writeFrame(inVideoFrame);
+        },
+        [&cv, &mutex](AsyncTaskStatus inStatus)
+        {
+            if (inStatus != AsyncTaskStatus::COMPLETE)
+            {
+                ISX_LOG_ERROR("An error occurred while writing a frame to a MosaicMovieFile.");
+            }
+            mutex.lock("writeFrame finished");  // will only be able to take lock when client reaches cv.waitForMs
+            mutex.unlock();
+            cv.notifyOne();
+        });
+    writeIoTask->schedule();
+    cv.wait(mutex);
+    mutex.unlock();
 }
 
 } // namespace isx

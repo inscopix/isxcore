@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <algorithm>
 
+namespace
+{
+
 isx::MosaicMovieFile
 writeTestU16Movie(
         const std::string & inFileName,
@@ -68,6 +71,8 @@ writeTestF32Movie(
     }
     return movie;
 }
+
+} // namespace
 
 TEST_CASE("MosaicMovieFileU16", "[core-internal]")
 {

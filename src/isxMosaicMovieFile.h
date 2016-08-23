@@ -165,17 +165,22 @@ private:
     ///
     isize_t getPixelSizeInBytes() const;
 
-    /// \return     The size of a row in bytes.
-    ///
-    isize_t getRowSizeInBytes() const;
-
     /// \return     The size of a frame in bytes.
     ///
     isize_t getFrameSizeInBytes() const;
 
+    /// Seek to the location of a frame for reading.
+    ///
+    /// \param  inFile          The input file stream whose input position
+    ///                         will be modified to be at the given frame number.
+    /// \param  inFrameNumber   The number of the frame to which to seek.
+    void seekForReadFrame(
+            std::ifstream & inFile,
+            isize_t inFrameNumber);
+
     /// Seek to the location of a frame for writing.
     ///
-    /// \param  inFile          The output file stream whose tell pointer
+    /// \param  inFile          The output file stream whose output position
     ///                         will be modified to be at the given frame number.
     /// \param  inFrameNumber   The number of the frame to which to seek.
     void seekForWriteFrame(

@@ -168,10 +168,6 @@ private:
     ///
     isize_t getPixelSizeInBytes() const;
 
-    /// \return     The size of a row in bytes.
-    ///
-    isize_t getRowSizeInBytes() const;
-
     /// The shared implementation of getting different frame types synchronously.
     ///
     /// \param  inFrameNumber   The number of the frame to read.

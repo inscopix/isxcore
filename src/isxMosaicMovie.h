@@ -74,6 +74,8 @@ public:
 
     void writeFrame(const SpU16VideoFrame_t & inVideoFrame) override;
 
+    void writeFrame(const SpF32VideoFrame_t & inVideoFrame) override;
+
     const isx::TimingInfo & getTimingInfo() const override;
 
     const isx::SpacingInfo & getSpacingInfo() const override;
@@ -118,6 +120,12 @@ private:
     void getFrameAsyncTemplate(
             isize_t inFrameNumber,
             MovieGetFrameCB_t<FrameType> inCallback);
+
+    /// The shared implementation of writing different frame types.
+    ///
+    /// \param  inVideoFrame    The frame to write.
+    template <typename FrameType>
+    void writeFrameTemplate(const std::shared_ptr<FrameType> & inVideoFrame);
 };
 
 } // namespace isx
