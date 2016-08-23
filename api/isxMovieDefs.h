@@ -17,11 +17,11 @@ namespace isx {
     ///
     typedef std::shared_ptr<U16VideoFrame_t> SpU16VideoFrame_t;
 
-    /// A video frame containing uint16 pixels.
+    /// A video frame containing float pixels.
     ///
     typedef VideoFrame<float> F32VideoFrame_t;
 
-    /// A shared pointer to a video frame containing uint16 pixels.
+    /// A shared pointer to a video frame containing float pixels.
     ///
     typedef std::shared_ptr<F32VideoFrame_t> SpF32VideoFrame_t;
 

@@ -106,7 +106,7 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame)
         }
         default:
         {
-            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", m_dataType);
+            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", isize_t(m_dataType));
             break;
         }
     }
@@ -156,7 +156,7 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame)
         }
         default:
         {
-            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", m_dataType);
+            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", isize_t(m_dataType));
             break;
         }
     }
@@ -197,7 +197,7 @@ MosaicMovieFile::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
         }
         default:
         {
-            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", m_dataType);
+            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", isize_t(m_dataType));
             break;
         }
     }
@@ -243,7 +243,7 @@ MosaicMovieFile::writeFrame(const SpF32VideoFrame_t & inVideoFrame)
         }
         default:
         {
-            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", m_dataType);
+            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", isize_t(m_dataType));
             break;
         }
     }
@@ -431,7 +431,7 @@ MosaicMovieFile::getPixelSizeInBytes() const
         }
         default:
         {
-            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", m_dataType);
+            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", int(m_dataType));
         }
     }
 }

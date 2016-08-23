@@ -11,7 +11,7 @@ namespace isx
 
     /// \cond doxygen chokes on enum class inside of namespace
     /// The data types of values.
-    enum DataType
+    enum class DataType
     {
         U16 = 0,
         F32
