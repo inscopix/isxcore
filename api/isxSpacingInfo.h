@@ -102,7 +102,7 @@ public:
     ///
     /// \param  inPoint     The point in pixels to convert.
     /// \return             The point in microns.
-    PointInMicrons_t convertPointInPixelsToMicrons(const PointInPixels_t & inPoint) const;
+    PointInMicrons_t convertPixelsToMidPointInMicrons(const PointInPixels_t & inPoint) const;
 
     /// Converts a point in microns to a point in pixel indices within these samples.
     ///
@@ -114,7 +114,7 @@ public:
     ///
     /// \param  inPoint     The point in microns to convert.
     /// \return             The point in pixels.
-    PointInPixels_t convertPointInMicronsToPixels(const PointInMicrons_t & inPoint) const;
+    PointInPixels_t convertMidPointInMicronsToPixels(const PointInMicrons_t & inPoint) const;
 
     /// \param  other   The other spacing information with which to compare.
     /// \return         True if this is exactly equal to other, false otherwise.

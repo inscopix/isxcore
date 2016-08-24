@@ -89,7 +89,7 @@ public:
     ///
     /// \param  inIndex The index of the sample/window.
     /// \return         The absolute center of time of the window associated with inIndex.
-    Time convertIndexToTime(isize_t inIndex) const;
+    Time convertIndexToMidTime(isize_t inIndex) const;
 
     /// Converts an index to the absolute start time of its associated window.
     ///

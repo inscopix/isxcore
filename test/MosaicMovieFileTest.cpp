@@ -81,7 +81,7 @@ TEST_CASE("MosaicMovieFileTest", "[core-internal]")
         isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo);
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            isx::Time frameTime = timingInfo.convertIndexToTime(f);
+            isx::Time frameTime = timingInfo.convertIndexToStartTime(f);
             isx::SpU16VideoFrame_t frame = std::make_shared<isx::U16VideoFrame_t>(
                 spacingInfo,
                 rowSizeInBytes,
