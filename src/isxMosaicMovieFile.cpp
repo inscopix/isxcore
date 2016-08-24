@@ -75,7 +75,7 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
 
     // TODO sweet : check to see if frame number exceeds number of frames
     // instead of returning the last frame.
-    Time frameTime = m_timingInfo.convertIndexToTime(inFrameNumber);
+    Time frameTime = m_timingInfo.convertIndexToStartTime(inFrameNumber);
     SpU16VideoFrame_t frame = std::make_shared<U16VideoFrame_t>(
         m_spacingInfo,
         rowSizeInBytes,

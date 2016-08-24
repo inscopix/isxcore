@@ -53,21 +53,21 @@ TEST_CASE("TimingInfoConversionTest", "[core]")
     // Index to time
     SECTION("Convert the first index to a time")
     {
-        isx::Time actual = timingInfo.convertIndexToTime(0);
+        isx::Time actual = timingInfo.convertIndexToMidTime(0);
         isx::Time expected(1970, 1, 1, 0, 0, 0, isx::DurationInSeconds(25, 1000));
         REQUIRE(actual == expected);
     }
 
     SECTION("Convert a valid index to a time")
     {
-        isx::Time actual = timingInfo.convertIndexToTime(2);
+        isx::Time actual = timingInfo.convertIndexToMidTime(2);
         isx::Time expected(1970, 1, 1, 0, 0, 0, isx::DurationInSeconds(125, 1000));
         REQUIRE(actual == expected);
     }
 
     SECTION("Convert an index that exceeds the number of samples to a time")
     {
-        isx::Time actual = timingInfo.convertIndexToTime(100);
+        isx::Time actual = timingInfo.convertIndexToMidTime(100);
         isx::Time expected(1970, 1, 1, 0, 0, 4, isx::DurationInSeconds(975, 1000));
         REQUIRE(actual == expected);
     }
@@ -76,7 +76,7 @@ TEST_CASE("TimingInfoConversionTest", "[core]")
     {
         numTimes = 0;
         timingInfo = isx::TimingInfo(start, step, numTimes);
-        isx::Time actual = timingInfo.convertIndexToTime(2);
+        isx::Time actual = timingInfo.convertIndexToMidTime(2);
         REQUIRE(actual == start);
     }
 

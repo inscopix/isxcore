@@ -96,7 +96,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     SECTION("Convert a point in pixels to a point in microns (x equals 0)")
     {
         isx::PointInPixels_t pointInPixels(0, 3);
-        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPointInPixelsToMicrons(pointInPixels);
+        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToMidPointInMicrons(pointInPixels);
 
         REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(77, 10), isx::Ratio(121, 10)));
     }
@@ -104,7 +104,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     SECTION("Convert a point in pixels to a point in microns (y equals 0)")
     {
         isx::PointInPixels_t pointInPixels(4, 0);
-        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPointInPixelsToMicrons(pointInPixels);
+        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToMidPointInMicrons(pointInPixels);
 
         REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(165, 10), isx::Ratio(55, 10)));
     }
@@ -112,7 +112,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     SECTION("Convert a point in pixels to a point in microns (x equals max)")
     {
         isx::PointInPixels_t pointInPixels(8, 3);
-        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPointInPixelsToMicrons(pointInPixels);
+        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToMidPointInMicrons(pointInPixels);
 
         REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(231, 10), isx::Ratio(121, 10)));
     }
@@ -120,7 +120,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     SECTION("Convert a point in pixels to a point in microns (y equals max)")
     {
         isx::PointInPixels_t pointInPixels(4, 6);
-        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPointInPixelsToMicrons(pointInPixels);
+        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToMidPointInMicrons(pointInPixels);
 
         REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(165, 10), isx::Ratio(165, 10)));
     }
@@ -130,7 +130,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
         numPixels = isx::SizeInPixels_t(0, 6);
         spacingInfo = isx::SpacingInfo(numPixels, pixelSize, topLeft);
         isx::PointInPixels_t pointInPixels(4, 3);
-        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPointInPixelsToMicrons(pointInPixels);
+        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToMidPointInMicrons(pointInPixels);
 
         REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(66, 10), isx::Ratio(121, 10)));
     }
@@ -140,7 +140,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
         numPixels = isx::SizeInPixels_t(8, 0);
         spacingInfo = isx::SpacingInfo(numPixels, pixelSize, topLeft);
         isx::PointInPixels_t pointInPixels(4, 3);
-        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPointInPixelsToMicrons(pointInPixels);
+        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToMidPointInMicrons(pointInPixels);
 
         REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(165, 10), isx::Ratio(44, 10)));
     }
@@ -149,7 +149,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     SECTION("Convert a point in microns to a point in pixels (x equals left)")
     {
         isx::PointInMicrons_t pointInMicrons(isx::Ratio(66, 10), isx::Ratio(121, 10));
-        isx::PointInPixels_t pointInPixels = spacingInfo.convertPointInMicronsToPixels(pointInMicrons);
+        isx::PointInPixels_t pointInPixels = spacingInfo.convertMidPointInMicronsToPixels(pointInMicrons);
 
         REQUIRE(pointInPixels == isx::PointInPixels_t(0, 3));
     }
@@ -157,7 +157,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     SECTION("Convert a point in microns to a point in pixels (y equals top)")
     {
         isx::PointInMicrons_t pointInMicrons(isx::Ratio(165, 10), isx::Ratio(44, 10));
-        isx::PointInPixels_t pointInPixels = spacingInfo.convertPointInMicronsToPixels(pointInMicrons);
+        isx::PointInPixels_t pointInPixels = spacingInfo.convertMidPointInMicronsToPixels(pointInMicrons);
 
         REQUIRE(pointInPixels == isx::PointInPixels_t(4, 0));
     }
@@ -165,7 +165,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     SECTION("Convert a point in microns to a point in pixels (x is closer to previous center)")
     {
         isx::PointInMicrons_t pointInMicrons(isx::Ratio(87, 10), isx::Ratio(121, 10));
-        isx::PointInPixels_t pointInPixels = spacingInfo.convertPointInMicronsToPixels(pointInMicrons);
+        isx::PointInPixels_t pointInPixels = spacingInfo.convertMidPointInMicronsToPixels(pointInMicrons);
 
         REQUIRE(pointInPixels == isx::PointInPixels_t(0, 3));
     }
@@ -173,7 +173,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     SECTION("Convert a point in microns to a point in pixels (x is closer to next center)")
     {
         isx::PointInMicrons_t pointInMicrons(isx::Ratio(88, 10), isx::Ratio(121, 10));
-        isx::PointInPixels_t pointInPixels = spacingInfo.convertPointInMicronsToPixels(pointInMicrons);
+        isx::PointInPixels_t pointInPixels = spacingInfo.convertMidPointInMicronsToPixels(pointInMicrons);
 
         REQUIRE(pointInPixels == isx::PointInPixels_t(1, 3));
     }
@@ -181,7 +181,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     SECTION("Convert a point in microns to a point in pixels (y is closer to previous center)")
     {
         isx::PointInMicrons_t pointInMicrons(isx::Ratio(165, 10), isx::Ratio(109, 10));
-        isx::PointInPixels_t pointInPixels = spacingInfo.convertPointInMicronsToPixels(pointInMicrons);
+        isx::PointInPixels_t pointInPixels = spacingInfo.convertMidPointInMicronsToPixels(pointInMicrons);
 
         REQUIRE(pointInPixels == isx::PointInPixels_t(4, 2));
     }
@@ -189,7 +189,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     SECTION("Convert a point in microns to a point in pixels (y is closer to next center)")
     {
         isx::PointInMicrons_t pointInMicrons(isx::Ratio(165, 10), isx::Ratio(110, 10));
-        isx::PointInPixels_t pointInPixels = spacingInfo.convertPointInMicronsToPixels(pointInMicrons);
+        isx::PointInPixels_t pointInPixels = spacingInfo.convertMidPointInMicronsToPixels(pointInMicrons);
 
         REQUIRE(pointInPixels == isx::PointInPixels_t(4, 3));
     }
@@ -197,7 +197,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     SECTION("Convert a point in microns to a point in pixels (x equals right)")
     {
         isx::PointInMicrons_t pointInMicrons(isx::Ratio(242, 10), isx::Ratio(121, 10));
-        isx::PointInPixels_t pointInPixels = spacingInfo.convertPointInMicronsToPixels(pointInMicrons);
+        isx::PointInPixels_t pointInPixels = spacingInfo.convertMidPointInMicronsToPixels(pointInMicrons);
 
         REQUIRE(pointInPixels == isx::PointInPixels_t(7, 3));
     }
@@ -205,7 +205,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     SECTION("Convert a point in microns to a point in pixels (y equals bottom)")
     {
         isx::PointInMicrons_t pointInMicrons(isx::Ratio(165, 10), isx::Ratio(176, 10));
-        isx::PointInPixels_t pointInPixels = spacingInfo.convertPointInMicronsToPixels(pointInMicrons);
+        isx::PointInPixels_t pointInPixels = spacingInfo.convertMidPointInMicronsToPixels(pointInMicrons);
 
         REQUIRE(pointInPixels == isx::PointInPixels_t(4, 5));
     }
@@ -215,7 +215,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
         numPixels = isx::SizeInPixels_t(0, 6);
         spacingInfo = isx::SpacingInfo(numPixels, pixelSize, topLeft);
         isx::PointInMicrons_t pointInMicrons(isx::Ratio(165, 10), isx::Ratio(121, 10));
-        isx::PointInPixels_t pointInPixels = spacingInfo.convertPointInMicronsToPixels(pointInMicrons);
+        isx::PointInPixels_t pointInPixels = spacingInfo.convertMidPointInMicronsToPixels(pointInMicrons);
 
         REQUIRE(pointInPixels == isx::PointInPixels_t(0, 3));
     }
@@ -225,7 +225,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
         numPixels = isx::SizeInPixels_t(8, 0);
         spacingInfo = isx::SpacingInfo(numPixels, pixelSize, topLeft);
         isx::PointInMicrons_t pointInMicrons(isx::Ratio(165, 10), isx::Ratio(121, 10));
-        isx::PointInPixels_t pointInPixels = spacingInfo.convertPointInMicronsToPixels(pointInMicrons);
+        isx::PointInPixels_t pointInPixels = spacingInfo.convertMidPointInMicronsToPixels(pointInMicrons);
 
         REQUIRE(pointInPixels == isx::PointInPixels_t(4, 0));
     }
