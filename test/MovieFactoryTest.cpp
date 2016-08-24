@@ -25,7 +25,7 @@ writeTestData(isx::SpWritableMovie_t & inMovie)
                 spacingInfo,
                 rowSizeInBytes,
                 1, // numChannels
-                timingInfo.convertIndexToTime(f),
+                timingInfo.convertIndexToStartTime(f),
                 f);
 
         uint16_t * pixelArray = frame->getPixels();
