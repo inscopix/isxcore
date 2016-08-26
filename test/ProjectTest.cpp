@@ -25,11 +25,10 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE(project.isValid());
         REQUIRE(project.getName() == projectName);
         REQUIRE(project.getFileName() == projectFileName);
-        REQUIRE(project.getGroup("/")->getGroups().size() == 3);
+        REQUIRE(project.getGroup("/")->getGroups().size() == 2);
         REQUIRE_NOTHROW(project.getRootGroup());
         REQUIRE_NOTHROW(project.getOriginalGroup());
         REQUIRE_NOTHROW(project.getOutputGroup());
-        REQUIRE_NOTHROW(project.getCellGroup());
     }
 
     SECTION("Create a new project in a file that already exists")
@@ -106,7 +105,7 @@ TEST_CASE("ProjectTest", "[core]")
 
         std::string origMoviePath = "/Original/" + origMovieName;
         std::string outMoviePath = "/Output/" + outMovieName;
-        std::string cellSetPath = "/Cell/" + cellSetName;
+        std::string cellSetPath = "/Output/" + cellSetName;
 
         std::string origMovieFileName = "/inscopix/data/" + origMovieName + ".isxd";
         std::string outMovieFileName = g_resources["testDataPath"] + "/" + outMovieName + ".isxd";
@@ -122,13 +121,12 @@ TEST_CASE("ProjectTest", "[core]")
         isx::Group rootGroup = isx::Group("/");
         isx::Group * origGroup = rootGroup.createGroup("Original");
         isx::Group * outGroup = rootGroup.createGroup("Output");
-        isx::Group * cellGroup = rootGroup.createGroup("Cell");
 
         isx::DataSet * expOrigMovie = origGroup->createDataSet(
                 origMovieName, isx::DataSet::Type::MOVIE, origMovieFileName);
         isx::DataSet * expOutMovie = outGroup->createDataSet(
                 outMovieName, isx::DataSet::Type::MOVIE, outMovieFileName);
-        isx::DataSet * expCellSet = cellGroup->createDataSet(
+        isx::DataSet * expCellSet = outGroup->createDataSet(
                 cellSetName, isx::DataSet::Type::CELLSET, cellSetFileName);
 
         isx::Project project(projectFileName);

@@ -34,7 +34,6 @@ Project::Project(const std::string & inFileName, const std::string & inName)
     m_root.reset(new Group("/"));
     m_root->createGroup("Original");
     m_root->createGroup("Output");
-    m_root->createGroup("Cell");
     m_valid = true;
 }
 
@@ -115,12 +114,6 @@ Group *
 Project::getOutputGroup() const
 {
     return m_root->getGroup("Output");
-}
-
-Group *
-Project::getCellGroup() const
-{
-    return m_root->getGroup("Cell");
 }
 
 bool
