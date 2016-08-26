@@ -132,6 +132,9 @@ public:
         return 0;
     }
 
+    /// \return the value of the requested pixel
+    /// \param row row index
+    /// \param col column index
     T 
     getPixelValue(isize_t row, isize_t col)
     {
@@ -140,7 +143,7 @@ public:
             ISX_THROW(ExceptionUserInput, "Bad row and/or column indices requested");
         }
 
-        int idx = row * m_rowBytes / getPixelSizeInBytes() + col;
+        isize_t idx = row * m_rowBytes / getPixelSizeInBytes() + col;
 
         return m_pixels[idx];
     }
