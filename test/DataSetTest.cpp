@@ -2,6 +2,7 @@
 #include "isxTest.h"
 #include "isxException.h"
 #include "isxGroup.h"
+#include "isxMovieFactory.h"
 
 #include "catch.hpp"
 
@@ -59,6 +60,33 @@ TEST_CASE("DataSetTest", "[core]")
         REQUIRE(dataSet.getParent());
         REQUIRE(dataSet.getParent() == &group);
         REQUIRE(dataSet.getPath() == "myGroup/myCellSet");
+    }
+
+}
+
+TEST_CASE("readDataSetTypeTest", "[core]")
+{
+
+    std::string fileName = g_resources["testDataPath"] + "/myDataSet.isxd";
+    std::remove(fileName.c_str());
+
+    isx::Time start(2016, 8, 26, 10, 31, 26, isx::DurationInSeconds(117, 1000));
+    isx::DurationInSeconds step(50, 1000);
+    isx::isize_t numTimes = 5;
+    isx::TimingInfo timingInfo(start, step, numTimes);
+
+    isx::SizeInPixels_t numPixels(3, 4);
+    isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
+    isx::PointInMicrons_t topLeft(0, 0);
+    isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
+
+    SECTION("Movie")
+    {
+        isx::writeMosaicMovie(fileName, timingInfo, spacingInfo);
+
+        isx::DataSet::Type type = isx::readDataSetType(fileName);
+
+        REQUIRE(type == isx::DataSet::Type::MOVIE);
     }
 
 }

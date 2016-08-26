@@ -145,28 +145,7 @@ void
 Project::read()
 {
     std::ifstream file(m_fileName);
-    file.seekg(std::ios_base::beg);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-                "Error opening project file: ", m_fileName);
-    }
-
-    json jsonObject;
-    try
-    {
-        file >> jsonObject;
-    }
-    catch (const std::exception & error)
-    {
-        ISX_THROW(isx::ExceptionDataIO,
-                "Error while parsing project header: ", error.what());
-    }
-    catch (...)
-    {
-        ISX_THROW(isx::ExceptionDataIO,
-                "Unknown error while parsing project header.");
-    }
+    json jsonObject = readJsonHeader(file, false);
 
     try
     {
@@ -214,18 +193,7 @@ Project::write() const
     }
 
     std::ofstream file(m_fileName, std::ios::trunc);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open file when writing project: ", m_fileName);
-    }
-
-    file << std::setw(4) << jsonObject;
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Failed to write header in project file: ", m_fileName);
-    }
+    writeJsonHeader(jsonObject, file, false);
 }
 
 } // namespace isx

@@ -1,4 +1,7 @@
 #include "isxJsonUtils.h"
+#include "isxException.h"
+
+#include <fstream>
 
 namespace isx
 {
@@ -215,6 +218,71 @@ createGroupTreeFromJson(Group * inGroup, const json & inJson)
     for (json::iterator it = groups.begin(); it != groups.end(); ++it)
     {
         createGroupTreeFromJson(group, *it);
+    }
+}
+
+json
+readJsonHeader(std::istream & inStream, bool inNullTerm)
+{
+    if (!inStream.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Error while reading JSON header.");
+    }
+
+    inStream.seekg(std::ios_base::beg);
+    if (!inStream.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Error while seeking to JSON header.");
+    }
+
+    json jsonObject;
+    try
+    {
+        if (inNullTerm)
+        {
+            std::string jsonStr;
+            std::getline(inStream, jsonStr, '\0');
+            jsonObject = json::parse(jsonStr);
+        }
+        else
+        {
+            inStream >> jsonObject;
+        }
+    }
+    catch (const std::exception & error)
+    {
+        ISX_THROW(isx::ExceptionDataIO, "Error while parsing JSON header: ", error.what());
+    }
+    catch (...)
+    {
+        ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing JSON header.");
+    }
+
+    return jsonObject;
+}
+
+void
+writeJsonHeader(
+        const json & inJsonObject,
+        std::ostream & inStream,
+        bool inNullTerm)
+{
+    if (!inStream.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Failed to open stream when writing JSON header.");
+    }
+
+    inStream.seekp(std::ios_base::beg);
+    inStream << std::setw(4) << inJsonObject;
+    if (inNullTerm)
+    {
+        inStream << '\0';
+    }
+
+    if (!inStream.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Failed to write JSON header.");
     }
 }
 

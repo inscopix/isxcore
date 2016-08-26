@@ -91,6 +91,17 @@ private:
 
 }; // class DataSet
 
+/// Get the Inscopix DataSet type of a file.
+///
+/// If the file format is not recognized, then this function fails.
+///
+/// \param  inFileName      The name of the movie file.
+/// \return                 The data set type.
+///
+/// \throw  isx::ExceptionFileIO    If read the file fails.
+/// \throw  isx::ExceptionDataIO    If the file format is not recognized.
+DataSet::Type readDataSetType(const std::string & inFileName);
+
 } // namespace isx
 
 #endif // ISX_DATA_SET_H

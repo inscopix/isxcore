@@ -1,6 +1,9 @@
 #include "isxDataSet.h"
 #include "isxException.h"
 #include "isxGroup.h"
+#include "isxJsonUtils.h"
+
+#include <fstream>
 
 namespace isx
 {
@@ -100,6 +103,26 @@ DataSet::serialize(std::ostream & strm) const
         "path = " << getPath() << ", " <<
         "type = " << int(m_type) << ", " <<
         "fileName = " << m_fileName << ")";
+}
+
+DataSet::Type
+readDataSetType(const std::string & inFileName)
+{
+    std::ifstream file(inFileName, std::ios::binary);
+    json j = readJsonHeader(file);
+
+    try
+    {
+        return DataSet::Type(int(j["type"]));
+    }
+    catch (const std::exception & error)
+    {
+        ISX_THROW(isx::ExceptionDataIO, "Error parsing data file header: ", error.what());
+    }
+    catch (...)
+    {
+        ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing data file header.");
+    }
 }
 
 } // namespace isx
