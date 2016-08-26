@@ -93,4 +93,13 @@ DataSet::operator ==(const DataSet & inOther) const
         (m_type == inOther.m_type);
 }
 
+void
+DataSet::serialize(std::ostream & strm) const
+{
+    strm << "DataSet(" <<
+        "path = " << getPath() << ", " <<
+        "type = " << int(m_type) << ", " <<
+        "fileName = " << m_fileName << ")";
+}
+
 } // namespace isx

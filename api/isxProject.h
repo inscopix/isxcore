@@ -113,6 +113,10 @@ public:
     ///
     Group * getOutputGroup() const;
 
+    /// \return     The group of cell data.
+    ///
+    Group * getCellGroup() const;
+
     /// \return     True if this project is valid.
     ///
     bool isValid() const;

@@ -1,6 +1,7 @@
 #ifndef ISX_DATA_SET_H
 #define ISX_DATA_SET_H
 
+#include "isxObject.h"
 #include "isxProjectItem.h"
 
 #include <string>
@@ -17,15 +18,16 @@ class Group;
 ///
 /// This is described by a data set type, a name and a file name.
 class DataSet : public ProjectItem
+              , public Object
 {
 public:
 
-    /// The type of data item.
+    /// The type of data set.
     ///
     /// TODO sweet : add image and trace when we have files for them.
-    enum Type
+    enum class Type
     {
-        MOVIE,
+        MOVIE = 0,
         CELLSET,
     };
 
@@ -67,6 +69,8 @@ public:
     void setParent(Group * inParent) override;
 
     std::string getPath() const override;
+
+    void serialize(std::ostream & strm) const override;
 
 private:
 
