@@ -44,23 +44,10 @@ TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
     SECTION("getFrame for frame number") {
         isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
         REQUIRE(m->isValid());
-        isx::SpU16VideoFrame_t nvf;
-        m->getFrame(0, nvf);
+        isx::SpVideoFrame_t nvf = m->getFrame(0);
         unsigned char * t = reinterpret_cast<unsigned char *>(nvf->getPixels());
         REQUIRE(t[0] == 0x43);
         REQUIRE(t[1] == 0x3);
-    }
-
-    SECTION("getFrame with float pixels for frame number") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
-        REQUIRE(m->isValid());
-
-        isx::SpF32VideoFrame_t nvf;
-        m->getFrame(0, nvf);
-
-        float * t = nvf->getPixels();
-        REQUIRE(t[0] == 835.f);
-        REQUIRE(t[1] == 792.f);
     }
 
     SECTION("getTimingInfo().getDuration()") {
@@ -102,7 +89,7 @@ TEST_CASE("MovieTestAsync", "[core]") {
     
     isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
     REQUIRE(m->isValid());
-    isx::MovieGetU16FrameCB_t cb = [&](isx::SpU16VideoFrame_t inFrame){
+    isx::MovieGetFrameCB_t cb = [&](isx::SpVideoFrame_t inFrame){
         size_t index = inFrame->getFrameIndex();
         unsigned char * t = reinterpret_cast<unsigned char *>(inFrame->getPixels());
         if (memcmp(t, expected[index], numTestBytesPerFrame))

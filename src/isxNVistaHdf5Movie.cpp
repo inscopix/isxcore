@@ -45,38 +45,102 @@ NVistaHdf5Movie::NVistaHdf5Movie(
     initialize(inFileName, files, inTimingInfo, inSpacingInfo);
 }
 
-NVistaHdf5Movie::~NVistaHdf5Movie()
-{
-}
-
 bool
 NVistaHdf5Movie::isValid() const
 {
     return m_valid;
 }
 
-void
-NVistaHdf5Movie::getFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame)
+SpVideoFrame_t
+NVistaHdf5Movie::getFrame(isize_t inFrameNumber)
 {
-    getFrameTemplate<U16VideoFrame_t>(inFrameNumber, outFrame);
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("getFrame");
+    SpVideoFrame_t outFrame;
+    getFrameAsync(inFrameNumber,
+        [&outFrame, &cv, &mutex](const SpVideoFrame_t & inFrame)
+        {
+            mutex.lock("getFrame async");
+            outFrame = inFrame;
+            mutex.unlock();
+            cv.notifyOne();
+        }
+    );
+    cv.wait(mutex);
+    mutex.unlock();
+    return outFrame;
 }
 
 void
-NVistaHdf5Movie::getFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame)
+NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
-    getFrameTemplate<F32VideoFrame_t>(inFrameNumber, outFrame);
-}
+    // Only get a weak pointer to this, so that we don't bother reading
+    // if this has been deleted when the read gets executed.
+    std::weak_ptr<NVistaHdf5Movie> weakThis = shared_from_this();
 
-void
-NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetU16FrameCB_t inCallback)
-{
-    getFrameAsyncTemplate<U16VideoFrame_t>(inFrameNumber, inCallback);
-}
+    uint64_t readRequestId = 0;
+    {
+        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
+        readRequestId = m_readRequestCount++;
+    }
 
-void
-NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetF32FrameCB_t inCallback)
-{
-    getFrameAsyncTemplate<F32VideoFrame_t>(inFrameNumber, inCallback);
+    auto readIoTask = std::make_shared<IoTask>(
+        [weakThis, this, inFrameNumber, inCallback]()
+        {
+            auto sharedThis = weakThis.lock();
+            if (sharedThis)
+            {
+                inCallback(getFrameInternal(inFrameNumber));
+            }
+        },
+        [weakThis, this, readRequestId, inCallback](AsyncTaskStatus inStatus)
+        {
+            auto sharedThis = weakThis.lock();
+            if (!sharedThis)
+            {
+                return;
+            }
+
+            auto rt = unregisterReadRequest(readRequestId);
+
+            switch (inStatus)
+            {
+                case AsyncTaskStatus::ERROR_EXCEPTION:
+                {
+                    try
+                    {
+                        std::rethrow_exception(rt->getExceptionPtr());
+                    }
+                    catch(std::exception & e)
+                    {
+                        ISX_LOG_ERROR("Exception occurred reading from NVistaHdf5Movie: ", e.what());
+                    }
+                    inCallback(SpVideoFrame_t());
+                    break;
+                }
+
+                case AsyncTaskStatus::UNKNOWN_ERROR:
+                    ISX_LOG_ERROR("An error occurred while reading a frame from a NVistaHdf5Movie file");
+                    break;
+
+                case AsyncTaskStatus::CANCELLED:
+                    ISX_LOG_INFO("getFrameAsync request cancelled.");
+                    break;
+
+                case AsyncTaskStatus::COMPLETE:
+                case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
+                case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
+                    break;
+            }
+        }
+    );
+
+    {
+        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
+        m_pendingReads[readRequestId] = readIoTask;
+    }
+    readIoTask->schedule();
 }
 
 SpAsyncTaskHandle_t
@@ -207,15 +271,11 @@ NVistaHdf5Movie::initSpacingInfo(const std::vector<SpH5File_t> & inHdf5Files)
     }
 }
 
-void
-NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame)
+SpVideoFrame_t
+NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber)
 {
-    outFrame = std::make_shared<U16VideoFrame_t>(
-        m_spacingInfo,
-        sizeof(uint16_t) * m_spacingInfo.getNumColumns(),
-        1, // numChannels
-        m_timingInfo.convertIndexToTime(inFrameNumber),
-        inFrameNumber);
+    SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
+            shared_from_this(), inFrameNumber);
 
     isize_t newFrameNumber = inFrameNumber;
     isize_t idx = getMovieIndex(inFrameNumber);
@@ -225,30 +285,8 @@ NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber, SpU16VideoFrame_t & out
     }
 
     m_movies[idx]->getFrame(newFrameNumber, outFrame);
-}
 
-void
-NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame)
-{
-    // Get the uint16 frame
-    SpU16VideoFrame_t u16Frame;
-    getFrameInternal(inFrameNumber, u16Frame);
-
-    // then cast it
-    outFrame = std::make_shared<F32VideoFrame_t>(
-        m_spacingInfo,
-        sizeof(float) * m_spacingInfo.getNumColumns(),
-        1, // numChannels
-        u16Frame->getTimeStamp(),
-        inFrameNumber);
-
-    isize_t numPixels = m_spacingInfo.getTotalNumPixels();
-    uint16_t * u16FrameArray = u16Frame->getPixels();
-    float * outFrameArray = outFrame->getPixels();
-    for (isize_t i = 0; i < numPixels; ++i)
-    {
-        outFrameArray[i] = float(u16FrameArray[i]);
-    }
+    return outFrame;
 }
 
 bool
@@ -379,105 +417,6 @@ NVistaHdf5Movie::getMovieIndex(isize_t inFrameNumber)
         ++idx;
     }
     return idx;
-}
-
-template <typename FrameType>
-void
-NVistaHdf5Movie::getFrameTemplate(
-        isize_t inFrameNumber,
-        std::shared_ptr<FrameType> & outFrame)
-{
-    Mutex mutex;
-    ConditionVariable cv;
-    mutex.lock("getFrame");
-    getFrameAsync(inFrameNumber,
-        [&outFrame, &cv, &mutex](const std::shared_ptr<FrameType> & inFrame)
-        {
-            mutex.lock("getFrame async");
-            outFrame = inFrame;
-            mutex.unlock();
-            cv.notifyOne();
-        }
-    );
-    cv.wait(mutex);
-    mutex.unlock();
-}
-
-template <typename FrameType>
-void
-NVistaHdf5Movie::getFrameAsyncTemplate(
-        isize_t inFrameNumber,
-        MovieGetFrameCB_t<FrameType> inCallback)
-{
-    // Only get a weak pointer to this, so that we don't bother reading
-    // if this has been deleted when the read gets executed.
-    std::weak_ptr<NVistaHdf5Movie> weakThis = shared_from_this();
-
-    uint64_t readRequestId = 0;
-    {
-        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
-        readRequestId = m_readRequestCount++;
-    }
-
-    auto readIoTask = std::make_shared<IoTask>(
-        [weakThis, this, inFrameNumber, inCallback]()
-        {
-            auto sharedThis = weakThis.lock();
-            if (sharedThis)
-            {
-                std::shared_ptr<FrameType> frame;
-                getFrameInternal(inFrameNumber, frame);
-                inCallback(frame);
-            }
-        },
-        [weakThis, this, readRequestId, inCallback](AsyncTaskStatus inStatus)
-        {
-            auto sharedThis = weakThis.lock();
-            if (!sharedThis)
-            {
-                return;
-            }
-
-            auto rt = unregisterReadRequest(readRequestId);
-
-            switch (inStatus)
-            {
-                case AsyncTaskStatus::ERROR_EXCEPTION:
-                {
-                    try
-                    {
-                        std::rethrow_exception(rt->getExceptionPtr());
-                    }
-                    catch(std::exception & e)
-                    {
-                        ISX_LOG_ERROR("Exception occurred reading from NVistaHdf5Movie: ", e.what());
-                    }
-                    std::shared_ptr<FrameType> frame;
-                    inCallback(frame);
-                    break;
-                }
-
-                case AsyncTaskStatus::UNKNOWN_ERROR:
-                    ISX_LOG_ERROR("An error occurred while reading a frame from a NVistaHdf5Movie file");
-                    break;
-
-                case AsyncTaskStatus::CANCELLED:
-                    ISX_LOG_INFO("getFrameAsync request cancelled.");
-                    break;
-
-                case AsyncTaskStatus::COMPLETE:
-                case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
-                case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
-                    break;
-            }
-        }
-    );
-
-    {
-        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
-        m_pendingReads[readRequestId] = readIoTask;
-    }
-    readIoTask->schedule();
 }
 
 } // namespace isx

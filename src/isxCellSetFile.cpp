@@ -93,7 +93,7 @@ namespace isx
         
     }
     
-    SpFImage_t 
+    SpImage_t 
     CellSetFile::readSegmentationImage(isize_t inCellId) 
     {
         std::fstream file(m_fileName, std::ios::binary | std::ios_base::in);
@@ -113,7 +113,11 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell segmentation image.");
         }        
 
-        SpFImage_t image = std::make_shared<FImage_t>(m_spacingInfo, sizeof(float) * m_spacingInfo.getNumColumns(), 1);
+        SpImage_t image = std::make_shared<Image>(
+                m_spacingInfo,
+                sizeof(float) * m_spacingInfo.getNumColumns(),
+                1,
+                DataType::F32);
         file.read(reinterpret_cast<char*>(image->getPixels()), image->getImageSizeInBytes());
         
         if (!file.good())
@@ -125,7 +129,7 @@ namespace isx
     }
     
     void 
-    CellSetFile::writeCellData(isize_t inCellId, Image<float> & inSegmentationImage, Trace<float> & inData)
+    CellSetFile::writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData)
     {
         // Input validity
         isize_t inImageSizeInBytes = inSegmentationImage.getImageSizeInBytes();

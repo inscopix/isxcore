@@ -2,7 +2,7 @@
 #define ISX_MOSAIC_MOVIE_FILE_H
 
 #include "isxCore.h"
-#include "isxMovieDefs.h"
+#include "isxCoreFwd.h"
 #include "isxVideoFrame.h"
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
@@ -56,10 +56,6 @@ public:
                 const SpacingInfo & inSpacingInfo,
                 DataType inDataType = DataType::U16);
 
-    /// Destructor.
-    ///
-    ~MosaicMovieFile();
-
     /// \return True if the movie file is valid, false otherwise.
     ///
     bool isValid() const;
@@ -67,24 +63,19 @@ public:
     /// Read a uint16 frame in the file by index.
     ///
     /// \param  inFrameNumber   The index of the frame.
-    /// \param  outFrame        The frame read from the file.
-    void readFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame);
-
-    /// Read a float frame in the file by index.
+    /// \return                 The frame read from the file.
     ///
-    /// \param  inFrameNumber   The index of the frame.
-    /// \param  outFrame        The frame read from the file.
-    void readFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame);
+    /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
+    SpVideoFrame_t readFrame(isize_t inFrameNumber);
 
     /// Write a uint16 frame to the file.
     ///
     /// \param  inVideoFrame    The frame to write to the file.
-    void writeFrame(const SpU16VideoFrame_t & inVideoFrame);
-
-    /// Write a float frame to the file.
     ///
-    /// \param  inVideoFrame    The frame to write to the file.
-    void writeFrame(const SpF32VideoFrame_t & inVideoFrame);
+    /// \throw  isx::ExceptionDataIO    If the frame data type does not match
+    ///                                 the movie data type.
+    /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
+    void writeFrame(const SpVideoFrame_t & inVideoFrame);
 
     /// Initialize for reading.
     ///
@@ -164,6 +155,10 @@ private:
     /// \return     The size of a pixel value in bytes.
     ///
     isize_t getPixelSizeInBytes() const;
+
+    /// \return     The size of a row in bytes.
+    ///
+    isize_t getRowSizeInBytes() const;
 
     /// \return     The size of a frame in bytes.
     ///

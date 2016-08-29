@@ -56,18 +56,18 @@ TEST_CASE("RecordingTest", "[core]") {
         isx::isize_t frameIdxXML[] = {nFramesHdf0 - 3, nFramesHdf0 + 5};
         isx::isize_t frameIdxHDF[] = {nFramesHdf0 - 3, 5};
           
-        isx::SpU16VideoFrame_t framesXML[2];
-        mXml->getFrame(frameIdxXML[0], framesXML[0]);
-        mXml->getFrame(frameIdxXML[1], framesXML[1]);
+        isx::SpVideoFrame_t framesXML[2];
+        framesXML[0] = mXml->getFrame(frameIdxXML[0]);
+        framesXML[1] = mXml->getFrame(frameIdxXML[1]);
                 
-        isx::SpU16VideoFrame_t framesHDF5[2];
-        mHdf0->getFrame(frameIdxHDF[0], framesHDF5[0]);
-        mHdf1->getFrame(frameIdxHDF[1], framesHDF5[1]);
+        isx::SpVideoFrame_t framesHDF5[2];
+        framesHDF5[0] = mHdf0->getFrame(frameIdxHDF[0]);
+        framesHDF5[1] = mHdf1->getFrame(frameIdxHDF[1]);
         
-        uint16_t *p0_x = framesXML[0]->getPixels();
-        uint16_t *p0_h = framesHDF5[0]->getPixels();
-        uint16_t *p1_x = framesXML[1]->getPixels();
-        uint16_t *p1_h = framesHDF5[1]->getPixels();
+        char *p0_x = framesXML[0]->getPixels();
+        char *p0_h = framesHDF5[0]->getPixels();
+        char *p1_x = framesXML[1]->getPixels();
+        char *p1_h = framesHDF5[1]->getPixels();
         REQUIRE(*p0_x == *p0_h);
         REQUIRE(*p1_x == *p1_h);
     }

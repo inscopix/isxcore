@@ -105,36 +105,103 @@ MosaicMovie::MosaicMovie(
     m_valid = true;
 }
 
-MosaicMovie::~MosaicMovie(){}
-
 bool
 MosaicMovie::isValid() const
 {
     return m_valid;
 }
 
-void
-MosaicMovie::getFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame)
+SpVideoFrame_t
+MosaicMovie::getFrame(isize_t inFrameNumber)
 {
-    getFrameTemplate<U16VideoFrame_t>(inFrameNumber, outFrame);
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("getFrame");
+    SpVideoFrame_t outFrame;
+    getFrameAsync(inFrameNumber,
+        [&outFrame, &cv, &mutex](const SpVideoFrame_t & inFrame)
+        {
+            mutex.lock("getFrame async");
+            outFrame = inFrame;
+            mutex.unlock();
+            cv.notifyOne();
+        }
+    );
+    cv.wait(mutex);
+    mutex.unlock();
+    return outFrame;
 }
 
 void
-MosaicMovie::getFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame)
+MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
-    getFrameTemplate<F32VideoFrame_t>(inFrameNumber, outFrame);
-}
+    // Only get a weak pointer to this, so that we don't bother reading
+    // if this has been deleted when the read gets executed.
+    std::weak_ptr<MosaicMovie> weakThis = shared_from_this();
 
-void
-MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetU16FrameCB_t inCallback)
-{
-    getFrameAsyncTemplate<U16VideoFrame_t>(inFrameNumber, inCallback);
-}
+    uint64_t readRequestId = 0;
+    {
+        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
+        readRequestId = m_readRequestCount++;
+    }
 
-void
-MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetF32FrameCB_t inCallback)
-{
-    getFrameAsyncTemplate<F32VideoFrame_t>(inFrameNumber, inCallback);
+    auto readIoTask = std::make_shared<IoTask>(
+        [weakThis, this, inFrameNumber, inCallback]()
+        {
+            auto sharedThis = weakThis.lock();
+            if (sharedThis)
+            {
+                inCallback(m_file->readFrame(inFrameNumber));
+            }
+        },
+        [weakThis, this, readRequestId, inCallback](AsyncTaskStatus inStatus)
+        {
+            auto sharedThis = weakThis.lock();
+            if (!sharedThis)
+            {
+                return;
+            }
+
+            auto rt = unregisterReadRequest(readRequestId);
+
+            switch (inStatus)
+            {
+                case AsyncTaskStatus::ERROR_EXCEPTION:
+                {
+                    try
+                    {
+                        std::rethrow_exception(rt->getExceptionPtr());
+                    }
+                    catch(std::exception & e)
+                    {
+                        ISX_LOG_ERROR("Exception occurred reading from NVistaHdf5Movie: ", e.what());
+                    }
+                    inCallback(SpVideoFrame_t());
+                    break;
+                }
+
+                case AsyncTaskStatus::UNKNOWN_ERROR:
+                    ISX_LOG_ERROR("An error occurred while reading a frame from a MosaicMovie file");
+                    break;
+
+                case AsyncTaskStatus::CANCELLED:
+                    ISX_LOG_INFO("getFrameAsync request cancelled.");
+                    break;
+
+                case AsyncTaskStatus::COMPLETE:
+                case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
+                case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
+                    break;
+            }
+        }
+    );
+
+    {
+        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
+        m_pendingReads[readRequestId] = readIoTask;
+    }
+    readIoTask->schedule();
+
 }
 
 SpAsyncTaskHandle_t
@@ -158,15 +225,31 @@ MosaicMovie::cancelPendingReads()
 }
 
 void
-MosaicMovie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
+MosaicMovie::writeFrame(const SpVideoFrame_t & inVideoFrame)
 {
-    writeFrameTemplate<U16VideoFrame_t>(inVideoFrame);
-}
-
-void
-MosaicMovie::writeFrame(const SpF32VideoFrame_t & inVideoFrame)
-{
-    writeFrameTemplate<F32VideoFrame_t>(inVideoFrame);
+    // Get a new shared pointer to the file, so we can guarantee the write.
+    std::shared_ptr<MosaicMovieFile> file = m_file;
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("writeFrame");
+    auto writeIoTask = std::make_shared<IoTask>(
+        [file, inVideoFrame]()
+        {
+            file->writeFrame(inVideoFrame);
+        },
+        [&cv, &mutex](AsyncTaskStatus inStatus)
+        {
+            if (inStatus != AsyncTaskStatus::COMPLETE)
+            {
+                ISX_LOG_ERROR("An error occurred while writing a frame to a MosaicMovieFile.");
+            }
+            mutex.lock("writeFrame finished");  // will only be able to take lock when client reaches cv.waitForMs
+            mutex.unlock();
+            cv.notifyOne();
+        });
+    writeIoTask->schedule();
+    cv.wait(mutex);
+    mutex.unlock();
 }
 
 const isx::TimingInfo &
@@ -197,134 +280,6 @@ void
 MosaicMovie::serialize(std::ostream & strm) const
 {
     strm << getFileName();
-}
-
-template <typename FrameType>
-void
-MosaicMovie::getFrameTemplate(
-        isize_t inFrameNumber,
-        std::shared_ptr<FrameType> & outFrame)
-{
-    Mutex mutex;
-    ConditionVariable cv;
-    mutex.lock("getFrame");
-    getFrameAsync(inFrameNumber,
-        [&outFrame, &cv, &mutex](const std::shared_ptr<FrameType> & inFrame)
-        {
-            mutex.lock("getFrame async");
-            outFrame = inFrame;
-            mutex.unlock();
-            cv.notifyOne();
-        }
-    );
-    cv.wait(mutex);
-    mutex.unlock();
-}
-
-template <typename FrameType>
-void
-MosaicMovie::getFrameAsyncTemplate(
-        isize_t inFrameNumber,
-        MovieGetFrameCB_t<FrameType> inCallback)
-{
-    // Only get a weak pointer to this, so that we don't bother reading
-    // if this has been deleted when the read gets executed.
-    std::weak_ptr<MosaicMovie> weakThis = shared_from_this();
-
-    uint64_t readRequestId = 0;
-    {
-        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
-        readRequestId = m_readRequestCount++;
-    }
-
-    auto readIoTask = std::make_shared<IoTask>(
-        [weakThis, this, inFrameNumber, inCallback]()
-        {
-            auto sharedThis = weakThis.lock();
-            if (sharedThis)
-            {
-                std::shared_ptr<FrameType> frame;
-                m_file->readFrame(inFrameNumber, frame);
-                inCallback(frame);
-            }
-        },
-        [weakThis, this, readRequestId, inCallback](AsyncTaskStatus inStatus)
-        {
-            auto sharedThis = weakThis.lock();
-            if (!sharedThis)
-            {
-                return;
-            }
-
-            auto rt = unregisterReadRequest(readRequestId);
-
-            switch (inStatus)
-            {
-                case AsyncTaskStatus::ERROR_EXCEPTION:
-                {
-                    try
-                    {
-                        std::rethrow_exception(rt->getExceptionPtr());
-                    }
-                    catch(std::exception & e)
-                    {
-                        ISX_LOG_ERROR("Exception occurred reading from NVistaHdf5Movie: ", e.what());
-                    }
-                    std::shared_ptr<FrameType> frame;
-                    inCallback(frame);
-                    break;
-                }
-
-                case AsyncTaskStatus::UNKNOWN_ERROR:
-                    ISX_LOG_ERROR("An error occurred while reading a frame from a MosaicMovie file");
-                    break;
-
-                case AsyncTaskStatus::CANCELLED:
-                    ISX_LOG_INFO("getFrameAsync request cancelled.");
-                    break;
-
-                case AsyncTaskStatus::COMPLETE:
-                case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
-                case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
-                    break;
-            }
-        }
-    );
-
-    {
-        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
-        m_pendingReads[readRequestId] = readIoTask;
-    }
-    readIoTask->schedule();
-}
-
-template <typename FrameType>
-void
-MosaicMovie::writeFrameTemplate(const std::shared_ptr<FrameType> & inVideoFrame)
-{
-    // Get a new shared pointer to the file, so we can guarantee the write.
-    std::shared_ptr<MosaicMovieFile> file = m_file;
-    Mutex mutex;
-    ConditionVariable cv;
-    mutex.lock("writeFrame");
-    auto writeIoTask = std::make_shared<IoTask>(
-        [file, inVideoFrame]()
-        {
-            file->writeFrame(inVideoFrame);
-        },
-        [&cv, &mutex](AsyncTaskStatus inStatus)
-        {
-            if (inStatus != AsyncTaskStatus::COMPLETE)
-            {
-                ISX_LOG_ERROR("An error occurred while writing a frame to a MosaicMovieFile.");
-            }
-            mutex.lock("writeFrame finished");  // will only be able to take lock when client reaches cv.waitForMs
-            mutex.unlock();
-            cv.notifyOne();
-        });
-    writeIoTask->schedule();
-    cv.wait(mutex);
-    mutex.unlock();
 }
 
 } // namespace isx

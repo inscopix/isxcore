@@ -23,14 +23,15 @@ writeTestU16Movie(
             inFileName, inTimingInfo, inSpacingInfo, isx::DataType::U16);
     for (isx::isize_t f = 0; f < numFrames; ++f)
     {
-        isx::SpU16VideoFrame_t frame = std::make_shared<isx::U16VideoFrame_t>(
+        isx::SpVideoFrame_t frame = std::make_shared<isx::VideoFrame>(
             inSpacingInfo,
             rowSizeInBytes,
             1, // numChannels
+            isx::DataType::U16,
             inTimingInfo.convertIndexToTime(f),
             f);
 
-        uint16_t * pPixels = frame->getPixels();
+        uint16_t * pPixels = frame->getPixelsAsU16();
         for (isx::isize_t p = 0; p < numPixels; ++p)
         {
             *pPixels = uint16_t((f * numPixels) + p);
@@ -56,14 +57,15 @@ writeTestF32Movie(
             inFileName, inTimingInfo, inSpacingInfo, isx::DataType::F32);
     for (isx::isize_t f = 0; f < numFrames; ++f)
     {
-        isx::SpF32VideoFrame_t frame = std::make_shared<isx::F32VideoFrame_t>(
+        isx::SpVideoFrame_t frame = std::make_shared<isx::VideoFrame>(
             inSpacingInfo,
             rowSizeInBytes,
             1, // numChannels
+            isx::DataType::F32,
             inTimingInfo.convertIndexToTime(f),
             f);
 
-        float * pPixels = frame->getPixels();
+        float * pPixels = frame->getPixelsAsF32();
         for (isx::isize_t p = 0; p < numPixels; ++p)
         {
             *pPixels = float((f * numPixels) + p);
@@ -91,6 +93,8 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
     isx::PointInMicrons_t topLeft(0, 0);
     isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
+    isx::DataType dataType = isx::DataType::U16;
+
     isx::CoreInitialize();
 
     SECTION("Empty constructor")
@@ -101,23 +105,25 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
 
     SECTION("Write constructor.")
     {
-        auto movie = std::make_shared<isx::MosaicMovie>(fileName, timingInfo, spacingInfo);
+        auto movie = std::make_shared<isx::MosaicMovie>(
+                fileName, timingInfo, spacingInfo, dataType);
         REQUIRE(movie->isValid());
-        REQUIRE(movie->getDataType() == isx::DataType::U16);
+        REQUIRE(movie->getDataType() == dataType);
     }
 
     SECTION("Read after writing.")
     {
-        auto movie = std::make_shared<isx::MosaicMovie>(fileName, timingInfo, spacingInfo);
+        auto movie = std::make_shared<isx::MosaicMovie>(
+                fileName, timingInfo, spacingInfo, dataType);
         REQUIRE(movie->isValid());
         REQUIRE(movie->getTimingInfo() == timingInfo);
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
+
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
-        isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            movie->getFrame(f, frame);
-            std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
+            isx::SpVideoFrame_t frame = movie->getFrame(f);
+            uint16_t * frameBuf = frame->getPixelsAsU16();
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
                 REQUIRE(frameBuf[p] == 0);
@@ -128,18 +134,19 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
     SECTION("Read constructor after writing.")
     {
         {
-            auto movie = std::make_shared<isx::MosaicMovie>(fileName, timingInfo, spacingInfo);
+            auto movie = std::make_shared<isx::MosaicMovie>(
+                    fileName, timingInfo, spacingInfo, dataType);
         }
         auto movie = std::make_shared<isx::MosaicMovie>(fileName);
         REQUIRE(movie->isValid());
         REQUIRE(movie->getTimingInfo() == timingInfo);
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
+
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
-        isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            movie->getFrame(f, frame);
-            std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
+            isx::SpVideoFrame_t frame = movie->getFrame(f);
+            uint16_t * frameBuf = frame->getPixelsAsU16();
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
                 REQUIRE(frameBuf[p] == 0);
@@ -155,34 +162,13 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
 
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
-        isx::SpU16VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            movie->getFrame(f, frame);
-            std::vector<uint16_t> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
+            isx::SpVideoFrame_t frame = movie->getFrame(f);
+            uint16_t * frameBuf = frame->getPixelsAsU16();
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
                 REQUIRE(frameBuf[p] == (f * numPixels) + p);
-            }
-        }
-    }
-
-    SECTION("Write frame data and verify float read matches it.")
-    {
-        isx::SpWritableMovie_t movie = writeTestU16Movie(fileName, timingInfo, spacingInfo);
-        REQUIRE(movie->isValid());
-        REQUIRE(movie->getTimingInfo() == timingInfo);
-        REQUIRE(movie->getSpacingInfo() == spacingInfo);
-
-        isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
-        isx::SpF32VideoFrame_t frame;
-        for (isx::isize_t f = 0; f < numFrames; ++f)
-        {
-            movie->getFrame(f, frame);
-            std::vector<float> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
-            for (isx::isize_t p = 0; p < numPixels; ++p)
-            {
-                REQUIRE(frameBuf[p] == float((f * numPixels) + p));
             }
         }
     }
@@ -210,23 +196,25 @@ TEST_CASE("MosaicMovieF32", "[core-internal]")
 
     SECTION("Write constructor.")
     {
-        auto movie = std::make_shared<isx::MosaicMovie>(fileName, timingInfo, spacingInfo, dataType);
+        auto movie = std::make_shared<isx::MosaicMovie>(
+                fileName, timingInfo, spacingInfo, dataType);
         REQUIRE(movie->isValid());
         REQUIRE(movie->getDataType() == isx::DataType::F32);
     }
 
     SECTION("Read after writing.")
     {
-        auto movie = std::make_shared<isx::MosaicMovie>(fileName, timingInfo, spacingInfo, dataType);
+        auto movie = std::make_shared<isx::MosaicMovie>(
+                fileName, timingInfo, spacingInfo, dataType);
         REQUIRE(movie->isValid());
         REQUIRE(movie->getTimingInfo() == timingInfo);
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
+
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
-        isx::SpF32VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            movie->getFrame(f, frame);
-            std::vector<float> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
+            isx::SpVideoFrame_t frame = movie->getFrame(f);
+            float * frameBuf = frame->getPixelsAsF32();
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
                 REQUIRE(frameBuf[p] == 0);
@@ -237,18 +225,19 @@ TEST_CASE("MosaicMovieF32", "[core-internal]")
     SECTION("Read constructor after writing.")
     {
         {
-            auto movie = std::make_shared<isx::MosaicMovie>(fileName, timingInfo, spacingInfo, dataType);
+            auto movie = std::make_shared<isx::MosaicMovie>(
+                    fileName, timingInfo, spacingInfo, dataType);
         }
         auto movie = std::make_shared<isx::MosaicMovie>(fileName);
         REQUIRE(movie->isValid());
         REQUIRE(movie->getTimingInfo() == timingInfo);
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
+
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
-        isx::SpF32VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            movie->getFrame(f, frame);
-            std::vector<float> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
+            isx::SpVideoFrame_t frame = movie->getFrame(f);
+            float * frameBuf = frame->getPixelsAsF32();
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
                 REQUIRE(frameBuf[p] == 0);
@@ -264,11 +253,10 @@ TEST_CASE("MosaicMovieF32", "[core-internal]")
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
 
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
-        isx::SpF32VideoFrame_t frame;
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            movie->getFrame(f, frame);
-            std::vector<float> frameBuf(frame->getPixels(), frame->getPixels() + numPixels);
+            isx::SpVideoFrame_t frame = movie->getFrame(f);
+            float * frameBuf = frame->getPixelsAsF32();
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
                 REQUIRE(frameBuf[p] == (f * numPixels) + p);

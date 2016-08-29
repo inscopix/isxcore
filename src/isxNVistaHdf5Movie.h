@@ -47,25 +47,15 @@ public:
         const TimingInfo & inTimingInfo = TimingInfo(),
         const SpacingInfo & inSpacingInfo = SpacingInfo());
 
-    /// Destructor
-    ///
-    ~NVistaHdf5Movie();
-
     // Overrides
     bool
     isValid() const override;
 
-    void
-    getFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame) override;
+    SpVideoFrame_t
+    getFrame(isize_t inFrameNumber) override;
 
     void
-    getFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame) override;
-
-    void
-    getFrameAsync(size_t inFrameNumber, MovieGetU16FrameCB_t inCallback) override;
-
-    void
-    getFrameAsync(size_t inFrameNumber, MovieGetF32FrameCB_t inCallback) override;
+    getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback) override;
 
     void
     cancelPendingReads() override;
@@ -125,14 +115,8 @@ private:
     /// Reads a uint16 frame directly from the associated file.
     ///
     /// The read occurs on whatever thread calls this function.
-    void
-    getFrameInternal(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame);
-
-    /// Reads a float frame directly from the associated file.
-    ///
-    /// The read occurs on whatever thread calls this function.
-    void
-    getFrameInternal(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame);
+    SpVideoFrame_t
+    getFrameInternal(isize_t inFrameNumber);
 
     /// Read/infer the timing info of this from the HDF5 movie files.
     ///
@@ -163,28 +147,6 @@ private:
     uint64_t m_readRequestCount = 0;
     isx::Mutex m_pendingReadsMutex;
     std::map<uint64_t, SpAsyncTaskHandle_t> m_pendingReads;
-
-    /// \return     The size of a pixel value in bytes.
-    ///
-    isize_t getPixelSizeInBytes() const;
-
-    /// The shared implementation of getting different frame types synchronously.
-    ///
-    /// \param  inFrameNumber   The number of the frame to read.
-    /// \param  outFrame        The shared pointer in which to store the frame data.
-    template <typename FrameType>
-    void getFrameTemplate(
-            isize_t inFrameNumber,
-            std::shared_ptr<FrameType> & outFrame);
-
-    /// The shared implementation of getting different frame types asynchronously.
-    ///
-    /// \param  inFrameNumber   The number of the frame to read.
-    /// \param  inCallback      The function used to return the retrieved video frame.
-    template <typename FrameType>
-    void getFrameAsyncTemplate(
-            isize_t inFrameNumber,
-            MovieGetFrameCB_t<FrameType> inCallback);
 };
 
 typedef std::shared_ptr<NVistaHdf5Movie>  SpNVistaHdf5Movie_t;

@@ -80,7 +80,7 @@ public:
     /// \return a shared pointer to the segmentation image for the input cell
     /// \param inCellId the cell of interest
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
-    SpFImage_t readSegmentationImage(isize_t inCellId);
+    SpImage_t readSegmentationImage(isize_t inCellId);
     
     /// Write cell data
     /// \param inCellId the cell of interest
@@ -88,7 +88,7 @@ public:
     /// \param inData the trace to write
     /// If cell ID already exists, it will overwrite its data. Otherwise, it will be appended
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or writing fails.
-    void writeCellData(isize_t inCellId, Image<float> & inSegmentationImage, Trace<float> & inData);
+    void writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData);
     
     /// \return if the cell is valid 
     /// \param inCellId the cell of interest

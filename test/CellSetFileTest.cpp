@@ -17,8 +17,12 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
     isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
     // Set image
-    isx::Image<float> originalImage(spacingInfo, sizeof(float) * spacingInfo.getNumColumns(), 1);
-    float * originalPixels = originalImage.getPixels();
+    isx::Image originalImage(
+            spacingInfo,
+            sizeof(float) * spacingInfo.getNumColumns(),
+            1,
+            isx::DataType::F32);
+    float * originalPixels = originalImage.getPixelsAsF32();
     memset(originalPixels, 0, sizeof(float) * originalImage.getSpacingInfo().getTotalNumPixels());
     originalPixels[0] = 1.0f;
     originalPixels[1] = 2.5f;
@@ -106,9 +110,9 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         file.writeCellData(0, originalImage, originalTrace);  
         REQUIRE(file.numberOfCells() == 1);
 
-        isx::SpFImage_t im = file.readSegmentationImage(0);
+        isx::SpImage_t im = file.readSegmentationImage(0);
         bool pixelsAreEqual = false;
-        float * pixels = im->getPixels();
+        float * pixels = im->getPixelsAsF32();
 
         REQUIRE(im->getSpacingInfo().getTotalNumPixels() == originalImage.getSpacingInfo().getTotalNumPixels());
 
@@ -164,8 +168,8 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
             isx::SpFTrace_t trace = file.readTrace(i);
             float * values = trace->getValues();
 
-            isx::SpFImage_t image = file.readSegmentationImage(i);
-            float * pixels = image->getPixels();
+            isx::SpImage_t image = file.readSegmentationImage(i);
+            float * pixels = image->getPixelsAsF32();
 
             for (isx::isize_t i = 0; i < trace->getTimingInfo().getNumTimes(); ++i)
             {

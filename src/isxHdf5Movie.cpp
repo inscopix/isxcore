@@ -117,7 +117,7 @@ namespace isx
     }
 
     void
-    Hdf5Movie::getFrame(isize_t inFrameNumber, const SpU16VideoFrame_t & vf)
+    Hdf5Movie::getFrame(isize_t inFrameNumber, const SpVideoFrame_t & vf)
     {
         try 
         {
@@ -135,7 +135,7 @@ namespace isx
     }
 
     void 
-    Hdf5Movie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
+    Hdf5Movie::writeFrame(const SpVideoFrame_t & inVideoFrame)
     {
         // Check that buffer size matches dataspace definition
         if (inVideoFrame->getImageSizeInBytes() != getFrameSizeInBytes())

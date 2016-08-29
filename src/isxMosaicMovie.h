@@ -29,9 +29,6 @@ public:
     /// This creates a valid c++ object but an invalid movie.
     MosaicMovie();
 
-    /// Destructor
-    ~MosaicMovie();
-
     /// Read constructor.
     ///
     /// This opens an existing movie from a file.
@@ -57,24 +54,18 @@ public:
     MosaicMovie(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
                 const SpacingInfo & inSpacingInfo,
-                DataType inDataType = DataType::U16);
+                DataType inDataType);
 
     // Overrides - see base classes for documentation
     bool isValid() const override;
 
-    void getFrame(isize_t inFrameNumber, SpU16VideoFrame_t & outFrame) override;
+    SpVideoFrame_t getFrame(isize_t inFrameNumber) override;
 
-    void getFrame(isize_t inFrameNumber, SpF32VideoFrame_t & outFrame) override;
-
-    void getFrameAsync(isize_t inFrameNumber, MovieGetU16FrameCB_t inCallback) override;
-
-    void getFrameAsync(isize_t inFrameNumber, MovieGetF32FrameCB_t inCallback) override;
+    void getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback) override;
 
     void cancelPendingReads() override;
 
-    void writeFrame(const SpU16VideoFrame_t & inVideoFrame) override;
-
-    void writeFrame(const SpF32VideoFrame_t & inVideoFrame) override;
+    void writeFrame(const SpVideoFrame_t & inVideoFrame) override;
 
     const isx::TimingInfo & getTimingInfo() const override;
 
@@ -102,30 +93,6 @@ private:
     uint64_t m_readRequestCount = 0;
     isx::Mutex m_pendingReadsMutex;
     std::map<uint64_t, SpAsyncTaskHandle_t> m_pendingReads;
-
-    /// The shared implementation of getting different frame types synchronously.
-    ///
-    /// \param  inFrameNumber   The number of the frame to read.
-    /// \param  outFrame        The shared pointer in which to store the frame data.
-    template <typename FrameType>
-    void getFrameTemplate(
-            isize_t inFrameNumber,
-            std::shared_ptr<FrameType> & outFrame);
-
-    /// The shared implementation of getting different frame types asynchronously.
-    ///
-    /// \param  inFrameNumber   The number of the frame to read.
-    /// \param  inCallback      The function used to return the retrieved video frame.
-    template <typename FrameType>
-    void getFrameAsyncTemplate(
-            isize_t inFrameNumber,
-            MovieGetFrameCB_t<FrameType> inCallback);
-
-    /// The shared implementation of writing different frame types.
-    ///
-    /// \param  inVideoFrame    The frame to write.
-    template <typename FrameType>
-    void writeFrameTemplate(const std::shared_ptr<FrameType> & inVideoFrame);
 };
 
 } // namespace isx
