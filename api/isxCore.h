@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <vector>
 
+#include <ostream>
+
 namespace isx
 {
     /// The type of all sizes, lengths and indices

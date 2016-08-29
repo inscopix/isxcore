@@ -3,8 +3,6 @@
 #include "isxIoQueue.h"
 #include "isxVersion.h"
 
-#include <ostream>
-
 namespace isx
 {
     isize_t getDataTypeSizeInBytes(DataType inDataType)
