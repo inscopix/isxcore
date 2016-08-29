@@ -1,6 +1,7 @@
 #ifndef ISX_DATA_SET_H
 #define ISX_DATA_SET_H
 
+#include "isxObject.h"
 #include "isxProjectItem.h"
 
 #include <string>
@@ -17,15 +18,16 @@ class Group;
 ///
 /// This is described by a data set type, a name and a file name.
 class DataSet : public ProjectItem
+              , public Object
 {
 public:
 
-    /// The type of data item.
+    /// The type of data set.
     ///
     /// TODO sweet : add image and trace when we have files for them.
-    enum Type
+    enum class Type
     {
-        MOVIE,
+        MOVIE = 0,
         CELLSET,
     };
 
@@ -68,6 +70,8 @@ public:
 
     std::string getPath() const override;
 
+    void serialize(std::ostream & strm) const override;
+
 private:
 
     /// True if this data set is valid.
@@ -86,6 +90,17 @@ private:
     Group * m_parent;
 
 }; // class DataSet
+
+/// Get the Inscopix DataSet type of a file.
+///
+/// If the file format is not recognized, then this function fails.
+///
+/// \param  inFileName      The name of the movie file.
+/// \return                 The data set type.
+///
+/// \throw  isx::ExceptionFileIO    If read the file fails.
+/// \throw  isx::ExceptionDataIO    If the file format is not recognized.
+DataSet::Type readDataSetType(const std::string & inFileName);
 
 } // namespace isx
 

@@ -62,7 +62,6 @@ MosaicMovieFile::isValid() const
 SpU16VideoFrame_t
 MosaicMovieFile::readFrame(isize_t inFrameNumber)
 {
-    //std::ifstream file = openForReadOnly();
     std::ifstream file(m_fileName, std::ios::binary);
     if (!file.good())
     {
@@ -159,44 +158,17 @@ void
 MosaicMovieFile::readHeader()
 {
     std::ifstream file(m_fileName, std::ios::binary);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Error while reading movie header: ", m_fileName);
-    }
-
-    std::string jsonStr;
-    file.seekg(std::ios_base::beg);
-    std::getline(file, jsonStr, '\0');
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Error while reading movie header: ", m_fileName);
-    }
-
-    json j;
-    try
-    {
-        j = json::parse(jsonStr);
-    }
-    catch (const std::exception & error)
-    {
-        ISX_THROW(isx::ExceptionDataIO, "Error while parsing movie header: ", error.what());
-    }
-    catch (...)
-    {
-        ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing movie header.");
-    }
-
+    json j = readJsonHeader(file);
     m_headerOffset = file.tellg();
 
     try
     {
         std::string dataType = j["dataType"];
-        std::string type = j["type"];
-        if (type.compare("Movie") != 0)
+        DataSet::Type type = DataSet::Type(size_t(j["type"]));
+        if (type != DataSet::Type::MOVIE)
         {
-            ISX_THROW(isx::ExceptionDataIO, "Expected type to be Movie. Instead got ", type, ".");
+            ISX_THROW(isx::ExceptionDataIO,
+                    "Expected type to be Movie. Instead got ", size_t(type), ".");
         }
         m_timingInfo = convertJsonToTimingInfo(j["timingInfo"]);
         m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
@@ -214,17 +186,10 @@ MosaicMovieFile::readHeader()
 void
 MosaicMovieFile::writeHeader()
 {
-    std::ofstream file(m_fileName, std::ios::binary | std::ios::trunc);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open movie when writing header: ", m_fileName);
-    }
-
     json j;
     try
     {
-        j["type"] = "Movie";
+        j["type"] = size_t(DataSet::Type::MOVIE);
         // TODO sweet : data type is uint16 for now, but needs to be more general
         j["dataType"] = "uint16";
         j["timingInfo"] = convertTimingInfoToJson(m_timingInfo);
@@ -246,14 +211,8 @@ MosaicMovieFile::writeHeader()
             "Unknown error while generating movie header.");
     }
 
-    file << std::setw(4) << j;
-    file << '\0';
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Failed to write header in movie file: ", m_fileName);
-    }
-
+    std::ofstream file(m_fileName, std::ios::binary | std::ios::trunc);
+    writeJsonHeader(j, file);
     m_headerOffset = file.tellp();
 }
 
