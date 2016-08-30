@@ -28,7 +28,7 @@ writeTestU16Movie(
             rowSizeInBytes,
             1, // numChannels
             isx::DataType::U16,
-            inTimingInfo.convertIndexToTime(f),
+            inTimingInfo.convertIndexToStartTime(f),
             f);
 
         uint16_t * pPixels = frame->getPixelsAsU16();
@@ -62,7 +62,7 @@ writeTestF32Movie(
             rowSizeInBytes,
             1, // numChannels
             isx::DataType::F32,
-            inTimingInfo.convertIndexToTime(f),
+            inTimingInfo.convertIndexToStartTime(f),
             f);
 
         float * pPixels = frame->getPixelsAsF32();

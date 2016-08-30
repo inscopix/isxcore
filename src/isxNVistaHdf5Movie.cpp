@@ -274,8 +274,14 @@ NVistaHdf5Movie::initSpacingInfo(const std::vector<SpH5File_t> & inHdf5Files)
 SpVideoFrame_t
 NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber)
 {
-    SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
-            shared_from_this(), inFrameNumber);
+    SpacingInfo si = getSpacingInfo();
+    auto outFrame = std::make_shared<VideoFrame>(
+        si,
+        sizeof(uint16_t) * si.getNumColumns(),
+        1, // numChannels
+        isx::DataType::U16,
+        m_timingInfo.convertIndexToStartTime(inFrameNumber),
+        inFrameNumber);
 
     isize_t newFrameNumber = inFrameNumber;
     isize_t idx = getMovieIndex(inFrameNumber);

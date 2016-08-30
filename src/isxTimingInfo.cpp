@@ -72,7 +72,7 @@ TimingInfo::convertTimeToIndex(const Time & inTime) const
 }
 
 Time
-TimingInfo::convertIndexToTime(isize_t inIndex) const
+TimingInfo::convertIndexToMidTime(isize_t inIndex) const
 {
     if (m_numTimes == 0)
     {

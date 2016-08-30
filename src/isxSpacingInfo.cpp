@@ -69,7 +69,7 @@ SpacingInfo::getTotalSize() const
 }
 
 PointInMicrons_t
-SpacingInfo::convertPointInPixelsToMicrons(const PointInPixels_t & inPoint) const
+SpacingInfo::convertPixelsToMidPointInMicrons(const PointInPixels_t & inPoint) const
 {
     Ratio xMicrons = m_topLeft.getX();
     if (m_numPixels.getX() > 0)
@@ -95,7 +95,7 @@ SpacingInfo::convertPointInPixelsToMicrons(const PointInPixels_t & inPoint) cons
 }
 
 PointInPixels_t
-SpacingInfo::convertPointInMicronsToPixels(const PointInMicrons_t & inPoint) const
+SpacingInfo::convertMidPointInMicronsToPixels(const PointInMicrons_t & inPoint) const
 {
     double xPixels = 0;
     if (m_numPixels.getX() > 0)

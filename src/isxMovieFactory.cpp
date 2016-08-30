@@ -27,7 +27,7 @@ readMovie(const std::string & inFileName)
     {
         return readMosaicMovie(inFileName);
     }
-    else if (extension == "hdf5")
+    else if ((extension == "hdf5") || (extension == "xml"))
     {
         return readNVistaHdf5Movie(inFileName);
     }
