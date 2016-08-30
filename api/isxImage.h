@@ -133,9 +133,6 @@ private:
     DataType m_dataType;
 };
 
-/// The type of shared pointer to an image
-typedef std::shared_ptr<Image> SpImage_t;
-
 } // namespace isx
 
 #endif // def ISX_IMAGE_H

@@ -2,6 +2,7 @@
 #define ISX_CELL_SET_FILE_H
 
 #include <fstream>
+#include "isxCoreFwd.h"
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
 #include "isxImage.h"

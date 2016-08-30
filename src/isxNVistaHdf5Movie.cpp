@@ -279,7 +279,7 @@ NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber)
         si,
         sizeof(uint16_t) * si.getNumColumns(),
         1, // numChannels
-        isx::DataType::U16,
+        getDataType(),
         m_timingInfo.convertIndexToStartTime(inFrameNumber),
         inFrameNumber);
 

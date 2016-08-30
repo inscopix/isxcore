@@ -67,7 +67,6 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
 
     // TODO sweet : check to see if frame number exceeds number of frames
     // instead of returning the last frame.
-    Time frameTime = m_timingInfo.convertIndexToStartTime(inFrameNumber);
     SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
         m_spacingInfo,
         getRowSizeInBytes(),
@@ -92,7 +91,7 @@ MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
     std::ofstream file(m_fileName, std::ios::binary | std::ios::in);
     seekForWriteFrame(file, inVideoFrame->getFrameIndex());
 
-    DataType frameDataType = inVideoFrame->getDataType();
+    const DataType frameDataType = inVideoFrame->getDataType();
     if (frameDataType == m_dataType)
     {
         file.write(inVideoFrame->getPixels(), getFrameSizeInBytes());
@@ -215,7 +214,7 @@ MosaicMovieFile::writeZeroData()
     }
 
     // Create a zero frame buffer once.
-    isize_t frameSizeInBytes = getFrameSizeInBytes();
+    const isize_t frameSizeInBytes = getFrameSizeInBytes();
     std::vector<char> frameBuf(frameSizeInBytes, 0);
 
     // Write the frames to file one by one.
@@ -277,14 +276,14 @@ MosaicMovieFile::seekForReadFrame(
 
     // TODO sweet : check to see if time is outside of sample window instead
     // of reading last frame data
-    isize_t numFrames = m_timingInfo.getNumTimes();
+    const isize_t numFrames = m_timingInfo.getNumTimes();
     if (inFrameNumber >= numFrames)
     {
         inFrameNumber = numFrames - 1;
     }
 
-    isize_t frameSizeInBytes = getFrameSizeInBytes();
-    isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
+    const isize_t frameSizeInBytes = getFrameSizeInBytes();
+    const isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
     inFile.seekg(m_headerOffset);
     inFile.seekg(offsetInBytes, std::ios_base::cur);
     if (!inFile.good())
@@ -307,14 +306,14 @@ MosaicMovieFile::seekForWriteFrame(
 
     // TODO sweet : check to see if time is outside of sample window instead
     // of overwriting last frame data
-    isize_t numFrames = m_timingInfo.getNumTimes();
+    const isize_t numFrames = m_timingInfo.getNumTimes();
     if (inFrameNumber >= numFrames)
     {
         inFrameNumber = numFrames - 1;
     }
 
-    isize_t frameSizeInBytes = getFrameSizeInBytes();
-    isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
+    const isize_t frameSizeInBytes = getFrameSizeInBytes();
+    const isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
     inFile.seekp(m_headerOffset);
     inFile.seekp(offsetInBytes, std::ios_base::cur);
     if (!inFile.good())

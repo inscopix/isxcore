@@ -1,4 +1,5 @@
 #include "isxCellSetFile.h"
+#include "isxImage.h"
 #include "isxException.h"
 #include "isxAssert.h"
 #include "isxJsonUtils.h"
