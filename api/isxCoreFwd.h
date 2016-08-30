@@ -25,8 +25,6 @@ namespace isx
     FWD_DECLARE_WITH_PTRS(DispatchQueueWorker);
     FWD_DECLARE_WITH_PTRS(AsyncTaskHandle);
 
-    typedef std::function<void(const SpVideoFrame_t & inVideoFrame)> MovieGetFrameCB_t;
-
 } // namespace isx
 
 #undef FWD_DECLARE_WITH_PTRS

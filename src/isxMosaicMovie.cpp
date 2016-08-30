@@ -252,6 +252,23 @@ MosaicMovie::writeFrame(const SpVideoFrame_t & inVideoFrame)
     mutex.unlock();
 }
 
+SpVideoFrame_t
+MosaicMovie::makeVideoFrame(isize_t inIndex)
+{
+    const SpacingInfo spacingInfo = getSpacingInfo();
+    const DataType dataType = getDataType();
+    const isize_t pixelSizeInBytes = getDataTypeSizeInBytes(dataType);
+    const isize_t rowSizeInBytes = pixelSizeInBytes * spacingInfo.getNumColumns();
+    SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
+            spacingInfo,
+            rowSizeInBytes,
+            1,
+            dataType,
+            getTimingInfo().convertIndexToStartTime(inIndex),
+            inIndex);
+    return outFrame;
+}
+
 const isx::TimingInfo &
 MosaicMovie::getTimingInfo() const
 {

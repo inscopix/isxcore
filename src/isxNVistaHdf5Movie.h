@@ -112,7 +112,7 @@ private:
     ///
     void initSpacingInfo(const std::vector<SpH5File_t> & inHdf5Files);
 
-    /// Reads a uint16 frame directly from the associated file.
+    /// Reads a frame directly from the associated file.
     ///
     /// The read occurs on whatever thread calls this function.
     SpVideoFrame_t

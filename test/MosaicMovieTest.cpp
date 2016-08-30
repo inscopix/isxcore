@@ -264,5 +264,19 @@ TEST_CASE("MosaicMovieF32", "[core-internal]")
         }
     }
 
+    SECTION("Make a middle video frame in a movie")
+    {
+        isx::SpWritableMovie_t movie = std::make_shared<isx::MosaicMovie>(
+                fileName, timingInfo, spacingInfo, dataType);
+
+        isx::SpVideoFrame_t frame = movie->makeVideoFrame(3);
+
+        REQUIRE(frame->getImage().getSpacingInfo() == spacingInfo);
+        REQUIRE(frame->getNumChannels() == 1);
+        REQUIRE(frame->getDataType() == dataType);
+        REQUIRE(frame->getTimeStamp() == timingInfo.convertIndexToStartTime(3));
+        REQUIRE(frame->getFrameIndex() == 3);
+    }
+
     isx::CoreShutdown();
 }

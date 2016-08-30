@@ -21,17 +21,6 @@ VideoFrame::VideoFrame(
 {
 }
 
-VideoFrame::VideoFrame(const SpMovie_t & inMovie, isize_t inFrameIndex)
-{
-    SpacingInfo spacingInfo = inMovie->getSpacingInfo();
-    isize_t pixelSizeInBytes = getDataTypeSizeInBytes(inMovie->getDataType());
-    isize_t rowSizeInBytes = pixelSizeInBytes * spacingInfo.getNumColumns();
-    m_image = Image(spacingInfo, rowSizeInBytes, 1, inMovie->getDataType());
-
-    m_timeStamp = inMovie->getTimingInfo().convertIndexToStartTime(inFrameIndex);
-    m_frameIndex = inFrameIndex;
-}
-
 Image &
 VideoFrame::getImage()
 {

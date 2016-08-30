@@ -11,6 +11,9 @@
 namespace isx
 {
 
+/// The type of callback for getting a frame asynchronously
+typedef std::function<void(const SpVideoFrame_t & inVideoFrame)> MovieGetFrameCB_t;
+
 /// Interface for Movies
 ///
 class Movie : public Object

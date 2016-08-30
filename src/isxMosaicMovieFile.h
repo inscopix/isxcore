@@ -54,13 +54,13 @@ public:
     MosaicMovieFile(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
                 const SpacingInfo & inSpacingInfo,
-                DataType inDataType = DataType::U16);
+                DataType inDataType);
 
     /// \return True if the movie file is valid, false otherwise.
     ///
     bool isValid() const;
 
-    /// Read a uint16 frame in the file by index.
+    /// Read a frame in the file by index.
     ///
     /// \param  inFrameNumber   The index of the frame.
     /// \return                 The frame read from the file.
@@ -68,7 +68,7 @@ public:
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     SpVideoFrame_t readFrame(isize_t inFrameNumber);
 
-    /// Write a uint16 frame to the file.
+    /// Write a frame to the file.
     ///
     /// \param  inVideoFrame    The frame to write to the file.
     ///

@@ -2,6 +2,7 @@
 #include "isxDispatchQueue.h"
 #include "isxIoQueue.h"
 #include "isxVersion.h"
+#include "isxException.h"
 
 namespace isx
 {

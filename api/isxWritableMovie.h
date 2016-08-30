@@ -27,6 +27,14 @@ public:
     void
     writeFrame(const SpVideoFrame_t & inVideoFrame) = 0;
 
+    /// Creates a new frame indexed within this movie.
+    ///
+    /// \param  inIndex     The index of the frame in the given movie.
+    /// \return             The created frame.
+    virtual
+    SpVideoFrame_t
+    makeVideoFrame(isize_t inIndex) = 0;
+
 };
 
 } // namespace isx

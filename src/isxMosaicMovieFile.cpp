@@ -234,21 +234,13 @@ MosaicMovieFile::writeZeroData()
 isize_t
 MosaicMovieFile::getPixelSizeInBytes() const
 {
-    switch (m_dataType)
+    isize_t sizeInBytes = getDataTypeSizeInBytes(m_dataType);
+    if (sizeInBytes == 0)
     {
-        case DataType::U16:
-        {
-            return sizeof(uint16_t);
-        }
-        case DataType::F32:
-        {
-            return sizeof(float);
-        }
-        default:
-        {
-            ISX_THROW(isx::ExceptionDataIO, "Invalid pixel size type: ", int(m_dataType));
-        }
+        ISX_THROW(isx::ExceptionDataIO,
+                "Unrecognized pixel size type: ", m_dataType);
     }
+    return sizeInBytes;
 }
 
 isize_t

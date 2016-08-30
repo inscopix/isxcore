@@ -90,6 +90,8 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
     isx::PointInMicrons_t topLeft(0, 0);
     isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
+    const isx::DataType dataType = isx::DataType::U16;
+
     SECTION("Empty constructor")
     {
         isx::MosaicMovieFile movie;
@@ -98,16 +100,16 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
 
     SECTION("Write constructor.")
     {
-        isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo);
+        isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo, dataType);
         REQUIRE(movie.isValid());
+        REQUIRE(movie.getTimingInfo() == timingInfo);
+        REQUIRE(movie.getSpacingInfo() == spacingInfo);
+        REQUIRE(movie.getDataType() == dataType);
     }
 
     SECTION("Read after writing.")
     {
-        isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo);
-        REQUIRE(movie.isValid());
-        REQUIRE(movie.getTimingInfo() == timingInfo);
-        REQUIRE(movie.getSpacingInfo() == spacingInfo);
+        isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo, dataType);
 
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
         for (isx::isize_t f = 0; f < numFrames; ++f)
@@ -124,12 +126,13 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
     SECTION("Read constructor after writing.")
     {
         {
-            isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo);
+            isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo, dataType);
         }
         isx::MosaicMovieFile movie(fileName);
         REQUIRE(movie.isValid());
         REQUIRE(movie.getTimingInfo() == timingInfo);
         REQUIRE(movie.getSpacingInfo() == spacingInfo);
+        REQUIRE(movie.getDataType() == dataType);
 
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
         for (isx::isize_t f = 0; f < numFrames; ++f)
@@ -149,6 +152,7 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
         REQUIRE(movie.isValid());
         REQUIRE(movie.getTimingInfo() == timingInfo);
         REQUIRE(movie.getSpacingInfo() == spacingInfo);
+        REQUIRE(movie.getDataType() == dataType);
 
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
         for (isx::isize_t f = 0; f < numFrames; ++f)
@@ -193,10 +197,6 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal]")
     SECTION("Read frame after writing.")
     {
         isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo, dataType);
-        REQUIRE(movie.isValid());
-        REQUIRE(movie.getTimingInfo() == timingInfo);
-        REQUIRE(movie.getSpacingInfo() == spacingInfo);
-        REQUIRE(movie.getDataType() == dataType);
 
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
         for (isx::isize_t f = 0; f < numFrames; ++f)
@@ -236,9 +236,6 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal]")
     SECTION("Write frame data and verify read matches it.")
     {
         isx::MosaicMovieFile movie = writeTestF32Movie(fileName, timingInfo, spacingInfo);
-        REQUIRE(movie.isValid());
-        REQUIRE(movie.getTimingInfo() == timingInfo);
-        REQUIRE(movie.getSpacingInfo() == spacingInfo);
 
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
         for (isx::isize_t f = 0; f < numFrames; ++f)
