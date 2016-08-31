@@ -10,8 +10,8 @@ TEST_CASE("VideoFrameTest", "[core]") {
 
     SECTION("default constructor") 
     {
-        isx::VideoFrame<uint32_t> v;
-        uint32_t * p = 0;
+        isx::VideoFrame v;
+        char * p = 0;
         REQUIRE(v.getWidth() == 0);
         REQUIRE(v.getPixels() == p);
         REQUIRE(v.getTimeStamp() == isx::Time());
@@ -26,9 +26,12 @@ TEST_CASE("VideoFrameTest", "[core]") {
         const int32_t c = 6;
         const isx::Time t = isx::Time::now();
         const size_t f = 42;
+        const isx::DataType dataType = isx::DataType::U16;
+        const isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(w, h));
 
-        isx::VideoFrame<uint16_t> v(w, h, r, c, t, f);
+        isx::VideoFrame v(spacingInfo, r, c, dataType, t, f);
         REQUIRE(v.getWidth() == w);
+        REQUIRE(v.getDataType() == dataType);
         REQUIRE(v.getTimeStamp() == t);
         REQUIRE(v.getFrameIndex() == f);
 
@@ -40,7 +43,7 @@ TEST_CASE("VideoFrameTest", "[core]") {
 
         // write, should have enough buffer space to not cause
         // access violation :)
-        uint16_t * p = v.getPixels();
+        uint16_t * p = v.getPixelsAsU16();
         memcpy(p, &buf[0], buf.size());
 
         // read, check if data is the same as what was written
@@ -51,6 +54,7 @@ TEST_CASE("VideoFrameTest", "[core]") {
     {
         const int32_t r = 8640;
         const int32_t c = 3;
+        const isx::DataType dataType = isx::DataType::U16;
 
         isx::SizeInPixels_t numPixels(1440, 1080);
         isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE * 2);
@@ -58,7 +62,7 @@ TEST_CASE("VideoFrameTest", "[core]") {
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
         isx::Time time;
-        isx::VideoFrame<uint16_t> v(spacingInfo, r, c, time, 0);
+        isx::VideoFrame v(spacingInfo, r, c, dataType, time, 0);
 
         REQUIRE(v.getImage().getSpacingInfo() == spacingInfo);
     }

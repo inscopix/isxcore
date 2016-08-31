@@ -20,6 +20,7 @@ TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
     SECTION("create movie from one dataset") {
         isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
         REQUIRE(m->isValid());
+        REQUIRE(m->getDataType() == isx::DataType::U16);
     }
 
     SECTION("getTimingInfo().getNumTimes()") {
@@ -40,19 +41,10 @@ TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
         REQUIRE(m->getSpacingInfo().getNumRows() == 500);
     }
 
-    SECTION("getFrame for time") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
-        REQUIRE(m->isValid());
-        auto nvf = m->getFrame(m->getTimingInfo().getStart());
-        unsigned char * t = reinterpret_cast<unsigned char *>(nvf->getPixels());
-        REQUIRE(t[0] == 0x43);
-        REQUIRE(t[1] == 0x3);
-    }
-
     SECTION("getFrame for frame number") {
         isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
         REQUIRE(m->isValid());
-        auto nvf = m->getFrame(0);
+        isx::SpVideoFrame_t nvf = m->getFrame(0);
         unsigned char * t = reinterpret_cast<unsigned char *>(nvf->getPixels());
         REQUIRE(t[0] == 0x43);
         REQUIRE(t[1] == 0x3);
@@ -97,7 +89,7 @@ TEST_CASE("MovieTestAsync", "[core]") {
     
     isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
     REQUIRE(m->isValid());
-    isx::MovieGetFrameCB_t cb = [&](isx::SpU16VideoFrame_t inFrame){
+    isx::MovieGetFrameCB_t cb = [&](isx::SpVideoFrame_t inFrame){
         size_t index = inFrame->getFrameIndex();
         unsigned char * t = reinterpret_cast<unsigned char *>(inFrame->getPixels());
         if (memcmp(t, expected[index], numTestBytesPerFrame))
@@ -106,27 +98,6 @@ TEST_CASE("MovieTestAsync", "[core]") {
         }
         ++doneCount;
     };
-
-    SECTION("get frame for time asynchronously") {
-        isx::Time fetchTime = m->getTimingInfo().getStart();
-        for (size_t i = 0; i < numTestFrames; ++i)
-        {
-            m->getFrameAsync(fetchTime, cb);
-            fetchTime += m->getTimingInfo().getStep();
-        }
-
-        for (int i = 0; i < 250; ++i)
-        {
-            if (doneCount == int(numTestFrames))
-            {
-                break;
-            }
-            std::chrono::milliseconds d(2);
-            std::this_thread::sleep_for(d);
-        }
-        REQUIRE(doneCount == int(numTestFrames));
-        REQUIRE(isDataCorrect);
-    }
 
     SECTION("get frame for frame number asynchronously") {
         for (size_t i = 0; i < numTestFrames; ++i)

@@ -1,7 +1,8 @@
 #ifndef ISX_MOSAIC_MOVIE_FILE_H
 #define ISX_MOSAIC_MOVIE_FILE_H
 
-#include "isxMovieDefs.h"
+#include "isxCore.h"
+#include "isxCoreFwd.h"
 #include "isxVideoFrame.h"
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
@@ -46,16 +47,14 @@ public:
     /// \param  inFileName      The name of the movie file.
     /// \param  inTimingInfo    The timing information of the movie.
     /// \param  inSpacingInfo   The spacing information of the movie.
+    /// \param  inDataType      The pixel value data type.
     ///
     /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the movie data fails.
     MosaicMovieFile(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
-                const SpacingInfo & inSpacingInfo);
-
-    /// Destructor.
-    ///
-    ~MosaicMovieFile();
+                const SpacingInfo & inSpacingInfo,
+                DataType inDataType);
 
     /// \return True if the movie file is valid, false otherwise.
     ///
@@ -65,12 +64,18 @@ public:
     ///
     /// \param  inFrameNumber   The index of the frame.
     /// \return                 The frame read from the file.
-    SpU16VideoFrame_t readFrame(isize_t inFrameNumber);
+    ///
+    /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
+    SpVideoFrame_t readFrame(isize_t inFrameNumber);
 
     /// Write a frame to the file.
     ///
     /// \param  inVideoFrame    The frame to write to the file.
-    void writeFrame(const SpU16VideoFrame_t & inVideoFrame);
+    ///
+    /// \throw  isx::ExceptionDataIO    If the frame data type does not match
+    ///                                 the movie data type.
+    /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
+    void writeFrame(const SpVideoFrame_t & inVideoFrame);
 
     /// Initialize for reading.
     ///
@@ -85,12 +90,14 @@ public:
     /// \param  inFileName      The name of the movie file.
     /// \param  inTimingInfo    The timing information of the movie.
     /// \param  inSpacingInfo   The spacing information of the movie.
+    /// \param  inDataType      The pixel value data type.
     ///
     /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the movie data fails.
     void initialize(const std::string & inFileName,
                     const TimingInfo & inTimingInfo,
-                    const SpacingInfo & inSpacingInfo);
+                    const SpacingInfo & inSpacingInfo,
+                    DataType inDataType);
 
     /// \return     The name of the file.
     ///
@@ -103,6 +110,10 @@ public:
     /// \return     The spacing information read from the movie.
     ///
     const isx::SpacingInfo & getSpacingInfo() const;
+
+    /// \return     The data type of a pixel value.
+    ///
+    DataType getDataType() const;
 
 private:
 
@@ -121,6 +132,9 @@ private:
     /// The header offset.
     std::ios::pos_type m_headerOffset;
 
+    /// The data type of the pixel values.
+    DataType m_dataType;
+
     /// Read the header to populate information about the movie.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the header from the file fails.
@@ -137,6 +151,36 @@ private:
     /// This seeks to the location in the file just after the header and
     /// writes from there.
     void writeZeroData();
+
+    /// \return     The size of a pixel value in bytes.
+    ///
+    isize_t getPixelSizeInBytes() const;
+
+    /// \return     The size of a row in bytes.
+    ///
+    isize_t getRowSizeInBytes() const;
+
+    /// \return     The size of a frame in bytes.
+    ///
+    isize_t getFrameSizeInBytes() const;
+
+    /// Seek to the location of a frame for reading.
+    ///
+    /// \param  inFile          The input file stream whose input position
+    ///                         will be modified to be at the given frame number.
+    /// \param  inFrameNumber   The number of the frame to which to seek.
+    void seekForReadFrame(
+            std::ifstream & inFile,
+            isize_t inFrameNumber);
+
+    /// Seek to the location of a frame for writing.
+    ///
+    /// \param  inFile          The output file stream whose output position
+    ///                         will be modified to be at the given frame number.
+    /// \param  inFrameNumber   The number of the frame to which to seek.
+    void seekForWriteFrame(
+            std::ofstream & inFile,
+            isize_t inFrameNumber);
 };
 
 }

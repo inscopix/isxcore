@@ -21,14 +21,15 @@ writeTestData(isx::SpWritableMovie_t & inMovie)
 
     for (isx::isize_t f = 0; f < numFrames; ++f)
     {
-        isx::SpU16VideoFrame_t frame = std::make_shared<isx::U16VideoFrame_t>(
+        isx::SpVideoFrame_t frame = std::make_shared<isx::VideoFrame>(
                 spacingInfo,
                 rowSizeInBytes,
                 1, // numChannels
+                inMovie->getDataType(),
                 timingInfo.convertIndexToStartTime(f),
                 f);
 
-        uint16_t * pixelArray = frame->getPixels();
+        uint16_t * pixelArray = frame->getPixelsAsU16();
         for (isx::isize_t p = 0; p < numPixels; ++p)
         {
             pixelArray[p] = uint16_t((f * numPixels) + p);
@@ -62,12 +63,12 @@ TEST_CASE("MovieFactoryReadMovieXml", "[core]")
         REQUIRE(movie->getTimingInfo() == timingInfo);
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
 
-        isx::SpU16VideoFrame_t firstFrame = movie->getFrame(0);
-        uint16_t * firstFrameArray = firstFrame->getPixels();
+        isx::SpVideoFrame_t firstFrame = movie->getFrame(0);
+        uint16_t * firstFrameArray = firstFrame->getPixelsAsU16();
         REQUIRE(firstFrameArray[0] == 835);
 
-        isx::SpU16VideoFrame_t lastFrame = movie->getFrame(numTimes - 1);
-        uint16_t * lastFrameArray = lastFrame->getPixels();
+        isx::SpVideoFrame_t lastFrame = movie->getFrame(numTimes - 1);
+        uint16_t * lastFrameArray = lastFrame->getPixelsAsU16();
         REQUIRE(lastFrameArray[0] == 809);
     }
 
@@ -90,12 +91,12 @@ TEST_CASE("MovieFactoryReadMovieXml", "[core]")
         REQUIRE(movie->getTimingInfo() == timingInfo);
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
 
-        isx::SpU16VideoFrame_t firstFrame = movie->getFrame(0);
-        uint16_t * firstFrameArray = firstFrame->getPixels();
+        isx::SpVideoFrame_t firstFrame = movie->getFrame(0);
+        uint16_t * firstFrameArray = firstFrame->getPixelsAsU16();
         REQUIRE(firstFrameArray[0] == 1416);
 
-        isx::SpU16VideoFrame_t lastFrame = movie->getFrame(numTimes - 1);
-        uint16_t * lastFrameArray = lastFrame->getPixels();
+        isx::SpVideoFrame_t lastFrame = movie->getFrame(numTimes - 1);
+        uint16_t * lastFrameArray = lastFrame->getPixelsAsU16();
         REQUIRE(lastFrameArray[0] == 721);
     }
 
@@ -125,12 +126,12 @@ TEST_CASE("MovieFactoryReadMovieHdf5", "[core]")
         REQUIRE(movie->getTimingInfo() == timingInfo);
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
 
-        isx::SpU16VideoFrame_t firstFrame = movie->getFrame(0);
-        uint16_t * firstFrameArray = firstFrame->getPixels();
+        isx::SpVideoFrame_t firstFrame = movie->getFrame(0);
+        uint16_t * firstFrameArray = firstFrame->getPixelsAsU16();
         REQUIRE(firstFrameArray[0] == 835);
 
-        isx::SpU16VideoFrame_t lastFrame = movie->getFrame(numTimes - 1);
-        uint16_t * lastFrameArray = lastFrame->getPixels();
+        isx::SpVideoFrame_t lastFrame = movie->getFrame(numTimes - 1);
+        uint16_t * lastFrameArray = lastFrame->getPixelsAsU16();
         REQUIRE(lastFrameArray[0] == 809);
     }
 
@@ -154,16 +155,18 @@ TEST_CASE("MovieFactoryMosaicMovie", "[core]")
     isx::PointInMicrons_t topLeft(0, 0);
     isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
+    isx::DataType dataType = isx::DataType::U16;
+
     SECTION("Write a Mosaic movie file")
     {
-        isx::SpWritableMovie_t movie = isx::writeMosaicMovie(fileName, timingInfo, spacingInfo);
+        isx::SpWritableMovie_t movie = isx::writeMosaicMovie(fileName, timingInfo, spacingInfo, dataType);
         REQUIRE(movie->isValid());
     }
 
     SECTION("Read a Mosaic movie file")
     {
         {
-            isx::SpWritableMovie_t movie = isx::writeMosaicMovie(fileName, timingInfo, spacingInfo);
+            isx::SpWritableMovie_t movie = isx::writeMosaicMovie(fileName, timingInfo, spacingInfo, dataType);
             writeTestData(movie);
         }
 
@@ -171,8 +174,8 @@ TEST_CASE("MovieFactoryMosaicMovie", "[core]")
 
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            isx::SpU16VideoFrame_t frame = movie->getFrame(f);
-            uint16_t * pixelArray = frame->getPixels();
+            isx::SpVideoFrame_t frame = movie->getFrame(f);
+            uint16_t * pixelArray = frame->getPixelsAsU16();
             isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {

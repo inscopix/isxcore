@@ -15,7 +15,8 @@ namespace isx
 
 /// Encapsulates a movie/recording from nVista stored in at least one HDF5 file.
 ///
-class NVistaHdf5Movie : public Movie, public std::enable_shared_from_this<NVistaHdf5Movie>
+class NVistaHdf5Movie : public Movie
+                      , public std::enable_shared_from_this<NVistaHdf5Movie>
 {
 public:
 
@@ -46,25 +47,15 @@ public:
         const TimingInfo & inTimingInfo = TimingInfo(),
         const SpacingInfo & inSpacingInfo = SpacingInfo());
 
-    /// Destructor
-    ///
-    ~NVistaHdf5Movie();
-
     // Overrides
     bool
     isValid() const override;
 
-    SpU16VideoFrame_t
+    SpVideoFrame_t
     getFrame(isize_t inFrameNumber) override;
-
-    SpU16VideoFrame_t
-    getFrame(const Time & inTime) override;
 
     void
     getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback) override;
-
-    void
-    getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback) override;
 
     void
     cancelPendingReads() override;
@@ -74,6 +65,9 @@ public:
 
     const isx::SpacingInfo &
     getSpacingInfo() const override;
+
+    DataType
+    getDataType() const override;
 
     std::string
     getFileName() const override;
@@ -121,7 +115,7 @@ private:
     /// Reads a frame directly from the associated file.
     ///
     /// The read occurs on whatever thread calls this function.
-    SpU16VideoFrame_t
+    SpVideoFrame_t
     getFrameInternal(isize_t inFrameNumber);
 
     /// Read/infer the timing info of this from the HDF5 movie files.

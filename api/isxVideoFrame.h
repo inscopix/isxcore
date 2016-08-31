@@ -1,148 +1,145 @@
-#ifndef ISX_VIDEOFRAME_H
-#define ISX_VIDEOFRAME_H
+#ifndef ISX_VIDEO_FRAME_H
+#define ISX_VIDEO_FRAME_H
 
+#include "isxCore.h"
+#include "isxCoreFwd.h"
 #include "isxTime.h"
 #include "isxImage.h"
-
-#include <vector>
-#include <cstdint>
-#include <cstddef>
 
 namespace isx
 {
 /// A class representing a VideoFrame in-memory
 /// This basically uses an Image and adds a timestap and a frameIndex
 ///
-template<typename T>
 class VideoFrame
 {
 public:
-    /// Default constructor
-    ///
-    VideoFrame(){}
 
-    /// Constructor
-    /// \param inWidth width of the image in pixels
-    /// \param inHeight height of the image in pixels
-    /// \param inRowBytes number of bytes between 
-    ///        column 0 of any two subsequent rows
-    /// \param inNumChannels number of data channels
-    ///        of type T per pixel (eg. RGBA would be 4)
-    /// \param inTimeStamp timestamp of this frame
-    /// \param inFrameIndex index of this frame in its movie
+    /// Empty constructor for allocation only.
     ///
-    VideoFrame(
-        isize_t inWidth, isize_t inHeight,
-        isize_t inRowBytes, isize_t inNumChannels,
-        Time inTimeStamp, isize_t inFrameIndex)
-        : m_image(inWidth, inHeight, inRowBytes, inNumChannels)
-        , m_timeStamp(inTimeStamp)
-        , m_frameIndex(inFrameIndex){}
+    VideoFrame();
 
-    /// Constructor
-    /// \param inSpacingInfo spacing info of the image
-    /// \param inRowBytes number of bytes between 
-    ///        column 0 of any two subsequent rows
-    /// \param inNumChannels number of data channels
-    ///        of type T per pixel (eg. RGBA would be 4)
-    /// \param inTimeStamp timestamp of this frame
-    /// \param inFrameIndex index of this frame in its movie
+    /// Constructor.
     ///
+    /// \param inSpacingInfo    Spacing info of the image.
+    /// \param inRowBytes       Number of bytes between column 0 of any two
+    ///                         subsequent rows
+    /// \param inNumChannels    Number of data channels per pixel (e.g.
+    ///                         RGBA would be 4)
+    /// \param inDataType       The data type of a pixel.
+    /// \param inTimeStamp      The timestamp of this frame in its ovie.
+    /// \param inFrameIndex     The index of this frame in its movie.
     VideoFrame(
-        const SpacingInfo & inSpacingInfo,
-        isize_t inRowBytes, isize_t inNumChannels,
-        Time inTimeStamp, isize_t inFrameIndex)
-        : m_image(inSpacingInfo, inRowBytes, inNumChannels)
-        , m_timeStamp(inTimeStamp)
-        , m_frameIndex(inFrameIndex){}
+            const SpacingInfo & inSpacingInfo,
+            isize_t inRowBytes,
+            isize_t inNumChannels,
+            DataType inDataType,
+            Time inTimeStamp,
+            isize_t inFrameIndex);
+
+    /// Construct a frame in a given movie.
+    ///
+    /// \param  inMovie         The movie of which to create a frame.
+    /// \param  inFrameNumber   The index of the frame in the given movie.
+    /// \return                 The created frame.
+    VideoFrame(const SpMovie_t & inMovie, isize_t inFrameNumber);
+
+    /// \return the image data for this videoframe
+    ///
+    Image &
+    getImage();
 
     /// \return the timestamp for this videoframe
     ///
     const Time &
-    getTimeStamp() const
-    {
-        return m_timeStamp;
-    }
+    getTimeStamp() const;
 
     /// \return the frame index for this videoframe
     ///
     isize_t
-    getFrameIndex() const
-    {
-        return m_frameIndex;
-    }
-
-    /// \return the image data for this videoframe
-    ///
-    Image<T> &
-    getImage()
-    {
-        return m_image;
-    }
+    getFrameIndex() const;
 
     /// \return the width of this image
     ///
     isize_t
-    getWidth() const
-    {
-        return m_image.getWidth();
-    }
+    getWidth() const;
 
     /// \return the height of this image
     ///
     isize_t
-    getHeight() const
-    {
-        return m_image.getHeight();
-    }
+    getHeight() const;
+
+    /// \return     The data type of each pixel in the frame.
+    ///
+    DataType
+    getDataType() const;
 
     /// \return the number of bytes between the first pixels of two neighboring rows
     /// note that this could be different from getPixelSizeInBytes() * getWidth()
     ///
     isize_t
-    getRowBytes() const
-    {
-        return m_image.getRowBytes();
-    }
-
-    /// \return the number of bytes between the first pixels of two neighboring rows
-    /// note that this could be different from getPixelSizeInBytes() * getWidth()
-    ///
-    isize_t
-    getNumChannels() const
-    {
-        return m_image.getNumChannels();
-    }
+    getNumChannels() const;
 
     /// \return the size of one pixel in bytes
     ///
     isize_t
-    getPixelSizeInBytes() const
-    {
-        return m_image.getPixelSizeInBytes();
-    }
+    getPixelSizeInBytes() const;
+
+    /// \return the number of bytes between the first pixels of two neighboring rows
+    /// note that this could be different from getPixelSizeInBytes() * getWidth()
+    ///
+    isize_t
+    getRowBytes() const;
 
     /// \return the size of this image in bytes
     ///
     isize_t
-    getImageSizeInBytes() const
-    {
-        return m_image.getImageSizeInBytes();
-    }
+    getImageSizeInBytes() const;
 
-    /// \return the address of the first pixel in memory
+    /// Get the address of the first byte of image data.
     ///
-    T *
-    getPixels()
-    {
-        return m_image.getPixels();
-    }
+    /// This should always succeed as long as the image is valid.
+    ///
+    /// \return     The address of the first byte of image data.
+    char *
+    getPixels();
+
+    /// Get the address of the first pixel of image data as uint16_t.
+    ///
+    /// This will fail if the underlying data type is not uint16_t.
+    ///
+    /// \return     The address of the first pixel of image data.
+    ///
+    /// \throw  isx::ExceptionDataIO    If the underlying data type is
+    ///                                 not uint16_t.
+    uint16_t *
+    getPixelsAsU16();
+
+    /// Get the address of the first pixel of image data as float.
+    ///
+    /// This will fail if the underlying data type is not float.
+    ///
+    /// \return     The address of the first pixel of image data.
+    ///
+    /// \throw  isx::ExceptionDataIO    If the underlying data type is
+    ///                                 not float.
+    float *
+    getPixelsAsF32();
 
 private:
-    Image<T>    m_image;
+
+    /// The image data and meta data of this frame.
+    Image       m_image;
+
+    /// The time stamp of this frame in its movie, which should correspond
+    /// to the beginning of its time window.
     Time        m_timeStamp;
+
+    /// The index of this frame in its movie.
     isize_t     m_frameIndex = 0;
 
 };
+
 } // namespace isx
-#endif // def ISX_VIDEOFRAME_H
+
+#endif // ISX_VIDEO_FRAME_H

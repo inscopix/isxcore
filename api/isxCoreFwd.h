@@ -2,7 +2,7 @@
 #define ISX_CORE_FWD_H
 
 #include <memory>
-
+#include <functional>
 
 #define FWD_DECLARE_WITH_PTRS( C ) \
 class C; \
@@ -14,6 +14,8 @@ namespace isx
 {
     FWD_DECLARE_WITH_PTRS(Movie);
     FWD_DECLARE_WITH_PTRS(WritableMovie);
+    FWD_DECLARE_WITH_PTRS(Image);
+    FWD_DECLARE_WITH_PTRS(VideoFrame);
     FWD_DECLARE_WITH_PTRS(Recording);
     FWD_DECLARE_WITH_PTRS(CellSet);
     FWD_DECLARE_WITH_PTRS(MovieSeries);
@@ -23,8 +25,8 @@ namespace isx
     FWD_DECLARE_WITH_PTRS(DispatchQueueInterface);
     FWD_DECLARE_WITH_PTRS(DispatchQueueWorker);
     FWD_DECLARE_WITH_PTRS(AsyncTaskHandle);
-} // namespace isx
 
+} // namespace isx
 
 #undef FWD_DECLARE_WITH_PTRS
 
