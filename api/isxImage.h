@@ -116,21 +116,12 @@ public:
     float *
     getPixelsAsF32();
 
-    /// \return the value of the requested pixel
+    /// \return the value of the requested pixel as float
     /// \param row row index
     /// \param col column index
-    T 
-    getPixelValue(isize_t row, isize_t col)
-    {
-        if(row > m_spacingInfo.getNumRows() || col > m_spacingInfo.getNumColumns())
-        {
-            ISX_THROW(ExceptionUserInput, "Bad row and/or column indices requested");
-        }
+    float 
+    getPixelValueAsF32(isize_t row, isize_t col);
 
-        isize_t idx = row * m_rowBytes / getPixelSizeInBytes() + col;
-
-        return m_pixels[idx];
-    }
 
 private:
 
