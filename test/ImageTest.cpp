@@ -10,8 +10,8 @@ TEST_CASE("ImageTest", "[core]") {
 
     SECTION("default constructor") 
     {
-        isx::Image<uint32_t> i;
-        uint32_t * p = 0;
+        isx::Image i;
+        char * p = 0;
         REQUIRE(i.getWidth() == 0);
         REQUIRE(i.getHeight() == 0);
         REQUIRE(i.getRowBytes() == 0);
@@ -27,12 +27,15 @@ TEST_CASE("ImageTest", "[core]") {
         const isx::isize_t h = 10;
         const isx::isize_t r = 128;
         const isx::isize_t c = 6;
+        const isx::DataType dataType = isx::DataType::U16;
+        const isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(w, h));
 
-        isx::Image<uint16_t> i(w, h, r, c);
+        isx::Image i(spacingInfo, r, c, dataType);
         REQUIRE(i.getWidth() == w);
         REQUIRE(i.getHeight() == h);
         REQUIRE(i.getRowBytes() == r);
         REQUIRE(i.getNumChannels() == c);
+        REQUIRE(i.getDataType() == dataType);
         REQUIRE(i.getPixelSizeInBytes() == 2 * c);
         REQUIRE(i.getImageSizeInBytes() == r * h);
 
@@ -44,7 +47,7 @@ TEST_CASE("ImageTest", "[core]") {
 
         // write, should have enough buffer space to not cause
         // access violation :)
-        uint16_t * p = i.getPixels();
+        uint16_t * p = i.getPixelsAsU16();
         memcpy(p, &buf[0], buf.size());
 
         // read, check if data is the same as what was written
@@ -61,7 +64,7 @@ TEST_CASE("ImageTest", "[core]") {
         isx::PointInMicrons_t topLeft(22, 44);
         isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
-        isx::Image<uint16_t> i(spacingInfo, r, c);
+        isx::Image i(spacingInfo, r, c, isx::DataType::U16);
 
         REQUIRE(i.getSpacingInfo() == spacingInfo);
     }

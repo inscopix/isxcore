@@ -1,4 +1,5 @@
 #include "isxCellSetFile.h"
+#include "isxImage.h"
 #include "isxException.h"
 #include "isxAssert.h"
 #include "isxJsonUtils.h"
@@ -93,7 +94,7 @@ namespace isx
         
     }
     
-    SpFImage_t 
+    SpImage_t 
     CellSetFile::readSegmentationImage(isize_t inCellId) 
     {
         std::fstream file(m_fileName, std::ios::binary | std::ios_base::in);
@@ -113,7 +114,11 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell segmentation image.");
         }        
 
-        SpFImage_t image = std::make_shared<FImage_t>(m_spacingInfo, sizeof(float) * m_spacingInfo.getNumColumns(), 1);
+        SpImage_t image = std::make_shared<Image>(
+                m_spacingInfo,
+                sizeof(float) * m_spacingInfo.getNumColumns(),
+                1,
+                DataType::F32);
         file.read(reinterpret_cast<char*>(image->getPixels()), image->getImageSizeInBytes());
         
         if (!file.good())
@@ -125,7 +130,7 @@ namespace isx
     }
     
     void 
-    CellSetFile::writeCellData(isize_t inCellId, Image<float> & inSegmentationImage, Trace<float> & inData)
+    CellSetFile::writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData)
     {
         // Input validity
         isize_t inImageSizeInBytes = inSegmentationImage.getImageSizeInBytes();
@@ -225,44 +230,17 @@ namespace isx
     CellSetFile::readHeader()
     {
         std::fstream file(m_fileName, std::ios::binary | std::ios::in);
-        if (!file.good())
-        {
-            ISX_THROW(isx::ExceptionFileIO,
-                "Error while reading cell set header: ", m_fileName);
-        }
-
-        std::string jsonStr;
-        file.seekg(std::ios_base::beg);
-        std::getline(file, jsonStr, '\0');
-        if (!file.good())
-        {
-            ISX_THROW(isx::ExceptionFileIO,
-                "Error while reading cell set header: ", m_fileName);
-        }
-
-        json j;
-        try
-        {
-            j = json::parse(jsonStr);
-        }
-        catch (const std::exception & error)
-        {
-            ISX_THROW(isx::ExceptionDataIO, "Error while parsing cell set header: ", error.what());
-        }
-        catch (...)
-        {
-            ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing cell set header.");
-        }
-
+        json j = readJsonHeader(file);
         m_headerOffset = file.tellg();
 
         try
         {
             std::string dataType = j["dataType"];
-            std::string type = j["type"];
-            if (type.compare("CellSet") != 0)
+            DataSet::Type type = DataSet::Type(size_t(j["type"]));
+            if (type != DataSet::Type::CELLSET)
             {
-                ISX_THROW(isx::ExceptionDataIO, "Expected type to be CellSet. Instead got ", type, ".");
+                ISX_THROW(isx::ExceptionDataIO,
+                        "Expected type to be CellSet. Instead got ", size_t(type), ".");
             }
             m_timingInfo = convertJsonToTimingInfo(j["timingInfo"]);
             m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
@@ -292,24 +270,10 @@ namespace isx
     void 
     CellSetFile::writeHeader(bool inTruncate)
     {
-        std::ios_base::openmode mode = std::ios::binary | std::ios::out;
-        
-        if(inTruncate)
-        {
-            mode |= std::ios::trunc;
-        }
-        
-        std::fstream file(m_fileName, mode);
-        if (!file.good())
-        {
-            ISX_THROW(isx::ExceptionFileIO,
-                "Failed to open cell set when writing header: ", m_fileName);
-        }
-
         json j;
         try
         {
-            j["type"] = "CellSet";
+            j["type"] = size_t(DataSet::Type::CELLSET);
             j["dataType"] = "float";
             j["timingInfo"] = convertTimingInfoToJson(m_timingInfo);
             j["spacingInfo"] = convertSpacingInfoToJson(m_spacingInfo);
@@ -325,16 +289,14 @@ namespace isx
             ISX_THROW(isx::ExceptionDataIO,
                 "Unknown error while generating cell set header.");
         }
-        
-        file.seekp(std::ios_base::beg);
-        file << std::setw(4) << j;
-        file << '\0';
-        if (!file.good())
-        {
-            ISX_THROW(isx::ExceptionFileIO,
-                "Failed to write header in cell set file: ", m_fileName);
-        }
 
+        std::ios_base::openmode mode = std::ios::binary | std::ios::out;
+        if(inTruncate)
+        {
+            mode |= std::ios::trunc;
+        }
+        std::fstream file(m_fileName, mode);
+        writeJsonHeader(j, file);
         m_headerOffset = file.tellp();
     }
     

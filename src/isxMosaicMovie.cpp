@@ -62,7 +62,8 @@ MosaicMovie::MosaicMovie(const std::string & inFileName)
 MosaicMovie::MosaicMovie(
     const std::string & inFileName,
     const TimingInfo & inTimingInfo,
-    const SpacingInfo & inSpacingInfo)
+    const SpacingInfo & inSpacingInfo,
+    const DataType inDataType)
     : m_valid(false)
 {
     // TODO sweet : decide if we want all IO on the IO thread or if
@@ -100,11 +101,9 @@ MosaicMovie::MosaicMovie(
     //mutex.unlock();
     //m_file = file;
 
-    m_file = std::make_shared<MosaicMovieFile>(inFileName, inTimingInfo, inSpacingInfo);
+    m_file = std::make_shared<MosaicMovieFile>(inFileName, inTimingInfo, inSpacingInfo, inDataType);
     m_valid = true;
 }
-
-MosaicMovie::~MosaicMovie(){}
 
 bool
 MosaicMovie::isValid() const
@@ -112,32 +111,25 @@ MosaicMovie::isValid() const
     return m_valid;
 }
 
-SpU16VideoFrame_t
+SpVideoFrame_t
 MosaicMovie::getFrame(isize_t inFrameNumber)
 {
-    SpU16VideoFrame_t outVideoFrame;
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("getFrame");
+    SpVideoFrame_t outFrame;
     getFrameAsync(inFrameNumber,
-        [&outVideoFrame, &cv, &mutex](const SpU16VideoFrame_t & inVideoFrame)
+        [&outFrame, &cv, &mutex](const SpVideoFrame_t & inFrame)
         {
             mutex.lock("getFrame async");
-            outVideoFrame = inVideoFrame;
+            outFrame = inFrame;
             mutex.unlock();
             cv.notifyOne();
         }
     );
     cv.wait(mutex);
     mutex.unlock();
-    return outVideoFrame;
-}
-
-SpU16VideoFrame_t
-MosaicMovie::getFrame(const Time & inTime)
-{
-    isize_t frameNum = getTimingInfo().convertTimeToIndex(inTime);
-    return getFrame(frameNum);
+    return outFrame;
 }
 
 void
@@ -146,7 +138,7 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
     // Only get a weak pointer to this, so that we don't bother reading
     // if this has been deleted when the read gets executed.
     std::weak_ptr<MosaicMovie> weakThis = shared_from_this();
-    
+
     uint64_t readRequestId = 0;
     {
         ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
@@ -175,6 +167,7 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
             switch (inStatus)
             {
                 case AsyncTaskStatus::ERROR_EXCEPTION:
+                {
                     try
                     {
                         std::rethrow_exception(rt->getExceptionPtr());
@@ -183,8 +176,9 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
                     {
                         ISX_LOG_ERROR("Exception occurred reading from NVistaHdf5Movie: ", e.what());
                     }
-                    inCallback(SpU16VideoFrame_t());
+                    inCallback(SpVideoFrame_t());
                     break;
+                }
 
                 case AsyncTaskStatus::UNKNOWN_ERROR:
                     ISX_LOG_ERROR("An error occurred while reading a frame from a MosaicMovie file");
@@ -201,19 +195,13 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
             }
         }
     );
-    
+
     {
         ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
         m_pendingReads[readRequestId] = readIoTask;
     }
     readIoTask->schedule();
-}
 
-void
-MosaicMovie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
-{
-    isize_t frameNumber = getTimingInfo().convertTimeToIndex(inTime);
-    getFrameAsync(frameNumber, inCallback);
 }
 
 SpAsyncTaskHandle_t
@@ -237,7 +225,7 @@ MosaicMovie::cancelPendingReads()
 }
 
 void
-MosaicMovie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
+MosaicMovie::writeFrame(const SpVideoFrame_t & inVideoFrame)
 {
     // Get a new shared pointer to the file, so we can guarantee the write.
     std::shared_ptr<MosaicMovieFile> file = m_file;
@@ -264,6 +252,23 @@ MosaicMovie::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
     mutex.unlock();
 }
 
+SpVideoFrame_t
+MosaicMovie::makeVideoFrame(isize_t inIndex)
+{
+    const SpacingInfo spacingInfo = getSpacingInfo();
+    const DataType dataType = getDataType();
+    const isize_t pixelSizeInBytes = getDataTypeSizeInBytes(dataType);
+    const isize_t rowSizeInBytes = pixelSizeInBytes * spacingInfo.getNumColumns();
+    SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
+            spacingInfo,
+            rowSizeInBytes,
+            1,
+            dataType,
+            getTimingInfo().convertIndexToStartTime(inIndex),
+            inIndex);
+    return outFrame;
+}
+
 const isx::TimingInfo &
 MosaicMovie::getTimingInfo() const
 {
@@ -274,6 +279,12 @@ const isx::SpacingInfo &
 MosaicMovie::getSpacingInfo() const
 {
     return m_file->getSpacingInfo();
+}
+
+DataType
+MosaicMovie::getDataType() const
+{
+    return m_file->getDataType();
 }
 
 std::string

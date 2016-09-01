@@ -48,6 +48,35 @@ createDataSetFromJson(Group * inGroup, const json & inJson);
 void
 createGroupTreeFromJson(Group * inGroup, const json & inJson);
 
+/// Reads a JSON header from an input stream.
+///
+/// This reads from the beginning of the stream.
+///
+/// \param  inStream    The input stream from which to read.
+/// \param  inNullTerm  If true, read until a null terminator.
+/// \return             The JSON structure.
+///
+/// \throw  isx::ExceptionFileIO    If reading the stream fails.
+/// \throw  isx::ExceptionDataIO    If parsing the JSON header fails.
+json
+readJsonHeader(std::istream & inStream, bool inNullTerm = true);
+
+/// Writes a JSON header to an output stream.
+///
+/// This writes from the beginning of the stream.
+///
+/// \param  inJsonObject    The JSON structure.
+/// \param  inStream        The output stream to which to write.
+/// \param  inNullTerm      If true, write a null terminator at the end
+///                         of the header.
+///
+/// \throw  isx::ExceptionFileIO    If writing the header fails.
+void
+writeJsonHeader(
+        const json & inJsonObject,
+        std::ostream & inStream,
+        bool inNullTerm = true);
+
 } // namespace isx
 
 #endif // ISX_JSON_UTILS_H

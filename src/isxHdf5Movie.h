@@ -8,7 +8,6 @@
 #include "isxHdf5Utils.h"
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
-#include "isxMovieDefs.h"
 
 
 namespace isx {    
@@ -40,11 +39,11 @@ namespace isx {
         /// Get a movie frame
         /// \param inFrameNumber frame index
         /// \param vf output
-        void getFrame(isize_t inFrameNumber, const SpU16VideoFrame_t & vf);
+        void getFrame(isize_t inFrameNumber, const SpVideoFrame_t & vf);
         
         /// Write a new frame to the movie
         /// \param inVideoFrame     video frame to write
-        void writeFrame(const SpU16VideoFrame_t & inVideoFrame);
+        void writeFrame(const SpVideoFrame_t & inVideoFrame);
 
         /// \return the total number of frames in the movie
         ///

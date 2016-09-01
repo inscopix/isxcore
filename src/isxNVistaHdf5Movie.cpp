@@ -1,8 +1,9 @@
 #include "isxNVistaHdf5Movie.h"
 #include "isxHdf5Utils.h"
 #include "isxMutex.h"
-#include "isxConditionVariable.h"
 #include "isxIoQueue.h"
+#include "isxConditionVariable.h"
+
 #include <iostream>
 #include <vector>
 #include <sstream>
@@ -44,50 +45,40 @@ NVistaHdf5Movie::NVistaHdf5Movie(
     initialize(inFileName, files, inTimingInfo, inSpacingInfo);
 }
 
-NVistaHdf5Movie::~NVistaHdf5Movie()
-{
-}
-
 bool
 NVistaHdf5Movie::isValid() const
 {
     return m_valid;
 }
 
-SpU16VideoFrame_t
+SpVideoFrame_t
 NVistaHdf5Movie::getFrame(isize_t inFrameNumber)
 {
-    SpU16VideoFrame_t ret;
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("getFrame");
-    getFrameAsync(inFrameNumber, [&ret, &cv, &mutex](const SpU16VideoFrame_t & inVideoFrame){
-        mutex.lock("getFrame async");
-        mutex.unlock();
-        ret = inVideoFrame;
-        cv.notifyOne();
-    });
-    bool didNotTimeOut = cv.waitForMs(mutex, 500);
+    SpVideoFrame_t outFrame;
+    getFrameAsync(inFrameNumber,
+        [&outFrame, &cv, &mutex](const SpVideoFrame_t & inFrame)
+        {
+            mutex.lock("getFrame async");
+            outFrame = inFrame;
+            mutex.unlock();
+            cv.notifyOne();
+        }
+    );
+    cv.wait(mutex);
     mutex.unlock();
-    if (didNotTimeOut == false)
-    {
-        ISX_THROW(isx::ExceptionDataIO, "getFrame timed out.\n");
-    }
-    return ret;
-}
-
-SpU16VideoFrame_t
-NVistaHdf5Movie::getFrame(const Time & inTime)
-{
-    isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
-    return getFrame(frameNumber);
+    return outFrame;
 }
 
 void
 NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
-    WpNVistaHdf5Movie_t weakThis = shared_from_this();
-    
+    // Only get a weak pointer to this, so that we don't bother reading
+    // if this has been deleted when the read gets executed.
+    std::weak_ptr<NVistaHdf5Movie> weakThis = shared_from_this();
+
     uint64_t readRequestId = 0;
     {
         ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
@@ -110,12 +101,13 @@ NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallba
             {
                 return;
             }
-            
+
             auto rt = unregisterReadRequest(readRequestId);
 
             switch (inStatus)
             {
                 case AsyncTaskStatus::ERROR_EXCEPTION:
+                {
                     try
                     {
                         std::rethrow_exception(rt->getExceptionPtr());
@@ -124,12 +116,12 @@ NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallba
                     {
                         ISX_LOG_ERROR("Exception occurred reading from NVistaHdf5Movie: ", e.what());
                     }
-                    inCallback(SpU16VideoFrame_t());
+                    inCallback(SpVideoFrame_t());
                     break;
+                }
 
                 case AsyncTaskStatus::UNKNOWN_ERROR:
-                    ISX_LOG_ERROR("An error occurred while reading a frame from an NVistaHdf5Movie file");
-                    inCallback(SpU16VideoFrame_t());
+                    ISX_LOG_ERROR("An error occurred while reading a frame from a NVistaHdf5Movie file");
                     break;
 
                 case AsyncTaskStatus::CANCELLED:
@@ -143,19 +135,12 @@ NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallba
             }
         }
     );
-    
+
     {
         ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
         m_pendingReads[readRequestId] = readIoTask;
     }
     readIoTask->schedule();
-}
-
-void
-NVistaHdf5Movie::getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback)
-{
-    isize_t frameNumber = m_timingInfo.convertTimeToIndex(inTime);
-    return getFrameAsync(frameNumber, inCallback);
 }
 
 SpAsyncTaskHandle_t
@@ -188,6 +173,12 @@ const isx::SpacingInfo &
 NVistaHdf5Movie::getSpacingInfo() const
 {
     return m_spacingInfo;
+}
+
+DataType
+NVistaHdf5Movie::getDataType() const
+{
+    return DataType::U16;
 }
 
 std::string
@@ -271,7 +262,6 @@ NVistaHdf5Movie::initTimingInfo(const std::vector<SpH5File_t> & inHdf5Files)
     }    
 }
 
-
 void
 NVistaHdf5Movie::initSpacingInfo(const std::vector<SpH5File_t> & inHdf5Files)
 {
@@ -281,16 +271,17 @@ NVistaHdf5Movie::initSpacingInfo(const std::vector<SpH5File_t> & inHdf5Files)
     }
 }
 
-SpU16VideoFrame_t
+SpVideoFrame_t
 NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber)
 {
-    Time frameTime = m_timingInfo.convertIndexToStartTime(inFrameNumber);
     SpacingInfo si = getSpacingInfo();
-    auto nvf = std::make_shared<U16VideoFrame_t>(
-        si.getNumColumns(), si.getNumRows(),
+    auto outFrame = std::make_shared<VideoFrame>(
+        si,
         sizeof(uint16_t) * si.getNumColumns(),
         1, // numChannels
-        frameTime, inFrameNumber);
+        getDataType(),
+        m_timingInfo.convertIndexToStartTime(inFrameNumber),
+        inFrameNumber);
 
     isize_t newFrameNumber = inFrameNumber;
     isize_t idx = getMovieIndex(inFrameNumber);
@@ -299,8 +290,9 @@ NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber)
         newFrameNumber = inFrameNumber - m_cumulativeFrames[idx - 1];
     }
 
-    m_movies[idx]->getFrame(newFrameNumber, nvf);
-    return nvf;
+    m_movies[idx]->getFrame(newFrameNumber, outFrame);
+
+    return outFrame;
 }
 
 bool
@@ -375,7 +367,6 @@ NVistaHdf5Movie::readTimingInfo(std::vector<SpH5File_t> inHdf5Files)
 
     return bInitializedFromFile;
 }
-
 
 bool
 NVistaHdf5Movie::readSpacingInfo(std::vector<SpH5File_t> inHdf5Files)

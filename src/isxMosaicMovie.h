@@ -9,7 +9,6 @@
 #include <memory>
 #include <map>
 
-
 namespace isx
 {
 
@@ -30,9 +29,6 @@ public:
     /// This creates a valid c++ object but an invalid movie.
     MosaicMovie();
 
-    /// Destructor
-    ~MosaicMovie();
-
     /// Read constructor.
     ///
     /// This opens an existing movie from a file.
@@ -51,37 +47,40 @@ public:
     /// \param  inFileName      The name of the movie file.
     /// \param  inTimingInfo    The timing information of the movie.
     /// \param  inSpacingInfo   The spacing information of the movie.
+    /// \param  inDataType      The pixel value data type.
     ///
     /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the movie data fails.
     MosaicMovie(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
-                const SpacingInfo & inSpacingInfo);
+                const SpacingInfo & inSpacingInfo,
+                DataType inDataType);
 
     // Overrides - see base classes for documentation
     bool isValid() const override;
 
-    SpU16VideoFrame_t getFrame(isize_t inFrameNumber) override;
-
-    SpU16VideoFrame_t getFrame(const Time & inTime) override;
+    SpVideoFrame_t getFrame(isize_t inFrameNumber) override;
 
     void getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback) override;
 
-    void getFrameAsync(const Time & inTime, MovieGetFrameCB_t inCallback) override;
-
     void cancelPendingReads() override;
 
-    void writeFrame(const SpU16VideoFrame_t & inVideoFrame) override;
+    void writeFrame(const SpVideoFrame_t & inVideoFrame) override;
+
+    SpVideoFrame_t makeVideoFrame(isize_t inIndex) override;
 
     const isx::TimingInfo & getTimingInfo() const override;
 
     const isx::SpacingInfo & getSpacingInfo() const override;
+
+    DataType getDataType() const override;
 
     std::string getFileName() const override;
 
     void serialize(std::ostream & strm) const override;
 
 private:
+
     /// remove read request from our pending reads
     /// \param inReadRequestId Id of request to remove
     /// \return AsyncTaskHandle for the removed read request
@@ -98,5 +97,6 @@ private:
     std::map<uint64_t, SpAsyncTaskHandle_t> m_pendingReads;
 };
 
-}
+} // namespace isx
+
 #endif // ISX_MOSAIC_MOVIE_H

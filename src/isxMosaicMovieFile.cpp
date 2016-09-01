@@ -21,14 +21,11 @@ MosaicMovieFile::MosaicMovieFile(const std::string & inFileName)
 MosaicMovieFile::MosaicMovieFile(
     const std::string & inFileName,
     const TimingInfo & inTimingInfo,
-    const SpacingInfo & inSpacingInfo)
+    const SpacingInfo & inSpacingInfo,
+    DataType inDataType)
     : m_valid(false)
 {
-    initialize(inFileName, inTimingInfo, inSpacingInfo);
-}
-
-MosaicMovieFile::~MosaicMovieFile()
-{
+    initialize(inFileName, inTimingInfo, inSpacingInfo, inDataType);
 }
 
 void
@@ -41,13 +38,16 @@ MosaicMovieFile::initialize(const std::string & inFileName)
 }
 
 void
-MosaicMovieFile::initialize(const std::string & inFileName,
-                const TimingInfo & inTimingInfo,
-                const SpacingInfo & inSpacingInfo)
+MosaicMovieFile::initialize(
+        const std::string & inFileName,
+        const TimingInfo & inTimingInfo,
+        const SpacingInfo & inSpacingInfo,
+        DataType inDataType)
 {
     m_fileName = inFileName;
     m_timingInfo = inTimingInfo;
     m_spacingInfo = inSpacingInfo;
+    m_dataType = inDataType;
     writeHeader();
     writeZeroData();
     m_valid = true;
@@ -59,77 +59,50 @@ MosaicMovieFile::isValid() const
     return m_valid;
 }
 
-SpU16VideoFrame_t
+SpVideoFrame_t
 MosaicMovieFile::readFrame(isize_t inFrameNumber)
 {
-    //std::ifstream file = openForReadOnly();
     std::ifstream file(m_fileName, std::ios::binary);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open movie file when reading frame: ", m_fileName);
-    }
-
-    isize_t rowSizeInBytes = sizeof(uint16_t) * m_spacingInfo.getNumColumns();
-    isize_t frameSizeInBytes = sizeof(uint16_t) * m_spacingInfo.getTotalNumPixels();
+    seekForReadFrame(file, inFrameNumber);
 
     // TODO sweet : check to see if frame number exceeds number of frames
     // instead of returning the last frame.
-    Time frameTime = m_timingInfo.convertIndexToStartTime(inFrameNumber);
-    SpU16VideoFrame_t frame = std::make_shared<U16VideoFrame_t>(
+    SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
         m_spacingInfo,
-        rowSizeInBytes,
-        1, // numChannels
-        frameTime, inFrameNumber);
+        getRowSizeInBytes(),
+        1,
+        m_dataType,
+        m_timingInfo.convertIndexToStartTime(inFrameNumber),
+        inFrameNumber);
 
-    isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
-    file.seekg(m_headerOffset);
-    file.seekg(offsetInBytes, std::ios_base::cur);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO, "Error seeking movie frame for read.");
-    }
+    file.read(outFrame->getPixels(), getFrameSizeInBytes());
 
-    file.read(reinterpret_cast<char*>(frame->getPixels()), frameSizeInBytes);
     if (!file.good())
     {
         ISX_THROW(isx::ExceptionFileIO, "Error reading movie frame.");
     }
 
-    return frame;
+    return outFrame;
 }
 
 void
-MosaicMovieFile::writeFrame(const SpU16VideoFrame_t & inVideoFrame)
+MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
 {
     std::ofstream file(m_fileName, std::ios::binary | std::ios::in);
-    if (!file.good())
+    seekForWriteFrame(file, inVideoFrame->getFrameIndex());
+
+    const DataType frameDataType = inVideoFrame->getDataType();
+    if (frameDataType == m_dataType)
     {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open movie file when writing frame: ", m_fileName);
+        file.write(inVideoFrame->getPixels(), getFrameSizeInBytes());
+    }
+    else
+    {
+        ISX_THROW(isx::ExceptionDataIO,
+                "Frame pixel type (", int(frameDataType),
+                ") does not match movie data type (", int(m_dataType), ").");
     }
 
-    isize_t frameSizeInBytes = sizeof(uint16_t) * m_spacingInfo.getTotalNumPixels();
-
-    //// TODO sweet : check to see if time is outside of sample window instead
-    //// of overwriting first or last frame data?
-    isize_t frameNumber = inVideoFrame->getFrameIndex();
-    isize_t numFrames = m_timingInfo.getNumTimes();
-    if (frameNumber >= numFrames)
-    {
-        frameNumber = numFrames - 1;
-    }
-
-    isize_t offsetInBytes = frameNumber * frameSizeInBytes;
-    file.seekp(m_headerOffset);
-    file.seekp(offsetInBytes, std::ios_base::cur);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Error seeking movie frame for write.", m_fileName);
-    }
-
-    file.write(reinterpret_cast<char*>(inVideoFrame->getPixels()), frameSizeInBytes);
     if (!file.good())
     {
         ISX_THROW(isx::ExceptionFileIO,
@@ -155,48 +128,28 @@ MosaicMovieFile::getSpacingInfo() const
     return m_spacingInfo;
 }
 
+DataType
+MosaicMovieFile::getDataType() const
+{
+    return m_dataType;
+}
+
 void
 MosaicMovieFile::readHeader()
 {
     std::ifstream file(m_fileName, std::ios::binary);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Error while reading movie header: ", m_fileName);
-    }
-
-    std::string jsonStr;
-    file.seekg(std::ios_base::beg);
-    std::getline(file, jsonStr, '\0');
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Error while reading movie header: ", m_fileName);
-    }
-
-    json j;
-    try
-    {
-        j = json::parse(jsonStr);
-    }
-    catch (const std::exception & error)
-    {
-        ISX_THROW(isx::ExceptionDataIO, "Error while parsing movie header: ", error.what());
-    }
-    catch (...)
-    {
-        ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing movie header.");
-    }
-
+    json j = readJsonHeader(file);
     m_headerOffset = file.tellg();
 
     try
     {
-        std::string dataType = j["dataType"];
-        std::string type = j["type"];
-        if (type.compare("Movie") != 0)
+        // TODO sweet : extra check to see if data type is recognized
+        m_dataType = DataType(isize_t(j["dataType"]));
+        DataSet::Type type = DataSet::Type(size_t(j["type"]));
+        if (type != DataSet::Type::MOVIE)
         {
-            ISX_THROW(isx::ExceptionDataIO, "Expected type to be Movie. Instead got ", type, ".");
+            ISX_THROW(isx::ExceptionDataIO,
+                    "Expected type to be Movie. Instead got ", size_t(type), ".");
         }
         m_timingInfo = convertJsonToTimingInfo(j["timingInfo"]);
         m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
@@ -214,19 +167,11 @@ MosaicMovieFile::readHeader()
 void
 MosaicMovieFile::writeHeader()
 {
-    std::ofstream file(m_fileName, std::ios::binary | std::ios::trunc);
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open movie when writing header: ", m_fileName);
-    }
-
     json j;
     try
     {
-        j["type"] = "Movie";
-        // TODO sweet : data type is uint16 for now, but needs to be more general
-        j["dataType"] = "uint16";
+        j["dataType"] = isize_t(m_dataType);
+        j["type"] = size_t(DataSet::Type::MOVIE);
         j["timingInfo"] = convertTimingInfoToJson(m_timingInfo);
         j["spacingInfo"] = convertSpacingInfoToJson(m_spacingInfo);
         // TODO sweet : these aren't in the state of a movie right now, but they
@@ -246,14 +191,8 @@ MosaicMovieFile::writeHeader()
             "Unknown error while generating movie header.");
     }
 
-    file << std::setw(4) << j;
-    file << '\0';
-    if (!file.good())
-    {
-        ISX_THROW(isx::ExceptionFileIO,
-            "Failed to write header in movie file: ", m_fileName);
-    }
-
+    std::ofstream file(m_fileName, std::ios::binary | std::ios::trunc);
+    writeJsonHeader(j, file);
     m_headerOffset = file.tellp();
 }
 
@@ -275,21 +214,104 @@ MosaicMovieFile::writeZeroData()
     }
 
     // Create a zero frame buffer once.
-    isize_t numPixels = m_spacingInfo.getTotalNumPixels();
-    isize_t frameSizeInBytes = sizeof(uint16_t) * numPixels;
-    std::vector<uint16_t> frameVec(numPixels, 0);
-    char* frameBuf = reinterpret_cast<char*>(frameVec.data());
+    const isize_t frameSizeInBytes = getFrameSizeInBytes();
+    std::vector<char> frameBuf(frameSizeInBytes, 0);
 
     // Write the frames to file one by one.
-    for (isize_t i = 0; i < m_timingInfo.getNumTimes(); ++i)
+    isize_t numFrames = m_timingInfo.getNumTimes();
+    for (isize_t i = 0; i < numFrames; ++i)
     {
-        file.write(frameBuf, frameSizeInBytes);
+        file.write(frameBuf.data(), frameSizeInBytes);
     }
 
     if (!file.good())
     {
         ISX_THROW(isx::ExceptionFileIO,
             "Failed to write zero data in movie file: ", m_fileName);
+    }
+}
+
+isize_t
+MosaicMovieFile::getPixelSizeInBytes() const
+{
+    isize_t sizeInBytes = getDataTypeSizeInBytes(m_dataType);
+    if (sizeInBytes == 0)
+    {
+        ISX_THROW(isx::ExceptionDataIO,
+                "Unrecognized pixel size type: ", m_dataType);
+    }
+    return sizeInBytes;
+}
+
+isize_t
+MosaicMovieFile::getRowSizeInBytes() const
+{
+    return (getPixelSizeInBytes() * m_spacingInfo.getNumColumns());
+}
+
+isize_t
+MosaicMovieFile::getFrameSizeInBytes() const
+{
+    return (getPixelSizeInBytes() * m_spacingInfo.getTotalNumPixels());
+}
+
+void
+MosaicMovieFile::seekForReadFrame(
+        std::ifstream & inFile,
+        isize_t inFrameNumber)
+{
+    if (!inFile.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Failed to open movie file when reading frame: ", m_fileName);
+    }
+
+    // TODO sweet : check to see if time is outside of sample window instead
+    // of reading last frame data
+    const isize_t numFrames = m_timingInfo.getNumTimes();
+    if (inFrameNumber >= numFrames)
+    {
+        inFrameNumber = numFrames - 1;
+    }
+
+    const isize_t frameSizeInBytes = getFrameSizeInBytes();
+    const isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
+    inFile.seekg(m_headerOffset);
+    inFile.seekg(offsetInBytes, std::ios_base::cur);
+    if (!inFile.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Error seeking movie frame for read.", m_fileName);
+    }
+}
+
+void
+MosaicMovieFile::seekForWriteFrame(
+        std::ofstream & inFile,
+        isize_t inFrameNumber)
+{
+    if (!inFile.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Failed to open movie file when writing frame: ", m_fileName);
+    }
+
+    // TODO sweet : check to see if time is outside of sample window instead
+    // of overwriting last frame data
+    const isize_t numFrames = m_timingInfo.getNumTimes();
+    if (inFrameNumber >= numFrames)
+    {
+        inFrameNumber = numFrames - 1;
+    }
+
+    const isize_t frameSizeInBytes = getFrameSizeInBytes();
+    const isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
+    inFile.seekp(m_headerOffset);
+    inFile.seekp(offsetInBytes, std::ios_base::cur);
+    if (!inFile.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Error seeking movie frame for write.", m_fileName);
     }
 }
 
