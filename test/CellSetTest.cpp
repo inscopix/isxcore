@@ -2,6 +2,7 @@
 #include "catch.hpp"
 #include "isxTest.h"
 #include "isxException.h"
+#include <cstring>
 
 namespace
 {
@@ -12,11 +13,10 @@ namespace
 ///
 /// \param  inActual    The actual trace.
 /// \param  inExpected  The expected trace.
-template <typename T>
 void
 requireEqualTraces(
-        const std::shared_ptr<isx::Trace<T>> & inActual,
-        const std::shared_ptr<isx::Trace<T>> & inExpected)
+        const isx::SpFTrace_t & inActual,
+        const isx::SpFTrace_t & inExpected)
 {
     const isx::TimingInfo timingInfo = inExpected->getTimingInfo();
 
@@ -24,8 +24,8 @@ requireEqualTraces(
 
     const isx::isize_t numTimes = timingInfo.getNumTimes();
 
-    T * actualValues = inActual->getValues();
-    T * expectedValues = inExpected->getValues();
+    float * actualValues = inActual->getValues();
+    float * expectedValues = inExpected->getValues();
     for (isx::isize_t i = 0; i < numTimes; ++i)
     {
         REQUIRE(actualValues[i] == expectedValues[i]);
