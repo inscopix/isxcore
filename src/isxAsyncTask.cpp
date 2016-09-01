@@ -94,7 +94,7 @@ CreateAsyncTask(AsyncFunc_t inTask, AsyncProgressCB_t inProgressCB, AsyncFinishe
 
 void
 checkAsyncTaskStatus(
-        SpAsyncTaskHandle_t inTask,
+        const SpAsyncTaskHandle_t & inTask,
         AsyncTaskStatus inStatus,
         const std::string & inTaskName)
 {
