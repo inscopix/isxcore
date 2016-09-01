@@ -33,8 +33,19 @@ typedef std::function<void(float)> AsyncProgressCB_t;
 SpAsyncTaskHandle_t 
 CreateAsyncTask(AsyncFunc_t inTask, AsyncProgressCB_t inProgressCB, AsyncFinishedCB_t inFinishedCB);
 
-    
-} // namespace isx
+/// Check the status of an asynchronous task.
+///
+/// This simply logs errors/info and does not throw exceptions.
+///
+/// \param  inTask      The task used to rethrow an exception if needed.
+/// \param  inStatus    The status to check.
+/// \param  inTaskName  The name of the task.
+void
+checkAsyncTaskStatus(
+        SpAsyncTaskHandle_t inTask,
+        AsyncTaskStatus inStatus,
+        const std::string & inTaskName);
 
+} // namespace isx
 
 #endif // def ISX_ASYNC_H

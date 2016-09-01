@@ -164,34 +164,10 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 
             auto rt = unregisterReadRequest(readRequestId);
 
-            switch (inStatus)
+            checkAsyncTaskStatus(rt, inStatus, "MosaicMovie::getFrameAsync");
+            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
             {
-                case AsyncTaskStatus::ERROR_EXCEPTION:
-                {
-                    try
-                    {
-                        std::rethrow_exception(rt->getExceptionPtr());
-                    }
-                    catch(std::exception & e)
-                    {
-                        ISX_LOG_ERROR("Exception occurred reading from NVistaHdf5Movie: ", e.what());
-                    }
-                    inCallback(SpVideoFrame_t());
-                    break;
-                }
-
-                case AsyncTaskStatus::UNKNOWN_ERROR:
-                    ISX_LOG_ERROR("An error occurred while reading a frame from a MosaicMovie file");
-                    break;
-
-                case AsyncTaskStatus::CANCELLED:
-                    ISX_LOG_INFO("getFrameAsync request cancelled.");
-                    break;
-
-                case AsyncTaskStatus::COMPLETE:
-                case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
-                case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
-                    break;
+                inCallback(SpVideoFrame_t());
             }
         }
     );

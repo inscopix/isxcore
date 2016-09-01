@@ -1,6 +1,7 @@
 #include "isxAsync.h"
 #include "isxAsyncTask.h"
 #include "isxDispatchQueue.h"
+#include "isxLog.h"
 
 namespace isx
 {
@@ -90,5 +91,41 @@ CreateAsyncTask(AsyncFunc_t inTask, AsyncProgressCB_t inProgressCB, AsyncFinishe
 {
     return std::make_shared<AsyncTask>(inTask, inProgressCB, inFinishedCB);
 }
-    
+
+void
+checkAsyncTaskStatus(
+        SpAsyncTaskHandle_t inTask,
+        AsyncTaskStatus inStatus,
+        const std::string & inTaskName)
+{
+    switch (inStatus)
+    {
+        case AsyncTaskStatus::ERROR_EXCEPTION:
+            {
+                try
+                {
+                    std::rethrow_exception(inTask->getExceptionPtr());
+                }
+                catch(std::exception & e)
+                {
+                    ISX_LOG_ERROR("Exception occurred during an async task: ", e.what());
+                }
+                break;
+            }
+
+        case AsyncTaskStatus::UNKNOWN_ERROR:
+            ISX_LOG_ERROR("An error occurred during an async task:");
+            break;
+
+        case AsyncTaskStatus::CANCELLED:
+            ISX_LOG_INFO("getFrameAsync request cancelled.");
+            break;
+
+        case AsyncTaskStatus::COMPLETE:
+        case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
+        case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
+            break;
+    }
+}
+
 } // namespace isx

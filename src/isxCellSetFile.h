@@ -89,6 +89,7 @@ public:
     /// \param inData the trace to write
     /// If cell ID already exists, it will overwrite its data. Otherwise, it will be appended
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or writing fails.
+    /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
     void writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData);
     
     /// \return if the cell is valid 
