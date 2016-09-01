@@ -12,7 +12,7 @@ CellSet::CellSet()
 
 CellSet::CellSet(const std::string & inFileName)
 {
-    m_file = std::unique_ptr<CellSetFile>(new CellSetFile(inFileName));
+    m_file = std::make_shared<CellSetFile>(inFileName);
     m_valid = true;
 }
 
@@ -21,8 +21,7 @@ CellSet::CellSet(
         const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo)
 {
-    m_file = std::unique_ptr<CellSetFile>(new CellSetFile(
-                inFileName, inTimingInfo, inSpacingInfo));
+    m_file = std::make_shared<CellSetFile>(inFileName, inTimingInfo, inSpacingInfo);
     m_valid = true;
 }
 
@@ -202,7 +201,30 @@ CellSet::writeImageAndTrace(
         SpImage_t & inImage,
         SpFTrace_t & inTrace)
 {
-    m_file->writeCellData(inIndex, *inImage, *inTrace);
+    // Get a new shared pointer to the file, so we can guarantee the write.
+    std::shared_ptr<CellSetFile> file = m_file;
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("CellSet::writeImageAndTrace");
+    auto writeIoTask = std::make_shared<IoTask>(
+        [file, inIndex, inImage, inTrace]()
+        {
+            file->writeCellData(inIndex, *inImage, *inTrace);
+        },
+        [&cv, &mutex](AsyncTaskStatus inStatus)
+        {
+            if (inStatus != AsyncTaskStatus::COMPLETE)
+            {
+                ISX_LOG_ERROR("An error occurred while writing image and trace data to a CellSet.");
+            }
+            // will only be able to take lock when client reaches cv.wait
+            mutex.lock("CellSetwriteImageAndTrace finished");
+            mutex.unlock();
+            cv.notifyOne();
+        });
+    writeIoTask->schedule();
+    cv.wait(mutex);
+    mutex.unlock();
 }
 
 bool

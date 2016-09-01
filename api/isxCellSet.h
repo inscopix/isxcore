@@ -126,6 +126,9 @@ public:
     /// If the cell already exists, it will overwrite its data.
     /// Otherwise, it will be appended.
     ///
+    /// This write is performed on the IoQueue, but this function waits
+    /// until it is complete.
+    ///
     /// \param  inIndex     The index of the cell.
     /// \param  inImage     The cell image data to write.
     /// \param  inTrace     The cell trace data to write.
@@ -160,7 +163,7 @@ private:
     bool m_valid = false;
 
     /// The cell set file to read/write from/to.
-    std::unique_ptr<CellSetFile> m_file;
+    std::shared_ptr<CellSetFile> m_file;
 
     /// The number of read requests since this was created.
     uint64_t m_readRequestCount = 0;
