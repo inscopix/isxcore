@@ -98,6 +98,7 @@ checkAsyncTaskStatus(
         AsyncTaskStatus inStatus,
         const std::string & inTaskName)
 {
+    const std::string taskStr = "async task (" + inTaskName + ")";
     switch (inStatus)
     {
         case AsyncTaskStatus::ERROR_EXCEPTION:
@@ -108,17 +109,17 @@ checkAsyncTaskStatus(
                 }
                 catch(std::exception & e)
                 {
-                    ISX_LOG_ERROR("Exception occurred during an async task: ", e.what());
+                    ISX_LOG_ERROR("Exception occurred during ", taskStr, ": ", e.what());
                 }
                 break;
             }
 
         case AsyncTaskStatus::UNKNOWN_ERROR:
-            ISX_LOG_ERROR("An error occurred during an async task:");
+            ISX_LOG_ERROR("An error occurred during ", taskStr, ".");
             break;
 
         case AsyncTaskStatus::CANCELLED:
-            ISX_LOG_INFO("getFrameAsync request cancelled.");
+            ISX_LOG_INFO(taskStr, " cancelled.");
             break;
 
         case AsyncTaskStatus::COMPLETE:
