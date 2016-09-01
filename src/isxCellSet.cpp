@@ -197,7 +197,7 @@ CellSet::getImageAsync(isize_t inIndex, GetImageCB_t inCallback)
 }
 
 void
-CellSet::setImageAndTrace(
+CellSet::writeImageAndTrace(
         isize_t inIndex,
         SpImage_t & inImage,
         SpFTrace_t & inTrace)

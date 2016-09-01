@@ -156,7 +156,7 @@ TEST_CASE("CellSetTest", "[core]")
     {
         isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
                 fileName, timingInfo, spacingInfo);
-        cellSet->setImageAndTrace(0, originalImage, originalTrace);
+        cellSet->writeImageAndTrace(0, originalImage, originalTrace);
 
         REQUIRE(cellSet->getNumCells() == 1);
         REQUIRE(cellSet->isCellValid(0) == true);
@@ -169,7 +169,7 @@ TEST_CASE("CellSetTest", "[core]")
         {
             isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
                     fileName, timingInfo, spacingInfo);
-            cellSet->setImageAndTrace(0, originalImage, originalTrace);
+            cellSet->writeImageAndTrace(0, originalImage, originalTrace);
         }
         isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(fileName);
 
@@ -185,7 +185,7 @@ TEST_CASE("CellSetTest", "[core]")
                 fileName, timingInfo, spacingInfo);
         for (size_t i = 0; i < 3; ++i)
         {
-            cellSet->setImageAndTrace(i, originalImage, originalTrace);
+            cellSet->writeImageAndTrace(i, originalImage, originalTrace);
         }
         cellSet->setCellValid(0, true);
         cellSet->setCellValid(1, false);
@@ -210,7 +210,7 @@ TEST_CASE("CellSetTest", "[core]")
                     fileName, timingInfo, spacingInfo);
             for (size_t i = 0; i < 3; ++i)
             {
-                cellSet->setImageAndTrace(i, originalImage, originalTrace);
+                cellSet->writeImageAndTrace(i, originalImage, originalTrace);
             }
             cellSet->setCellValid(0, true);
             cellSet->setCellValid(1, false);
@@ -236,7 +236,7 @@ TEST_CASE("CellSetTest", "[core]")
                 fileName, timingInfo, spacingInfo);
         for (size_t i = 0; i < 3; ++i)
         {
-            cellSet->setImageAndTrace(i, originalImage, originalTrace);
+            cellSet->writeImageAndTrace(i, originalImage, originalTrace);
         }
 
         isx::CellSet::GetTraceCB_t callBack = [originalTrace](const isx::SpFTrace_t inTrace)
@@ -255,7 +255,7 @@ TEST_CASE("CellSetTest", "[core]")
                 fileName, timingInfo, spacingInfo);
         for (size_t i = 0; i < 3; ++i)
         {
-            cellSet->setImageAndTrace(i, originalImage, originalTrace);
+            cellSet->writeImageAndTrace(i, originalImage, originalTrace);
         }
 
         isx::CellSet::GetImageCB_t callBack = [originalImage](const isx::SpImage_t inImage)

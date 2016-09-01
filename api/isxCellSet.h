@@ -121,7 +121,7 @@ public:
     /// \param  inCallback  The call back that operates on the image.
     void getImageAsync(isize_t inIndex, GetImageCB_t inCallback);
 
-    /// Set image and trace data for a cell.
+    /// Write the image and trace data for a cell.
     ///
     /// If the cell already exists, it will overwrite its data.
     /// Otherwise, it will be appended.
@@ -131,7 +131,7 @@ public:
     /// \param  inTrace     The cell trace data to write.
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or writing fails.
     /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
-    void setImageAndTrace(
+    void writeImageAndTrace(
             isize_t inIndex,
             SpImage_t & inImage,
             SpFTrace_t & inTrace);
