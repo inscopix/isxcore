@@ -17,6 +17,7 @@ namespace isx
     FWD_DECLARE_WITH_PTRS(Image);
     FWD_DECLARE_WITH_PTRS(VideoFrame);
     FWD_DECLARE_WITH_PTRS(Recording);
+    FWD_DECLARE_WITH_PTRS(CellSet);
     FWD_DECLARE_WITH_PTRS(MovieSeries);
     FWD_DECLARE_WITH_PTRS(Project);
     FWD_DECLARE_WITH_PTRS(ProjectFile);

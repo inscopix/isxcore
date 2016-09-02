@@ -119,7 +119,7 @@ namespace isx
                 sizeof(float) * m_spacingInfo.getNumColumns(),
                 1,
                 DataType::F32);
-        file.read(reinterpret_cast<char*>(image->getPixels()), image->getImageSizeInBytes());
+        file.read(image->getPixels(), image->getImageSizeInBytes());
         
         if (!file.good())
         {
@@ -132,6 +132,14 @@ namespace isx
     void 
     CellSetFile::writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData)
     {
+        // Check that image is F32
+        const DataType dataType = inSegmentationImage.getDataType();
+        if (dataType != DataType::F32)
+        {
+            ISX_THROW(isx::ExceptionDataIO,
+                    "Expected F32 data type, instead got: ", dataType);
+        }
+
         // Input validity
         isize_t inImageSizeInBytes = inSegmentationImage.getImageSizeInBytes();
         isize_t fImageSizeInBytes = segmentationImageSizeInBytes();
@@ -178,7 +186,7 @@ namespace isx
         
         char valid = 1;
         file.write(&valid, sizeof(char));
-        file.write(reinterpret_cast<char*>(inSegmentationImage.getPixels()), inImageSizeInBytes);
+        file.write(inSegmentationImage.getPixels(), inImageSizeInBytes);
         file.write(reinterpret_cast<char*>(inData.getValues()), traceSizeInBytes());
         if (!file.good())
         {
