@@ -5,6 +5,7 @@
 
 #include "isxSpacingInfo.h"
 #include "isxCore.h"
+#include "isxException.h"
 
 namespace isx
 {
@@ -114,6 +115,13 @@ public:
     ///                                 not float.
     float *
     getPixelsAsF32();
+
+    /// \return the value of the requested pixel as float
+    /// \param row row index
+    /// \param col column index
+    float 
+    getPixelValueAsF32(isize_t row, isize_t col);
+
 
 private:
 

@@ -116,4 +116,40 @@ Image::getPixelsAsF32()
     return reinterpret_cast<float *>(getPixels());
 }
 
+float 
+Image::getPixelValueAsF32(isize_t row, isize_t col)
+{
+    if(row > m_spacingInfo.getNumRows() || col > m_spacingInfo.getNumColumns())
+    {
+        ISX_THROW(ExceptionUserInput, "Bad row and/or column indices requested");
+    }
+
+    float pixVal = 0.0f;
+    isize_t idx = row * m_rowBytes / getPixelSizeInBytes() + col;
+
+    switch(m_dataType)
+    {
+        case DataType::U8:
+        {
+            uint8_t * pixels = getPixelsAsU8();
+            pixVal = (float)pixels[idx];
+            break;
+        }
+        case DataType::F32:
+        {
+            float * pixels = getPixelsAsF32();
+            pixVal = pixels[idx];
+            break;
+        }
+        case DataType::U16:
+        {
+            uint16_t * pixels = getPixelsAsU16();
+            pixVal = (float)pixels[idx];
+            break;
+        }
+    }    
+
+    return pixVal;
+}
+
 } // namespace isx
