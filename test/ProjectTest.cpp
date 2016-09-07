@@ -28,7 +28,7 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE(project.getGroup("/")->getGroups().size() == 2);
         REQUIRE_NOTHROW(project.getRootGroup());
         REQUIRE_NOTHROW(project.getOriginalGroup());
-        REQUIRE_NOTHROW(project.getOutputGroup());
+        REQUIRE_NOTHROW(project.getProcessedGroup());
     }
 
     SECTION("Create a new project in a file that already exists")
@@ -103,9 +103,9 @@ TEST_CASE("ProjectTest", "[core]")
         std::string outMovieName = baseName + "-pp";
         std::string cellSetName = "ics";
 
-        std::string origMoviePath = "/Original/" + origMovieName;
-        std::string outMoviePath = "/Output/" + outMovieName;
-        std::string cellSetPath = "/Output/" + cellSetName;
+        std::string origMoviePath = "/Original/ImagingData/" + origMovieName;
+        std::string outMoviePath = "/Processed/ImagingData/" + outMovieName;
+        std::string cellSetPath = "/Processed/CellData/" + cellSetName;
 
         std::string origMovieFileName = "/inscopix/data/" + origMovieName + ".isxd";
         std::string outMovieFileName = g_resources["testDataPath"] + "/" + outMovieName + ".isxd";
@@ -120,13 +120,16 @@ TEST_CASE("ProjectTest", "[core]")
 
         isx::Group rootGroup = isx::Group("/");
         isx::Group * origGroup = rootGroup.createGroup("Original");
-        isx::Group * outGroup = rootGroup.createGroup("Output");
+        isx::Group * origImagingGroup = origGroup->createGroup("ImagingData");
+        isx::Group * outGroup = rootGroup.createGroup("Processed");
+        isx::Group * outImagingGroup = outGroup->createGroup("ImagingData");
+        isx::Group * outCellGroup = outGroup->createGroup("CellData");
 
-        isx::DataSet * expOrigMovie = origGroup->createDataSet(
+        isx::DataSet * expOrigMovie = origImagingGroup->createDataSet(
                 origMovieName, isx::DataSet::Type::MOVIE, origMovieFileName);
-        isx::DataSet * expOutMovie = outGroup->createDataSet(
+        isx::DataSet * expOutMovie = outImagingGroup->createDataSet(
                 outMovieName, isx::DataSet::Type::MOVIE, outMovieFileName);
-        isx::DataSet * expCellSet = outGroup->createDataSet(
+        isx::DataSet * expCellSet = outCellGroup->createDataSet(
                 cellSetName, isx::DataSet::Type::CELLSET, cellSetFileName);
 
         isx::Project project(projectFileName);

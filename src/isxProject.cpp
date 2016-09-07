@@ -32,8 +32,12 @@ Project::Project(const std::string & inFileName, const std::string & inName)
                 "The file name already exists: ", inFileName);
     }
     m_root.reset(new Group("/"));
-    m_root->createGroup("Original");
-    m_root->createGroup("Output");
+    Group * origGroup = m_root->createGroup("Original");
+    origGroup->createGroup("ImagingData");
+    origGroup->createGroup("CellData");
+    Group * procGroup = m_root->createGroup("Processed");
+    procGroup->createGroup("ImagingData");
+    procGroup->createGroup("CellData");
     m_valid = true;
 }
 
@@ -111,9 +115,9 @@ Project::getOriginalGroup() const
 }
 
 Group *
-Project::getOutputGroup() const
+Project::getProcessedGroup() const
 {
-    return m_root->getGroup("Output");
+    return m_root->getGroup("Processed");
 }
 
 bool
