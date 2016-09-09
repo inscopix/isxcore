@@ -2,6 +2,7 @@
 #include "catch.hpp"
 #include "isxTest.h"
 #include "isxException.h"
+#include "isxPathUtils.h"
 
 #include <fstream>
 
@@ -78,7 +79,7 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE(dataSet->getName() == "myDataSet");
         REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(dataSet->getPath() == "/myDataSet");
-        REQUIRE(dataSet->getFileName() == movieFileName);
+        REQUIRE(dataSet->getFileName() == isx::getAbsolutePath(movieFileName));
         REQUIRE(project.getDataSet("/myDataSet") == dataSet);
     }
 
@@ -126,17 +127,43 @@ TEST_CASE("ProjectTest", "[core]")
         isx::Group * outCellGroup = outGroup->createGroup("CellData");
 
         isx::DataSet * expOrigMovie = origImagingGroup->createDataSet(
-                origMovieName, isx::DataSet::Type::MOVIE, origMovieFileName);
+                origMovieName, isx::DataSet::Type::MOVIE, isx::getAbsolutePath(origMovieFileName));
         isx::DataSet * expOutMovie = outImagingGroup->createDataSet(
-                outMovieName, isx::DataSet::Type::MOVIE, outMovieFileName);
+                outMovieName, isx::DataSet::Type::MOVIE, isx::getAbsolutePath(outMovieFileName));
         isx::DataSet * expCellSet = outCellGroup->createDataSet(
-                cellSetName, isx::DataSet::Type::CELLSET, cellSetFileName);
+                cellSetName, isx::DataSet::Type::CELLSET, isx::getAbsolutePath(cellSetFileName));
 
         isx::Project project(projectFileName);
         REQUIRE(project.isValid());
         REQUIRE(*(project.getDataSet(origMoviePath)) == *expOrigMovie);
         REQUIRE(*(project.getDataSet(outMoviePath)) == *expOutMovie);
         REQUIRE(*(project.getDataSet(cellSetPath)) == *expCellSet);
+    }
+
+}
+
+TEST_CASE("ProjectSynth", "[core][!hide]")
+{
+
+    SECTION("Create a synthetic project with a group of movies")
+    {
+        const std::string fileName = g_resources["testDataPath"] + "/project-synth_1.isxp";
+        std::remove(fileName.c_str());
+
+        const std::string groupPath = "/Original/ImagingData/Day_1";
+
+        isx::Project project(fileName, "Synthetic Project 1");
+        project.createGroup(groupPath);
+
+        project.createDataSet(
+                groupPath + "/recording_20160426_145041",
+                isx::DataSet::Type::MOVIE,
+                g_resources["testDataPath"] + "/recording_20160426_145041.hdf5");
+
+        project.createDataSet(
+                groupPath + "/recording_20160706_132714",
+                isx::DataSet::Type::MOVIE,
+                g_resources["testDataPath"] + "/recording_20160706_132714.hdf5");
     }
 
 }

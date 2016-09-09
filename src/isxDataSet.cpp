@@ -93,7 +93,8 @@ DataSet::operator ==(const DataSet & inOther) const
     }
     return sameParent &&
         (m_name == inOther.m_name) &&
-        (m_type == inOther.m_type);
+        (m_type == inOther.m_type) &&
+        (m_fileName == inOther.m_fileName);
 }
 
 void

@@ -58,13 +58,14 @@ Project::createDataSet(
         const std::string & inFileName)
 {
     const std::string name = isx::getFileName(inPath);
-    // TODO sweet : We really want to store a data set's file name as a
-    // relative path from the project file's directory
-    //std::string projectDirName = getDirName(m_fileName);
-    //std::string relFileName = getRelativePath(projectDirName, inFileName);
+    // NOTE sweet : when creating a data set through the project, the
+    // absolute path gets stored, so that other clients of this data set
+    // can use that file name without referring to the path of the project
+    // file name.
+    std::string absFileName = getAbsolutePath(inFileName);
     const std::string groupPath = getDirName(inPath);
     Group * parent = getGroup(groupPath);
-    return parent->createDataSet(name, inType, inFileName);
+    return parent->createDataSet(name, inType, absFileName);
 }
 
 DataSet *

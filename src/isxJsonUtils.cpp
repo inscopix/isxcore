@@ -191,6 +191,11 @@ convertDataSetToJson(const DataSet * inDataSet)
     outJson["type"] = "DataSet";
     outJson["name"] = inDataSet->getName();
     outJson["dataSetType"] = isize_t(inDataSet->getType());
+    // TODO sweet : when a dataset in a project is serialized, we should
+    // store the relative path to the project file name, so that if that
+    // sub-tree gets moved, then the paths are still accurate.
+    // For any file names that are above the project file, we should store
+    // absolute paths.
     outJson["fileName"] = inDataSet->getFileName();
     return outJson;
 }

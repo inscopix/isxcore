@@ -78,6 +78,13 @@ getRelativePath(
     return relPath.toStdString();
 }
 
+std::string
+getAbsolutePath(const std::string & inPath)
+{
+    QFileInfo pathInfo(QString::fromStdString(inPath));
+    return pathInfo.absoluteFilePath().toStdString();
+}
+
 bool
 pathExists(const std::string & inPath)
 {
