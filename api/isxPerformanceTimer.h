@@ -164,7 +164,7 @@ public:
 //            uint64_t stopTime = mach_absolute_time();
 //            elapsedTime_ += stopTime - startTime_;
 //            isRunning = false;
-        }
+//        }
     }
     void reset()
     {
