@@ -20,7 +20,7 @@
 #define NOMINMAX
 #include <windows.h>
 #elif ISX_OS_LINUX
-// TODO: implement
+#include <sys/time.h>
 #endif
 
 namespace isx
@@ -144,52 +144,50 @@ private:
 // Linux implementation
 //
 ///////////////////////////////////////////////////////////////////////////////////////////
-// TODO: implement
 class PerformanceTimer
 {
 public:
-    PerformanceTimer() {}
-//        : isRunning(false)
-//        , startTime_(0)
-//        , elapsedTime_(0) {}
+    PerformanceTimer()
+        : isRunning(false)
+        , elapsedNanoSeconds_(0)
+    {
+        startTime_ = {0};
+    }
     void start()
     {
-//        startTime_ = mach_absolute_time();
-//        isRunning = true;
+        clock_gettime(CLOCK_MONOTONIC, &startTime_);
+        isRunning = true;
     }
     void stop()
     {
-//        if (isRunning)
-//        {
-//            uint64_t stopTime = mach_absolute_time();
-//            elapsedTime_ += stopTime - startTime_;
-//            isRunning = false;
-//        }
+        static const uint64_t sSecondsPerNanoSecond = 1000 * 1000 * 1000;
+        if (isRunning)
+        {
+            struct timespec stopTime = {0};
+            clock_gettime(CLOCK_MONOTONIC, &stopTime);
+            elapsedNanoSeconds_ += sSecondsPerNanoSecond * (stopTime.tv_sec - startTime_.tv_sec)
+                + stopTime.tv_nsec - startTime_.tv_nsec;
+            isRunning = false;
+        }
     }
     void reset()
     {
-//        if (!isRunning)
-//        {
-//            elapsedTime_ = 0;
-//        }
+        if (!isRunning)
+        {
+            elapsedNanoSeconds_ = {0};
+        }
     }
     float getElapsed_ms()
     {
-//        static mach_timebase_info_data_t sTimebaseInfo;
-//        if (sTimebaseInfo.denom == 0)
-//        {
-//            mach_timebase_info(&sTimebaseInfo);
-//        }
-//        uint64_t elapsed_ns = elapsedTime_ * sTimebaseInfo.numer / sTimebaseInfo.denom;
-//        double elapsed_ms = double(elapsed_ns) / 1000.0 / 1000.0;
-//
-//        return elapsed_ms;
-        return 0.f;
+        static const double sMilliSecondsPerNanoSecond = 1000.0 * 1000.0;
+        double elapsed_ms = double(elapsedNanoSeconds_) / sMilliSecondsPerNanoSecond;
+
+        return elapsed_ms;
     }
 private:
-//    bool isRunning;
-//    uint64_t startTime_;
-//    uint64_t elapsedTime_;
+    bool isRunning;
+    struct timespec startTime_;
+    uint64_t elapsedNanoSeconds_;
 };
 
 #endif
