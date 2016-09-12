@@ -109,7 +109,7 @@ StopWatch::getElapsedMs()
     elapsed_1000_ticks.QuadPart = m_elapsedTime.QuadPart * oneThousand.QuadPart; // division by frequency results in seconds, we want miliseconds
     double elapsed_ms = double(elapsed_1000_ticks.QuadPart) / double(sFrequency.QuadPart);
 
-    return elapsed_ms;
+    return float(elapsed_ms);
 }
 
 #elif ISX_OS_LINUX
