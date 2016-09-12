@@ -151,7 +151,7 @@ StopWatch::reset()
 {
     if (!m_isRunning)
     {
-        elapsedNanoSeconds_ = {0};
+        m_elapsedNanoSeconds = {0};
     }
 }
 

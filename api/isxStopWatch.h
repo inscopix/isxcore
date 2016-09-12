@@ -11,7 +11,8 @@
 #define NOMINMAX
 #include <windows.h>
 #elif ISX_OS_LINUX
-#include <sys/time.h>
+#include <time.h>
+#include <cstdint>
 #endif
 
 namespace isx
