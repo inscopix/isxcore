@@ -71,7 +71,7 @@ private:
 ///        ScopedStopWatch sw(&timeElapsed);
 ///        doSomethingTimeCritical();
 ///    }
-///    log("doSomethingTimeCritical took ". timeElapsed, "milliseconds.");
+///    log("doSomethingTimeCritical took ", timeElapsed, "milliseconds.");
 ///
 class ScopedStopWatch
 {
