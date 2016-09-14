@@ -68,16 +68,31 @@ SpacingInfo::getTotalSize() const
     return m_pixelSize * m_numPixels;
 }
 
+Rect
+SpacingInfo::getFovInPixels() const
+{
+    const PointInPixels_t topLeft(0, 0);
+    isize_t right = m_numPixels.getX();
+    if (right > 0)
+    {
+        right -= 1;
+    }
+    isize_t bottom = m_numPixels.getY();
+    if (bottom > 0)
+    {
+        bottom -= 1;
+    }
+    const PointInPixels_t bottomRight(right, bottom);
+    return Rect(topLeft, bottomRight);
+}
+
 PointInMicrons_t
-SpacingInfo::convertPixelsToMidPointInMicrons(const PointInPixels_t & inPoint) const
+SpacingInfo::convertPixelsToPointInMicrons(const PointInPixels_t & inPoint) const
 {
     Ratio xMicrons = m_topLeft.getX();
     if (m_numPixels.getX() > 0)
     {
         isize_t xPixels = std::min(inPoint.getX(), m_numPixels.getX() - 1);
-        xMicrons = xMicrons + (m_pixelSize.getX() / 2);
-
-        // Offset by half pixel size to get to center.
         xMicrons = xMicrons + (m_pixelSize.getX() * xPixels);
     }
 
@@ -86,12 +101,16 @@ SpacingInfo::convertPixelsToMidPointInMicrons(const PointInPixels_t & inPoint) c
     {
         isize_t yPixels = std::min(inPoint.getY(), m_numPixels.getY() - 1);
         yMicrons = yMicrons + (m_pixelSize.getY() * yPixels);
-
-        // Offset by half pixel size to get to center.
-        yMicrons = yMicrons + (m_pixelSize.getY() / 2);
     }
 
     return PointInMicrons_t(xMicrons, yMicrons);
+}
+
+PointInMicrons_t
+SpacingInfo::convertPixelsToMidPointInMicrons(const PointInPixels_t & inPoint) const
+{
+    PointInMicrons_t topLeft = convertPixelsToPointInMicrons(inPoint);
+    return topLeft + VectorInMicrons_t(m_pixelSize.getX() / 2, m_pixelSize.getY() / 2);
 }
 
 PointInPixels_t

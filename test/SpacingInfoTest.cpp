@@ -132,7 +132,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
         isx::PointInPixels_t pointInPixels(4, 3);
         isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToMidPointInMicrons(pointInPixels);
 
-        REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(66, 10), isx::Ratio(121, 10)));
+        REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(77, 10), isx::Ratio(121, 10)));
     }
 
     SECTION("Convert a point in pixels to a point in microns when there are no y samples")
@@ -142,7 +142,7 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
         isx::PointInPixels_t pointInPixels(4, 3);
         isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToMidPointInMicrons(pointInPixels);
 
-        REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(165, 10), isx::Ratio(44, 10)));
+        REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(165, 10), isx::Ratio(55, 10)));
     }
 
     // Microns to pixels

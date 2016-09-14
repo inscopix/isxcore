@@ -7,6 +7,7 @@
 #include "isxSpatialSize.h"
 #include "isxSpatialPoint.h"
 #include "isxRatio.h"
+#include "isxRect.h"
 
 namespace isx
 {
@@ -91,6 +92,20 @@ public:
     /// \return The total size in each dimension of the field of view in microns.
     ///
     SizeInMicrons_t getTotalSize() const;
+
+    /// \return The field of view rectangle in pixels.
+    ///
+    Rect getFovInPixels() const;
+
+    /// Converts a point in pixel indices within these samples to a point in microns.
+    ///
+    /// The converted point in microns represents the top left of the input pixel.
+    /// The conversion uses clamping so that converted point always corresponds to
+    /// exactly one sample.
+    ///
+    /// \param  inPoint     The point in pixels to convert.
+    /// \return             The point in microns.
+    PointInMicrons_t convertPixelsToPointInMicrons(const PointInPixels_t & inPoint) const;
 
     /// Converts a point in pixel indices within these samples to a point in microns.
     ///
