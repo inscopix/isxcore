@@ -52,7 +52,7 @@ public:
     DataSet(const std::string & inName,
             Type inType,
             const std::string & inFileName,
-            const std::map<std::string, float> & inProperties);
+            const std::map<std::string, float> & inProperties = std::map<std::string, float>());
 
     /// \return     The type of this data set.
     ///

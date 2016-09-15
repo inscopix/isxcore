@@ -18,13 +18,18 @@ TEST_CASE("DataSetTest", "[core]")
 
     SECTION("Construct a movie data set")
     {
-        isx::DataSet dataSet("myMovie", isx::DataSet::Type::MOVIE, "myMovie.isxd");
+        std::map<std::string, float> properties;
+        properties["test"] = 1.0f;
+        isx::DataSet dataSet("myMovie", isx::DataSet::Type::MOVIE, "myMovie.isxd", properties);
 
         REQUIRE(dataSet.isValid());
         REQUIRE(dataSet.getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(dataSet.getName() == "myMovie");
         REQUIRE(!dataSet.getParent());
         REQUIRE(dataSet.getPath() == "myMovie");
+        float value;
+        REQUIRE(dataSet.getPropertyValue("test", value));
+        REQUIRE(value == 1.0f);
     }
 
     SECTION("Construct a movie data set then set parent group")
