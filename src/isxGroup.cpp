@@ -84,7 +84,8 @@ DataSet *
 Group::createDataSet(
     const std::string & inName, 
     DataSet::Type inType,
-    const std::string & inFileName)
+    const std::string & inFileName,
+    const std::map<std::string, float> & inProperties)
 {
     if (isName(inName))
     {
@@ -96,7 +97,7 @@ Group::createDataSet(
         ISX_THROW(isx::ExceptionFileIO,
                 "There is already a data set with the file name: ", inFileName);
     }
-    std::unique_ptr<DataSet> ds(new DataSet(inName, inType, inFileName));
+    std::unique_ptr<DataSet> ds(new DataSet(inName, inType, inFileName, inProperties));
     ds->setParent(this);
     m_dataSets.push_back(std::move(ds));
     return m_dataSets.back().get();

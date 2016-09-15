@@ -81,6 +81,7 @@ public:
     /// \param  inName      The name of the data set.
     /// \param  inType      The type of the data set.
     /// \param  inFileName  The file name of the data set.
+    /// \param  inProperties The properties for the data set.
     /// \return             A raw pointer to the new data set after
     ///                     ownership has been taken by this group.
     ///
@@ -89,7 +90,8 @@ public:
     DataSet * createDataSet(
         const std::string & inName,
         DataSet::Type inType,
-        const std::string & inFileName);
+        const std::string & inFileName, 
+        const std::map<std::string, float> & inProperties);
 
     /// Get the data sets in this group.
     ///

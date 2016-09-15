@@ -17,12 +17,14 @@ DataSet::DataSet()
 DataSet::DataSet(
         const std::string & inName,
         Type inType,
-        const std::string & inFileName)
+        const std::string & inFileName,
+        const std::map<std::string, float> & inProperties)
     : m_valid(true)
     , m_name(inName)
     , m_type(inType)
     , m_fileName(inFileName)
     , m_parent(nullptr)
+    , m_properties(inProperties)
 {
 }
 
@@ -102,7 +104,14 @@ DataSet::serialize(std::ostream & strm) const
     strm << "DataSet(" <<
         "path = " << getPath() << ", " <<
         "type = " << int(m_type) << ", " <<
-        "fileName = " << m_fileName << ")";
+        "fileName = " << m_fileName << ", " <<
+        "properties = " << m_properties << ")";
+}
+
+std::map<std::string, float> & 
+DataSet::getProperties() const
+{
+    return m_properties;
 }
 
 DataSet::Type

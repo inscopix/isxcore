@@ -51,7 +51,8 @@ DataSet *
 Project::createDataSet(
         const std::string & inPath,
         DataSet::Type inType,
-        const std::string & inFileName)
+        const std::string & inFileName,
+        const std::map<std::string, float> & inProperties)
 {
     const std::string name = isx::getFileName(inPath);
     // TODO sweet : We really want to store a data set's file name as a
@@ -60,7 +61,7 @@ Project::createDataSet(
     //std::string relFileName = getRelativePath(projectDirName, inFileName);
     const std::string groupPath = getDirName(inPath);
     Group * parent = getGroup(groupPath);
-    return parent->createDataSet(name, inType, inFileName);
+    return parent->createDataSet(name, inType, inFileName, inProperties);
 }
 
 DataSet *

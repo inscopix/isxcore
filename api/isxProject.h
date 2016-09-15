@@ -72,7 +72,8 @@ public:
     DataSet * createDataSet(
             const std::string & inPath,
             DataSet::Type inType,
-            const std::string & inFileName);
+            const std::string & inFileName,
+            const std::map<std::string, float> & inProperties);
 
     /// Get a data set by its project path.
     ///

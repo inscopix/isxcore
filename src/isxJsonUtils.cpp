@@ -192,6 +192,7 @@ convertDataSetToJson(const DataSet * inDataSet)
     outJson["name"] = inDataSet->getName();
     outJson["dataSetType"] = isize_t(inDataSet->getType());
     outJson["fileName"] = inDataSet->getFileName();
+    outJson["properties"] = inDataSet->getProperties();
     return outJson;
 }
 
@@ -201,7 +202,8 @@ createDataSetFromJson(Group * inGroup, const json & inJson)
     std::string name = inJson["name"];
     DataSet::Type dataSetType = DataSet::Type(isize_t(inJson["dataSetType"]));
     std::string fileName = inJson["fileName"];
-    inGroup->createDataSet(name, dataSetType, fileName);
+    std::map<std::string, float> properties = inJson["properties"];
+    inGroup->createDataSet(name, dataSetType, fileName, properties);
 }
 
 void

@@ -6,6 +6,7 @@
 
 #include <string>
 #include <memory>
+#include <map>
 
 namespace isx
 {
@@ -43,7 +44,8 @@ public:
     /// \param  inFileName  The file name of the data set.
     DataSet(const std::string & inName,
             Type inType,
-            const std::string & inFileName);
+            const std::string & inFileName,
+            const std::map<std::string, float> & inProperties);
 
     /// \return     The type of this data set.
     ///
@@ -72,6 +74,8 @@ public:
 
     void serialize(std::ostream & strm) const override;
 
+    std::map<std::string, float> & getProperties() const;
+
 private:
 
     /// True if this data set is valid.
@@ -88,6 +92,9 @@ private:
 
     /// The parent group to which this belongs.
     Group * m_parent;
+
+    /// Dataset properties
+    std::map<std::string, float> m_properties;
 
 }; // class DataSet
 
