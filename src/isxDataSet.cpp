@@ -2,8 +2,11 @@
 #include "isxException.h"
 #include "isxGroup.h"
 #include "isxJsonUtils.h"
+#include "isxVideoFrame.h"
+#include "isxMovieFactory.h"
 
 #include <fstream>
+#include <limits>
 
 namespace isx
 {
@@ -110,14 +113,31 @@ DataSet::serialize(std::ostream & strm) const
     strm << "DataSet(" <<
         "path = " << getPath() << ", " <<
         "type = " << int(m_type) << ", " <<
-        "fileName = " << m_fileName << ", " <<
-        "properties = " << m_properties << ")";
+        "fileName = " << m_fileName << ")";
 }
 
-std::map<std::string, float> & 
+const std::map<std::string, float> & 
 DataSet::getProperties() const
 {
     return m_properties;
+}
+
+bool 
+DataSet::getPropertyValue(const std::string & inPropertyName, float & outValue)
+{   
+    bool found = false;
+    if (m_properties.find(inPropertyName) != m_properties.end()) 
+    {        
+        found = true;
+        outValue = m_properties[inPropertyName];
+    }
+    return found;
+}
+
+void 
+DataSet::setProperty(const std::string & inPropertyName, float inValue)
+{
+    m_properties[inPropertyName] = inValue;
 }
 
 DataSet::Type
@@ -137,6 +157,62 @@ readDataSetType(const std::string & inFileName)
     catch (...)
     {
         ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing data file header.");
+    }
+}
+
+void 
+getDataRange(const std::string & inFilePath, float & outMin, float & outMax)
+{
+    SpMovie_t m = readMovie(inFilePath);
+    SpVideoFrame_t vf = m->getFrame(0);                
+
+    DataType dt = vf->getDataType();
+    isize_t numPixels = vf->getImage().getSpacingInfo().getTotalNumPixels();
+    switch(dt)
+    {
+        case DataType::U16:
+        {
+            outMin = (float) std::numeric_limits<uint16_t>::max();
+            outMax = (float) std::numeric_limits<uint16_t>::min();
+            uint16_t * pixels = vf->getPixelsAsU16();
+            for (isize_t i(0); i < numPixels; ++i)
+            {
+                if(pixels[i] > (uint16_t)outMax)
+                {
+                    outMax = (float)pixels[i];
+                }
+                else if(pixels[i] < (uint16_t)outMin)
+                {
+                    outMin = (float)pixels[i];
+                }
+            }
+
+        }
+        break;
+        case DataType::F32:
+        {
+            outMin = std::numeric_limits<float>::max();
+            outMax = std::numeric_limits<float>::min();
+            float * pixels = vf->getPixelsAsF32();
+            for (isize_t i(0); i < numPixels; ++i)
+            {
+                if(pixels[i] > outMax)
+                {
+                    outMax = pixels[i];
+                }
+                else if(pixels[i] < outMin)
+                {
+                    outMin = pixels[i];
+                }
+            }
+
+        }
+        break;
+        default:
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Unsupported datatype: ", dt);
+        }
+        break;
     }
 }
 
