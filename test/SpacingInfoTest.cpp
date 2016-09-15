@@ -92,8 +92,8 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
     isx::PointInMicrons_t topLeft(isx::Ratio(66, 10), isx::Ratio(44, 10));
     isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
-    // Pixels to microns
-    SECTION("Convert a point in pixels to a point in microns (x equals 0)")
+    // Pixels to mid point in microns
+    SECTION("Convert a point in pixels to a mid point in microns (x equals 0)")
     {
         isx::PointInPixels_t pointInPixels(0, 3);
         isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToMidPointInMicrons(pointInPixels);
@@ -143,6 +143,59 @@ TEST_CASE("SpacingInfoTestConversion", "[core]")
         isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToMidPointInMicrons(pointInPixels);
 
         REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(165, 10), isx::Ratio(55, 10)));
+    }
+
+    // Pixels to top left corner in microns
+    SECTION("Convert a point in pixels to the top left corner of that pixel in microns (x equals 0)")
+    {
+        isx::PointInPixels_t pointInPixels(0, 3);
+        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToPointInMicrons(pointInPixels);
+
+        REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(66, 10), isx::Ratio(110, 10)));
+    }
+
+    SECTION("Convert a point in pixels to the top left corner of that pixel in microns (y equals 0)")
+    {
+        isx::PointInPixels_t pointInPixels(4, 0);
+        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToPointInMicrons(pointInPixels);
+
+        REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(154, 10), isx::Ratio(44, 10)));
+    }
+
+    SECTION("Convert a point in pixels to the top left corner of that pixel in microns (x equals max)")
+    {
+        isx::PointInPixels_t pointInPixels(8, 3);
+        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToPointInMicrons(pointInPixels);
+
+        REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(220, 10), isx::Ratio(110, 10)));
+    }
+
+    SECTION("Convert a point in pixels to the top left corner of that pixel in microns (y equals max)")
+    {
+        isx::PointInPixels_t pointInPixels(4, 6);
+        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToPointInMicrons(pointInPixels);
+
+        REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(154, 10), isx::Ratio(154, 10)));
+    }
+
+    SECTION("Convert a point in pixels to the top left corner of that pixel in microns when there are no x samples")
+    {
+        numPixels = isx::SizeInPixels_t(0, 6);
+        spacingInfo = isx::SpacingInfo(numPixels, pixelSize, topLeft);
+        isx::PointInPixels_t pointInPixels(4, 3);
+        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToPointInMicrons(pointInPixels);
+
+        REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(66, 10), isx::Ratio(110, 10)));
+    }
+
+    SECTION("Convert a point in pixels to the top left corner of that pixel in microns when there are no y samples")
+    {
+        numPixels = isx::SizeInPixels_t(8, 0);
+        spacingInfo = isx::SpacingInfo(numPixels, pixelSize, topLeft);
+        isx::PointInPixels_t pointInPixels(4, 3);
+        isx::PointInMicrons_t pointInMicrons = spacingInfo.convertPixelsToPointInMicrons(pointInPixels);
+
+        REQUIRE(pointInMicrons == isx::PointInMicrons_t(isx::Ratio(154, 10), isx::Ratio(44, 10)));
     }
 
     // Microns to pixels
