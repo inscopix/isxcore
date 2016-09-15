@@ -7,6 +7,12 @@
 
 namespace isx
 {
+    
+const std::string DataSet::PROP_DATA_MIN = "dmin";
+const std::string DataSet::PROP_DATA_MAX = "dmax";
+const std::string DataSet::PROP_VIS_MIN  = "vmin";
+const std::string DataSet::PROP_VIS_MAX  = "vmax";
+
 
 DataSet::DataSet()
     : m_valid(false)

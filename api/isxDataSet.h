@@ -32,6 +32,11 @@ public:
         CELLSET,
     };
 
+    static const std::string PROP_DATA_MIN;
+    static const std::string PROP_DATA_MAX;
+    static const std::string PROP_VIS_MIN;
+    static const std::string PROP_VIS_MAX;
+
     /// Empty constructor.
     ///
     /// This creates a valid C++ object, but invalid DataSet.
