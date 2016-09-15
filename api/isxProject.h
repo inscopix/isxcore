@@ -109,9 +109,9 @@ public:
     ///
     Group * getOriginalGroup() const;
 
-    /// \return     The group of output data.
+    /// \return     The group of processed data.
     ///
-    Group * getOutputGroup() const;
+    Group * getProcessedGroup() const;
 
     /// \return     True if this project is valid.
     ///
