@@ -32,8 +32,12 @@ Project::Project(const std::string & inFileName, const std::string & inName)
                 "The file name already exists: ", inFileName);
     }
     m_root.reset(new Group("/"));
-    m_root->createGroup("Original");
-    m_root->createGroup("Output");
+    Group * origGroup = m_root->createGroup("Original");
+    origGroup->createGroup("ImagingData");
+    origGroup->createGroup("CellData");
+    Group * procGroup = m_root->createGroup("Processed");
+    procGroup->createGroup("ImagingData");
+    procGroup->createGroup("CellData");
     m_valid = true;
 }
 
@@ -55,13 +59,14 @@ Project::createDataSet(
         const std::map<std::string, float> & inProperties)
 {
     const std::string name = isx::getFileName(inPath);
-    // TODO sweet : We really want to store a data set's file name as a
-    // relative path from the project file's directory
-    //std::string projectDirName = getDirName(m_fileName);
-    //std::string relFileName = getRelativePath(projectDirName, inFileName);
+    // NOTE sweet : when creating a data set through the project, the
+    // absolute path gets stored, so that other clients of this data set
+    // can use that file name without referring to the path of the project
+    // file name.
+    std::string absFileName = getAbsolutePath(inFileName);
     const std::string groupPath = getDirName(inPath);
     Group * parent = getGroup(groupPath);
-    return parent->createDataSet(name, inType, inFileName, inProperties);
+    return parent->createDataSet(name, inType, absFileName, inProperties);
 }
 
 DataSet *
@@ -112,9 +117,9 @@ Project::getOriginalGroup() const
 }
 
 Group *
-Project::getOutputGroup() const
+Project::getProcessedGroup() const
 {
-    return m_root->getGroup("Output");
+    return m_root->getGroup("Processed");
 }
 
 bool
