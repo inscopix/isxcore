@@ -5,8 +5,15 @@
 
 #include <fstream>
 
+
 namespace isx
 {
+    
+const std::string DataSet::PROP_DATA_MIN = "dmin";
+const std::string DataSet::PROP_DATA_MAX = "dmax";
+const std::string DataSet::PROP_VIS_MIN  = "vmin";
+const std::string DataSet::PROP_VIS_MAX  = "vmax";
+
 
 DataSet::DataSet()
     : m_valid(false)
@@ -17,12 +24,14 @@ DataSet::DataSet()
 DataSet::DataSet(
         const std::string & inName,
         Type inType,
-        const std::string & inFileName)
+        const std::string & inFileName,
+        const std::map<std::string, float> & inProperties)
     : m_valid(true)
     , m_name(inName)
     , m_type(inType)
     , m_fileName(inFileName)
     , m_parent(nullptr)
+    , m_properties(inProperties)
 {
 }
 
@@ -104,6 +113,30 @@ DataSet::serialize(std::ostream & strm) const
         "path = " << getPath() << ", " <<
         "type = " << int(m_type) << ", " <<
         "fileName = " << m_fileName << ")";
+}
+
+const std::map<std::string, float> & 
+DataSet::getProperties() const
+{
+    return m_properties;
+}
+
+bool 
+DataSet::getPropertyValue(const std::string & inPropertyName, float & outValue)
+{   
+    bool found = false;
+    if (m_properties.find(inPropertyName) != m_properties.end()) 
+    {        
+        found = true;
+        outValue = m_properties[inPropertyName];
+    }
+    return found;
+}
+
+void 
+DataSet::setProperty(const std::string & inPropertyName, float inValue)
+{
+    m_properties[inPropertyName] = inValue;
 }
 
 DataSet::Type
