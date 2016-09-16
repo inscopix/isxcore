@@ -129,12 +129,6 @@ private:
 /// \throw  isx::ExceptionDataIO    If the file format is not recognized.
 DataSet::Type readDataSetType(const std::string & inFileName);
 
-/// Get the min and max values in the data for the first frame of a movie;
-/// \param inFilePath Data file path
-/// \param outMin the min value in the first frame
-/// \param outMax the max value in the first frame 
-void 
-getDataRange(const std::string & inFilePath, float & outMin, float & outMax);
 
 } // namespace isx
 

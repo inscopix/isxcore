@@ -2,11 +2,9 @@
 #include "isxException.h"
 #include "isxGroup.h"
 #include "isxJsonUtils.h"
-#include "isxVideoFrame.h"
-#include "isxMovieFactory.h"
 
 #include <fstream>
-#include <limits>
+
 
 namespace isx
 {
@@ -158,62 +156,6 @@ readDataSetType(const std::string & inFileName)
     catch (...)
     {
         ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing data file header.");
-    }
-}
-
-void 
-getDataRange(const std::string & inFilePath, float & outMin, float & outMax)
-{
-    SpMovie_t m = readMovie(inFilePath);
-    SpVideoFrame_t vf = m->getFrame(0);                
-
-    DataType dt = vf->getDataType();
-    isize_t numPixels = vf->getImage().getSpacingInfo().getTotalNumPixels();
-    switch(dt)
-    {
-        case DataType::U16:
-        {
-            outMin = (float) std::numeric_limits<uint16_t>::max();
-            outMax = (float) std::numeric_limits<uint16_t>::min();
-            uint16_t * pixels = vf->getPixelsAsU16();
-            for (isize_t i(0); i < numPixels; ++i)
-            {
-                if(pixels[i] > (uint16_t)outMax)
-                {
-                    outMax = (float)pixels[i];
-                }
-                else if(pixels[i] < (uint16_t)outMin)
-                {
-                    outMin = (float)pixels[i];
-                }
-            }
-
-        }
-        break;
-        case DataType::F32:
-        {
-            outMin = std::numeric_limits<float>::max();
-            outMax = std::numeric_limits<float>::min();
-            float * pixels = vf->getPixelsAsF32();
-            for (isize_t i(0); i < numPixels; ++i)
-            {
-                if(pixels[i] > outMax)
-                {
-                    outMax = pixels[i];
-                }
-                else if(pixels[i] < outMin)
-                {
-                    outMin = pixels[i];
-                }
-            }
-
-        }
-        break;
-        default:
-        {
-            ISX_THROW(isx::ExceptionFileIO, "Unsupported datatype: ", dt);
-        }
-        break;
     }
 }
 
