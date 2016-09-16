@@ -91,6 +91,15 @@ std::string getRelativePath(
         const std::string & inPath,
         const std::string & inDirName);
 
+/// Get the absolute path of a file/directory on the file system.
+///
+/// If the path cannot be found on the file system, this will return
+/// a copy of the given path.
+///
+/// \param  inPath      The path.
+/// \return             The absolute version of the given path.
+std::string getAbsolutePath(const std::string & inPath);
+
 /// Check if a patch exists on the file system.
 ///
 /// \param  inPath      The path to check for existence.
