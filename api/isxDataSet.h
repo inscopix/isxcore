@@ -95,6 +95,20 @@ public:
     std::string getPath() const override;
 
     void serialize(std::ostream & strm) const override;
+    
+    /// Serialize this DataSet to a JSON string
+    /// \return JSON string for this DataSet
+    ///
+    std::string
+    toJsonString() const;
+    
+    /// Create a DataSet from a JSON string
+    /// \param inDataSetJson string containing JSON for a DataSet
+    /// \param outPath is set to the full path (in project) of the DataSet
+    ///
+    static
+    DataSet
+    fromJsonString(const std::string & inDataSetJson, std::string & outPath);
 
 private:
 

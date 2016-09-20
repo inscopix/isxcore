@@ -1,3 +1,4 @@
+#include "isxCoreFwd.h"
 #include "isxDataSet.h"
 #include "isxException.h"
 #include "isxGroup.h"
@@ -159,4 +160,22 @@ readDataSetType(const std::string & inFileName)
     }
 }
 
+std::string
+DataSet::toJsonString() const
+{
+    json ds;
+    ds["path"] = getPath();
+    ds["dataset"] = convertDataSetToJson(this);
+    return ds.dump();
+}
+
+DataSet
+DataSet::fromJsonString(const std::string & inDataSetJson, std::string & outPath)
+{
+    json ds = json::parse(inDataSetJson);
+    outPath = ds["path"];
+    UpGroup_t bogus(new Group{""});
+    createDataSetFromJson(bogus.get(), ds["dataset"]);
+    return **(bogus->getDataSets().begin());
+}
 } // namespace isx

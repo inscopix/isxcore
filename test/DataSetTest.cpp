@@ -95,3 +95,41 @@ TEST_CASE("readDataSetTypeTest", "[core]")
     }
 
 }
+
+TEST_CASE("DataSetToFromJson", "[core]")
+{
+    const std::string dsName = "myMovie";
+    const isx::DataSet::Type dsType = isx::DataSet::Type::MOVIE;
+    const std::string dsFileName = "myMovie.isxd";
+    const std::string propKey = "test";
+    const float propValue = 1.f;
+    std::map<std::string, float> properties;
+    properties[propKey] = propValue;
+    isx::DataSet dataSet(dsName, dsType, dsFileName, properties);
+    isx::Group group("myGroup");
+    dataSet.setParent(&group);
+
+    const std::string expected = "{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup/myMovie\"}";
+
+    SECTION("ToJson")
+    {
+        std::string js = dataSet.toJsonString();
+        REQUIRE(js == expected);
+    }
+    
+    SECTION("FromJson")
+    {
+        std::string path;
+        isx::DataSet ds = isx::DataSet::fromJsonString(expected, path);
+        const std::map<std::string, float> & props = ds.getProperties();
+        REQUIRE(path == "myGroup/myMovie");
+        REQUIRE(ds.getName() == dsName);
+        REQUIRE(ds.getType() == dsType);
+        REQUIRE(ds.getFileName() == dsFileName);
+        REQUIRE(props.size() == 1);
+        REQUIRE(props.find(propKey) != props.end());
+        REQUIRE(props.at(propKey) == propValue);
+    }
+    
+}
+
