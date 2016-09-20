@@ -63,6 +63,7 @@ public:
     /// \param  inPath      The path of the data set to create.
     /// \param  inType      The type of the data set to create.
     /// \param  inFileName  The file name of the data set to create.
+    /// \param  inProperties The property map for the data set to create.
     /// \return             The data set created.
     ///
     /// \throw  isx::ExceptionDataIO    If an item with the given path
@@ -72,7 +73,8 @@ public:
     DataSet * createDataSet(
             const std::string & inPath,
             DataSet::Type inType,
-            const std::string & inFileName);
+            const std::string & inFileName,
+            const std::map<std::string, float> & inProperties = std::map<std::string, float>());
 
     /// Get a data set by its project path.
     ///

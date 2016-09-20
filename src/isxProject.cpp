@@ -55,7 +55,8 @@ DataSet *
 Project::createDataSet(
         const std::string & inPath,
         DataSet::Type inType,
-        const std::string & inFileName)
+        const std::string & inFileName,
+        const std::map<std::string, float> & inProperties)
 {
     const std::string name = isx::getFileName(inPath);
     // NOTE sweet : when creating a data set through the project, the
@@ -65,7 +66,7 @@ Project::createDataSet(
     std::string absFileName = getAbsolutePath(inFileName);
     const std::string groupPath = getDirName(inPath);
     Group * parent = getGroup(groupPath);
-    return parent->createDataSet(name, inType, absFileName);
+    return parent->createDataSet(name, inType, absFileName, inProperties);
 }
 
 DataSet *

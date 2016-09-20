@@ -6,6 +6,7 @@
 
 #include <string>
 #include <memory>
+#include <map>
 
 namespace isx
 {
@@ -31,6 +32,12 @@ public:
         CELLSET,
     };
 
+    // Property names as used in the property map
+    static const std::string PROP_DATA_MIN;     ///< Min range of data in a movie dataset
+    static const std::string PROP_DATA_MAX;     ///< Max range of data in a movie dataset
+    static const std::string PROP_VIS_MIN;      ///< Min visualization range [0..255]
+    static const std::string PROP_VIS_MAX;      ///< Max visualization range [0..255]
+
     /// Empty constructor.
     ///
     /// This creates a valid C++ object, but invalid DataSet.
@@ -41,9 +48,11 @@ public:
     /// \param  inName      The name of the data set.
     /// \param  inType      The type of the data set.
     /// \param  inFileName  The file name of the data set.
+    /// \param  inProperties The property map for the dataset
     DataSet(const std::string & inName,
             Type inType,
-            const std::string & inFileName);
+            const std::string & inFileName,
+            const std::map<std::string, float> & inProperties = std::map<std::string, float>());
 
     /// \return     The type of this data set.
     ///
@@ -58,6 +67,21 @@ public:
     /// \param  inOther     The data set with which to compare.
     /// \return             True if the data sets are exactly equal.
     bool operator==(const DataSet & inOther) const;
+
+    /// Get the property map
+    /// \return the property map
+    const std::map<std::string, float> & getProperties() const;
+
+    /// Get the property value
+    /// \return whether the property was found or not
+    /// \param inPropertyName the name of the property
+    /// \param outValue the found value
+    bool getPropertyValue(const std::string & inPropertyName, float & outValue);
+
+    /// Sets a property in the map
+    /// \param inPropertyName name
+    /// \param inValue value
+    void setProperty(const std::string & inPropertyName, float inValue);
 
     // Overrides
     bool isValid() const override;
@@ -89,6 +113,9 @@ private:
     /// The parent group to which this belongs.
     Group * m_parent;
 
+    /// Dataset properties
+    std::map<std::string, float> m_properties;
+
 }; // class DataSet
 
 /// Get the Inscopix DataSet type of a file.
@@ -101,6 +128,7 @@ private:
 /// \throw  isx::ExceptionFileIO    If read the file fails.
 /// \throw  isx::ExceptionDataIO    If the file format is not recognized.
 DataSet::Type readDataSetType(const std::string & inFileName);
+
 
 } // namespace isx
 

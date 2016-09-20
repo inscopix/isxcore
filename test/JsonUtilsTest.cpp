@@ -11,16 +11,20 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
 
     SECTION("Convert a movie data set to json")
     {
-        isx::DataSet dataSet("myDataSet", isx::DataSet::Type::MOVIE, movieFileName);
+        std::map<std::string, float> inProperties;
+        inProperties["test"] = 1.0f;
+        isx::DataSet dataSet("myDataSet", isx::DataSet::Type::MOVIE, movieFileName, inProperties);
 
         isx::json jsonObject = isx::convertDataSetToJson(&dataSet);
 
         std::string type = jsonObject["type"];
         isx::DataSet::Type dataSetType = isx::DataSet::Type(isx::isize_t(jsonObject["dataSetType"]));
         std::string fileName = jsonObject["fileName"];
+        std::map<std::string, float> outProperties = jsonObject["properties"];
         REQUIRE(type == "DataSet");
         REQUIRE(dataSetType == isx::DataSet::Type::MOVIE);
         REQUIRE(fileName == movieFileName);
+        REQUIRE(outProperties["test"] == inProperties["test"]);
     }
 
     SECTION("Convert json to a movie data set")
@@ -30,6 +34,9 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         jsonObject["name"] = "myDataSet";
         jsonObject["dataSetType"] = isx::isize_t(isx::DataSet::Type::MOVIE);
         jsonObject["fileName"] = movieFileName;
+        std::map<std::string, float> inProperties;
+        inProperties["test"] = 1.0f;
+        jsonObject["properties"] = inProperties;
 
         isx::Group group;
         isx::createDataSetFromJson(&group, jsonObject);
@@ -39,6 +46,9 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         REQUIRE(dataSet->getName() == "myDataSet");
         REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(dataSet->getFileName() == movieFileName);
+        float value;
+        REQUIRE(dataSet->getPropertyValue("test", value));
+        REQUIRE(value == 1.0f);
     }
 
     SECTION("Convert an empty group to json")
