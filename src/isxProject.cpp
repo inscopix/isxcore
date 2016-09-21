@@ -9,12 +9,12 @@ namespace isx
 {
 
 Project::Project()
-    : m_valid(false)
+    : m_valid(false)    
 {
 }
 
 Project::Project(const std::string & inFileName)
-    : m_valid(false)
+    : m_valid(false)    
     , m_fileName(inFileName)
 {
     read();
@@ -22,7 +22,7 @@ Project::Project(const std::string & inFileName)
 }
 
 Project::Project(const std::string & inFileName, const std::string & inName)
-    : m_valid(false)
+    : m_valid(false)    
     , m_name(inName)
     , m_fileName(inFileName)
 {
@@ -39,15 +39,21 @@ Project::Project(const std::string & inFileName, const std::string & inName)
     procGroup->createGroup("ImagingData");
     procGroup->createGroup("CellData");
     m_valid = true;
+    m_root->setUnmodified();
 }
 
 Project::~Project()
 {
-    // TODO sweet : maybe we shouldn't always write when the project is
-    // destroyed, but this works for now
+
+}
+
+void
+Project::save() 
+{
     if (m_valid)
     {
         write();
+        setUnmodified();
     }
 }
 
@@ -140,6 +146,18 @@ Project::getFileName() const
     return m_fileName;
 }
 
+void 
+Project::setFileName(const std::string & inFileName)
+{
+    m_fileName = inFileName;
+}
+
+bool 
+Project::isModified() const
+{
+    return m_root->isModified();
+}
+
 void
 Project::read()
 {
@@ -170,7 +188,7 @@ Project::read()
 }
 
 void
-Project::write() const
+Project::write() 
 {
     json jsonObject;
     try
@@ -192,7 +210,13 @@ Project::write() const
     }
 
     std::ofstream file(m_fileName, std::ios::trunc);
-    writeJsonHeader(jsonObject, file, false);
+    writeJsonHeader(jsonObject, file, false);    
+}
+
+void 
+Project::setUnmodified()
+{
+    m_root->setUnmodified();
 }
 
 } // namespace isx

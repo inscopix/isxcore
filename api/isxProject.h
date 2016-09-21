@@ -53,6 +53,10 @@ public:
     ///
     ~Project();
 
+    /// Write the file to disk.
+    ///
+    void save();
+
     /// Create a data set in this project.
     ///
     /// If a data set with the given path already exists in this project,
@@ -127,6 +131,14 @@ public:
     ///
     std::string getFileName() const;
 
+    /// Sets the file name of this project's file.
+    ///
+    void setFileName(const std::string & inFileName);
+
+    /// \return whether the file has unsaved changes.
+    ///
+    bool isModified() const;
+
 private:
 
     /// True if the project is valid, false otherwise.
@@ -149,7 +161,7 @@ private:
     /// Write this project to its file.
     ///
     /// This requires the file name to already be set.
-    void write() const;
+    void write();
 
     /// Checks if the file name is already used by a data set in this group's tree.
     ///
@@ -157,6 +169,10 @@ private:
     /// \return             True if this group's tree contains a data set with
     ///                     given file name.
     bool isFileName(const std::string & inFileName);
+
+    /// Sets all the groups/datasets in the project as unmodified
+    ///
+    void setUnmodified();
 
 };
 

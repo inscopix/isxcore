@@ -17,6 +17,7 @@ const std::string DataSet::PROP_VIS_MAX  = "vmax";
 
 DataSet::DataSet()
     : m_valid(false)
+    , m_modified(false)
     , m_parent(nullptr)
 {
 }
@@ -27,6 +28,7 @@ DataSet::DataSet(
         const std::string & inFileName,
         const std::map<std::string, float> & inProperties)
     : m_valid(true)
+    , m_modified(false)
     , m_name(inName)
     , m_type(inType)
     , m_fileName(inFileName)
@@ -88,6 +90,18 @@ DataSet::getPath() const
     return m_name;
 }
 
+bool 
+DataSet::isModified() const
+{
+    return m_modified;
+}
+
+void 
+DataSet::setUnmodified()
+{
+    m_modified = false;
+}
+
 bool
 DataSet::operator ==(const DataSet & inOther) const
 {
@@ -136,6 +150,7 @@ DataSet::getPropertyValue(const std::string & inPropertyName, float & outValue)
 void 
 DataSet::setProperty(const std::string & inPropertyName, float inValue)
 {
+    m_modified = true;
     m_properties[inPropertyName] = inValue;
 }
 
