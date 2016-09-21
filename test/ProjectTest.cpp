@@ -88,6 +88,7 @@ TEST_CASE("ProjectTest", "[core]")
         {
             isx::Project project(projectFileName, projectName);
             project.createGroup("/myGroup");
+            project.save();
         }
         isx::Project project(projectFileName);
         REQUIRE(project.isValid());
@@ -117,6 +118,7 @@ TEST_CASE("ProjectTest", "[core]")
             project.createDataSet(origMoviePath, isx::DataSet::Type::MOVIE, origMovieFileName);
             project.createDataSet(outMoviePath, isx::DataSet::Type::MOVIE, outMovieFileName);
             project.createDataSet(cellSetPath, isx::DataSet::Type::CELLSET, cellSetFileName);
+            project.save();
         }
 
         isx::Group rootGroup = isx::Group("/");
@@ -164,6 +166,8 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
                 groupPath + "/recording_20160706_132714",
                 isx::DataSet::Type::MOVIE,
                 g_resources["testDataPath"] + "/recording_20160706_132714.hdf5");
+
+        project.save();
     }
 
 }
