@@ -30,6 +30,7 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE_NOTHROW(project.getRootGroup());
         REQUIRE_NOTHROW(project.getOriginalGroup());
         REQUIRE_NOTHROW(project.getProcessedGroup());
+        project.save();
     }
 
     SECTION("Create a new project in a file that already exists")
