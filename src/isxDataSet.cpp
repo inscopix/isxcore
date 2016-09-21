@@ -123,13 +123,13 @@ DataSet::getProperties() const
 }
 
 bool 
-DataSet::getPropertyValue(const std::string & inPropertyName, float & outValue)
+DataSet::getPropertyValue(const std::string & inPropertyName, float & outValue) const
 {   
     bool found = false;
     if (m_properties.find(inPropertyName) != m_properties.end()) 
     {        
         found = true;
-        outValue = m_properties[inPropertyName];
+        outValue = m_properties.at(inPropertyName);
     }
     return found;
 }

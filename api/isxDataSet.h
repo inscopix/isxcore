@@ -35,8 +35,8 @@ public:
     // Property names as used in the property map
     static const std::string PROP_DATA_MIN;     ///< Min range of data in a movie dataset
     static const std::string PROP_DATA_MAX;     ///< Max range of data in a movie dataset
-    static const std::string PROP_VIS_MIN;      ///< Min visualization range [0..255]
-    static const std::string PROP_VIS_MAX;      ///< Max visualization range [0..255]
+    static const std::string PROP_VIS_MIN;      ///< Min visualization range [0..1]
+    static const std::string PROP_VIS_MAX;      ///< Max visualization range [0..1]
 
     /// Empty constructor.
     ///
@@ -76,7 +76,7 @@ public:
     /// \return whether the property was found or not
     /// \param inPropertyName the name of the property
     /// \param outValue the found value
-    bool getPropertyValue(const std::string & inPropertyName, float & outValue);
+    bool getPropertyValue(const std::string & inPropertyName, float & outValue) const;
 
     /// Sets a property in the map
     /// \param inPropertyName name
