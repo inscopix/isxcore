@@ -94,6 +94,10 @@ public:
 
     std::string getPath() const override;
 
+    bool isModified() const override;
+
+    void setUnmodified() override;
+
     void serialize(std::ostream & strm) const override;
     
     /// Serialize this DataSet to a JSON string
@@ -114,6 +118,9 @@ private:
 
     /// True if this data set is valid.
     bool m_valid;
+
+    /// True if this has unsaved changes.
+    bool m_modified;
 
     /// The name of this data set.
     std::string m_name;

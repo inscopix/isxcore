@@ -155,10 +155,17 @@ public:
 
     std::string getPath() const override;
 
+    bool isModified() const override;
+
+    void setUnmodified() override;
+
 private:
 
     /// True if this data set is valid.
     bool m_valid;
+
+    /// True if this has unsaved changes.
+    bool m_modified;
 
     /// The name of this group.
     std::string m_name;
