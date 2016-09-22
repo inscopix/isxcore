@@ -19,6 +19,7 @@ Project::Project(const std::string & inFileName)
 {
     read();
     m_valid = true;
+    setUnmodified();
 }
 
 Project::Project(const std::string & inFileName, const std::string & inName)
@@ -39,7 +40,7 @@ Project::Project(const std::string & inFileName, const std::string & inName)
     procGroup->createGroup("ImagingData");
     procGroup->createGroup("CellData");
     m_valid = true;
-    m_root->setUnmodified();
+    setUnmodified();
 }
 
 Project::~Project()
@@ -188,7 +189,7 @@ Project::read()
 }
 
 void
-Project::write() 
+Project::write() const
 {
     json jsonObject;
     try

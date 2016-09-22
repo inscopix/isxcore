@@ -161,7 +161,7 @@ private:
     /// Write this project to its file.
     ///
     /// This requires the file name to already be set.
-    void write();
+    void write() const;
 
     /// Checks if the file name is already used by a data set in this group's tree.
     ///
