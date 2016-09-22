@@ -173,8 +173,6 @@ TEST_CASE("ProjectModificationTest", "[core]")
         REQUIRE(!isx::pathExists(projectFileName));
     }
 
-// TODO sweet : re-enable this test when behavior is fixed.
-#if 0
     SECTION("Check that a project is not modified after importing.")
     {
         {
@@ -184,7 +182,6 @@ TEST_CASE("ProjectModificationTest", "[core]")
         isx::Project project(projectFileName);
         REQUIRE(!project.isModified());
     }
-#endif
 
 }
 
