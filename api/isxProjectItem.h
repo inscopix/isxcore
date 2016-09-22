@@ -43,6 +43,14 @@ public:
     ///
     virtual std::string getPath() const = 0;
 
+    /// Returns whether the item has been modified since last save.
+    ///
+    virtual bool isModified() const = 0;
+
+    /// Sets the item flag indicating wehther there are unsaved changes to false.
+    ///
+    virtual void setUnmodified() = 0;
+
 }; // class ProjectItem
 
 } // namespace isx

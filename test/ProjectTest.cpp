@@ -30,6 +30,7 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE_NOTHROW(project.getRootGroup());
         REQUIRE_NOTHROW(project.getOriginalGroup());
         REQUIRE_NOTHROW(project.getProcessedGroup());
+        project.save();
     }
 
     SECTION("Create a new project in a file that already exists")
@@ -88,6 +89,7 @@ TEST_CASE("ProjectTest", "[core]")
         {
             isx::Project project(projectFileName, projectName);
             project.createGroup("/myGroup");
+            project.save();
         }
         isx::Project project(projectFileName);
         REQUIRE(project.isValid());
@@ -117,6 +119,7 @@ TEST_CASE("ProjectTest", "[core]")
             project.createDataSet(origMoviePath, isx::DataSet::Type::MOVIE, origMovieFileName);
             project.createDataSet(outMoviePath, isx::DataSet::Type::MOVIE, outMovieFileName);
             project.createDataSet(cellSetPath, isx::DataSet::Type::CELLSET, cellSetFileName);
+            project.save();
         }
 
         isx::Group rootGroup = isx::Group("/");
@@ -138,6 +141,46 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE(*(project.getDataSet(origMoviePath)) == *expOrigMovie);
         REQUIRE(*(project.getDataSet(outMoviePath)) == *expOutMovie);
         REQUIRE(*(project.getDataSet(cellSetPath)) == *expCellSet);
+    }
+
+}
+
+TEST_CASE("ProjectModificationTest", "[core]")
+{
+    std::string projectFileName = g_resources["testDataPath"] + "/project.isxp";
+    std::remove(projectFileName.c_str());
+
+    std::string projectName = "myProject";
+
+    SECTION("Check that a project is not modified after creating it.")
+    {
+        isx::Project project(projectFileName, projectName);
+        REQUIRE(!project.isModified());
+    }
+
+    SECTION("Check that a project is not modified after writing it")
+    {
+        isx::Project project(projectFileName, projectName);
+        project.save();
+        REQUIRE(!project.isModified());
+    }
+
+    SECTION("Check that a file is not written if there is no explicit save")
+    {
+        {
+            isx::Project project(projectFileName, projectName);
+        }
+        REQUIRE(!isx::pathExists(projectFileName));
+    }
+
+    SECTION("Check that a project is not modified after importing.")
+    {
+        {
+            isx::Project project(projectFileName, projectName);
+            project.save();
+        }
+        isx::Project project(projectFileName);
+        REQUIRE(!project.isModified());
     }
 
 }
@@ -164,6 +207,8 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
                 groupPath + "/recording_20160706_132714",
                 isx::DataSet::Type::MOVIE,
                 g_resources["testDataPath"] + "/recording_20160706_132714.hdf5");
+
+        project.save();
     }
 
 }

@@ -6,12 +6,14 @@ namespace isx
 
 Group::Group()
     : m_valid(false)
+    , m_modified(false)
     , m_parent(nullptr)
 {
 }
 
 Group::Group(const std::string & inName)
     : m_valid(true)
+    , m_modified(false)
     , m_name(inName)
     , m_parent(nullptr)
 {
@@ -28,6 +30,7 @@ Group::createGroup(const std::string & inPath)
     std::unique_ptr<Group> g(new Group(inPath));
     g->m_parent = this;
     m_groups.push_back(std::move(g));
+    m_modified = true;
     return m_groups.back().get();
 }
 
@@ -73,6 +76,7 @@ Group::removeGroup(const std::string & inName)
         {
             (*it)->m_parent = nullptr;
             it = m_groups.erase(it);
+            m_modified = true;
             return;
         }
     }
@@ -100,6 +104,7 @@ Group::createDataSet(
     std::unique_ptr<DataSet> ds(new DataSet(inName, inType, inFileName, inProperties));
     ds->setParent(this);
     m_dataSets.push_back(std::move(ds));
+    m_modified = true;
     return m_dataSets.back().get();
 }
 
@@ -180,6 +185,7 @@ Group::removeDataSet(const std::string & inName)
         {
             (*it)->setParent(nullptr);
             it = m_dataSets.erase(it);
+            m_modified = true;
             return;
         }
     }
@@ -225,6 +231,47 @@ Group::getPath() const
         }
     }
     return m_name;
+}
+
+bool
+Group::isModified() const
+{
+    std::vector<std::unique_ptr<Group>>::const_iterator groupIt;
+    for (groupIt = m_groups.begin(); groupIt != m_groups.end(); ++groupIt)
+    {
+        if ((*groupIt)->isModified())
+        {
+            return true;
+        }
+    }
+
+    std::vector<std::unique_ptr<DataSet>>::const_iterator dataSetIt;
+    for (dataSetIt = m_dataSets.begin(); dataSetIt != m_dataSets.end(); ++dataSetIt)
+    {
+        if ((*dataSetIt)->isModified())
+        {
+            return true;
+        }
+    }
+
+    return m_modified;
+}
+
+void
+Group::setUnmodified()
+{
+    m_modified = false;
+    std::vector<std::unique_ptr<Group>>::const_iterator groupIt;
+    for (groupIt = m_groups.begin(); groupIt != m_groups.end(); ++groupIt)
+    {
+        (*groupIt)->setUnmodified();        
+    }
+
+    std::vector<std::unique_ptr<DataSet>>::const_iterator dataSetIt;
+    for (dataSetIt = m_dataSets.begin(); dataSetIt != m_dataSets.end(); ++dataSetIt)
+    {
+        (*dataSetIt)->setUnmodified();
+    }
 }
 
 bool
