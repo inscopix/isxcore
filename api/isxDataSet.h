@@ -23,6 +23,9 @@ class DataSet : public ProjectItem
 {
 public:
 
+    /// type of DataSet Properties
+    using Properties = std::map<std::string, float>;
+
     /// The type of data set.
     ///
     /// TODO sweet : add image and trace when we have files for them.
@@ -52,7 +55,7 @@ public:
     DataSet(const std::string & inName,
             Type inType,
             const std::string & inFileName,
-            const std::map<std::string, float> & inProperties = std::map<std::string, float>());
+            const Properties & inProperties = Properties());
 
     /// \return     The type of this data set.
     ///
@@ -70,7 +73,7 @@ public:
 
     /// Get the property map
     /// \return the property map
-    const std::map<std::string, float> & getProperties() const;
+    const Properties & getProperties() const;
 
     /// Get the property value
     /// \return whether the property was found or not
@@ -135,7 +138,7 @@ private:
     Group * m_parent;
 
     /// Dataset properties
-    std::map<std::string, float> m_properties;
+    Properties m_properties;
 
 }; // class DataSet
 

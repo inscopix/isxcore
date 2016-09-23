@@ -27,7 +27,7 @@ DataSet::DataSet(
         const std::string & inName,
         Type inType,
         const std::string & inFileName,
-        const std::map<std::string, float> & inProperties)
+        const Properties & inProperties)
     : m_valid(true)
     , m_modified(false)
     , m_name(inName)
@@ -130,7 +130,7 @@ DataSet::serialize(std::ostream & strm) const
         "fileName = " << m_fileName << ")";
 }
 
-const std::map<std::string, float> & 
+const DataSet::Properties & 
 DataSet::getProperties() const
 {
     return m_properties;

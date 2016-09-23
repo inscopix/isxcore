@@ -89,7 +89,7 @@ Group::createDataSet(
     const std::string & inName, 
     DataSet::Type inType,
     const std::string & inFileName,
-    const std::map<std::string, float> & inProperties)
+    const DataSet::Properties & inProperties)
 {
     if (isName(inName))
     {

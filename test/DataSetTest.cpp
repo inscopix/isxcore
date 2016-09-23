@@ -18,7 +18,7 @@ TEST_CASE("DataSetTest", "[core]")
 
     SECTION("Construct a movie data set")
     {
-        std::map<std::string, float> properties;
+        isx::DataSet::Properties properties;
         properties["test"] = 1.0f;
         isx::DataSet dataSet("myMovie", isx::DataSet::Type::MOVIE, "myMovie.isxd", properties);
 
@@ -103,7 +103,7 @@ TEST_CASE("DataSetToFromJson", "[core]")
     const std::string dsFileName = "myMovie.isxd";
     const std::string propKey = "test";
     const float propValue = 1.f;
-    std::map<std::string, float> properties;
+    isx::DataSet::Properties properties;
     properties[propKey] = propValue;
     isx::DataSet dataSet(dsName, dsType, dsFileName, properties);
     isx::Group group("myGroup");
@@ -121,7 +121,7 @@ TEST_CASE("DataSetToFromJson", "[core]")
     {
         std::string path;
         isx::DataSet ds = isx::DataSet::fromJsonString(expected, path);
-        const std::map<std::string, float> & props = ds.getProperties();
+        const isx::DataSet::Properties & props = ds.getProperties();
         REQUIRE(path == "myGroup/myMovie");
         REQUIRE(ds.getName() == dsName);
         REQUIRE(ds.getType() == dsType);

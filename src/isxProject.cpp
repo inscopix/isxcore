@@ -63,7 +63,7 @@ Project::createDataSet(
         const std::string & inPath,
         DataSet::Type inType,
         const std::string & inFileName,
-        const std::map<std::string, float> & inProperties)
+        const DataSet::Properties & inProperties)
 {
     const std::string name = isx::getFileName(inPath);
     // NOTE sweet : when creating a data set through the project, the

@@ -78,7 +78,7 @@ public:
             const std::string & inPath,
             DataSet::Type inType,
             const std::string & inFileName,
-            const std::map<std::string, float> & inProperties = std::map<std::string, float>());
+            const DataSet::Properties & inProperties = DataSet::Properties());
 
     /// Get a data set by its project path.
     ///

@@ -11,7 +11,7 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
 
     SECTION("Convert a movie data set to json")
     {
-        std::map<std::string, float> inProperties;
+        isx::DataSet::Properties inProperties;
         inProperties["test"] = 1.0f;
         isx::DataSet dataSet("myDataSet", isx::DataSet::Type::MOVIE, movieFileName, inProperties);
 
@@ -20,7 +20,7 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         std::string type = jsonObject["type"];
         isx::DataSet::Type dataSetType = isx::DataSet::Type(isx::isize_t(jsonObject["dataSetType"]));
         std::string fileName = jsonObject["fileName"];
-        std::map<std::string, float> outProperties = jsonObject["properties"];
+        isx::DataSet::Properties outProperties = jsonObject["properties"];
         REQUIRE(type == "DataSet");
         REQUIRE(dataSetType == isx::DataSet::Type::MOVIE);
         REQUIRE(fileName == movieFileName);
@@ -34,7 +34,7 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         jsonObject["name"] = "myDataSet";
         jsonObject["dataSetType"] = isx::isize_t(isx::DataSet::Type::MOVIE);
         jsonObject["fileName"] = movieFileName;
-        std::map<std::string, float> inProperties;
+        isx::DataSet::Properties inProperties;
         inProperties["test"] = 1.0f;
         jsonObject["properties"] = inProperties;
 
