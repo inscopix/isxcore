@@ -136,6 +136,12 @@ DataSet::getProperties() const
     return m_properties;
 }
 
+void
+DataSet::setProperties(const SpDataSetProperties_t & inDataSetProperties)
+{
+    m_properties = *inDataSetProperties;
+}
+
 bool 
 DataSet::getPropertyValue(const std::string & inPropertyName, float & outValue) const
 {   
@@ -149,7 +155,7 @@ DataSet::getPropertyValue(const std::string & inPropertyName, float & outValue) 
 }
 
 void 
-DataSet::setProperty(const std::string & inPropertyName, float inValue)
+DataSet::setPropertyValue(const std::string & inPropertyName, float inValue)
 {
     m_modified = true;
     m_properties[inPropertyName] = inValue;

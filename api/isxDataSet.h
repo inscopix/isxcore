@@ -75,6 +75,10 @@ public:
     /// \return the property map
     const Properties & getProperties() const;
 
+    /// Set the Properties of this DataSet
+    /// \param inDataSetProperties new Properties to set
+    void setProperties(const std::shared_ptr<Properties> & inDataSetProperties);
+
     /// Get the property value
     /// \return whether the property was found or not
     /// \param inPropertyName the name of the property
@@ -84,7 +88,7 @@ public:
     /// Sets a property in the map
     /// \param inPropertyName name
     /// \param inValue value
-    void setProperty(const std::string & inPropertyName, float inValue);
+    void setPropertyValue(const std::string & inPropertyName, float inValue);
 
     // Overrides
     bool isValid() const override;
@@ -153,6 +157,7 @@ private:
 /// \throw  isx::ExceptionDataIO    If the file format is not recognized.
 DataSet::Type readDataSetType(const std::string & inFileName);
 
+using SpDataSetProperties_t = std::shared_ptr<DataSet::Properties>;
 
 } // namespace isx
 
