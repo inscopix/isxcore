@@ -174,10 +174,6 @@ MosaicMovieFile::writeHeader()
         j["type"] = size_t(DataSet::Type::MOVIE);
         j["timingInfo"] = convertTimingInfoToJson(m_timingInfo);
         j["spacingInfo"] = convertSpacingInfoToJson(m_spacingInfo);
-        // TODO sweet : these aren't in the state of a movie right now, but they
-        // are in the spec, so assigning to null for now
-        j["dataRange"] = nullptr;
-        j["displayRange"] = nullptr;
         j["mosaicVersion"] = CoreVersionVector();
     }
     catch (const std::exception & error)
