@@ -51,7 +51,7 @@ StopWatch::getElapsedMs()
     uint64_t elapsed_ns = m_elapsedTime * sTimebaseInfo.numer / sTimebaseInfo.denom;
     double elapsed_ms = double(elapsed_ns) / 1000.0 / 1000.0;
 
-    return elapsed_ms;
+    return float(elapsed_ms);
 }
 
 #elif ISX_OS_WIN32
@@ -161,7 +161,7 @@ StopWatch::getElapsedMs()
     static const double sMilliSecondsPerNanoSecond = 1000.0 * 1000.0;
     double elapsed_ms = double(m_elapsedNanoSeconds) / sMilliSecondsPerNanoSecond;
 
-    return elapsed_ms;
+    return float(elapsed_ms);
 }
 
 #endif
