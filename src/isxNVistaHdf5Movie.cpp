@@ -3,6 +3,7 @@
 #include "isxMutex.h"
 #include "isxIoQueue.h"
 #include "isxConditionVariable.h"
+#include "isxAsyncFrameReader.h"
 
 #include <iostream>
 #include <vector>
@@ -24,6 +25,7 @@ NVistaHdf5Movie::NVistaHdf5Movie(
     const SpHdf5FileHandle_t & inHdf5FileHandle,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo)
+    : m_asyncFrameReader(new AsyncFrameReader())
 {
     std::vector<SpH5File_t> files(1, inHdf5FileHandle->get());
 
@@ -35,6 +37,7 @@ NVistaHdf5Movie::NVistaHdf5Movie(
     const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo)
+    : m_asyncFrameReader(new AsyncFrameReader())
 {
     std::vector<SpH5File_t> files;
     for (isize_t i(0); i < inHdf5FileHandles.size(); ++i)
@@ -75,68 +78,23 @@ NVistaHdf5Movie::getFrame(isize_t inFrameNumber)
 void
 NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
-    // Only get a weak pointer to this, so that we don't bother reading
-    // if this has been deleted when the read gets executed.
     std::weak_ptr<NVistaHdf5Movie> weakThis = shared_from_this();
-
-    uint64_t readRequestId = 0;
+    m_asyncFrameReader->getFrameAsync([weakThis, this, inFrameNumber]()
     {
-        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
-        readRequestId = m_readRequestCount++;
-    }
-
-    auto readIoTask = std::make_shared<IoTask>(
-        [weakThis, this, inFrameNumber, inCallback]()
+        auto sharedThis = weakThis.lock();
+        if (sharedThis)
         {
-            auto sharedThis = weakThis.lock();
-            if (sharedThis)
-            {
-                inCallback(getFrameInternal(inFrameNumber));
-            }
-        },
-        [weakThis, this, readRequestId, inCallback](AsyncTaskStatus inStatus)
-        {
-            auto sharedThis = weakThis.lock();
-            if (!sharedThis)
-            {
-                return;
-            }
-
-            auto rt = unregisterReadRequest(readRequestId);
-
-            checkAsyncTaskStatus(rt, inStatus, "MosaicMovie::getFrameAsync");
-            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
-            {
-                inCallback(SpVideoFrame_t());
-            }
+            return getFrameInternal(inFrameNumber);
         }
-    );
-
-    {
-        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
-        m_pendingReads[readRequestId] = readIoTask;
-    }
-    readIoTask->schedule();
-}
-
-SpAsyncTaskHandle_t
-NVistaHdf5Movie::unregisterReadRequest(uint64_t inReadRequestId)
-{
-    ScopedMutex locker(m_pendingReadsMutex, "unregisterPendingRead");
-    auto ret = m_pendingReads[inReadRequestId];
-    m_pendingReads.erase(inReadRequestId);
-    return ret;
+        return SpVideoFrame_t();
+    },
+    inCallback);
 }
 
 void
 NVistaHdf5Movie::cancelPendingReads()
 {
-    ScopedMutex locker(m_pendingReadsMutex, "cancelPendingReads");
-    for (auto & pr: m_pendingReads)
-    {
-        pr.second->cancel();
-    }
-    m_pendingReads.clear();
+    m_asyncFrameReader->cancelPendingReads();
 }
     
 const isx::TimingInfo &

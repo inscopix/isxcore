@@ -6,6 +6,7 @@
 #include "isxMutex.h"
 #include "isxIoQueue.h"
 #include "isxConditionVariable.h"
+#include "isxAsyncFrameReader.h"
 
 #include <fstream>
 
@@ -19,6 +20,7 @@ MosaicMovie::MosaicMovie()
 
 MosaicMovie::MosaicMovie(const std::string & inFileName)
     : m_valid(false)
+    , m_asyncFrameReader(new AsyncFrameReader())
 {
     // TODO sweet : decide if we want all IO on the IO thread or if
     // it's okay to read the header on the current thread.
@@ -65,6 +67,7 @@ MosaicMovie::MosaicMovie(
     const SpacingInfo & inSpacingInfo,
     const DataType inDataType)
     : m_valid(false)
+    , m_asyncFrameReader(new AsyncFrameReader())
 {
     // TODO sweet : decide if we want all IO on the IO thread or if
     // it's okay to write the header on the current thread.
@@ -135,69 +138,23 @@ MosaicMovie::getFrame(isize_t inFrameNumber)
 void
 MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
-    // Only get a weak pointer to this, so that we don't bother reading
-    // if this has been deleted when the read gets executed.
     std::weak_ptr<MosaicMovie> weakThis = shared_from_this();
-
-    uint64_t readRequestId = 0;
+    m_asyncFrameReader->getFrameAsync([weakThis, this, inFrameNumber]()
     {
-        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
-        readRequestId = m_readRequestCount++;
-    }
-
-    auto readIoTask = std::make_shared<IoTask>(
-        [weakThis, this, inFrameNumber, inCallback]()
+        auto sharedThis = weakThis.lock();
+        if (sharedThis)
         {
-            auto sharedThis = weakThis.lock();
-            if (sharedThis)
-            {
-                inCallback(m_file->readFrame(inFrameNumber));
-            }
-        },
-        [weakThis, this, readRequestId, inCallback](AsyncTaskStatus inStatus)
-        {
-            auto sharedThis = weakThis.lock();
-            if (!sharedThis)
-            {
-                return;
-            }
-
-            auto rt = unregisterReadRequest(readRequestId);
-
-            checkAsyncTaskStatus(rt, inStatus, "MosaicMovie::getFrameAsync");
-            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
-            {
-                inCallback(SpVideoFrame_t());
-            }
+            return m_file->readFrame(inFrameNumber);
         }
-    );
-
-    {
-        ScopedMutex locker(m_pendingReadsMutex, "getFrameAsync");
-        m_pendingReads[readRequestId] = readIoTask;
-    }
-    readIoTask->schedule();
-
-}
-
-SpAsyncTaskHandle_t
-MosaicMovie::unregisterReadRequest(uint64_t inReadRequestId)
-{
-    ScopedMutex locker(m_pendingReadsMutex, "unregisterPendingRead");
-    auto ret = m_pendingReads[inReadRequestId];
-    m_pendingReads.erase(inReadRequestId);
-    return ret;
+        return SpVideoFrame_t();
+    },
+    inCallback);
 }
     
 void
 MosaicMovie::cancelPendingReads()
 {
-    ScopedMutex locker(m_pendingReadsMutex, "cancelPendingReads");
-    for (auto & pr: m_pendingReads)
-    {
-        pr.second->cancel();
-    }
-    m_pendingReads.clear();
+    m_asyncFrameReader->cancelPendingReads();
 }
 
 void
