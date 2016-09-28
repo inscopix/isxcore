@@ -12,7 +12,7 @@
 namespace isx
 {
 
-class AsyncFrameReader;
+class IoTaskTracker;
 
 /// Encapsulates movie information and data.
 ///
@@ -88,7 +88,7 @@ private:
 
     /// The shared pointer to the movie file that stores data.
     std::shared_ptr<MosaicMovieFile>    m_file;
-    std::shared_ptr<AsyncFrameReader>   m_asyncFrameReader;
+    std::shared_ptr<IoTaskTracker>      m_ioTaskTracker;
 };
 
 } // namespace isx

@@ -6,7 +6,7 @@
 #include "isxMutex.h"
 #include "isxIoQueue.h"
 #include "isxConditionVariable.h"
-#include "isxAsyncFrameReader.h"
+#include "isxIoTaskTracker.h"
 
 #include <fstream>
 
@@ -20,7 +20,7 @@ MosaicMovie::MosaicMovie()
 
 MosaicMovie::MosaicMovie(const std::string & inFileName)
     : m_valid(false)
-    , m_asyncFrameReader(new AsyncFrameReader())
+    , m_ioTaskTracker(new IoTaskTracker())
 {
     // TODO sweet : decide if we want all IO on the IO thread or if
     // it's okay to read the header on the current thread.
@@ -67,7 +67,7 @@ MosaicMovie::MosaicMovie(
     const SpacingInfo & inSpacingInfo,
     const DataType inDataType)
     : m_valid(false)
-    , m_asyncFrameReader(new AsyncFrameReader())
+    , m_ioTaskTracker(new IoTaskTracker())
 {
     // TODO sweet : decide if we want all IO on the IO thread or if
     // it's okay to write the header on the current thread.
@@ -139,7 +139,7 @@ void
 MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
     std::weak_ptr<MosaicMovie> weakThis = shared_from_this();
-    m_asyncFrameReader->getFrameAsync([weakThis, this, inFrameNumber]()
+    m_ioTaskTracker->schedule([weakThis, this, inFrameNumber]()
     {
         auto sharedThis = weakThis.lock();
         if (sharedThis)
@@ -154,7 +154,7 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 void
 MosaicMovie::cancelPendingReads()
 {
-    m_asyncFrameReader->cancelPendingReads();
+    m_ioTaskTracker->cancelPendingTasks();
 }
 
 void

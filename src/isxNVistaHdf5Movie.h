@@ -13,7 +13,7 @@
 namespace isx
 {
 
-class AsyncFrameReader;
+class IoTaskTracker;
 
 /// Encapsulates a movie/recording from nVista stored in at least one HDF5 file.
 ///
@@ -95,8 +95,8 @@ private:
     std::vector<isize_t> m_cumulativeFrames;
     
     std::string m_fileName;
-    
-    std::shared_ptr<AsyncFrameReader>   m_asyncFrameReader;
+
+    std::shared_ptr<IoTaskTracker>   m_ioTaskTracker;
 
     /// Handles most of the initialization.
     /// \param inFileName name of movie file

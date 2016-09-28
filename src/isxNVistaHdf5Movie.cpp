@@ -3,7 +3,7 @@
 #include "isxMutex.h"
 #include "isxIoQueue.h"
 #include "isxConditionVariable.h"
-#include "isxAsyncFrameReader.h"
+#include "isxIoTaskTracker.h"
 
 #include <iostream>
 #include <vector>
@@ -25,7 +25,7 @@ NVistaHdf5Movie::NVistaHdf5Movie(
     const SpHdf5FileHandle_t & inHdf5FileHandle,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo)
-    : m_asyncFrameReader(new AsyncFrameReader())
+    : m_ioTaskTracker(new IoTaskTracker())
 {
     std::vector<SpH5File_t> files(1, inHdf5FileHandle->get());
 
@@ -37,7 +37,7 @@ NVistaHdf5Movie::NVistaHdf5Movie(
     const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo)
-    : m_asyncFrameReader(new AsyncFrameReader())
+    : m_ioTaskTracker(new IoTaskTracker())
 {
     std::vector<SpH5File_t> files;
     for (isize_t i(0); i < inHdf5FileHandles.size(); ++i)
@@ -79,7 +79,7 @@ void
 NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
     std::weak_ptr<NVistaHdf5Movie> weakThis = shared_from_this();
-    m_asyncFrameReader->getFrameAsync([weakThis, this, inFrameNumber]()
+    m_ioTaskTracker->schedule([weakThis, this, inFrameNumber]()
     {
         auto sharedThis = weakThis.lock();
         if (sharedThis)
@@ -94,7 +94,7 @@ NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallba
 void
 NVistaHdf5Movie::cancelPendingReads()
 {
-    m_asyncFrameReader->cancelPendingReads();
+    m_ioTaskTracker->cancelPendingTasks();
 }
     
 const isx::TimingInfo &
