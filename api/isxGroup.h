@@ -19,6 +19,15 @@ class Group : public ProjectItem
 {
 public:
 
+    /// The type of group.
+    ///
+    enum class Type
+    {
+        GENERAL = 0,        /// A general group just for organization.
+        DATASET,            /// A group that stores a data set and its derived datasets, etc.
+        DERIVED             /// A group that stores derived data sets.
+    };
+
     /// Empty constructor.
     ///
     /// Creates a valid C++ object, but not a valid Group.
@@ -27,9 +36,14 @@ public:
     /// Create a group with the given name.
     ///
     /// \param  inName      The name of this group.
-    Group(const std::string & inName);
+    /// \param  inType      The type of group.
+    Group(const std::string & inName, const Type inType = Type::GENERAL);
 
-    /// Create a new group and it to this group.
+    /// \return     The type of this group.
+    ///
+    Type getType() const;
+
+    /// Create a new group and add it to this group.
     ///
     /// This returns a raw pointer to the new created group after it
     /// has been created and added to this group.
@@ -37,12 +51,13 @@ public:
     /// exists in this group.
     ///
     /// \param  inPath      The path of the data set to create.
+    /// \param  inType      The type of group.
     /// \return             A raw pointer to the new group after
     ///                     it has been added to this group.
     ///
     /// \throw  isx::ExceptionDataIO    If a group with the given name
     ///                                 already exists.
-    Group * createGroup(const std::string & inPath);
+    Group * createGroup(const std::string & inPath, const Type inType = Type::GENERAL);
 
     /// Get the groups in this group.
     ///
@@ -169,6 +184,9 @@ private:
 
     /// The name of this group.
     std::string m_name;
+
+    /// The type of this group.
+    Type m_type;
 
     /// The parent group to which this belongs.
     Group * m_parent;

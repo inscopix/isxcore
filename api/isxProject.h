@@ -57,6 +57,32 @@ public:
     ///
     void save();
 
+    /// Import a data set into this project.
+    ///
+    /// This will add a dataset to the original data group and will also
+    /// create a data set group in the project data group.
+    /// If a data set with the given name already exists in this project,
+    /// this will fail.
+    /// If there is an existing data set in this project with the given
+    /// file name, this will fail.
+    ///
+    /// \param  inName      The name of the data set to create.
+    /// \param  inType      The type of the data set to create.
+    /// \param  inFileName  The file name of the data set to create.
+    /// \param  inProperties The property map for the data set to create.
+    /// \return             The data set created.
+    ///
+    /// \throw  isx::ExceptionDataIO    If an item with the given name
+    ///                                 already exists.
+    /// \throw  isx::ExceptionFileIO    If a data set with the given file
+    ///                                 name has already been imported into
+    ///                                 this project.
+    DataSet * importDataSet(
+            const std::string & inName,
+            DataSet::Type inType,
+            const std::string & inFileName,
+            const DataSet::Properties & inProperties = DataSet::Properties());
+
     /// Create a data set in this project.
     ///
     /// If a data set with the given path already exists in this project,
@@ -79,6 +105,32 @@ public:
             DataSet::Type inType,
             const std::string & inFileName,
             const DataSet::Properties & inProperties = DataSet::Properties());
+
+    /// Create a data set in this project.
+    ///
+    /// This will create a data set group in the project data group, will
+    /// create a data set in that group and will create a derived data set
+    /// group associated with that data set in the same group.
+    /// If a data set with the given path already exists in this project,
+    /// this will fail.
+    /// If there is an existing data set in this project with the given
+    /// file name, this will fail.
+    ///
+    /// \param  inPath      The path of the data set to create.
+    /// \param  inType      The type of the data set to create.
+    /// \param  inFileName  The file name of the data set to create.
+    /// \param  inProperties The property map for the data set to create.
+    /// \return             The data set created.
+    ///
+    /// \throw  isx::ExceptionDataIO    If an item with the given path
+    ///                                 already exists.
+    /// \throw  isx::ExceptionFileIO    If a data set with the given file
+    ///                                 name already exists in this project.
+    DataSet * createDataSetAsGroup(
+                            const std::string & inPath,
+                            DataSet::Type inType,
+                            const std::string & inFileName,
+                            const DataSet::Properties & inProperties = DataSet::Properties());
 
     /// Get a data set by its project path.
     ///
@@ -111,13 +163,9 @@ public:
     ///
     Group * getRootGroup() const;
 
-    /// \return     The group of original data.
+    /// \return     The group of original data that have been imported into this project.
     ///
-    Group * getOriginalGroup() const;
-
-    /// \return     The group of processed data.
-    ///
-    Group * getProcessedGroup() const;
+    Group * getOriginalDataGroup() const;
 
     /// \return     True if this project is valid.
     ///
@@ -149,6 +197,9 @@ private:
 
     /// The root group of the project.
     std::unique_ptr<Group> m_root;
+
+    /// The group of original data that have been imported into this.
+    std::unique_ptr<Group> m_originalData;
 
     /// The file name of the project file.
     std::string m_fileName;
