@@ -18,11 +18,13 @@ IoTaskTracker::schedule(getFrameCB_t inGetFrame, MovieGetFrameCB_t inCallback)
     }
 
     std::weak_ptr<IoTaskTracker> weakThis = shared_from_this();
-    auto readIoTask = std::make_shared<IoTask>(
+    Task_t asyncTask = 
         [inGetFrame, inCallback]()
         {
             inCallback(inGetFrame());
-        },
+        };
+
+    AsyncFinishedCB_t finishedCB =
         [weakThis, this, readRequestId, inCallback](AsyncTaskStatus inStatus)
         {
             auto sharedThis = weakThis.lock();
@@ -38,8 +40,9 @@ IoTaskTracker::schedule(getFrameCB_t inGetFrame, MovieGetFrameCB_t inCallback)
             {
                 inCallback(SpVideoFrame_t());
             }
-        }
-    );
+        };
+
+    auto readIoTask = std::make_shared<IoTask>(asyncTask, finishedCB);
 
     {
         ScopedMutex locker(m_pendingRequestsMutex, "IoTaskTracker::schedule");

@@ -13,7 +13,7 @@
 namespace isx
 {
 
-/// Utility class used by implementors of the Movie interface to track and possibly cancle IoTasks
+/// Utility class used by implementors of the Movie interface to track and possibly cancel IoTasks
 class IoTaskTracker : public std::enable_shared_from_this<IoTaskTracker>
 {
 public:
