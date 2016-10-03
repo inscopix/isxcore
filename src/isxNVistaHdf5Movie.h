@@ -13,6 +13,8 @@
 namespace isx
 {
 
+class IoTaskTracker;
+
 /// Encapsulates a movie/recording from nVista stored in at least one HDF5 file.
 ///
 class NVistaHdf5Movie : public Movie
@@ -94,6 +96,8 @@ private:
     
     std::string m_fileName;
 
+    std::shared_ptr<IoTaskTracker>   m_ioTaskTracker;
+
     /// Handles most of the initialization.
     /// \param inFileName name of movie file
     /// \param inHdf5Files List of files containing the movie data
@@ -137,20 +141,11 @@ private:
     /// \return The HDF5 movie file index associated with a frame number.
     ///
     isize_t getMovieIndex(isize_t inFrameNumber);
-    
-    /// remove read request from our pending reads
-    /// \param inReadRequestId Id of request to remove
-    /// \return AsyncTaskHandle for the removed read request
-    SpAsyncTaskHandle_t
-    unregisterReadRequest(uint64_t inReadRequestId);
-    
-    uint64_t m_readRequestCount = 0;
-    isx::Mutex m_pendingReadsMutex;
-    std::map<uint64_t, SpAsyncTaskHandle_t> m_pendingReads;
 };
 
 typedef std::shared_ptr<NVistaHdf5Movie>  SpNVistaHdf5Movie_t;
 typedef std::weak_ptr<NVistaHdf5Movie>    WpNVistaHdf5Movie_t;
+
 
 } // namespace isx
 

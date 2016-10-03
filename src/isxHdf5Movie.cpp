@@ -119,6 +119,12 @@ namespace isx
     void
     Hdf5Movie::getFrame(isize_t inFrameNumber, const SpVideoFrame_t & vf)
     {
+        if (inFrameNumber >= getNumFrames())
+        {
+            ISX_THROW(isx::ExceptionDataIO,
+                "The index of the frame (", inFrameNumber, ") is out of range (0-",
+                getNumFrames()-1, ").");
+        }
         try 
         {
             isx::internal::HSizeVector_t size = { 1, m_dims[1], m_dims[2] };
