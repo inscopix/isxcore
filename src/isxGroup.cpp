@@ -73,6 +73,20 @@ Group::getGroup(const std::string & inName) const
             "Could not find group with the name: ", inName);
 }
 
+bool
+Group::isGroup(const std::string & inName) const
+{
+    std::vector<std::unique_ptr<Group>>::const_iterator it;
+    for (it = m_groups.begin(); it != m_groups.end(); ++it)
+    {
+        if ((*it)->m_name == inName)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void
 Group::removeGroup(const std::string & inName)
 {

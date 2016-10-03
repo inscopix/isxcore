@@ -75,6 +75,12 @@ public:
     ///                                 given name in this group.
     Group * getGroup(const std::string & inName) const;
 
+    /// Checks that a group exists in this group.
+    ///
+    /// \param  inName  The name of the group to check for.
+    /// \return         True if the group exists.
+    bool isGroup(const std::string & inName) const;
+
     /// Remove a sub-group with the given name.
     ///
     /// Before removing the group, this sets the parent of the input group
