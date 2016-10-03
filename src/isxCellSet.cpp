@@ -199,7 +199,8 @@ void
 CellSet::writeImageAndTrace(
         isize_t inIndex,
         SpImage_t & inImage,
-        SpFTrace_t & inTrace)
+        SpFTrace_t & inTrace,
+        const std::string & inName)
 {
     // Get a new shared pointer to the file, so we can guarantee the write.
     std::shared_ptr<CellSetFile> file = m_file;
@@ -207,9 +208,9 @@ CellSet::writeImageAndTrace(
     ConditionVariable cv;
     mutex.lock("CellSet::writeImageAndTrace");
     auto writeIoTask = std::make_shared<IoTask>(
-        [file, inIndex, inImage, inTrace]()
+        [file, inIndex, inImage, inTrace, inName]()
         {
-            file->writeCellData(inIndex, *inImage, *inTrace);
+            file->writeCellData(inIndex, *inImage, *inTrace, inName);
         },
         [&cv, &mutex](AsyncTaskStatus inStatus)
         {
@@ -236,7 +237,19 @@ CellSet::isCellValid(isize_t inIndex)
 void
 CellSet::setCellValid(isize_t inIndex, bool inIsValid)
 {
-    return m_file->setCellValid(inIndex, inIsValid);
+    m_file->setCellValid(inIndex, inIsValid);
+}
+
+std::string 
+CellSet::getCellName(isize_t inIndex)
+{
+    return m_file->getCellName(inIndex);
+}
+
+void
+CellSet::setCellName(isize_t inIndex, const std::string & inName)
+{
+    m_file->setCellName(inIndex, inName);
 }
 
 void
