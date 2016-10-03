@@ -159,13 +159,13 @@ public:
     /// \param inIndex the cell of interest
     /// \return a string with the name
     std::string 
-    CellSet::getCellName(isize_t inIndex);
+    getCellName(isize_t inIndex);
 
     /// Set the cell name 
     /// \param inIndex the cell of interest
     /// \param inName the assigned name (it will be truncated to 15 characters, if longer than that)
     void 
-    CellSet::setCellName(isize_t inIndex, const std::string & inName);
+    setCellName(isize_t inIndex, const std::string & inName);
 
     /// Cancel all pending read requests (schedule with getTraceAsync/getImageAsync).
     ///
