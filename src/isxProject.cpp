@@ -61,29 +61,11 @@ Project::importDataSet(
 {
     const std::string name = isx::getFileName(inPath);
     m_originalData->createDataSet(name, inType, inFileName, inProperties);
-    return createDataSetAsGroup(inPath, inType, inFileName, inProperties);
+    return createDataSet(inPath, inType, inFileName, inProperties);
 }
 
 DataSet *
 Project::createDataSet(
-        const std::string & inPath,
-        DataSet::Type inType,
-        const std::string & inFileName,
-        const DataSet::Properties & inProperties)
-{
-    const std::string name = isx::getFileName(inPath);
-    // NOTE sweet : when creating a data set through the project, the
-    // absolute path gets stored, so that other clients of this data set
-    // can use that file name without referring to the path of the project
-    // file name.
-    std::string absFileName = getAbsolutePath(inFileName);
-    const std::string groupPath = getDirName(inPath);
-    Group * parent = getGroup(groupPath);
-    return parent->createDataSet(name, inType, absFileName, inProperties);
-}
-
-DataSet *
-Project::createDataSetAsGroup(
         const std::string & inPath,
         DataSet::Type inType,
         const std::string & inFileName,

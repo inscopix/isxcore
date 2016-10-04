@@ -74,12 +74,24 @@ TEST_CASE("ProjectTest", "[core]")
         isx::DataSet * dataSet = project.createDataSet("/myDataSet",
                 isx::DataSet::Type::MOVIE, movieFileName);
 
-        REQUIRE(dataSet->getParent() == project.getRootGroup());
+        REQUIRE(dataSet->getParent() == project.getGroup("/myDataSet"));
         REQUIRE(dataSet->getName() == "myDataSet");
         REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
-        REQUIRE(dataSet->getPath() == "/myDataSet");
+        REQUIRE(dataSet->getPath() == "/myDataSet/myDataSet");
         REQUIRE(dataSet->getFileName() == isx::getAbsolutePath(movieFileName));
-        REQUIRE(project.getDataSet("/myDataSet") == dataSet);
+        REQUIRE(project.getDataSet("/myDataSet/myDataSet") == dataSet);
+    }
+
+    SECTION("Import a movie data set in a project")
+    {
+        std::string movieFileName = g_resources["testDataPath"] + "/movie.isxp";
+        isx::Project project(projectFileName, projectName);
+
+        isx::DataSet * dataSet = project.createDataSet("/myDataSet",
+                isx::DataSet::Type::MOVIE, movieFileName);
+
+        REQUIRE(project.getDataSet("OriginalData/myDataSet/myDataSet") == dataSet);
+        REQUIRE(project.getDataSet("/myDataSet/myDataSet") == dataSet);
     }
 
     SECTION("Open an existing project after adding a group.")
@@ -111,7 +123,8 @@ TEST_CASE("ProjectTest", "[core]")
         std::string procMoviePath = procMovieGroupPath + "/" + procMovieName;
         std::string procMovieDerivedPath = procMovieGroupPath + "/derived";
 
-        std::string cellSetPath = procMovieDerivedPath + "/" + cellSetName;
+        std::string cellSetGroupPath = procMovieDerivedPath + "/" + cellSetName;
+        std::string cellSetPath = cellSetGroupPath + "/" + cellSetName;
 
 #if ISX_OS_WIN32
         std::string rootFileName = "C:/";
@@ -124,18 +137,19 @@ TEST_CASE("ProjectTest", "[core]")
 
         {
             isx::Project project(projectFileName, projectName);
-            project.importDataSet("/" + movieName, isx::DataSet::Type::MOVIE, movieFileName);
-            project.createDataSetAsGroup("/" + procMovieName, isx::DataSet::Type::MOVIE, procMovieFileName);
-            project.createDataSet(cellSetPath, isx::DataSet::Type::CELLSET, cellSetFileName);
+            project.importDataSet(movieGroupPath, isx::DataSet::Type::MOVIE, movieFileName);
+            project.createDataSet(procMovieGroupPath, isx::DataSet::Type::MOVIE, procMovieFileName);
+            project.createDataSet(cellSetGroupPath, isx::DataSet::Type::CELLSET, cellSetFileName);
             project.save();
         }
 
         // Create expected groups/datasets
         isx::Group rootGroup("/");
         isx::Group origGroup("OriginalData");
-        isx::Group * movieGroup = rootGroup.createGroup(movieName);
-        isx::Group * procMovieGroup = rootGroup.createGroup(procMovieName);
-        isx::Group * procMovieDerivedGroup = procMovieGroup->createGroup("derived");
+        isx::Group * movieGroup = rootGroup.createGroup(movieName, isx::Group::Type::DATASET);
+        isx::Group * procMovieGroup = rootGroup.createGroup(procMovieName, isx::Group::Type::DATASET);
+        isx::Group * procMovieDerivedGroup = procMovieGroup->createGroup("derived", isx::Group::Type::DERIVED);
+        isx::Group * procCellGroup = procMovieDerivedGroup->createGroup(cellSetName, isx::Group::Type::DATASET);
 
         isx::DataSet * expOrigMovie = origGroup.createDataSet(
                 movieName, isx::DataSet::Type::MOVIE, isx::getAbsolutePath(movieFileName));
@@ -143,7 +157,7 @@ TEST_CASE("ProjectTest", "[core]")
                 movieName, isx::DataSet::Type::MOVIE, isx::getAbsolutePath(movieFileName));
         isx::DataSet * expProcMovie = procMovieGroup->createDataSet(
                 procMovieName, isx::DataSet::Type::MOVIE, isx::getAbsolutePath(procMovieFileName));
-        isx::DataSet * expCellSet = procMovieDerivedGroup->createDataSet(
+        isx::DataSet * expCellSet = procCellGroup->createDataSet(
                 cellSetName, isx::DataSet::Type::CELLSET, isx::getAbsolutePath(cellSetFileName));
 
         isx::Project project(projectFileName);
@@ -219,7 +233,7 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
                 isx::DataSet::Type::MOVIE,
                 g_resources["testDataPath"] + "/datasetC2FN-m.isxd");
 
-        project.createDataSetAsGroup(
+        project.createDataSet(
                 "/Day_1/datasetC2FN-m/derived/PCA-ICA",
                 isx::DataSet::Type::CELLSET,
                 g_resources["testDataPath"] + "/datasetC2FN-c.isxd");

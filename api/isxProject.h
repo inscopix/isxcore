@@ -17,7 +17,9 @@ namespace isx
 ///
 /// In the current state of the project (i.e. ignoring history) any group
 /// or dataset is also uniquely identified by its absolute path from the root
-/// of the project where the / character is used as a group delimiter.
+/// of the project where the '/' character is used as a group delimiter.
+/// Additionally, each data set that is imported into the project (using the
+/// importDataSet method) is added to the "OriginalData" group.
 /// Any dataset is also uniquely identified by its file name on the actual
 /// filesystem - i.e. two or more datasets in a project cannot refer to the
 /// same file.
@@ -85,6 +87,9 @@ public:
 
     /// Create a data set in this project.
     ///
+    /// This will create a data set group in the project data group, will
+    /// create a data set in that group and will create a derived data set
+    /// group associated with that data set in the same group.
     /// If a data set with the given path already exists in this project,
     /// this will fail.
     /// If there is an existing data set in this project with the given
@@ -105,32 +110,6 @@ public:
             DataSet::Type inType,
             const std::string & inFileName,
             const DataSet::Properties & inProperties = DataSet::Properties());
-
-    /// Create a data set in this project.
-    ///
-    /// This will create a data set group in the project data group, will
-    /// create a data set in that group and will create a derived data set
-    /// group associated with that data set in the same group.
-    /// If a data set with the given path already exists in this project,
-    /// this will fail.
-    /// If there is an existing data set in this project with the given
-    /// file name, this will fail.
-    ///
-    /// \param  inPath      The path of the data set to create.
-    /// \param  inType      The type of the data set to create.
-    /// \param  inFileName  The file name of the data set to create.
-    /// \param  inProperties The property map for the data set to create.
-    /// \return             The data set created.
-    ///
-    /// \throw  isx::ExceptionDataIO    If an item with the given path
-    ///                                 already exists.
-    /// \throw  isx::ExceptionFileIO    If a data set with the given file
-    ///                                 name already exists in this project.
-    DataSet * createDataSetAsGroup(
-                            const std::string & inPath,
-                            DataSet::Type inType,
-                            const std::string & inFileName,
-                            const DataSet::Properties & inProperties = DataSet::Properties());
 
     /// Get a data set by its project path.
     ///
