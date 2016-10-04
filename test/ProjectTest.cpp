@@ -113,7 +113,12 @@ TEST_CASE("ProjectTest", "[core]")
 
         std::string cellSetPath = procMovieDerivedPath + "/" + cellSetName;
 
-        std::string movieFileName = "/inscopix/data/" + movieName + ".isxd";
+#if ISX_OS_WIN32
+        std::string rootFileName = "C:/";
+#else
+        std::string rootFileName = "/";
+#endif
+        std::string movieFileName = rootFileName + "inscopix/data/" + movieName + ".isxd";
         std::string procMovieFileName = g_resources["testDataPath"] + "/" + procMovieName + ".isxd";
         std::string cellSetFileName = g_resources["testDataPath"] + "/" + cellSetName + ".isxd";
 
