@@ -157,8 +157,11 @@ DataSet::getPropertyValue(const std::string & inPropertyName, float & outValue) 
 void 
 DataSet::setPropertyValue(const std::string & inPropertyName, float inValue)
 {
-    m_modified = true;
-    m_properties[inPropertyName] = inValue;
+    if (m_properties[inPropertyName] != inValue)
+    {
+        m_modified = true;
+        m_properties[inPropertyName] = inValue;
+    }
 }
 
 DataSet::Type
