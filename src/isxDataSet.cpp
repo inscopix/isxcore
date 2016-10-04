@@ -139,7 +139,10 @@ DataSet::getProperties() const
 void
 DataSet::setProperties(const SpDataSetProperties_t & inDataSetProperties)
 {
-    m_properties = *inDataSetProperties;
+    if (inDataSetProperties)
+    {
+        m_properties = *inDataSetProperties;
+    }
 }
 
 bool 
