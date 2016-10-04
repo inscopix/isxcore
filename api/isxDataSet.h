@@ -79,6 +79,13 @@ public:
     /// \param inDataSetProperties new Properties to set
     void setProperties(const std::shared_ptr<Properties> & inDataSetProperties);
 
+    /// Merge Properties into this DataSet's properties.
+    /// Will only change those properties that are actually defined in inDataSetProperties.
+    /// Will overwrite any existing Properties if they are defined in inDataSetProperties.
+    /// \param inDataSetProperties Properties to merge
+    void
+    mergeProperties(const Properties & inDataSetProperties);
+
     /// Get the property value
     /// \return whether the property was found or not
     /// \param inPropertyName the name of the property
