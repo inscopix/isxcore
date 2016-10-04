@@ -2,7 +2,6 @@
 #define ISX_DATA_SET_H
 
 #include "isxObject.h"
-#include "isxProjectItem.h"
 
 #include <string>
 #include <memory>
@@ -17,9 +16,10 @@ class Group;
 
 /// Encapsulates a data set within a project.
 ///
-/// This is described by a data set type, a name and a file name.
-class DataSet : public ProjectItem
-              , public Object
+/// This is described by a data set type, a name, a file name and dictionary
+/// of various properties.
+/// It may also have a parent Group which is its owner.
+class DataSet : public Object
 {
 public:
 
@@ -90,29 +90,47 @@ public:
     /// \param inValue value
     void setPropertyValue(const std::string & inPropertyName, float inValue);
 
+    /// \return     True if this is valid.
+    ///
+    bool isValid() const;
+
+    /// \return     The name of this data set.
+    ///
+    std::string getName() const;
+
+    /// \return     The parent of this group.
+    ///
+    Group * getParent() const;
+
+    /// Set the parent of this data set.
+    ///
+    /// This simply updates the parent of this data set and does not move
+    /// this data set into the given parent group,
+    ///
+    /// \param  inParent    The new parent of this data set.
+    void setParent(Group * inParent);
+
+    /// \return     The path of this group from the root group.
+    ///
+    std::string getPath() const;
+
+    /// Returns whether the item has been modified since last save.
+    ///
+    bool isModified() const;
+
+    /// Sets the item flag indicating wehther there are unsaved changes to false.
+    ///
+    void setUnmodified();
+
     // Overrides
-    bool isValid() const override;
-
-    std::string getName() const override;
-
-    Group * getParent() const override;
-
-    void setParent(Group * inParent) override;
-
-    std::string getPath() const override;
-
-    bool isModified() const override;
-
-    void setUnmodified() override;
-
     void serialize(std::ostream & strm) const override;
-    
+
     /// Serialize this DataSet to a JSON string
     /// \return JSON string for this DataSet
     ///
     std::string
     toJsonString() const;
-    
+
     /// Create a DataSet from a JSON string
     /// \param inDataSetJson string containing JSON for a DataSet
     /// \param outPath is set to the full path (in project) of the DataSet

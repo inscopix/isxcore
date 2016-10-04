@@ -15,7 +15,7 @@ namespace isx
 ///
 /// All data sets are initially ordered by their time of creation and
 /// allgroups are initially ordered by their time of creation.
-class Group : public ProjectItem
+class Group
 {
 public:
 
@@ -23,7 +23,7 @@ public:
     ///
     enum class Type
     {
-        GENERAL = 0,        /// A general group just for organization.
+        GENERAL,        /// A general group just for organization.
         DATASET,            /// A group that stores a data set and its derived datasets, etc.
         DERIVED             /// A group that stores derived data sets.
     };
@@ -111,7 +111,7 @@ public:
     DataSet * createDataSet(
         const std::string & inName,
         DataSet::Type inType,
-        const std::string & inFileName, 
+        const std::string & inFileName,
         const DataSet::Properties & inProperties = DataSet::Properties());
 
     /// Get the data sets in this group.
@@ -165,20 +165,37 @@ public:
     /// \return             True if the groups are exactly equal.
     bool operator==(const Group & inOther) const;
 
-    // Overrides
-    bool isValid() const override;
+    /// \return     True if this is valid.
+    ///
+    bool isValid() const;
 
-    std::string getName() const override;
+    /// \return     The name of this data set.
+    ///
+    std::string getName() const;
 
-    Group * getParent() const override;
+    /// \return     The parent of this group.
+    ///
+    Group * getParent() const;
 
-    void setParent(Group * inParent) override;
+    /// Set the parent of this data set.
+    ///
+    /// This simply updates the parent of this data set and does not move
+    /// this data set into the given parent group,
+    ///
+    /// \param  inParent    The new parent of this data set.
+    void setParent(Group * inParent);
 
-    std::string getPath() const override;
+    /// \return     The path of this group from the root group.
+    ///
+    std::string getPath() const;
 
-    bool isModified() const override;
+    /// Returns whether the item has been modified since last save.
+    ///
+    bool isModified() const;
 
-    void setUnmodified() override;
+    /// Sets the item flag indicating wehther there are unsaved changes to false.
+    ///
+    void setUnmodified();
 
 private:
 
