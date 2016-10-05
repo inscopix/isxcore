@@ -8,7 +8,7 @@
 
 TEST_CASE("ProjectTest", "[core]")
 {
-    std::string projectFileName = g_resources["testDataPath"] + "/project.isxp";
+    std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
     std::remove(projectFileName.c_str());
 
     std::string projectName = "myProject";
@@ -70,7 +70,7 @@ TEST_CASE("ProjectTest", "[core]")
 
     SECTION("Create a movie data set in a project")
     {
-        std::string movieFileName = g_resources["testDataPath"] + "/movie.isxp";
+        std::string movieFileName = g_resources["unitTestDataPath"] + "/movie.isxp";
         isx::Project project(projectFileName, projectName);
 
         isx::DataSet * dataSet = project.createDataSet("/myDataSet",
@@ -111,8 +111,8 @@ TEST_CASE("ProjectTest", "[core]")
         std::string cellSetPath = "/Processed/CellData/" + cellSetName;
 
         std::string origMovieFileName = "/inscopix/data/" + origMovieName + ".isxd";
-        std::string outMovieFileName = g_resources["testDataPath"] + "/" + outMovieName + ".isxd";
-        std::string cellSetFileName = g_resources["testDataPath"] + "/" + cellSetName + ".isxd";
+        std::string outMovieFileName = g_resources["unitTestDataPath"] + "/" + outMovieName + ".isxd";
+        std::string cellSetFileName = g_resources["unitTestDataPath"] + "/" + cellSetName + ".isxd";
 
         {
             isx::Project project(projectFileName, projectName);
@@ -147,7 +147,7 @@ TEST_CASE("ProjectTest", "[core]")
 
 TEST_CASE("ProjectModificationTest", "[core]")
 {
-    std::string projectFileName = g_resources["testDataPath"] + "/project.isxp";
+    std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
     std::remove(projectFileName.c_str());
 
     std::string projectName = "myProject";
@@ -190,7 +190,7 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
 
     SECTION("Create a synthetic project with a group of movies")
     {
-        const std::string fileName = g_resources["testDataPath"] + "/project-synth_1.isxp";
+        const std::string fileName = g_resources["unitTestDataPath"] + "/project-synth_1.isxp";
         std::remove(fileName.c_str());
 
         const std::string groupPath = "/Original/ImagingData/Day_1";
@@ -201,12 +201,12 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
         project.createDataSet(
                 groupPath + "/recording_20160426_145041",
                 isx::DataSet::Type::MOVIE,
-                g_resources["testDataPath"] + "/recording_20160426_145041.hdf5");
+                g_resources["unitTestDataPath"] + "/recording_20160426_145041.hdf5");
 
         project.createDataSet(
                 groupPath + "/recording_20160706_132714",
                 isx::DataSet::Type::MOVIE,
-                g_resources["testDataPath"] + "/recording_20160706_132714.hdf5");
+                g_resources["unitTestDataPath"] + "/recording_20160706_132714.hdf5");
 
         project.save();
     }

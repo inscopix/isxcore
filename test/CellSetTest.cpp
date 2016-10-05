@@ -85,7 +85,7 @@ requireEqualImages(
 
 TEST_CASE("CellSetTest", "[core]")
 {
-    std::string fileName = g_resources["testDataPath"] + "/cellset.isxd";
+    std::string fileName = g_resources["unitTestDataPath"] + "/cellset.isxd";
 
     isx::Time start;
     isx::DurationInSeconds step(50, 1000);

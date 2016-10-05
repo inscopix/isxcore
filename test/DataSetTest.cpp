@@ -72,7 +72,7 @@ TEST_CASE("DataSetTest", "[core]")
 TEST_CASE("readDataSetTypeTest", "[core]")
 {
 
-    std::string fileName = g_resources["testDataPath"] + "/myDataSet.isxd";
+    std::string fileName = g_resources["unitTestDataPath"] + "/myDataSet.isxd";
     std::remove(fileName.c_str());
 
     isx::Time start(2016, 8, 26, 10, 31, 26, isx::DurationInSeconds(117, 1000));
