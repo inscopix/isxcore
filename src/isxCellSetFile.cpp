@@ -259,34 +259,7 @@ namespace isx
     std::string 
     CellSetFile::getCellName(isize_t inCellId) 
     {
-        std::fstream file(m_fileName, std::ios::binary | std::ios_base::in);
-        if (!file.good())
-        {
-            ISX_THROW(isx::ExceptionFileIO,
-                "Failed to open cell set file for reading: ", m_fileName);
-        }
-        seekToCell(inCellId, file);    
-        
-        // Calculate bytes till beginning of the segmentation image
-        isize_t offsetInBytes = cellValiditySizeInBytes();
-        
-        file.seekg(offsetInBytes, std::ios_base::cur);
-        if (!file.good())
-        {
-            ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell name.");
-        }        
-        
-        char name[16];
-        file.read(name, 16);
-       
-        if (!file.good())
-        {
-            ISX_THROW(isx::ExceptionFileIO, "Error reading cell name.");
-        }
-
-        std::string strName(name);
-
-        return strName;
+        return m_cellNames[inCellId];
     }
 
     void 
@@ -372,6 +345,53 @@ namespace isx
 
         isize_t bytesPerCell = cellHeaderSizeInBytes() + traceSizeInBytes();
         m_numCells = bytesInCells / bytesPerCell;
+    }
+
+    void 
+    CellSetFile::readCellNames() 
+    {
+        if (m_numCells != 0)
+        {
+            m_cellNames.resize(m_numCells);
+
+            for (isize_t id(0); id < m_numCells; ++id)
+            {
+                m_cellNames[id] = readCellName(id);
+            }
+        }
+    }
+
+    std::string 
+    CellSetFile::readCellName(isize_t inCellId)
+    {
+        std::fstream file(m_fileName, std::ios::binary | std::ios_base::in);
+        if (!file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failed to open cell set file for reading: ", m_fileName);
+        }
+        seekToCell(inCellId, file);
+
+        // Calculate bytes till beginning of the segmentation image
+        isize_t offsetInBytes = cellValiditySizeInBytes();
+
+        file.seekg(offsetInBytes, std::ios_base::cur);
+        if (!file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell name.");
+        }
+
+        char name[16];
+        file.read(name, 16);
+
+        if (!file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error reading cell name.");
+        }
+
+        std::string strName(name);
+
+        return strName;
     }
     
     void 

@@ -135,11 +135,24 @@ private:
     /// The header offset.
     std::ios::pos_type m_headerOffset;
 
+    /// The cell names
+    std::vector<std::string> m_cellNames;
+
     /// Read the header to populate information about the cell set.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the header from the file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the header fails.
     void readHeader();
+
+    /// Read the all the cell names for the cells in the datasets and hold them in memory
+    ///
+    /// \throw  isx::ExceptionFileIO    If reading from the file fails.
+    void readCellNames();
+
+    /// Get the name for a cell in the set
+    /// \param inCellId the cell of interest
+    /// \return a string with the name 
+    std::string readCellName(isize_t inCellId);
 
     /// Write the header containing information about the cell set.
     ///
