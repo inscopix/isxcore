@@ -87,6 +87,20 @@ Group::isGroup(const std::string & inName) const
     return false;
 }
 
+bool
+Group::isDataSet(const std::string & inName) const
+{
+    std::vector<std::unique_ptr<DataSet>>::const_iterator it;
+    for (it = m_dataSets.begin(); it != m_dataSets.end(); ++it)
+    {
+        if ((*it)->getName() == inName)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void
 Group::removeGroup(const std::string & inName)
 {
