@@ -15,6 +15,7 @@ namespace isx
         m_fileName(inFileName)
     {
         readHeader();
+        readCellNames();
         m_valid = true;
     }
 
@@ -169,6 +170,8 @@ namespace isx
                 ISX_THROW(isx::ExceptionFileIO,
                     "Failed to write cell ID: ", m_fileName);
             }
+
+            m_cellNames.push_back(std::string());
             
             ++m_numCells;
         }
@@ -215,6 +218,8 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO,
                 "Failed to write cell data to file: ", m_fileName);
         }
+
+        m_cellNames[inCellId] = inName;
     }
 
     bool 
@@ -304,6 +309,8 @@ namespace isx
         {
             ISX_THROW(isx::ExceptionFileIO, "Error writing cell name.");
         } 
+
+        m_cellNames[inCellId] = inName;
     }
     
     void 
