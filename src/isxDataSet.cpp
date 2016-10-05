@@ -139,10 +139,22 @@ DataSet::getProperties() const
 void
 DataSet::setProperties(const SpDataSetProperties_t & inDataSetProperties)
 {
-    m_properties = *inDataSetProperties;
+    if (inDataSetProperties)
+    {
+        m_properties = *inDataSetProperties;
+    }
 }
 
-bool 
+void
+DataSet::mergeProperties(const Properties & inDataSetProperties)
+{
+    for (auto p: inDataSetProperties)
+    {
+        setPropertyValue(p.first, p.second);
+    }
+}
+
+bool
 DataSet::getPropertyValue(const std::string & inPropertyName, float & outValue) const
 {   
     bool found = false;
