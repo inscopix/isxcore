@@ -200,6 +200,8 @@ namespace isx
         {
             name = inName.substr(0, 15);
         }
+
+        m_cellNames[inCellId] = name;
         
         while(name.size() < 16)
         {
@@ -218,8 +220,6 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO,
                 "Failed to write cell data to file: ", m_fileName);
         }
-
-        m_cellNames[inCellId] = inName;
     }
 
     bool 
@@ -302,6 +302,8 @@ namespace isx
             name = inName.substr(0, 15);
         }
 
+        m_cellNames[inCellId] = name;
+
         name += '\0';
 
         file.write(name.data(), name.length());
@@ -309,8 +311,7 @@ namespace isx
         {
             ISX_THROW(isx::ExceptionFileIO, "Error writing cell name.");
         } 
-
-        m_cellNames[inCellId] = inName;
+        
     }
     
     void 
