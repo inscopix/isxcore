@@ -226,12 +226,24 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
         project.importDataSet(
                 groupPath + "/recording_20160426_145041",
                 isx::DataSet::Type::MOVIE,
-                g_resources["testDataPath"] + "/recording_20160426_145041.hdf5");
+                g_resources["testDataPath"] + "/recording_20160426_145041.hdf5",
+                {
+                    {isx::DataSet::PROP_DATA_MIN, 0},
+                    {isx::DataSet::PROP_DATA_MAX, 4095},
+                    {isx::DataSet::PROP_VIS_MIN, 0},
+                    {isx::DataSet::PROP_VIS_MAX, 1}
+                });
 
         project.importDataSet(
                 groupPath + "/datasetC2FN-m",
                 isx::DataSet::Type::MOVIE,
-                g_resources["testDataPath"] + "/datasetC2FN-m.isxd");
+                g_resources["testDataPath"] + "/datasetC2FN-m.isxd",
+                {
+                    {isx::DataSet::PROP_DATA_MIN, 0},
+                    {isx::DataSet::PROP_DATA_MAX, 4095},
+                    {isx::DataSet::PROP_VIS_MIN, 0},
+                    {isx::DataSet::PROP_VIS_MAX, 1}
+                });
 
         project.createDataSet(
                 "/Day_1/datasetC2FN-m/derived/PCA-ICA",
