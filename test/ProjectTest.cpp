@@ -228,10 +228,10 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
                 isx::DataSet::Type::MOVIE,
                 g_resources["testDataPath"] + "/recording_20160426_145041.hdf5",
                 {
-                    {isx::DataSet::PROP_DATA_MIN, 0},
-                    {isx::DataSet::PROP_DATA_MAX, 4095},
-                    {isx::DataSet::PROP_VIS_MIN, 0},
-                    {isx::DataSet::PROP_VIS_MAX, 1}
+                    {isx::DataSet::PROP_DATA_MIN, 0.f},
+                    {isx::DataSet::PROP_DATA_MAX, 4095.f},
+                    {isx::DataSet::PROP_VIS_MIN, 0.f},
+                    {isx::DataSet::PROP_VIS_MAX, 1.f}
                 });
 
         project.importDataSet(
@@ -239,10 +239,10 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
                 isx::DataSet::Type::MOVIE,
                 g_resources["testDataPath"] + "/datasetC2FN-m.isxd",
                 {
-                    {isx::DataSet::PROP_DATA_MIN, 0},
-                    {isx::DataSet::PROP_DATA_MAX, 4095},
-                    {isx::DataSet::PROP_VIS_MIN, 0},
-                    {isx::DataSet::PROP_VIS_MAX, 1}
+                    {isx::DataSet::PROP_DATA_MIN, 0.f},
+                    {isx::DataSet::PROP_DATA_MAX, 4095.f},
+                    {isx::DataSet::PROP_VIS_MIN, 0.f},
+                    {isx::DataSet::PROP_VIS_MAX, 1.f}
                 });
 
         project.createDataSet(
