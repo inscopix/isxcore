@@ -49,7 +49,6 @@ MosaicMovieFile::initialize(
     m_spacingInfo = inSpacingInfo;
     m_dataType = inDataType;
     writeHeader();
-    writeZeroData();
     m_valid = true;
 }
 
@@ -88,8 +87,12 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
 void
 MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
 {
-    std::ofstream file(m_fileName, std::ios::binary | std::ios::in);
-    seekForWriteFrame(file, inVideoFrame->getFrameIndex());
+    std::ofstream file(m_fileName, std::ios::binary | std::ios::app);
+    if (file.tellp() != std::ofstream::pos_type(inVideoFrame->getFrameIndex() * getFrameSizeInBytes() + m_headerOffset))
+    {
+        ISX_LOG_ERROR("MosaicMovieFile::writeFrame: Attempt to write frames out of order.");
+        ISX_ASSERT(false);
+    }
 
     const DataType frameDataType = inVideoFrame->getDataType();
     if (frameDataType == m_dataType)
