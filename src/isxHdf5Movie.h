@@ -39,6 +39,7 @@ namespace isx {
         /// Get a movie frame
         /// \param inFrameNumber frame index
         /// \param vf output
+        /// \throw  isx::ExceptionDataIO    If inFrameNumber is out of range.
         void getFrame(isize_t inFrameNumber, const SpVideoFrame_t & vf);
         
         /// Write a new frame to the movie

@@ -66,6 +66,7 @@ public:
     /// \return                 The frame read from the file.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
+    /// \throw  isx::ExceptionDataIO    If inFrameNumber is out of range.
     SpVideoFrame_t readFrame(isize_t inFrameNumber);
 
     /// Write a frame to the file.

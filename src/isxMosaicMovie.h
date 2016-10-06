@@ -12,6 +12,8 @@
 namespace isx
 {
 
+class IoTaskTracker;
+
 /// Encapsulates movie information and data.
 ///
 /// All information and data is read from and written to one file.
@@ -81,20 +83,12 @@ public:
 
 private:
 
-    /// remove read request from our pending reads
-    /// \param inReadRequestId Id of request to remove
-    /// \return AsyncTaskHandle for the removed read request
-    SpAsyncTaskHandle_t
-    unregisterReadRequest(uint64_t inReadRequestId);
-    
     /// True if the movie file is valid, false otherwise.
     bool m_valid;
 
     /// The shared pointer to the movie file that stores data.
-    std::shared_ptr<MosaicMovieFile> m_file;
-    uint64_t m_readRequestCount = 0;
-    isx::Mutex m_pendingReadsMutex;
-    std::map<uint64_t, SpAsyncTaskHandle_t> m_pendingReads;
+    std::shared_ptr<MosaicMovieFile>    m_file;
+    std::shared_ptr<IoTaskTracker>      m_ioTaskTracker;
 };
 
 } // namespace isx

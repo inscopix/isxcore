@@ -262,12 +262,12 @@ MosaicMovieFile::seekForReadFrame(
             "Failed to open movie file when reading frame: ", m_fileName);
     }
 
-    // TODO sweet : check to see if time is outside of sample window instead
-    // of reading last frame data
-    const isize_t numFrames = m_timingInfo.getNumTimes();
+    const isize_t numFrames = getTimingInfo().getNumTimes();
     if (inFrameNumber >= numFrames)
     {
-        inFrameNumber = numFrames - 1;
+        ISX_THROW(isx::ExceptionDataIO,
+            "The index of the frame (", inFrameNumber, ") is out of range (0-",
+            numFrames-1, ").");
     }
 
     const isize_t frameSizeInBytes = getFrameSizeInBytes();
@@ -289,7 +289,10 @@ MosaicMovieFile::seekForWriteFrame(
     if (!inFile.good())
     {
         ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open movie file when writing frame: ", m_fileName);
+            "Failed to open movie file when writing frame: ", m_fileName, 
+            " eof: ", inFile.eof(), 
+            " bad: ", inFile.bad(), 
+            " fail: ", inFile.fail());
     }
 
     // TODO sweet : check to see if time is outside of sample window instead
