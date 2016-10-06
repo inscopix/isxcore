@@ -2,6 +2,8 @@
 #include "isxException.h"
 #include "isxJsonUtils.h"
 
+#include <sys/stat.h>
+
 #include <fstream>
 
 namespace isx
@@ -87,8 +89,17 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
 void
 MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
 {
+    struct stat st;
+    if (stat(m_fileName.c_str(), &st) == -1)
+    {
+        ISX_LOG_DEBUG("stat failed.");
+        return;
+    }
+
+    ISX_LOG_DEBUG("MosaicMovieFile::writeFrame writing frame ", inVideoFrame->getFrameIndex());
     std::ofstream file(m_fileName, std::ios::binary | std::ios::app);
-    if (file.tellp() != std::ofstream::pos_type(inVideoFrame->getFrameIndex() * getFrameSizeInBytes() + m_headerOffset))
+
+    if (st.st_size != off_t(inVideoFrame->getFrameIndex() * getFrameSizeInBytes() + m_headerOffset))
     {
         ISX_LOG_ERROR("MosaicMovieFile::writeFrame: Attempt to write frames out of order.");
         ISX_ASSERT(false);
