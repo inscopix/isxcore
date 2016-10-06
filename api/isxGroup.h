@@ -15,9 +15,18 @@ namespace isx
 ///
 /// All data sets are initially ordered by their time of creation and
 /// allgroups are initially ordered by their time of creation.
-class Group : public ProjectItem
+class Group
 {
 public:
+
+    /// The type of group.
+    ///
+    enum class Type
+    {
+        GENERAL,        /// A general group just for organization.
+        DATASET,            /// A group that stores a data set and its derived datasets, etc.
+        DERIVED             /// A group that stores derived data sets.
+    };
 
     /// Empty constructor.
     ///
@@ -27,9 +36,14 @@ public:
     /// Create a group with the given name.
     ///
     /// \param  inName      The name of this group.
-    Group(const std::string & inName);
+    /// \param  inType      The type of group.
+    Group(const std::string & inName, const Type inType = Type::GENERAL);
 
-    /// Create a new group and it to this group.
+    /// \return     The type of this group.
+    ///
+    Type getType() const;
+
+    /// Create a new group and add it to this group.
     ///
     /// This returns a raw pointer to the new created group after it
     /// has been created and added to this group.
@@ -37,12 +51,13 @@ public:
     /// exists in this group.
     ///
     /// \param  inPath      The path of the data set to create.
+    /// \param  inType      The type of group.
     /// \return             A raw pointer to the new group after
     ///                     it has been added to this group.
     ///
     /// \throw  isx::ExceptionDataIO    If a group with the given name
     ///                                 already exists.
-    Group * createGroup(const std::string & inPath);
+    Group * createGroup(const std::string & inPath, const Type inType = Type::GENERAL);
 
     /// Get the groups in this group.
     ///
@@ -59,6 +74,18 @@ public:
     /// \throw  isx::ExceptionDataIO    If there is no data set with the
     ///                                 given name in this group.
     Group * getGroup(const std::string & inName) const;
+
+    /// Checks that a group with a given name exists in this group.
+    ///
+    /// \param  inName  The name of the group to check for.
+    /// \return         True if the group exists.
+    bool isGroup(const std::string & inName) const;
+
+    /// Checks that a data set with a given name exists in this group.
+    ///
+    /// \param  inName  The name of the data set to check for.
+    /// \return         True if the data set exists.
+    bool isDataSet(const std::string & inName) const;
 
     /// Remove a sub-group with the given name.
     ///
@@ -90,7 +117,7 @@ public:
     DataSet * createDataSet(
         const std::string & inName,
         DataSet::Type inType,
-        const std::string & inFileName, 
+        const std::string & inFileName,
         const DataSet::Properties & inProperties = DataSet::Properties());
 
     /// Get the data sets in this group.
@@ -144,20 +171,37 @@ public:
     /// \return             True if the groups are exactly equal.
     bool operator==(const Group & inOther) const;
 
-    // Overrides
-    bool isValid() const override;
+    /// \return     True if this is valid.
+    ///
+    bool isValid() const;
 
-    std::string getName() const override;
+    /// \return     The name of this data set.
+    ///
+    std::string getName() const;
 
-    Group * getParent() const override;
+    /// \return     The parent of this group.
+    ///
+    Group * getParent() const;
 
-    void setParent(Group * inParent) override;
+    /// Set the parent of this data set.
+    ///
+    /// This simply updates the parent of this data set and does not move
+    /// this data set into the given parent group,
+    ///
+    /// \param  inParent    The new parent of this data set.
+    void setParent(Group * inParent);
 
-    std::string getPath() const override;
+    /// \return     The path of this group from the root group.
+    ///
+    std::string getPath() const;
 
-    bool isModified() const override;
+    /// Returns whether the item has been modified since last save.
+    ///
+    bool isModified() const;
 
-    void setUnmodified() override;
+    /// Sets the item flag indicating wehther there are unsaved changes to false.
+    ///
+    void setUnmodified();
 
 private:
 
@@ -169,6 +213,9 @@ private:
 
     /// The name of this group.
     std::string m_name;
+
+    /// The type of this group.
+    Type m_type;
 
     /// The parent group to which this belongs.
     Group * m_parent;

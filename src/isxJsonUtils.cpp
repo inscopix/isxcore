@@ -141,6 +141,7 @@ convertGroupToJson(const Group * inGroup)
 {
     json outJson;
     outJson["type"] = "Group";
+    outJson["groupType"] = isize_t(inGroup->getType());
     outJson["name"] = inGroup->getName();
 
     outJson["groups"] = json::array();
@@ -214,7 +215,8 @@ createDataSetFromJson(Group * inGroup, const json & inJson)
 void
 createGroupTreeFromJson(Group * inGroup, const json & inJson)
 {
-    Group * group = inGroup->createGroup(inJson["name"]);
+    const Group::Type groupType = Group::Type(isize_t(inJson["groupType"]));
+    Group * group = inGroup->createGroup(inJson["name"], groupType);
     json dataSets = inJson["dataSets"];
     for (json::iterator it = dataSets.begin(); it != dataSets.end(); ++it)
     {

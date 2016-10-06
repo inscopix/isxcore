@@ -11,23 +11,30 @@ Group::Group()
 {
 }
 
-Group::Group(const std::string & inName)
+Group::Group(const std::string & inName, const Type inType)
     : m_valid(true)
     , m_modified(false)
     , m_name(inName)
+    , m_type(inType)
     , m_parent(nullptr)
 {
 }
 
+Group::Type
+Group::getType() const
+{
+    return m_type;
+}
+
 Group *
-Group::createGroup(const std::string & inPath)
+Group::createGroup(const std::string & inPath, const Type inType)
 {
     if (isName(inPath))
     {
         ISX_THROW(isx::ExceptionDataIO,
                 "There is already an item with the name: ", inPath);
     }
-    std::unique_ptr<Group> g(new Group(inPath));
+    std::unique_ptr<Group> g(new Group(inPath, inType));
     g->m_parent = this;
     m_groups.push_back(std::move(g));
     m_modified = true;
@@ -64,6 +71,34 @@ Group::getGroup(const std::string & inName) const
     }
     ISX_THROW(isx::ExceptionDataIO,
             "Could not find group with the name: ", inName);
+}
+
+bool
+Group::isGroup(const std::string & inName) const
+{
+    std::vector<std::unique_ptr<Group>>::const_iterator it;
+    for (it = m_groups.begin(); it != m_groups.end(); ++it)
+    {
+        if ((*it)->m_name == inName)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+Group::isDataSet(const std::string & inName) const
+{
+    std::vector<std::unique_ptr<DataSet>>::const_iterator it;
+    for (it = m_dataSets.begin(); it != m_dataSets.end(); ++it)
+    {
+        if ((*it)->getName() == inName)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void
