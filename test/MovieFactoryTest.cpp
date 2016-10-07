@@ -46,7 +46,7 @@ TEST_CASE("MovieFactoryReadMovieXml", "[core]")
 
     SECTION("Read an XML file that wraps around one HDF5 files")
     {
-        std::string fileName = g_resources["testDataPath"] + "/recording_20160426_145041.xml";
+        std::string fileName = g_resources["unitTestDataPath"] + "/recording_20160426_145041.xml";
 
         isx::Time start(2016, 4, 26, 14, 50, 41, isx::DurationInSeconds(930, 1000));
         isx::DurationInSeconds step(100, 1002);
@@ -74,7 +74,7 @@ TEST_CASE("MovieFactoryReadMovieXml", "[core]")
 
     SECTION("Read an XML file that wraps around two HDF5 files")
     {
-        std::string fileName = g_resources["testDataPath"] + "/recording_20160706_132714.xml";
+        std::string fileName = g_resources["unitTestDataPath"] + "/recording_20160706_132714.xml";
 
         isx::Time start(2016, 7, 6, 13, 27, 23, isx::DurationInSeconds(999, 1000));
         isx::DurationInSeconds step(100, 1001);
@@ -109,7 +109,7 @@ TEST_CASE("MovieFactoryReadMovieHdf5", "[core]")
 
     SECTION("Read an HDF5 file")
     {
-        std::string fileName = g_resources["testDataPath"] + "/recording_20160426_145041.hdf5";
+        std::string fileName = g_resources["unitTestDataPath"] + "/recording_20160426_145041.hdf5";
 
         isx::Time start(2016, 4, 26, 21, 50, 41, isx::DurationInSeconds(0, 1000));
         isx::DurationInSeconds step(96, 1000);
@@ -142,7 +142,7 @@ TEST_CASE("MovieFactoryMosaicMovie", "[core]")
 {
     isx::CoreInitialize();
 
-    std::string fileName = g_resources["testDataPath"] + "/movie.isxd";
+    std::string fileName = g_resources["unitTestDataPath"] + "/movie.isxd";
     std::remove(fileName.c_str());
 
     isx::Time start;

@@ -6,7 +6,7 @@
 
 TEST_CASE("JsonUtilsTest", "[core-internal]")
 {
-    std::string movieFileName = g_resources["testDataPath"] + "/movie.isxd";
+    std::string movieFileName = g_resources["unitTestDataPath"] + "/movie.isxd";
     std::remove(movieFileName.c_str());
 
     SECTION("Convert a movie data set to json")

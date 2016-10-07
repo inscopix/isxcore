@@ -8,7 +8,7 @@
 
 TEST_CASE("ProjectTest", "[core]")
 {
-    std::string projectFileName = g_resources["testDataPath"] + "/project.isxp";
+    std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
     std::remove(projectFileName.c_str());
 
     std::string projectName = "myProject";
@@ -68,7 +68,7 @@ TEST_CASE("ProjectTest", "[core]")
 
     SECTION("Create a movie data set in a project")
     {
-        std::string movieFileName = g_resources["testDataPath"] + "/movie.isxp";
+        std::string movieFileName = g_resources["unitTestDataPath"] + "/movie.isxp";
         isx::Project project(projectFileName, projectName);
 
         isx::DataSet * dataSet = project.createDataSet("/myDataSet",
@@ -84,7 +84,7 @@ TEST_CASE("ProjectTest", "[core]")
 
     SECTION("Import a movie data set in a project")
     {
-        std::string movieFileName = g_resources["testDataPath"] + "/movie.isxp";
+        std::string movieFileName = g_resources["unitTestDataPath"] + "/movie.isxp";
         isx::Project project(projectFileName, projectName);
 
         isx::DataSet * dataSet = project.createDataSet("/myDataSet",
@@ -132,8 +132,8 @@ TEST_CASE("ProjectTest", "[core]")
         std::string rootFileName = "/";
 #endif
         std::string movieFileName = rootFileName + "inscopix/data/" + movieName + ".isxd";
-        std::string procMovieFileName = g_resources["testDataPath"] + "/" + procMovieName + ".isxd";
-        std::string cellSetFileName = g_resources["testDataPath"] + "/" + cellSetName + ".isxd";
+        std::string procMovieFileName = g_resources["unitTestDataPath"] + "/" + procMovieName + ".isxd";
+        std::string cellSetFileName = g_resources["unitTestDataPath"] + "/" + cellSetName + ".isxd";
 
         {
             isx::Project project(projectFileName, projectName);
@@ -172,7 +172,7 @@ TEST_CASE("ProjectTest", "[core]")
 
 TEST_CASE("ProjectModificationTest", "[core]")
 {
-    std::string projectFileName = g_resources["testDataPath"] + "/project.isxp";
+    std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
     std::remove(projectFileName.c_str());
 
     std::string projectName = "myProject";
@@ -215,7 +215,7 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
 
     SECTION("Create a synthetic project with a group of movies")
     {
-        const std::string fileName = g_resources["testDataPath"] + "/project-synth_1.isxp";
+        const std::string fileName = g_resources["unitTestDataPath"] + "/project-synth_1.isxp";
         std::remove(fileName.c_str());
 
         const std::string groupPath = "/Day_1";
@@ -226,7 +226,7 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
         project.importDataSet(
                 groupPath + "/recording_20160426_145041",
                 isx::DataSet::Type::MOVIE,
-                g_resources["testDataPath"] + "/recording_20160426_145041.hdf5",
+                g_resources["unitTestDataPath"] + "/recording_20160426_145041.hdf5",
                 {
                     {isx::DataSet::PROP_DATA_MIN, 0.f},
                     {isx::DataSet::PROP_DATA_MAX, 4095.f},
@@ -237,7 +237,7 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
         project.importDataSet(
                 groupPath + "/datasetC2FN-m",
                 isx::DataSet::Type::MOVIE,
-                g_resources["testDataPath"] + "/datasetC2FN-m.isxd",
+                g_resources["unitTestDataPath"] + "/datasetC2FN-m.isxd",
                 {
                     {isx::DataSet::PROP_DATA_MIN, 0.f},
                     {isx::DataSet::PROP_DATA_MAX, 4095.f},
@@ -248,7 +248,7 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
         project.createDataSet(
                 "/Day_1/datasetC2FN-m/derived/PCA-ICA",
                 isx::DataSet::Type::CELLSET,
-                g_resources["testDataPath"] + "/datasetC2FN-c.isxd");
+                g_resources["unitTestDataPath"] + "/datasetC2FN-c.isxd");
 
         project.save();
     }
