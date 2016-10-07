@@ -89,17 +89,27 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
 void
 MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
 {
+    isize_t currentFileSize{ 0 };
+
+#if ISX_OS_WIN32
+    struct __stat64 st;
+    if (_stat64(m_fileName.c_str(), &st) == -1)
+    {
+        ISX_THROW(isx::ExceptionFileIO, "stat failed with ", errno);
+    }
+    currentFileSize = isize_t(st.st_size);
+#else
     struct stat st;
     if (stat(m_fileName.c_str(), &st) == -1)
     {
-        ISX_LOG_DEBUG("stat failed.");
-        return;
+        ISX_THROW(isx::ExceptionFileIO, "stat failed with ", errno);
     }
+    currentFileSize = isize_t(st.st_size);
+#endif
 
-    ISX_LOG_DEBUG("MosaicMovieFile::writeFrame writing frame ", inVideoFrame->getFrameIndex());
     std::ofstream file(m_fileName, std::ios::binary | std::ios::app);
 
-    if (st.st_size != off_t(inVideoFrame->getFrameIndex() * getFrameSizeInBytes() + m_headerOffset))
+    if (currentFileSize != int64_t(inVideoFrame->getFrameIndex() * getFrameSizeInBytes() + m_headerOffset))
     {
         ISX_LOG_ERROR("MosaicMovieFile::writeFrame: Attempt to write frames out of order.");
         ISX_ASSERT(false);
