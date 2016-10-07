@@ -6,7 +6,7 @@
 #include <vector>
 
 TEST_CASE("ImageTest", "[core]") {
-    //std::string testFile = g_resources["testDataPath"] + "/recording_20160426_145041.hdf5";
+    //std::string testFile = g_resources["unitTestDataPath"] + "/recording_20160426_145041.hdf5";
 
     SECTION("default constructor") 
     {

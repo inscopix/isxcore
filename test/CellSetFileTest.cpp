@@ -4,7 +4,7 @@
 
 TEST_CASE("CellSetFileTest", "[core-internal]")
 {
-    std::string fileName = g_resources["testDataPath"] + "/cellset.isxd";
+	std::string fileName = g_resources["unitTestDataPath"] + "/cellset.isxd";
     
     isx::Time start;
     isx::DurationInSeconds step(50, 1000);
@@ -68,9 +68,17 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         REQUIRE(file.numberOfCells() == 0);        
 
         // Write to file
+        /// Cell trace with default name
         file.writeCellData(0, originalImage, originalTrace);
         REQUIRE(file.numberOfCells() == 1);
         REQUIRE(file.isCellValid(0) == true);
+        REQUIRE(file.getCellName(0).compare("C0") == 0);
+
+        /// Cell trace with given name
+        file.writeCellData(1, originalImage, originalTrace, "testName");
+        REQUIRE(file.numberOfCells() == 2);
+        REQUIRE(file.isCellValid(1) == true);
+        REQUIRE(file.getCellName(1).compare("testName") == 0);
     }
 
     SECTION("Read trace")
@@ -142,6 +150,20 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         REQUIRE(file.isCellValid(0) == false);
         file.setCellValid(0, true);
         REQUIRE(file.isCellValid(0) == true);
+    }
+
+    SECTION("Set/Get cell name")
+    {
+        isx::CellSetFile file(fileName, timingInfo, spacingInfo);
+        REQUIRE(file.isValid());
+        file.writeCellData(0, originalImage, originalTrace);  
+        REQUIRE(file.numberOfCells() == 1);
+        REQUIRE(file.isCellValid(0) == true);
+        REQUIRE(file.getCellName(0).compare("C0") == 0);
+
+        file.setCellName(0, "newName");
+        REQUIRE(file.getCellName(0).compare("newName") == 0);
+        
     }
 
     SECTION("Write 10 cells then read it back in")

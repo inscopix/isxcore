@@ -15,6 +15,7 @@ namespace isx
         m_fileName(inFileName)
     {
         readHeader();
+        readCellNames();
         m_valid = true;
     }
 
@@ -75,7 +76,7 @@ namespace isx
         seekToCell(inCellId, file);      
         
         // Calculate bytes till beginning of cell data
-        isize_t offsetInBytes = cellValiditySizeInBytes() + segmentationImageSizeInBytes();
+        isize_t offsetInBytes = cellValiditySizeInBytes() + cellNameSizeInBytes() + reservedSizeInBytes() + segmentationImageSizeInBytes();
         
         file.seekg(offsetInBytes, std::ios_base::cur);
         if (!file.good())
@@ -106,7 +107,7 @@ namespace isx
         seekToCell(inCellId, file);    
         
         // Calculate bytes till beginning of the segmentation image
-        isize_t offsetInBytes = cellValiditySizeInBytes();
+        isize_t offsetInBytes = cellValiditySizeInBytes() + cellNameSizeInBytes() + reservedSizeInBytes();
         
         file.seekg(offsetInBytes, std::ios_base::cur);
         if (!file.good())
@@ -130,7 +131,7 @@ namespace isx
     }
     
     void 
-    CellSetFile::writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData)
+    CellSetFile::writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData, const std::string & inName)
     {
         // Check that image is F32
         const DataType dataType = inSegmentationImage.getDataType();
@@ -169,6 +170,8 @@ namespace isx
                 ISX_THROW(isx::ExceptionFileIO,
                     "Failed to write cell ID: ", m_fileName);
             }
+
+            m_cellNames.push_back(std::string());
             
             ++m_numCells;
         }
@@ -186,6 +189,30 @@ namespace isx
         
         char valid = 1;
         file.write(&valid, sizeof(char));
+
+        // Write cell name
+        std::string name = inName;
+        if(inName.empty())
+        {
+            name = "C" + std::to_string(inCellId);
+        }
+        else if(inName.size() > 15)
+        {
+            name = inName.substr(0, 15);
+        }
+
+        m_cellNames[inCellId] = name;
+        
+        while(name.size() < 16)
+        {
+            name += '\0';
+        }
+
+        file.write(name.data(), name.length());
+        char * zeroBuf = new char[reservedSizeInBytes()];
+        file.write(zeroBuf, reservedSizeInBytes());
+        delete [] zeroBuf;
+
         file.write(inSegmentationImage.getPixels(), inImageSizeInBytes);
         file.write(reinterpret_cast<char*>(inData.getValues()), traceSizeInBytes());
         if (!file.good())
@@ -233,6 +260,59 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO, "Error writing cell information.");
         } 
     }
+
+    std::string 
+    CellSetFile::getCellName(isize_t inCellId) 
+    {
+        return m_cellNames[inCellId];
+    }
+
+    void 
+    CellSetFile::setCellName(isize_t inCellId, const std::string & inName)
+    {
+        // Open stream and write  
+        std::fstream file;       
+        
+        // Overwrite existing cell
+        file.open(m_fileName, std::ios::binary | std::ios::in | std::ios::out);
+        if (!file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failed to open cell set file for writing: ", m_fileName);
+        }
+        seekToCell(inCellId, file);       
+        
+        // Calculate bytes till beginning of the segmentation image
+        isize_t offsetInBytes = cellValiditySizeInBytes();
+        
+        file.seekp(offsetInBytes, std::ios_base::cur);
+        if (!file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell name.");
+        }
+
+        // Write cell name
+        std::string name = inName;
+        if(inName.empty())
+        {
+            name = "C" + std::to_string(inCellId);
+        }
+        else if(inName.size() > 15)
+        {
+            name = inName.substr(0, 15);
+        }
+
+        m_cellNames[inCellId] = name;
+
+        name += '\0';
+
+        file.write(name.data(), name.length());
+        if (!file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error writing cell name.");
+        } 
+        
+    }
     
     void 
     CellSetFile::readHeader()
@@ -273,6 +353,53 @@ namespace isx
 
         isize_t bytesPerCell = cellHeaderSizeInBytes() + traceSizeInBytes();
         m_numCells = bytesInCells / bytesPerCell;
+    }
+
+    void 
+    CellSetFile::readCellNames() 
+    {
+        if (m_numCells != 0)
+        {
+            m_cellNames.resize(m_numCells);
+
+            for (isize_t id(0); id < m_numCells; ++id)
+            {
+                m_cellNames[id] = readCellName(id);
+            }
+        }
+    }
+
+    std::string 
+    CellSetFile::readCellName(isize_t inCellId)
+    {
+        std::fstream file(m_fileName, std::ios::binary | std::ios_base::in);
+        if (!file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failed to open cell set file for reading: ", m_fileName);
+        }
+        seekToCell(inCellId, file);
+
+        // Calculate bytes till beginning of the segmentation image
+        isize_t offsetInBytes = cellValiditySizeInBytes();
+
+        file.seekg(offsetInBytes, std::ios_base::cur);
+        if (!file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell name.");
+        }
+
+        char name[16];
+        file.read(name, 16);
+
+        if (!file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error reading cell name.");
+        }
+
+        std::string strName(name);
+
+        return strName;
     }
     
     void 
@@ -348,7 +475,18 @@ namespace isx
         return sizeof(char);
     }
 
+    isize_t 
+    CellSetFile::cellNameSizeInBytes()
+    {
+        return (sizeof(char)*16);
+    }
     
+    isize_t 
+    CellSetFile::reservedSizeInBytes()
+    {
+        return (128 - (cellIdSizeInBytes() + cellValiditySizeInBytes() + cellNameSizeInBytes()));
+    }
+
     isize_t 
     CellSetFile::segmentationImageSizeInBytes()
     {
@@ -366,7 +504,7 @@ namespace isx
     isize_t 
     CellSetFile::cellHeaderSizeInBytes()
     {
-        isize_t bytes = cellIdSizeInBytes() +  cellValiditySizeInBytes() + segmentationImageSizeInBytes();
+        isize_t bytes = 128 + segmentationImageSizeInBytes();
         return bytes;
     }
     

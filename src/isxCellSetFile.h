@@ -87,10 +87,11 @@ public:
     /// \param inCellId the cell of interest
     /// \param inSegmentationImage the image to write
     /// \param inData the trace to write
+    /// \param inName the cell name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the cell id
     /// If cell ID already exists, it will overwrite its data. Otherwise, it will be appended
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or writing fails.
     /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
-    void writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData);
+    void writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData, const std::string & inName = std::string());
     
     /// \return if the cell is valid 
     /// \param inCellId the cell of interest
@@ -102,6 +103,16 @@ public:
     /// \param inIsValid whether to reject or accept a cell in the set
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     void setCellValid(isize_t inCellId, bool inIsValid);
+
+    /// Get the name for a cell in the set
+    /// \param inCellId the cell of interest
+    /// \return a string with the name 
+    std::string getCellName(isize_t inCellId);
+
+    /// Set the cell name in the cell header
+    /// \param inCellId the cell of interest
+    /// \param inName the assigned name (it will be truncated to 15 characters, if longer than that)
+    void setCellName(isize_t inCellId, const std::string & inName);
 
 
 private:
@@ -124,11 +135,24 @@ private:
     /// The header offset.
     std::ios::pos_type m_headerOffset;
 
+    /// The cell names
+    std::vector<std::string> m_cellNames;
+
     /// Read the header to populate information about the cell set.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the header from the file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the header fails.
     void readHeader();
+
+    /// Read the all the cell names for the cells in the datasets and hold them in memory
+    ///
+    /// \throw  isx::ExceptionFileIO    If reading from the file fails.
+    void readCellNames();
+
+    /// Get the name for a cell in the set
+    /// \param inCellId the cell of interest
+    /// \return a string with the name 
+    std::string readCellName(isize_t inCellId);
 
     /// Write the header containing information about the cell set.
     ///
@@ -151,6 +175,14 @@ private:
     /// \return the size of the valid/invalid flag in bytes (in the cell header)
     ///
     isize_t cellValiditySizeInBytes();
+
+    /// \return the size of the cell name field in bytes (in the cell header)
+    ///
+    isize_t cellNameSizeInBytes();
+
+    /// \return the size of the reserved portion of the cell header in bytes
+    ///
+    isize_t reservedSizeInBytes();
 
     /// \return the size of the segmentation image in bytes (in the cell header)
     ///
