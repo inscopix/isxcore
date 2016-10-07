@@ -33,19 +33,13 @@ Project::Project(const std::string & inFileName, const std::string & inName)
                 "The file name already exists: ", inFileName);
     }
     m_root.reset(new Group("/"));
-    Group * origGroup = m_root->createGroup("Original");
-    origGroup->createGroup("ImagingData");
-    origGroup->createGroup("CellData");
-    Group * procGroup = m_root->createGroup("Processed");
-    procGroup->createGroup("ImagingData");
-    procGroup->createGroup("CellData");
+    m_originalData.reset(new Group("OriginalData"));
     m_valid = true;
     setUnmodified();
 }
 
 Project::~Project()
 {
-
 }
 
 void
@@ -56,6 +50,18 @@ Project::save()
         write();
         setUnmodified();
     }
+}
+
+DataSet *
+Project::importDataSet(
+        const std::string & inPath,
+        DataSet::Type inType,
+        const std::string & inFileName,
+        const DataSet::Properties & inProperties)
+{
+    const std::string name = isx::getFileName(inPath);
+    m_originalData->createDataSet(name, inType, inFileName, inProperties);
+    return createDataSet(inPath, inType, inFileName, inProperties);
 }
 
 DataSet *
@@ -73,7 +79,9 @@ Project::createDataSet(
     std::string absFileName = getAbsolutePath(inFileName);
     const std::string groupPath = getDirName(inPath);
     Group * parent = getGroup(groupPath);
-    return parent->createDataSet(name, inType, absFileName, inProperties);
+    Group * dataSetGroup = parent->createGroup(name, Group::Type::DATASET);
+    dataSetGroup->createGroup("derived", Group::Type::DERIVED);
+    return dataSetGroup->createDataSet(name, inType, absFileName, inProperties);
 }
 
 DataSet *
@@ -97,11 +105,6 @@ Group *
 Project::getGroup(const std::string & inPath) const
 {
     const std::vector<std::string> groupNames = getPathTokens(inPath);
-    if (groupNames.front() != "/")
-    {
-        ISX_THROW(isx::ExceptionDataIO,
-                  "The project path does not start with the root character (/): ", inPath);
-    }
     Group * currentGroup = m_root.get();
     std::vector<std::string>::const_iterator it;
     for (it = (groupNames.begin() + 1); it != groupNames.end(); ++it)
@@ -118,15 +121,9 @@ Project::getRootGroup() const
 }
 
 Group *
-Project::getOriginalGroup() const
+Project::getOriginalDataGroup() const
 {
-    return m_root->getGroup("Original");
-}
-
-Group *
-Project::getProcessedGroup() const
-{
-    return m_root->getGroup("Processed");
+    return m_originalData.get();
 }
 
 bool
@@ -175,6 +172,7 @@ Project::read()
         }
         m_name = jsonObject["name"];
         m_root = createProjectTreeFromJson(jsonObject["rootGroup"]);
+        m_originalData = createProjectTreeFromJson(jsonObject["originalDataGroup"]);
     }
     catch (const std::exception & error)
     {
@@ -198,6 +196,7 @@ Project::write() const
         jsonObject["name"] = m_name;
         jsonObject["mosaicVersion"] = CoreVersionVector();
         jsonObject["rootGroup"] = convertGroupToJson(m_root.get());
+        jsonObject["originalDataGroup"] = convertGroupToJson(m_originalData.get());
     }
     catch (const std::exception & error)
     {

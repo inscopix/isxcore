@@ -81,7 +81,7 @@ writeTestF32Movie(
 
 TEST_CASE("MosaicMovieU16", "[core-internal]")
 {
-    std::string fileName = g_resources["testDataPath"] + "/movie.isxd";
+    std::string fileName = g_resources["unitTestDataPath"] + "/movie.isxd";
 
     isx::Time start;
     isx::DurationInSeconds step(50, 1000);
@@ -178,7 +178,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
 
 TEST_CASE("MosaicMovieF32", "[core-internal]")
 {
-    std::string fileName = g_resources["testDataPath"] + "/movie.isxd";
+    std::string fileName = g_resources["unitTestDataPath"] + "/movie.isxd";
 
     isx::Time start;
     isx::DurationInSeconds step(50, 1000);

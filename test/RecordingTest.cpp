@@ -8,7 +8,7 @@
 
 
 TEST_CASE("RecordingTest", "[core]") {
-    std::string testFile = g_resources["testDataPath"] + "/recording_20160426_145041.hdf5";
+    std::string testFile = g_resources["unitTestDataPath"] + "/recording_20160426_145041.hdf5";
     isx::CoreInitialize();
     SECTION("default constructor") {
         isx::Recording r;
@@ -29,9 +29,9 @@ TEST_CASE("RecordingTest", "[core]") {
     
     SECTION("Load recording XML - Split movie", "[core]")
     {
-        std::string testXML = g_resources["testDataPath"] + "/recording_20160706_132714.xml";
-        std::string testHDF5_0 = g_resources["testDataPath"] + "/recording_20160706_132714.hdf5";
-        std::string testHDF5_1 = g_resources["testDataPath"] + "/recording_20160706_132714-001.hdf5";
+        std::string testXML = g_resources["unitTestDataPath"] + "/recording_20160706_132714.xml";
+        std::string testHDF5_0 = g_resources["unitTestDataPath"] + "/recording_20160706_132714.hdf5";
+        std::string testHDF5_1 = g_resources["unitTestDataPath"] + "/recording_20160706_132714-001.hdf5";
         
         isx::SpRecording_t rXml  = std::make_shared<isx::Recording>(testXML);
         isx::SpRecording_t rHdf0 = std::make_shared<isx::Recording>(testHDF5_0);
@@ -74,7 +74,7 @@ TEST_CASE("RecordingTest", "[core]") {
 
     SECTION("Load recording XML - Read timing and spacing info from XML", "[core]")
     {
-        std::string testXML = g_resources["testDataPath"] + "/recording_20160706_132714.xml";
+        std::string testXML = g_resources["unitTestDataPath"] + "/recording_20160706_132714.xml";
         isx::SpRecording_t rXml  = std::make_shared<isx::Recording>(testXML);
         isx::SpMovie_t mov  = rXml->getMovie();
 

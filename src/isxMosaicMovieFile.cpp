@@ -289,7 +289,10 @@ MosaicMovieFile::seekForWriteFrame(
     if (!inFile.good())
     {
         ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open movie file when writing frame: ", m_fileName);
+            "Failed to open movie file when writing frame: ", m_fileName, 
+            " eof: ", inFile.eof(), 
+            " bad: ", inFile.bad(), 
+            " fail: ", inFile.fail());
     }
 
     // TODO sweet : check to see if time is outside of sample window instead
