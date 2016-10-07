@@ -132,12 +132,14 @@ public:
     /// \param  inIndex     The index of the cell.
     /// \param  inImage     The cell image data to write.
     /// \param  inTrace     The cell trace data to write.
+    /// \param  inName      The cell name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the given index
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or writing fails.
     /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
     void writeImageAndTrace(
             isize_t inIndex,
             SpImage_t & inImage,
-            SpFTrace_t & inTrace);
+            SpFTrace_t & inTrace,
+            const std::string & inName = std::string());
 
     /// \return             True if the cell is valid
     /// \param  inIndex     The index of the cell.
@@ -152,6 +154,18 @@ public:
     /// \param inIsValid whether to reject or accept a cell in the set
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     void setCellValid(isize_t inIndex, bool inIsValid);
+
+    /// Get the name for a cell in the set
+    /// \param inIndex the cell of interest
+    /// \return a string with the name
+    std::string 
+    getCellName(isize_t inIndex);
+
+    /// Set the cell name 
+    /// \param inIndex the cell of interest
+    /// \param inName the assigned name (it will be truncated to 15 characters, if longer than that)
+    void 
+    setCellName(isize_t inIndex, const std::string & inName);
 
     /// Cancel all pending read requests (schedule with getTraceAsync/getImageAsync).
     ///

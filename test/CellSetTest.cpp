@@ -169,14 +169,28 @@ TEST_CASE("CellSetTest", "[core]")
         {
             isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
                     fileName, timingInfo, spacingInfo);
-            cellSet->writeImageAndTrace(0, originalImage, originalTrace);
+            cellSet->writeImageAndTrace(0, originalImage, originalTrace, "mycell");
         }
         isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(fileName);
 
         REQUIRE(cellSet->getNumCells() == 1);
         REQUIRE(cellSet->isCellValid(0) == true);
+        REQUIRE(cellSet->getCellName(0).compare("mycell") == 0);
         requireEqualImages(cellSet->getImage(0), originalImage);
         requireEqualTraces(cellSet->getTrace(0), originalTrace);
+    }
+    SECTION("Set/Get cell name")
+    {
+        isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
+                    fileName, timingInfo, spacingInfo);
+        cellSet->writeImageAndTrace(0, originalImage, originalTrace);
+        REQUIRE(cellSet->getNumCells() == 1);
+        REQUIRE(cellSet->isCellValid(0) == true);
+        REQUIRE(cellSet->getCellName(0).compare("C0") == 0);
+
+        cellSet->setCellName(0, "newName");
+        REQUIRE(cellSet->getCellName(0).compare("newName") == 0);
+        
     }
 
     SECTION("Set data for 3 cells and check values are correct")
