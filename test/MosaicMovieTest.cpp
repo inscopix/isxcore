@@ -159,7 +159,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
                     dataType,
                     timingInfo.convertIndexToStartTime(f),
                     f);
-                std::fill(frame->getPixelsAsU16(), frame->getPixelsAsU16() + numPixels, 0xBABE);
+                std::fill(frame->getPixelsAsU16(), frame->getPixelsAsU16() + numPixels, 0xAFFE);
                 void * p = frame->getPixels();
                 movie->writeFrame(frame);
             }
@@ -176,7 +176,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
             uint16_t * frameBuf = frame->getPixelsAsU16();
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
-                REQUIRE(frameBuf[p] == 0xBABE);
+                REQUIRE(frameBuf[p] == 0xAFFE);
             }
         }
     }

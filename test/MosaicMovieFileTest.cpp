@@ -152,7 +152,7 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
                     dataType,
                     timingInfo.convertIndexToStartTime(f),
                     f);
-                std::fill(frame->getPixelsAsU16(), frame->getPixelsAsU16() + numPixels, 0xBABE);
+                std::fill(frame->getPixelsAsU16(), frame->getPixelsAsU16() + numPixels, 0xAFFE);
                 void * p = frame->getPixels();
                 movie.writeFrame(frame);
             }
@@ -169,7 +169,7 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
             uint16_t * frameBuf = frame->getPixelsAsU16();
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
-                REQUIRE(frameBuf[p] == 0xBABE);
+                REQUIRE(frameBuf[p] == 0xAFFE);
             }
         }
     }
@@ -303,62 +303,4 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal]")
             }
         }
     }
-}
-
-TEST_CASE("FileTest", "[core-internal]")
-{
-    std::string fileName = g_resources["testDataPath"] + "/simple.isxd";
-    
-    isx::Time start;
-    isx::DurationInSeconds step(50, 1000);
-    isx::isize_t numFrames = 5;
-    isx::TimingInfo timingInfo(start, step, numFrames);
-    
-    isx::SizeInPixels_t sizePixels(4, 3);
-    isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
-    isx::PointInMicrons_t topLeft(0, 0);
-    isx::SpacingInfo spacingInfo(sizePixels, pixelSize, topLeft);
-    
-    const isx::DataType dataType = isx::DataType::U16;
-    
-    SECTION("write movie file header")
-    {
-        isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo, dataType);
-        
-        REQUIRE(movie.isValid());
-        REQUIRE(movie.getTimingInfo() == timingInfo);
-        REQUIRE(movie.getSpacingInfo() == spacingInfo);
-        REQUIRE(movie.getDataType() == dataType);
-    }
-    
-    SECTION("write movie file")
-    {
-        isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo, dataType);
-        
-        isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
-        for (isx::isize_t f = 0; f < numFrames; ++f)
-        {
-            auto frame = std::make_shared<isx::VideoFrame>(
-                spacingInfo,
-                2 * sizePixels.getWidth(),
-                1,
-                dataType,
-                timingInfo.convertIndexToStartTime(f),
-                f);
-            std::memset(frame->getPixels(), 1, frame->getImageSizeInBytes());
-            movie.writeFrame(frame);
-        }
-        
-        for (isx::isize_t f = 0; f < numFrames; ++f)
-        {
-            isx::SpVideoFrame_t frame = movie.readFrame(f);
-            uint16_t * frameBuf = frame->getPixelsAsU16();
-            for (isx::isize_t p = 0; p < numPixels; ++p)
-            {
-                REQUIRE(frameBuf[p] == 0x0101);
-            }
-        }
-    }
-    
-    
 }
