@@ -106,18 +106,26 @@ TEST_CASE("DataSetToFromJson", "[core]")
     isx::DataSet::Properties properties;
     properties[propKey] = propValue;
     isx::DataSet dataSet(dsName, dsType, dsFileName, properties);
+
+    const std::string dsNameD = "myMovieD";
+    const std::string dsFileNameD = "myMovieD.isxd";
+    isx::DataSet dataSetDerived(dsNameD, dsType, dsFileNameD, properties);
+
     isx::Group group("myGroup");
     dataSet.setParent(&group);
+    dataSetDerived.setParent(&group);
 
     const std::string expected = "{\"original\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup/myMovie\"}}";
+    const std::string derived_expected = "{\"derived\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovieD.isxd\",\"name\":\"myMovieD\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup/myMovieD\"},\
+\"original\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup/myMovie\"}}";
 
-    SECTION("ToJson")
+    SECTION("ToJson - original only")
     {
         std::string js = isx::DataSet::toJsonString(&dataSet);
         REQUIRE(js == expected);
     }
     
-    SECTION("FromJson")
+    SECTION("FromJson - original only")
     {
         std::string path;
         isx::DataSet ds;
@@ -131,6 +139,39 @@ TEST_CASE("DataSetToFromJson", "[core]")
         REQUIRE(props.size() == 1);
         REQUIRE(props.find(propKey) != props.end());
         REQUIRE(props.at(propKey) == propValue);
+    }
+
+    SECTION("ToJson - original and derived")
+    {
+        std::string js = isx::DataSet::toJsonString(&dataSet, &dataSetDerived);
+        REQUIRE(js == derived_expected);
+    }
+    
+    SECTION("FromJson - original and derived")
+    {
+        std::string path;
+        isx::DataSet ds;
+        isx::DataSet dds;
+        isx::DataSet::fromJsonString(derived_expected, path, ds, dds);
+        const isx::DataSet::Properties & props = ds.getProperties();
+        
+        // Original
+        REQUIRE(path == "myGroup/myMovie");
+        REQUIRE(ds.getName() == dsName);
+        REQUIRE(ds.getType() == dsType);
+        REQUIRE(ds.getFileName() == dsFileName);
+        REQUIRE(props.size() == 1);
+        REQUIRE(props.find(propKey) != props.end());
+        REQUIRE(props.at(propKey) == propValue);
+
+        // Derived        
+        REQUIRE(dds.getName() == dsNameD);
+        REQUIRE(dds.getType() == dsType);
+        REQUIRE(dds.getFileName() == dsFileNameD);
+        const isx::DataSet::Properties & props_dds = dds.getProperties();
+        REQUIRE(props_dds.size() == 1);
+        REQUIRE(props_dds.find(propKey) != props_dds.end());
+        REQUIRE(props_dds.at(propKey) == propValue);
     }
     
 }
