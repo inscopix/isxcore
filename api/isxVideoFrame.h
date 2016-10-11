@@ -27,7 +27,7 @@ public:
     /// \param inNumChannels    Number of data channels per pixel (e.g.
     ///                         RGBA would be 4)
     /// \param inDataType       The data type of a pixel.
-    /// \param inTimeStamp      The timestamp of this frame in its ovie.
+    /// \param inTimeStamp      The timestamp of this frame in its movie.
     /// \param inFrameIndex     The index of this frame in its movie.
     VideoFrame(
             const SpacingInfo & inSpacingInfo,

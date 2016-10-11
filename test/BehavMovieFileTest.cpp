@@ -13,6 +13,7 @@ TEST_CASE("BehavMovieFile", "[core]")
     SECTION("init from Noldus file") 
     {
         isx::BehavMovieFile b("/Users/aschildan/Documents/Trial9.mpg");
+        b.readFrame(0);
     }
 
     isx::CoreShutdown();

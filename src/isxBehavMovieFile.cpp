@@ -114,8 +114,37 @@ BehavMovieFile::isValid() const
 SpVideoFrame_t
 BehavMovieFile::readFrame(isize_t inFrameNumber)
 {
-    ISX_ASSERT(!"not implemented");
-    return SpVideoFrame_t();
+    ISX_ASSERT(m_codecCtx && m_formatCtx);
+    
+    AVPacket packet;
+    AVFrame * pFrame = av_frame_alloc();
+    int recvResult = 1;
+    while (av_read_frame(m_formatCtx, &packet) >= 0
+        && recvResult != 0)
+    {
+        if (avcodec_send_packet(m_codecCtx, &packet) != 0)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Failed to retrieve video packet: ", m_fileName);
+        }
+        recvResult = avcodec_receive_frame(m_codecCtx, pFrame);
+        if (recvResult != 0 && recvResult != AVERROR(EAGAIN))
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Failed to decode video: ", m_fileName, ", error: ", recvResult);
+        }
+    }
+    
+    ISX_ASSERT(isize_t(pFrame->width) == m_spacingInfo.getNumPixels().getWidth());
+    ISX_ASSERT(isize_t(pFrame->height) == m_spacingInfo.getNumPixels().getHeight());
+    
+    Time t = m_timingInfo.convertIndexToStartTime(inFrameNumber);
+    auto ret = std::make_shared<VideoFrame>(
+        m_spacingInfo, pFrame->linesize[0], 1, DataType::U8, t, inFrameNumber);
+    
+    std::memcpy(ret->getPixels(), pFrame->data[0], pFrame->linesize[0] * pFrame->height);
+
+    return ret;
 }
 
 const
