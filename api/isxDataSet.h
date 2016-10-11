@@ -134,17 +134,20 @@ public:
 
     /// Serialize this DataSet to a JSON string
     /// \return JSON string for this DataSet
-    ///
+    /// \param inOriginal original dataset 
+    /// \param inDerived derived dataset (i.e. cellset coming from a movie)
+    static
     std::string
-    toJsonString() const;
+    toJsonString(const DataSet * inOriginal, const DataSet * inDerived = nullptr);
 
     /// Create a DataSet from a JSON string
     /// \param inDataSetJson string containing JSON for a DataSet
     /// \param outPath is set to the full path (in project) of the DataSet
-    ///
+    /// \param outOriginal the original dataset described in the JSON string
+    /// \param outDerived the derived dataset (if there is such in the JSON string)
     static
-    DataSet
-    fromJsonString(const std::string & inDataSetJson, std::string & outPath);
+    void
+    fromJsonString(const std::string & inDataSetJson, std::string & outPath, DataSet & outOriginal, DataSet & outDerived);
 
 private:
 

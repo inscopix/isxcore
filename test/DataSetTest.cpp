@@ -109,18 +109,20 @@ TEST_CASE("DataSetToFromJson", "[core]")
     isx::Group group("myGroup");
     dataSet.setParent(&group);
 
-    const std::string expected = "{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup/myMovie\"}";
+    const std::string expected = "{\"original\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup/myMovie\"}}";
 
     SECTION("ToJson")
     {
-        std::string js = dataSet.toJsonString();
+        std::string js = isx::DataSet::toJsonString(&dataSet);
         REQUIRE(js == expected);
     }
     
     SECTION("FromJson")
     {
         std::string path;
-        isx::DataSet ds = isx::DataSet::fromJsonString(expected, path);
+        isx::DataSet ds;
+        isx::DataSet dds;
+        isx::DataSet::fromJsonString(expected, path, ds, dds);
         const isx::DataSet::Properties & props = ds.getProperties();
         REQUIRE(path == "myGroup/myMovie");
         REQUIRE(ds.getName() == dsName);
