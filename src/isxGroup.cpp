@@ -1,5 +1,6 @@
 #include "isxGroup.h"
 #include "isxException.h"
+#include "isxJsonUtils.h"
 
 namespace isx
 {
@@ -308,6 +309,24 @@ Group::setUnmodified()
         (*dataSetIt)->setUnmodified();
     }
 }
+
+std::string
+Group::toJsonString() const
+{
+    json j = convertGroupToJson(this);
+    return j.dump();
+}
+
+
+Group
+Group::fromJsonString(const std::string & inGroupJson)
+{
+    json g = json::parse(inGroupJson);    
+    UpGroup_t bogus(new Group{""});
+    createGroupTreeFromJson(bogus.get(), g);
+    return *(bogus->getGroup(g["name"]));
+}
+
 
 bool
 Group::operator ==(const Group & inOther) const

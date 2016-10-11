@@ -203,6 +203,19 @@ public:
     ///
     void setUnmodified();
 
+    /// Serialize this Group to a JSON string
+    /// \return JSON string for this Group
+    ///
+    std::string
+    toJsonString() const;
+
+    /// Create a Group from a JSON string
+    /// \param inGroupJson string containing JSON for a Group
+    ///
+    static
+    Group
+    fromJsonString(const std::string & inGroupJson);
+
 private:
 
     /// True if this data set is valid.
