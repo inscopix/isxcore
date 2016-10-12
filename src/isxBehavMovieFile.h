@@ -10,6 +10,8 @@
 // ffmpeg forwards
 struct AVFormatContext;
 struct AVCodecContext;
+struct AVStream;
+struct AVPacket;
 
 namespace isx
 {
@@ -79,6 +81,8 @@ public:
     getDataType() const;
 
 private:
+    bool
+    initializeFromStream(isize_t inIndex);
 
     /// \return     The size of a pixel value in bytes.
     ///
@@ -122,8 +126,18 @@ private:
     
     
     // ffmpeg
-    AVFormatContext *   m_formatCtx = nullptr;
-    AVCodecContext *    m_codecCtx  = nullptr;
+    AVFormatContext *           m_formatCtx = nullptr;
+    AVCodecContext *            m_videoCodecCtx  = nullptr;
+    isize_t                     m_videoStreamIndex = 0;
+    AVStream *                  m_videoStream = nullptr;
+    Ratio                       m_videoPtsFrameDelta;
+    int64_t                     m_videoPtsStartOffset = 0;
+    
+    std::unique_ptr<AVPacket>   m_pPacket;
+    Ratio                       m_timeBase;
+    
+    isize_t                     m_lastVideoFrameNumber = std::numeric_limits<uint64_t>::max();
+    int64_t                     m_lastPktPts = -1;
 
 };
 
