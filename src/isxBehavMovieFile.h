@@ -84,6 +84,11 @@ private:
     bool
     initializeFromStream(isize_t inIndex);
 
+    /// \return duration of number of frames in units of ffmpeg's time_base
+    /// used for calculating time stamps
+    int64_t
+    timeBaseUnitsForFrames(isize_t inFrameNumber) const;
+
     /// \return     The size of a pixel value in bytes.
     ///
     isize_t
