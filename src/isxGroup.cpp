@@ -1,4 +1,3 @@
-#include "isxCoreFwd.h"
 #include "isxGroup.h"
 #include "isxException.h"
 #include "isxJsonUtils.h"
