@@ -1,6 +1,5 @@
 #include "isxGroup.h"
 #include "isxException.h"
-#include "isxJsonUtils.h"
 
 namespace isx
 {
@@ -309,7 +308,6 @@ Group::setUnmodified()
         (*dataSetIt)->setUnmodified();
     }
 }
-
 
 bool
 Group::operator ==(const Group & inOther) const
