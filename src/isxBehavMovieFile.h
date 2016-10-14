@@ -89,6 +89,10 @@ private:
     int64_t
     timeBaseUnitsForFrames(isize_t inFrameNumber) const;
 
+    /// \return true if the two given pts match
+    bool
+    isPtsMatch(int64_t inPts1, int64_t inPts2) const;
+
     /// \return     The size of a pixel value in bytes.
     ///
     isize_t

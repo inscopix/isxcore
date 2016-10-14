@@ -72,21 +72,22 @@ BehavMovieFile::~BehavMovieFile()
     avformat_close_input(&m_formatCtx);
 }
 
-/// \return True if the movie file is valid, false otherwise.
-///
-bool 
+bool
 BehavMovieFile::isValid() const
 {
     return m_valid;
 }
+    
+bool
+BehavMovieFile::isPtsMatch(int64_t inPts1, int64_t inPts2) const
+{
+    if (inPts1 == AV_NOPTS_VALUE || inPts2 == AV_NOPTS_VALUE)
+    {
+        return false;
+    }
+    return std::abs(inPts1 - inPts2) < (timeBaseUnitsForFrames(1) / 2);
+}
 
-/// Read a frame in the file by index.
-///
-/// \param  inFrameNumber   The index of the frame.
-/// \return                 The frame read from the file.
-///
-/// \throw  isx::ExceptionFileIO    If reading the movie file fails.
-/// \throw  isx::ExceptionDataIO    If inFrameNumber is out of range.
 SpVideoFrame_t
 BehavMovieFile::readFrame(isize_t inFrameNumber)
 {
@@ -128,7 +129,7 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
         pts = pFrame->pkt_pts;
     }
 
-    while ((pts == AV_NOPTS_VALUE || requestedPts - pts > timeBaseUnitsForFrames(1))
+    while (!isPtsMatch(requestedPts, pts)
            && av_read_frame(m_formatCtx, m_pPacket.get()) >= 0)
     {
         if (avcodec_send_packet(m_videoCodecCtx, m_pPacket.get()) != 0)
@@ -139,7 +140,9 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
         av_packet_unref(m_pPacket.get());
         
         recvResult = 0;
-        while ((pts == AV_NOPTS_VALUE || requestedPts - pts > timeBaseUnitsForFrames(1)) && recvResult == 0)
+        // Apparently AVPackets may contain multiple frames, so we keep decoding until we either found
+        // the pts we want or we get no more frames (recvResult != 0)
+        while (!isPtsMatch(requestedPts, pts) && recvResult == 0)
         {
             recvResult = avcodec_receive_frame(m_videoCodecCtx, pFrame);
             if (recvResult != 0 && recvResult != AVERROR(EAGAIN))
@@ -148,6 +151,14 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
                           "Failed to decode video: ", m_fileName, ", error: ", recvResult);
             }
             pts = pFrame->pkt_pts;
+            if (recvResult == 0)
+            {
+                ISX_LOG_DEBUG("    pts: ", pts, "delta: ", requestedPts - pts, ", recvResult: ", recvResult);
+            }
+            else
+            {
+                ISX_LOG_DEBUG("recvResult: ", recvResult);
+            }
         }
     }
 
