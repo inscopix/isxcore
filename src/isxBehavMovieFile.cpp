@@ -98,7 +98,8 @@ BehavMovieFile::isPtsMatch(int64_t inTargetPts, int64_t inTestPts) const
     // actual pts that is earlier than their calculated pts (from frame number, frame rate and time base)
     // set fudge to 5% of m_videoPtsFrameDelta (pts delta between frames)
     int64_t fudge = int64_t(std::floor(m_videoPtsFrameDelta.toDouble() * 0.05));
-    return inTestPts >= (inTargetPts - fudge) && (inTestPts - inTargetPts) < timeBaseUnitsForFrames(1);
+    ISX_BEHAV_READ_LOG_DEBUG("isPtsMatch: ", inTestPts - inTargetPts);
+    return inTestPts >= (inTargetPts - fudge);
 }
 
 SpVideoFrame_t
@@ -121,7 +122,12 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
     }
     else if (std::abs(deltaFromExpected) > int64_t(m_videoPtsFrameDelta.toDouble() + 0.5f))
     {
-        ISX_ASSERT(inFrameNumber != m_lastVideoFrameNumber + 1);
+//        ISX_ASSERT(inFrameNumber != m_lastVideoFrameNumber + 1);
+        if (inFrameNumber == m_lastVideoFrameNumber + 1)
+        {
+            ISX_LOG_INFO("Last frame had timestamp for this frame, repeating it.");
+        }
+        
         
         isize_t seekFrameNumber = inFrameNumber - sGopSize;
         int64_t seekPts = timeBaseUnitsForFrames(seekFrameNumber) + m_videoPtsStartOffset;
