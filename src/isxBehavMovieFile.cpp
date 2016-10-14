@@ -15,6 +15,15 @@ extern "C" {
 //#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 //#endif
 
+// set to 1 to turn on behavioral frame read debug logging
+#if 0
+#define ISX_BEHAV_READ_DEBUG_LOGGING 1
+#define ISX_BEHAV_READ_LOG_DEBUG(...) ISX_LOG_DEBUG(__VA_ARGS__)
+#else
+#define ISX_BEHAV_READ_DEBUG_LOGGING 0
+#define ISX_BEHAV_READ_LOG_DEBUG(...)
+#endif
+
 namespace isx
 {
 
@@ -79,13 +88,17 @@ BehavMovieFile::isValid() const
 }
     
 bool
-BehavMovieFile::isPtsMatch(int64_t inPts1, int64_t inPts2) const
+BehavMovieFile::isPtsMatch(int64_t inTargetPts, int64_t inTestPts) const
 {
-    if (inPts1 == AV_NOPTS_VALUE || inPts2 == AV_NOPTS_VALUE)
+    if (inTestPts == AV_NOPTS_VALUE)
     {
         return false;
     }
-    return std::abs(inPts1 - inPts2) < (timeBaseUnitsForFrames(1) / 2);
+    // fudge needed for a small number of frames that have an
+    // actual pts that is earlier than their calculated pts (from frame number, frame rate and time base)
+    // set fudge to 5% of m_videoPtsFrameDelta (pts delta between frames)
+    int64_t fudge = int64_t(std::floor(m_videoPtsFrameDelta.toDouble() * 0.05));
+    return inTestPts >= (inTargetPts - fudge) && (inTestPts - inTargetPts) < timeBaseUnitsForFrames(1);
 }
 
 SpVideoFrame_t
@@ -110,10 +123,17 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
     {
         ISX_ASSERT(inFrameNumber != m_lastVideoFrameNumber + 1);
         
-        isize_t seekFrameNumber = inFrameNumber < sGopSize ? 0 : inFrameNumber - sGopSize;
+        isize_t seekFrameNumber = inFrameNumber - sGopSize;
         int64_t seekPts = timeBaseUnitsForFrames(seekFrameNumber) + m_videoPtsStartOffset;
         
+        if (inFrameNumber < sGopSize)
+        {
+            seekFrameNumber = 0;
+            seekPts = 0;
+        }
+        
         int flags = AVSEEK_FLAG_ANY | (deltaFromCurrent < 0) ? AVSEEK_FLAG_BACKWARD : 0;
+        ISX_BEHAV_READ_LOG_DEBUG("req: ", requestedPts, ", seek: ", seekPts);
         av_seek_frame(m_formatCtx, m_videoStreamIndex, seekPts, flags);
         avcodec_flush_buffers(m_videoCodecCtx);
         seeking = true;
@@ -153,11 +173,11 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
             pts = pFrame->pkt_pts;
             if (recvResult == 0)
             {
-                ISX_LOG_DEBUG("    pts: ", pts, "delta: ", requestedPts - pts, ", recvResult: ", recvResult);
+                ISX_BEHAV_READ_LOG_DEBUG("    pts: ", pts, "delta: ", requestedPts - pts, ", recvResult: ", recvResult);
             }
             else
             {
-                ISX_LOG_DEBUG("recvResult: ", recvResult);
+                ISX_BEHAV_READ_LOG_DEBUG("recvResult: ", recvResult);
             }
         }
     }
@@ -167,19 +187,22 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
     ISX_ASSERT(isize_t(pFrame->width) == m_spacingInfo.getNumPixels().getWidth());
     ISX_ASSERT(isize_t(pFrame->height) == m_spacingInfo.getNumPixels().getHeight());
     
-    double ptsd = (Ratio(pts, 1) * m_timeBase).toDouble();
-    int64_t delta = requestedPts - pts;
-    const char * pictureTypeNames[] = {
-        "0", "I", "P", "B", "S", "SI", "SP", "BI"
-    };
+    #if ISX_BEHAV_READ_DEBUG_LOGGING
+        double ptsd = (Ratio(pts, 1) * m_timeBase).toDouble();
+        int64_t delta = requestedPts - pts;
+        const char * pictureTypeNames[] = {
+            "0", "I", "P", "B", "S", "SI", "SP", "BI"
+        };
+    #endif
     
-    ISX_LOG_DEBUG("req: (", inFrameNumber, ")", requestedPts,
-                  "\tactual: ", pts,
-                  "\t-", ptsd, "s",
-                  "\tdelta: ", delta, std::abs(delta) > timeBaseUnitsForFrames(1) ? "*" : " ",
-                  "\t type: ", pictureTypeNames[pFrame->pict_type],
-                  "\tcpn: ", pFrame->coded_picture_number,
-                  "\tdpn: ", pFrame->display_picture_number);
+    ISX_BEHAV_READ_LOG_DEBUG(
+        "req: (", inFrameNumber, ")", requestedPts,
+        "\tactual: ", pts,
+        "\t-", ptsd, "s",
+        "\tdelta: ", delta, std::abs(delta) > timeBaseUnitsForFrames(1) ? "*" : " ",
+        "\t type: ", pictureTypeNames[pFrame->pict_type],
+        "\tcpn: ", pFrame->coded_picture_number,
+        "\tdpn: ", pFrame->display_picture_number);
     m_lastPktPts = pFrame->pkt_pts;
     Time t = m_timingInfo.convertIndexToStartTime(inFrameNumber);
     auto ret = std::make_shared<VideoFrame>(
