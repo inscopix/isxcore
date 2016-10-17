@@ -196,22 +196,37 @@ readDataSetType(const std::string & inFileName)
     }
 }
 
+/*static*/
 std::string
-DataSet::toJsonString() const
+DataSet::toJsonString(const DataSet * inOriginal, const DataSet * inDerived)
 {
-    json ds;
-    ds["path"] = getPath();
-    ds["dataset"] = convertDataSetToJson(this);
-    return ds.dump();
+    json j;
+    j["original"]["path"] = inOriginal->getPath();
+    j["original"]["dataset"] = convertDataSetToJson(inOriginal);
+    if(inDerived)
+    {
+        j["derived"]["path"] = inDerived->getPath();
+        j["derived"]["dataset"] = convertDataSetToJson(inDerived);
+    }
+    return j.dump();
 }
 
-DataSet
-DataSet::fromJsonString(const std::string & inDataSetJson, std::string & outPath)
+/*static*/
+void
+DataSet::fromJsonString(const std::string & inDataSetJson, std::string & outPath, DataSet & outOriginal, DataSet & outDerived)
 {
-    json ds = json::parse(inDataSetJson);
-    outPath = ds["path"];
+    json j = json::parse(inDataSetJson);
+    outPath = j["original"]["path"];
     UpGroup_t bogus(new Group{""});
-    createDataSetFromJson(bogus.get(), ds["dataset"]);
-    return **(bogus->getDataSets().begin());
+    createDataSetFromJson(bogus.get(), j["original"]["dataset"]);
+    outOriginal = **(bogus->getDataSets().begin());
+    
+    isize_t derived_present = j.count("derived");
+    if(derived_present)
+    {
+        createDataSetFromJson(bogus.get(), j["derived"]["dataset"]);
+        outDerived = *(bogus->getDataSets().back());
+    }    
+    
 }
 } // namespace isx
