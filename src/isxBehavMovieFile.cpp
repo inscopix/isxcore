@@ -138,7 +138,7 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
             seekPts = 0;
         }
         
-        int flags = AVSEEK_FLAG_ANY | (deltaFromCurrent < 0) ? AVSEEK_FLAG_BACKWARD : 0;
+        int flags = AVSEEK_FLAG_ANY | ((deltaFromCurrent < 0) ? AVSEEK_FLAG_BACKWARD : 0);
         ISX_BEHAV_READ_LOG_DEBUG("req: ", requestedPts, ", seek: ", seekPts);
         av_seek_frame(m_formatCtx, m_videoStreamIndex, seekPts, flags);
         avcodec_flush_buffers(m_videoCodecCtx);
@@ -256,7 +256,7 @@ BehavMovieFile::getDataType() const
 
 
 bool
-BehavMovieFile::initializeFromStream(isize_t inIndex)
+BehavMovieFile::initializeFromStream(int inIndex)
 {
     // from stream_component_open() in ffplay.c
     AVCodecContext *avctx;
@@ -276,7 +276,10 @@ BehavMovieFile::initializeFromStream(isize_t inIndex)
 
     avctx = avcodec_alloc_context3(NULL);
     if (!avctx)
-        return AVERROR(ENOMEM);
+    {
+//        return AVERROR(ENOMEM);
+        return false;
+    }
 
     ret = avcodec_parameters_to_context(avctx, m_formatCtx->streams[inIndex]->codecpar);
     if (ret < 0)
