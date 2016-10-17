@@ -3,6 +3,8 @@
 #include "isxTest.h"
 #include "isxException.h"
 #include "isxPathUtils.h"
+#include "isxMovieFactory.h"
+#include "isxCellSet.h"
 
 #include <fstream>
 
@@ -284,11 +286,13 @@ TEST_CASE("ProjectSynth", "[data][!hide]")
             for (auto nameIt = names.begin(); nameIt != names.end(); ++nameIt)
             {
                 const std::string movieName = *nameIt + "-mc";
+                const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
                 const std::string moviePath = groupPath + "/" + movieName;
+                const std::string cellSetFile = procDataDir + "/" + *nameIt + "-pca_ica.isxd";
                 project.createDataSet(
                         moviePath,
                         isx::DataSet::Type::MOVIE,
-                        procDataDir + "/" + movieName + ".isxd",
+                        movieFile,
                         {
                           {isx::DataSet::PROP_DATA_MIN, 0.f},
                           {isx::DataSet::PROP_DATA_MAX, 4095.f},
@@ -298,7 +302,13 @@ TEST_CASE("ProjectSynth", "[data][!hide]")
                 project.createDataSet(
                         moviePath + "/derived/PCA-ICA",
                         isx::DataSet::Type::CELLSET,
-                        procDataDir + "/" + *nameIt + "-pca_ica.isxd");
+                        cellSetFile);
+
+                // NOTE sweet : also check that timing/spacing info is consistent
+                isx::SpMovie_t movie = isx::readMovie(movieFile);
+                auto cellSet = std::make_shared<isx::CellSet>(cellSetFile);
+                REQUIRE(movie->getTimingInfo() == cellSet->getTimingInfo());
+                REQUIRE(movie->getSpacingInfo() == cellSet->getSpacingInfo());
             }
         }
 
