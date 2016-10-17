@@ -82,7 +82,7 @@ public:
 
 private:
     bool
-    initializeFromStream(isize_t inIndex);
+    initializeFromStream(int inIndex);
 
     /// \return duration of number of frames in units of ffmpeg's time_base
     /// used for calculating time stamps
@@ -141,7 +141,7 @@ private:
     // ffmpeg
     AVFormatContext *           m_formatCtx = nullptr;
     AVCodecContext *            m_videoCodecCtx  = nullptr;
-    isize_t                     m_videoStreamIndex = 0;
+    int                         m_videoStreamIndex = 0;
     AVStream *                  m_videoStream = nullptr;
     Ratio                       m_videoPtsFrameDelta;
     int64_t                     m_videoPtsStartOffset = 0;
