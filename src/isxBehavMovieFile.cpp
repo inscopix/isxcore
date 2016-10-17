@@ -269,7 +269,7 @@ BehavMovieFile::initializeFromStream(int inIndex)
     int ret = 0;
 //    int stream_lowres = lowres;
 
-    if (inIndex >= isize_t(m_formatCtx->nb_streams))
+    if (inIndex >= int(m_formatCtx->nb_streams))
     {
         return false;
     }
