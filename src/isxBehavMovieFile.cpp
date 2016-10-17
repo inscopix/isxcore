@@ -420,7 +420,7 @@ BehavMovieFile::initializeFromStream(isize_t inIndex)
             Ratio frameRate(m_videoStream->avg_frame_rate.num, m_videoStream->avg_frame_rate.den);
             double numFramesD = (durationInSeconds * frameRate).toDouble();
             isize_t numFrames = isize_t(std::floor(numFramesD));
-            auto startTime = Time();
+            auto startTime = getStartTime();
             m_timingInfo = TimingInfo(startTime, frameRate.getInverse(), numFrames);
             
             m_videoPtsFrameDelta = m_timingInfo.getStep() * m_timeBase.getInverse();
@@ -500,6 +500,28 @@ BehavMovieFile::seekForReadFrame(
     isize_t inFrameNumber)
 {
     ISX_ASSERT(!"not implemented");
+}
+
+
+Time 
+BehavMovieFile::getStartTime() const
+{
+   std::string fn0("Trial     9.mpg"); 
+   std::string fn1("Trial    11.mpg");
+   Time t;
+
+   if(m_fileName.compare(fn0) == 0)
+   {
+        /// 8/2/2015  11:59:07.161
+        t = Time(2015, 8, 2, 11, 59, 07, DurationInSeconds(161, 1000));
+   }
+   else if(m_fileName.compare(fn1) == 0)
+   {
+        /// 8/3/2015  12:01:21.224
+        t = Time(2015, 8, 3, 12, 1, 21, DurationInSeconds(224, 1000));
+   }
+
+   return t;
 }
 
 } // namespace isx

@@ -108,6 +108,10 @@ private:
     isize_t
     getFrameSizeInBytes() const;
 
+    /// \return     Start time used in timing info.
+    /// This is a hack needed until we have a way of requesting the user to define a start time on file import
+    Time getStartTime() const;
+
     /// Seek to the location of a frame for reading.
     ///
     /// \param  inFile          The input file stream whose input position
