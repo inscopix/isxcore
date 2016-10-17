@@ -133,19 +133,22 @@ public:
     // Overrides
     void serialize(std::ostream & strm) const override;
 
-    /// Serialize this DataSet to a JSON string
-    /// \return JSON string for this DataSet
-    ///
-    std::string
-    toJsonString() const;
-
-    /// Create a DataSet from a JSON string
-    /// \param inDataSetJson string containing JSON for a DataSet
-    /// \param outPath is set to the full path (in project) of the DataSet
-    ///
+    /// Serialize DataSet(s) to a JSON string
+    /// \return JSON string for the DataSet(s)
+    /// \param inOriginal original dataset 
+    /// \param inDerived derived dataset (i.e. cellset coming from a movie)
     static
-    DataSet
-    fromJsonString(const std::string & inDataSetJson, std::string & outPath);
+    std::string
+    toJsonString(const DataSet * inOriginal, const DataSet * inDerived = nullptr);
+
+    /// Create DataSet(s) from a JSON string
+    /// \param inDataSetJson string containing JSON info for one or two DataSets
+    /// \param outPath is set to the full path (in project) of the original DataSet
+    /// \param outOriginal the original dataset described in the JSON string
+    /// \param outDerived the derived dataset (if there is such in the JSON string)
+    static
+    void
+    fromJsonString(const std::string & inDataSetJson, std::string & outPath, DataSet & outOriginal, DataSet & outDerived);
 
 private:
 

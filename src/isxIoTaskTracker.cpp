@@ -36,7 +36,8 @@ IoTaskTracker::schedule(getFrameCB_t inGetFrame, MovieGetFrameCB_t inCallback)
             auto rt = unregisterPendingTask(readRequestId);
 
             checkAsyncTaskStatus(rt, inStatus, "IoTaskTracker::schedule");
-            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
+            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION
+              ||inStatus == AsyncTaskStatus::CANCELLED)
             {
                 inCallback(SpVideoFrame_t());
             }
