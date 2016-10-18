@@ -9,6 +9,7 @@ extern "C" {
 }
 
 
+#include <cstring>
 #include <cmath>
 #include <algorithm>
 #include <limits>

@@ -7,6 +7,8 @@
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
 
+#include <limits>
+
 // ffmpeg forwards
 struct AVFormatContext;
 struct AVCodecContext;
