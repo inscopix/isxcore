@@ -1,5 +1,7 @@
 
 #include "isxBehavMovieFile.h"
+#include "isxPathUtils.h"
+
 
 extern "C" {
 #include "libavcodec/avcodec.h"
@@ -509,22 +511,24 @@ BehavMovieFile::seekForReadFrame(
 Time 
 BehavMovieFile::getStartTime() const
 {
-   std::string fn0("Trial     9.mpg"); 
-   std::string fn1("Trial    11.mpg");
-   Time t;
+    static const char * fn0 = "Trial     9.mpg";
+    static const char * fn1 = "Trial    11.mpg";
+    Time t;
+    
+    const std::string fileName = isx::getFileName(m_fileName);
 
-   if(m_fileName.compare(fn0) == 0)
-   {
+    if(fileName.compare(fn0) == 0)
+    {
         /// 8/2/2015  11:59:07.161
         t = Time(2015, 8, 2, 11, 59, 07, DurationInSeconds(161, 1000));
-   }
-   else if(m_fileName.compare(fn1) == 0)
-   {
+    }
+    else if(fileName.compare(fn1) == 0)
+    {
         /// 8/3/2015  12:01:21.224
         t = Time(2015, 8, 3, 12, 1, 21, DurationInSeconds(224, 1000));
-   }
+    }
 
-   return t;
+    return t;
 }
 
 } // namespace isx

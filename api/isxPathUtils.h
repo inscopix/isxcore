@@ -14,8 +14,8 @@ namespace isx
 /// For example:
 /// - "movie.isxd" -> "movie"
 /// - "outputs" -> "outputs"
-/// - "outputs/movie.isxd" -> "outputs/movie"
-/// - "outputs/day1" -> "outputs/day1"
+/// - "outputs/movie.isxd" -> "movie"
+/// - "outputs/day1" -> "day1"
 ///
 /// \param  inPath  The path from which to get the base name.
 /// \return         The base name of the path.
