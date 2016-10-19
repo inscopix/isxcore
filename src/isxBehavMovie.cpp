@@ -20,41 +20,6 @@ BehavMovie::BehavMovie(const std::string & inFileName)
     : m_valid(false)
     , m_ioTaskTracker(new IoTaskTracker())
 {
-    // TODO sweet : decide if we want all IO on the IO thread or if
-    // it's okay to read the header on the current thread.
-    // If we decide on the former, use this code.
-
-    //std::shared_ptr<MosaicMovieFile> file = std::make_shared<MosaicMovieFile>();
-    //Mutex mutex;
-    //ConditionVariable cv;
-    //mutex.lock("MosaicMovie read");
-    //IoQueue::instance()->enqueue(
-    //    IoQueue::IoTask(
-    //        [&file, &inFileName, &cv, &mutex]()
-    //        {
-    //            mutex.lock("MosaicMovieFile read initialize");
-    //            file->initialize(inFileName);
-    //            mutex.unlock();
-    //            cv.notifyOne();
-    //        }
-    //        ,
-    //        [](AsyncTaskStatus inStatus)
-    //        {
-    //            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
-    //            {
-    //                ISX_LOG_ERROR("An exception occurred while initializing a MosaicMovieFile for reading.");
-    //            }
-    //            else if (inStatus != AsyncTaskStatus::COMPLETE)
-    //            {
-    //                ISX_LOG_ERROR("An error occurred while initializing a MosaicMovieFile for reading.");
-    //            }
-    //        }
-    //    )
-    //);
-    //cv.wait(mutex);
-    //mutex.unlock();
-    //m_file = file;
-
     m_file = std::make_shared<BehavMovieFile>(inFileName);
     m_valid = true;
 }

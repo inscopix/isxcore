@@ -89,7 +89,8 @@ BehavMovieFile::isValid() const
 {
     return m_valid;
 }
-    
+
+/// \return true if the two given Presentation Time Stamps (pts) match
 bool
 BehavMovieFile::isPtsMatch(int64_t inTargetPts, int64_t inTestPts) const
 {
@@ -108,7 +109,7 @@ BehavMovieFile::isPtsMatch(int64_t inTargetPts, int64_t inTestPts) const
 SpVideoFrame_t
 BehavMovieFile::readFrame(isize_t inFrameNumber)
 {
-    static const isize_t sGopSize = 10; // note aschildan 10/12/2016: extracted from noldus video, need to calculate this
+    static const isize_t sGopSize = 10; // TODO aschildan 10/12/2016: need to calculate this, this value is extracted from noldus video
     
     ISX_ASSERT(m_videoCodecCtx && m_formatCtx);
 
@@ -261,16 +262,14 @@ BehavMovieFile::getDataType() const
 bool
 BehavMovieFile::initializeFromStream(int inIndex)
 {
-    // from stream_component_open() in ffplay.c
+    //
+    // this code is lifted from stream_component_open() in ffplay.c
+    //
+    
     AVCodecContext *avctx;
     AVCodec *codec;
-//    const char *forced_codec_name = NULL;
     AVDictionary *opts = NULL;
-//    AVDictionaryEntry *t = NULL;
-//    int sample_rate, nb_channels;
-//    int64_t channel_layout;
     int ret = 0;
-//    int stream_lowres = lowres;
 
     if (inIndex >= int(m_formatCtx->nb_streams))
     {
@@ -280,7 +279,6 @@ BehavMovieFile::initializeFromStream(int inIndex)
     avctx = avcodec_alloc_context3(NULL);
     if (!avctx)
     {
-//        return AVERROR(ENOMEM);
         return false;
     }
 
@@ -296,16 +294,6 @@ BehavMovieFile::initializeFromStream(int inIndex)
 
     codec = avcodec_find_decoder(avctx->codec_id);
 
-#if 0
-    switch(avctx->codec_type){
-        case AVMEDIA_TYPE_AUDIO   : is->last_audio_stream    = stream_index; forced_codec_name =    audio_codec_name; break;
-        case AVMEDIA_TYPE_SUBTITLE: is->last_subtitle_stream = stream_index; forced_codec_name = subtitle_codec_name; break;
-        case AVMEDIA_TYPE_VIDEO   : is->last_video_stream    = stream_index; forced_codec_name =    video_codec_name; break;
-    }
-    if (forced_codec_name)
-        codec = avcodec_find_decoder_by_name(forced_codec_name);
-#endif
-
     if (!codec)
     {
         avcodec_free_context(&avctx);
@@ -314,33 +302,12 @@ BehavMovieFile::initializeFromStream(int inIndex)
     }
 
     avctx->codec_id = codec->id;
-#if 0
-    if(stream_lowres > av_codec_get_max_lowres(codec)){
-        av_log(avctx, AV_LOG_WARNING, "The maximum value for lowres supported by the decoder is %d\n",
-                av_codec_get_max_lowres(codec));
-        stream_lowres = av_codec_get_max_lowres(codec);
-    }
-    av_codec_set_lowres(avctx, stream_lowres);
     
-#if FF_API_EMU_EDGE
-    if(stream_lowres) avctx->flags |= CODEC_FLAG_EMU_EDGE;
-#endif
-    if (fast)
-        avctx->flags2 |= AV_CODEC_FLAG2_FAST;
-#endif
-    
-#if 1 //FF_API_EMU_EDGE
     if(codec->capabilities & AV_CODEC_CAP_DR1)
+    {
         avctx->flags |= CODEC_FLAG_EMU_EDGE;
-#endif
+    }
     
-#if 0
-    opts = filter_codec_opts(codec_opts, avctx->codec_id, m_formatCtx, m_formatCtx->streams[inIndex], codec);
-    if (!av_dict_get(opts, "threads", NULL, 0))
-        av_dict_set(&opts, "threads", "auto", 0);
-    if (stream_lowres)
-        av_dict_set_int(&opts, "lowres", stream_lowres, 0);
-#endif
     if (avctx->codec_type == AVMEDIA_TYPE_VIDEO || avctx->codec_type == AVMEDIA_TYPE_AUDIO)
         av_dict_set(&opts, "refcounted_frames", "1", 0);
     if ((ret = avcodec_open2(avctx, codec, &opts)) < 0)
@@ -350,67 +317,11 @@ BehavMovieFile::initializeFromStream(int inIndex)
         ISX_THROW(isx::ExceptionFileIO,
                   "Failed to open codec: ", m_fileName);
     }
-#if 0
-    if ((t = av_dict_get(opts, "", NULL, AV_DICT_IGNORE_SUFFIX)))
-    {
-        av_log(NULL, AV_LOG_ERROR, "Option %s not found.\n", t->key);
-//        ret =  AVERROR_OPTION_NOT_FOUND;
-//        goto fail;
-    }
-#endif
+    
     m_formatCtx->streams[inIndex]->discard = AVDISCARD_DEFAULT;
     switch (avctx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
         ISX_ASSERT(!"Not supported.");
-#if 0
-#if CONFIG_AVFILTER
-        {
-            AVFilterLink *link;
-
-            is->audio_filter_src.freq           = avctx->sample_rate;
-            is->audio_filter_src.channels       = avctx->channels;
-            is->audio_filter_src.channel_layout = get_valid_channel_layout(avctx->channel_layout, avctx->channels);
-            is->audio_filter_src.fmt            = avctx->sample_fmt;
-            if ((ret = configure_audio_filters(is, afilters, 0)) < 0)
-                goto fail;
-            link = is->out_audio_filter->inputs[0];
-            sample_rate    = link->sample_rate;
-            nb_channels    = avfilter_link_get_channels(link);
-            channel_layout = link->channel_layout;
-        }
-#else
-        sample_rate    = avctx->sample_rate;
-        nb_channels    = avctx->channels;
-        channel_layout = avctx->channel_layout;
-#endif
-
-        /* prepare audio output */
-        if ((ret = audio_open(is, channel_layout, nb_channels, sample_rate, &is->audio_tgt)) < 0)
-            goto fail;
-        is->audio_hw_buf_size = ret;
-        is->audio_src = is->audio_tgt;
-        is->audio_buf_size  = 0;
-        is->audio_buf_index = 0;
-
-        /* init averaging filter */
-        is->audio_diff_avg_coef  = exp(log(0.01) / AUDIO_DIFF_AVG_NB);
-        is->audio_diff_avg_count = 0;
-        /* since we do not have a precise anough audio FIFO fullness,
-           we correct audio sync only if larger than this threshold */
-        is->audio_diff_threshold = (double)(is->audio_hw_buf_size) / is->audio_tgt.bytes_per_sec;
-
-        is->audio_stream = stream_index;
-        is->audio_st = ic->streams[stream_index];
-
-        decoder_init(&is->auddec, avctx, &is->audioq, is->continue_read_thread);
-        if ((is->ic->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) && !is->ic->iformat->read_seek) {
-            is->auddec.start_pts = is->audio_st->start_time;
-            is->auddec.start_pts_tb = is->audio_st->time_base;
-        }
-        if ((ret = decoder_start(&is->auddec, audio_thread, is)) < 0)
-            goto out;
-        SDL_PauseAudio(0);
-#endif
         break;
     case AVMEDIA_TYPE_VIDEO:
         {
@@ -432,24 +343,9 @@ BehavMovieFile::initializeFromStream(int inIndex)
             m_videoPtsFrameDelta = m_timingInfo.getStep() * m_timeBase.getInverse();
             m_videoPtsStartOffset = m_videoStream->start_time;
         }
-
-#if 0
-            decoder_init(&is->viddec, avctx, &is->videoq, is->continue_read_thread);
-        if ((ret = decoder_start(&is->viddec, video_thread, is)) < 0)
-            goto out;
-        is->queue_attachments_req = 1;
-#endif
         break;
     case AVMEDIA_TYPE_SUBTITLE:
-            ISX_ASSERT(!"Not supported.");
-#if 0
-        is->subtitle_stream = stream_index;
-        is->subtitle_st = ic->streams[stream_index];
-
-        decoder_init(&is->subdec, avctx, &is->subtitleq, is->continue_read_thread);
-        if ((ret = decoder_start(&is->subdec, subtitle_thread, is)) < 0)
-            goto out;
-#endif
+        ISX_ASSERT(!"Not supported.");
         break;
     default:
         break;
@@ -531,5 +427,225 @@ BehavMovieFile::getStartTime() const
 
     return t;
 }
-
+    
 } // namespace isx
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////
+// aschildan 10/19/2016 note:
+// version with original code lines commented out - use when we
+// add dedicated decoder thread or
+// add audio support
+//////////////////////////////////////////////////////////////////////////
+#if 0
+bool
+BehavMovieFile::initializeFromStream(int inIndex)
+{
+    //
+    // this code is lifted from stream_component_open() in ffplay.c
+    //
+    
+    AVCodecContext *avctx;
+    AVCodec *codec;
+    //    const char *forced_codec_name = NULL;
+    AVDictionary *opts = NULL;
+    //    AVDictionaryEntry *t = NULL;
+    //    int sample_rate, nb_channels;
+    //    int64_t channel_layout;
+    int ret = 0;
+    //    int stream_lowres = lowres;
+    
+    if (inIndex >= int(m_formatCtx->nb_streams))
+    {
+        return false;
+    }
+    
+    avctx = avcodec_alloc_context3(NULL);
+    if (!avctx)
+    {
+        //        return AVERROR(ENOMEM);
+        return false;
+    }
+    
+    ret = avcodec_parameters_to_context(avctx, m_formatCtx->streams[inIndex]->codecpar);
+    if (ret < 0)
+    {
+        avcodec_free_context(&avctx);
+        ISX_THROW(isx::ExceptionFileIO,
+                  "Failed to get codec parameters: ", m_fileName);
+    }
+    
+    av_codec_set_pkt_timebase(avctx, m_formatCtx->streams[inIndex]->time_base);
+    
+    codec = avcodec_find_decoder(avctx->codec_id);
+    
+#if 0
+    switch(avctx->codec_type){
+        case AVMEDIA_TYPE_AUDIO   : is->last_audio_stream    = stream_index; forced_codec_name =    audio_codec_name; break;
+        case AVMEDIA_TYPE_SUBTITLE: is->last_subtitle_stream = stream_index; forced_codec_name = subtitle_codec_name; break;
+        case AVMEDIA_TYPE_VIDEO   : is->last_video_stream    = stream_index; forced_codec_name =    video_codec_name; break;
+    }
+    if (forced_codec_name)
+        codec = avcodec_find_decoder_by_name(forced_codec_name);
+#endif
+    
+    if (!codec)
+    {
+        avcodec_free_context(&avctx);
+        ISX_THROW(isx::ExceptionFileIO,
+                  "Failed to find codec: ", m_fileName);
+    }
+    
+    avctx->codec_id = codec->id;
+#if 0
+    if(stream_lowres > av_codec_get_max_lowres(codec)){
+        av_log(avctx, AV_LOG_WARNING, "The maximum value for lowres supported by the decoder is %d\n",
+               av_codec_get_max_lowres(codec));
+        stream_lowres = av_codec_get_max_lowres(codec);
+    }
+    av_codec_set_lowres(avctx, stream_lowres);
+    
+#if FF_API_EMU_EDGE
+    if(stream_lowres) avctx->flags |= CODEC_FLAG_EMU_EDGE;
+#endif
+    if (fast)
+        avctx->flags2 |= AV_CODEC_FLAG2_FAST;
+#endif
+    
+#if 1 //FF_API_EMU_EDGE
+    if(codec->capabilities & AV_CODEC_CAP_DR1)
+        avctx->flags |= CODEC_FLAG_EMU_EDGE;
+#endif
+    
+#if 0
+    opts = filter_codec_opts(codec_opts, avctx->codec_id, m_formatCtx, m_formatCtx->streams[inIndex], codec);
+    if (!av_dict_get(opts, "threads", NULL, 0))
+        av_dict_set(&opts, "threads", "auto", 0);
+    if (stream_lowres)
+        av_dict_set_int(&opts, "lowres", stream_lowres, 0);
+#endif
+    if (avctx->codec_type == AVMEDIA_TYPE_VIDEO || avctx->codec_type == AVMEDIA_TYPE_AUDIO)
+        av_dict_set(&opts, "refcounted_frames", "1", 0);
+    if ((ret = avcodec_open2(avctx, codec, &opts)) < 0)
+    {
+        avcodec_free_context(&avctx);
+        av_dict_free(&opts);
+        ISX_THROW(isx::ExceptionFileIO,
+                  "Failed to open codec: ", m_fileName);
+    }
+#if 0
+    if ((t = av_dict_get(opts, "", NULL, AV_DICT_IGNORE_SUFFIX)))
+    {
+        av_log(NULL, AV_LOG_ERROR, "Option %s not found.\n", t->key);
+        //        ret =  AVERROR_OPTION_NOT_FOUND;
+        //        goto fail;
+    }
+#endif
+    m_formatCtx->streams[inIndex]->discard = AVDISCARD_DEFAULT;
+    switch (avctx->codec_type) {
+        case AVMEDIA_TYPE_AUDIO:
+            ISX_ASSERT(!"Not supported.");
+#if 0
+#if CONFIG_AVFILTER
+        {
+            AVFilterLink *link;
+            
+            is->audio_filter_src.freq           = avctx->sample_rate;
+            is->audio_filter_src.channels       = avctx->channels;
+            is->audio_filter_src.channel_layout = get_valid_channel_layout(avctx->channel_layout, avctx->channels);
+            is->audio_filter_src.fmt            = avctx->sample_fmt;
+            if ((ret = configure_audio_filters(is, afilters, 0)) < 0)
+                goto fail;
+            link = is->out_audio_filter->inputs[0];
+            sample_rate    = link->sample_rate;
+            nb_channels    = avfilter_link_get_channels(link);
+            channel_layout = link->channel_layout;
+        }
+#else
+            sample_rate    = avctx->sample_rate;
+            nb_channels    = avctx->channels;
+            channel_layout = avctx->channel_layout;
+#endif
+            
+            /* prepare audio output */
+            if ((ret = audio_open(is, channel_layout, nb_channels, sample_rate, &is->audio_tgt)) < 0)
+                goto fail;
+            is->audio_hw_buf_size = ret;
+            is->audio_src = is->audio_tgt;
+            is->audio_buf_size  = 0;
+            is->audio_buf_index = 0;
+            
+            /* init averaging filter */
+            is->audio_diff_avg_coef  = exp(log(0.01) / AUDIO_DIFF_AVG_NB);
+            is->audio_diff_avg_count = 0;
+            /* since we do not have a precise anough audio FIFO fullness,
+             we correct audio sync only if larger than this threshold */
+            is->audio_diff_threshold = (double)(is->audio_hw_buf_size) / is->audio_tgt.bytes_per_sec;
+            
+            is->audio_stream = stream_index;
+            is->audio_st = ic->streams[stream_index];
+            
+            decoder_init(&is->auddec, avctx, &is->audioq, is->continue_read_thread);
+            if ((is->ic->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) && !is->ic->iformat->read_seek) {
+                is->auddec.start_pts = is->audio_st->start_time;
+                is->auddec.start_pts_tb = is->audio_st->time_base;
+            }
+            if ((ret = decoder_start(&is->auddec, audio_thread, is)) < 0)
+                goto out;
+            SDL_PauseAudio(0);
+#endif
+            break;
+        case AVMEDIA_TYPE_VIDEO:
+        {
+            m_videoStreamIndex = inIndex;
+            m_videoStream = m_formatCtx->streams[inIndex];
+            m_videoCodecCtx = avctx;
+            m_spacingInfo = SpacingInfo(isx::SizeInPixels_t(avctx->width, avctx->height));
+            
+            m_timeBase = Ratio(m_videoStream->time_base.num, m_videoStream->time_base.den);
+            Ratio avDuration = Ratio(m_videoStream->duration, 1);
+            Ratio durationInSeconds = (avDuration * m_timeBase);
+            
+            Ratio frameRate(m_videoStream->avg_frame_rate.num, m_videoStream->avg_frame_rate.den);
+            double numFramesD = (durationInSeconds * frameRate).toDouble();
+            isize_t numFrames = isize_t(std::floor(numFramesD));
+            auto startTime = getStartTime();
+            m_timingInfo = TimingInfo(startTime, frameRate.getInverse(), numFrames);
+            
+            m_videoPtsFrameDelta = m_timingInfo.getStep() * m_timeBase.getInverse();
+            m_videoPtsStartOffset = m_videoStream->start_time;
+        }
+            
+#if 0
+            decoder_init(&is->viddec, avctx, &is->videoq, is->continue_read_thread);
+            if ((ret = decoder_start(&is->viddec, video_thread, is)) < 0)
+                goto out;
+            is->queue_attachments_req = 1;
+#endif
+            break;
+        case AVMEDIA_TYPE_SUBTITLE:
+            ISX_ASSERT(!"Not supported.");
+#if 0
+            is->subtitle_stream = stream_index;
+            is->subtitle_st = ic->streams[stream_index];
+            
+            decoder_init(&is->subdec, avctx, &is->subtitleq, is->continue_read_thread);
+            if ((ret = decoder_start(&is->subdec, subtitle_thread, is)) < 0)
+                goto out;
+#endif
+            break;
+        default:
+            break;
+    }
+    
+    av_dict_free(&opts);
+    
+    return true;
+}
+#endif
