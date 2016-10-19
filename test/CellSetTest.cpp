@@ -304,8 +304,8 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
         const std::string projectFile = g_resources["unitTestDataPath"] + "/project-full-frame.isxp";
         std::remove(projectFile.c_str());
 
-        const isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(40, 31));
-        const isx::TimingInfo timingInfo(isx::Time(), isx::DurationInSeconds(1), 5);
+        const isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(6, 5));
+        const isx::TimingInfo timingInfo(isx::Time(), isx::DurationInSeconds(1), 7);
 
         isx::CellSet cellSet(cellSetFile, timingInfo, spacingInfo);
         isx::SpWritableMovie_t movie = isx::writeMosaicMovie(
@@ -318,11 +318,13 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
                 sizeof(float) * spacingInfo.getNumColumns(),
                 1,
                 isx::DataType::F32);
-        float * imageData = image->getPixelsAsF32();
-        for (isx::isize_t p = 0; p < spacingInfo.getTotalNumPixels(); ++p)
-        {
-            imageData[p] = 1;
-        }
+        float imageData[] = {
+            1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1,
+            1, 1, 0, 1, 1, 1,
+            1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1 };
+        std::memcpy(image->getPixels(), reinterpret_cast<char *>(imageData), image->getImageSizeInBytes());
 
         isx::SpFTrace_t trace = std::make_shared<isx::FTrace_t>(timingInfo);
         float * traceData = trace->getValues();
@@ -334,7 +336,7 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
             float * frameData = frame->getPixelsAsF32();
             for (isx::isize_t p = 0; p < spacingInfo.getTotalNumPixels(); ++p)
             {
-                frameData[p] = 1 * traceData[t];
+                frameData[p] = imageData[p] * traceData[t];
             }
             movie->writeFrame(frame);
         }
