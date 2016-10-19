@@ -105,22 +105,24 @@ TEST_CASE("DataSetToFromJson", "[core]")
     const float propValue = 1.f;
     isx::DataSet::Properties properties;
     properties[propKey] = propValue;
-    isx::DataSet dataSet(dsName, dsType, dsFileName, properties);
 
     const std::string dsNameD = "myMovieD";
     const std::string dsFileNameD = "myMovieD.isxd";
-    isx::DataSet dataSetDerived(dsNameD, dsType, dsFileNameD, properties);
 
     isx::Group group("myGroup");
-    dataSet.setParent(&group);
-    dataSetDerived.setParent(&group);
-
-    const std::string expected = "{\"original\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup\"}}";
-    const std::string derived_expected = "{\"derived\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovieD.isxd\",\"name\":\"myMovieD\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup\"},\"original\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup\"}}";
+    isx::Group * dataSetGroup = group.createGroup(dsName, isx::Group::Type::DATASET);
+    isx::Group * derivedGroup = dataSetGroup->createGroup("derived", isx::Group::Type::DERIVED);
+    isx::Group * derivedDataSetGroup = group.createGroup(dsNameD, isx::Group::Type::DATASET);
+    
+    isx::DataSet * dataSet = dataSetGroup->createDataSet(dsName, dsType, dsFileName, properties);
+    isx::DataSet * derivedDataSet = derivedDataSetGroup->createDataSet(dsNameD, dsType, dsFileNameD, properties);
+    
+    const std::string expected = "{\"original\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup/myMovie\"}}";
+    const std::string derived_expected = "{\"derived\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovieD.isxd\",\"name\":\"myMovieD\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup/myMovieD\"},\"original\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup/myMovie\"}}";
 
     SECTION("ToJson - original only")
     {
-        std::string js = isx::DataSet::toJsonString(&dataSet);
+        std::string js = isx::DataSet::toJsonString(dataSet);
         REQUIRE(js == expected);
     }
     
@@ -142,7 +144,7 @@ TEST_CASE("DataSetToFromJson", "[core]")
 
     SECTION("ToJson - original and derived")
     {
-        std::string js = isx::DataSet::toJsonString(&dataSet, &dataSetDerived);
+        std::string js = isx::DataSet::toJsonString(dataSet, derivedDataSet);
         REQUIRE(js == derived_expected);
     }
     
@@ -155,7 +157,7 @@ TEST_CASE("DataSetToFromJson", "[core]")
         const isx::DataSet::Properties & props = ds.getProperties();
         
         // Original
-        REQUIRE(path == "myGroup");
+        REQUIRE(path == "myGroup/myMovie");
         REQUIRE(ds.getName() == dsName);
         REQUIRE(ds.getType() == dsType);
         REQUIRE(ds.getFileName() == dsFileName);
