@@ -2,7 +2,112 @@
 #include "catch.hpp"
 #include "isxTest.h"
 
-TEST_CASE("PathUtils-getRelativePath", "[core-internal]")
+TEST_CASE("PathUtils-getBaseName", "[core]")
+{
+
+    SECTION("File name with extension")
+    {
+        REQUIRE(isx::getBaseName("movie.isxd") == "movie");
+    }
+
+    SECTION("File name without extension")
+    {
+        REQUIRE(isx::getBaseName("outputs") == "outputs");
+    }
+
+    SECTION("File name with directory name and extension.")
+    {
+        REQUIRE(isx::getBaseName("outputs/movie.isxd") == "movie");
+    }
+
+    SECTION("File name with directory and without extension.")
+    {
+        REQUIRE(isx::getBaseName("outputs/day1") == "day1");
+    }
+
+}
+
+TEST_CASE("PathUtils-getFileName", "[core]")
+{
+
+    SECTION("File name with extension")
+    {
+        REQUIRE(isx::getFileName("movie.isxd") == "movie.isxd");
+    }
+
+    SECTION("File name without extension")
+    {
+        REQUIRE(isx::getFileName("outputs") == "outputs");
+    }
+
+    SECTION("File name with directory name and extension.")
+    {
+        REQUIRE(isx::getFileName("outputs/movie.isxd") == "movie.isxd");
+    }
+
+    SECTION("File name with directory and without extension.")
+    {
+        REQUIRE(isx::getFileName("outputs/day1") == "day1");
+    }
+    
+}
+
+TEST_CASE("PathUtils-getDirName", "[core]")
+{
+
+    SECTION("File name with extension")
+    {
+        REQUIRE(isx::getDirName("movie.isxd") == ".");
+    }
+
+    SECTION("File name without extension")
+    {
+        REQUIRE(isx::getDirName("outputs") == ".");
+    }
+
+    SECTION("File name with directory name and extension")
+    {
+        REQUIRE(isx::getDirName("outputs/movie.isxd") == "outputs");
+    }
+
+    SECTION("File name with directory and without extension")
+    {
+        REQUIRE(isx::getDirName("outputs/day1") == "outputs");
+    }
+    
+}
+
+TEST_CASE("PathUtils-getExtension", "[core]")
+{
+
+    SECTION("File name with extension")
+    {
+        REQUIRE(isx::getExtension("movie.isxd") == "isxd");
+    }
+
+    SECTION("File name with extension with two periods")
+    {
+        REQUIRE(isx::getExtension("movie.isxd.gz") == "isxd.gz");
+    }
+
+    SECTION("File name without extension")
+    {
+        REQUIRE(isx::getExtension("outputs") == "");
+    }
+
+    SECTION("File name with directory name and extension.")
+    {
+        REQUIRE(isx::getExtension("outputs/movie.isxd") == "isxd");
+    }
+
+    SECTION("File name with directory and without extension.")
+    {
+        REQUIRE(isx::getExtension("outputs/day1") == "");
+    }
+    
+}
+
+TEST_CASE("PathUtils-getRelativePath", "[core]")
 {
 
 #if ISX_OS_WIN32
