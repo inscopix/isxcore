@@ -95,34 +95,9 @@ private:
     bool
     isPtsMatch(int64_t inTargetPts, int64_t inTestPts) const;
 
-    /// \return     The size of a pixel value in bytes.
-    ///
-    isize_t
-    getPixelSizeInBytes() const;
-
-    /// \return     The size of a row in bytes.
-    ///
-    isize_t
-    getRowSizeInBytes() const;
-
-    /// \return     The size of a frame in bytes.
-    ///
-    isize_t
-    getFrameSizeInBytes() const;
-
     /// \return     Start time used in timing info.
     /// This is a hack needed until we have a way of requesting the user to define a start time on file import
     Time getStartTime() const;
-
-    /// Seek to the location of a frame for reading.
-    ///
-    /// \param  inFile          The input file stream whose input position
-    ///                         will be modified to be at the given frame number.
-    /// \param  inFrameNumber   The number of the frame to which to seek.
-    void
-    seekForReadFrame(
-        std::ifstream & inFile,
-        isize_t inFrameNumber);
 
     /// True if the movie file is valid, false otherwise.
     bool m_valid = false;
@@ -138,7 +113,6 @@ private:
 
     /// The data type of the pixel values.
     DataType m_dataType = DataType::U8;
-    
     
     // ffmpeg
     AVFormatContext *           m_formatCtx = nullptr;
