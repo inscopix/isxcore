@@ -115,9 +115,8 @@ TEST_CASE("DataSetToFromJson", "[core]")
     dataSet.setParent(&group);
     dataSetDerived.setParent(&group);
 
-    const std::string expected = "{\"original\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup/myMovie\"}}";
-    const std::string derived_expected = "{\"derived\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovieD.isxd\",\"name\":\"myMovieD\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup/myMovieD\"},\
-\"original\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup/myMovie\"}}";
+    const std::string expected = "{\"original\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup\"}}";
+    const std::string derived_expected = "{\"derived\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovieD.isxd\",\"name\":\"myMovieD\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup\"},\"original\":{\"dataset\":{\"dataSetType\":0,\"fileName\":\"myMovie.isxd\",\"name\":\"myMovie\",\"properties\":{\"test\":1},\"type\":\"DataSet\"},\"path\":\"myGroup\"}}";
 
     SECTION("ToJson - original only")
     {
@@ -156,7 +155,7 @@ TEST_CASE("DataSetToFromJson", "[core]")
         const isx::DataSet::Properties & props = ds.getProperties();
         
         // Original
-        REQUIRE(path == "myGroup/myMovie");
+        REQUIRE(path == "myGroup");
         REQUIRE(ds.getName() == dsName);
         REQUIRE(ds.getType() == dsType);
         REQUIRE(ds.getFileName() == dsFileName);
