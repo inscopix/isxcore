@@ -128,10 +128,9 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
     }
     else if (std::abs(deltaFromExpected) > int64_t(m_videoPtsFrameDelta.toDouble() + 0.5f))
     {
-//        ISX_ASSERT(inFrameNumber != m_lastVideoFrameNumber + 1);
         if (inFrameNumber == m_lastVideoFrameNumber + 1)
         {
-            ISX_LOG_INFO("Last frame had timestamp for this frame, repeating it.");
+            ISX_BEHAV_READ_LOG_DEBUG("Last frame had timestamp for this frame, repeating it.");
         }
         
         
