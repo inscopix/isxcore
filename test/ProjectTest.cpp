@@ -40,7 +40,7 @@ TEST_CASE("ProjectTest", "[core]")
             outStream << "testing";
         }
 
-        std::cout << "EXPECTED EXCEPTION -- " << std::endl;
+        ISX_EXPECT_EXCEPTION();
         try
         {
             isx::Project project(projectFileName, projectName);
