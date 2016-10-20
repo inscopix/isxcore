@@ -2,6 +2,8 @@
 #include "catch.hpp"
 #include "isxTest.h"
 #include "isxException.h"
+#include "isxMovieFactory.h"
+#include "isxProject.h"
 #include <cstring>
 
 namespace
@@ -284,4 +286,80 @@ TEST_CASE("CellSetTest", "[core]")
 
     isx::CoreShutdown();
 
+}
+
+TEST_CASE("CellSetSynth", "[data][!hide]")
+{
+
+    isx::CoreInitialize();
+
+    SECTION("Test with completely filled frame")
+    {
+        const std::string cellSetFile = g_resources["unitTestDataPath"] + "/cellset-full-frame.isxd";
+        std::remove(cellSetFile.c_str());
+
+        const std::string movieFile = g_resources["unitTestDataPath"] + "/movie-full-frame.isxd";
+        std::remove(movieFile.c_str());
+
+        const std::string projectFile = g_resources["unitTestDataPath"] + "/project-full-frame.isxp";
+        std::remove(projectFile.c_str());
+
+        const isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(6, 5));
+        const isx::TimingInfo timingInfo(isx::Time(), isx::DurationInSeconds(1), 7);
+
+        isx::CellSet cellSet(cellSetFile, timingInfo, spacingInfo);
+        isx::SpWritableMovie_t movie = isx::writeMosaicMovie(
+                movieFile,
+                timingInfo,
+                spacingInfo,
+                isx::DataType::F32);
+        isx::SpImage_t image = std::make_shared<isx::Image>(
+                spacingInfo,
+                sizeof(float) * spacingInfo.getNumColumns(),
+                1,
+                isx::DataType::F32);
+        float imageData[] = {
+            1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1,
+            1, 1, 0, 1, 1, 1,
+            1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1 };
+        std::memcpy(image->getPixels(), reinterpret_cast<char *>(imageData), image->getImageSizeInBytes());
+
+        isx::SpFTrace_t trace = std::make_shared<isx::FTrace_t>(timingInfo);
+        float * traceData = trace->getValues();
+        for (isx::isize_t t = 0; t < timingInfo.getNumTimes(); ++t)
+        {
+            traceData[t] = float(t % 2);
+
+            isx::SpVideoFrame_t frame = movie->makeVideoFrame(t);
+            float * frameData = frame->getPixelsAsF32();
+            for (isx::isize_t p = 0; p < spacingInfo.getTotalNumPixels(); ++p)
+            {
+                frameData[p] = imageData[p] * traceData[t];
+            }
+            movie->writeFrame(frame);
+        }
+
+        cellSet.writeImageAndTrace(0, image, trace);
+
+        isx::Project project(projectFile, "Full Frame");
+        project.importDataSet(
+                "/movie-full-frame",
+                isx::DataSet::Type::MOVIE,
+                movieFile,
+                {
+                  {isx::DataSet::PROP_DATA_MIN, 0.f},
+                  {isx::DataSet::PROP_DATA_MAX, 1.f},
+                  {isx::DataSet::PROP_VIS_MIN, 0.f},
+                  {isx::DataSet::PROP_VIS_MAX, 1.f}
+                });
+        project.createDataSet(
+                "/movie-full-frame/derived/cellset-full-frame",
+                isx::DataSet::Type::CELLSET,
+                cellSetFile);
+        project.save();
+    }
+
+    isx::CoreShutdown();
 }
