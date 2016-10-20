@@ -3,6 +3,8 @@
 #include "isxTest.h"
 #include "isxException.h"
 #include "isxPathUtils.h"
+#include "isxMovieFactory.h"
+#include "isxCellSet.h"
 
 #include <fstream>
 
@@ -210,7 +212,7 @@ TEST_CASE("ProjectModificationTest", "[core]")
 
 }
 
-TEST_CASE("ProjectSynth", "[core][!hide]")
+TEST_CASE("ProjectSynth", "[data][!hide]")
 {
 
     SECTION("Create a synthetic project with a group of movies")
@@ -249,6 +251,66 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
                 "/Day_1/datasetC2FN-m/derived/PCA-ICA",
                 isx::DataSet::Type::CELLSET,
                 g_resources["unitTestDataPath"] + "/datasetC2FN-c.isxd");
+
+        project.save();
+    }
+
+    SECTION("Create a synthetic project for the sfn 2016 demo")
+    {
+        const std::string dataDir = g_resources["realTestDataPath"] + "/prism_probe_P39";
+        const std::string procDataDir = dataDir + "/proc";
+        const std::string fileName = dataDir + "/project-sfn_demo.isxp";
+        std::remove(fileName.c_str());
+
+        std::map<std::string, std::vector<std::string>> groups;
+        groups["/Day_4"] = {
+            "recording_20150802_115907",
+            "recording_20150802_120607",
+            "recording_20150802_121307",
+            "recording_20150802_122007"
+        };
+        groups["/Day_5"] = {
+            "recording_20150803_120121",
+            "recording_20150803_120821",
+            "recording_20150803_121521",
+            "recording_20150803_122221"
+        };
+
+        isx::Project project(fileName, "SfN 2016 Demo Project");
+
+        for (auto groupIt = groups.begin(); groupIt != groups.end(); ++groupIt)
+        {
+            const std::string groupPath = groupIt->first;
+            project.createGroup(groupPath);
+            const auto names = groupIt->second;
+            for (auto nameIt = names.begin(); nameIt != names.end(); ++nameIt)
+            {
+                const std::string movieName = *nameIt + "-mc";
+                const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
+                const std::string moviePath = groupPath + "/" + movieName;
+                const std::string cellSetFile = procDataDir + "/" + *nameIt + "-pca_ica.isxd";
+                project.createDataSet(
+                        moviePath,
+                        isx::DataSet::Type::MOVIE,
+                        movieFile,
+                        {
+                          {isx::DataSet::PROP_DATA_MIN, 0.f},
+                          {isx::DataSet::PROP_DATA_MAX, 4095.f},
+                          {isx::DataSet::PROP_VIS_MIN, 0.f},
+                          {isx::DataSet::PROP_VIS_MAX, 1.f}
+                        });
+                project.createDataSet(
+                        moviePath + "/derived/PCA-ICA",
+                        isx::DataSet::Type::CELLSET,
+                        cellSetFile);
+
+                // NOTE sweet : also check that timing/spacing info is consistent
+                isx::SpMovie_t movie = isx::readMovie(movieFile);
+                auto cellSet = std::make_shared<isx::CellSet>(cellSetFile);
+                REQUIRE(movie->getTimingInfo() == cellSet->getTimingInfo());
+                REQUIRE(movie->getSpacingInfo() == cellSet->getSpacingInfo());
+            }
+        }
 
         project.save();
     }
