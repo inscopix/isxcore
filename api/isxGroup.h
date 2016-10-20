@@ -154,6 +154,11 @@ public:
     ///                                 given name in this group.
     DataSet * getDataSet(const std::string & inName) const;
 
+    /// \return     The data set that a data set group contains or nullptr if
+    ///             this group is not a data set group.
+    isx::DataSet *
+    getDataSetFromGroup() const;
+
     /// Removes a data set from this group.
     ///
     /// Before removing the group, this sets the parent of the input group
