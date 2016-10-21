@@ -235,9 +235,9 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
                 });
 
         project.importDataSet(
-                groupPath + "/datasetC2FN-m",
+                groupPath + "/synth_movie-3cells",
                 isx::DataSet::Type::MOVIE,
-                g_resources["unitTestDataPath"] + "/datasetC2FN-m.isxd",
+                g_resources["unitTestDataPath"] + "/synth_movie-3cells.isxd",
                 {
                     {isx::DataSet::PROP_DATA_MIN, 0.f},
                     {isx::DataSet::PROP_DATA_MAX, 4095.f},
@@ -246,9 +246,9 @@ TEST_CASE("ProjectSynth", "[core][!hide]")
                 });
 
         project.createDataSet(
-                "/Day_1/datasetC2FN-m/derived/PCA-ICA",
+                "/Day_1/synth_movie-3cells/derived/PCA-ICA",
                 isx::DataSet::Type::CELLSET,
-                g_resources["unitTestDataPath"] + "/datasetC2FN-c.isxd");
+                g_resources["unitTestDataPath"] + "/synth_trace-3cells.isxd");
 
         project.save();
     }
