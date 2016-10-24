@@ -14,8 +14,8 @@ namespace isx
 /// For example:
 /// - "movie.isxd" -> "movie"
 /// - "outputs" -> "outputs"
-/// - "outputs/movie.isxd" -> "outputs/movie"
-/// - "outputs/day1" -> "outputs/day1"
+/// - "outputs/movie.isxd" -> "movie"
+/// - "outputs/day1" -> "day1"
 ///
 /// \param  inPath  The path from which to get the base name.
 /// \return         The base name of the path.
@@ -32,7 +32,7 @@ std::string getBaseName(const std::string & inPath);
 /// - "movie.isxd" -> "movie.isxd"
 /// - "outputs" -> "outputs"
 /// - "outputs/movie.isxd" -> "movie.isxd"
-/// - "outputs/day1" -> "outputs/day1"
+/// - "outputs/day1" -> "day1"
 ///
 /// \param  inPath  The path from which to get the file name.
 /// \return         The file name of the path.
@@ -41,8 +41,8 @@ std::string getFileName(const std::string & inPath);
 /// Get the directory name of a path.
 ///
 /// For example:
-/// - "movie.isxd" -> ""
-/// - "outputs" -> ""
+/// - "movie.isxd" -> "." (to signify the current directory)
+/// - "outputs" -> "." (to signify the current directory)
 /// - "outputs/movie.isxd" -> "outputs"
 /// - "outputs/day1" -> "outputs"
 ///
@@ -53,10 +53,10 @@ std::string getDirName(const std::string & inPath);
 /// Get the extension of a path.
 ///
 /// For example:
-/// - "movie.isxd" -> ""
+/// - "movie.isxd" -> "isxd"
 /// - "movie.isxd.gz" -> "isxd.gz"
 /// - "outputs" -> ""
-/// - "outputs/movie.isxd" -> "outputs"
+/// - "outputs/movie.isxd" -> "isxd"
 /// - "outputs/day1" -> ""
 ///
 /// \param  inPath  The path from which to get the extension.
