@@ -201,11 +201,11 @@ std::string
 DataSet::toJsonString(const DataSet * inOriginal, const DataSet * inDerived)
 {
     json j;
-    j["original"]["path"] = inOriginal->getPath();
+    j["original"]["path"] = inOriginal->getParent()->getPath();
     j["original"]["dataset"] = convertDataSetToJson(inOriginal);
     if(inDerived)
     {
-        j["derived"]["path"] = inDerived->getPath();
+        j["derived"]["path"] = inDerived->getParent()->getPath();
         j["derived"]["dataset"] = convertDataSetToJson(inDerived);
     }
     return j.dump();

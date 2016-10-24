@@ -210,6 +210,21 @@ Group::getDataSet(const std::string & inName) const
     ISX_THROW(isx::ExceptionDataIO, "Could not find data set with name: ", inName);
 }
 
+isx::DataSet *
+Group::getDataSetFromGroup() const
+{
+    if (getType() != isx::Group::Type::DATASET)
+    {
+        return nullptr;
+    }
+    const std::string dsName = getName();
+    if (isDataSet(dsName))
+    {
+        return getDataSet(dsName);
+    }
+    return nullptr;
+}
+    
 void
 Group::removeDataSet(const std::string & inName)
 {
