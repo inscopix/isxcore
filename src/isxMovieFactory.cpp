@@ -1,6 +1,7 @@
 #include "isxMovieFactory.h"
 #include "isxMosaicMovie.h"
 #include "isxNVistaHdf5Movie.h"
+#include "isxBehavMovie.h"
 #include "isxRecording.h"
 #include "isxPathUtils.h"
 
@@ -31,6 +32,10 @@ readMovie(const std::string & inFileName)
     {
         return readNVistaHdf5Movie(inFileName);
     }
+    else if ((extension == "mpg") || (extension == "mp4"))
+    {
+        return readBehavioralMovie(inFileName);
+    }
     else
     {
         ISX_THROW(isx::ExceptionDataIO,
@@ -50,6 +55,13 @@ readNVistaHdf5Movie(const std::string & inFileName)
 {
     SpRecording_t recording = std::make_shared<Recording>(inFileName);
     SpMovie_t movie = recording->getMovie();
+    return movie;
+}
+    
+SpMovie_t
+readBehavioralMovie(const std::string & inFileName)
+{
+    SpMovie_t movie = std::make_shared<BehavMovie>(inFileName);
     return movie;
 }
 
