@@ -62,6 +62,15 @@ SpMovie_t readMosaicMovie(const std::string & inFileName);
 /// \throw  isx::ExceptionDataIO    If parsing the movie file failed.
 SpMovie_t readNVistaHdf5Movie(const std::string & inFileName);
 
+/// Read an behavioral movie from a file.
+///
+/// \param  inFileName      The name of the behavioral movie file to read.
+/// \return                 The imported movie.
+///
+/// \throw  isx::ExceptionFileIO    If the movie file cannot be read.
+/// \throw  isx::ExceptionDataIO    If parsing the movie file failed.
+SpMovie_t readBehavioralMovie(const std::string & inFileName);
+
 } // namespace isx
 
 #endif // ifndef ISX_MOVIE_FACTORY_H
