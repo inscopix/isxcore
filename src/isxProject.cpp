@@ -156,35 +156,6 @@ Project::isModified() const
     return m_root->isModified();
 }
 
-bool
-Project::isGroup(const std::string & inPath) const
-{
-    const std::vector<std::string> pathTokens = getPathTokens(inPath);
-    const size_t numTokens = pathTokens.size();
-    if (numTokens == 0)
-    {
-        return false;
-    }
-    if (numTokens == 1)
-    {
-        return pathTokens[0] == "/";
-    }
-    bool exists = true;
-    Group * group = getGroup(pathTokens[0]);
-    for (size_t i = 0; exists && i < (numTokens - 1); ++i)
-    {
-        if (group->isGroup(pathTokens[i + 1]))
-        {
-            group = group->getGroup(pathTokens[i + 1]);
-        }
-        else
-        {
-            exists = false;
-        }
-    }
-    return exists;
-}
-
 void
 Project::read()
 {

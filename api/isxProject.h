@@ -166,10 +166,6 @@ public:
     ///
     bool isModified() const;
 
-    /// \return True if the given path represents a Group.
-    ///
-    bool isGroup(const std::string & inPath) const;
-
 private:
 
     /// True if the project is valid, false otherwise.
