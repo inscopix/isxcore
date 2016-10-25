@@ -3,11 +3,8 @@
 
 #include "isxWritableMovie.h"
 #include "isxMosaicMovieFile.h"
-#include "isxAsyncTaskHandle.h"
-#include "isxMutex.h"
 
 #include <memory>
-#include <map>
 
 namespace isx
 {
