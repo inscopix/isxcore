@@ -45,6 +45,8 @@ TEST_CASE("GroupTest", "[core]")
     {
         isx::Group group("myGroup");
         group.createGroup("mySubGroup");
+
+        ISX_EXPECT_EXCEPTION();
         try
         {
             group.createGroup("mySubGroup");
@@ -81,6 +83,8 @@ TEST_CASE("GroupTest", "[core]")
 
         REQUIRE(group.getGroups().size() == 1);
         REQUIRE(group.getGroup("mySubGroup2") == subGroup2);
+
+        ISX_EXPECT_EXCEPTION();
         try
         {
             group.getGroup("mySubGroup1");
@@ -109,6 +113,8 @@ TEST_CASE("GroupTest", "[core]")
     {
         isx::Group group("myGroup");
         group.createDataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
+
+        ISX_EXPECT_EXCEPTION();
         try
         {
             group.createDataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
@@ -129,6 +135,8 @@ TEST_CASE("GroupTest", "[core]")
     {
         isx::Group group("myGroup");
         group.createDataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie.isxd");
+
+        ISX_EXPECT_EXCEPTION();
         try
         {
             group.createDataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie.isxd");
@@ -167,6 +175,8 @@ TEST_CASE("GroupTest", "[core]")
 
         REQUIRE(group.getDataSets().size() == 1);
         REQUIRE(group.getDataSet("myDataSet2") == dataSet2);
+
+        ISX_EXPECT_EXCEPTION();
         try
         {
             group.getGroup("myDataSet1");

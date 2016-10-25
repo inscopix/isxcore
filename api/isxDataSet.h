@@ -33,6 +33,7 @@ public:
     {
         MOVIE = 0,
         CELLSET,
+        BEHAVIOR
     };
 
     // Property names as used in the property map
