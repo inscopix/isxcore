@@ -173,6 +173,36 @@ TEST_CASE("ProjectTest", "[core]")
 
 }
 
+TEST_CASE("Project-isGroup", "[core]")
+{
+    std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
+    std::remove(projectFileName.c_str());
+
+    std::string projectName = "myProject";
+
+    SECTION("Empty project")
+    {
+        isx::Project project(projectFileName, projectName);
+        REQUIRE(project.isGroup("/"));
+    }
+
+    SECTION("Project with one group")
+    {
+        isx::Project project(projectFileName, projectName);
+        project.createGroup("/Day_1");
+        REQUIRE(project.isGroup("/Day_1"));
+    }
+
+    SECTION("Project with one sub-group")
+    {
+        isx::Project project(projectFileName, projectName);
+        project.createGroup("/Animal_1");
+        REQUIRE(project.isGroup("/Animal_1"));
+        project.createGroup("/Animal_1/Day_1");
+        REQUIRE(project.isGroup("/Animal_1/Day_1"));
+    }
+}
+
 TEST_CASE("ProjectModificationTest", "[core]")
 {
     std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
