@@ -368,8 +368,8 @@ TEST_CASE("ProjectSynth", "[data][!hide]")
                                       isx::DataSet::Type::MOVIE,
                                       movieFile,
                                       {
-                                          {isx::DataSet::PROP_DATA_MIN, 0.f},
-                                          {isx::DataSet::PROP_DATA_MAX, 4095.f},
+                                          {isx::DataSet::PROP_DATA_MIN, -0.3f},
+                                          {isx::DataSet::PROP_DATA_MAX, 0.5f},
                                           {isx::DataSet::PROP_VIS_MIN, 0.f},
                                           {isx::DataSet::PROP_VIS_MAX, 1.f}
                                       });
