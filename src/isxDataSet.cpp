@@ -220,6 +220,7 @@ DataSet::fromJsonString(const std::string & inDataSetJson, std::string & outPath
     UpGroup_t bogus(new Group{""});
     createDataSetFromJson(bogus.get(), j["original"]["dataset"]);
     outOriginal = **(bogus->getDataSets().begin());
+    outDerived = DataSet();
     
     isize_t derived_present = j.count("derived");
     if(derived_present)
