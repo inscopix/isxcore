@@ -308,7 +308,7 @@ TEST_CASE("ProjectSynth", "[data][!hide]")
             "recording_20150803_122221"
         };
 
-        isx::Project project(fileName, "SfN 2016 Demo Project");
+        isx::Project project(fileName, "SfN 2016 Demo (MC)");
 
         for (auto groupIt = groups.begin(); groupIt != groups.end(); ++groupIt)
         {
@@ -380,7 +380,7 @@ TEST_CASE("ProjectSynth", "[data][!hide]")
             "recording_20150803_122221"
         };
         
-        isx::Project project(fileName, "SfN 2016 Demo Project");
+        isx::Project project(fileName, "SfN 2016 Demo (DFF)");
         
         for (auto groupIt = groups.begin(); groupIt != groups.end(); ++groupIt)
         {
