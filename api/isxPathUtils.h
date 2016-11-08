@@ -100,7 +100,7 @@ std::string getRelativePath(
 /// \return             The absolute version of the given path.
 std::string getAbsolutePath(const std::string & inPath);
 
-/// Check if a patch exists on the file system.
+/// Check if a path exists on the file system.
 ///
 /// \param  inPath      The path to check for existence.
 /// \return             True if the path exists on the file system.
