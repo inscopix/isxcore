@@ -2,8 +2,11 @@
 #include "isxMosaicMovie.h"
 #include "isxNVistaHdf5Movie.h"
 #include "isxBehavMovie.h"
+#include "isxMovieSeries.h"
+#include "isxGaplessMovieSeries.h"
 #include "isxRecording.h"
 #include "isxPathUtils.h"
+
 
 namespace isx
 {
@@ -41,6 +44,12 @@ readMovie(const std::string & inFileName)
         ISX_THROW(isx::ExceptionDataIO,
                 "Movie extension not recognized: ", extension);
     }
+}
+    
+SpMovie_t
+readMovieSeries(const std::vector<std::string> & inFileNames)
+{
+    return std::make_shared<MovieSeries>(inFileNames);
 }
 
 SpMovie_t

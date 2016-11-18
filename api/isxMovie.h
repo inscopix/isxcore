@@ -13,6 +13,8 @@ namespace isx
 
 /// The type of callback for getting a frame asynchronously
 typedef std::function<void(const SpVideoFrame_t & inVideoFrame)> MovieGetFrameCB_t;
+typedef std::function<SpVideoFrame_t()> GetFrameCB_t;
+
 
 /// Interface for Movies
 ///
@@ -59,6 +61,14 @@ public:
     virtual
     const isx::TimingInfo &
     getTimingInfo() const = 0;
+
+    /// \return     The TimingInfos_t of a MovieSeries.
+    ///             For a regular movie this will contain one TimingInfo object
+    ///             matching getTimingInfo.
+    ///
+    virtual
+    const isx::TimingInfos_t &
+    getTimingInfosForSeries() const = 0;
 
     /// \return     The spacing information of the movie.
     ///

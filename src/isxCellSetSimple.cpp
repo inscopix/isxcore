@@ -1,0 +1,217 @@
+#include "isxCellSetSimple.h"
+#include "isxCellSetFile.h"
+#include "isxConditionVariable.h"
+#include "isxIoTask.h"
+#include "isxIoTaskTracker.h"
+
+namespace isx
+{
+
+CellSetSimple::CellSetSimple()
+{
+}
+
+CellSetSimple::CellSetSimple(const std::string & inFileName)
+    : m_valid(false)
+    , m_ioTaskTracker(new IoTaskTracker())
+{
+    m_file = std::make_shared<CellSetFile>(inFileName);
+    m_valid = true;
+}
+
+CellSetSimple::CellSetSimple(
+        const std::string & inFileName,
+        const TimingInfo & inTimingInfo,
+        const SpacingInfo & inSpacingInfo)
+    : m_valid(false)
+    , m_ioTaskTracker(new IoTaskTracker())
+{
+    m_file = std::make_shared<CellSetFile>(inFileName, inTimingInfo, inSpacingInfo);
+    m_valid = true;
+}
+
+CellSetSimple::~CellSetSimple()
+{
+}
+
+bool
+CellSetSimple::isValid() const
+{
+    return m_valid;
+}
+
+std::string
+CellSetSimple::getFileName() const
+{
+    return m_file->getFileName();
+}
+
+const isize_t
+CellSetSimple::getNumCells()
+{
+    return m_file->numberOfCells();
+}
+
+isx::TimingInfo
+CellSetSimple::getTimingInfo() const
+{
+    return m_file->getTimingInfo();
+}
+
+isx::TimingInfos_t 
+CellSetSimple::getTimingInfosForSeries() const
+{
+    TimingInfos_t tis = TimingInfos_t{m_file->getTimingInfo()};
+    return tis;
+}
+
+isx::SpacingInfo
+CellSetSimple::getSpacingInfo() const
+{
+    return m_file->getSpacingInfo();
+}
+
+SpFTrace_t
+CellSetSimple::getTrace(isize_t inIndex)
+{
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("getTrace");
+    SpFTrace_t outTrace;
+    getTraceAsync(inIndex,
+        [&outTrace, &cv, &mutex](const SpFTrace_t & inTrace)
+        {
+            mutex.lock("getTrace async");
+            outTrace = inTrace;
+            mutex.unlock();
+            cv.notifyOne();
+        }
+    );
+    cv.wait(mutex);
+    mutex.unlock();
+    return outTrace;
+}
+
+void
+CellSetSimple::getTraceAsync(isize_t inIndex, CellSetGetTraceCB_t inCallback)
+{
+    // Only get a weak pointer to this, so that we don't bother reading
+    // if this has been deleted when the read gets executed.
+    std::weak_ptr<CellSetSimple> weakThis = shared_from_this();
+    GetTraceCB_t getTraceCB = [weakThis, this, inIndex]()
+        {
+            auto sharedThis = weakThis.lock();
+            if (sharedThis)
+            {
+                return m_file->readTrace(inIndex);
+            }
+            return SpFTrace_t();
+        };
+    m_ioTaskTracker->schedule(getTraceCB, inCallback);
+}
+
+SpImage_t
+CellSetSimple::getImage(isize_t inIndex)
+{
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("getImage");
+    SpImage_t outImage;
+    getImageAsync(inIndex,
+        [&outImage, &cv, &mutex](const SpImage_t & inImage)
+        {
+            mutex.lock("getImage async");
+            outImage = inImage;
+            mutex.unlock();
+            cv.notifyOne();
+        }
+    );
+    cv.wait(mutex);
+    mutex.unlock();
+    return outImage;
+}
+
+void
+CellSetSimple::getImageAsync(isize_t inIndex, CellSetGetImageCB_t inCallback)
+{
+    // Only get a weak pointer to this, so that we don't bother reading
+    // if this has been deleted when the read gets executed.
+    std::weak_ptr<CellSetSimple> weakThis = shared_from_this();
+    GetImageCB_t getImageCB = [weakThis, this, inIndex]()
+        {
+            auto sharedThis = weakThis.lock();
+            if (sharedThis)
+            {
+                return m_file->readSegmentationImage(inIndex);
+            }
+            return SpImage_t();
+        };
+    m_ioTaskTracker->schedule(getImageCB, inCallback);
+}
+
+void
+CellSetSimple::writeImageAndTrace(
+        isize_t inIndex,
+        SpImage_t & inImage,
+        SpFTrace_t & inTrace,
+        const std::string & inName)
+{
+    // Get a new shared pointer to the file, so we can guarantee the write.
+    std::shared_ptr<CellSetFile> file = m_file;
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("CellSetSimple::writeImageAndTrace");
+    auto writeIoTask = std::make_shared<IoTask>(
+        [file, inIndex, inImage, inTrace, inName]()
+        {
+            file->writeCellData(inIndex, *inImage, *inTrace, inName);
+        },
+        [&cv, &mutex](AsyncTaskStatus inStatus)
+        {
+            if (inStatus != AsyncTaskStatus::COMPLETE)
+            {
+                ISX_LOG_ERROR("An error occurred while writing image and trace data to a CellSet.");
+            }
+            // will only be able to take lock when client reaches cv.wait
+            mutex.lock("CellSetwriteImageAndTrace finished");
+            mutex.unlock();
+            cv.notifyOne();
+        });
+    writeIoTask->schedule();
+    cv.wait(mutex);
+    mutex.unlock();
+}
+
+bool
+CellSetSimple::isCellValid(isize_t inIndex)
+{
+    return m_file->isCellValid(inIndex);
+}
+
+void
+CellSetSimple::setCellValid(isize_t inIndex, bool inIsValid)
+{
+    m_file->setCellValid(inIndex, inIsValid);
+}
+
+std::string 
+CellSetSimple::getCellName(isize_t inIndex)
+{
+    return m_file->getCellName(inIndex);
+}
+
+void
+CellSetSimple::setCellName(isize_t inIndex, const std::string & inName)
+{
+    m_file->setCellName(inIndex, inName);
+}
+
+void
+CellSetSimple::cancelPendingReads()
+{
+    m_ioTaskTracker->cancelPendingTasks();
+}
+
+
+}
+

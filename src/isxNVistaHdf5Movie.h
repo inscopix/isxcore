@@ -65,6 +65,9 @@ public:
     const isx::TimingInfo &
     getTimingInfo() const override;
 
+    const isx::TimingInfos_t &
+    getTimingInfosForSeries() const override;
+    
     const isx::SpacingInfo &
     getSpacingInfo() const override;
 
@@ -83,7 +86,7 @@ private:
     bool m_valid;
 
     /// The timing information of the movie.
-    TimingInfo m_timingInfo;
+    TimingInfos_t m_timingInfos;
 
     /// The spacing information of the movie.
     SpacingInfo m_spacingInfo;

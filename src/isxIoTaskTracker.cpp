@@ -1,6 +1,10 @@
 #include "isxIoTaskTracker.h"
 #include "isxIoTask.h"
 
+#include "isxVideoFrame.h"
+#include "isxImage.h"
+#include "isxTrace.h"
+
 #include <memory>
 #include <map>
 #include <functional>
@@ -8,8 +12,9 @@
 namespace isx
 {
 
+template <typename T>
 void
-IoTaskTracker::schedule(getFrameCB_t inGetFrame, MovieGetFrameCB_t inCallback)
+IoTaskTracker::schedule(IoFunc_t<T> inGetData, CallerFunc_t<T> inCallback)
 {
     uint64_t readRequestId = 0;
     {
@@ -19,9 +24,9 @@ IoTaskTracker::schedule(getFrameCB_t inGetFrame, MovieGetFrameCB_t inCallback)
 
     std::weak_ptr<IoTaskTracker> weakThis = shared_from_this();
     Task_t asyncTask = 
-        [inGetFrame, inCallback]()
+        [inGetData, inCallback]()
         {
-            inCallback(inGetFrame());
+            inCallback(inGetData());
         };
 
     AsyncFinishedCB_t finishedCB =
@@ -39,7 +44,7 @@ IoTaskTracker::schedule(getFrameCB_t inGetFrame, MovieGetFrameCB_t inCallback)
             if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION
               ||inStatus == AsyncTaskStatus::CANCELLED)
             {
-                inCallback(SpVideoFrame_t());
+                inCallback(std::shared_ptr<T>());
             }
         };
 
@@ -71,5 +76,10 @@ IoTaskTracker::unregisterPendingTask(uint64_t inRequestId)
     m_pendingRequests.erase(inRequestId);
     return ret;
 }
+
+template void IoTaskTracker::schedule(IoFunc_t<Trace<float>>, CallerFunc_t<Trace<float>>);
+template void IoTaskTracker::schedule(IoFunc_t<Image>, CallerFunc_t<Image>);
+template void IoTaskTracker::schedule(IoFunc_t<VideoFrame>, CallerFunc_t<VideoFrame>);
+
 
 } // namespace isx

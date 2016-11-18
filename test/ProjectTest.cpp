@@ -82,7 +82,7 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(dataSet->getPath() == "/myDataSet/myDataSet");
         REQUIRE(dataSet->getFileName() == isx::getAbsolutePath(movieFileName));
-        REQUIRE(project.getDataSet("/myDataSet/myDataSet") == dataSet);
+        REQUIRE(project.getDataSet("/myDataSet") == dataSet);
     }
 
     SECTION("Import a movie data set in a project")
@@ -93,8 +93,8 @@ TEST_CASE("ProjectTest", "[core]")
         isx::DataSet * dataSet = project.createDataSet("/myDataSet",
                 isx::DataSet::Type::MOVIE, movieFileName);
 
-        REQUIRE(project.getDataSet("OriginalData/myDataSet/myDataSet") == dataSet);
-        REQUIRE(project.getDataSet("/myDataSet/myDataSet") == dataSet);
+        REQUIRE(project.getDataSet("OriginalData/myDataSet") == dataSet);
+        REQUIRE(project.getDataSet("/myDataSet") == dataSet);
     }
 
     SECTION("Open an existing project after adding a group.")
@@ -119,15 +119,12 @@ TEST_CASE("ProjectTest", "[core]")
         std::string procMovieName = baseName + "-pp";
         std::string cellSetName = "ics";
 
-        std::string movieGroupPath = "/" + movieName;
-        std::string moviePath = movieGroupPath + "/" + movieName;
+        std::string moviePath = "/" + movieName;
 
-        std::string procMovieGroupPath = "/" + procMovieName;
-        std::string procMoviePath = procMovieGroupPath + "/" + procMovieName;
-        std::string procMovieDerivedPath = procMovieGroupPath + "/derived";
+        std::string procMoviePath = "/" + procMovieName;
+        std::string procMovieDerivedPath = procMoviePath + "/derived";
 
-        std::string cellSetGroupPath = procMovieDerivedPath + "/" + cellSetName;
-        std::string cellSetPath = cellSetGroupPath + "/" + cellSetName;
+        std::string cellSetPath = procMovieDerivedPath + "/" + cellSetName;
 
 #if ISX_OS_WIN32
         std::string rootFileName = "C:/";
@@ -140,9 +137,9 @@ TEST_CASE("ProjectTest", "[core]")
 
         {
             isx::Project project(projectFileName, projectName);
-            project.importDataSet(movieGroupPath, isx::DataSet::Type::MOVIE, movieFileName);
-            project.createDataSet(procMovieGroupPath, isx::DataSet::Type::MOVIE, procMovieFileName);
-            project.createDataSet(cellSetGroupPath, isx::DataSet::Type::CELLSET, cellSetFileName);
+            project.importDataSet(moviePath, isx::DataSet::Type::MOVIE, movieFileName);
+            project.createDataSet(procMoviePath, isx::DataSet::Type::MOVIE, procMovieFileName);
+            project.createDataSet(cellSetPath, isx::DataSet::Type::CELLSET, cellSetFileName);
             project.save();
         }
 

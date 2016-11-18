@@ -13,19 +13,25 @@
 namespace isx
 {
 
+
 /// Utility class used by implementors of the Movie interface to track and possibly cancel IoTasks
 class IoTaskTracker : public std::enable_shared_from_this<IoTaskTracker>
 {
-public:
-    /// alias for getFrame callback to be passed into this frame reader
-    using getFrameCB_t = std::function<SpVideoFrame_t()>;
+public:    
+    /// I/O function to read data from disk (video frame, trace, image)
+    template <typename T> using IoFunc_t = 
+        std::function<std::shared_ptr<T>()>;
 
+    /// Callback used with the output of IoFunc_t as an input
+    template <typename T> using CallerFunc_t = 
+        std::function<void(const std::shared_ptr<T> & inData)>;
+        
     /// issues read frame request asynchronously
-    /// \param inGetFrame getFrame function provided by caller
-    /// \param inCallback callback function to be called with retrieved frame returned by inGetFrame
-    // NOTE aschildan 9/28/2016: this could be made a function template on the two parameters
+    /// \param inGetData function provided by caller
+    /// \param inCallback callback function to be called with retrieved data returned by inGetData
+    template <typename T>
     void 
-    schedule(getFrameCB_t inGetFrame, MovieGetFrameCB_t inCallback);
+    schedule(IoFunc_t<T> inGetData, CallerFunc_t<T> inCallback);
 
     /// cancels all pending tasks
     void 

@@ -55,16 +55,18 @@ void
 BehavMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
     std::weak_ptr<BehavMovie> weakThis = shared_from_this();
-    m_ioTaskTracker->schedule([weakThis, this, inFrameNumber]()
-    {
-        auto sharedThis = weakThis.lock();
-        if (sharedThis)
+    GetFrameCB_t getFrameCB = 
+        [weakThis, this, inFrameNumber]()
         {
-            return m_file->readFrame(inFrameNumber);
-        }
-        return SpVideoFrame_t();
-    },
-    inCallback);
+            auto sharedThis = weakThis.lock();
+            if (sharedThis)
+            {
+                return m_file->readFrame(inFrameNumber);
+            }
+            return SpVideoFrame_t();
+        };
+
+    m_ioTaskTracker->schedule(getFrameCB, inCallback);
 }
     
 void
@@ -77,6 +79,12 @@ const isx::TimingInfo &
 BehavMovie::getTimingInfo() const
 {
     return m_file->getTimingInfo();
+}
+
+const isx::TimingInfos_t &
+BehavMovie::getTimingInfosForSeries() const
+{
+    return m_file->getTimingInfosForSeries();
 }
 
 const isx::SpacingInfo &

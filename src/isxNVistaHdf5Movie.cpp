@@ -79,16 +79,17 @@ void
 NVistaHdf5Movie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
     std::weak_ptr<NVistaHdf5Movie> weakThis = shared_from_this();
-    m_ioTaskTracker->schedule([weakThis, this, inFrameNumber]()
-    {
-        auto sharedThis = weakThis.lock();
-        if (sharedThis)
+    GetFrameCB_t getFrameCB = [weakThis, this, inFrameNumber]()
         {
-            return getFrameInternal(inFrameNumber);
-        }
-        return SpVideoFrame_t();
-    },
-    inCallback);
+            auto sharedThis = weakThis.lock();
+            if (sharedThis)
+            {
+                return getFrameInternal(inFrameNumber);
+            }
+            return SpVideoFrame_t();
+        };
+
+    m_ioTaskTracker->schedule(getFrameCB, inCallback);
 }
 
 void
@@ -100,7 +101,13 @@ NVistaHdf5Movie::cancelPendingReads()
 const isx::TimingInfo &
 NVistaHdf5Movie::getTimingInfo() const
 {
-    return m_timingInfo;
+    return m_timingInfos[0];
+}
+
+const isx::TimingInfos_t &
+NVistaHdf5Movie::getTimingInfosForSeries() const
+{
+    return m_timingInfos;
 }
 
 const isx::SpacingInfo &
@@ -166,7 +173,7 @@ NVistaHdf5Movie::initialize(
 
     if (inTimingInfo.isValid())
     {
-        m_timingInfo = inTimingInfo;
+        m_timingInfos = TimingInfos_t{inTimingInfo};
     }
     else
     {
@@ -192,7 +199,7 @@ NVistaHdf5Movie::initTimingInfo(const std::vector<SpH5File_t> & inHdf5Files)
     if (readTimingInfo(inHdf5Files) == false)
     {
         // If we cannot read the timing info, use default values
-        m_timingInfo = TimingInfo::getDefault(m_cumulativeFrames[m_cumulativeFrames.size() - 1]);         
+        m_timingInfos = TimingInfos_t{TimingInfo::getDefault(m_cumulativeFrames[m_cumulativeFrames.size() - 1])};
     }    
 }
 
@@ -214,7 +221,7 @@ NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber)
         sizeof(uint16_t) * si.getNumColumns(),
         1, // numChannels
         getDataType(),
-        m_timingInfo.convertIndexToStartTime(inFrameNumber),
+        getTimingInfo().convertIndexToStartTime(inFrameNumber),
         inFrameNumber);
 
     isize_t newFrameNumber = inFrameNumber;
@@ -296,7 +303,7 @@ NVistaHdf5Movie::readTimingInfo(std::vector<SpH5File_t> inHdf5Files)
 
         isx::DurationInSeconds step = isx::DurationInSeconds(isize_t(std::round(totalDurationInSecs)), 1000);
         isx::Time start = isx::Time(startTime);
-        m_timingInfo = isx::TimingInfo(start, step, totalNumFrames);
+        m_timingInfos = TimingInfos_t{isx::TimingInfo(start, step, totalNumFrames)};
     }
 
     return bInitializedFromFile;

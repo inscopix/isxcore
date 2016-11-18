@@ -5,6 +5,8 @@
 #include "isxCore.h"
 #include "isxTime.h"
 
+#include <vector>
+
 namespace isx
 {
 
@@ -135,6 +137,9 @@ private:
     bool m_isValid = false;
 
 }; // class
+
+/// type of container for multiple TimingInfo objects for MovieSeries, TraceSeries
+using TimingInfos_t = std::vector<TimingInfo>;
 
 } // namespace
 

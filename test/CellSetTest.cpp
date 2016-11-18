@@ -1,10 +1,12 @@
-#include "isxCellSet.h"
+#include "isxCellSetFactory.h"
+#include "isxCellSetSimple.h"
 #include "catch.hpp"
 #include "isxTest.h"
 #include "isxException.h"
 #include "isxMovieFactory.h"
 #include "isxProject.h"
 #include <cstring>
+#include <atomic>
 
 namespace
 {
@@ -88,6 +90,7 @@ requireEqualImages(
 TEST_CASE("CellSetTest", "[core]")
 {
     std::string fileName = g_resources["unitTestDataPath"] + "/cellset.isxd";
+    std::remove(fileName.c_str());
 
     isx::Time start;
     isx::DurationInSeconds step(50, 1000);
@@ -118,18 +121,19 @@ TEST_CASE("CellSetTest", "[core]")
         val += 0.01f;
     }
 
+
     isx::CoreInitialize();
 
     SECTION("Empty constructor")
     {
-        isx::CellSet cellSet;
+        isx::CellSetSimple cellSet;
 
         REQUIRE(!cellSet.isValid());
     }
 
     SECTION("Write constructor")
     {
-        isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
+        isx::SpCellSet_t cellSet = isx::writeCellSet(
                 fileName, timingInfo, spacingInfo);
 
         REQUIRE(cellSet->isValid());
@@ -142,10 +146,10 @@ TEST_CASE("CellSetTest", "[core]")
     SECTION("Read constructor")
     {
         {
-            isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
+            isx::SpCellSet_t cellSet = isx::writeCellSet(
                     fileName, timingInfo, spacingInfo);
         }
-        isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(fileName);
+        isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
 
         REQUIRE(cellSet->isValid());
         REQUIRE(cellSet->getFileName() == fileName);
@@ -156,7 +160,7 @@ TEST_CASE("CellSetTest", "[core]")
 
     SECTION("Set data for one cell and check values are correct")
     {
-        isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
+        isx::SpCellSet_t cellSet = isx::writeCellSet(
                 fileName, timingInfo, spacingInfo);
         cellSet->writeImageAndTrace(0, originalImage, originalTrace);
 
@@ -169,11 +173,11 @@ TEST_CASE("CellSetTest", "[core]")
     SECTION("Set data for one cell and check read values are correct")
     {
         {
-            isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
+            isx::SpCellSet_t cellSet = isx::writeCellSet(
                     fileName, timingInfo, spacingInfo);
             cellSet->writeImageAndTrace(0, originalImage, originalTrace, "mycell");
         }
-        isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(fileName);
+        isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
 
         REQUIRE(cellSet->getNumCells() == 1);
         REQUIRE(cellSet->isCellValid(0) == true);
@@ -183,7 +187,7 @@ TEST_CASE("CellSetTest", "[core]")
     }
     SECTION("Set/Get cell name")
     {
-        isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
+        isx::SpCellSet_t cellSet = isx::writeCellSet(
                     fileName, timingInfo, spacingInfo);
         cellSet->writeImageAndTrace(0, originalImage, originalTrace);
         REQUIRE(cellSet->getNumCells() == 1);
@@ -197,7 +201,7 @@ TEST_CASE("CellSetTest", "[core]")
 
     SECTION("Set data for 3 cells and check values are correct")
     {
-        isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
+        isx::SpCellSet_t cellSet = isx::writeCellSet(
                 fileName, timingInfo, spacingInfo);
         for (size_t i = 0; i < 3; ++i)
         {
@@ -222,7 +226,7 @@ TEST_CASE("CellSetTest", "[core]")
     SECTION("Set data for 3 cells and check read values are correct")
     {
         {
-            isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
+            isx::SpCellSet_t cellSet = isx::writeCellSet(
                     fileName, timingInfo, spacingInfo);
             for (size_t i = 0; i < 3; ++i)
             {
@@ -232,7 +236,7 @@ TEST_CASE("CellSetTest", "[core]")
             cellSet->setCellValid(1, false);
             cellSet->setCellValid(2, true);
         }
-        isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(fileName);
+        isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
 
         REQUIRE(cellSet->getNumCells() == 3);
         REQUIRE(cellSet->isCellValid(0) == true);
@@ -248,40 +252,70 @@ TEST_CASE("CellSetTest", "[core]")
 
     SECTION("Read trace data for 3 cells asynchronously")
     {
-        isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
+        std::atomic_int doneCount(0);
+        size_t numCells = 3;
+        isx::SpCellSet_t cellSet = isx::writeCellSet(
                 fileName, timingInfo, spacingInfo);
         for (size_t i = 0; i < 3; ++i)
         {
             cellSet->writeImageAndTrace(i, originalImage, originalTrace);
         }
 
-        isx::CellSet::GetTraceCB_t callBack = [originalTrace](const isx::SpFTrace_t inTrace)
+        isx::CellSet::CellSetGetTraceCB_t callBack = [originalTrace, &doneCount](const isx::SpFTrace_t inTrace)
         {
             requireEqualTraces(inTrace, originalTrace);
+            ++doneCount;
+
         };
-        for (size_t i = 0; i < 3; ++i)
+        for (size_t i = 0; i < numCells; ++i)
         {
             cellSet->getTraceAsync(i, callBack);
         }
+
+        for (int i = 0; i < 250; ++i)
+        {
+            if (doneCount == int(numCells))
+            {
+                break;
+            }
+            std::chrono::milliseconds d(2);
+            std::this_thread::sleep_for(d);
+        }
+        REQUIRE(doneCount == int(numCells));
     }
 
     SECTION("Read image data for 3 cells asynchronously")
     {
-        isx::SpCellSet_t cellSet = std::make_shared<isx::CellSet>(
+        std::atomic_int doneCount(0);
+        size_t numCells = 3;
+
+        isx::SpCellSet_t cellSet = isx::writeCellSet(
                 fileName, timingInfo, spacingInfo);
         for (size_t i = 0; i < 3; ++i)
         {
             cellSet->writeImageAndTrace(i, originalImage, originalTrace);
         }
 
-        isx::CellSet::GetImageCB_t callBack = [originalImage](const isx::SpImage_t inImage)
+        isx::CellSet::CellSetGetImageCB_t callBack = [originalImage, &doneCount](const isx::SpImage_t inImage)
         {
             requireEqualImages(inImage, originalImage);
+            ++doneCount;
         };
         for (size_t i = 0; i < 3; ++i)
         {
             cellSet->getImageAsync(i, callBack);
         }
+
+        for (int i = 0; i < 250; ++i)
+        {
+            if (doneCount == int(numCells))
+            {
+                break;
+            }
+            std::chrono::milliseconds d(2);
+            std::this_thread::sleep_for(d);
+        }
+        REQUIRE(doneCount == int(numCells));
     }
 
     isx::CoreShutdown();
@@ -307,7 +341,7 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
         const isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(6, 5));
         const isx::TimingInfo timingInfo(isx::Time(), isx::DurationInSeconds(1), 7);
 
-        isx::CellSet cellSet(cellSetFile, timingInfo, spacingInfo);
+        isx::SpCellSet_t cellSet = writeCellSet(cellSetFile, timingInfo, spacingInfo);
         isx::SpWritableMovie_t movie = isx::writeMosaicMovie(
                 movieFile,
                 timingInfo,
@@ -341,7 +375,7 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
             movie->writeFrame(frame);
         }
 
-        cellSet.writeImageAndTrace(0, image, trace);
+        cellSet->writeImageAndTrace(0, image, trace);
 
         isx::Project project(projectFile, "Full Frame");
         project.importDataSet(

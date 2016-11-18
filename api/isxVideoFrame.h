@@ -125,6 +125,19 @@ public:
     ///                                 not float.
     float *
     getPixelsAsF32();
+    
+    /// Move a new compatible image into this VideoFrame object.
+    /// Will fail if the new image does not match the old image's
+    /// SpacingInfo, rowbytes, channels, DataType.
+    ///
+    /// Can be used to effectively change a VideoFrame's timestamp and frameIndex.
+    ///
+    /// \param inImage image to move into this VideoFrame, will be
+    ///        invalid after successful completion of this call
+    /// \throw isx::ExceptionDataIO If inImage is not compatible
+    ///        with the current image in this VideoFrame
+    void
+    moveCompatibleImage(Image & inImage);
 
 private:
 

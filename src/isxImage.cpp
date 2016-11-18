@@ -25,6 +25,28 @@ Image::Image(  const SpacingInfo & inSpacingInfo,
     m_pixels.reset(new char[getImageSizeInBytes()]);
 }
 
+Image::Image(Image && inOther)
+: m_pixels(std::move(inOther.m_pixels))
+, m_spacingInfo(inOther.m_spacingInfo)
+, m_rowBytes(inOther.m_rowBytes)
+, m_numChannels(inOther.m_numChannels)
+, m_dataType(inOther.m_dataType)
+{
+}
+
+Image & Image::operator=(Image && inOther)
+{
+    if (this != &inOther)
+    {
+        m_pixels = std::move(inOther.m_pixels);
+        m_spacingInfo = inOther.m_spacingInfo;
+        m_rowBytes = inOther.m_rowBytes;
+        m_numChannels = inOther.m_numChannels;
+        m_dataType = inOther.m_dataType;
+    }
+    return *this;
+}
+    
 const SpacingInfo &
 Image::getSpacingInfo() const
 {

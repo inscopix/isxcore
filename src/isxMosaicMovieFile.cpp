@@ -47,7 +47,7 @@ MosaicMovieFile::initialize(
         DataType inDataType)
 {
     m_fileName = inFileName;
-    m_timingInfo = inTimingInfo;
+    m_timingInfos = TimingInfos_t{inTimingInfo};
     m_spacingInfo = inSpacingInfo;
     m_dataType = inDataType;
     writeHeader();
@@ -73,7 +73,7 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
         getRowSizeInBytes(),
         1,
         m_dataType,
-        m_timingInfo.convertIndexToStartTime(inFrameNumber),
+        getTimingInfo().convertIndexToStartTime(inFrameNumber),
         inFrameNumber);
 
     file.read(outFrame->getPixels(), getFrameSizeInBytes());
@@ -143,9 +143,15 @@ MosaicMovieFile::getFileName() const
 const isx::TimingInfo &
 MosaicMovieFile::getTimingInfo() const
 {
-    return m_timingInfo;
+    return m_timingInfos[0];
 }
 
+const isx::TimingInfos_t &
+MosaicMovieFile::getTimingInfosForSeries() const
+{
+    return m_timingInfos;
+}
+   
 const isx::SpacingInfo &
 MosaicMovieFile::getSpacingInfo() const
 {
@@ -175,7 +181,7 @@ MosaicMovieFile::readHeader()
             ISX_THROW(isx::ExceptionDataIO,
                     "Expected type to be Movie. Instead got ", size_t(type), ".");
         }
-        m_timingInfo = convertJsonToTimingInfo(j["timingInfo"]);
+        m_timingInfos = TimingInfos_t{convertJsonToTimingInfo(j["timingInfo"])};
         m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
     }
     catch (const std::exception & error)
@@ -196,7 +202,7 @@ MosaicMovieFile::writeHeader()
     {
         j["dataType"] = isize_t(m_dataType);
         j["type"] = size_t(DataSet::Type::MOVIE);
-        j["timingInfo"] = convertTimingInfoToJson(m_timingInfo);
+        j["timingInfo"] = convertTimingInfoToJson(getTimingInfo());
         j["spacingInfo"] = convertSpacingInfoToJson(m_spacingInfo);
         j["mosaicVersion"] = CoreVersionVector();
     }
@@ -238,7 +244,7 @@ MosaicMovieFile::writeZeroData()
     std::vector<char> frameBuf(frameSizeInBytes, 0);
 
     // Write the frames to file one by one.
-    isize_t numFrames = m_timingInfo.getNumTimes();
+    isize_t numFrames = getTimingInfo().getNumTimes();
     for (isize_t i = 0; i < numFrames; ++i)
     {
         file.write(frameBuf.data(), frameSizeInBytes);
@@ -321,7 +327,7 @@ MosaicMovieFile::seekForWriteFrame(
 
     // TODO sweet : check to see if time is outside of sample window instead
     // of overwriting last frame data
-    const isize_t numFrames = m_timingInfo.getNumTimes();
+    const isize_t numFrames = getTimingInfo().getNumTimes();
     if (inFrameNumber >= numFrames)
     {
         inFrameNumber = numFrames - 1;

@@ -71,6 +71,13 @@ public:
     isx::TimingInfo &
     getTimingInfo() const;
 
+    /// \return     The TimingInfos_t of a MovieSeries.
+    ///             For a regular movie this will contain one TimingInfo object
+    ///             matching getTimingInfo.
+    ///
+    const isx::TimingInfos_t &
+    getTimingInfosForSeries() const;
+
     /// \return     The spacing information read from the movie.
     ///
     const
@@ -106,7 +113,7 @@ private:
     std::string m_fileName;
 
     /// The timing information of the movie.
-    TimingInfo m_timingInfo;
+    TimingInfos_t m_timingInfos;
 
     /// The spacing information of the movie.
     SpacingInfo m_spacingInfo;

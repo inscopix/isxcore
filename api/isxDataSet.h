@@ -1,11 +1,13 @@
 #ifndef ISX_DATA_SET_H
 #define ISX_DATA_SET_H
 
+#include "isxCore.h"
 #include "isxObject.h"
 
 #include <string>
 #include <memory>
 #include <map>
+#include <vector>
 
 namespace isx
 {
@@ -133,23 +135,30 @@ public:
     // Overrides
     void serialize(std::ostream & strm) const override;
 
-    /// Serialize DataSet(s) to a JSON string
+    /// Serialize vector of DataSets and derived DataSets to a JSON string
     /// \return JSON string for the DataSet(s)
-    /// \param inOriginal original dataset 
-    /// \param inDerived derived dataset (i.e. cellset coming from a movie)
+    /// \param inPath project path for the dataset
+    /// \param inDataSets vector of datasets
+    /// \param inDerivedDataSets vector of derived datasets
     static
     std::string
-    toJsonString(const DataSet * inOriginal, const DataSet * inDerived = nullptr);
-
+    toJsonString(
+        const std::string & inPath,
+        const std::vector<DataSet *> & inDataSets,
+        const std::vector<DataSet *> & inDerivedDataSets);
+    
     /// Create DataSet(s) from a JSON string
     /// \param inDataSetJson string containing JSON info for one or two DataSets
     /// \param outPath is set to the full path (in project) of the original DataSet
-    /// \param outOriginal the original dataset described in the JSON string
-    /// \param outDerived the derived dataset (if there is such in the JSON string)
+    /// \param outOriginals the original dataset described in the JSON string
+    /// \param outDeriveds the derived dataset (if there is such in the JSON string)
     static
     void
-    fromJsonString(const std::string & inDataSetJson, std::string & outPath, DataSet & outOriginal, DataSet & outDerived);
-
+    fromJsonString(const std::string & inDataSetJson,
+        std::string & outPath,
+        std::vector<DataSet> & outOriginals,
+        std::vector<DataSet> & outDeriveds);
+    
 private:
 
     /// True if this data set is valid.

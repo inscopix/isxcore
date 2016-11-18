@@ -196,37 +196,55 @@ readDataSetType(const std::string & inFileName)
     }
 }
 
-/*static*/
 std::string
-DataSet::toJsonString(const DataSet * inOriginal, const DataSet * inDerived)
+DataSet::toJsonString(
+    const std::string & inPath,
+    const std::vector<DataSet *> & inDataSets,
+    const std::vector<DataSet *> & inDerivedDataSets)
 {
-    json j;
-    j["original"]["path"] = inOriginal->getParent()->getPath();
-    j["original"]["dataset"] = convertDataSetToJson(inOriginal);
-    if(inDerived)
+    json jv;
+    ISX_ASSERT(inDataSets.size() == inDerivedDataSets.size());
+    
+    for (isize_t i = 0; i < inDataSets.size(); ++i)
     {
-        j["derived"]["path"] = inDerived->getParent()->getPath();
-        j["derived"]["dataset"] = convertDataSetToJson(inDerived);
+        json j;
+        j["original"] = convertDataSetToJson(inDataSets[i]);
+        if (inDerivedDataSets[i])
+        {
+            j["derived"] = convertDataSetToJson(inDerivedDataSets[i]);
+        }
+        jv["dataSets"].push_back(j);
     }
-    return j.dump();
+    jv["path"] = inPath;
+    return jv.dump();
 }
 
-/*static*/
 void
-DataSet::fromJsonString(const std::string & inDataSetJson, std::string & outPath, DataSet & outOriginal, DataSet & outDerived)
+DataSet::fromJsonString(
+    const std::string & inDataSetJson,
+    std::string & outPath,
+    std::vector<DataSet> & outOriginals,
+    std::vector<DataSet> & outDeriveds)
 {
     json j = json::parse(inDataSetJson);
-    outPath = j["original"]["path"];
-    UpGroup_t bogus(new Group{""});
-    createDataSetFromJson(bogus.get(), j["original"]["dataset"]);
-    outOriginal = **(bogus->getDataSets().begin());
+    const isize_t numDataSets = isize_t(j["dataSets"].size());
     
-    isize_t derived_present = j.count("derived");
-    if(derived_present)
+    for (isize_t i = 0; i < numDataSets; ++i)
     {
-        createDataSetFromJson(bogus.get(), j["derived"]["dataset"]);
-        outDerived = *(bogus->getDataSets().back());
-    }    
-    
+        outPath = j["path"];
+        UpGroup_t bogus(new Group{""});
+        createDataSetFromJson(bogus.get(), j["dataSets"][i]["original"]);
+        ISX_ASSERT(bogus->getDataSets().size() == 1);
+        outOriginals.push_back(*(bogus->getDataSets().back()));
+
+        isize_t derived_present = j["dataSets"][i].count("derived");
+        if (derived_present)
+        {
+            createDataSetFromJson(bogus.get(), j["dataSets"][i]["derived"]);
+            ISX_ASSERT(bogus->getDataSets().size() == 2);
+            outDeriveds.push_back(*(bogus->getDataSets().back()));
+        }
+    }
 }
+    
 } // namespace isx

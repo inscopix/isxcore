@@ -98,5 +98,20 @@ VideoFrame::getPixelsAsF32()
 {
     return m_image.getPixelsAsF32();
 }
+    
+void
+VideoFrame::moveCompatibleImage(Image & inImage)
+{
+    if (!(inImage.getSpacingInfo() == getImage().getSpacingInfo())
+      || inImage.getRowBytes() != getImage().getRowBytes()
+      || inImage.getNumChannels() != getImage().getNumChannels()
+      || inImage.getDataType() != getImage().getDataType())
+    {
+        ISX_THROW(ExceptionDataIO, "Attemptimg o move incompatible image.");
+    }
+
+    m_image = std::move(inImage);
+}
+
 
 } // namespace isx

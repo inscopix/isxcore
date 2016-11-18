@@ -5,6 +5,9 @@
 #include "isxWritableMovie.h"
 #include "isxCoreFwd.h"
 
+#include <string>
+#include <vector>
+
 namespace isx
 {
 
@@ -37,13 +40,31 @@ SpWritableMovie_t writeMosaicMovie(
 ///
 /// If the extension is not recognized, this fails.
 ///
-/// \param  inFileName      The name of the nVista movie file to read.
+/// \param  inFileName      The name of the movie file to read.
 /// \return                 The imported movie.
 ///
 /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
 /// \throw  isx::ExceptionDataIO    If parsing the movie file fails or
 ///                                 if the extension is not recognized.
 SpMovie_t readMovie(const std::string & inFileName);
+
+/// Read an existing series of movies from a vector of files.
+///
+/// The actual type of each movie file to import (e.g. MosaicMovie, NVistaHdf5Movie)
+/// is determined by the file extension.
+///
+/// - isxd: MosaicMovie
+/// - hdf5: NVistaHdf5Movie
+///
+/// If the extension is not recognizedfor ane of the filenames, this fails.
+///
+/// \param  inFileNames     A vector containing the names of the movie files to read.
+/// \return                 The imported movie.
+///
+/// \throw  isx::ExceptionFileIO    If reading of any of the movie files fails.
+/// \throw  isx::ExceptionDataIO    If parsing for any the movie files fails or
+///                                 if their extension is not recognized.
+SpMovie_t readMovieSeries(const std::vector<std::string> & inFileNames);
 
 /// Read an existing mosaic movie from a file.
 ///

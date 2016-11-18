@@ -70,6 +70,9 @@ public:
 
     const isx::TimingInfo & getTimingInfo() const override;
 
+    const isx::TimingInfos_t &
+    getTimingInfosForSeries() const override;
+
     const isx::SpacingInfo & getSpacingInfo() const override;
 
     DataType getDataType() const override;

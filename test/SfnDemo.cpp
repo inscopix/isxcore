@@ -4,6 +4,7 @@
 #include "isxException.h"
 #include "isxPathUtils.h"
 #include "isxMovieFactory.h"
+#include "isxCellSetFactory.h"
 #include "isxCellSet.h"
 
 #include <fstream>
@@ -157,7 +158,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
 
                 // NOTE sweet : also check that timing/spacing info is consistent
                 isx::SpMovie_t movie = isx::readMovie(movieFile);
-                auto cellSet = std::make_shared<isx::CellSet>(cellSetFile);
+                auto cellSet = isx::readCellSet(cellSetFile);
                 REQUIRE(movie->getTimingInfo() == cellSet->getTimingInfo());
                 REQUIRE(movie->getSpacingInfo() == cellSet->getSpacingInfo());
             }
@@ -258,7 +259,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
 
                     // NOTE sweet : also check that timing/spacing info is consistent
                     isx::SpMovie_t movie = isx::readMovie(movieFile);
-                    auto cellSet = std::make_shared<isx::CellSet>(cellSetFile);
+                    auto cellSet = isx::readCellSet(cellSetFile);
                     REQUIRE(movie->getTimingInfo() == cellSet->getTimingInfo());
                     REQUIRE(movie->getSpacingInfo() == cellSet->getSpacingInfo());
                 }
@@ -364,7 +365,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
 
                 // NOTE sweet : also check that timing/spacing info is consistent
                 isx::SpMovie_t movie = isx::readMovie(movieFile);
-                auto cellSet = std::make_shared<isx::CellSet>(cellSetFile);
+                auto cellSet = isx::readCellSet(cellSetFile);
                 REQUIRE(movie->getTimingInfo() == cellSet->getTimingInfo());
                 REQUIRE(movie->getSpacingInfo() == cellSet->getSpacingInfo());
             }

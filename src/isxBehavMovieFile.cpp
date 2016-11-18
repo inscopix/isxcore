@@ -215,7 +215,7 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
         "\tcpn: ", pFrame->coded_picture_number,
         "\tdpn: ", pFrame->display_picture_number);
     m_lastPktPts = pFrame->pkt_pts;
-    Time t = m_timingInfo.convertIndexToStartTime(inFrameNumber);
+    Time t = getTimingInfo().convertIndexToStartTime(inFrameNumber);
     auto ret = std::make_shared<VideoFrame>(
         m_spacingInfo, pFrame->linesize[0], 1, DataType::U8, t, inFrameNumber);
     
@@ -239,7 +239,13 @@ const
 isx::TimingInfo &
 BehavMovieFile::getTimingInfo() const
 {
-    return m_timingInfo;
+    return m_timingInfos[0];
+}
+    
+const isx::TimingInfos_t &
+BehavMovieFile::getTimingInfosForSeries() const
+{
+    return m_timingInfos;
 }
 
 /// \return     The spacing information read from the movie.
@@ -339,9 +345,9 @@ BehavMovieFile::initializeFromStream(int inIndex)
             double numFramesD = (durationInSeconds * frameRate).toDouble();
             isize_t numFrames = isize_t(std::floor(numFramesD));
             auto startTime = getStartTime();
-            m_timingInfo = TimingInfo(startTime, frameRate.getInverse(), numFrames);
+            m_timingInfos = TimingInfos_t{TimingInfo(startTime, frameRate.getInverse(), numFrames)};
             
-            m_videoPtsFrameDelta = m_timingInfo.getStep() * m_timeBase.getInverse();
+            m_videoPtsFrameDelta = getTimingInfo().getStep() * m_timeBase.getInverse();
             m_videoPtsStartOffset = m_videoStream->start_time;
         }
         break;

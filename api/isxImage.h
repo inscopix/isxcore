@@ -33,6 +33,18 @@ public:
             isize_t inNumChannels,
             DataType inDataType);
 
+    /// copy ctor
+    Image(const Image & inOther) = delete;
+
+    /// move ctor
+    Image(Image && inOther);
+
+    /// copy assignment
+    Image & operator=(const Image & inOther) = delete;
+
+    /// move assignment
+    Image & operator=(Image && inOther);
+
     /// \return the spacing information of this image
     ///
     const SpacingInfo &

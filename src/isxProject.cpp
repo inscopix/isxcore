@@ -88,8 +88,7 @@ DataSet *
 Project::getDataSet(const std::string & inPath) const
 {
     const std::string name = isx::getFileName(inPath);
-    const std::string groupPath = getDirName(inPath);
-    return getGroup(groupPath)->getDataSet(name);
+    return getGroup(inPath)->getDataSet(name);
 }
 
 Group *

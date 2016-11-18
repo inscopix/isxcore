@@ -51,7 +51,7 @@ public:
                             t->setTaskStatus(AsyncTaskStatus::PROCESSING);
                             try
                             {
-                                t->getTask()();             // execute without holding lock, eneuque can push onto queue
+                                t->getTask()();             // execute without holding lock, enqueue can push onto queue
                                 t->setTaskStatus(AsyncTaskStatus::COMPLETE);
                             }
                             catch(...)
