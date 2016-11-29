@@ -55,7 +55,10 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             for (const auto & name : names)
             {
                 const std::string movieFile = origDataDir + "/" + name + ".xml";
-                REQUIRE(isx::pathExists(movieFile));
+                if (!isx::pathExists(movieFile))
+                {
+                    ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+                }
                 const std::string moviePath = groupPath + "/" + name;
                 project.createDataSet(
                         moviePath,
@@ -95,7 +98,10 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             {
                 const std::string movieName = name + "-mc";
                 const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
-                REQUIRE(isx::pathExists(movieFile));
+                if (!isx::pathExists(movieFile))
+                {
+                    ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+                }
                 const std::string moviePath = groupPath + "/" + movieName;
                 project.createDataSet(
                         moviePath,
@@ -114,7 +120,10 @@ TEST_CASE("SfnDemo", "[data][!hide]")
         for (const auto & bms : behavioralMovies)
         {
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
-            REQUIRE(isx::pathExists(movieFile));
+            if (!isx::pathExists(movieFile))
+            {
+                ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+            }
             const std::string moviePath = "/" + bms;
             project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile);
         }
@@ -136,10 +145,16 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             {
                 const std::string movieName = name + "-mc_DFF";
                 const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
-                REQUIRE(isx::pathExists(movieFile));
+                if (!isx::pathExists(movieFile))
+                {
+                    ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+                }
                 const std::string moviePath = groupPath + "/" + movieName;
                 const std::string cellSetFile = procDataDir + "/" + name + "-rois.isxd";
-                REQUIRE(isx::pathExists(cellSetFile));
+                if (!isx::pathExists(cellSetFile))
+                {
+                    ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+                }
                 project.createDataSet(
                         moviePath,
                         isx::DataSet::Type::MOVIE,
@@ -157,17 +172,23 @@ TEST_CASE("SfnDemo", "[data][!hide]")
                         cellSetFile);
 
                 // NOTE sweet : also check that timing/spacing info is consistent
-                isx::SpMovie_t movie = isx::readMovie(movieFile);
-                auto cellSet = isx::readCellSet(cellSetFile);
-                REQUIRE(movie->getTimingInfo() == cellSet->getTimingInfo());
-                REQUIRE(movie->getSpacingInfo() == cellSet->getSpacingInfo());
+                if (isx::pathExists(movieFile) && isx::pathExists(cellSetFile))
+                {
+                    isx::SpMovie_t movie = isx::readMovie(movieFile);
+                    auto cellSet = isx::readCellSet(cellSetFile);
+                    REQUIRE(movie->getTimingInfo() == cellSet->getTimingInfo());
+                    REQUIRE(movie->getSpacingInfo() == cellSet->getSpacingInfo());
+                }
             }
         }
 
         for (const auto & bms : behavioralMovies)
         {
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
-            REQUIRE(isx::pathExists(movieFile));
+            if (!isx::pathExists(movieFile))
+            {
+                ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+            }
             const std::string moviePath = "/" + bms;
             project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile);
         }
@@ -190,7 +211,10 @@ TEST_CASE("SfnDemo", "[data][!hide]")
                 for (const auto & name : group.second)
                 {
                     const std::string movieFile = origDataDir + "/" + name + ".xml";
-                    REQUIRE(isx::pathExists(movieFile));
+                    if (isx::pathExists(movieFile))
+                    {
+                        ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+                    }
                     const std::string moviePath = groupPath + "/" + name;
                     project.createDataSet(
                             moviePath,
@@ -214,7 +238,10 @@ TEST_CASE("SfnDemo", "[data][!hide]")
                 {
                     const std::string movieName = name + "-mc";
                     const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
-                    REQUIRE(isx::pathExists(movieFile));
+                    if (!isx::pathExists(movieFile))
+                    {
+                        ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+                    }
                     const std::string moviePath = groupPath + "/" + movieName;
                     project.createDataSet(
                             moviePath,
@@ -238,10 +265,17 @@ TEST_CASE("SfnDemo", "[data][!hide]")
                 {
                     const std::string movieName = name + "-mc_DFF";
                     const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
-                    REQUIRE(isx::pathExists(movieFile));
+                    if (!isx::pathExists(movieFile))
+                    {
+                        ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+                    }
+
                     const std::string moviePath = groupPath + "/" + movieName;
                     const std::string cellSetFile = procDataDir + "/" + name + "-rois.isxd";
-                    REQUIRE(isx::pathExists(cellSetFile));
+                    if (!isx::pathExists(cellSetFile))
+                    {
+                        ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+                    }
                     project.createDataSet(
                             moviePath,
                             isx::DataSet::Type::MOVIE,
@@ -258,10 +292,13 @@ TEST_CASE("SfnDemo", "[data][!hide]")
                             cellSetFile);
 
                     // NOTE sweet : also check that timing/spacing info is consistent
-                    isx::SpMovie_t movie = isx::readMovie(movieFile);
-                    auto cellSet = isx::readCellSet(cellSetFile);
-                    REQUIRE(movie->getTimingInfo() == cellSet->getTimingInfo());
-                    REQUIRE(movie->getSpacingInfo() == cellSet->getSpacingInfo());
+                    if (isx::pathExists(movieFile) && isx::pathExists(cellSetFile))
+                    {
+                        isx::SpMovie_t movie = isx::readMovie(movieFile);
+                        auto cellSet = isx::readCellSet(cellSetFile);
+                        REQUIRE(movie->getTimingInfo() == cellSet->getTimingInfo());
+                        REQUIRE(movie->getSpacingInfo() == cellSet->getSpacingInfo());
+                    }
                 }
             }
         }
@@ -269,7 +306,10 @@ TEST_CASE("SfnDemo", "[data][!hide]")
         for (const auto & bms : behavioralMovies)
         {
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
-            REQUIRE(isx::pathExists(movieFile));
+            if (!isx::pathExists(movieFile))
+            {
+                ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+            }
             const std::string moviePath = "/" + bms;
             project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile);
         }
@@ -292,7 +332,10 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             for (const auto & name : group.second)
             {
                 const std::string movieFile = origDataDir + "/" + name + ".xml";
-                REQUIRE(isx::pathExists(movieFile));
+                if (!isx::pathExists(movieFile))
+                {
+                    ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+                }
                 const std::string moviePath = groupPath + "/" + name;
                 project.createDataSet(
                         moviePath,
@@ -318,7 +361,10 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             {
                 const std::string movieName = name + "-mc";
                 const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
-                REQUIRE(isx::pathExists(movieFile));
+                if (!isx::pathExists(movieFile))
+                {
+                    ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+                }
                 const std::string moviePath = groupPath + "/" + movieName;
                 project.createDataSet(
                         moviePath,
@@ -344,10 +390,16 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             {
                 const std::string movieName = name + "-mc_DFF";
                 const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
-                REQUIRE(isx::pathExists(movieFile));
+                if (!isx::pathExists(movieFile))
+                {
+                    ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+                }
                 const std::string moviePath = groupPath + "/" + movieName;
                 const std::string cellSetFile = procDataDir + "/" + name + "-rois.isxd";
-                REQUIRE(isx::pathExists(cellSetFile));
+                if (!isx::pathExists(cellSetFile))
+                {
+                    ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+                }
                 project.createDataSet(
                         moviePath,
                         isx::DataSet::Type::MOVIE,
@@ -364,10 +416,13 @@ TEST_CASE("SfnDemo", "[data][!hide]")
                         cellSetFile);
 
                 // NOTE sweet : also check that timing/spacing info is consistent
-                isx::SpMovie_t movie = isx::readMovie(movieFile);
-                auto cellSet = isx::readCellSet(cellSetFile);
-                REQUIRE(movie->getTimingInfo() == cellSet->getTimingInfo());
-                REQUIRE(movie->getSpacingInfo() == cellSet->getSpacingInfo());
+                if (isx::pathExists(movieFile) && isx::pathExists(cellSetFile))
+                {
+                    isx::SpMovie_t movie = isx::readMovie(movieFile);
+                    auto cellSet = isx::readCellSet(cellSetFile);
+                    REQUIRE(movie->getTimingInfo() == cellSet->getTimingInfo());
+                    REQUIRE(movie->getSpacingInfo() == cellSet->getSpacingInfo());
+                }
             }
         }
 
@@ -375,7 +430,10 @@ TEST_CASE("SfnDemo", "[data][!hide]")
         for (const auto & bms : behavioralMovies)
         {
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
-            REQUIRE(isx::pathExists(movieFile));
+            if (!isx::pathExists(movieFile))
+            {
+                ISX_LOG_WARNING("Adding movie even though file does not exist: ", movieFile);
+            }
             const std::string moviePath = "/Behavioral/" + bms;
             project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile);
         }
