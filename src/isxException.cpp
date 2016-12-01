@@ -58,6 +58,15 @@ ExceptionUserInput::~ExceptionUserInput()
 {
 }
 
+ExceptionSeries::ExceptionSeries(const std::string& file, int line, const std::string& message)
+    : Exception(file, line, message)
+{
+}
+
+ExceptionSeries::~ExceptionSeries()
+{
+}
+
 // Non API utilities.
 namespace internal
 {

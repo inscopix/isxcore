@@ -223,3 +223,157 @@ TEST_CASE("GroupTest", "[core]")
     }
 
 }
+
+TEST_CASE("Group-moveDataSet", "[core]")
+{
+    isx::Group root("/");
+    isx::DataSet * movie1 = root.createDataSet("movie1", isx::DataSet::Type::MOVIE, "movie1.isxd");
+    isx::DataSet * movie2 = root.createDataSet("movie2", isx::DataSet::Type::MOVIE, "movie2.isxd");
+    isx::Group * series = root.createGroup("Day 1", isx::Group::Type::SERIES);
+
+    SECTION("Move a data set from root to a series")
+    {
+        root.moveDataSet("movie1", series);
+
+        REQUIRE(root.getDataSets().size() == 1);
+        REQUIRE(root.getDataSet("movie2") == movie2);
+        ISX_EXPECT_EXCEPTION();
+        try
+        {
+            root.getDataSet("movie1");
+            FAIL("Failed to throw an exception.");
+        }
+        catch (const isx::ExceptionDataIO & error)
+        {
+            REQUIRE(std::string(error.what()) ==
+                    "Could not find data set with name: movie1");
+        }
+        catch (...)
+        {
+            FAIL("Failed to throw an isx::ExceptionDataIO");
+        }
+
+        REQUIRE(series->getDataSets().size() == 1);
+        REQUIRE(series->getDataSet("movie1") == movie1);
+    }
+
+}
+
+TEST_CASE("Group-moveGroup", "[core]")
+{
+    isx::Group root("/");
+    isx::Group * group1 = root.createGroup("group1");
+    isx::Group * group2 = root.createGroup("group2");
+    isx::Group * group3 = root.createGroup("group3");
+
+    SECTION("Move a group from root to another group")
+    {
+        root.moveGroup("group1", group3);
+
+        REQUIRE(root.getGroups().size() == 2);
+        REQUIRE(root.getGroup("group2") == group2);
+        ISX_EXPECT_EXCEPTION();
+        try
+        {
+            root.getGroup("group1");
+            FAIL("Failed to throw an exception.");
+        }
+        catch (const isx::ExceptionDataIO & error)
+        {
+            REQUIRE(std::string(error.what()) ==
+                    "Could not find group with the name: group1");
+        }
+        catch (...)
+        {
+            FAIL("Failed to throw an isx::ExceptionDataIO");
+        }
+
+        REQUIRE(group3->getGroups().size() == 1);
+        REQUIRE(group3->getGroup("group1") == group1);
+    }
+
+    SECTION("Identity move")
+    {
+        root.moveGroup("group1", &root, 0);
+
+        const std::vector<isx::Group *> groups = root.getGroups();
+        REQUIRE(groups.size() == 3);
+        REQUIRE(groups.at(0) == group1);
+        REQUIRE(groups.at(1) == group2);
+        REQUIRE(groups.at(2) == group3);
+    }
+
+    SECTION("Internal move to the beginning of a group")
+    {
+        root.moveGroup("group2", &root, 0);
+
+        const std::vector<isx::Group *> groups = root.getGroups();
+        REQUIRE(groups.size() == 3);
+        REQUIRE(groups.at(0) == group2);
+        REQUIRE(groups.at(1) == group1);
+        REQUIRE(groups.at(2) == group3);
+    }
+
+    SECTION("Internal move to the middle of a group")
+    {
+        root.moveGroup("group1", &root, 1);
+
+        const std::vector<isx::Group *> groups = root.getGroups();
+        REQUIRE(groups.size() == 3);
+        REQUIRE(groups.at(0) == group2);
+        REQUIRE(groups.at(1) == group1);
+        REQUIRE(groups.at(2) == group3);
+    }
+
+    SECTION("Internal move to the end of a group")
+    {
+        root.moveGroup("group1", &root, 2);
+
+        const std::vector<isx::Group *> groups = root.getGroups();
+        REQUIRE(groups.size() == 3);
+        REQUIRE(groups.at(0) == group2);
+        REQUIRE(groups.at(1) == group3);
+        REQUIRE(groups.at(2) == group1);
+    }
+
+    SECTION("Internal move past the end of a group")
+    {
+        root.moveGroup("group1", &root, 3);
+
+        const std::vector<isx::Group *> groups = root.getGroups();
+        REQUIRE(groups.size() == 3);
+        REQUIRE(groups.at(0) == group2);
+        REQUIRE(groups.at(1) == group3);
+        REQUIRE(groups.at(2) == group1);
+    }
+
+}
+
+TEST_CASE("Group-getIndex", "[core]")
+{
+    isx::Group root("/");
+    isx::Group * group1 = root.createGroup("group1");
+    isx::Group * group2 = root.createGroup("group2");
+    isx::Group * group3 = group2->createGroup("group3");
+    isx::Group * group4 = group2->createGroup("group4");
+
+    SECTION("Get the index of the root group")
+    {
+        REQUIRE(root.getIndex() == -1);
+    }
+
+    SECTION("Get the index of the groups immediately owned by root")
+    {
+        REQUIRE(group1->getIndex() == 0);
+        REQUIRE(group2->getIndex() == 1);
+    }
+
+    SECTION("Get the index of the groups immediately owned by group2")
+    {
+        REQUIRE(group3->getIndex() == 0);
+        REQUIRE(group4->getIndex() == 1);
+    }
+
+}
+
+

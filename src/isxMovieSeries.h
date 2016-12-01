@@ -73,6 +73,30 @@ public:
     getMovies()
     const;
 
+    /// Checks that the timing info is consistent with that of a reference in a series.
+    ///
+    /// \param  inRef   The reference timing info.
+    /// \param  inNew   The new timing info.
+    /// \throw  isx::ExceptionSeries    If the new timing info is not consistent
+    ///                                 with the reference.
+    static void checkTimingInfo(const TimingInfo & inRef, const TimingInfo & inNew);
+
+    /// Checks that the spacing info is consistent with that of a reference in a series.
+    ///
+    /// \param  inRef   The reference spacing info.
+    /// \param  inNew   The new spacing info.
+    /// \throw  isx::ExceptionSeries    If the new spacing info is not consistent
+    ///                                 with the reference.
+    static void checkSpacingInfo(const SpacingInfo & inRef, const SpacingInfo & inNew);
+
+    /// Checks that the data type is consistent with that of a reference in a series.
+    ///
+    /// \param  inRef   The reference data type.
+    /// \param  inNew   The new data type.
+    /// \throw  ExceptionSeries     If the new data type is not consistent with
+    ///                             the reference.
+    static void checkDataType(const DataType inRef, const DataType inNew);
+
     // Overrides - see base classes for documentation
     bool
     isValid()

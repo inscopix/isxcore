@@ -29,35 +29,21 @@ MovieSeries::MovieSeries(const std::vector<std::string> & inFileNames)
         {
             return a->getTimingInfo().getStart() < b->getTimingInfo().getStart();
         });
-    
+
     // movies are sorted by start time now, check if they meet requirements
+    const auto & refSi = m_movies[0]->getSpacingInfo();
+    const DataType refDataType = m_movies[0]->getDataType();
     for (isize_t i = 1; i < m_movies.size(); ++i)
     {
         const auto & m = m_movies[i];
-        if (m->getDataType() != m_movies[0]->getDataType())
-        {
-            ISX_THROW(ExceptionDataIO, "MovieSeries with mismatching DataType: ", m->getFileName());
-        }
+        checkDataType(refDataType, m->getDataType());
+        checkSpacingInfo(refSi, m->getSpacingInfo());
 
-        if (!(m->getSpacingInfo() == m_movies[0]->getSpacingInfo()))
-        {
-            ISX_THROW(ExceptionDataIO, "MovieSeries with mismatching SpacingInfo: ", m->getFileName());
-        }
-        
         const auto & tip = m_movies[i-1]->getTimingInfo();
         const auto & tic = m_movies[i]->getTimingInfo();
-        if (tic.getStart() <= tip.getEnd())
-        {
-            ISX_THROW(ExceptionDataIO, "MovieSeries with overlapping TimingInfo: ", m->getFileName());
-        }
-        
-        if (tic.getStep() != tip.getStep())
-        {
-            ISX_THROW(ExceptionDataIO, "MovieSeries with mismatching framerate: ", m->getFileName());
-        }
-        
+        checkTimingInfo(tip, tic);
     }
-    
+
     // individual movie files are compatible, initialize
     m_spacingInfo = m_movies[0]->getSpacingInfo();
     const auto start = m_movies[0]->getTimingInfo().getStart();
@@ -93,6 +79,37 @@ MovieSeries::getMovies()
 const
 {
     return m_movies;
+}
+
+void
+MovieSeries::checkTimingInfo(const TimingInfo & inRef, const TimingInfo & inNew)
+{
+    if (inNew.getStep() != inRef.getStep())
+    {
+        ISX_THROW(ExceptionSeries, "The timing info has a different frame rate than the reference.");
+    }
+    if (inNew.overlapsWith(inRef))
+    {
+        ISX_THROW(ExceptionSeries, "The timing info temporally overlaps with the reference.");
+    }
+}
+
+void
+MovieSeries::checkSpacingInfo(const SpacingInfo & inRef, const SpacingInfo & inNew)
+{
+    if (!(inRef == inNew))
+    {
+        ISX_THROW(ExceptionSeries, "The spacing info is different than the reference.");
+    }
+}
+
+void
+MovieSeries::checkDataType(const DataType inRef, const DataType inNew)
+{
+    if (inRef != inNew)
+    {
+        ISX_THROW(ExceptionSeries, "The data type is different than the reference.");
+    }
 }
 
 bool

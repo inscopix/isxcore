@@ -121,6 +121,24 @@ namespace isx
         ~ExceptionUserInput() override;
     };
 
+    /// Exception related to adding a data set to a series.
+    ///
+    class ExceptionSeries : public Exception
+    {
+    public:
+
+        /// Constructor
+        ///
+        /// \param  file    The name of the file from where the exception is thrown.
+        /// \param  line    The line in the file from where the exception is thrown.
+        /// \param  message The error message.
+        explicit ExceptionSeries(const std::string& file, int line, const std::string& message);
+
+        /// Destructor
+        ///
+        ~ExceptionSeries() override;
+    };
+
 } // namespace isx
 
 #endif //ISX_EXCEPTION_H

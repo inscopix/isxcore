@@ -1,5 +1,6 @@
 #include "isxPathUtils.h"
 
+#include <sstream>
 #include <QFileInfo>
 #include <QDir>
 #include <QStringList>
@@ -90,6 +91,19 @@ pathExists(const std::string & inPath)
 {
     QFileInfo pathInfo(QString::fromStdString(inPath));
     return pathInfo.exists();
+}
+
+std::string
+appendNumberToPath(
+        const std::string & inPath,
+        const isize_t inNumber,
+        const isize_t inWidth)
+{
+    std::stringstream ss;
+    ss.width(inWidth);
+    ss.fill('0');
+    ss << inNumber;
+    return inPath + "_" + ss.str();
 }
 
 } // namespace isx

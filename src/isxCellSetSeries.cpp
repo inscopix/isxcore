@@ -1,5 +1,6 @@
 #include "isxCellSetFactory.h"
 #include "isxCellSetSeries.h"
+#include "isxMovieSeries.h"
 #include "isxAsync.h"
 #include "isxAsyncTaskHandle.h"
 #include "isxDispatchQueue.h"
@@ -31,34 +32,24 @@ namespace isx
         {
             return a->getTimingInfo().getStart() < b->getTimingInfo().getStart();
         });
-        
-    
-        // movies are sorted by start time now, check if they meet requirements
+
+        // cell sets are sorted by start time now, check if they meet requirements
+        const auto & refSi = m_cellSets[0]->getSpacingInfo();
+        const isize_t refNumCells = m_cellSets[0]->getNumCells();
         for (isize_t i = 1; i < m_cellSets.size(); ++i)
         {
             const auto & cs = m_cellSets[i];
-            
-            if (!(cs->getSpacingInfo() == m_cellSets[0]->getSpacingInfo()))
+
+            if (cs->getNumCells() != refNumCells)
             {
-                ISX_THROW(ExceptionDataIO, "CellSetSeries with mismatching SpacingInfo: ", cs->getFileName());
+                ISX_THROW(ExceptionSeries, "CellSetSeries with mismatching number of cells: ", cs->getFileName());
             }
 
-            if (!(cs->getNumCells() == m_cellSets[0]->getNumCells()))
-            {
-                ISX_THROW(ExceptionDataIO, "CellSetSeries with mismatching number of cells: ", cs->getFileName());
-            }
+            MovieSeries::checkSpacingInfo(refSi, cs->getSpacingInfo());
 
             const auto & tip = m_cellSets[i-1]->getTimingInfo();
             const auto & tic = m_cellSets[i]->getTimingInfo();
-            if (tic.getStart() <= tip.getEnd())
-            {
-                ISX_THROW(ExceptionDataIO, "CellSetSeries with overlapping TimingInfo: ", cs->getFileName());
-            }
-            
-            if (tic.getStep() != tip.getStep())
-            {
-                ISX_THROW(ExceptionDataIO, "CellSetSeries with mismatching framerate: ", cs->getFileName());
-            }            
+            MovieSeries::checkTimingInfo(tip, tic);
         }
 
         Time start = m_cellSets[0]->getTimingInfo().getStart();

@@ -1,6 +1,8 @@
 #ifndef ISX_PATH_UTILS_H
 #define ISX_PATH_UTILS_H
 
+#include "isxCore.h"
+
 #include <string>
 #include <vector>
 
@@ -105,6 +107,17 @@ std::string getAbsolutePath(const std::string & inPath);
 /// \param  inPath      The path to check for existence.
 /// \return             True if the path exists on the file system.
 bool pathExists(const std::string & inPath);
+
+/// Append a zero padded non-negative number to a path.
+///
+/// \param  inPath      The path to which to append.
+/// \param  inNumber    The number to append.
+/// \param  inWidth     The width of the number string to append.
+/// \return             The resulting path.
+std::string appendNumberToPath(
+        const std::string & inPath,
+        const isize_t inNumber,
+        const isize_t inWidth);
 
 } // namespace isx
 

@@ -1,5 +1,6 @@
 #include "isxGroup.h"
 #include "isxException.h"
+#include "isxAssert.h"
 
 namespace isx
 {
@@ -27,18 +28,18 @@ Group::getType() const
 }
 
 Group *
-Group::createGroup(const std::string & inPath, const Type inType)
+Group::createGroup(
+        const std::string & inPath,
+        const Type inType,
+        const int inIndex)
 {
     if (isName(inPath))
     {
         ISX_THROW(isx::ExceptionDataIO,
                 "There is already an item with the name: ", inPath);
     }
-    std::unique_ptr<Group> g(new Group(inPath, inType));
-    g->m_parent = this;
-    m_groups.push_back(std::move(g));
-    m_modified = true;
-    return m_groups.back().get();
+    std::unique_ptr<Group> group(new Group(inPath, inType));
+    return insertGroup(std::move(group), inIndex);
 }
 
 std::vector<Group *>
@@ -99,6 +100,70 @@ Group::isDataSet(const std::string & inName) const
         }
     }
     return false;
+}
+
+void
+Group::moveGroup(
+        const std::string & inName,
+        Group * inDest,
+        const int inIndex)
+{
+    // In the case of an internal move, we need to do some insert/erase
+    // index adjustment so using indexed for loop instead of iterator
+    for (size_t i = 0; i < m_groups.size(); ++i)
+    {
+        if (m_groups.at(i)->m_name == inName)
+        {
+            size_t eraseIndex = i;
+            int insertIndex = inIndex;
+
+            // An internal move needs some special handling because the size the
+            // vector will temporarily change.
+            if (this == inDest)
+            {
+                // Ignore the identity move
+                if (int(i) == inIndex)
+                {
+                    return;
+                }
+
+                if (inIndex != -1)
+                {
+                    // NOTE sweet : If the insertion index is before the original index,
+                    // then we need to adjust the erasure index by 1 because there will
+                    // be a new element before the original one.
+                    //
+                    // If we didn't do this, then consider these examples.
+                    // groups = {a, b, c}
+                    // move(c, 0) -> {c, a, b, null} -> {c, a, null} != {c, a, b}
+                    // or
+                    // move(c, 1) -> {a, c, b, null} -> {a, c, null} != {a, c, b}
+                    if (inIndex < int(i))
+                    {
+                        eraseIndex = i + 1;
+                    }
+                    // If the insertion index is after the original index, then we need
+                    // to adjust the insertion index by 1 because the insertion occurs
+                    // before the specified index.
+                    //
+                    // If we didn't do this, then consider these examples.
+                    // groups = {a, b, c}
+                    // move(a, 1) -> {null, a, b, c} -> {a, b, c} != {b, a, c}
+                    // or
+                    // move(a, 2) -> {null, b, a, c} -> {b, a, c} != {b, c, a}
+                    else if (inIndex)
+                    {
+                        insertIndex = inIndex + 1;
+                    }
+                }
+            }
+
+            inDest->insertGroup(std::move(m_groups.at(i)), insertIndex);
+            m_groups.erase(m_groups.begin() + eraseIndex);
+            m_modified = true;
+            return;
+        }
+    }
 }
 
 void
@@ -224,7 +289,25 @@ Group::getDataSetFromGroup() const
     }
     return nullptr;
 }
-    
+
+void
+Group::moveDataSet(const std::string & inName, Group * inDest)
+{
+    std::vector<std::unique_ptr<DataSet>>::iterator it;
+    for (it = m_dataSets.begin(); it != m_dataSets.end(); ++it)
+    {
+        if ((*it)->getName() == inName)
+        {
+            (*it)->setParent(inDest);
+            inDest->m_dataSets.push_back(std::move(*it));
+            it = m_dataSets.erase(it);
+            m_modified = true;
+            return;
+        }
+    }
+    ISX_THROW(isx::ExceptionDataIO, "Could not find data set with name: ", inName);
+}
+
 void
 Group::removeDataSet(const std::string & inName)
 {
@@ -252,6 +335,13 @@ std::string
 Group::getName() const
 {
     return m_name;
+}
+
+void
+Group::setName(const std::string & inName)
+{
+    m_name = inName;
+    m_modified = true;
 }
 
 Group *
@@ -376,6 +466,26 @@ Group::isName(const std::string & inName) const
     return false;
 }
 
+int
+Group::getIndex() const
+{
+    int index = -1;
+    if (m_parent == nullptr)
+    {
+        return index;
+    }
+    for (const auto & group : m_parent->m_groups)
+    {
+        ++index;
+        if (group.get() == this)
+        {
+            return index;
+        }
+    }
+    ISX_ASSERT(false, "Non-orphaned child cannot be found in parent.");
+    return index;
+}
+
 bool
 Group::isFileName(const std::string & inFileName)
 {
@@ -390,6 +500,20 @@ Group::isFileName(const std::string & inFileName)
         }
     }
     return false;
+}
+
+Group *
+Group::insertGroup(std::unique_ptr<Group> inGroup, const int inIndex)
+{
+    inGroup->m_parent = this;
+    size_t index = size_t(inIndex);
+    if (inIndex < 0 || index >= m_groups.size())
+    {
+        index = m_groups.size();
+    }
+    auto it = m_groups.insert(m_groups.begin() + index, std::move(inGroup));
+    m_modified = true;
+    return (*it).get();
 }
 
 } // namespace isx

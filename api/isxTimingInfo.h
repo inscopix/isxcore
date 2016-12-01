@@ -102,13 +102,16 @@ public:
     /// \return the start time of the window associated with inIndex
     Time convertIndexToStartTime(isize_t inIndex) const;
 
+    /// \return     True if this overlaps in time with another timing info.
+    ///
+    bool overlapsWith(const TimingInfo & inOther) const;
+
     /// \param  other   The other timing information with which to compare.
     /// \return         True if this is exactly equal to other, false otherwise.
     bool operator ==(const TimingInfo& other) const;
 
     // Overrides
     void serialize(std::ostream& strm) const override;
-
 
     /// Set the object valid/invalid
     /// \param inValid validity flag

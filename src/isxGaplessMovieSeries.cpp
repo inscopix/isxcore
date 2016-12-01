@@ -1,4 +1,5 @@
 #include "isxGaplessMovieSeries.h"
+#include "isxMovieSeries.h"
 #include "isxMovieFactory.h"
 #include "isxException.h"
 
@@ -26,34 +27,22 @@ GaplessMovieSeries::GaplessMovieSeries(const std::vector<std::string> & inFileNa
         {
             return a->getTimingInfo().getStart() < b->getTimingInfo().getStart();
         });
-    
+
     isize_t totalNumTimes = m_movies[0]->getTimingInfo().getNumTimes();
-    
+
     // movies are sorted by start time now, check if they meet requirements
+    const auto & refSi = m_movies[0]->getSpacingInfo();
+    const DataType refDataType = m_movies[0]->getDataType();
     for (isize_t i = 1; i < m_movies.size(); ++i)
     {
         const auto & m = m_movies[i];
-        if (m->getDataType() != m_movies[0]->getDataType())
-        {
-            ISX_THROW(ExceptionDataIO, "GaplessMovieSeries with mismatching DataType: ", m->getFileName());
-        }
+        MovieSeries::checkDataType(refDataType, m->getDataType());
+        MovieSeries::checkSpacingInfo(refSi, m->getSpacingInfo());
 
-        if (!(m->getSpacingInfo() == m_movies[0]->getSpacingInfo()))
-        {
-            ISX_THROW(ExceptionDataIO, "GaplessMovieSeries with mismatching SpacingInfo: ", m->getFileName());
-        }
-        
         const auto & tip = m_movies[i-1]->getTimingInfo();
         const auto & tic = m_movies[i]->getTimingInfo();
-        if (tic.getStart() <= tip.getEnd())
-        {
-            ISX_THROW(ExceptionDataIO, "GaplessMovieSeries with overlapping TimingInfo: ", m->getFileName());
-        }
-        
-        if (tic.getStep() != tip.getStep())
-        {
-            ISX_THROW(ExceptionDataIO, "GaplessMovieSeries with mismatching framerate: ", m->getFileName());
-        }
+        MovieSeries::checkTimingInfo(tip, tic);
+
         totalNumTimes += tic.getNumTimes();
     }
     

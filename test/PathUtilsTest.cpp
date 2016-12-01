@@ -152,3 +152,18 @@ TEST_CASE("PathUtils-getRelativePath", "[core]")
 #endif
 
 }
+
+TEST_CASE("PathUtils-appendNumberToPath")
+{
+
+    SECTION("Width = 2")
+    {
+        REQUIRE(isx::appendNumberToPath("/a/b", 1, 2) == "/a/b_01");
+    }
+
+    SECTION("Width = 3")
+    {
+        REQUIRE(isx::appendNumberToPath("/a/b", 2, 3) == "/a/b_002");
+    }
+
+}

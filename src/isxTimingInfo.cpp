@@ -116,6 +116,14 @@ TimingInfo::convertIndexToStartTime(isize_t inIndex) const
 }
 
 bool
+TimingInfo::overlapsWith(const TimingInfo & inOther) const
+{
+    const bool thisStartsAfterOtherEnds = getStart() >= inOther.getEnd();
+    const bool thisEndsBeforeOtherStarts = getEnd() <= inOther.getStart();
+    return !(thisStartsAfterOtherEnds || thisEndsBeforeOtherStarts);
+}
+
+bool
 TimingInfo::operator ==(const TimingInfo& other) const
 {
     return (m_start == other.m_start)

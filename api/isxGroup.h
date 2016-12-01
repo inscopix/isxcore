@@ -24,8 +24,9 @@ public:
     enum class Type
     {
         GENERAL,        /// A general group just for organization.
-        DATASET,            /// A group that stores a data set and its derived datasets, etc.
-        DERIVED             /// A group that stores derived data sets.
+        DATASET,        /// A group that stores a data set and its derived datasets, etc.
+        DERIVED,        /// A group that stores derived data sets.
+        SERIES,         /// A group that stores a series of data sets that can be processed/visualized as one.
     };
 
     /// Empty constructor.
@@ -52,12 +53,18 @@ public:
     ///
     /// \param  inPath      The path of the data set to create.
     /// \param  inType      The type of group.
+    /// \param  inIndex     The index at which to insert this (if -1 or
+    ///                     greater than the number of elements -1, then
+    ///                     insert at end).
     /// \return             A raw pointer to the new group after
     ///                     it has been added to this group.
     ///
     /// \throw  isx::ExceptionDataIO    If a group with the given name
     ///                                 already exists.
-    Group * createGroup(const std::string & inPath, const Type inType = Type::GENERAL);
+    Group * createGroup(
+            const std::string & inPath,
+            const Type inType = Type::GENERAL,
+            const int inIndex = -1);
 
     /// Get the groups in this group.
     ///
@@ -86,6 +93,20 @@ public:
     /// \param  inName  The name of the data set to check for.
     /// \return         True if the data set exists.
     bool isDataSet(const std::string & inName) const;
+
+    /// Move a sub-group by name to a new group.
+    ///
+    /// \param  inName  The name of the group to remove.
+    /// \param  inDest  The destination group.
+    /// \param  inIndex The index in the destination in which to insert
+    ///                 the sub-group.
+    ///
+    /// \throw  isx::ExceptionDataIO    If there is no data set with the
+    ///                                 given name in this group.
+    void moveGroup(
+            const std::string & inName,
+            Group * inDest,
+            const int inIndex = -1);
 
     /// Remove a sub-group with the given name.
     ///
@@ -159,6 +180,15 @@ public:
     isx::DataSet *
     getDataSetFromGroup() const;
 
+    /// Moves a data set from this group into another.
+    ///
+    /// \param  inName      The name of the data set to remove.
+    /// \param  inDest      The destination group to which to move into.
+    ///
+    /// \throw  isx::ExceptionDataIO    If there is no data set with the
+    ///                                 given name in this group.
+    void moveDataSet(const std::string & inName, Group * inDest);
+
     /// Removes a data set from this group.
     ///
     /// Before removing the group, this sets the parent of the input group
@@ -184,6 +214,10 @@ public:
     ///
     std::string getName() const;
 
+    /// \param  inName  The new name of the group.
+    ///
+    void setName(const std::string & inName);
+
     /// \return     The parent of this group.
     ///
     Group * getParent() const;
@@ -207,6 +241,17 @@ public:
     /// Sets the item flag indicating wehther there are unsaved changes to false.
     ///
     void setUnmodified();
+
+    /// Checks if the name is already taken by a group or data set.
+    ///
+    /// \param  inName  The name to check.
+    /// \return         True if there is already a group or data set with the given name.
+    ///
+    bool isName(const std::string & inName) const;
+
+    /// \return The index of this in its parent, or -1 if it has no parent.
+    ///
+    int getIndex() const;
 
 private:
 
@@ -235,19 +280,19 @@ private:
     ///
     Group * getRootParent();
 
-    /// Checks if the name is already taken by a group or data set.
-    ///
-    /// \param  inName  The name to check.
-    /// \return         True if there is already a group or data set with the given name.
-    ///
-    bool isName(const std::string & inName) const;
-
     /// Checks if the file name is already used by a data set in this group's tree.
     ///
     /// \param  inFileName  The file name to check.
     /// \return             True if this group's tree contains a data set with
     ///                     given file name.
     bool isFileName(const std::string & inFileName);
+
+    /// Insert a group using a signed index.
+    ///
+    /// \param  inIndex     The signed index, where -1 denotes insertion at end.
+    /// \param  inGroup     The group to insert. It must be passed with std::move.
+    /// \return             The unsigned insertion index.
+    Group * insertGroup(std::unique_ptr<Group> inGroup, const int inIndex);
 
 };
 

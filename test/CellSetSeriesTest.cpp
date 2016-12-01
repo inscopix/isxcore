@@ -7,12 +7,6 @@
 #include <array>
 #include <cstring>
 
-
-namespace 
-{
-
-}
-
 TEST_CASE("CellSetSeries", "[core-internal]")
 {
     std::array<const char *, 3> names = 
@@ -118,19 +112,10 @@ TEST_CASE("CellSetSeries", "[core-internal]")
             isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], timingInfos[i], spacingInfos[i]);            
         }
 
-        bool thrown = false;
-        ISX_EXPECT_EXCEPTION();
-        
-        try {
-            isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
-        }
-        catch (const isx::ExceptionDataIO & error)
-        {
-            REQUIRE(std::string(error.what()).compare("CellSetSeries with mismatching SpacingInfo:") > 0);
-            thrown = true;
-        }
-
-        REQUIRE(thrown);  
+        ISX_REQUIRE_EXCEPTION(
+            isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
+            isx::ExceptionSeries,
+            "The spacing info is different than the reference.");
     }
 
     SECTION("Non-compatible set of cellsets - number of cells")
@@ -150,19 +135,10 @@ TEST_CASE("CellSetSeries", "[core-internal]")
             }           
         }
 
-        bool thrown = false;
-        ISX_EXPECT_EXCEPTION();
-        
-        try {
-            isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
-        }
-        catch (const isx::ExceptionDataIO & error)
-        {
-            REQUIRE(std::string(error.what()).compare("CellSetSeries with mismatching number of cells") > 0);
-            thrown = true;
-        }
-
-        REQUIRE(thrown);
+        ISX_REQUIRE_EXCEPTION(
+            isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
+            isx::ExceptionSeries,
+            "CellSetSeries with mismatching number of cells: " + filenames.at(2));
     }
 
     SECTION("Non-compatible set of cellsets - non-overlapping time windows")
@@ -176,20 +152,10 @@ TEST_CASE("CellSetSeries", "[core-internal]")
             isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], tis[i], spacingInfo);            
         }
 
-        bool thrown = false;
-        ISX_EXPECT_EXCEPTION();
-        
-        try {
-            isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
-        }
-        catch (const isx::ExceptionDataIO & error)
-        {
-            REQUIRE(std::string(error.what()).compare("CellSetSeries with overlapping TimingInfo:") > 0);
-            thrown = true;
-        }
-
-        REQUIRE(thrown);
-
+        ISX_REQUIRE_EXCEPTION(
+            isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
+            isx::ExceptionSeries,
+            "The timing info temporally overlaps with the reference.");
     }
 
     SECTION("Non-compatible set of cellsets - framerate")
@@ -207,19 +173,10 @@ TEST_CASE("CellSetSeries", "[core-internal]")
             isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], tis[i], spacingInfo);            
         }
 
-        bool thrown = false;
-        ISX_EXPECT_EXCEPTION();
-        
-        try {
-            isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
-        }
-        catch (const isx::ExceptionDataIO & error)
-        {
-            REQUIRE(std::string(error.what()).compare("CellSetSeries with mismatching framerate: ") > 0);
-            thrown = true;
-        }
-
-        REQUIRE(thrown);
+        ISX_REQUIRE_EXCEPTION(
+            isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
+            isx::ExceptionSeries,
+            "The timing info has a different frame rate than the reference.");
     }
 
     SECTION("Get image")
