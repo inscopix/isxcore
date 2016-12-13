@@ -118,6 +118,8 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
     int64_t requestedPts = timeBaseUnitsForFrames(inFrameNumber) + m_videoPtsStartOffset;
     int64_t deltaFromCurrent = requestedPts - m_lastPktPts;
     int64_t deltaFromExpected = deltaFromCurrent - timeBaseUnitsForFrames(1);
+    ISX_BEHAV_READ_LOG_DEBUG("deltaFromExpected: ", deltaFromExpected, ", thresh: ", int64_t(m_videoPtsFrameDelta.toDouble() + 0.5f));
+    
     bool seeking = false;
     
     if (inFrameNumber == 0)
@@ -126,8 +128,12 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
         avcodec_flush_buffers(m_videoCodecCtx);
         seeking = true;
     }
-    else if (std::abs(deltaFromExpected) > int64_t(m_videoPtsFrameDelta.toDouble() + 0.5f))
+    else if (-deltaFromExpected > timeBaseUnitsForFrames(1)
+           || deltaFromExpected > timeBaseUnitsForFrames(sGopSize))
     {
+        // We get here and start seeking if the next frame is more than one frame
+        // before the expected frame or more than the gop-size after the expected frame
+        
         if (inFrameNumber == m_lastVideoFrameNumber + 1)
         {
             ISX_BEHAV_READ_LOG_DEBUG("Last frame had timestamp for this frame, repeating it.");
@@ -184,7 +190,7 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
             pts = pFrame->pkt_pts;
             if (recvResult == 0)
             {
-                ISX_BEHAV_READ_LOG_DEBUG("    pts: ", pts, "delta: ", requestedPts - pts, ", recvResult: ", recvResult);
+                ISX_BEHAV_READ_LOG_DEBUG("    pts: ", pts, ", delta: ", requestedPts - pts, ", recvResult: ", recvResult);
             }
             else
             {
@@ -209,7 +215,7 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
     ISX_BEHAV_READ_LOG_DEBUG(
         "req: (", inFrameNumber, ")", requestedPts,
         "\tactual: ", pts,
-        "\t-", ptsd, "s",
+        "\(", ptsd, "s)",
         "\tdelta: ", delta, std::abs(delta) > timeBaseUnitsForFrames(1) ? "*" : " ",
         "\t type: ", pictureTypeNames[pFrame->pict_type],
         "\tcpn: ", pFrame->coded_picture_number,
