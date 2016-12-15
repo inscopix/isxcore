@@ -15,11 +15,14 @@ TEST_CASE("TimingInfoTest", "[core]")
         isx::Time start;
         isx::DurationInSeconds step(50, 1000);
         isx::isize_t numTimes = 20;
-        isx::TimingInfo timingInfo(start, step, numTimes);
+        std::vector<isx::isize_t> droppedFrames{4, 7};
+        isx::TimingInfo timingInfo(start, step, numTimes, droppedFrames);
         REQUIRE(timingInfo.getStart() == start);
         REQUIRE(timingInfo.getStep() == step);
         REQUIRE(timingInfo.getNumTimes() == numTimes);
-    }
+        std::vector<isx::isize_t> retrievedDroppedFrames = timingInfo.getDroppedFrames();
+        REQUIRE(retrievedDroppedFrames == droppedFrames);
+     }
 
     SECTION("Get the end time of the samples")
     {
@@ -192,6 +195,43 @@ TEST_CASE("TimingInfoConversionTest", "[core]")
         std::string expected = "TimingInfo(Start=20160620-111000 0 / 1 UTC, "
             "Step=50 / 1000, NumTimes=100)";
         REQUIRE(timingInfo.toString() == expected);
+    }
+
+    SECTION("Adjust indices for dropped frames")
+    {
+        isx::Time start(2016, 6, 20, 11, 10);
+        isx::Ratio step(50, 1000);
+        std::vector<isx::isize_t> dropped{2, 5};
+        isx::isize_t numTimes = 10;
+        isx::TimingInfo ti(start, step, numTimes, dropped);
+
+        REQUIRE(ti.getDroppedCount() == 2);
+        
+        for(isx::isize_t i(0); i < numTimes; ++i)
+        {
+            if(i == 2 || i == 5)
+            {
+                REQUIRE(true == ti.isDropped(i));
+            }
+            else
+            {
+                REQUIRE(false == ti.isDropped(i));
+
+                if(i < 2)
+                {
+                    REQUIRE(i == ti.timeIdxToRecordedIdx(i));
+                }
+                else if(i > 2 && i < 5)
+                {
+                    REQUIRE((i-1) == ti.timeIdxToRecordedIdx(i));                    
+                }
+                else
+                {
+                    REQUIRE((i-2) == ti.timeIdxToRecordedIdx(i));
+                }
+            }
+        }
+
     }
 
 }

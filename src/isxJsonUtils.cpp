@@ -50,6 +50,8 @@ convertTimingInfoToJson(const TimingInfo & inTimingInfo)
     j["numTimes"] = inTimingInfo.getNumTimes();
     j["period"] = convertRatioToJson(inTimingInfo.getStep());
     j["start"] = convertTimeToJson(inTimingInfo.getStart());
+    std::vector<isize_t> droppedFrames = inTimingInfo.getDroppedFrames();
+    j["dropped"] = droppedFrames;
     return j;
 }
 
@@ -59,7 +61,13 @@ convertJsonToTimingInfo(const json & j)
     isize_t numTimes = j["numTimes"];
     DurationInSeconds step = convertJsonToRatio(j["period"]);
     Time start = convertJsonToTime(j["start"]);
-    return TimingInfo(start, step, numTimes);
+    isize_t dropped_present = j.count("dropped");
+    std::vector<isize_t> droppedFrames;
+    if (dropped_present)
+    {
+        droppedFrames = j["dropped"].get<std::vector<isize_t>>();
+    }    
+    return TimingInfo(start, step, numTimes, droppedFrames);
 }
 
 json

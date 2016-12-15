@@ -2,11 +2,14 @@
 #include "isxCore.h"
 #include "catch.hpp"
 #include "isxTest.h"
+#include "isxRecording.h"
+
 
 #include <vector>
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <numeric>
 
 TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
     std::string testFileName = g_resources["unitTestDataPath"] + "/recording_20160426_145041.hdf5";
@@ -59,6 +62,26 @@ TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
     SECTION("toString") {
         isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
         REQUIRE(m->toString() == "/images");
+    }
+
+    SECTION("Get frames corresponding to dropped frames", "[core]")
+    {
+        std::string testXML = g_resources["unitTestDataPath"] + "/recording_20140729_145048.xml";
+        isx::SpRecording_t rXml  = std::make_shared<isx::Recording>(testXML);
+        isx::SpMovie_t mov  = rXml->getMovie();
+
+        isx::TimingInfo movTimingInfo = mov->getTimingInfo();
+        std::vector<isx::isize_t> dropped = movTimingInfo.getDroppedFrames();
+
+        REQUIRE(dropped.size());
+        isx::SpVideoFrame_t vf = mov->getFrame(dropped[0]);
+
+        REQUIRE(vf);
+        uint16_t * pixels = vf->getPixelsAsU16();
+        isx::isize_t totalNumPixels = mov->getSpacingInfo().getTotalNumPixels();
+        std::vector<uint16_t> pixelVec(pixels, pixels + totalNumPixels);
+        uint16_t sum = std::accumulate(pixelVec.begin(), pixelVec.end(), uint16_t(0));
+        REQUIRE(sum == 0);
     }
 
     isx::CoreShutdown();

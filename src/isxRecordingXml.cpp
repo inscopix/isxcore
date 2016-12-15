@@ -7,6 +7,9 @@
 #include <QDateTime>
 
 #include <cmath>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace isx
 {
@@ -35,7 +38,7 @@ namespace isx
             QStringRef name = reader.name();
 
             // Attributes
-            QString start, fps, frames, /*droppedFrames,*/ width, height, downsample, top, left;
+            QString start, fps, frames, droppedFrames, width, height, downsample, top, left;
 
             while (!reader.atEnd())
             {
@@ -85,10 +88,10 @@ namespace isx
                                 {
                                     start = reader.readElementText();
                                 }                           
-                                /*else if (attrs.value("name") == "dropped")
+                                else if (attrs.value("name") == "dropped")
                                 {
                                     droppedFrames = reader.readElementText();
-                                } */                               
+                                }                               
                                 else
                                 {
                                     reader.skipCurrentElement();
@@ -112,12 +115,13 @@ namespace isx
                 
             }
 
+            parseDroppedFrames(droppedFrames, m_droppedFrameNums);
+
             if (!start.isEmpty() &&
                 !fps.isEmpty() &&
-                !frames.isEmpty() /*&&
-                !droppedFrames.isEmpty()*/)
+                !frames.isEmpty())
             {
-                initTimingInfo(start, fps, frames/*, droppedFrames*/);
+                initTimingInfo(start, fps, frames, droppedFrames);
             }
 
             if (!width.isEmpty() &&
@@ -136,6 +140,12 @@ namespace isx
         TimingInfo getTimingInfo()
         {
             return m_timingInfo;
+        }
+
+        const std::vector<isize_t> & 
+        getDroppedFrames() const
+        {
+            return m_droppedFrameNums;
         }
 
         SpacingInfo getSpacingInfo()
@@ -160,9 +170,10 @@ namespace isx
     private: 
         std::vector<std::string> m_hdf5FileNames;
         TimingInfo m_timingInfo;
-        SpacingInfo m_spacingInfo;        
+        SpacingInfo m_spacingInfo;
+        std::vector<isize_t> m_droppedFrameNums;     
 
-        void initTimingInfo(const QString & inStart, const QString & inFps, const QString & inNumFrames/*, const QString & inDroppedFrames*/)
+        void initTimingInfo(const QString & inStart, const QString & inFps, const QString & inNumFrames, const QString & inDroppedFrames)
         {
             Time start;
             DurationInSeconds step;
@@ -206,7 +217,13 @@ namespace isx
             // Convert number of frames
             numTimes = inNumFrames.toULongLong();
 
-            m_timingInfo = TimingInfo(start, step, numTimes);
+            // Convert dropped frames 
+            std::vector<isize_t> droppedFrameNums;
+            parseDroppedFrames(inDroppedFrames, droppedFrameNums);
+
+            numTimes += droppedFrameNums.size();
+
+            m_timingInfo = TimingInfo(start, step, numTimes, droppedFrameNums);
 
         }
 
@@ -227,6 +244,24 @@ namespace isx
 
             m_spacingInfo = SpacingInfo(numPixels, pixelSize, topLeft);
 
+        }
+
+        void parseDroppedFrames(const QString & inDroppedFrames, std::vector<isize_t> & outFrameNums)
+        {
+            outFrameNums.clear();      
+
+            // Remove the brackets from the ends
+            std::string droppedFramesStd = inDroppedFrames.toStdString();
+            std::string noBrackets = droppedFramesStd.substr(1, droppedFramesStd.size()-2);
+
+            // Split string (comma-separated values)
+            std::stringstream ss(noBrackets);
+            std::string s;    
+            char delim = ',';
+            while (std::getline(ss, s, delim)) 
+            {                
+                outFrameNums.push_back((isize_t)std::stoull(s));
+            }
         }
     };
 
@@ -251,6 +286,11 @@ namespace isx
     RecordingXml::getTimingInfo()
     {
         return m_pImpl->getTimingInfo();
+    }
+    const std::vector<isize_t> & 
+    RecordingXml::getDroppedFrames() const
+    {
+        return m_pImpl->getDroppedFrames();
     }
 
     SpacingInfo 

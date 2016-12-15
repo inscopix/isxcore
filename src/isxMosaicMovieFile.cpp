@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 
 #include <fstream>
+#include <cstring>
 
 namespace isx
 {
@@ -63,9 +64,7 @@ MosaicMovieFile::isValid() const
 SpVideoFrame_t
 MosaicMovieFile::readFrame(isize_t inFrameNumber)
 {
-    std::ifstream file(m_fileName, std::ios::binary);
-    seekForReadFrame(file, inFrameNumber);
-
+    const TimingInfo & ti = getTimingInfo();
     // TODO sweet : check to see if frame number exceeds number of frames
     // instead of returning the last frame.
     SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
@@ -73,8 +72,20 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
         getRowSizeInBytes(),
         1,
         m_dataType,
-        getTimingInfo().convertIndexToStartTime(inFrameNumber),
+        ti.convertIndexToStartTime(inFrameNumber),
         inFrameNumber);
+
+    if(ti.isDropped(inFrameNumber))
+    {
+        /// TODO: salpert 12/7/2016 return a placeholder frame displaying "No Data" or something similar
+        std::memset(outFrame->getPixels(), 0, outFrame->getImageSizeInBytes());
+        return outFrame;
+    }
+
+    // The frame was not dropped, shift frame numbers and proceed to read
+    isize_t newFrameNumber = ti.timeIdxToRecordedIdx(inFrameNumber);
+    std::ifstream file(m_fileName, std::ios::binary);
+    seekForReadFrame(file, newFrameNumber);
 
     file.read(outFrame->getPixels(), getFrameSizeInBytes());
 
@@ -89,31 +100,8 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
 void
 MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
 {
-    isize_t currentFileSize{ 0 };
-
-#if ISX_OS_WIN32
-    struct __stat64 st;
-    if (_stat64(m_fileName.c_str(), &st) == -1)
-    {
-        ISX_THROW(isx::ExceptionFileIO, "stat failed with ", errno);
-    }
-    currentFileSize = isize_t(st.st_size);
-#else
-    struct stat st;
-    if (stat(m_fileName.c_str(), &st) == -1)
-    {
-        ISX_THROW(isx::ExceptionFileIO, "stat failed with ", errno);
-    }
-    currentFileSize = isize_t(st.st_size);
-#endif
-
+    
     std::ofstream file(m_fileName, std::ios::binary | std::ios::app);
-
-    if (currentFileSize != inVideoFrame->getFrameIndex() * getFrameSizeInBytes() + m_headerOffset)
-    {
-        ISX_LOG_ERROR("MosaicMovieFile::writeFrame: Attempt to write frames out of order.");
-        ISX_ASSERT(false);
-    }
 
     const DataType frameDataType = inVideoFrame->getDataType();
     if (frameDataType == m_dataType)

@@ -26,10 +26,11 @@ public:
 
     /// Fully specified constructor.
     ///
-    /// \param start    The start time of the samples.
-    /// \param step     The duration of one sample in seconds.
-    /// \param numTimes The number of samples.
-    TimingInfo(const Time & start, const DurationInSeconds & step, isize_t numTimes);
+    /// \param start            The start time of the samples.
+    /// \param step             The duration of one sample in seconds.
+    /// \param numTimes         The number of samples.
+    /// \param droppedFrames    A vector containing frame numbers that were dropped
+    TimingInfo(const Time & start, const DurationInSeconds & step, isize_t numTimes, const std::vector<isize_t> & droppedFrames = std::vector<isize_t>());
 
     /// Get the start time of the samples.
     ///
@@ -121,9 +122,28 @@ public:
     ///
     bool isValid() const;
 
+    /// \return the vector of dropped frame numbers
+    ///
+    const std::vector<isize_t> & getDroppedFrames() const;
+
+    /// \return the number of dropped frames
+    /// Provided for convenience. Same as getDroppedFrames().size();
+    isize_t getDroppedCount() const;
+
+    /// \return whether a time index corresponds to a dropped data point
+    /// \param inIndex the time sample index ranging from [0- (getNumTimes()-1)]
+    bool isDropped(isize_t inIndex) const;
+
+    /// Converts a time index in the range [0- (getNumTimes()-1)] to the corresponding
+    /// index in the file, accounting for dropped frames in the nVista system
+    /// \return the corresponding index as recorded in the file 
+    /// \param inIndex the time index
+    isize_t timeIdxToRecordedIdx(isize_t inIndex) const;
+
     /// \return a TimingInfo object initialized with default values
-    /// \param inFrames
-    static TimingInfo getDefault(isize_t inFrames);
+    /// \param inFrames total number of frames
+    /// \param inDroppedFrames a vector of dropped frame numbers
+    static TimingInfo getDefault(isize_t inFrames, const std::vector<isize_t> & inDroppedFrames);
 
 private:
 
@@ -138,6 +158,9 @@ private:
 
     /// Whether the object is valid or not
     bool m_isValid = false;
+
+    /// A vector of frame numbers indicating dropped frames
+    std::vector<isize_t> m_droppedFrames;
 
 }; // class
 

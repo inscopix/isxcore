@@ -150,7 +150,7 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
         };
     m_ioTaskTracker->schedule(getFrameCB, inCallback);
 }
-    
+
 void
 MosaicMovie::cancelPendingReads()
 {
@@ -160,6 +160,13 @@ MosaicMovie::cancelPendingReads()
 void
 MosaicMovie::writeFrame(const SpVideoFrame_t & inVideoFrame)
 {
+    const TimingInfo & ti = getTimingInfo();
+    if(ti.isDropped(inVideoFrame->getFrameIndex()))
+    {
+        ISX_LOG_WARNING("Attempt to write frame that is dropped.");
+        return;
+    }
+
     // Get a new shared pointer to the file, so we can guarantee the write.
     std::shared_ptr<MosaicMovieFile> file = m_file;
     Mutex mutex;

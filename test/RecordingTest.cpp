@@ -95,6 +95,19 @@ TEST_CASE("RecordingTest", "[core]") {
         REQUIRE(xmlSpacingInfo == movSpacingInfo);
 
     }
+
+    SECTION("Load recording XML - Read dropped frames from XML", "[core]")
+    {
+        std::string testXML = g_resources["unitTestDataPath"] + "/recording_20140729_145048.xml";
+        isx::SpRecording_t rXml  = std::make_shared<isx::Recording>(testXML);
+        isx::SpMovie_t mov  = rXml->getMovie();
+
+        isx::TimingInfo movTimingInfo = mov->getTimingInfo();
+        std::vector<isx::isize_t> movDroppedFrames = movTimingInfo.getDroppedFrames();
+        std::vector<isx::isize_t> xmlDroppedFrames {20, 30, 31, 32, 33, 34};
+        REQUIRE(movDroppedFrames == xmlDroppedFrames);
+
+    }
     isx::CoreShutdown();
 
 }

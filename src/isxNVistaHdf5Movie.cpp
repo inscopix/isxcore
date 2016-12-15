@@ -11,6 +11,7 @@
 #include <mutex>
 #include <memory>
 #include <cmath>
+#include <cstring>
 
 namespace isx
 {
@@ -24,19 +25,21 @@ NVistaHdf5Movie::NVistaHdf5Movie(
     const std::string &inFileName,
     const SpHdf5FileHandle_t & inHdf5FileHandle,
     const TimingInfo & inTimingInfo,
-    const SpacingInfo & inSpacingInfo)
+    const SpacingInfo & inSpacingInfo,
+    const std::vector<isize_t> & inDroppedFrames)
     : m_ioTaskTracker(new IoTaskTracker())
 {
     std::vector<SpH5File_t> files(1, inHdf5FileHandle->get());
 
-    initialize(inFileName, files, inTimingInfo, inSpacingInfo);
+    initialize(inFileName, files, inTimingInfo, inSpacingInfo, inDroppedFrames);
 }
 
 NVistaHdf5Movie::NVistaHdf5Movie(
     const std::string &inFileName,
     const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
     const TimingInfo & inTimingInfo,
-    const SpacingInfo & inSpacingInfo)
+    const SpacingInfo & inSpacingInfo, 
+    const std::vector<isize_t> & inDroppedFrames)
     : m_ioTaskTracker(new IoTaskTracker())
 {
     std::vector<SpH5File_t> files;
@@ -45,7 +48,7 @@ NVistaHdf5Movie::NVistaHdf5Movie(
         files.push_back(inHdf5FileHandles[i]->get());
     }
 
-    initialize(inFileName, files, inTimingInfo, inSpacingInfo);
+    initialize(inFileName, files, inTimingInfo, inSpacingInfo, inDroppedFrames);
 }
 
 bool
@@ -146,7 +149,8 @@ NVistaHdf5Movie::initialize(
     const std::string & inFileName,
     const std::vector<SpH5File_t> & inHdf5Files,
     const TimingInfo & inTimingInfo,
-    const SpacingInfo & inSpacingInfo)
+    const SpacingInfo & inSpacingInfo,
+    const std::vector<isize_t> & inDroppedFrames)
 {
     ISX_ASSERT(inHdf5Files.size());
 
@@ -177,7 +181,7 @@ NVistaHdf5Movie::initialize(
     }
     else
     {
-        initTimingInfo(inHdf5Files);
+        initTimingInfo(inHdf5Files, inDroppedFrames);
     }
 
     if (inSpacingInfo.isValid())
@@ -194,12 +198,14 @@ NVistaHdf5Movie::initialize(
 }
 
 void
-NVistaHdf5Movie::initTimingInfo(const std::vector<SpH5File_t> & inHdf5Files)
+NVistaHdf5Movie::initTimingInfo(const std::vector<SpH5File_t> & inHdf5Files, const std::vector<isize_t> & inDroppedFrames)
 {
-    if (readTimingInfo(inHdf5Files) == false)
+    if (readTimingInfo(inHdf5Files, inDroppedFrames) == false)
     {
         // If we cannot read the timing info, use default values
-        m_timingInfos = TimingInfos_t{TimingInfo::getDefault(m_cumulativeFrames[m_cumulativeFrames.size() - 1])};
+        isize_t numFrames = m_cumulativeFrames[m_cumulativeFrames.size() - 1] + inDroppedFrames.size();
+        TimingInfo defaultTi = TimingInfo::getDefault(numFrames, inDroppedFrames);
+        m_timingInfos = TimingInfos_t{defaultTi};
     }    
 }
 
@@ -215,6 +221,7 @@ NVistaHdf5Movie::initSpacingInfo(const std::vector<SpH5File_t> & inHdf5Files)
 SpVideoFrame_t
 NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber)
 {
+    TimingInfo & ti = m_timingInfos[0];
     SpacingInfo si = getSpacingInfo();
     auto outFrame = std::make_shared<VideoFrame>(
         si,
@@ -223,9 +230,17 @@ NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber)
         getDataType(),
         getTimingInfo().convertIndexToStartTime(inFrameNumber),
         inFrameNumber);
+    
+    if(ti.isDropped(inFrameNumber))
+    {
+        /// TODO: salpert 12/7/2016 return a placeholder frame displaying "No Data" or something similar
+        std::memset(outFrame->getPixels(), 0, outFrame->getImageSizeInBytes());
+        return outFrame;
+    }
 
-    isize_t newFrameNumber = inFrameNumber;
-    isize_t idx = getMovieIndex(inFrameNumber);
+    // The frame was not dropped, shift frame numbers and proceed to read
+    isize_t newFrameNumber = ti.timeIdxToRecordedIdx(inFrameNumber);
+    isize_t idx = getMovieIndex(newFrameNumber);
     if (idx > 0)
     {
         newFrameNumber = inFrameNumber - m_cumulativeFrames[idx - 1];
@@ -237,7 +252,7 @@ NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber)
 }
 
 bool
-NVistaHdf5Movie::readTimingInfo(std::vector<SpH5File_t> inHdf5Files)
+NVistaHdf5Movie::readTimingInfo(std::vector<SpH5File_t> inHdf5Files, const std::vector<isize_t> & inDroppedFrames)
 {
     H5::DataSet timingInfoDataSet;
     hsize_t totalNumFrames = 0;
@@ -299,11 +314,12 @@ NVistaHdf5Movie::readTimingInfo(std::vector<SpH5File_t> inHdf5Files)
 
     if (bInitializedFromFile)
     {
+        totalNumFrames += inDroppedFrames.size();               /// Account for lost frames
         totalDurationInSecs *= 1000.0 / double(totalNumFrames);
 
         isx::DurationInSeconds step = isx::DurationInSeconds(isize_t(std::round(totalDurationInSecs)), 1000);
         isx::Time start = isx::Time(startTime);
-        m_timingInfos = TimingInfos_t{isx::TimingInfo(start, step, totalNumFrames)};
+        m_timingInfos = TimingInfos_t{isx::TimingInfo(start, step, totalNumFrames, inDroppedFrames)};
     }
 
     return bInitializedFromFile;

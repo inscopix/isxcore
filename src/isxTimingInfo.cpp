@@ -1,5 +1,6 @@
 #include "isxTimingInfo.h"
 #include <cmath>
+#include <algorithm>
 
 namespace isx
 {
@@ -8,11 +9,13 @@ TimingInfo::TimingInfo()
 {
 }
 
-TimingInfo::TimingInfo(const Time & start, const DurationInSeconds & step, isize_t numTimes)
+TimingInfo::TimingInfo(const Time & start, const DurationInSeconds & step, isize_t numTimes, const std::vector<isize_t> & droppedFrames)
 : m_start(start)
 , m_step(step)
 , m_numTimes(numTimes)
+, m_droppedFrames(droppedFrames)
 {
+    std::sort(m_droppedFrames.begin(), m_droppedFrames.end());
     m_isValid = true;
 }
 
@@ -128,7 +131,8 @@ TimingInfo::operator ==(const TimingInfo& other) const
 {
     return (m_start == other.m_start)
         && (m_step == other.m_step)
-        && (m_numTimes == other.m_numTimes);
+        && (m_numTimes == other.m_numTimes)
+        && (m_droppedFrames == other.m_droppedFrames);
 }
 
 void
@@ -155,12 +159,50 @@ TimingInfo::isValid() const
     return m_isValid;
 }
 
+const std::vector<isize_t> & 
+TimingInfo::getDroppedFrames() const
+{
+    return m_droppedFrames;
+}
+
+isize_t
+TimingInfo::getDroppedCount() const
+{
+    return m_droppedFrames.size();
+}
+
+bool 
+TimingInfo::isDropped(isize_t inIndex) const
+{
+    auto & df = m_droppedFrames;
+    return std::binary_search(df.begin(), df.end(), inIndex);    
+}
+
+
+isize_t 
+TimingInfo::timeIdxToRecordedIdx(isize_t inIndex) const
+{
+    /// ISX_ASSERT(!isDropped(inIndex))? inIndex should not be a dropped index but I don't want to perform this 
+    /// search for every requested frame (for the second time). 
+    auto it = std::find_if(
+        m_droppedFrames.begin(),
+        m_droppedFrames.end(),
+        [&inIndex](const isize_t &index)
+        { return index > inIndex; });
+
+    isize_t numDroppedBefore = it - m_droppedFrames.begin();
+    isize_t recordedIdx = inIndex - numDroppedBefore;
+    
+    return recordedIdx;
+}
+
+
 TimingInfo 
-TimingInfo::getDefault(isize_t inFrames)
+TimingInfo::getDefault(isize_t inFrames, const std::vector<isize_t> & inDroppedFrames)
 {
     Time start;                       // Default to Unix epoch
     DurationInSeconds step(50, 1000); // Default to 20Hz
-    return TimingInfo(start, step, inFrames);
+    return TimingInfo(start, step, inFrames, inDroppedFrames);
 }
 
 } // namespace

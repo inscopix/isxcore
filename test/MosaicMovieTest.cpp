@@ -200,6 +200,51 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
         }
     }
 
+    SECTION("Read/Write movie with dropped frames")
+    {
+        std::vector<isx::isize_t> dropped{2, 4};
+        isx::TimingInfo ti(start, step, numFrames, dropped);
+
+        auto movie = std::make_shared<isx::MosaicMovie>(
+                fileName, ti, spacingInfo, dataType);
+    
+        isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
+        for (isx::isize_t f = 0; f < numFrames; ++f)
+        {
+            if(f == 2 || f == 4)
+            {
+                continue;
+            }
+
+            auto frame = std::make_shared<isx::VideoFrame>(
+                spacingInfo,
+                sizeof(uint16_t) * sizePixels.getWidth(),
+                1,
+                dataType,
+                timingInfo.convertIndexToStartTime(f),
+                f);
+            std::fill(frame->getPixelsAsU16(), frame->getPixelsAsU16() + numPixels, 0xCAFE);
+            movie->writeFrame(frame);
+        }
+
+        for (isx::isize_t f = 0; f < numFrames; ++f)
+        {
+            isx::SpVideoFrame_t frame = movie->getFrame(f);
+            uint16_t * frameBuf = frame->getPixelsAsU16();
+            for (isx::isize_t p = 0; p < numPixels; ++p)
+            {
+                if(f == 2 || f == 4)
+                {
+                    REQUIRE(frameBuf[p] == 0x0000);
+                }
+                else
+                {
+                    REQUIRE(frameBuf[p] == 0xCAFE);
+                }
+            }
+        }
+    }
+
     isx::CoreShutdown();
 }
 

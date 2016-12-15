@@ -33,10 +33,12 @@ public:
     /// \param inHdf5FileHandle opaque HDF5 file handles
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
+    /// \param inDroppedFrames the list of frame numbers that were dropped (from external source such as xml)
     NVistaHdf5Movie(const std::string &inFileName,
         const SpHdf5FileHandle_t & inHdf5FileHandle,
         const TimingInfo & inTimingInfo = TimingInfo(),
-        const SpacingInfo & inSpacingInfo = SpacingInfo());
+        const SpacingInfo & inSpacingInfo = SpacingInfo(),
+        const std::vector<isize_t> & inDroppedFrames = std::vector<isize_t>());
 
     /// Construct a new movie from vector of existing HDF5 datasets
     ///
@@ -44,10 +46,12 @@ public:
     /// \param inHdf5FileHandles vector of opaque HDF5 file handles
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
+    /// \param inDroppedFrames the list of frame numbers that were dropped (from external source such as xml)
     NVistaHdf5Movie(const std::string &inFileName,
         const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
         const TimingInfo & inTimingInfo = TimingInfo(),
-        const SpacingInfo & inSpacingInfo = SpacingInfo());
+        const SpacingInfo & inSpacingInfo = SpacingInfo(),
+        const std::vector<isize_t> & inDroppedFrames = std::vector<isize_t>());
 
     // Overrides
     bool
@@ -106,14 +110,16 @@ private:
     /// \param inHdf5Files List of files containing the movie data
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
+    /// \param inDroppedFrames the list of frame numbers that were dropped (from external source such as xml)
     void initialize(const std::string & inFileName,
         const std::vector<SpH5File_t> & inHdf5Files,
         const TimingInfo & inTimingInfo,
-        const SpacingInfo & inSpacingInfo);
+        const SpacingInfo & inSpacingInfo,
+        const std::vector<isize_t> & inDroppedFrames);
 
     /// Initialize timing info from the HDF5
     ///
-    void initTimingInfo(const std::vector<SpH5File_t> & inHdf5Files);
+    void initTimingInfo(const std::vector<SpH5File_t> & inHdf5Files, const std::vector<isize_t> & inDroppedFrames);
 
     /// Initialize timing info from the HDF5
     ///
@@ -131,7 +137,7 @@ private:
     ///
     /// \return     True if successful, false otherwise.
     bool
-    readTimingInfo(std::vector<SpH5File_t> inHdf5Files);
+    readTimingInfo(std::vector<SpH5File_t> inHdf5Files, const std::vector<isize_t> & inDroppedFrames);
 
     /// Read the spacing info of this from the HDF5 movie files.
     ///

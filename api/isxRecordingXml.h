@@ -31,6 +31,10 @@ namespace isx {
         /// \return the timing Info
         ///
         TimingInfo getTimingInfo();
+
+        /// \return the vector of dropped frame numbers
+        ///
+        const std::vector<isize_t> & getDroppedFrames() const;
         
         /// \return the spacing info
         ///
