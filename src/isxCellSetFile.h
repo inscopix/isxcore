@@ -138,6 +138,12 @@ private:
     /// The cell names
     std::vector<std::string> m_cellNames;
 
+    /// The file stream
+    std::fstream m_file;
+
+    /// The stream open mode
+    std::ios_base::openmode m_openmode;
+
     /// Read the header to populate information about the cell set.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the header from the file fails.
@@ -156,16 +162,14 @@ private:
 
     /// Write the header containing information about the cell set.
     ///
-    /// \param inTruncate - If true, the file will be truncated before writing the file.
     /// \throw  isx::ExceptionFileIO    If writing the cell set file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the cell set data fails.
-    void writeHeader(bool inTruncate);
+    void writeHeader();
     
     /// Seek to a specific cell in the file
     /// \param inCellId the cell ID
-    /// \param file the file stream to use
     /// \throw  isx::ExceptionFileIO    If seeking to a unexistent cell or reading fails.
-    void seekToCell(isize_t inCellId, std::fstream &file);
+    void seekToCell(isize_t inCellId);
 
 
     /// \return the size of the cell ID in bytes (in the cell header)
@@ -195,6 +199,10 @@ private:
     /// \return the size of the cell header in bytes (in the cell header)
     ///
     isize_t cellHeaderSizeInBytes();
+
+    /// Flush the stream
+    ///
+    void flush();
 
 
 };

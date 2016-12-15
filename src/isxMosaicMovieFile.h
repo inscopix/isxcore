@@ -8,6 +8,7 @@
 #include "isxSpacingInfo.h"
 
 #include <ios>
+#include <fstream>
 
 namespace isx
 {
@@ -55,6 +56,10 @@ public:
                 const TimingInfo & inTimingInfo,
                 const SpacingInfo & inSpacingInfo,
                 DataType inDataType);
+
+    /// Default destructor
+    ///
+    ~MosaicMovieFile();
 
     /// \return True if the movie file is valid, false otherwise.
     ///
@@ -144,6 +149,9 @@ private:
     /// The data type of the pixel values.
     DataType m_dataType;
 
+    /// The file stream
+    std::fstream m_file;
+
     /// Read the header to populate information about the movie.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the header from the file fails.
@@ -154,12 +162,6 @@ private:
     ///
     /// This truncates the file when opening it.
     void writeHeader();
-
-    /// Writes zero data to a file for initialization purposes.
-    ///
-    /// This seeks to the location in the file just after the header and
-    /// writes from there.
-    void writeZeroData();
 
     /// \return     The size of a pixel value in bytes.
     ///
@@ -175,21 +177,13 @@ private:
 
     /// Seek to the location of a frame for reading.
     ///
-    /// \param  inFile          The input file stream whose input position
-    ///                         will be modified to be at the given frame number.
     /// \param  inFrameNumber   The number of the frame to which to seek.
-    void seekForReadFrame(
-            std::ifstream & inFile,
-            isize_t inFrameNumber);
+    void seekForReadFrame(isize_t inFrameNumber);
 
-    /// Seek to the location of a frame for writing.
+    /// Flush the stream
     ///
-    /// \param  inFile          The output file stream whose output position
-    ///                         will be modified to be at the given frame number.
-    /// \param  inFrameNumber   The number of the frame to which to seek.
-    void seekForWriteFrame(
-            std::ofstream & inFile,
-            isize_t inFrameNumber);
+    void flush();
+
 };
 
 }
