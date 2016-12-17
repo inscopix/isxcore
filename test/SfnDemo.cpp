@@ -138,6 +138,62 @@ TEST_CASE("SfnDemo", "[data][!hide]")
         project.save();
     }
 
+    SECTION("Project for SfN demo - DF/F nVista movies with PCA/ICA cell sets")
+    {
+        const std::string fileName = dataDir + "/project-sfn_demo_dff_pcaica.isxp";
+        std::remove(fileName.c_str());
+        isx::Project project(fileName, "SfN 2016 Demo");
+        
+        for (const auto group : groups)
+        {
+            const std::string groupPath = group.first;
+            project.createGroup(groupPath, isx::Group::Type::SERIES);
+            for (const auto & name : group.second)
+            {
+                const std::string movieName = name + "-mc_DFF";
+                const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
+                REQUIRE(isx::pathExists(movieFile));
+                const std::string moviePath = groupPath + "/" + movieName;
+                const std::string cellSetFile = procDataDir + "/" + name + "-pca_ica.isxd";
+                REQUIRE(isx::pathExists(cellSetFile));
+                project.createDataSet(
+                                      moviePath,
+                                      isx::DataSet::Type::MOVIE,
+                                      movieFile,
+                                      {
+                                          {isx::DataSet::PROP_DATA_MIN, dffMin},
+                                          {isx::DataSet::PROP_DATA_MAX, dffMax},
+                                          {isx::DataSet::PROP_VIS_MIN, 0.f},
+                                          {isx::DataSet::PROP_VIS_MAX, 1.f}
+                                      }
+                                      );
+                project.createDataSet(
+                                      moviePath + "/derived/PCA-ICA",
+                                      isx::DataSet::Type::CELLSET,
+                                      cellSetFile);
+                
+                // NOTE sweet : also check that timing/spacing info is consistent
+                if (isx::pathExists(movieFile) && isx::pathExists(cellSetFile))
+                {
+                    isx::SpMovie_t movie = isx::readMovie(movieFile);
+                    auto cellSet = isx::readCellSet(cellSetFile);
+                    REQUIRE(movie->getTimingInfo() == cellSet->getTimingInfo());
+                    REQUIRE(movie->getSpacingInfo() == cellSet->getSpacingInfo());
+                }
+            }
+        }
+        
+        for (const auto & bms : behavioralMovies)
+        {
+            const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
+            REQUIRE(isx::pathExists(movieFile));
+            const std::string moviePath = "/" + bms;
+            project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile);
+        }
+        
+        project.save();
+    }
+    
 }
 
 TEST_CASE("SfnDemoOrig", "[data][!hide]")
