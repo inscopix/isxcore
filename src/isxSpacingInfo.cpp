@@ -92,14 +92,14 @@ SpacingInfo::convertPixelsToPointInMicrons(const PointInPixels_t & inPoint) cons
     Ratio xMicrons = m_topLeft.getX();
     if (m_numPixels.getX() > 0)
     {
-        isize_t xPixels = std::min(inPoint.getX(), m_numPixels.getX() - 1);
+        auto xPixels = std::min(inPoint.getX(), int64_t(m_numPixels.getX()) - 1);
         xMicrons = xMicrons + (m_pixelSize.getX() * xPixels);
     }
 
     Ratio yMicrons = m_topLeft.getY();
     if (m_numPixels.getY() > 0)
     {
-        isize_t yPixels = std::min(inPoint.getY(), m_numPixels.getY() - 1);
+        auto yPixels = std::min(inPoint.getY(), int64_t(m_numPixels.getY()) - 1);
         yMicrons = yMicrons + (m_pixelSize.getY() * yPixels);
     }
 

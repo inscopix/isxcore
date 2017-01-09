@@ -18,7 +18,7 @@ namespace isx
 // like pixel translations.
 typedef SpatialVector<int64_t> VectorInPixels_t;
 typedef SpatialSize<isize_t> SizeInPixels_t;
-typedef SpatialPoint<isize_t> PointInPixels_t;
+typedef SpatialPoint<int64_t> PointInPixels_t;
 
 // Vectors, sizes and points in microns.
 typedef SpatialVector<Ratio> VectorInMicrons_t;

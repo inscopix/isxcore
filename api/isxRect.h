@@ -15,7 +15,7 @@ struct Rect
     /// convenience constructor 
     /// \param inTopLeft                top left corner in pixels
     /// \param inBottomRight            bottom right corner in pixels
-    Rect(const SpatialPoint<isize_t> & inTopLeft, const SpatialPoint<isize_t> & inBottomRight)
+    Rect(const SpatialPoint<int64_t> & inTopLeft, const SpatialPoint<int64_t> & inBottomRight)
         : m_topLeft(inTopLeft)
         , m_bottomRight(inBottomRight)
     {}
@@ -30,11 +30,11 @@ struct Rect
 
     /// \return the location of the top left corner in the x axis for the cropping rectangle in pixels
     ///
-    isize_t x() const;
+    int64_t x() const;
 
     /// \return the location of the top left corner in the y axis for the cropping rectangle in pixels
     ///
-    isize_t y() const;
+    int64_t y() const;
 
     /// Exact comparison with another rectangle.
     ///
@@ -42,8 +42,8 @@ struct Rect
     /// \return             True if this is exactly equal to the other rectangle.
     bool operator ==(const Rect & inOther) const;
 
-    SpatialPoint<isize_t> m_topLeft;        ///< top left point of the rectangle
-    SpatialPoint<isize_t> m_bottomRight;    ///< bottom right point of the rectangle
+    SpatialPoint<int64_t> m_topLeft;        ///< top left point of the rectangle
+    SpatialPoint<int64_t> m_bottomRight;    ///< bottom right point of the rectangle
 };
 
 } // namespace isx
