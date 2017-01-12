@@ -1,6 +1,7 @@
 #ifndef ISX_LOG_H
 #define ISX_LOG_H
 
+#include "isxLogger.h"
 #include <iostream>
 #include <sstream>
 #include <utility>
@@ -88,11 +89,16 @@ void log_(Rest && ...rest)
     {
         std::cout << str;
         std::cout << std::flush;
-    }
+    }    
 #else
     std::cout << str;
     std::cout << std::flush;
 #endif
+    Logger * logger = Logger::instance();
+    if(logger)
+    {
+        logger->log(str);
+    }
 }
 
 /// Strips the leading directory name from a file name.

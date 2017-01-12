@@ -23,7 +23,11 @@ IoTask::cancel()
 void 
 IoTask::schedule() 
 {
-    IoQueue::instance()->enqueue(shared_from_this());
+    IoQueue * q = IoQueue::instance();
+    if (q)
+    {
+        q->enqueue(shared_from_this());
+    }
 }
 
 AsyncTaskStatus

@@ -36,7 +36,7 @@ namespace isx
             std::ostream & inStream,
             DataType inDataType);
 
-    void CoreInitialize();
+    void CoreInitialize(const std::string & inLogFileName = std::string());
     bool CoreIsInitialized();
     void CoreShutdown();
 

@@ -150,7 +150,6 @@ IoQueue::isInitialized()
 IoQueue *
 IoQueue::instance()
 {
-    ISX_ASSERT(isInitialized());
     if (isInitialized())
     {
         return s_instance.get();

@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <map>
-#include <functional>
+
 
 namespace isx
 {
