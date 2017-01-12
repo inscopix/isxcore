@@ -205,5 +205,9 @@ void Variant::operator = (const Variant & right)
     *m_pImpl = *(right.m_pImpl);
 }
 
+template void Variant::setValue<float>(const float &);
+template void Variant::setValue<Time>(const Time &);
+template float Variant::value<float>() const;
+template Time Variant::value<Time>() const;
 
 } // namespace isx
