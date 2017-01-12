@@ -4,6 +4,7 @@
 #include "isxGroup.h"
 #include "isxProject.h"
 #include "isxMovieFactory.h"
+#include "isxVariant.h"
 
 #include "catch.hpp"
 
@@ -20,7 +21,7 @@ TEST_CASE("DataSetTest", "[core]")
     SECTION("Construct a movie data set")
     {
         isx::DataSet::Properties properties;
-        properties["test"] = 1.0f;
+        properties["test"] = isx::Variant(1.0f);
         isx::DataSet dataSet("myMovie", isx::DataSet::Type::MOVIE, "myMovie.isxd", properties);
 
         REQUIRE(dataSet.isValid());
@@ -28,9 +29,9 @@ TEST_CASE("DataSetTest", "[core]")
         REQUIRE(dataSet.getName() == "myMovie");
         REQUIRE(!dataSet.getParent());
         REQUIRE(dataSet.getPath() == "myMovie");
-        float value;
+        isx::Variant value;
         REQUIRE(dataSet.getPropertyValue("test", value));
-        REQUIRE(value == 1.0f);
+        REQUIRE(value.value<float>() == 1.0f);
     }
 
     SECTION("Construct a movie data set then set parent group")
@@ -111,7 +112,7 @@ TEST_CASE("DataSetToFromJson", "[core]")
     const isx::DataSet::Type dsType = isx::DataSet::Type::MOVIE;
     const std::string dsFileNameInput = "myMovie.isxd";
     const std::string propKey = "test";
-    const float propValue = 1.f;
+    const isx::Variant propValue(1.f);
     isx::DataSet::Properties properties;
     properties[propKey] = propValue;
 
@@ -176,7 +177,7 @@ TEST_CASE("DataSetToFromJson", "[core]")
     SECTION("ToJson - original and derived")
     {
         std::string js = isx::DataSet::toJsonString(dsPath, dataSets, derivedDataSets);
-        REQUIRE(js == derived_expected);
+        REQUIRE(js == derived_expected); 
     }
 
     SECTION("FromJson - original and derived")
@@ -225,7 +226,7 @@ TEST_CASE("DataSetGroupToFromJson", "[core]")
     const isx::DataSet::Type dsType0 = isx::DataSet::Type::MOVIE;
     const std::string dsFileNameInput0 = "myMovie0.isxd";
     const std::string propKey0 = "test0";
-    const float propValue0 = 1.f;
+    const isx::Variant propValue0(1.f);
     isx::DataSet::Properties properties0;
     properties0[propKey0] = propValue0;
 
@@ -252,7 +253,7 @@ TEST_CASE("DataSetGroupToFromJson", "[core]")
     const isx::DataSet::Type dsType1 = isx::DataSet::Type::MOVIE;
     const std::string dsFileNameInput1 = "myMovie1.isxd";
     const std::string propKey1 = "test1";
-    const float propValue1 = 1.1f;
+    const isx::Variant propValue1(1.1f);
     isx::DataSet::Properties properties1;
     properties1[propKey1] = propValue1;
 

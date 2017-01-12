@@ -31,10 +31,11 @@ public:
     /// This opens an existing movie from a file.
     ///
     /// \param  inFileName  The name of the movie file.
+    /// \param  inStartTime The start time for the movie
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
-    BehavMovie(const std::string & inFileName);
+    BehavMovie(const std::string & inFileName, const Time & inStartTime);
 
     // Overrides - see base classes for documentation
     bool isValid() const override;

@@ -504,20 +504,20 @@ TEST_CASE("ProjectSynth", "[data][!hide]")
                 isx::DataSet::Type::MOVIE,
                 g_resources["unitTestDataPath"] + "/recording_20160426_145041.xml",
                 {
-                    {isx::DataSet::PROP_DATA_MIN, 0.f},
-                    {isx::DataSet::PROP_DATA_MAX, 4095.f},
-                    {isx::DataSet::PROP_VIS_MIN, 0.f},
-                    {isx::DataSet::PROP_VIS_MAX, 1.f}
+                    {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
+                    {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
+                    {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
+                    {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
                 });
         project.importDataSet(
                 "/recording_20160706_132714",
                 isx::DataSet::Type::MOVIE,
                 g_resources["unitTestDataPath"] + "/recording_20160706_132714.xml",
                 {
-                    {isx::DataSet::PROP_DATA_MIN, 0.f},
-                    {isx::DataSet::PROP_DATA_MAX, 4095.f},
-                    {isx::DataSet::PROP_VIS_MIN, 0.f},
-                    {isx::DataSet::PROP_VIS_MAX, 1.f}
+                    {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
+                    {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
+                    {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
+                    {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
                 });
         project.createGroup("/Day 1", isx::Group::Type::SERIES);
         project.moveGroups({"/recording_20160426_145041", "/recording_20160706_132714"}, "/Day 1");
@@ -527,10 +527,10 @@ TEST_CASE("ProjectSynth", "[data][!hide]")
                 isx::DataSet::Type::MOVIE,
                 g_resources["unitTestDataPath"] + "/synth_movie-3cells.isxd",
                 {
-                    {isx::DataSet::PROP_DATA_MIN, 0.f},
-                    {isx::DataSet::PROP_DATA_MAX, 4095.f},
-                    {isx::DataSet::PROP_VIS_MIN, 0.f},
-                    {isx::DataSet::PROP_VIS_MAX, 1.f}
+                    {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
+                    {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
+                    {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
+                    {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
                 });
 
         project.createDataSet(

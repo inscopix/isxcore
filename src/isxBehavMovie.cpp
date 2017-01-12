@@ -16,11 +16,11 @@ BehavMovie::BehavMovie()
 {
 }
 
-BehavMovie::BehavMovie(const std::string & inFileName)
+BehavMovie::BehavMovie(const std::string & inFileName, const Time & inStartTime)
     : m_valid(false)
     , m_ioTaskTracker(new IoTaskTracker())
 {
-    m_file = std::make_shared<BehavMovieFile>(inFileName);
+    m_file = std::make_shared<BehavMovieFile>(inFileName, inStartTime);
     m_valid = true;
 }
 

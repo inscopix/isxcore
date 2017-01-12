@@ -37,6 +37,9 @@ SpacingInfo convertJsonToSpacingInfo(const json & j);
 
 json convertGroupToJson(const Group * inGroup);
 
+json convertPropertiesToJson(const DataSet::Properties & inProperties);
+DataSet::Properties convertJsonToProperties(const json & j);
+
 json convertDataSetToJson(const DataSet * inDataSet);
 
 std::unique_ptr<Group>

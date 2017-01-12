@@ -14,6 +14,7 @@ const std::string DataSet::PROP_DATA_MIN = "dmin";
 const std::string DataSet::PROP_DATA_MAX = "dmax";
 const std::string DataSet::PROP_VIS_MIN  = "vmin";
 const std::string DataSet::PROP_VIS_MAX  = "vmax";
+const std::string DataSet::PROP_MOVIE_START_TIME = "movieStartTime";
 
 
 DataSet::DataSet()
@@ -155,7 +156,7 @@ DataSet::mergeProperties(const Properties & inDataSetProperties)
 }
 
 bool
-DataSet::getPropertyValue(const std::string & inPropertyName, float & outValue) const
+DataSet::getPropertyValue(const std::string & inPropertyName, Variant & outValue) const
 {   
     bool found = false;
     if (m_properties.find(inPropertyName) != m_properties.end()) 
@@ -167,7 +168,7 @@ DataSet::getPropertyValue(const std::string & inPropertyName, float & outValue) 
 }
 
 void 
-DataSet::setPropertyValue(const std::string & inPropertyName, float inValue)
+DataSet::setPropertyValue(const std::string & inPropertyName, Variant inValue)
 {
     if (m_properties[inPropertyName] != inValue)
     {

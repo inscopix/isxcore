@@ -16,7 +16,7 @@ TEST_CASE("BehavMovieFile", "[core]")
 
     SECTION("init from trimmed Noldus file")
     {
-        isx::BehavMovieFile b(testFileName);
+        isx::BehavMovieFile b(testFileName, isx::Time());
         
         REQUIRE(b.isValid());
         const isx::TimingInfo ti = b.getTimingInfo();

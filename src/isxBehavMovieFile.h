@@ -35,10 +35,11 @@ public:
     /// objects.
     ///
     /// \param  inFileName  The name of the movie file.
+    /// \param  inStartTime The start time for the movie
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
-    BehavMovieFile(const std::string & inFileName);
+    BehavMovieFile(const std::string & inFileName, const Time & inStartTime);
 
     /// Destructor
     ///
@@ -102,15 +103,14 @@ private:
     bool
     isPtsMatch(int64_t inTargetPts, int64_t inTestPts) const;
 
-    /// \return     Start time used in timing info.
-    /// This is a hack needed until we have a way of requesting the user to define a start time on file import
-    Time getStartTime() const;
-
     /// True if the movie file is valid, false otherwise.
     bool m_valid = false;
 
     /// The name of the movie file.
     std::string m_fileName;
+
+    /// The start time used to define the timing info
+    Time        m_startTime;
 
     /// The timing information of the movie.
     TimingInfos_t m_timingInfos;

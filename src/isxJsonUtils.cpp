@@ -193,6 +193,36 @@ createProjectTreeFromJson(const json & inJson)
     return root;
 }
 
+json convertPropertiesToJson(const DataSet::Properties & inProperties)
+{
+    json outJson = json::object();
+    for (auto & p : inProperties)
+    {
+        json o = json::parse(p.second.toString());
+        outJson[p.first] = o;
+    }
+    return outJson;
+}
+
+DataSet::Properties convertJsonToProperties(const json & j)
+{
+    DataSet::Properties properties;
+    for (json::const_iterator it = j.begin(); it != j.end(); ++it) 
+    {
+        Variant v;
+        if (it.key() != DataSet::PROP_MOVIE_START_TIME)
+        {
+            v = Variant(it.value().get<float>());
+        }
+        else 
+        {
+            v = Variant(convertJsonToTime(it.value()));
+        }
+        properties[it.key()] = v;
+    }
+    return properties;
+}
+
 json
 convertDataSetToJson(const DataSet * inDataSet)
 {
@@ -206,7 +236,7 @@ convertDataSetToJson(const DataSet * inDataSet)
     // For any file names that are above the project file, we should store
     // absolute paths.
     outJson["fileName"] = inDataSet->getFileName();
-    outJson["properties"] = inDataSet->getProperties();
+    outJson["properties"] = convertPropertiesToJson(inDataSet->getProperties());
     return outJson;
 }
 
@@ -216,7 +246,7 @@ createDataSetFromJson(Group * inGroup, const json & inJson)
     std::string name = inJson["name"];
     DataSet::Type dataSetType = DataSet::Type(isize_t(inJson["dataSetType"]));
     std::string fileName = inJson["fileName"];
-    DataSet::Properties properties = inJson["properties"];
+    DataSet::Properties properties = convertJsonToProperties(inJson["properties"]);
     inGroup->createDataSet(name, dataSetType, fileName, properties);
 }
 

@@ -19,7 +19,7 @@ TEST_CASE("BehavMovie", "[core]")
 
     SECTION("init from trimmed Noldus file")
     {
-        isx::SpMovie_t movie = isx::readMovie(testFileName);
+        isx::SpMovie_t movie = isx::readBehavioralMovie(testFileName, isx::Time());
 
         REQUIRE(movie->isValid());
         const isx::TimingInfo ti = movie->getTimingInfo();
@@ -42,7 +42,7 @@ TEST_CASE("BehavMovie", "[core]")
         size_t numTestFrames = expected.size();
         size_t numTestBytesPerFrame = sizeof(f0_data);
         
-        isx::SpMovie_t movie = isx::readMovie(testFileName);
+        isx::SpMovie_t movie = isx::readBehavioralMovie(testFileName, isx::Time());
 
         isx::MovieGetFrameCB_t cb = [&](isx::SpVideoFrame_t inFrame){
             size_t index = inFrame->getFrameIndex();

@@ -3,6 +3,7 @@
 
 #include "isxCore.h"
 #include "isxObject.h"
+#include "isxVariant.h"
 
 #include <string>
 #include <memory>
@@ -26,7 +27,7 @@ class DataSet : public Object
 public:
 
     /// type of DataSet Properties
-    using Properties = std::map<std::string, float>;
+    using Properties = std::map<std::string, Variant>;
 
     /// The type of data set.
     ///
@@ -43,6 +44,8 @@ public:
     static const std::string PROP_DATA_MAX;     ///< Max range of data in a movie dataset
     static const std::string PROP_VIS_MIN;      ///< Min visualization range [0..1]
     static const std::string PROP_VIS_MAX;      ///< Max visualization range [0..1]
+    static const std::string PROP_MOVIE_START_TIME;      ///< Movie start time - used for behavioral movies
+
 
     /// Empty constructor.
     ///
@@ -93,12 +96,12 @@ public:
     /// \return whether the property was found or not
     /// \param inPropertyName the name of the property
     /// \param outValue the found value
-    bool getPropertyValue(const std::string & inPropertyName, float & outValue) const;
+    bool getPropertyValue(const std::string & inPropertyName, Variant & outValue) const;
 
     /// Sets a property in the map
     /// \param inPropertyName name
     /// \param inValue value
-    void setPropertyValue(const std::string & inPropertyName, float inValue);
+    void setPropertyValue(const std::string & inPropertyName, Variant inValue);
 
     /// \return     True if this is valid.
     ///

@@ -2,7 +2,6 @@
 #include "isxBehavMovieFile.h"
 #include "isxPathUtils.h"
 
-
 extern "C" {
 #include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
@@ -33,9 +32,10 @@ namespace isx
 BehavMovieFile::BehavMovieFile()
 {}
 
-BehavMovieFile::BehavMovieFile(const std::string & inFileName)
+BehavMovieFile::BehavMovieFile(const std::string & inFileName, const Time & inStartTime)
 {
     m_fileName = inFileName;
+    m_startTime = inStartTime;
 
     av_register_all();  // aschildan 10/10/2016: could/should be moved to coreInitialize
 
@@ -350,8 +350,8 @@ BehavMovieFile::initializeFromStream(int inIndex)
             Ratio frameRate(m_videoStream->avg_frame_rate.num, m_videoStream->avg_frame_rate.den);
             double numFramesD = (durationInSeconds * frameRate).toDouble();
             isize_t numFrames = isize_t(std::floor(numFramesD));
-            auto startTime = getStartTime();
-            m_timingInfos = TimingInfos_t{TimingInfo(startTime, frameRate.getInverse(), numFrames)};
+            
+            m_timingInfos = TimingInfos_t{TimingInfo(m_startTime, frameRate.getInverse(), numFrames)};
             
             m_videoPtsFrameDelta = getTimingInfo().getStep() * m_timeBase.getInverse();
             m_videoPtsStartOffset = m_videoStream->start_time;
@@ -373,29 +373,6 @@ int64_t
 BehavMovieFile::timeBaseUnitsForFrames(isize_t inFrameNumber) const
 {
     return int64_t(std::floor((Ratio(inFrameNumber, 1) * m_videoPtsFrameDelta).toDouble() + 0.5f));
-}
-
-Time 
-BehavMovieFile::getStartTime() const
-{
-    static const char * fn0 = "Trial     9.mpg";
-    static const char * fn1 = "Trial    11.mpg";
-    Time t;
-    
-    const std::string fileName = isx::getFileName(m_fileName);
-
-    if(fileName.compare(fn0) == 0)
-    {
-        /// 8/2/2015  11:59:07.161
-        t = Time(2015, 8, 2, 11, 59, 07, DurationInSeconds(161, 1000));
-    }
-    else if(fileName.compare(fn1) == 0)
-    {
-        /// 8/3/2015  12:01:21.224
-        t = Time(2015, 8, 3, 12, 1, 21, DurationInSeconds(224, 1000));
-    }
-
-    return t;
 }
     
 } // namespace isx
@@ -585,8 +562,7 @@ BehavMovieFile::initializeFromStream(int inIndex)
             Ratio frameRate(m_videoStream->avg_frame_rate.num, m_videoStream->avg_frame_rate.den);
             double numFramesD = (durationInSeconds * frameRate).toDouble();
             isize_t numFrames = isize_t(std::floor(numFramesD));
-            auto startTime = getStartTime();
-            m_timingInfo = TimingInfo(startTime, frameRate.getInverse(), numFrames);
+            m_timingInfo = TimingInfo(m_startTime, frameRate.getInverse(), numFrames);
             
             m_videoPtsFrameDelta = m_timingInfo.getStep() * m_timeBase.getInverse();
             m_videoPtsStartOffset = m_videoStream->start_time;

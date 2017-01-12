@@ -383,10 +383,10 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
                 isx::DataSet::Type::MOVIE,
                 movieFile,
                 {
-                  {isx::DataSet::PROP_DATA_MIN, 0.f},
-                  {isx::DataSet::PROP_DATA_MAX, 1.f},
-                  {isx::DataSet::PROP_VIS_MIN, 0.f},
-                  {isx::DataSet::PROP_VIS_MAX, 1.f}
+                  {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
+                  {isx::DataSet::PROP_DATA_MAX, isx::Variant(1.f)},
+                  {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
+                  {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
                 });
         project.createDataSet(
                 "/movie-full-frame/derived/cellset-full-frame",

@@ -35,10 +35,6 @@ readMovie(const std::string & inFileName)
     {
         return readNVistaHdf5Movie(inFileName);
     }
-    else if ((extension == "mpg") || (extension == "mp4"))
-    {
-        return readBehavioralMovie(inFileName);
-    }
     else
     {
         ISX_THROW(isx::ExceptionDataIO,
@@ -68,9 +64,9 @@ readNVistaHdf5Movie(const std::string & inFileName)
 }
     
 SpMovie_t
-readBehavioralMovie(const std::string & inFileName)
+readBehavioralMovie(const std::string & inFileName, const Time & inStartTime)
 {
-    SpMovie_t movie = std::make_shared<BehavMovie>(inFileName);
+    SpMovie_t movie = std::make_shared<BehavMovie>(inFileName, inStartTime);
     return movie;
 }
 

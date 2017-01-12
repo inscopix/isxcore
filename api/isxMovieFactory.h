@@ -86,11 +86,12 @@ SpMovie_t readNVistaHdf5Movie(const std::string & inFileName);
 /// Read an behavioral movie from a file.
 ///
 /// \param  inFileName      The name of the behavioral movie file to read.
+/// \param  inStartTime     The start time for the movie - used for synchronization with other data sets
 /// \return                 The imported movie.
 ///
 /// \throw  isx::ExceptionFileIO    If the movie file cannot be read.
 /// \throw  isx::ExceptionDataIO    If parsing the movie file failed.
-SpMovie_t readBehavioralMovie(const std::string & inFileName);
+SpMovie_t readBehavioralMovie(const std::string & inFileName, const Time & inStartTime);
 
 } // namespace isx
 

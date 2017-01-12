@@ -1,6 +1,7 @@
 #include "isxJsonUtils.h"
 #include "catch.hpp"
 #include "isxTest.h"
+#include "isxVariant.h"
 
 #include <stdio.h>
 
@@ -12,7 +13,7 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
     SECTION("Convert a movie data set to json")
     {
         isx::DataSet::Properties inProperties;
-        inProperties["test"] = 1.0f;
+        inProperties["test"] = isx::Variant(1.0f);
         isx::DataSet dataSet("myDataSet", isx::DataSet::Type::MOVIE, movieFileName, inProperties);
 
         isx::json jsonObject = isx::convertDataSetToJson(&dataSet);
@@ -20,7 +21,7 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         std::string type = jsonObject["type"];
         isx::DataSet::Type dataSetType = isx::DataSet::Type(isx::isize_t(jsonObject["dataSetType"]));
         std::string fileName = jsonObject["fileName"];
-        isx::DataSet::Properties outProperties = jsonObject["properties"];
+        isx::DataSet::Properties outProperties = isx::convertJsonToProperties(jsonObject["properties"]);
         REQUIRE(type == "DataSet");
         REQUIRE(dataSetType == isx::DataSet::Type::MOVIE);
         REQUIRE(fileName == movieFileName);
@@ -35,8 +36,8 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         jsonObject["dataSetType"] = isx::isize_t(isx::DataSet::Type::MOVIE);
         jsonObject["fileName"] = movieFileName;
         isx::DataSet::Properties inProperties;
-        inProperties["test"] = 1.0f;
-        jsonObject["properties"] = inProperties;
+        inProperties["test"] = isx::Variant(1.0f);
+        jsonObject["properties"] = isx::convertPropertiesToJson(inProperties);
 
         isx::Group group;
         isx::createDataSetFromJson(&group, jsonObject);
@@ -46,9 +47,9 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         REQUIRE(dataSet->getName() == "myDataSet");
         REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(dataSet->getFileName() == movieFileName);
-        float value;
+        isx::Variant value;
         REQUIRE(dataSet->getPropertyValue("test", value));
-        REQUIRE(value == 1.0f);
+        REQUIRE(value.value<float>() == 1.0f);
     }
 
     SECTION("Convert an empty group to json")
