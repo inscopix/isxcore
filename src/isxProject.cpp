@@ -2,8 +2,6 @@
 #include "isxException.h"
 #include "isxJsonUtils.h"
 #include "isxPathUtils.h"
-#include "isxMovieFactory.h"
-#include "isxMovieSeries.h"
 
 #include <fstream>
 
@@ -11,12 +9,12 @@ namespace isx
 {
 
 Project::Project()
-    : m_valid(false)    
+    : m_valid(false)
 {
 }
 
 Project::Project(const std::string & inFileName)
-    : m_valid(false)    
+    : m_valid(false)
     , m_fileName(inFileName)
 {
     read();
@@ -25,27 +23,21 @@ Project::Project(const std::string & inFileName)
 }
 
 Project::Project(const std::string & inFileName, const std::string & inName)
-    : m_valid(false)    
+    : m_valid(false)
     , m_name(inName)
     , m_fileName(inFileName)
 {
     if (pathExists(inFileName))
     {
-        ISX_THROW(isx::ExceptionFileIO,
-                "The file name already exists: ", inFileName);
+        ISX_THROW(ExceptionFileIO, "The file name already exists: ", inFileName);
     }
-    m_root.reset(new Group("/"));
-    m_originalData.reset(new Group("OriginalData"));
+    m_root = std::make_shared<Group>("/");
     m_valid = true;
     setUnmodified();
 }
 
-Project::~Project()
-{
-}
-
 void
-Project::save() 
+Project::save()
 {
     if (m_valid)
     {
@@ -54,199 +46,127 @@ Project::save()
     }
 }
 
-DataSet *
-Project::importDataSet(
-        const std::string & inPath,
-        DataSet::Type inType,
-        const std::string & inFileName,
-        const DataSet::Properties & inProperties)
+ProjectItem *
+Project::getItem(const std::string & inPath) const
 {
-    const std::string name = isx::getFileName(inPath);
-    m_originalData->createDataSet(name, inType, inFileName, inProperties);
-    return createDataSet(inPath, inType, inFileName, inProperties);
+    const std::vector<std::string> itemNames = getPathTokens(inPath);
+    if (itemNames.front() != "/")
+    {
+        ISX_THROW(ExceptionDataIO, "All items paths must be absolute.");
+    }
+    ProjectItem * outItem = m_root.get();
+    for (auto it = (itemNames.begin() + 1); it != itemNames.end(); ++it)
+    {
+        outItem = outItem->getChild(*it);
+    }
+    return outItem;
 }
 
-DataSet *
-Project::createDataSet(
-        const std::string & inPath,
-        DataSet::Type inType,
-        const std::string & inFileName,
-        const DataSet::Properties & inProperties)
+void
+Project::removeItem(const std::string & inPath) const
 {
-    const std::string name = isx::getFileName(inPath);
-    // NOTE sweet : when creating a data set through the project, the
-    // absolute path gets stored, so that other clients of this data set
-    // can use that file name without referring to the path of the project
-    // file name.
-    std::string absFileName = getAbsolutePath(inFileName);
-    const std::string groupPath = getDirName(inPath);
-    Group * parent = getGroup(groupPath);
+    ProjectItem * item = getItem(inPath);
+    ProjectItem * parent = item->getParent();
+    ISX_ASSERT(parent != nullptr);
+    parent->removeChild(item->getName());
+}
+
+void
+Project::moveItem(
+        const std::string & inSrc,
+        const std::string & inDest,
+        const int inIndex)
+{
+    const std::string parentPath = getDirName(inSrc);
+    const std::string itemName = getBaseName(inSrc);
+    ProjectItem * parent = getItem(parentPath);
     ISX_ASSERT(parent != nullptr);
 
-    // TODO sweet : if the parent is a series, then check that the new data
-    // set can be added to it and find the index at which it should be
-    // inserted
-    int index = -1;
-    if (parent->getType() == Group::Type::SERIES)
-    {
-        checkDataSetForSeries(parent, inType, absFileName);
-        index = findSeriesIndex(parent, inType, absFileName);
-    }
+    const int origIndex = parent->getChild(itemName)->getIndex();
+    std::shared_ptr<ProjectItem> item = parent->removeChild(itemName);
 
-    Group * dataSetGroup = parent->createGroup(name, Group::Type::DATASET, index);
-    dataSetGroup->createGroup("derived", Group::Type::DERIVED);
+    ProjectItem * dest = getItem(inDest);
+
+    // NOTE sweet : the insertion might fail depending on the destination
+    // so we must put it back if that's the case.
     try
     {
-        return dataSetGroup->createDataSet(name, inType, absFileName, inProperties);
+        dest->insertChild(item, inIndex);
     }
-    catch (const Exception & error)
+    catch (...)
     {
-        (void)error;
-        parent->removeGroup(name);
+        parent->insertChild(item, origIndex);
         throw;
     }
 }
 
 DataSet *
-Project::getDataSet(const std::string & inPath) const
-{
-    const std::string name = isx::getFileName(inPath);
-    return getGroup(inPath)->getDataSet(name);
-}
-
-Group *
-Project::createGroup(
+Project::createDataSet(
         const std::string & inPath,
-        const Group::Type inType,
-        const int inIndex)
+        const DataSet::Type inType,
+        const std::string & inFileName,
+        const DataSet::Properties & inProperties)
 {
-    const std::string name = isx::getFileName(inPath);
-    const std::string parentPath = getDirName(inPath);
-    Group * parent = getGroup(parentPath);
-    if (parent->getType() == Group::Type::SERIES)
+    // NOTE sweet : when creating a data set through the project, the
+    // absolute path gets stored, so that other clients of this data set
+    // can use that file name without referring to the path of the project
+    // file name.
+    std::string absFileName = getAbsolutePath(inFileName);
+    if (isFileName(absFileName))
     {
-        if (inType != Group::Type::DATASET)
-        {
-            ISX_THROW(ExceptionSeries, "A series group can only contain data set groups.");
-        }
-    }
-    return parent->createGroup(name, inType, inIndex);
-}
-
-void
-Project::moveGroups(
-        const std::vector<std::string> & inSrcs,
-        const std::string & inDest,
-        const int inIndex)
-{
-    Group * dest = getGroup(inDest);
-
-    if (dest->getType() == Group::Type::SERIES)
-    {
-        // Must check all data sets can be moved into group before moving them
-        std::vector<const DataSet *> srcDataSets;
-        for (const auto & srcPath : inSrcs)
-        {
-            const Group * src = getGroup(srcPath);
-            if (src->getType() != Group::Type::DATASET)
-            {
-                ISX_THROW(ExceptionSeries, "Only data set groups can be added to a series.");
-            }
-
-            // NOTE sweet : if the data set is already in the series then ignore the move
-            if ((src->getParent() == dest) && (dest->isGroup(src->getName())))
-            {
-                continue;
-            }
-            const DataSet * srcDs = src->getDataSetFromGroup();
-            ISX_ASSERT(srcDs != nullptr);
-            checkDataSetForSeries(dest, srcDs->getType(), srcDs->getFileName());
-            srcDataSets.push_back(srcDs);
-        }
-        checkDataSetsForSeries(srcDataSets);
-
-        // Move the data sets group one by one and insert them in order.
-        // NOTE sweet : it would probably be more efficient to construct the group in
-        // any order and then sort, but as I already have findSeriesIndex, I decided
-        // to do it this way.
-        for (auto ds : srcDataSets)
-        {
-            Group * parent = ds->getParent();
-            ISX_ASSERT(parent != nullptr);
-            Group * grandParent = parent->getParent();
-            ISX_ASSERT(grandParent != nullptr);
-            const int index = findSeriesIndex(dest, ds->getType(), ds->getFileName());
-            grandParent->moveGroup(ds->getName(), dest, index);
-        }
-        return;
+        ISX_THROW(ExceptionFileIO, "There is already a data set with the file name: ", absFileName);
     }
 
-    for (const auto & srcPath : inSrcs)
-    {
-        Group * src = getGroup(srcPath);
-        Group * srcParent = src->getParent();
-        if (srcParent != nullptr)
-        {
-            srcParent->moveGroup(src->getName(), dest, inIndex);
-        }
-    }
-}
-
-void
-Project::flattenGroup(const std::string & inPath)
-{
-    Group * group = getGroup(inPath);
-    if (group == m_root.get())
-    {
-        ISX_THROW(ExceptionDataIO, "The root group cannot be flattened.");
-    }
-    Group * parent = group->getParent();
+    const std::string groupPath = getDirName(inPath);
+    const std::string name = getBaseName(inPath);
+    ProjectItem * parent = getItem(groupPath);
     ISX_ASSERT(parent != nullptr);
-    int index = group->getIndex();
-    for (auto subGroup : group->getGroups())
-    {
-        group->moveGroup(subGroup->getName(), parent, index);
-        if (index != -1)
-        {
-            index++;
-        }
-    }
-    // NOTE sweet : technically the group can immediately contain
-    // data sets so I need to move those too
-    for (auto dataSet : group->getDataSets())
-    {
-        group->moveDataSet(dataSet->getName(), parent);
-        if (index != -1)
-        {
-            index++;
-        }
-    }
-    parent->removeGroup(group->getName());
+
+    auto outDataSet = std::make_shared<DataSet>(name, inType, absFileName, inProperties);
+    parent->insertChild(outDataSet);
+    return outDataSet.get();
 }
 
-Group *
-Project::getGroup(const std::string & inPath) const
+Series *
+Project::createSeries(const std::string & inPath, const int inIndex)
 {
-    const std::vector<std::string> groupNames = getPathTokens(inPath);
-    Group * currentGroup = m_root.get();
-    std::vector<std::string>::const_iterator it;
-    for (it = (groupNames.begin() + 1); it != groupNames.end(); ++it)
+    const std::string groupPath = getDirName(inPath);
+    const std::string name = getBaseName(inPath);
+    ProjectItem * parent = getItem(groupPath);
+    ISX_ASSERT(parent != nullptr);
+
+    auto series = std::make_shared<Series>(name);
+    parent->insertChild(series, inIndex);
+    return series.get();
+}
+
+void
+Project::flattenSeries(const std::string & inPath)
+{
+    ProjectItem * item = getItem(inPath);
+    if (item->getItemType() != ProjectItem::Type::SERIES)
     {
-        currentGroup = currentGroup->getGroup(*it);
+        ISX_THROW(ExceptionDataIO, "The requested item is not a series.");
     }
-    return currentGroup;
+
+    Series * series = static_cast<Series *>(item);
+    ProjectItem * parent = series->getParent();
+    // TODO sweet : before moving the items we need to check that the
+    // destination doesn't contain any conflicting names.
+    int index = series->getIndex();
+    for (auto dataSet : series->getDataSets())
+    {
+        std::shared_ptr<DataSet> ds = series->removeDataSet(dataSet->getName());
+        parent->insertChild(ds, index);
+        ++index;
+    }
+    parent->removeChild(series->getName());
 }
 
 Group *
 Project::getRootGroup() const
 {
     return m_root.get();
-}
-
-Group *
-Project::getOriginalDataGroup() const
-{
-    return m_originalData.get();
 }
 
 bool
@@ -267,7 +187,7 @@ Project::getFileName() const
     return m_fileName;
 }
 
-void 
+void
 Project::setFileName(const std::string & inFileName)
 {
     m_fileName = inFileName;
@@ -276,18 +196,9 @@ Project::setFileName(const std::string & inFileName)
 bool
 Project::isPath(const std::string & inPath) const
 {
-    const std::vector<DataSet *> dataSets = m_root->getDataSets(true);
-    for (auto it = dataSets.begin(); it != dataSets.end(); ++it)
+    for (const auto & item : getAllItems())
     {
-        if ((*it)->getPath() == inPath)
-        {
-            return true;
-        }
-    }
-    const std::vector<Group *> groups = m_root->getGroups(true);
-    for (auto it = groups.begin(); it != groups.end(); ++it)
-    {
-        if ((*it)->getPath() == inPath)
+        if (item->getPath() == inPath)
         {
             return true;
         }
@@ -306,39 +217,10 @@ Project::createUniquePath(const std::string & inPath) const
     return outPath;
 }
 
-bool 
+bool
 Project::isModified() const
 {
     return m_root->isModified();
-}
-
-bool
-Project::isGroup(const std::string & inPath) const
-{
-    const std::vector<std::string> pathTokens = getPathTokens(inPath);
-    const size_t numTokens = pathTokens.size();
-    if (numTokens == 0)
-    {
-        return false;
-    }
-    if (numTokens == 1)
-    {
-        return pathTokens[0] == "/";
-    }
-    bool exists = true;
-    Group * group = getGroup(pathTokens[0]);
-    for (size_t i = 0; exists && i < (numTokens - 1); ++i)
-    {
-        if (group->isGroup(pathTokens[i + 1]))
-        {
-            group = group->getGroup(pathTokens[i + 1]);
-        }
-        else
-        {
-            exists = false;
-        }
-    }
-    return exists;
 }
 
 void
@@ -352,22 +234,18 @@ Project::read()
         std::string type = jsonObject["type"];
         if (type.compare("Project") != 0)
         {
-            ISX_THROW(isx::ExceptionDataIO,
-                    "Expected type to be Project. Instead got ", type);
+            ISX_THROW(ExceptionDataIO, "Expected type to be Project. Instead got ", type);
         }
         m_name = jsonObject["name"];
-        m_root = createProjectTreeFromJson(jsonObject["rootGroup"]);
-        m_originalData = createProjectTreeFromJson(jsonObject["originalDataGroup"]);
+        m_root = Group::fromJsonString(jsonObject["rootGroup"].dump());
     }
     catch (const std::exception & error)
     {
-        ISX_THROW(isx::ExceptionDataIO,
-                "Error while parsing project header: ", error.what());
+        ISX_THROW(ExceptionDataIO, "Error while parsing project header: ", error.what());
     }
     catch (...)
     {
-        ISX_THROW(isx::ExceptionDataIO,
-                "Unknown error while parsing project header.");
+        ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing project header.");
     }
 }
 
@@ -380,141 +258,61 @@ Project::write() const
         jsonObject["type"] = "Project";
         jsonObject["name"] = m_name;
         jsonObject["mosaicVersion"] = CoreVersionVector();
-        jsonObject["rootGroup"] = convertGroupToJson(m_root.get());
-        jsonObject["originalDataGroup"] = convertGroupToJson(m_originalData.get());
+        jsonObject["rootGroup"] = json::parse(m_root->toJsonString());
     }
     catch (const std::exception & error)
     {
-        ISX_THROW(isx::ExceptionDataIO,
-                "Error generating project header: ", error.what());
+        ISX_THROW(ExceptionDataIO, "Error generating project header: ", error.what());
     }
     catch (...)
     {
-        ISX_THROW(isx::ExceptionDataIO,
-            "Unknown error while generating project header.");
+        ISX_THROW(ExceptionDataIO, "Unknown error while generating project header.");
     }
 
     std::ofstream file(m_fileName, std::ios::trunc);
-    writeJsonHeader(jsonObject, file, false);    
+    writeJsonHeader(jsonObject, file, false);
 }
 
-void 
+bool
+Project::isFileName(const std::string & inFileName)
+{
+    for (const auto & item : getAllItems())
+    {
+        if (item->getItemType() == ProjectItem::Type::DATASET)
+        {
+            auto dataSet = static_cast<const DataSet *>(item);
+            if (dataSet->getFileName() == inFileName)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void
 Project::setUnmodified()
 {
     m_root->setUnmodified();
 }
 
-void
-Project::checkDataSetForSeries(const DataSet::Type inType)
+std::vector<ProjectItem *>
+Project::getAllItems() const
 {
-    if (inType != DataSet::Type::MOVIE)
-    {
-        ISX_THROW(ExceptionSeries, "A series can only contain nVista movies.");
-    }
+    return getAllItems(m_root.get());
 }
 
-void
-Project::checkDataSetForSeries(
-        const DataSet * inRef,
-        const DataSet::Type inType,
-        const std::string & inFileName)
+std::vector<ProjectItem *>
+Project::getAllItems(const ProjectItem * inItem) const
 {
-    checkDataSetForSeries(inType);
-
-    const DataSet::Type refType = inRef->getType();
-    if (inType != refType)
+    std::vector<ProjectItem *> outItems;
+    for (const auto & child : inItem->getChildren())
     {
-        ISX_THROW(ExceptionSeries,
-                "The data set has a different type than the reference data set.");
+        outItems.push_back(child);
+        std::vector<ProjectItem *> grandChildren = getAllItems(child);
+        outItems.insert(outItems.end(), grandChildren.begin(), grandChildren.end());
     }
-
-    const SpMovie_t refMovie = readMovie(inRef->getFileName());
-    const SpMovie_t movie = readMovie(inFileName);
-
-    MovieSeries::checkDataType(refMovie->getDataType(), movie->getDataType());
-    MovieSeries::checkSpacingInfo(refMovie->getSpacingInfo(), movie->getSpacingInfo());
-    MovieSeries::checkTimingInfo(refMovie->getTimingInfo(), movie->getTimingInfo());
-}
-
-void
-Project::checkDataSetForSeries(
-           const Group * inSeries,
-           const DataSet::Type inType,
-           const std::string & inFileName)
-{
-    ISX_ASSERT(inSeries->getType() == Group::Type::SERIES);
-    std::vector<Group *> dsGroups = inSeries->getGroups();
-
-    if (dsGroups.size() == 0)
-    {
-        checkDataSetForSeries(inType);
-        return;
-    }
-
-    for (const auto dsGroup : dsGroups)
-    {
-        const DataSet * ds = dsGroup->getDataSetFromGroup();
-        checkDataSetForSeries(ds, inType, inFileName);
-    }
-}
-
-void
-Project::checkDataSetsForSeries(const std::vector<const DataSet *> & inDataSets)
-{
-    if (inDataSets.size() == 0)
-    {
-        return;
-    }
-
-    // Use the first data set as a reference
-    const DataSet * refDs = *inDataSets.begin();
-    checkDataSetForSeries(refDs->getType());
-    const Group * refParent = refDs->getParent();
-    ISX_ASSERT(refParent != nullptr);
-    const Group * refGrandParent = refParent->getParent();
-    ISX_ASSERT(refGrandParent != nullptr);
-
-    // Check that the others are consistent with the reference
-    for (auto it = inDataSets.begin() + 1; it != inDataSets.end(); ++it)
-    {
-        const isx::DataSet * ds = *it;
-        checkDataSetForSeries(refDs, ds->getType(), ds->getFileName());
-        const Group * parent = ds->getParent();
-        ISX_ASSERT(parent != nullptr);
-        const Group * grandParent = parent->getParent();
-        ISX_ASSERT(grandParent != nullptr);
-        if (grandParent != refGrandParent)
-        {
-            ISX_THROW(ExceptionSeries,
-                    "The data set has a different parent than the reference data set.");
-        }
-    }
-}
-
-int
-Project::findSeriesIndex(
-        const Group * inSeries,
-        const DataSet::Type inType,
-        const std::string & inFileName)
-{
-    ISX_ASSERT(inSeries->getType() == Group::Type::SERIES);
-    checkDataSetForSeries(inType);
-
-    const SpMovie_t newMovie = readMovie(inFileName);
-    const Time newStart = newMovie->getTimingInfo().getStart();
-    int outIndex = 0;
-    for (auto dsGroup : inSeries->getGroups())
-    {
-        const DataSet * ds = dsGroup->getDataSetFromGroup();
-        ISX_ASSERT(ds != nullptr);
-        const SpMovie_t movie = readMovie(ds->getFileName());
-        if (newStart < movie->getTimingInfo().getStart())
-        {
-            break;
-        }
-        ++outIndex;
-    }
-    return outIndex;
+    return outItems;
 }
 
 } // namespace isx

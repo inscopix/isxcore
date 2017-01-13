@@ -1,9 +1,12 @@
 #include "isxGroup.h"
+#include "isxSeries.h"
+#include "isxDataSet.h"
+
 #include "catch.hpp"
 #include "isxTest.h"
 #include "isxException.h"
 
-TEST_CASE("GroupTest", "[core]")
+TEST_CASE("Group-Group", "[core]")
 {
 
     SECTION("Empty constructor")
@@ -19,332 +22,183 @@ TEST_CASE("GroupTest", "[core]")
 
         REQUIRE(group.isValid());
         REQUIRE(group.getName() == "myGroup");
-        REQUIRE(!group.getParent());
+        REQUIRE(group.getParent() == nullptr);
         REQUIRE(group.getPath() == "myGroup");
-    }
-
-    SECTION("Add a group to another group")
-    {
-        isx::Group group("myGroup");
-
-        isx::Group * subGroup = group.createGroup("mySubGroup");
-
-        REQUIRE(group.getGroup("mySubGroup") == subGroup);
-    }
-
-    SECTION("Add a group within a root (/) group)")
-    {
-        isx::Group group("/");
-
-        isx::Group * subGroup = group.createGroup("myGroup");
-
-        REQUIRE(group.getGroup("myGroup") == subGroup);
-    }
-
-    SECTION("Try to add two groups with the same name in another group")
-    {
-        isx::Group group("myGroup");
-        group.createGroup("mySubGroup");
-
-        ISX_EXPECT_EXCEPTION();
-        try
-        {
-            group.createGroup("mySubGroup");
-            FAIL("Failed to throw an exception.");
-        }
-        catch (const isx::ExceptionDataIO & error)
-        {
-            REQUIRE(std::string(error.what()) ==
-                    "There is already an item with the name: mySubGroup");
-        }
-        catch (...)
-        {
-            FAIL("Failed to throw an isx::ExceptionDataIO");
-        }
-    }
-
-    SECTION("Add two groups with different names to another group")
-    {
-        isx::Group group("myGroup");
-        isx::Group * subGroup1 = group.createGroup("mySubGroup1");
-        isx::Group * subGroup2 = group.createGroup("mySubGroup2");
-
-        REQUIRE(group.getGroup("mySubGroup1") == subGroup1);
-        REQUIRE(group.getGroup("mySubGroup2") == subGroup2);
-    }
-
-    SECTION("Remove a group by name")
-    {
-        isx::Group group("myGroup");
-        isx::Group * subGroup1 = group.createGroup("mySubGroup1");
-        isx::Group * subGroup2 = group.createGroup("mySubGroup2");
-
-        group.removeGroup("mySubGroup1");
-
-        REQUIRE(group.getGroups().size() == 1);
-        REQUIRE(group.getGroup("mySubGroup2") == subGroup2);
-
-        ISX_EXPECT_EXCEPTION();
-        try
-        {
-            group.getGroup("mySubGroup1");
-            FAIL("Failed to throw an exception.");
-        }
-        catch (const isx::ExceptionDataIO & error)
-        {
-            REQUIRE(std::string(error.what()) ==
-                    "Could not find group with the name: mySubGroup1");
-        }
-        catch (...)
-        {
-            FAIL("Failed to throw an isx::ExceptionDataIO");
-        }
-    }
-
-    SECTION("Add a data set to a group")
-    {
-        isx::Group group("myGroup");
-        isx::DataSet * dataSet = group.createDataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie.isxd");
-
-        REQUIRE(group.getDataSet("myDataSet") == dataSet);
-    }
-
-    SECTION("Try to create two data sets with the same name in a group")
-    {
-        isx::Group group("myGroup");
-        group.createDataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
-
-        ISX_EXPECT_EXCEPTION();
-        try
-        {
-            group.createDataSet("myDataSet", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
-            FAIL("Failed to throw an exception.");
-        }
-        catch (const isx::ExceptionDataIO & error)
-        {
-            REQUIRE(std::string(error.what()) ==
-                    "There is already an item with the name: myDataSet");
-        }
-        catch (...)
-        {
-            FAIL("Failed to throw an isx::ExceptionDataIO");
-        }
-    }
-
-    SECTION("Try to create two data sets with the same file name in a group")
-    {
-        isx::Group group("myGroup");
-        group.createDataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie.isxd");
-
-        ISX_EXPECT_EXCEPTION();
-        try
-        {
-            group.createDataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie.isxd");
-            FAIL("Failed to throw an exception.");
-        }
-        catch (const isx::ExceptionFileIO & error)
-        {
-            REQUIRE(std::string(error.what()) ==
-                    "There is already a data set with the file name: myMovie.isxd");
-        }
-        catch (...)
-        {
-            FAIL("Failed to throw an isx::ExceptionFileIO");
-        }
-    }
-
-    SECTION("Add two data sets")
-    {
-        isx::Group group("myGroup");
-
-        isx::DataSet * dataSet1 = group.createDataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
-        isx::DataSet * dataSet2 = group.createDataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
-
-        REQUIRE(group.getDataSet("myDataSet1") == dataSet1);
-        REQUIRE(group.getDataSet("myDataSet1") == dataSet1);
-    }
-
-    SECTION("Remove a data set by name")
-    {
-        isx::Group group("myGroup");
-
-        isx::DataSet * dataSet1 = group.createDataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
-        isx::DataSet * dataSet2 = group.createDataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
-
-        group.removeDataSet("myDataSet1");
-
-        REQUIRE(group.getDataSets().size() == 1);
-        REQUIRE(group.getDataSet("myDataSet2") == dataSet2);
-
-        ISX_EXPECT_EXCEPTION();
-        try
-        {
-            group.getGroup("myDataSet1");
-            FAIL("Failed to throw an exception.");
-        }
-        catch (const isx::ExceptionDataIO & error)
-        {
-            REQUIRE(std::string(error.what()) ==
-                    "Could not find group with the name: myDataSet1");
-        }
-        catch (...)
-        {
-            FAIL("Failed to throw an isx::ExceptionDataIO");
-        }
-    }
-
-    SECTION("Get data sets in a group")
-    {
-        isx::Group group("myGroup");
-
-        isx::DataSet * dataSet1 = group.createDataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
-        isx::DataSet * dataSet2 = group.createDataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
-
-        std::vector<isx::DataSet *> actualDataSets = group.getDataSets();
-
-        std::vector<isx::DataSet *> expectedDataSets = {dataSet1, dataSet2};
-        REQUIRE(actualDataSets == expectedDataSets);
-    }
-
-    SECTION("Get data sets in a group recursively")
-    {
-        isx::Group group("myGroup");
-
-        isx::Group * subGroup1 = group.createGroup("mySubGroup1");
-        isx::Group * subGroup2 = group.createGroup("mySubGroup2");
-
-        isx::DataSet * dataSet1 = group.createDataSet("myDataSet1", isx::DataSet::Type::MOVIE, "myMovie1.isxd");
-        isx::DataSet * dataSet2 = subGroup2->createDataSet("myDataSet2", isx::DataSet::Type::MOVIE, "myMovie2.isxd");
-
-        std::vector<isx::DataSet *> actualDataSets = group.getDataSets(true);
-
-        std::vector<isx::DataSet *> expectedDataSets = {dataSet1, dataSet2};
-        REQUIRE(actualDataSets == expectedDataSets);
+        REQUIRE(group.getNumChildren() == 0);
     }
 
 }
 
-TEST_CASE("Group-moveDataSet", "[core]")
+TEST_CASE("Group-insertChild", "[core]")
 {
-    isx::Group root("/");
-    isx::DataSet * movie1 = root.createDataSet("movie1", isx::DataSet::Type::MOVIE, "movie1.isxd");
-    isx::DataSet * movie2 = root.createDataSet("movie2", isx::DataSet::Type::MOVIE, "movie2.isxd");
-    isx::Group * series = root.createGroup("Day 1", isx::Group::Type::SERIES);
+    isx::Group group("myGroup");
+    auto subGroup = std::make_shared<isx::Group>("subGroup");
+    auto series = std::make_shared<isx::Series>("series");
+    auto dataSet = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie.isxd");
 
-    SECTION("Move a data set from root to a series")
+    SECTION("Insert a sub-group at the end of a group")
     {
-        root.moveDataSet("movie1", series);
+        group.insertChild(subGroup);
 
-        REQUIRE(root.getDataSets().size() == 1);
-        REQUIRE(root.getDataSet("movie2") == movie2);
-        ISX_EXPECT_EXCEPTION();
-        try
-        {
-            root.getDataSet("movie1");
-            FAIL("Failed to throw an exception.");
-        }
-        catch (const isx::ExceptionDataIO & error)
-        {
-            REQUIRE(std::string(error.what()) ==
-                    "Could not find data set with name: movie1");
-        }
-        catch (...)
-        {
-            FAIL("Failed to throw an isx::ExceptionDataIO");
-        }
+        REQUIRE(group.getChild("subGroup") == subGroup.get());
+    }
 
-        REQUIRE(series->getDataSets().size() == 1);
-        REQUIRE(series->getDataSet("movie1") == movie1);
+    SECTION("Insert the same sub-group into two groups")
+    {
+        group.insertChild(subGroup);
+
+        isx::Group group2("myGroup2");
+        group2.insertChild(subGroup);
+
+        ISX_REQUIRE_EXCEPTION(
+                group.getChild("subGroup"),
+                isx::ExceptionDataIO,
+                "Could not find child with the name: subGroup");
+
+        REQUIRE(group2.getChild("subGroup") == subGroup.get());
+    }
+
+    SECTION("Insert a series at the end of a group")
+    {
+        group.insertChild(series);
+
+        REQUIRE(group.getChild("series") == series.get());
+    }
+
+    SECTION("Insert a dataset at the end of a group")
+    {
+        group.insertChild(dataSet);
+
+        REQUIRE(group.getChild("dataSet") == dataSet.get());
+    }
+
+    SECTION("Try to insert two datasets with the same name in a group")
+    {
+        group.insertChild(dataSet);
+        auto dataSet2 = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie2.isxd");
+        ISX_REQUIRE_EXCEPTION(
+                group.insertChild(dataSet2),
+                isx::ExceptionDataIO,
+                "There is already an item with the name: dataSet");
+    }
+
+    SECTION("Insert two datasets with different names to the end of a group")
+    {
+        group.insertChild(dataSet);
+        auto dataSet2 = std::make_shared<isx::DataSet>("dataSet2", isx::DataSet::Type::MOVIE, "movie2.isxd");
+        group.insertChild(dataSet2);
+
+        REQUIRE(group.getChild("dataSet") == dataSet.get());
+        REQUIRE(group.getChild("dataSet2") == dataSet2.get());
+    }
+
+    SECTION("Insert two datasets with different names to a group in an interesting order")
+    {
+        group.insertChild(dataSet);
+        auto dataSet2 = std::make_shared<isx::DataSet>("dataSet2", isx::DataSet::Type::MOVIE, "movie2.isxd");
+        group.insertChild(dataSet2, 0);
+
+        std::vector<isx::ProjectItem *> children = group.getChildren();
+        REQUIRE(children.at(0) == dataSet2.get());
+        REQUIRE(children.at(1) == dataSet.get());
+    }
+
+    SECTION("Try to insert a group in itself")
+    {
+        ISX_REQUIRE_EXCEPTION(
+                subGroup->insertChild(subGroup),
+                isx::ExceptionDataIO,
+                "An item cannot be inserted in itself.");
+    }
+
+    SECTION("Try to insert an ancestor of a group")
+    {
+        auto group2 = std::make_shared<isx::Group>("group");
+        group2->insertChild(subGroup);
+        ISX_REQUIRE_EXCEPTION(
+                subGroup->insertChild(group2),
+                isx::ExceptionDataIO,
+                "The inserted item is an ancestor of this.");
     }
 
 }
 
-TEST_CASE("Group-moveGroup", "[core]")
+TEST_CASE("Group-removeChild", "[core]")
 {
-    isx::Group root("/");
-    isx::Group * group1 = root.createGroup("group1");
-    isx::Group * group2 = root.createGroup("group2");
-    isx::Group * group3 = root.createGroup("group3");
+    isx::Group group("myGroup");
+    auto subGroup = std::make_shared<isx::Group>("subGroup");
+    auto series = std::make_shared<isx::Series>("series");
+    auto dataSet = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie.isxd");
 
-    SECTION("Move a group from root to another group")
+    group.insertChild(subGroup);
+    group.insertChild(series);
+    group.insertChild(dataSet);
+
+    SECTION("Remove an item at the end")
     {
-        root.moveGroup("group1", group3);
+        group.removeChild("dataSet");
 
-        REQUIRE(root.getGroups().size() == 2);
-        REQUIRE(root.getGroup("group2") == group2);
-        ISX_EXPECT_EXCEPTION();
-        try
-        {
-            root.getGroup("group1");
-            FAIL("Failed to throw an exception.");
-        }
-        catch (const isx::ExceptionDataIO & error)
-        {
-            REQUIRE(std::string(error.what()) ==
-                    "Could not find group with the name: group1");
-        }
-        catch (...)
-        {
-            FAIL("Failed to throw an isx::ExceptionDataIO");
-        }
+        REQUIRE(group.getChildren().size() == 2);
+        REQUIRE(group.getChild("subGroup") == subGroup.get());
+        REQUIRE(group.getChild("series") == series.get());
 
-        REQUIRE(group3->getGroups().size() == 1);
-        REQUIRE(group3->getGroup("group1") == group1);
+        ISX_REQUIRE_EXCEPTION(
+                group.getChild("dataSet"),
+                isx::ExceptionDataIO,
+                "Could not find child with the name: dataSet");
     }
 
-    SECTION("Identity move")
+    SECTION("Remove an item in the middle")
     {
-        root.moveGroup("group1", &root, 0);
+        group.removeChild("series");
 
-        const std::vector<isx::Group *> groups = root.getGroups();
-        REQUIRE(groups.size() == 3);
-        REQUIRE(groups.at(0) == group1);
-        REQUIRE(groups.at(1) == group2);
-        REQUIRE(groups.at(2) == group3);
+        REQUIRE(group.getChildren().size() == 2);
+        REQUIRE(group.getChild("subGroup") == subGroup.get());
+        REQUIRE(group.getChild("dataSet") == dataSet.get());
+
+        ISX_REQUIRE_EXCEPTION(
+                group.getChild("series"),
+                isx::ExceptionDataIO,
+                "Could not find child with the name: series");
     }
 
-    SECTION("Internal move to the beginning of a group")
+    SECTION("Remove an item that does not exist")
     {
-        root.moveGroup("group2", &root, 0);
-
-        const std::vector<isx::Group *> groups = root.getGroups();
-        REQUIRE(groups.size() == 3);
-        REQUIRE(groups.at(0) == group2);
-        REQUIRE(groups.at(1) == group1);
-        REQUIRE(groups.at(2) == group3);
+        ISX_REQUIRE_EXCEPTION(
+                group.removeChild("movie"),
+                isx::ExceptionDataIO,
+                "Could not find item with the name: movie");
     }
 
-    SECTION("Internal move to the middle of a group")
-    {
-        root.moveGroup("group1", &root, 1);
+}
 
-        const std::vector<isx::Group *> groups = root.getGroups();
-        REQUIRE(groups.size() == 3);
-        REQUIRE(groups.at(0) == group2);
-        REQUIRE(groups.at(1) == group1);
-        REQUIRE(groups.at(2) == group3);
+TEST_CASE("Group-toFromJsonString", "[core]")
+{
+    auto subGroup = std::make_shared<isx::Group>("subGroup");
+    auto series = std::make_shared<isx::Series>("series");
+    auto dataSet = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie.isxd");
+
+    SECTION("An empty group")
+    {
+        const isx::Group expected("group");
+
+        const std::string jsonString = expected.toJsonString();
+        const std::shared_ptr<isx::Group> actual = isx::Group::fromJsonString(jsonString);
+
+        REQUIRE(*actual == expected);
     }
 
-    SECTION("Internal move to the end of a group")
+    SECTION("A group containing a sub-group, series and data set")
     {
-        root.moveGroup("group1", &root, 2);
+        isx::Group expected("group");
+        expected.insertChild(subGroup);
+        expected.insertChild(series);
+        expected.insertChild(dataSet);
 
-        const std::vector<isx::Group *> groups = root.getGroups();
-        REQUIRE(groups.size() == 3);
-        REQUIRE(groups.at(0) == group2);
-        REQUIRE(groups.at(1) == group3);
-        REQUIRE(groups.at(2) == group1);
-    }
+        const std::string jsonString = expected.toJsonString();
+        const std::shared_ptr<isx::Group> actual = isx::Group::fromJsonString(jsonString);
 
-    SECTION("Internal move past the end of a group")
-    {
-        root.moveGroup("group1", &root, 3);
-
-        const std::vector<isx::Group *> groups = root.getGroups();
-        REQUIRE(groups.size() == 3);
-        REQUIRE(groups.at(0) == group2);
-        REQUIRE(groups.at(1) == group3);
-        REQUIRE(groups.at(2) == group1);
+        REQUIRE(*actual == expected);
     }
 
 }
@@ -352,10 +206,16 @@ TEST_CASE("Group-moveGroup", "[core]")
 TEST_CASE("Group-getIndex", "[core]")
 {
     isx::Group root("/");
-    isx::Group * group1 = root.createGroup("group1");
-    isx::Group * group2 = root.createGroup("group2");
-    isx::Group * group3 = group2->createGroup("group3");
-    isx::Group * group4 = group2->createGroup("group4");
+
+    auto group1 = std::make_shared<isx::Group>("group1");
+    auto group2 = std::make_shared<isx::Group>("group2");
+    auto group3 = std::make_shared<isx::Group>("group3");
+    auto group4 = std::make_shared<isx::Group>("group4");
+
+    root.insertChild(group1);
+    group2->insertChild(group3);
+    group2->insertChild(group4);
+    root.insertChild(group2);
 
     SECTION("Get the index of the root group")
     {
@@ -375,5 +235,3 @@ TEST_CASE("Group-getIndex", "[core]")
     }
 
 }
-
-

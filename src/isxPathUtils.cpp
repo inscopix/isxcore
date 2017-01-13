@@ -106,4 +106,24 @@ appendNumberToPath(
     return inPath + "_" + ss.str();
 }
 
+bool
+makeDirectory(const std::string & inPath)
+{
+    QDir dir(QString::fromStdString(getDirName(inPath)));
+    return dir.mkdir(QString::fromStdString(getBaseName(inPath)));
+}
+
+std::string
+makeUniqueFilePath(const std::string & inPath, const isize_t inWidth)
+{
+    std::string outPath = inPath;
+    const std::string base = getDirName(inPath) + "/" + getBaseName(inPath);
+    const std::string extension = getExtension(inPath);
+    for (isize_t i = 0; pathExists(outPath) && i < 1000; ++i)
+    {
+        outPath = appendNumberToPath(base, i, inWidth) + "." + extension;
+    }
+    return outPath;
+}
+
 } // namespace isx

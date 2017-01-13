@@ -2,6 +2,7 @@
 #include "isxMovieFactory.h"
 #include "isxException.h"
 #include "isxDispatchQueue.h"
+#include "isxSeries.h"
 
 #include <algorithm>
 #include <functional>
@@ -33,15 +34,25 @@ MovieSeries::MovieSeries(const std::vector<std::string> & inFileNames)
     // movies are sorted by start time now, check if they meet requirements
     const auto & refSi = m_movies[0]->getSpacingInfo();
     const DataType refDataType = m_movies[0]->getDataType();
+    std::string errorMessage;
     for (isize_t i = 1; i < m_movies.size(); ++i)
     {
         const auto & m = m_movies[i];
-        checkDataType(refDataType, m->getDataType());
-        checkSpacingInfo(refSi, m->getSpacingInfo());
+        if (!Series::checkDataType(refDataType, m->getDataType(), errorMessage))
+        {
+            ISX_THROW(ExceptionSeries, errorMessage);
+        }
+        if (!Series::checkSpacingInfo(refSi, m->getSpacingInfo(), errorMessage))
+        {
+            ISX_THROW(ExceptionSeries, errorMessage);
+        }
 
         const auto & tip = m_movies[i-1]->getTimingInfo();
         const auto & tic = m_movies[i]->getTimingInfo();
-        checkTimingInfo(tip, tic);
+        if (!Series::checkTimingInfo(tip, tic, errorMessage))
+        {
+            ISX_THROW(ExceptionSeries, errorMessage);
+        }
     }
 
     // individual movie files are compatible, initialize
@@ -79,37 +90,6 @@ MovieSeries::getMovies()
 const
 {
     return m_movies;
-}
-
-void
-MovieSeries::checkTimingInfo(const TimingInfo & inRef, const TimingInfo & inNew)
-{
-    if (inNew.getStep() != inRef.getStep())
-    {
-        ISX_THROW(ExceptionSeries, "The timing info has a different frame rate than the reference.");
-    }
-    if (inNew.overlapsWith(inRef))
-    {
-        ISX_THROW(ExceptionSeries, "The timing info temporally overlaps with the reference.");
-    }
-}
-
-void
-MovieSeries::checkSpacingInfo(const SpacingInfo & inRef, const SpacingInfo & inNew)
-{
-    if (!(inRef == inNew))
-    {
-        ISX_THROW(ExceptionSeries, "The spacing info is different than the reference.");
-    }
-}
-
-void
-MovieSeries::checkDataType(const DataType inRef, const DataType inNew)
-{
-    if (inRef != inNew)
-    {
-        ISX_THROW(ExceptionSeries, "The data type is different than the reference.");
-    }
 }
 
 bool

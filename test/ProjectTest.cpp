@@ -9,7 +9,7 @@
 
 #include <fstream>
 
-TEST_CASE("ProjectTest", "[core]")
+TEST_CASE("Project-Project", "[core]")
 {
     std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
     std::remove(projectFileName.c_str());
@@ -30,7 +30,6 @@ TEST_CASE("ProjectTest", "[core]")
         REQUIRE(project.getName() == projectName);
         REQUIRE(project.getFileName() == projectFileName);
         REQUIRE_NOTHROW(project.getRootGroup());
-        REQUIRE_NOTHROW(project.getOriginalDataGroup());
         project.save();
     }
 
@@ -47,150 +46,394 @@ TEST_CASE("ProjectTest", "[core]")
                 "The file name already exists: " + projectFileName);
     }
 
-    SECTION("Create a group in a project")
+    SECTION("Open an existing project after creating a data set.")
     {
         isx::Project project(projectFileName, projectName);
+        const isx::DataSet * expected = project.createDataSet("/movie", isx::DataSet::Type::MOVIE, "movie.isxd");
+        project.save();
 
-        isx::Group * group = project.createGroup("/myGroup");
+        isx::Project readProject(projectFileName);
 
-        REQUIRE(group->getParent() == project.getRootGroup());
-        REQUIRE(group->getName() == "myGroup");
-        REQUIRE(group->getPath() == "/myGroup");
-        REQUIRE(project.getGroup("/myGroup") == group);
+        REQUIRE(*readProject.getItem("/movie") == *expected);
     }
 
-    SECTION("Create a movie data set in a project")
+    SECTION("Open an existing project after creating a series.")
     {
-        std::string movieFileName = g_resources["unitTestDataPath"] + "/movie.isxp";
         isx::Project project(projectFileName, projectName);
+        const isx::Series * expected = project.createSeries("/series");
+        project.save();
 
-        isx::DataSet * dataSet = project.createDataSet("/myDataSet",
-                isx::DataSet::Type::MOVIE, movieFileName);
+        isx::Project readProject(projectFileName);
 
-        REQUIRE(dataSet->getParent() == project.getGroup("/myDataSet"));
-        REQUIRE(dataSet->getName() == "myDataSet");
-        REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
-        REQUIRE(dataSet->getPath() == "/myDataSet/myDataSet");
-        REQUIRE(dataSet->getFileName() == isx::getAbsolutePath(movieFileName));
-        REQUIRE(project.getDataSet("/myDataSet") == dataSet);
-    }
-
-    SECTION("Import a movie data set in a project")
-    {
-        std::string movieFileName = g_resources["unitTestDataPath"] + "/movie.isxp";
-        isx::Project project(projectFileName, projectName);
-
-        isx::DataSet * dataSet = project.createDataSet("/myDataSet",
-                isx::DataSet::Type::MOVIE, movieFileName);
-
-        REQUIRE(project.getDataSet("OriginalData/myDataSet") == dataSet);
-        REQUIRE(project.getDataSet("/myDataSet") == dataSet);
-    }
-
-    SECTION("Open an existing project after adding a group.")
-    {
-        {
-            isx::Project project(projectFileName, projectName);
-            project.createGroup("/myGroup");
-            project.save();
-        }
-        isx::Project project(projectFileName);
-        REQUIRE(project.isValid());
-        isx::Group * group = project.getGroup("/myGroup");
-        REQUIRE(group->getName() == "myGroup");
-        REQUIRE(group->getPath() == "/myGroup");
-        REQUIRE(*(group->getParent()) == isx::Group("/"));
-    }
-
-    SECTION("Open an existing project after adding some typical groups and data sets")
-    {
-        std::string baseName = "recording-20160808-133943";
-        std::string movieName = baseName;
-        std::string procMovieName = baseName + "-pp";
-        std::string cellSetName = "ics";
-
-        std::string moviePath = "/" + movieName;
-
-        std::string procMoviePath = "/" + procMovieName;
-        std::string procMovieDerivedPath = procMoviePath + "/derived";
-
-        std::string cellSetPath = procMovieDerivedPath + "/" + cellSetName;
-
-#if ISX_OS_WIN32
-        std::string rootFileName = "C:/";
-#else
-        std::string rootFileName = "/";
-#endif
-        std::string movieFileName = rootFileName + "inscopix/data/" + movieName + ".isxd";
-        std::string procMovieFileName = g_resources["unitTestDataPath"] + "/" + procMovieName + ".isxd";
-        std::string cellSetFileName = g_resources["unitTestDataPath"] + "/" + cellSetName + ".isxd";
-
-        {
-            isx::Project project(projectFileName, projectName);
-            project.importDataSet(moviePath, isx::DataSet::Type::MOVIE, movieFileName);
-            project.createDataSet(procMoviePath, isx::DataSet::Type::MOVIE, procMovieFileName);
-            project.createDataSet(cellSetPath, isx::DataSet::Type::CELLSET, cellSetFileName);
-            project.save();
-        }
-
-        // Create expected groups/datasets
-        isx::Group rootGroup("/");
-        isx::Group origGroup("OriginalData");
-        isx::Group * movieGroup = rootGroup.createGroup(movieName, isx::Group::Type::DATASET);
-        isx::Group * procMovieGroup = rootGroup.createGroup(procMovieName, isx::Group::Type::DATASET);
-        isx::Group * procMovieDerivedGroup = procMovieGroup->createGroup("derived", isx::Group::Type::DERIVED);
-        isx::Group * procCellGroup = procMovieDerivedGroup->createGroup(cellSetName, isx::Group::Type::DATASET);
-
-        isx::DataSet * expOrigMovie = origGroup.createDataSet(
-                movieName, isx::DataSet::Type::MOVIE, isx::getAbsolutePath(movieFileName));
-        isx::DataSet * expMovie = movieGroup->createDataSet(
-                movieName, isx::DataSet::Type::MOVIE, isx::getAbsolutePath(movieFileName));
-        isx::DataSet * expProcMovie = procMovieGroup->createDataSet(
-                procMovieName, isx::DataSet::Type::MOVIE, isx::getAbsolutePath(procMovieFileName));
-        isx::DataSet * expCellSet = procCellGroup->createDataSet(
-                cellSetName, isx::DataSet::Type::CELLSET, isx::getAbsolutePath(cellSetFileName));
-
-        isx::Project project(projectFileName);
-        REQUIRE(project.isValid());
-        REQUIRE(*(project.getDataSet(moviePath)) == *expMovie);
-        REQUIRE(*(project.getOriginalDataGroup()->getDataSet(movieName)) == *expOrigMovie);
-        REQUIRE(*(project.getDataSet(procMoviePath)) == *expProcMovie);
-        REQUIRE(*(project.getDataSet(cellSetPath)) == *expCellSet);
+        REQUIRE(*readProject.getItem("/series") == *expected);
     }
 
 }
 
-TEST_CASE("Project-isGroup", "[core]")
+TEST_CASE("Project-createDataSet", "[core]")
 {
     std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
     std::remove(projectFileName.c_str());
-
     std::string projectName = "myProject";
+    isx::Project project(projectFileName, projectName);
 
-    SECTION("Empty project")
+    std::string movie1File, movie2File, movie3File,
+            movie1OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File;
+    createSeriesTestData(movie1File, movie2File, movie3File,
+            movie1OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File);
+
+    SECTION("Create a movie data set in a project")
     {
-        isx::Project project(projectFileName, projectName);
-        REQUIRE(project.isGroup("/"));
+        isx::DataSet * dataSet = project.createDataSet("/myDataSet", isx::DataSet::Type::MOVIE, movie1File);
+
+        REQUIRE(dataSet->getParent() == project.getRootGroup());
+        REQUIRE(dataSet->getName() == "myDataSet");
+        REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
+        REQUIRE(dataSet->getPath() == "/myDataSet");
+        REQUIRE(dataSet->getFileName() == isx::getAbsolutePath(movie1File));
+        REQUIRE(project.getItem("/myDataSet") == dataSet);
     }
 
-    SECTION("Project with one group")
+    SECTION("Create a movie in a series")
     {
-        isx::Project project(projectFileName, projectName);
-        project.createGroup("/Day_1");
-        REQUIRE(project.isGroup("/Day_1"));
+        isx::Series * series = project.createSeries("/series");
+
+        const isx::DataSet * movie1 = project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+
+        REQUIRE(movie1->getParent() == series);
+        REQUIRE(movie1->getName() == "movie1");
+        REQUIRE(movie1->getType() == isx::DataSet::Type::MOVIE);
+        REQUIRE(movie1->getFileName() == isx::getAbsolutePath(movie1File));
+        REQUIRE(movie1->getPath() == "/series/movie1");
     }
 
-    SECTION("Project with one sub-group")
+    SECTION("Create two consistent movies to the series in order")
     {
-        isx::Project project(projectFileName, projectName);
-        project.createGroup("/Animal_1");
-        REQUIRE(project.isGroup("/Animal_1"));
-        project.createGroup("/Animal_1/Day_1");
-        REQUIRE(project.isGroup("/Animal_1/Day_1"));
+        isx::Series * series = project.createSeries("/series");
+
+        const isx::DataSet * movie1 = project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+        const isx::DataSet * movie2 = project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File);
+
+        REQUIRE(movie1->getParent() == series);
+        REQUIRE(movie1->getName() == "movie1");
+        REQUIRE(movie1->getType() == isx::DataSet::Type::MOVIE);
+        REQUIRE(movie1->getFileName() == isx::getAbsolutePath(movie1File));
+        REQUIRE(movie1->getPath() == "/series/movie1");
+
+        REQUIRE(movie2->getParent() == series);
+        REQUIRE(movie2->getName() == "movie2");
+        REQUIRE(movie2->getType() == isx::DataSet::Type::MOVIE);
+        REQUIRE(movie2->getFileName() == isx::getAbsolutePath(movie2File));
+        REQUIRE(movie2->getPath() == "/series/movie2");
     }
+
+    SECTION("Add two consistent movies to the series out of order")
+    {
+        isx::Series * series = project.createSeries("/series");
+
+        const isx::DataSet * movie2 = project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File);
+        const isx::DataSet * movie1 = project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+
+        const std::vector<isx::ProjectItem *> children = series->getChildren();
+        REQUIRE(*static_cast<isx::DataSet *>(children.at(0)) == *movie1);
+        REQUIRE(*static_cast<isx::DataSet *>(children.at(1)) == *movie2);
+    }
+
+    SECTION("Try to create two movies that have different spacing info")
+    {
+        isx::Series * series = project.createSeries("/series");
+
+        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+
+        ISX_REQUIRE_EXCEPTION(
+                project.createDataSet("/series/movie2Cropped", isx::DataSet::Type::MOVIE, movie2CroppedFile),
+                isx::ExceptionSeries,
+                "The spacing info is different than that of the reference.");
+    }
+
+    SECTION("Try to create two movies that have different frame rates")
+    {
+        isx::Series * series = project.createSeries("/series");
+
+        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+
+        ISX_REQUIRE_EXCEPTION(
+                project.createDataSet("/series/movie2Step2", isx::DataSet::Type::MOVIE, movie2Step2File),
+                isx::ExceptionSeries,
+                "The timing info has a different frame rate than the reference.");
+    }
+
+    SECTION("Try to create two movies with temporal overlap")
+    {
+        isx::Series * series = project.createSeries("/series");
+
+        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+
+        ISX_REQUIRE_EXCEPTION(
+                project.createDataSet("/series/movie1Overlap", isx::DataSet::Type::MOVIE, movie1OverlapFile),
+                isx::ExceptionSeries,
+                "The timing info temporally overlaps with the reference.");
+    }
+
+    SECTION("Try to add a behavioral movie to a series")
+    {
+        isx::Series * series = project.createSeries("/series");
+
+        ISX_REQUIRE_EXCEPTION(
+                project.createDataSet("/series/behavior", isx::DataSet::Type::BEHAVIOR, "behavior.mpg"),
+                isx::ExceptionSeries,
+                "A series can only contain nVista movies.");
+    }
+
+    SECTION("Try to add two movies with different pixel data types")
+    {
+        isx::Series * series = project.createSeries("/series");
+
+        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+
+        ISX_REQUIRE_EXCEPTION(
+                project.createDataSet("/series/movie2F32", isx::DataSet::Type::MOVIE, movie2F32File),
+                isx::ExceptionSeries,
+                "The data type is different than that of the reference.");
+    }
+
 }
 
-TEST_CASE("ProjectModificationTest", "[core]")
+TEST_CASE("Project-removeItem", "[core]")
+{
+    const std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
+    std::remove(projectFileName.c_str());
+    const std::string projectName = "myProject";
+
+    isx::Project project(projectFileName, projectName);
+
+    SECTION("Remove a movie data set in an otherwise empty project")
+    {
+        project.createDataSet("/movie", isx::DataSet::Type::MOVIE, "movie.isxd");
+
+        project.removeItem("/movie");
+
+        ISX_REQUIRE_EXCEPTION(
+                project.getItem("/movie"),
+                isx::ExceptionDataIO,
+                "Could not find child with the name: movie")
+    }
+
+    SECTION("Remove one series in an empty project")
+    {
+        project.createSeries("/series");
+
+        project.removeItem("/series");
+
+        ISX_REQUIRE_EXCEPTION(
+                project.getItem("/series"),
+                isx::ExceptionDataIO,
+                "Could not find child with the name: series")
+    }
+
+}
+
+TEST_CASE("Project-moveItem", "[core]")
+{
+    std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
+    std::remove(projectFileName.c_str());
+    std::string projectName = "project";
+
+    isx::Project project(projectFileName, projectName);
+
+    std::string movie1File, movie2File, movie3File,
+        movie1OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File;
+    createSeriesTestData(movie1File, movie2File, movie3File,
+            movie1OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File);
+
+    SECTION("Identity move of a series")
+    {
+        project.createSeries("/series");
+
+        project.moveItem("/series", "/");
+
+        std::vector<isx::ProjectItem *> children = project.getItem("/")->getChildren();
+        REQUIRE(project.getItem("/series") == children.at(0));
+    }
+
+    SECTION("Change the order of two series in a project")
+    {
+        project.createSeries("/series_1");
+        project.createSeries("/series_2");
+
+        project.moveItem("/series_1", "/", 1);
+
+        std::vector<isx::ProjectItem *> children = project.getItem("/")->getChildren();
+        REQUIRE(project.getItem("/series_2") == children.at(0));
+        REQUIRE(project.getItem("/series_1") == children.at(1));
+    }
+
+    SECTION("Change the order of three series in a project")
+    {
+        project.createSeries("/series_1");
+        project.createSeries("/series_2");
+        project.createSeries("/series_3");
+
+        project.moveItem("/series_2", "/", 0);
+
+        std::vector<isx::ProjectItem *> children = project.getItem("/")->getChildren();
+        REQUIRE(project.getItem("/series_2") == children.at(0));
+        REQUIRE(project.getItem("/series_1") == children.at(1));
+        REQUIRE(project.getItem("/series_3") == children.at(2));
+    }
+
+    SECTION("Move a data set into an empty series")
+    {
+        project.createDataSet("/movie_1", isx::DataSet::Type::MOVIE, movie1File);
+        project.createSeries("/series");
+
+        project.moveItem("/movie_1", "/series");
+
+        std::vector<isx::ProjectItem *> children = project.getItem("/series")->getChildren();
+        REQUIRE(project.getItem("/series/movie_1") == children.at(0));
+
+        ISX_REQUIRE_EXCEPTION(
+                project.getItem("/movie_1"),
+                isx::ExceptionDataIO,
+                "Could not find child with the name: movie_1");
+    }
+
+    SECTION("Move a consistent data set into an existing series")
+    {
+        project.createSeries("/series");
+
+        project.createDataSet("/series/movie_1", isx::DataSet::Type::MOVIE, movie1File);
+        project.createDataSet("/movie_2", isx::DataSet::Type::MOVIE, movie2File);
+
+        project.moveItem("/movie_2", "/series");
+
+        std::vector<isx::ProjectItem *> children = project.getItem("/series")->getChildren();
+        REQUIRE(project.getItem("/series/movie_1") == children.at(0));
+        REQUIRE(project.getItem("/series/movie_2") == children.at(1));
+
+        ISX_REQUIRE_EXCEPTION(
+                project.getItem("/movie_1"),
+                isx::ExceptionDataIO,
+                "Could not find child with the name: movie_1");
+
+        ISX_REQUIRE_EXCEPTION(
+                project.getItem("/movie_2"),
+                isx::ExceptionDataIO,
+                "Could not find child with the name: movie_2");
+    }
+
+    SECTION("Move a consistent data set into an existing series out of order")
+    {
+        project.createSeries("/series");
+
+        project.createDataSet("/movie_1", isx::DataSet::Type::MOVIE, movie1File);
+        project.createDataSet("/series/movie_2", isx::DataSet::Type::MOVIE, movie2File);
+
+        project.moveItem("/movie_1", "/series");
+
+        std::vector<isx::ProjectItem *> children = project.getItem("/series")->getChildren();
+        REQUIRE(project.getItem("/series/movie_1") == children.at(0));
+        REQUIRE(project.getItem("/series/movie_2") == children.at(1));
+
+        ISX_REQUIRE_EXCEPTION(
+                project.getItem("/movie_1"),
+                isx::ExceptionDataIO,
+                "Could not find child with the name: movie_1");
+
+        ISX_REQUIRE_EXCEPTION(
+                project.getItem("/movie_2"),
+                isx::ExceptionDataIO,
+                "Could not find child with the name: movie_2");
+    }
+
+    SECTION("Move a data set into a series with which it is not consistent")
+    {
+        project.createSeries("/series");
+
+        const isx::DataSet * movie1 = project.createDataSet("/movie_1", isx::DataSet::Type::MOVIE, movie1File);
+        project.createDataSet("/series/movie_2", isx::DataSet::Type::MOVIE, movie2Step2File);
+
+        ISX_REQUIRE_EXCEPTION(
+                project.moveItem("/movie_1", "/series"),
+                isx::ExceptionSeries,
+                "The timing info has a different frame rate than the reference.");
+
+        REQUIRE(project.getItem("/movie_1") == movie1);
+    }
+
+}
+
+TEST_CASE("Project-createSeries", "[core]")
+{
+    const std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
+    std::remove(projectFileName.c_str());
+    const std::string projectName = "myProject";
+
+    isx::Project project(projectFileName, projectName);
+
+    SECTION("Create one series in an empty project")
+    {
+        const isx::Series * series = project.createSeries("/series");
+        REQUIRE(project.getItem("/series") == series);
+    }
+
+}
+
+TEST_CASE("Project-flattenSeries", "[core]")
+{
+    std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
+    std::remove(projectFileName.c_str());
+    std::string projectName = "myProject";
+    isx::Project project(projectFileName, projectName);
+
+    std::string movie1File, movie2File, movie3File,
+            movie1OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File;
+    createSeriesTestData(movie1File, movie2File, movie3File,
+            movie1OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File);
+
+    SECTION("Flatten a project with only one series")
+    {
+        project.createSeries("/series");
+        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+        project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File);
+
+        project.flattenSeries("/series");
+
+        const std::vector<isx::ProjectItem *> children = project.getRootGroup()->getChildren();
+        REQUIRE(project.getItem("/movie1") == children.at(0));
+        REQUIRE(project.getItem("/movie2") == children.at(1));
+
+        ISX_REQUIRE_EXCEPTION(
+            project.getItem("/series"),
+            isx::ExceptionDataIO,
+            "Could not find child with the name: series");
+    }
+
+    SECTION("Flatten a project with one series in a data set sandwich")
+    {
+        isx::DataSet * movie0 = project.createDataSet("/movie0", isx::DataSet::Type::MOVIE, "movie0.isxd");
+        project.createSeries("/series");
+        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+        project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File);
+        isx::DataSet * behavior = project.createDataSet("/behavior", isx::DataSet::Type::BEHAVIOR, "behavior.mpg");
+
+        project.flattenSeries("/series");
+
+        const std::vector<isx::ProjectItem *> children = project.getRootGroup()->getChildren();
+        REQUIRE(project.getItem("/movie0") == children.at(0));
+        REQUIRE(project.getItem("/movie1") == children.at(1));
+        REQUIRE(project.getItem("/movie2") == children.at(2));
+        REQUIRE(project.getItem("/behavior") == children.at(3));
+
+        ISX_REQUIRE_EXCEPTION(
+                project.getItem("/series"),
+                isx::ExceptionDataIO,
+                "Could not find child with the name: series");
+    }
+
+}
+
+TEST_CASE("Project-isModified", "[core]")
 {
     std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
     std::remove(projectFileName.c_str());
@@ -241,8 +484,8 @@ TEST_CASE("MOS-444", "[core]")
     {
         isx::Project project(projectFileName, projectName);
         project.createDataSet("/movie", isx::DataSet::Type::MOVIE, movieFileName);
-        project.createGroup("/series", isx::Group::Type::SERIES);
-        project.moveGroups({"/movie"}, "/series");
+        project.createSeries("/series");
+        project.moveItem("/movie", "/series");
 
         ISX_REQUIRE_EXCEPTION(
                 project.createDataSet("/movie", isx::DataSet::Type::MOVIE, movieFileName),
@@ -250,235 +493,58 @@ TEST_CASE("MOS-444", "[core]")
                 "There is already a data set with the file name: " + isx::getAbsolutePath(movieFileName));
 
         ISX_REQUIRE_EXCEPTION(
-                project.getGroup("/movie"),
+                project.getItem("/movie"),
                 isx::ExceptionDataIO,
-                "Could not find group with the name: movie");
+                "Could not find child with the name: movie");
     }
 }
 
-// A series should only contain data set groups.
-// In particular, we want to prevent nested series and prevent nesting of
-// general groups. Note that we do allow a general group to contain a series.
-TEST_CASE("Project-preventNestedSeries", "[core]")
-{
-    const std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
-    std::remove(projectFileName.c_str());
-    const std::string projectName = "myProject";
-    const std::string movieFileName = g_resources["unitTestDataPath"] + "/recording_20160426_145041.xml";
-
-    isx::Project project(projectFileName, projectName);
-
-    SECTION("Create a series within a general group")
-    {
-        project.createGroup("/animal_1", isx::Group::Type::GENERAL);
-        project.createGroup("/animal_1/series_1", isx::Group::Type::SERIES);
-        project.createDataSet("/movie_1", isx::DataSet::Type::MOVIE, movieFileName);
-        REQUIRE_NOTHROW(project.moveGroups({"/movie_1"}, "/animal_1/series_1"));
-    }
-
-    SECTION("Try to create a series within another series")
-    {
-        project.createGroup("/series_1", isx::Group::Type::SERIES);
-
-        ISX_REQUIRE_EXCEPTION(
-                project.createGroup("/series_1/subseries_2"),
-                isx::ExceptionSeries,
-                "A series group can only contain data set groups.");
-    }
-}
-
-void
-createSeriesTestData(
-        std::string & outMovie1File,
-        std::string & outMovie2File,
-        std::string & outMovie1OverlapFile,
-        std::string & outMovie2Step2File,
-        std::string & outMovie2CroppedFile,
-        std::string & outMovie2F32File,
-        std::string & outBehavMovieFile)
-{
-    const isx::Time start1(2016, 11, 8, 9, 24, 55);
-    const isx::Time start1Overlap(2016, 11, 8, 9, 24, 55, isx::DurationInSeconds(2, 20));
-    const isx::Time start2(2016, 11, 8, 9, 34, 29);
-    const isx::DurationInSeconds step1(1, 20);
-    const isx::DurationInSeconds step2(1, 15);
-    const isx::TimingInfo timingInfo1(start1, step1, 5);
-    const isx::TimingInfo timingInfo1Overlap(start1Overlap, step1, 9);
-    const isx::TimingInfo timingInfo2(start2, step1, 6);
-    const isx::TimingInfo timingInfo2Step2(start2, step2, 6);
-
-    const isx::SpacingInfo spacingInfo1(isx::SizeInPixels_t(3, 7));
-    const isx::SpacingInfo spacingInfoCropped(isx::SizeInPixels_t(3, 4));
-
-    const std::string dataPath = g_resources["unitTestDataPath"] + "/output";
-
-    // Movies 1 and 2 form a consistent series
-    outMovie1File = dataPath + "/movie1.isxd";
-    isx::writeMosaicMovie(outMovie1File, timingInfo1, spacingInfo1, isx::DataType::U16);
-
-    outMovie2File = dataPath + "/movie2.isxd";
-    isx::writeMosaicMovie(outMovie2File, timingInfo2, spacingInfo1, isx::DataType::U16);
-
-    // The same as movie2, but starts earlier so it temporally overlaps with movie1
-    outMovie1OverlapFile = dataPath + "/movie1Overlap.isxd";
-    isx::writeMosaicMovie(outMovie1OverlapFile, timingInfo1Overlap, spacingInfo1, isx::DataType::U16);
-
-    // The same as movie2, but with a different frame rate
-    outMovie2Step2File = dataPath + "/movie2Step2.isxd";
-    isx::writeMosaicMovie(outMovie2Step2File, timingInfo2Step2, spacingInfo1, isx::DataType::U16);
-
-    // The same as movie2, but with different spacing info
-    outMovie2CroppedFile = dataPath + "/movie2Cropped.isxd";
-    isx::writeMosaicMovie(outMovie2CroppedFile, timingInfo2, spacingInfoCropped, isx::DataType::U16);
-
-    // The same as movie2, but with a different pixel data type
-    outMovie2F32File = dataPath + "/movie2F32.isxd";
-    isx::writeMosaicMovie(outMovie2F32File, timingInfo2, spacingInfo1, isx::DataType::F32);
-
-    // A behavioral movie
-    outBehavMovieFile = g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg";
-}
-
-TEST_CASE("Project-createDataSetInSeries", "[core]")
+TEST_CASE("Project-createUniquePath", "[core][!hide]")
 {
     std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
     std::remove(projectFileName.c_str());
     std::string projectName = "myProject";
 
-    // Define test files
-    std::string movie1File, movie2File, movie1OverlapFile, movie2Step2File,
-            movie2CroppedFile, movie2F32File, behavMovieFile;
-    createSeriesTestData(movie1File, movie2File, movie1OverlapFile, movie2Step2File,
-            movie2CroppedFile, movie2F32File, behavMovieFile);
-
-    // Create project with a series group
     isx::Project project(projectFileName, projectName);
-    isx::Group * series = project.createGroup("/series", isx::Group::Type::SERIES);
 
-    SECTION("Add one movie to the series in order")
+    SECTION("When path is not taken")
     {
-        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+        project.createSeries("series_000");
+        const std::string path = project.createUniquePath("/series");
+        REQUIRE(path == "/series");
     }
 
-    SECTION("Add two consistent movies to the series in order")
+    SECTION("When path is taken once")
     {
-        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
-        project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File);
+        project.createSeries("series");
+        const std::string path = project.createUniquePath("/series");
+        REQUIRE(path == "/series_000");
     }
 
-    SECTION("Add two consistent movies to the series out of order")
+    SECTION("When path is taken twice")
     {
-        isx::DataSet * movie2 = project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File);
-        isx::DataSet * movie1 = project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
-
-        const std::vector<isx::Group *> groups = series->getGroups();
-        REQUIRE(groups[0]->getDataSetFromGroup() == movie1);
-        REQUIRE(groups[1]->getDataSetFromGroup() == movie2);
-    }
-
-    SECTION("Try to add two movies that have different spacing info")
-    {
-        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
-        ISX_REQUIRE_EXCEPTION(
-            project.createDataSet("/series/movie2Cropped", isx::DataSet::Type::MOVIE, movie2CroppedFile),
-            isx::ExceptionSeries,
-            "The spacing info is different than the reference.");
-    }
-
-    SECTION("Try to add two movies that have different frame rates")
-    {
-        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
-        ISX_REQUIRE_EXCEPTION(
-            project.createDataSet("/series/movie2Step2", isx::DataSet::Type::MOVIE, movie2Step2File),
-            isx::ExceptionSeries,
-            "The timing info has a different frame rate than the reference.");
-    }
-
-    SECTION("Try to add two movies with temporal overlap")
-    {
-        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
-        ISX_REQUIRE_EXCEPTION(
-            project.createDataSet("/series/movie1Overlap", isx::DataSet::Type::MOVIE, movie1OverlapFile),
-            isx::ExceptionSeries,
-            "The timing info temporally overlaps with the reference.");
-    }
-
-    SECTION("Try to add a behavioral movie to a series")
-    {
-        ISX_REQUIRE_EXCEPTION(
-            project.createDataSet("/series/behavMovie", isx::DataSet::Type::BEHAVIOR, behavMovieFile),
-            isx::ExceptionSeries,
-            "A series can only contain nVista movies.");
-    }
-
-    SECTION("Try to add two movies with different pixel data types")
-    {
-        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
-        ISX_REQUIRE_EXCEPTION(
-            project.createDataSet("/series/movie2F32", isx::DataSet::Type::MOVIE, movie2F32File),
-            isx::ExceptionSeries,
-            "The data type is different than the reference.");
-    }
-
-}
-
-TEST_CASE("Project-flattenGroup", "[core")
-{
-    std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
-    std::remove(projectFileName.c_str());
-    std::string projectName = "myProject";
-
-    // Define test files
-    std::string movie1File, movie2File, movie1OverlapFile, movie2Step2File,
-            movie2CroppedFile, movie2F32File, behavMovieFile;
-    createSeriesTestData(movie1File, movie2File, movie1OverlapFile, movie2Step2File,
-            movie2CroppedFile, movie2F32File, behavMovieFile);
-
-    // Define a project with some series
-    isx::Project project(projectFileName, projectName);
-    isx::Group * series1 = project.createGroup("/series1", isx::Group::Type::SERIES);
-    isx::DataSet * movie1 = project.createDataSet("/series1/movie1", isx::DataSet::Type::MOVIE, movie1File);
-    isx::DataSet * movie2 = project.createDataSet("/series1/movie2", isx::DataSet::Type::MOVIE, movie2File);
-    isx::DataSet * behavMovie = project.createDataSet("/behavMovie", isx::DataSet::Type::BEHAVIOR, behavMovieFile);
-
-    SECTION("Collapse one top level series")
-    {
-        project.flattenGroup("/series1");
-
-        REQUIRE(project.getDataSet("/movie1") == movie1);
-        REQUIRE(project.getDataSet("/movie2") == movie2);
-        REQUIRE(project.getDataSet("/behavMovie") == behavMovie);
-
-        ISX_REQUIRE_EXCEPTION(
-            project.getGroup("/series1"),
-            isx::ExceptionDataIO,
-            "Could not find group with the name: series1");
-    }
-
-    SECTION("Try to flatten root")
-    {
-        ISX_REQUIRE_EXCEPTION(
-            project.flattenGroup("/"),
-            isx::ExceptionDataIO,
-            "The root group cannot be flattened.");
+        project.createSeries("series");
+        project.createSeries("series_000");
+        const std::string path = project.createUniquePath("/series");
+        REQUIRE(path == "/series_001");
     }
 }
 
-TEST_CASE("Project-createUniquePathBench", "[core][!hide]")
+TEST_CASE("Project-createUniquePath_bench", "[core][!hide]")
 {
     std::string projectFileName = g_resources["unitTestDataPath"] + "/projectWithLotsOfGroups.isxp";
     std::remove(projectFileName.c_str());
     std::string projectName = "myProject";
 
     isx::Project project(projectFileName, projectName);
-    isx::Group * group = project.createGroup("/group");
+    const isx::Series * group = project.createSeries("series");
 
     SECTION("MOS-469: time with lots of groups")
     {
         const size_t numGroups = 500;
         for (size_t i = 1; i < numGroups; ++i)
         {
-            project.createGroup(isx::appendNumberToPath("/group", i, 3));
+            project.createSeries(isx::appendNumberToPath("series", i, 3));
         }
         float duration = 0.f;
         {
@@ -487,58 +553,4 @@ TEST_CASE("Project-createUniquePathBench", "[core][!hide]")
         }
        ISX_LOG_INFO("Creating unique path after ", numGroups, " groups took ", duration, " ms.");
     }
-}
-
-TEST_CASE("ProjectSynth", "[data][!hide]")
-{
-
-    SECTION("Create a synthetic project with a group of movies")
-    {
-        const std::string fileName = g_resources["unitTestDataPath"] + "/project-synth_1.isxp";
-        std::remove(fileName.c_str());
-
-        isx::Project project(fileName, "Synthetic Project 1");
-
-        project.importDataSet(
-                "/recording_20160426_145041",
-                isx::DataSet::Type::MOVIE,
-                g_resources["unitTestDataPath"] + "/recording_20160426_145041.xml",
-                {
-                    {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
-                    {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
-                    {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
-                    {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
-                });
-        project.importDataSet(
-                "/recording_20160706_132714",
-                isx::DataSet::Type::MOVIE,
-                g_resources["unitTestDataPath"] + "/recording_20160706_132714.xml",
-                {
-                    {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
-                    {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
-                    {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
-                    {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
-                });
-        project.createGroup("/Day 1", isx::Group::Type::SERIES);
-        project.moveGroups({"/recording_20160426_145041", "/recording_20160706_132714"}, "/Day 1");
-
-        project.importDataSet(
-                "/synth_movie-3cells",
-                isx::DataSet::Type::MOVIE,
-                g_resources["unitTestDataPath"] + "/synth_movie-3cells.isxd",
-                {
-                    {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
-                    {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
-                    {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
-                    {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
-                });
-
-        project.createDataSet(
-                "/synth_movie-3cells/derived/PCA-ICA",
-                isx::DataSet::Type::CELLSET,
-                g_resources["unitTestDataPath"] + "/synth_trace-3cells.isxd");
-
-        project.save();
-    }
-
 }

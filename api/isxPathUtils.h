@@ -119,6 +119,20 @@ std::string appendNumberToPath(
         const isize_t inNumber,
         const isize_t inWidth);
 
+/// Makes a directory on the file system with the given path.
+///
+/// \param  inPath  The path of the directory to make.
+/// \return         True if making the directory was successful.
+bool makeDirectory(const std::string & inPath);
+
+/// Make a unique path on the file system by appending a zero padded
+/// non-negative number.
+///
+/// \param  inPath  The requested file path.
+/// \param  inWidth The width of the number to append.
+/// \return         The unique file path.
+std::string makeUniqueFilePath(const std::string & inPath, const isize_t inWidth = 3);
+
 } // namespace isx
 
 #endif // ISX_PATH_UTILS_H

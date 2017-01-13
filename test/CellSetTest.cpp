@@ -378,7 +378,7 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
         cellSet->writeImageAndTrace(0, image, trace);
 
         isx::Project project(projectFile, "Full Frame");
-        project.importDataSet(
+        project.createDataSet(
                 "/movie-full-frame",
                 isx::DataSet::Type::MOVIE,
                 movieFile,
@@ -389,7 +389,7 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
                   {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
                 });
         project.createDataSet(
-                "/movie-full-frame/derived/cellset-full-frame",
+                "/movie-full-frame/cellset-full-frame",
                 isx::DataSet::Type::CELLSET,
                 cellSetFile);
         project.save();

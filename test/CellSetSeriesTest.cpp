@@ -115,7 +115,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         ISX_REQUIRE_EXCEPTION(
             isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
             isx::ExceptionSeries,
-            "The spacing info is different than the reference.");
+            "The spacing info is different than that of the reference.");
     }
 
     SECTION("Non-compatible set of cellsets - number of cells")

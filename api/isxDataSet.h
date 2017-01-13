@@ -2,27 +2,20 @@
 #define ISX_DATA_SET_H
 
 #include "isxCore.h"
-#include "isxObject.h"
+#include "isxProjectItem.h"
+#include "isxTimingInfo.h"
+#include "isxSpacingInfo.h"
 #include "isxVariant.h"
 
 #include <string>
-#include <memory>
 #include <map>
-#include <vector>
 
 namespace isx
 {
 
-// Need forward declare because declaration of DataSet needs knowledge
-// of Group and declaration of Group needs knowledge of DataSet.
-class Group;
-
-/// Encapsulates a data set within a project.
+/// A data set represents a movie, cell set, etc. that is backed by one or many files.
 ///
-/// This is described by a data set type, a name, a file name and dictionary
-/// of various properties.
-/// It may also have a parent Group which is its owner.
-class DataSet : public Object
+class DataSet : public ProjectItem
 {
 public:
 
@@ -71,12 +64,6 @@ public:
     ///
     std::string getFileName() const;
 
-    /// Exact comparison.
-    ///
-    /// \param  inOther     The data set with which to compare.
-    /// \return             True if the data sets are exactly equal.
-    bool operator==(const DataSet & inOther) const;
-
     /// Get the property map
     /// \return the property map
     const Properties & getProperties() const;
@@ -89,8 +76,7 @@ public:
     /// Will only change those properties that are actually defined in inDataSetProperties.
     /// Will overwrite any existing Properties if they are defined in inDataSetProperties.
     /// \param inDataSetProperties Properties to merge
-    void
-    mergeProperties(const Properties & inDataSetProperties);
+    void mergeProperties(const Properties & inDataSetProperties);
 
     /// Get the property value
     /// \return whether the property was found or not
@@ -103,40 +89,22 @@ public:
     /// \param inValue value
     void setPropertyValue(const std::string & inPropertyName, Variant inValue);
 
-    /// \return     True if this is valid.
+    /// \return     All the derived data sets of this.
     ///
-    bool isValid() const;
+    std::vector<DataSet *> getDerivedDataSets() const;
 
-    /// \return     The name of this data set.
+    /// Insert a derived data set into this.
     ///
-    std::string getName() const;
+    /// \param  inDataSet   The data set to add.
+    /// \throw  ExceptionDataIO If this item already has a child with the name of the data set.
+    void insertDerivedDataSet(std::shared_ptr<DataSet> & inDataSet);
 
-    /// \return     The parent of this group.
+    /// Remove a derived data set by name.
     ///
-    Group * getParent() const;
-
-    /// Set the parent of this data set.
-    ///
-    /// This simply updates the parent of this data set and does not move
-    /// this data set into the given parent group,
-    ///
-    /// \param  inParent    The new parent of this data set.
-    void setParent(Group * inParent);
-
-    /// \return     The path of this group from the root group.
-    ///
-    std::string getPath() const;
-
-    /// Returns whether the item has been modified since last save.
-    ///
-    bool isModified() const;
-
-    /// Sets the item flag indicating wehther there are unsaved changes to false.
-    ///
-    void setUnmodified();
-
-    // Overrides
-    void serialize(std::ostream & strm) const override;
+    /// \param  inName  The name of the data set to remove.
+    /// \return         The removed data set.
+    /// \throw  ExceptionDataIO If a data set with the given name cannot be found.
+    std::shared_ptr<DataSet> removeDerivedDataSet(const std::string & inName);
 
     /// Serialize vector of DataSets and derived DataSets to a JSON string
     /// \return JSON string for the DataSet(s)
@@ -147,9 +115,9 @@ public:
     std::string
     toJsonString(
         const std::string & inPath,
-        const std::vector<DataSet *> & inDataSets,
-        const std::vector<DataSet *> & inDerivedDataSets);
-    
+        const std::vector<const DataSet *> & inDataSets,
+        const std::vector<const DataSet *> & inDerivedDataSets);
+
     /// Create DataSet(s) from a JSON string
     /// \param inDataSetJson string containing JSON info for one or two DataSets
     /// \param outPath is set to the full path (in project) of the original DataSet
@@ -161,7 +129,62 @@ public:
         std::string & outPath,
         std::vector<DataSet> & outOriginals,
         std::vector<DataSet> & outDeriveds);
-    
+
+    /// Create a data set from a serialized JSON string.
+    ///
+    /// \param  inString    The serialized JSON string.
+    /// \return             The deserialized data set.
+    ///
+    /// \throw  ExceptionDataIO If the string cannot be parsed.
+    static std::shared_ptr<DataSet> fromJsonString(const std::string & inString);
+
+    /// \return The timing info associated with this data set.
+    ///
+    /// \throw  ExceptionFileIO If the data set file cannot be read.
+    /// \throw  ExceptionDataIO If the timing info cannot be parsed.
+    const TimingInfo & getTimingInfo();
+
+    /// \return The spacing info associated with this data set.
+    ///
+    /// \throw  ExceptionFileIO If the data set file cannot be read.
+    /// \throw  ExceptionDataIO If the spacing info cannot be parsed.
+    const SpacingInfo & getSpacingInfo();
+
+    /// \return     The data type associated with this data set.
+    ///
+    /// \throw  ExceptionFileIO If the data set file cannot be read.
+    /// \throw  ExceptionDataIO If the data type cannot be parsed.
+    DataType getDataType();
+
+    // Overrides: see isxProjectItem.h for docs.
+    ProjectItem::Type getItemType() const override;
+
+    bool isValid() const override;
+
+    std::string getName() const override;
+
+    void setName(const std::string & inName) override;
+
+    ProjectItem * getParent() const override;
+
+    void setParent(ProjectItem * inParent) override;
+
+    std::vector<ProjectItem *> getChildren() const override;
+
+    size_t getNumChildren() const override;
+
+    void insertChild(std::shared_ptr<ProjectItem> inItem, const int inIndex = -1) override;
+
+    std::shared_ptr<ProjectItem> removeChild(const std::string & inName) override;
+
+    bool isModified() const override;
+
+    void setUnmodified() override;
+
+    std::string toJsonString(const bool inPretty = false) const override;
+
+    bool operator ==(const ProjectItem & other) const override;
+
 private:
 
     /// True if this data set is valid.
@@ -179,11 +202,32 @@ private:
     /// The file name of this data set.
     std::string m_fileName;
 
-    /// The parent group to which this belongs.
-    Group * m_parent;
+    /// The derived data sets.
+    std::vector<std::shared_ptr<DataSet>> m_derived;
+
+    /// The parent item to which this belongs.
+    ProjectItem * m_parent;
 
     /// Dataset properties
     Properties m_properties;
+
+    /// The timing info of this data set.
+    TimingInfo m_timingInfo;
+
+    /// The spacing info of this data set.
+    SpacingInfo m_spacingInfo;
+
+    /// The data type of this data set.
+    DataType m_dataType;
+
+    /// True if the meta data has been read.
+    bool m_hasMetaData = false;
+
+    /// Read the meta data from the data set file.
+    ///
+    /// \throw  ExceptionFileIO     If the read fails.
+    /// \throw  ExceptionDataIO     If the file format is not recognized.
+    void readMetaData();
 
 }; // class DataSet
 
@@ -194,8 +238,8 @@ private:
 /// \param  inFileName      The name of the movie file.
 /// \return                 The data set type.
 ///
-/// \throw  isx::ExceptionFileIO    If read the file fails.
-/// \throw  isx::ExceptionDataIO    If the file format is not recognized.
+/// \throw  ExceptionFileIO     If the read fails.
+/// \throw  ExceptionDataIO     If the file format is not recognized.
 DataSet::Type readDataSetType(const std::string & inFileName);
 
 using SpDataSetProperties_t = std::shared_ptr<DataSet::Properties>;

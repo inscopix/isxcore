@@ -1,9 +1,10 @@
 #include "isxCellSetFactory.h"
 #include "isxCellSetSeries.h"
-#include "isxMovieSeries.h"
 #include "isxAsync.h"
 #include "isxAsyncTaskHandle.h"
 #include "isxDispatchQueue.h"
+#include "isxSeries.h"
+
 #include <algorithm>
 #include <cstring>
 
@@ -36,6 +37,7 @@ namespace isx
         // cell sets are sorted by start time now, check if they meet requirements
         const auto & refSi = m_cellSets[0]->getSpacingInfo();
         const isize_t refNumCells = m_cellSets[0]->getNumCells();
+        std::string errorMessage;
         for (isize_t i = 1; i < m_cellSets.size(); ++i)
         {
             const auto & cs = m_cellSets[i];
@@ -45,11 +47,17 @@ namespace isx
                 ISX_THROW(ExceptionSeries, "CellSetSeries with mismatching number of cells: ", cs->getFileName());
             }
 
-            MovieSeries::checkSpacingInfo(refSi, cs->getSpacingInfo());
+            if (!Series::checkSpacingInfo(refSi, cs->getSpacingInfo(), errorMessage))
+            {
+                ISX_THROW(ExceptionSeries, errorMessage);
+            }
 
             const auto & tip = m_cellSets[i-1]->getTimingInfo();
             const auto & tic = m_cellSets[i]->getTimingInfo();
-            MovieSeries::checkTimingInfo(tip, tic);
+            if (!Series::checkTimingInfo(tip, tic, errorMessage))
+            {
+                ISX_THROW(ExceptionSeries, errorMessage);
+            }
         }
 
         Time start = m_cellSets[0]->getTimingInfo().getStart();

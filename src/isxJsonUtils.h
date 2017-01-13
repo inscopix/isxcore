@@ -35,21 +35,8 @@ json convertPointInMicronsToJson(const PointInMicrons_t & inPointInMicrons);
 json convertSpacingInfoToJson(const SpacingInfo & inSpacingInfo);
 SpacingInfo convertJsonToSpacingInfo(const json & j);
 
-json convertGroupToJson(const Group * inGroup);
-
 json convertPropertiesToJson(const DataSet::Properties & inProperties);
 DataSet::Properties convertJsonToProperties(const json & j);
-
-json convertDataSetToJson(const DataSet * inDataSet);
-
-std::unique_ptr<Group>
-createProjectTreeFromJson(const json & inJson);
-
-void
-createDataSetFromJson(Group * inGroup, const json & inJson);
-
-void
-createGroupTreeFromJson(Group * inGroup, const json & inJson);
 
 /// Reads a JSON header from an input stream.
 ///
