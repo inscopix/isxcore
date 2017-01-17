@@ -6,7 +6,7 @@
 #include "isxCoreFwd.h"
 #include "isxImage.h"
 #include "isxTrace.h"
-#include "isxAsyncTaskresult.h"
+#include "isxAsyncTaskResult.h"
 
 #include <string>
 #include <functional>
