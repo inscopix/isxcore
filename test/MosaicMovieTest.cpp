@@ -379,3 +379,35 @@ TEST_CASE("MosaicMovieF32", "[core-internal]")
 
     isx::CoreShutdown();
 }
+
+TEST_CASE("Corrupt file", "[core-meme]")
+{
+    isx::CoreInitialize();
+
+    SECTION("Header-only file")
+    {
+        std::string fileName = g_resources["unitTestDataPath"] + "/negative/NullDataSet.isxd";
+        
+        auto movie = std::make_shared<isx::MosaicMovie>(fileName);
+        REQUIRE(movie->isValid());
+        REQUIRE(movie->getTimingInfo().getNumTimes() != 0);
+
+        ISX_EXPECT_EXCEPTION();
+        try
+        {
+            auto frame = movie->getFrame(0);
+            FAIL("Failed to throw an exception.");
+        }
+        catch (const isx::ExceptionFileIO & error)
+        {
+            REQUIRE(std::string(error.what()) ==
+                    "Error reading movie frame.");
+        }
+        catch (...)
+        {
+            FAIL("Failed to throw an isx::ExceptionFileIO");
+        }
+    }
+
+    isx::CoreShutdown();
+}

@@ -18,7 +18,7 @@ BehavMovie::BehavMovie()
 
 BehavMovie::BehavMovie(const std::string & inFileName, const Time & inStartTime)
     : m_valid(false)
-    , m_ioTaskTracker(new IoTaskTracker())
+    , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
     m_file = std::make_shared<BehavMovieFile>(inFileName, inStartTime);
     m_valid = true;
@@ -36,19 +36,20 @@ BehavMovie::getFrame(isize_t inFrameNumber)
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("getFrame");
-    SpVideoFrame_t outFrame;
+    AsyncTaskResult<SpVideoFrame_t> asyncTaskResult;
     getFrameAsync(inFrameNumber,
-        [&outFrame, &cv, &mutex](const SpVideoFrame_t & inFrame)
+        [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
         {
             mutex.lock("getFrame async");
-            outFrame = inFrame;
+            asyncTaskResult = inAsyncTaskResult;
             mutex.unlock();
             cv.notifyOne();
         }
     );
     cv.wait(mutex);
     mutex.unlock();
-    return outFrame;
+
+    return asyncTaskResult.get();   // will throw if asyncTaskResult contains an exception
 }
 
 void

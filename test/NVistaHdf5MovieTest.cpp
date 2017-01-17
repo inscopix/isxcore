@@ -112,9 +112,10 @@ TEST_CASE("MovieTestAsync", "[core]") {
     
     isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
     REQUIRE(m->isValid());
-    isx::MovieGetFrameCB_t cb = [&](isx::SpVideoFrame_t inFrame){
-        size_t index = inFrame->getFrameIndex();
-        unsigned char * t = reinterpret_cast<unsigned char *>(inFrame->getPixels());
+    isx::MovieGetFrameCB_t cb = [&](isx::AsyncTaskResult<isx::SpVideoFrame_t> inAsyncTaskResult){
+        REQUIRE(!inAsyncTaskResult.getException());
+        size_t index = inAsyncTaskResult.get()->getFrameIndex();
+        unsigned char * t = reinterpret_cast<unsigned char *>(inAsyncTaskResult.get()->getPixels());
         if (memcmp(t, expected[index], numTestBytesPerFrame))
         {
             isDataCorrect = false;

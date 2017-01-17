@@ -261,9 +261,10 @@ TEST_CASE("CellSetTest", "[core]")
             cellSet->writeImageAndTrace(i, originalImage, originalTrace);
         }
 
-        isx::CellSet::CellSetGetTraceCB_t callBack = [originalTrace, &doneCount](const isx::SpFTrace_t inTrace)
+        isx::CellSet::CellSetGetTraceCB_t callBack = [originalTrace, &doneCount](isx::AsyncTaskResult<isx::SpFTrace_t> inAsyncTaskResult)
         {
-            requireEqualTraces(inTrace, originalTrace);
+            REQUIRE(!inAsyncTaskResult.getException());
+            requireEqualTraces(inAsyncTaskResult.get(), originalTrace);
             ++doneCount;
 
         };
@@ -296,9 +297,10 @@ TEST_CASE("CellSetTest", "[core]")
             cellSet->writeImageAndTrace(i, originalImage, originalTrace);
         }
 
-        isx::CellSet::CellSetGetImageCB_t callBack = [originalImage, &doneCount](const isx::SpImage_t inImage)
+        isx::CellSet::CellSetGetImageCB_t callBack = [originalImage, &doneCount](isx::AsyncTaskResult<isx::SpImage_t> inAsyncTaskResult)
         {
-            requireEqualImages(inImage, originalImage);
+            REQUIRE(!inAsyncTaskResult.getException());
+            requireEqualImages(inAsyncTaskResult.get(), originalImage);
             ++doneCount;
         };
         for (size_t i = 0; i < 3; ++i)

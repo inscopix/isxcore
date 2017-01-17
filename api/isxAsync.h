@@ -16,8 +16,7 @@ enum class AsyncTaskStatus
     PROCESSING,             ///< task is processing
     COMPLETE,               ///< task completed successfully
     CANCELLED,              ///< task was cancelled
-    ERROR_EXCEPTION,        ///< an exception occurred while processing the task
-    UNKNOWN_ERROR           ///< an error occurred while processing the task
+    ERROR_EXCEPTION        ///< an exception occurred while processing the task
 };
 /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -32,19 +31,6 @@ typedef std::function<void(float)> AsyncProgressCB_t;
 
 SpAsyncTaskHandle_t 
 CreateAsyncTask(AsyncFunc_t inTask, AsyncProgressCB_t inProgressCB, AsyncFinishedCB_t inFinishedCB);
-
-/// Check the status of an asynchronous task.
-///
-/// This simply logs errors/info and does not throw exceptions.
-///
-/// \param  inTask      The task used to rethrow an exception if needed.
-/// \param  inStatus    The status to check.
-/// \param  inTaskName  The name of the task.
-void
-checkAsyncTaskStatus(
-        const SpAsyncTaskHandle_t & inTask,
-        AsyncTaskStatus inStatus,
-        const std::string & inTaskName);
 
 } // namespace isx
 

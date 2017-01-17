@@ -136,7 +136,8 @@ namespace isx
         }
         catch (const H5::DataSetIException& error)
         {
-            ISX_LOG_ERROR("Exception in ", error.getFuncName(), ":\n", error.getDetailMsg());
+            ISX_THROW(isx::ExceptionDataIO,
+                      "Failed to read frame from movie.\n", error.getDetailMsg());
         }
     }
 

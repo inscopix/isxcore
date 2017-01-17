@@ -12,8 +12,7 @@
 
 namespace isx
 {
-
-class IoTaskTracker;
+template <typename T> class IoTaskTracker;
 
 /// Encapsulates a movie/recording from nVista stored in at least one HDF5 file.
 ///
@@ -103,7 +102,7 @@ private:
     
     std::string m_fileName;
 
-    std::shared_ptr<IoTaskTracker>   m_ioTaskTracker;
+    std::shared_ptr<IoTaskTracker<VideoFrame>>   m_ioTaskTracker;
 
     /// Handles most of the initialization.
     /// \param inFileName name of movie file

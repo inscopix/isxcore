@@ -20,7 +20,7 @@ MosaicMovie::MosaicMovie()
 
 MosaicMovie::MosaicMovie(const std::string & inFileName)
     : m_valid(false)
-    , m_ioTaskTracker(new IoTaskTracker())
+    , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
     // TODO sweet : decide if we want all IO on the IO thread or if
     // it's okay to read the header on the current thread.
@@ -67,7 +67,7 @@ MosaicMovie::MosaicMovie(
     const SpacingInfo & inSpacingInfo,
     const DataType inDataType)
     : m_valid(false)
-    , m_ioTaskTracker(new IoTaskTracker())
+    , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
     // TODO sweet : decide if we want all IO on the IO thread or if
     // it's okay to write the header on the current thread.
@@ -120,19 +120,20 @@ MosaicMovie::getFrame(isize_t inFrameNumber)
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("getFrame");
-    SpVideoFrame_t outFrame;
+    AsyncTaskResult<SpVideoFrame_t> asyncTaskResult;
     getFrameAsync(inFrameNumber,
-        [&outFrame, &cv, &mutex](const SpVideoFrame_t & inFrame)
+        [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
         {
             mutex.lock("getFrame async");
-            outFrame = inFrame;
+            asyncTaskResult = inAsyncTaskResult;
             mutex.unlock();
             cv.notifyOne();
         }
     );
     cv.wait(mutex);
     mutex.unlock();
-    return outFrame;
+    
+    return asyncTaskResult.get();   // throws if asyncTaskResult contains an exception
 }
 
 void
@@ -190,6 +191,11 @@ MosaicMovie::writeFrame(const SpVideoFrame_t & inVideoFrame)
     writeIoTask->schedule();
     cv.wait(mutex);
     mutex.unlock();
+
+    if(writeIoTask->getTaskStatus() == AsyncTaskStatus::ERROR_EXCEPTION)
+    {
+        std::rethrow_exception(writeIoTask->getExceptionPtr());
+    }
 }
 
 SpVideoFrame_t

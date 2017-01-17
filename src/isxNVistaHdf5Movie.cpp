@@ -27,7 +27,7 @@ NVistaHdf5Movie::NVistaHdf5Movie(
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo,
     const std::vector<isize_t> & inDroppedFrames)
-    : m_ioTaskTracker(new IoTaskTracker())
+    : m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
     std::vector<SpH5File_t> files(1, inHdf5FileHandle->get());
 
@@ -40,7 +40,7 @@ NVistaHdf5Movie::NVistaHdf5Movie(
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo, 
     const std::vector<isize_t> & inDroppedFrames)
-    : m_ioTaskTracker(new IoTaskTracker())
+    : m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
     std::vector<SpH5File_t> files;
     for (isize_t i(0); i < inHdf5FileHandles.size(); ++i)
@@ -63,19 +63,20 @@ NVistaHdf5Movie::getFrame(isize_t inFrameNumber)
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("getFrame");
-    SpVideoFrame_t outFrame;
+    AsyncTaskResult<SpVideoFrame_t> asyncTaskResult;
     getFrameAsync(inFrameNumber,
-        [&outFrame, &cv, &mutex](const SpVideoFrame_t & inFrame)
+        [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
         {
             mutex.lock("getFrame async");
-            outFrame = inFrame;
+            asyncTaskResult = inAsyncTaskResult;
             mutex.unlock();
             cv.notifyOne();
         }
     );
     cv.wait(mutex);
     mutex.unlock();
-    return outFrame;
+
+    return asyncTaskResult.get();   //throws if asyncTaskResult contains an exception
 }
 
 void

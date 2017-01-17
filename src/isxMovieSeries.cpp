@@ -173,21 +173,29 @@ MovieSeries::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
     {
         // in between individual movies
         // --> return placeholder frame
+        AsyncTaskResult<SpVideoFrame_t> atr;
+        atr.setValue(ret);
         std::memset(ret->getPixels(), 0, ret->getImageSizeInBytes());
-        DispatchQueue::poolQueue()->dispatch([inCallback, ret]()
+        DispatchQueue::poolQueue()->dispatch([inCallback, atr]()
             {
-                inCallback(ret);
+                inCallback(atr);
             });
     }
     else
     {
-        m_movies[movieIndex]->getFrameAsync(frameIndex, [ret, inCallback](SpVideoFrame_t inFrame)
+        m_movies[movieIndex]->getFrameAsync(frameIndex, [ret, inCallback](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
             {
-                if (inFrame)
+                AsyncTaskResult<SpVideoFrame_t> atr;
+                if (!inAsyncTaskResult.getException() && inAsyncTaskResult.get())
                 {
-                    ret->moveCompatibleImage(inFrame->getImage());
+                    atr.setValue(ret);
+                    ret->moveCompatibleImage(inAsyncTaskResult.get()->getImage());
                 }
-                inCallback(ret);
+                else
+                {
+                    atr.setException(inAsyncTaskResult.getException());
+                }
+                inCallback(atr);
             });
     }
 }

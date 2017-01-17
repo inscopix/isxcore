@@ -13,7 +13,8 @@ CellSetSimple::CellSetSimple()
 
 CellSetSimple::CellSetSimple(const std::string & inFileName)
     : m_valid(false)
-    , m_ioTaskTracker(new IoTaskTracker())
+    , m_traceIoTaskTracker(new IoTaskTracker<FTrace_t>())
+    , m_imageIoTaskTracker(new IoTaskTracker<Image>())
 {
     m_file = std::make_shared<CellSetFile>(inFileName);
     m_valid = true;
@@ -24,7 +25,8 @@ CellSetSimple::CellSetSimple(
         const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo)
     : m_valid(false)
-    , m_ioTaskTracker(new IoTaskTracker())
+    , m_traceIoTaskTracker(new IoTaskTracker<FTrace_t>())
+    , m_imageIoTaskTracker(new IoTaskTracker<Image>())
 {
     m_file = std::make_shared<CellSetFile>(inFileName, inTimingInfo, inSpacingInfo);
     m_valid = true;
@@ -77,19 +79,19 @@ CellSetSimple::getTrace(isize_t inIndex)
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("getTrace");
-    SpFTrace_t outTrace;
-    getTraceAsync(inIndex,
-        [&outTrace, &cv, &mutex](const SpFTrace_t & inTrace)
+    AsyncTaskResult<SpFTrace_t> asyncTaskResult;
+    getTraceAsync(inIndex, [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
         {
             mutex.lock("getTrace async");
-            outTrace = inTrace;
+            asyncTaskResult = inAsyncTaskResult;
             mutex.unlock();
             cv.notifyOne();
         }
     );
     cv.wait(mutex);
     mutex.unlock();
-    return outTrace;
+
+    return asyncTaskResult.get();   // throws is asyncTaskResult contains an exception
 }
 
 void
@@ -107,7 +109,7 @@ CellSetSimple::getTraceAsync(isize_t inIndex, CellSetGetTraceCB_t inCallback)
             }
             return SpFTrace_t();
         };
-    m_ioTaskTracker->schedule(getTraceCB, inCallback);
+    m_traceIoTaskTracker->schedule(getTraceCB, inCallback);
 }
 
 SpImage_t
@@ -116,19 +118,20 @@ CellSetSimple::getImage(isize_t inIndex)
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("getImage");
-    SpImage_t outImage;
+    AsyncTaskResult<SpImage_t> asyncTaskResult;
     getImageAsync(inIndex,
-        [&outImage, &cv, &mutex](const SpImage_t & inImage)
+        [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpImage_t> inAsyncTaskResult)
         {
             mutex.lock("getImage async");
-            outImage = inImage;
+            asyncTaskResult = inAsyncTaskResult;
             mutex.unlock();
             cv.notifyOne();
         }
     );
     cv.wait(mutex);
     mutex.unlock();
-    return outImage;
+
+    return asyncTaskResult.get();   // throws if asyncTaskResults contains an exception
 }
 
 void
@@ -140,13 +143,14 @@ CellSetSimple::getImageAsync(isize_t inIndex, CellSetGetImageCB_t inCallback)
     GetImageCB_t getImageCB = [weakThis, this, inIndex]()
         {
             auto sharedThis = weakThis.lock();
+            SpImage_t im;
             if (sharedThis)
             {
-                return m_file->readSegmentationImage(inIndex);
+                im = m_file->readSegmentationImage(inIndex);
             }
-            return SpImage_t();
+            return im;
         };
-    m_ioTaskTracker->schedule(getImageCB, inCallback);
+    m_imageIoTaskTracker->schedule(getImageCB, inCallback);
 }
 
 void
@@ -180,6 +184,11 @@ CellSetSimple::writeImageAndTrace(
     writeIoTask->schedule();
     cv.wait(mutex);
     mutex.unlock();
+
+    if(writeIoTask->getTaskStatus() == AsyncTaskStatus::ERROR_EXCEPTION)
+    {
+        std::rethrow_exception(writeIoTask->getExceptionPtr());
+    }
 }
 
 bool
@@ -209,7 +218,8 @@ CellSetSimple::setCellName(isize_t inIndex, const std::string & inName)
 void
 CellSetSimple::cancelPendingReads()
 {
-    m_ioTaskTracker->cancelPendingTasks();
+    m_imageIoTaskTracker->cancelPendingTasks();
+    m_traceIoTaskTracker->cancelPendingTasks();
 }
 
 
