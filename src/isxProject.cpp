@@ -62,13 +62,13 @@ Project::getItem(const std::string & inPath) const
     return outItem;
 }
 
-void
+std::shared_ptr<ProjectItem>
 Project::removeItem(const std::string & inPath) const
 {
     ProjectItem * item = getItem(inPath);
     ProjectItem * parent = item->getParent();
     ISX_ASSERT(parent != nullptr);
-    parent->removeChild(item->getName());
+    return parent->removeChild(item->getName());
 }
 
 void
@@ -105,6 +105,7 @@ Project::createDataSet(
         const std::string & inPath,
         const DataSet::Type inType,
         const std::string & inFileName,
+        const HistoricalDetails & inHistory,
         const DataSet::Properties & inProperties)
 {
     // NOTE sweet : when creating a data set through the project, the
@@ -122,7 +123,7 @@ Project::createDataSet(
     ProjectItem * parent = getItem(groupPath);
     ISX_ASSERT(parent != nullptr);
 
-    auto outDataSet = std::make_shared<DataSet>(name, inType, absFileName, inProperties);
+    auto outDataSet = std::make_shared<DataSet>(name, inType, absFileName, inHistory, inProperties);
     parent->insertChild(outDataSet);
     return outDataSet.get();
 }

@@ -102,6 +102,12 @@ Series::checkDataSet(DataSet * inDataSet, std::string & outMessage)
         return false;
     }
 
+    if(inDataSet->getHistory() != HistoricalDetails())
+    {
+        outMessage = "A series can only contain unprocessed nVista movies.";
+        return false;
+    }
+
     if (m_dataSets.empty())
     {
         return true;
@@ -131,6 +137,7 @@ Series::checkDataSet(DataSet * inDataSet, std::string & outMessage)
             return false;
         }
     }
+
     return true;
 }
 

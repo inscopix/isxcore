@@ -6,6 +6,7 @@
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
 #include "isxVariant.h"
+#include "isxHistoricalDetails.h"
 
 #include <string>
 #include <map>
@@ -50,10 +51,12 @@ public:
     /// \param  inName      The name of the data set.
     /// \param  inType      The type of the data set.
     /// \param  inFileName  The file name of the data set.
+    /// \param  inHistory   The historical details for the dataset
     /// \param  inProperties The property map for the dataset
     DataSet(const std::string & inName,
             Type inType,
             const std::string & inFileName,
+            const HistoricalDetails & inHistory,
             const Properties & inProperties = Properties());
 
     /// \return     The type of this data set.
@@ -67,6 +70,10 @@ public:
     /// Get the property map
     /// \return the property map
     const Properties & getProperties() const;
+    
+    /// Get the history for this dataset
+    /// \return the historical details
+    const HistoricalDetails & getHistory() const;
 
     /// Set the Properties of this DataSet
     /// \param inDataSetProperties new Properties to set
@@ -105,6 +112,14 @@ public:
     /// \return         The removed data set.
     /// \throw  ExceptionDataIO If a data set with the given name cannot be found.
     std::shared_ptr<DataSet> removeDerivedDataSet(const std::string & inName);
+
+    /// Set the previous dataset that gave origin to this one
+    /// \param inDataSet the previous dataset
+    void setPrevious(const std::shared_ptr<DataSet> & inDataSet);
+
+    /// Get the previous dataset
+    /// \return the previous dataset
+    DataSet * getPrevious();
 
     /// Serialize vector of DataSets and derived DataSets to a JSON string
     /// \return JSON string for the DataSet(s)
@@ -207,6 +222,12 @@ private:
 
     /// The parent item to which this belongs.
     ProjectItem * m_parent;
+
+    /// The previous dataset that was used to create this one. 
+    std::shared_ptr<DataSet> m_previous;
+
+    /// Historical details for the dataset
+    HistoricalDetails m_history;
 
     /// Dataset properties
     Properties m_properties;

@@ -46,6 +46,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
 
     const float dffMin = -0.2f;
     const float dffMax = 0.2f;
+    isx::HistoricalDetails hd("Imported", "");
 
     SECTION("Project for SfN demo - motion corrected nVista movies only")
     {
@@ -67,6 +68,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
                         moviePath,
                         isx::DataSet::Type::MOVIE,
                         movieFile,
+                        hd,
                         {
                             {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
                             {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
@@ -83,7 +85,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
             REQUIRE(isx::pathExists(movieFile));
             const std::string moviePath = "/" + bms;
-            project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile,
+            project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile, hd,
                     {
                         {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
                     }
@@ -116,6 +118,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
                         moviePath,
                         isx::DataSet::Type::MOVIE,
                         movieFile,
+                        hd,
                         {
                             {isx::DataSet::PROP_DATA_MIN, isx::Variant(dffMin)},
                             {isx::DataSet::PROP_DATA_MAX, isx::Variant(dffMax)},
@@ -126,7 +129,8 @@ TEST_CASE("SfnDemo", "[data][!hide]")
                 project.createDataSet(
                         moviePath + "/Manual ROIs",
                         isx::DataSet::Type::CELLSET,
-                        cellSetFile);
+                        cellSetFile,
+                        hd);
 
                 // NOTE sweet : also check that timing/spacing info is consistent
                 if (isx::pathExists(movieFile) && isx::pathExists(cellSetFile))
@@ -145,7 +149,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
             REQUIRE(isx::pathExists(movieFile));
             const std::string moviePath = "/" + bms;
-            project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile,
+            project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile, hd,
                     {
                         {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
                     }
@@ -195,6 +199,7 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
 
     const float dffMin = -0.2f;
     const float dffMax = 0.2f;
+    isx::HistoricalDetails hd("Imported", "");
 
     SECTION("Project for SfN demo - original nVista movies only")
     {
@@ -216,6 +221,7 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
                         moviePath,
                         isx::DataSet::Type::MOVIE,
                         movieFile,
+                        hd,
                         {
                             {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
                             {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
@@ -231,7 +237,7 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
         {
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
             const std::string moviePath = "/" + bms;
-            project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile,
+            project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile, hd,
                     {
                         {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
                     }

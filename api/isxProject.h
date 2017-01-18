@@ -76,7 +76,7 @@ public:
     /// \param  inPath  The path of the item to remove.
     ///
     /// \throw  ExceptionDataIO If the item does not exist.
-    void removeItem(const std::string & inPath) const;
+    std::shared_ptr<ProjectItem> removeItem(const std::string & inPath) const;
 
     /// Move an item into a new destination/parent item.
     ///
@@ -102,6 +102,7 @@ public:
     /// \param  inPath      The path of the data set to create.
     /// \param  inType      The type of the data set to create.
     /// \param  inFileName  The file name of the data set to create.
+    /// \param  inHistory   The historical details for the dataset
     /// \param  inProperties The property map for the data set to create.
     /// \return             The data set created.
     ///
@@ -114,6 +115,7 @@ public:
             const std::string & inPath,
             const DataSet::Type inType,
             const std::string & inFileName,
+            const HistoricalDetails & inHistory,
             const DataSet::Properties & inProperties = DataSet::Properties());
 
     /// Create a series by its project path.

@@ -329,6 +329,8 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
 
     isx::CoreInitialize();
 
+    isx::HistoricalDetails hd("Imported", "");
+
     SECTION("Test with completely filled frame")
     {
         const std::string cellSetFile = g_resources["unitTestDataPath"] + "/cellset-full-frame.isxd";
@@ -384,6 +386,7 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
                 "/movie-full-frame",
                 isx::DataSet::Type::MOVIE,
                 movieFile,
+                hd,
                 {
                   {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
                   {isx::DataSet::PROP_DATA_MAX, isx::Variant(1.f)},
@@ -393,7 +396,8 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
         project.createDataSet(
                 "/movie-full-frame/cellset-full-frame",
                 isx::DataSet::Type::CELLSET,
-                cellSetFile);
+                cellSetFile,
+                hd);
         project.save();
     }
 

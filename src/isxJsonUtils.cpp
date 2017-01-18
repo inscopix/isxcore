@@ -144,7 +144,26 @@ convertJsonToSpacingInfo(const json & j)
     return SpacingInfo(numPixels, pixelSize, topLeft);
 }
 
-json convertPropertiesToJson(const DataSet::Properties & inProperties)
+json 
+convertHistoryToJson(const HistoricalDetails & inHistory)
+{
+    json outJson;
+    outJson["operation"] = inHistory.getOperation();
+    outJson["inputParameters"] = json::parse(inHistory.getInputParameters());
+    return outJson;
+}
+
+HistoricalDetails 
+convertJsonToHistory(const json & j)
+{
+    std::string operationName = j["operation"];
+    std::string inputParams = j["inputParameters"].dump(4);
+    HistoricalDetails outHistory(operationName, inputParams);
+    return outHistory;
+}
+
+json 
+convertPropertiesToJson(const DataSet::Properties & inProperties)
 {
     json outJson = json::object();
     for (auto & p : inProperties)
@@ -155,7 +174,8 @@ json convertPropertiesToJson(const DataSet::Properties & inProperties)
     return outJson;
 }
 
-DataSet::Properties convertJsonToProperties(const json & j)
+DataSet::Properties 
+convertJsonToProperties(const json & j)
 {
     DataSet::Properties properties;
     for (json::const_iterator it = j.begin(); it != j.end(); ++it) 

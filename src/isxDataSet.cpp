@@ -30,6 +30,7 @@ DataSet::DataSet(
         const std::string & inName,
         Type inType,
         const std::string & inFileName,
+        const HistoricalDetails & inHistory,
         const Properties & inProperties)
     : m_valid(true)
     , m_modified(false)
@@ -37,6 +38,7 @@ DataSet::DataSet(
     , m_type(inType)
     , m_fileName(inFileName)
     , m_parent(nullptr)
+    , m_history(inHistory)
     , m_properties(inProperties)
 {
 }
@@ -57,6 +59,12 @@ const DataSet::Properties &
 DataSet::getProperties() const
 {
     return m_properties;
+}
+
+const HistoricalDetails & 
+DataSet::getHistory() const
+{
+    return m_history;
 }
 
 void
@@ -150,6 +158,20 @@ DataSet::removeDerivedDataSet(const std::string & inName)
     ISX_THROW(ExceptionDataIO, "Could not find derived data set with name: ", inName);
 }
 
+void 
+DataSet::setPrevious(const std::shared_ptr<DataSet> & inDataSet)
+{
+    inDataSet->setParent(nullptr);
+    inDataSet->setName("previous");
+    m_previous = inDataSet;
+}
+
+DataSet * 
+DataSet::getPrevious()
+{
+    return m_previous.get();
+}
+
 DataSet::Type
 readDataSetType(const std::string & inFileName)
 {
@@ -212,6 +234,7 @@ DataSet::fromJsonString(
                     dataSet->getName(),
                     dataSet->getType(),
                     dataSet->getFileName(),
+                    dataSet->getHistory(),
                     dataSet->getProperties()
         ));
 
@@ -224,6 +247,7 @@ DataSet::fromJsonString(
                     derived->getName(),
                     derived->getType(),
                     derived->getFileName(),
+                    derived->getHistory(),
                     derived->getProperties()
             ));
         }
@@ -329,6 +353,7 @@ DataSet::toJsonString(const bool inPretty) const
     // For any file names that are above the project file, we should store
     // absolute paths.
     outJson["fileName"] = m_fileName;
+    outJson["history"] = convertHistoryToJson(m_history);
     outJson["properties"] = convertPropertiesToJson(m_properties);
     outJson["derived"] = json::array();
     for (const auto & derived : m_derived)
@@ -351,9 +376,10 @@ DataSet::fromJsonString(const std::string & inString)
     const std::string name = jsonObj["name"];
     const DataSet::Type dataSetType = DataSet::Type(size_t(jsonObj["dataSetType"]));
     const std::string fileName = jsonObj["fileName"];
+    const HistoricalDetails hd = convertJsonToHistory(jsonObj["history"]);
     const DataSet::Properties properties = convertJsonToProperties(jsonObj["properties"]);
 
-    auto outDataSet = std::make_shared<DataSet>(name, dataSetType, fileName, properties);
+    auto outDataSet = std::make_shared<DataSet>(name, dataSetType, fileName, hd, properties);
     for (auto derivedJson : jsonObj["derived"])
     {
         auto derived = fromJsonString(derivedJson.dump());
@@ -375,7 +401,8 @@ DataSet::operator ==(const ProjectItem & other) const
         && (m_type == otherDataSet->m_type)
         && (m_fileName == otherDataSet->m_fileName)
         && (m_properties == otherDataSet->m_properties)
-        && (m_derived.size() == otherDataSet->m_derived.size());
+        && (m_derived.size() == otherDataSet->m_derived.size())
+        && (m_history == otherDataSet->m_history);
     for (size_t i = 0; equal && i < m_derived.size(); ++i)
     {
         equal &= *m_derived.at(i) == *otherDataSet->m_derived.at(i);

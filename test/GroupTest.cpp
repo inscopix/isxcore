@@ -34,7 +34,8 @@ TEST_CASE("Group-insertChild", "[core]")
     isx::Group group("myGroup");
     auto subGroup = std::make_shared<isx::Group>("subGroup");
     auto series = std::make_shared<isx::Series>("series");
-    auto dataSet = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie.isxd");
+    isx::HistoricalDetails hd("test", "");
+    auto dataSet = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie.isxd", hd);
 
     SECTION("Insert a sub-group at the end of a group")
     {
@@ -75,7 +76,7 @@ TEST_CASE("Group-insertChild", "[core]")
     SECTION("Try to insert two datasets with the same name in a group")
     {
         group.insertChild(dataSet);
-        auto dataSet2 = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie2.isxd");
+        auto dataSet2 = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie2.isxd", hd);
         ISX_REQUIRE_EXCEPTION(
                 group.insertChild(dataSet2),
                 isx::ExceptionDataIO,
@@ -85,7 +86,7 @@ TEST_CASE("Group-insertChild", "[core]")
     SECTION("Insert two datasets with different names to the end of a group")
     {
         group.insertChild(dataSet);
-        auto dataSet2 = std::make_shared<isx::DataSet>("dataSet2", isx::DataSet::Type::MOVIE, "movie2.isxd");
+        auto dataSet2 = std::make_shared<isx::DataSet>("dataSet2", isx::DataSet::Type::MOVIE, "movie2.isxd", hd);
         group.insertChild(dataSet2);
 
         REQUIRE(group.getChild("dataSet") == dataSet.get());
@@ -95,7 +96,7 @@ TEST_CASE("Group-insertChild", "[core]")
     SECTION("Insert two datasets with different names to a group in an interesting order")
     {
         group.insertChild(dataSet);
-        auto dataSet2 = std::make_shared<isx::DataSet>("dataSet2", isx::DataSet::Type::MOVIE, "movie2.isxd");
+        auto dataSet2 = std::make_shared<isx::DataSet>("dataSet2", isx::DataSet::Type::MOVIE, "movie2.isxd", hd);
         group.insertChild(dataSet2, 0);
 
         std::vector<isx::ProjectItem *> children = group.getChildren();
@@ -128,7 +129,8 @@ TEST_CASE("Group-removeChild", "[core]")
     isx::Group group("myGroup");
     auto subGroup = std::make_shared<isx::Group>("subGroup");
     auto series = std::make_shared<isx::Series>("series");
-    auto dataSet = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie.isxd");
+    isx::HistoricalDetails hd("test", "");
+    auto dataSet = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie.isxd", hd);
 
     group.insertChild(subGroup);
     group.insertChild(series);
@@ -176,7 +178,8 @@ TEST_CASE("Group-toFromJsonString", "[core]")
 {
     auto subGroup = std::make_shared<isx::Group>("subGroup");
     auto series = std::make_shared<isx::Series>("series");
-    auto dataSet = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie.isxd");
+    isx::HistoricalDetails hd("test", "");
+    auto dataSet = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie.isxd", hd);
 
     SECTION("An empty group")
     {
