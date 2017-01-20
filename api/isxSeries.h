@@ -105,6 +105,18 @@ public:
             const SpacingInfo & inNew,
             std::string & outMessage);
 
+    /// Checks that the history details are consistent with those of a reference in a series.
+    ///
+    /// \param  inRef       The reference history.
+    /// \param  inNew       The new history.
+    /// \param  outMessage  The error message.
+    /// \return             True if the new history is consistent with
+    ///                     the reference, false otherwise.
+    static bool checkHistory(
+            const HistoricalDetails & inRef,
+            const HistoricalDetails & inNew,
+            std::string & outMessage);
+
     /// Create a series from a serialized JSON string.
     ///
     /// \param  inString    The serialized JSON string.

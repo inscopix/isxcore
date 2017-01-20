@@ -149,9 +149,8 @@ TEST_CASE("Series-insertDataSet", "[core]")
         ISX_REQUIRE_EXCEPTION(
                 series.insertDataSet(movie2Preprocessed),
                 isx::ExceptionSeries,
-                "A series can only contain unprocessed nVista movies.");
+                "The history details are different than those of the reference.");
     }
-
 }
 
 TEST_CASE("Series-removeDataSet", "[core]")

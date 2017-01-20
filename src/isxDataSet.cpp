@@ -161,8 +161,11 @@ DataSet::removeDerivedDataSet(const std::string & inName)
 void 
 DataSet::setPrevious(const std::shared_ptr<DataSet> & inDataSet)
 {
-    inDataSet->setParent(nullptr);
-    inDataSet->setName("previous");
+    if (inDataSet)
+    {
+        inDataSet->setParent(nullptr);
+        inDataSet->setName("previous");
+    }
     m_previous = inDataSet;
 }
 
@@ -355,11 +358,18 @@ DataSet::toJsonString(const bool inPretty) const
     outJson["fileName"] = m_fileName;
     outJson["history"] = convertHistoryToJson(m_history);
     outJson["properties"] = convertPropertiesToJson(m_properties);
-    outJson["derived"] = json::array();
+    outJson["derived"] = json::array();    
     for (const auto & derived : m_derived)
     {
         outJson["derived"].push_back(json::parse(derived->toJsonString()));
     }
+
+    outJson["previous"] = json::object();
+    if(m_previous)
+    {
+        outJson["previous"] = json::parse(m_previous->toJsonString());
+    }
+
     if (inPretty)
     {
         return outJson.dump(4);
@@ -370,7 +380,12 @@ DataSet::toJsonString(const bool inPretty) const
 std::shared_ptr<DataSet>
 DataSet::fromJsonString(const std::string & inString)
 {
-    const json jsonObj = json::parse(inString);
+    if (inString == json::object().dump())
+    {
+        return std::shared_ptr<DataSet>();
+    }
+
+    const json jsonObj = json::parse(inString);    
     const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj["itemType"]));
     ISX_ASSERT(itemType == ProjectItem::Type::DATASET);
     const std::string name = jsonObj["name"];
@@ -385,6 +400,7 @@ DataSet::fromJsonString(const std::string & inString)
         auto derived = fromJsonString(derivedJson.dump());
         outDataSet->insertDerivedDataSet(derived);
     }
+    outDataSet->setPrevious(DataSet::fromJsonString(jsonObj["previous"].dump()));
     return outDataSet;
 }
 

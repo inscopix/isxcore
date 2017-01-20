@@ -102,12 +102,6 @@ Series::checkDataSet(DataSet * inDataSet, std::string & outMessage)
         return false;
     }
 
-    if(inDataSet->getHistory() != HistoricalDetails())
-    {
-        outMessage = "A series can only contain unprocessed nVista movies.";
-        return false;
-    }
-
     if (m_dataSets.empty())
     {
         return true;
@@ -136,6 +130,11 @@ Series::checkDataSet(DataSet * inDataSet, std::string & outMessage)
         {
             return false;
         }
+    }
+
+    if(!checkHistory(refDs->getHistory(), inDataSet->getHistory(), outMessage))
+    {
+        return false;
     }
 
     return true;
@@ -182,6 +181,20 @@ Series::checkTimingInfo(
     if (inNew.overlapsWith(inRef))
     {
         outMessage = "The timing info temporally overlaps with the reference.";
+        return false;
+    }
+    return true;
+}
+
+bool 
+Series::checkHistory(
+        const HistoricalDetails & inRef,
+        const HistoricalDetails & inNew,
+        std::string & outMessage)
+{
+    if (inRef != inNew)
+    {
+        outMessage = "The history details are different than those of the reference.";
         return false;
     }
     return true;

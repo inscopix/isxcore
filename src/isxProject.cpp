@@ -151,6 +151,12 @@ Project::flattenSeries(const std::string & inPath)
     }
 
     Series * series = static_cast<Series *>(item);
+    auto dataSets = series->getDataSets();
+    if(dataSets.size() && (dataSets[0]->getHistory() != HistoricalDetails()))
+    {
+        ISX_THROW(ExceptionUserInput, "Series of processed movies cannot be ungrouped.");
+    }
+    
     ProjectItem * parent = series->getParent();
     // TODO sweet : before moving the items we need to check that the
     // destination doesn't contain any conflicting names.
