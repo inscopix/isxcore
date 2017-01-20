@@ -46,7 +46,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
 
     const float dffMin = -0.2f;
     const float dffMax = 0.2f;
-    isx::HistoricalDetails hd("Imported", "");
+    isx::HistoricalDetails hd("", "");
 
     SECTION("Project for SfN demo - motion corrected nVista movies only")
     {
@@ -199,7 +199,7 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
 
     const float dffMin = -0.2f;
     const float dffMax = 0.2f;
-    isx::HistoricalDetails hd("Imported", "");
+    isx::HistoricalDetails hd("", "");
 
     SECTION("Project for SfN demo - original nVista movies only")
     {
