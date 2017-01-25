@@ -654,7 +654,6 @@ TEST_CASE("PreviousDataSets", "[core]")
         // Verify results        
         isx::DataSet * returnedPrev = ds1->getPrevious();
         REQUIRE(returnedPrev);
-        REQUIRE(returnedPrev->getName() == "previous");
         REQUIRE(returnedPrev->getFileName() == filename0);
         std::vector<isx::DataSet *> derivedDs = returnedPrev->getDerivedDataSets();
         REQUIRE(derivedDs.size() == 1);

@@ -42,6 +42,8 @@ public:
 
     void setName(const std::string & inName) override;
 
+    ProjectItem * getMostRecent() const override;
+
     ProjectItem * getParent() const override;
 
     void setParent(ProjectItem * inParent) override;
@@ -61,6 +63,12 @@ public:
     std::string toJsonString(const bool inPretty = false) const override;
 
     bool operator ==(const ProjectItem & other) const override;
+
+    bool hasHistory() const override;
+
+    isize_t getNumHistoricalItems() const override;
+
+    bool isHistorical() const override;
 
 private:
 

@@ -29,6 +29,10 @@ public:
     /// \param  inName      The name of this series.
     Series(const std::string & inName);
 
+    /// \return the number of datasets components in the series
+    ///
+    isize_t getNumDataSets() const;
+
     /// \return All the data sets in this series.
     ///
     std::vector<DataSet *> getDataSets() const;
@@ -51,6 +55,18 @@ public:
     ///
     /// \throw  ExceptionDataIO If a data set with the given name cannot be found.
     std::shared_ptr<DataSet> removeDataSet(const std::string & inName);
+
+    /// \return a vector containing all historical series
+    ///
+    std::vector<std::shared_ptr<Series>> getHistoricalSeries();
+
+    /// Get the history for this series
+    /// \return the historical details
+    const HistoricalDetails getHistory() const;
+
+    /// Set the previous series that gave origin to this one
+    /// \param inSeries the previous series
+    void setPrevious(const std::shared_ptr<Series> & inSeries);
 
     /// Checks that a data set can be added to this series.
     ///
@@ -123,7 +139,7 @@ public:
     /// \return             The deserialized series.
     ///
     /// \throw  ExceptionDataIO If the string cannot be parsed.
-    static std::shared_ptr<Series> fromJsonString(const std::string & inString);
+    static std::shared_ptr<Series> fromJsonString(const std::string & inString);     
 
     // Overrides: see isxProjectItem.h for docs.
     ProjectItem::Type getItemType() const override;
@@ -133,6 +149,8 @@ public:
     std::string getName() const override;
 
     void setName(const std::string & inName) override;
+
+    ProjectItem * getMostRecent() const override;
 
     ProjectItem * getParent() const override;
 
@@ -154,6 +172,13 @@ public:
 
     bool operator ==(const ProjectItem & other) const override;
 
+    bool hasHistory() const override;
+
+    isize_t getNumHistoricalItems() const override;
+
+    bool isHistorical() const override;
+
+
 private:
 
     /// True if this series is valid.
@@ -161,6 +186,9 @@ private:
 
     /// True if this has unsaved changes.
     bool m_modified;
+
+    /// True if this is an historical series
+    bool m_historical = false;
 
     /// The parent of this series.
     ProjectItem * m_parent;
@@ -170,6 +198,12 @@ private:
 
     /// The data sets in this series.
     std::vector<std::shared_ptr<DataSet>> m_dataSets;
+
+    /// The historical series
+    std::shared_ptr<Series>  m_previous;
+
+    /// Set this dataset as historical
+    void setHistorical();
 
 };
 

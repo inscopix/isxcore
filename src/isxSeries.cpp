@@ -4,6 +4,7 @@
 #include "isxSpacingInfo.h"
 #include "isxTimingInfo.h"
 #include "isxMovieFactory.h"
+#include "isxPathUtils.h"
 
 #include "json.hpp"
 
@@ -25,6 +26,12 @@ Series::Series(const std::string & inName)
     , m_parent(nullptr)
     , m_name(inName)
 {
+}
+
+isize_t 
+Series::getNumDataSets() const
+{
+    return m_dataSets.size();
 }
 
 std::vector<DataSet *>
@@ -92,6 +99,76 @@ Series::removeDataSet(const std::string & inName)
         }
     }
     ISX_THROW(ExceptionDataIO, "Could not find data set with the name: ", inName);
+}
+
+bool 
+Series::hasHistory() const
+{
+    return (m_previous != nullptr);
+}
+
+isize_t 
+Series::getNumHistoricalItems() const
+{
+    isize_t num = 0;
+    if(m_previous)
+    {
+        num += 1;
+        num += m_previous->getNumHistoricalItems();
+    }
+    return num;
+}
+
+const HistoricalDetails 
+Series::getHistory() const
+{
+    if(m_dataSets.size())
+    {
+         return m_dataSets[0]->getHistory();
+    }
+
+    return HistoricalDetails();
+}
+
+void 
+Series::setPrevious(const std::shared_ptr<Series> & inSeries)
+{
+    if (inSeries)
+    {
+        inSeries->setHistorical();
+        inSeries->setParent(this);
+        std::string operationName = getHistory().getOperation();
+        inSeries->setName(operationName);
+    }
+    m_previous = inSeries;
+}
+
+void 
+Series::setHistorical()
+{
+    m_historical = true;
+}
+
+bool 
+Series::isHistorical() const
+{
+    return m_historical;
+}
+
+std::vector<std::shared_ptr<Series>> 
+Series::getHistoricalSeries()
+{
+    std::vector<std::shared_ptr<Series>> outSeries;
+    if(m_previous)
+    {
+        outSeries.push_back(m_previous);        
+        std::vector<std::shared_ptr<Series>> ancestors = m_previous->getHistoricalSeries();
+        if(ancestors.empty() == false)
+        {
+            outSeries.insert(outSeries.end(), ancestors.begin(), ancestors.end());    
+        }        
+    }
+    return outSeries;    
 }
 
 bool
@@ -237,6 +314,24 @@ Series::setName(const std::string & inName)
 {
     m_name = inName;
     m_modified = true;
+}
+
+ProjectItem * 
+Series::getMostRecent() const 
+{
+    ProjectItem * descendant = getParent();
+    if(descendant)
+    {
+        while(descendant->isHistorical())
+        {
+            descendant = descendant->getParent();
+            if(!descendant)
+            {
+                break;
+            }
+        }
+    }
+    return descendant;
 }
 
 ProjectItem *

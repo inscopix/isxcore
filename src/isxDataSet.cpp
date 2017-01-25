@@ -130,6 +130,11 @@ DataSet::insertDerivedDataSet(std::shared_ptr<DataSet> & inDataSet)
     m_modified = true;
 }
 
+isize_t DataSet::getNumDerivedDataSets() const
+{
+    return m_derived.size();
+}
+
 std::vector<DataSet *>
 DataSet::getDerivedDataSets() const
 {
@@ -163,8 +168,10 @@ DataSet::setPrevious(const std::shared_ptr<DataSet> & inDataSet)
 {
     if (inDataSet)
     {
-        inDataSet->setParent(nullptr);
-        inDataSet->setName("previous");
+        inDataSet->setHistorical();
+        inDataSet->setParent(this);
+        std::string operationName = getHistory().getOperation();
+        inDataSet->setName(operationName);
     }
     m_previous = inDataSet;
 }
@@ -282,6 +289,24 @@ DataSet::setName(const std::string & inName)
     m_modified = true;
 }
 
+ProjectItem * 
+DataSet::getMostRecent() const 
+{
+    ProjectItem * descendant = getParent();
+    if(descendant)
+    {
+        while(descendant->isHistorical())
+        {
+            descendant = descendant->getParent();
+            if(!descendant)
+            {
+                break;
+            }
+        }
+    }
+    return descendant;
+}
+
 ProjectItem *
 DataSet::getParent() const
 {
@@ -292,7 +317,7 @@ void
 DataSet::setParent(ProjectItem * inParent)
 {
     m_parent = inParent;
-    m_modified = true;
+    m_modified = true;    
 }
 
 std::vector<ProjectItem *>
@@ -454,6 +479,63 @@ DataSet::getDataType()
         readMetaData();
     }
     return m_dataType;
+}
+
+bool 
+DataSet::isPartOfSeries() const
+{
+    bool res = false;
+    if(m_parent)
+    {
+        res = m_parent->getItemType() == ProjectItem::Type::SERIES;
+    }
+    return res;
+}
+
+bool 
+DataSet::hasHistory() const
+{
+    return (m_previous != nullptr);
+}
+
+isize_t 
+DataSet::getNumHistoricalItems() const
+{
+    isize_t num = 0;
+    if(m_previous)
+    {
+        num += 1;
+        num += m_previous->getNumHistoricalItems();
+    }
+    return num;
+}
+
+void 
+DataSet::setHistorical()
+{
+    m_historical = true;
+}
+
+bool 
+DataSet::isHistorical() const
+{
+    return m_historical;
+}
+
+std::vector<std::shared_ptr<DataSet>> 
+DataSet::getHistoricalDataSets() const
+{
+    std::vector<std::shared_ptr<DataSet>> outDataSets;
+    if(m_previous)
+    {
+        outDataSets.push_back(m_previous);        
+        std::vector<std::shared_ptr<DataSet>> ancestors = m_previous->getHistoricalDataSets();
+        if(ancestors.empty() == false)
+        {
+            outDataSets.insert(outDataSets.end(), ancestors.begin(), ancestors.end());    
+        }        
+    }
+    return outDataSets;
 }
 
 void

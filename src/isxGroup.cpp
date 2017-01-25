@@ -51,6 +51,12 @@ Group::setName(const std::string & inName)
     m_modified = true;
 }
 
+ProjectItem * 
+Group::getMostRecent() const 
+{
+    return nullptr;
+}
+
 ProjectItem *
 Group::getParent() const
 {
@@ -208,6 +214,23 @@ Group::operator ==(const ProjectItem & other) const
         equal &= *m_items.at(i) == *otherGroup->m_items.at(i);
     }
     return equal;
+}
+bool 
+Group::hasHistory() const 
+{
+    return false;
+}
+
+isize_t 
+Group::getNumHistoricalItems() const
+{
+    return 0;
+}
+
+bool 
+Group::isHistorical() const
+{
+    return false;
 }
 
 } // namespace isx

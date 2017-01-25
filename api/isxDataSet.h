@@ -96,6 +96,10 @@ public:
     /// \param inValue value
     void setPropertyValue(const std::string & inPropertyName, Variant inValue);
 
+    /// \return the number of derived datasets 
+    ///
+    isize_t getNumDerivedDataSets() const;
+
     /// \return     All the derived data sets of this.
     ///
     std::vector<DataSet *> getDerivedDataSets() const;
@@ -171,6 +175,14 @@ public:
     /// \throw  ExceptionDataIO If the data type cannot be parsed.
     DataType getDataType();
 
+    /// \return whether this data set is contained in a series or not
+    ///
+    bool isPartOfSeries() const;          
+
+    /// \return a vector containing all historical data sets
+    ///
+    std::vector<std::shared_ptr<DataSet>> getHistoricalDataSets() const;
+
     // Overrides: see isxProjectItem.h for docs.
     ProjectItem::Type getItemType() const override;
 
@@ -179,6 +191,8 @@ public:
     std::string getName() const override;
 
     void setName(const std::string & inName) override;
+
+    ProjectItem * getMostRecent() const override;
 
     ProjectItem * getParent() const override;
 
@@ -200,6 +214,12 @@ public:
 
     bool operator ==(const ProjectItem & other) const override;
 
+    bool hasHistory() const override;
+
+    isize_t getNumHistoricalItems() const override;
+
+    bool isHistorical() const override;
+
 private:
 
     /// True if this data set is valid.
@@ -207,6 +227,9 @@ private:
 
     /// True if this has unsaved changes.
     bool m_modified;
+
+    /// True if this is an historical data set;
+    bool m_historical = false; 
 
     /// The name of this data set.
     std::string m_name;
@@ -249,6 +272,9 @@ private:
     /// \throw  ExceptionFileIO     If the read fails.
     /// \throw  ExceptionDataIO     If the file format is not recognized.
     void readMetaData();
+
+    /// Set this dataset as historical
+    void setHistorical();  
 
 }; // class DataSet
 
