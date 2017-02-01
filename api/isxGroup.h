@@ -44,6 +44,8 @@ public:
 
     ProjectItem * getMostRecent() const override;
 
+    ProjectItem * getPrevious() const override;
+
     ProjectItem * getParent() const override;
 
     void setParent(ProjectItem * inParent) override;

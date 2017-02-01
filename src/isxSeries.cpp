@@ -137,14 +137,12 @@ Series::setPrevious(const std::shared_ptr<Series> & inSeries)
     {
         inSeries->setHistorical();
         inSeries->setParent(this);
-        std::string operationName = getHistory().getOperation();
-        inSeries->setName(operationName);
     }
     m_previous = inSeries;
 }
 
-Series * 
-Series::getPrevious()
+ProjectItem *
+Series::getPrevious() const
 {
     return m_previous.get();
 }
@@ -422,6 +420,13 @@ Series::toJsonString(const bool inPretty) const
     {
         jsonObj["dataSets"].push_back(json::parse(dataSet->toJsonString()));
     }
+
+    jsonObj["previous"] = json::object();
+    if (m_previous)
+    {
+        jsonObj["previous"] = json::parse(m_previous->toJsonString());
+    }
+
     if (inPretty)
     {
         return jsonObj.dump(4);
@@ -432,6 +437,11 @@ Series::toJsonString(const bool inPretty) const
 std::shared_ptr<Series>
 Series::fromJsonString(const std::string & inString)
 {
+    if (inString == json::object().dump())
+    {
+        return std::shared_ptr<Series>();
+    }
+
     const json jsonObj = json::parse(inString);
     const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj["itemType"]));
     ISX_ASSERT(itemType == ProjectItem::Type::SERIES);
@@ -442,6 +452,11 @@ Series::fromJsonString(const std::string & inString)
         std::shared_ptr<DataSet> dataSet = DataSet::fromJsonString(jsonDataSet.dump());
         outSeries->insertDataSet(dataSet);
     }
+    if (jsonObj.find("previous") != jsonObj.end())
+    {
+        outSeries->setPrevious(Series::fromJsonString(jsonObj["previous"].dump()));
+    }
+    
     return outSeries;
 }
 

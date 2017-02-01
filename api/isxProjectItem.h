@@ -48,6 +48,10 @@ public:
     /// 
     virtual ProjectItem * getMostRecent() const = 0;
 
+    /// \return The previous item (this items's ancestor)
+    ///
+    virtual ProjectItem * getPrevious() const = 0;
+    
     /// \return The parent of this item.
     ///
     virtual ProjectItem * getParent() const = 0;

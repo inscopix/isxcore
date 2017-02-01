@@ -652,7 +652,7 @@ TEST_CASE("PreviousDataSets", "[core]")
         ds1->setPrevious(originalDs0);
 
         // Verify results        
-        isx::DataSet * returnedPrev = ds1->getPrevious();
+        isx::DataSet * returnedPrev = static_cast<isx::DataSet *>(ds1->getPrevious());
         REQUIRE(returnedPrev);
         REQUIRE(returnedPrev->getFileName() == filename0);
         std::vector<isx::DataSet *> derivedDs = returnedPrev->getDerivedDataSets();

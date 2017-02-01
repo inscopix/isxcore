@@ -170,14 +170,12 @@ DataSet::setPrevious(const std::shared_ptr<DataSet> & inDataSet)
     {
         inDataSet->setHistorical();
         inDataSet->setParent(this);
-        std::string operationName = getHistory().getOperation();
-        inDataSet->setName(operationName);
     }
     m_previous = inDataSet;
 }
 
-DataSet * 
-DataSet::getPrevious()
+ProjectItem *
+DataSet::getPrevious() const
 {
     return m_previous.get();
 }

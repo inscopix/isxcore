@@ -70,7 +70,19 @@ public:
     ///
     /// \throw  ExceptionDataIO If the item does not exist.
     ProjectItem * getItem(const std::string & inPath) const;
-
+    
+    /// This method exists because resolving an item's path and locating it
+    /// in the project tree must be done by searching two different subtrees
+    /// at each branch point (level in project tree).
+    /// This method tries to locate the item by searching
+    /// in the following order (at each branch point)
+    /// 1 - look at "previous" item to see if it matches
+    /// 2 - if current item is a dataset, search derived datasets
+    /// 3 - if current item is a series, search members of the series
+    /// \param inPath   The project path of the item to find.
+    /// \return         The item if it was found, nullptr if not.
+    ProjectItem * findItem(const std::string & inPath) const;
+    
     /// Remove an item by its project path.
     ///
     /// \param  inPath  The path of the item to remove.

@@ -58,6 +58,12 @@ Group::getMostRecent() const
 }
 
 ProjectItem *
+Group::getPrevious() const
+{
+    return nullptr;
+}
+
+ProjectItem *
 Group::getParent() const
 {
     return m_parent;

@@ -121,10 +121,6 @@ public:
     /// \param inDataSet the previous dataset
     void setPrevious(const std::shared_ptr<DataSet> & inDataSet);
 
-    /// Get the previous dataset
-    /// \return the previous dataset
-    DataSet * getPrevious();
-
     /// Serialize vector of DataSets and derived DataSets to a JSON string
     /// \return JSON string for the DataSet(s)
     /// \param inPath project path for the dataset
@@ -193,6 +189,8 @@ public:
     void setName(const std::string & inName) override;
 
     ProjectItem * getMostRecent() const override;
+    
+    ProjectItem * getPrevious() const override;
 
     ProjectItem * getParent() const override;
 

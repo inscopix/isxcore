@@ -62,6 +62,56 @@ Project::getItem(const std::string & inPath) const
     return outItem;
 }
 
+ProjectItem *
+Project::findItem(const std::string & inPath) const
+{
+    ProjectItem * ret = m_root.get();
+    
+    ISX_ASSERT(inPath[0] == '/');
+    auto path = inPath.substr(1);
+    
+    while (path != "")
+    {
+        // extract elements of "path" into variable "name"
+        // remove "name" from "path"
+        std::string name;
+        auto pos = path.find("/");
+        if (pos == path.npos)
+        {
+            name = path;
+            path = "";
+        }
+        else
+        {
+            name = path.substr(0, pos);
+            path = path.substr(pos + 1);
+        }
+
+        // search for "name", as historical item first, then children (derived datasets / series members)
+        if (ret->getPrevious() && ret->getPrevious()->getName() == name)
+        {
+            ret = ret->getPrevious();
+        }
+        else if (ret->isChild(name))
+        {
+            ret = ret->getChild(name);
+        }
+        else
+        {
+            // not found
+            ret = nullptr;
+            break;
+        }
+    }
+    
+    if (path == "")
+    {
+        ISX_ASSERT(ret->getPath() == inPath);
+    }
+
+    return ret;
+}
+
 std::shared_ptr<ProjectItem>
 Project::removeItem(const std::string & inPath) const
 {
