@@ -233,4 +233,10 @@ Group::isHistorical() const
     return false;
 }
 
+std::string 
+Group::getHistoricalDetails() const
+{
+    return std::string();
+}
+
 } // namespace isx

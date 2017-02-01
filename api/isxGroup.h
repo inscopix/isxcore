@@ -70,6 +70,8 @@ public:
 
     bool isHistorical() const override;
 
+    std::string getHistoricalDetails() const override;
+
 private:
 
     /// True if this data set is valid.

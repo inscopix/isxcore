@@ -516,6 +516,15 @@ DataSet::setHistorical()
     m_historical = true;
 }
 
+std::string 
+DataSet::getHistoricalDetails() const
+{
+    std::string str = "Operation Name: " + m_history.getOperation() + "\n"
+        + "Input Parameters: \n" + m_history.getInputParameters();
+
+    return str;
+}
+
 bool 
 DataSet::isHistorical() const
 {

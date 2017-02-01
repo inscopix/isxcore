@@ -118,6 +118,9 @@ public:
     /// \return whether this is an historical item or not
     virtual bool isHistorical() const = 0;
 
+    /// \return a JSON-formatted string containing the Historical Details 
+    virtual std::string getHistoricalDetails() const = 0;
+
     /// Get a child of this item by name.
     ///
     /// \param  inName  The name of the child.

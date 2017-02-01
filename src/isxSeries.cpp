@@ -143,6 +143,12 @@ Series::setPrevious(const std::shared_ptr<Series> & inSeries)
     m_previous = inSeries;
 }
 
+Series * 
+Series::getPrevious()
+{
+    return m_previous.get();
+}
+
 void 
 Series::setHistorical()
 {
@@ -153,6 +159,17 @@ bool
 Series::isHistorical() const
 {
     return m_historical;
+}
+
+std::string 
+Series::getHistoricalDetails() const
+{
+    std::string str;
+    if(m_dataSets.size())
+    {
+        str = m_dataSets[0]->getHistoricalDetails();
+    }
+    return str;
 }
 
 std::vector<std::shared_ptr<Series>> 

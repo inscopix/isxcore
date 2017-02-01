@@ -6,6 +6,7 @@ namespace isx {
 
 HistoricalDetails::HistoricalDetails()
 {
+    m_operationName = "Imported";
     m_inputParameters = json::object().dump();
 }
 
