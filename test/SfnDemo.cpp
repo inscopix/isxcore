@@ -17,14 +17,14 @@ TEST_CASE("SfnDemo", "[data][!hide]")
     const std::string behavioralDataDir = dataDir + "/noldus";
 
     std::map<std::string, std::vector<std::string>> allSeries;
-    allSeries["/Day 4"] =
+    allSeries["Day 4"] =
     {
         "recording_20150802_115907",
         "recording_20150802_120607",
         "recording_20150802_121307",
         "recording_20150802_122007"
     };
-    allSeries["/Day 5"] =
+    allSeries["Day 5"] =
     {
         "recording_20150803_120121",
         "recording_20150803_120821",
@@ -46,7 +46,10 @@ TEST_CASE("SfnDemo", "[data][!hide]")
 
     const float dffMin = -0.2f;
     const float dffMax = 0.2f;
-    isx::HistoricalDetails hd("", "");
+    const std::string operation = "Import";
+    const std::string params = "";
+    const std::string importPrefix = "1-IMP: ";
+    isx::HistoricalDetails hd(operation, params);
 
     SECTION("Project for SfN demo - motion corrected nVista movies only")
     {
@@ -56,14 +59,14 @@ TEST_CASE("SfnDemo", "[data][!hide]")
 
         for (const auto series : allSeries)
         {
-            const std::string seriesPath = series.first;
+            const std::string seriesPath = "/" + importPrefix + series.first;
             project.createSeries(seriesPath);
             for (const auto & name : series.second)
             {
                 const std::string movieName = name + "-mc";
                 const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
                 REQUIRE(isx::pathExists(movieFile));
-                const std::string moviePath = seriesPath + "/" + movieName;
+                const std::string moviePath = seriesPath + "/" + importPrefix + movieName;
                 project.createDataSet(
                         moviePath,
                         isx::DataSet::Type::MOVIE,
@@ -84,7 +87,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
         {
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
             REQUIRE(isx::pathExists(movieFile));
-            const std::string moviePath = "/" + bms;
+            const std::string moviePath = "/" + importPrefix + bms;
             project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile, hd,
                     {
                         {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
@@ -104,14 +107,14 @@ TEST_CASE("SfnDemo", "[data][!hide]")
 
         for (const auto series : allSeries)
         {
-            const std::string seriesPath = series.first;
+            const std::string seriesPath = "/" + importPrefix + series.first;
             project.createSeries(seriesPath);
             for (const auto & name : series.second)
             {
                 const std::string movieName = name + "-mc_DFF";
                 const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
                 REQUIRE(isx::pathExists(movieFile));
-                const std::string moviePath = seriesPath + "/" + movieName;
+                const std::string moviePath = seriesPath + "/" + importPrefix + movieName;
                 const std::string cellSetFile = procDataDir + "/" + name + "-rois.isxd";
                 REQUIRE(isx::pathExists(cellSetFile));
                 project.createDataSet(
@@ -148,7 +151,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
         {
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
             REQUIRE(isx::pathExists(movieFile));
-            const std::string moviePath = "/" + bms;
+            const std::string moviePath = "/" + importPrefix + bms;
             project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile, hd,
                     {
                         {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
@@ -199,7 +202,10 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
 
     const float dffMin = -0.2f;
     const float dffMax = 0.2f;
-    isx::HistoricalDetails hd("", "");
+    const std::string operation = "Import";
+    const std::string params = "";
+    const std::string importPrefix = "1-IMP: ";
+    isx::HistoricalDetails hd(operation, params);
 
     SECTION("Project for SfN demo - original nVista movies only")
     {
@@ -209,14 +215,14 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
 
         for (const auto series : allSeries)
         {
-            const std::string seriesPath = series.first;
+            const std::string seriesPath = "/" + importPrefix + series.first;
             project.createSeries(seriesPath);
             const auto names = series.second;
             for (const auto & name : names)
             {
                 const std::string movieFile = origDataDir + "/" + name + ".xml";
                 REQUIRE(isx::pathExists(movieFile));
-                const std::string moviePath = seriesPath + "/" + name;
+                const std::string moviePath = seriesPath + "/" + importPrefix + name;
                 project.createDataSet(
                         moviePath,
                         isx::DataSet::Type::MOVIE,
@@ -236,7 +242,7 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
         for (const auto & bms : behavioralMovies)
         {
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
-            const std::string moviePath = "/" + bms;
+            const std::string moviePath = "/" + importPrefix + bms;
             project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile, hd,
                     {
                         {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
