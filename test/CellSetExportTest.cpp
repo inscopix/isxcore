@@ -5,6 +5,7 @@
 #include "isxException.h"
 #include "isxMovieFactory.h"
 #include "isxProject.h"
+#include "isxPathUtils.h"
 
 #include "isxCellSetExporter.h"
 
@@ -12,20 +13,27 @@
 #include <fstream>
 #include <memory>
 
+#include <tiffio.h>
+
 TEST_CASE("CellSetExportTest", "[core]")
 {
     std::string fileName = g_resources["unitTestDataPath"] + "/cellset.isxd";
     std::remove(fileName.c_str());
     
-    std::string exportedFileName = g_resources["unitTestDataPath"] + "/exportedCellset.csv";
-    std::remove(exportedFileName.c_str());
+    std::string exportedTraceFileName = g_resources["unitTestDataPath"] + "/exportedTrace.csv";
+    std::remove(exportedTraceFileName.c_str());
+
+    std::string exportedImageFileName = g_resources["unitTestDataPath"] + "/exportedImage.tiff";
+    std::remove(exportedImageFileName.c_str());
 
     isx::Time start;
     isx::DurationInSeconds step(50, 1000);
     isx::isize_t numFrames = 5;
     isx::TimingInfo timingInfo(start, step, numFrames);
 
-    isx::SizeInPixels_t numPixels(4, 3);
+    isx::isize_t numRows = 4;
+    isx::isize_t numCols = 3;
+    isx::SizeInPixels_t numPixels(numCols, numRows);
     isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
     isx::PointInMicrons_t topLeft(0, 0);
     isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
@@ -58,7 +66,7 @@ TEST_CASE("CellSetExportTest", "[core]")
 
     isx::CoreInitialize();
 
-    SECTION("Verify exported data")
+    SECTION("Verify exported trace data")
     {
         // write sample data
         {
@@ -76,7 +84,8 @@ TEST_CASE("CellSetExportTest", "[core]")
         isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
         isx::CellSetExporterParams params(
             std::vector<isx::SpCellSet_t>{cellSet},
-            exportedFileName,
+            exportedTraceFileName,
+            std::string(),
             isx::CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM);
         isx::runCellSetExporter(params, [](float){return false;});
         
@@ -88,14 +97,14 @@ TEST_CASE("CellSetExportTest", "[core]")
             "0.175, 0.03, 42.02999, 84.03001, 126.03, 168.03\n"
             "0.225, 0.04, 42.03999, 84.04001, 126.04, 168.04\n";
         
-        std::ifstream strm(exportedFileName);
+        std::ifstream strm(exportedTraceFileName);
         std::unique_ptr<char[]> buf(new char[expected.length() + 1]);   // account for null termination
         strm.get(buf.get(), expected.length() + 1, '$');                // get reads count - 1 chars
         std::string actual(buf.get());
         REQUIRE(actual == expected);
     }
     
-    SECTION("Export CellSet with single cell")
+    SECTION("Export CellSet with single cell to CSV")
     {
         // write sample data
         {
@@ -109,7 +118,8 @@ TEST_CASE("CellSetExportTest", "[core]")
         isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
         isx::CellSetExporterParams params(
             std::vector<isx::SpCellSet_t>{cellSet},
-            exportedFileName,
+            exportedTraceFileName,
+            std::string(),
             isx::CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM);
         isx::runCellSetExporter(params, [](float){return false;});
         
@@ -121,14 +131,95 @@ TEST_CASE("CellSetExportTest", "[core]")
             "0.175, 84.03001\n"
             "0.225, 84.04001\n";
 
-        std::ifstream strm(exportedFileName);
+        std::ifstream strm(exportedTraceFileName);
         std::unique_ptr<char[]> buf(new char[expected.length() + 1]);   // account for null termination
         strm.get(buf.get(), expected.length() + 1, '$');                // get reads count - 1 chars
         std::string actual(buf.get());
         REQUIRE(actual == expected);
     }
 
+
+    SECTION("Export CellSet with single cell to TIFF")
+    {
+        // write sample data
+        {
+            isx::SpCellSet_t cellSet = isx::writeCellSet(
+                fileName, timingInfo, spacingInfo);
+
+            // Make the original image have alternating rows of 1's and 0's
+            float * pixelsF32 = originalImage->getPixelsAsF32();
+            for(isx::isize_t i = 0; i < numRows; i+=2)
+            {
+                for(isx::isize_t j = 0; j < numCols; ++j)
+                {
+                    pixelsF32[numCols * i + j] = 1.0f;
+                }
+            } 
+            
+            cellSet->writeImageAndTrace(0, originalImage, originalTraces[2], "Lonely1");
+        }
+        
+        // export 
+        isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
+        isx::CellSetExporterParams params(
+            std::vector<isx::SpCellSet_t>{cellSet},
+            std::string(),
+            exportedImageFileName,
+            isx::CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM);
+        isx::runCellSetExporter(params, [](float){return false;});
+
+        // read output TIFF and verify
+        std::string cellname = cellSet->getCellName(0);
+        std::string fn = isx::getDirName(exportedImageFileName) + "/" +
+                isx::getBaseName(exportedImageFileName) + "_" + cellname + 
+                "." + isx::getExtension(exportedImageFileName);
+
+        TIFF * tif = TIFFOpen(fn.c_str(), "r");
+        if(!tif)
+        {
+            FAIL("Could not open the TIFF file.");
+        }
+        else
+        {
+            uint32_t width, height;
+            TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+            TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+
+            REQUIRE(width == uint32_t(numCols));
+            REQUIRE(height == uint32_t(numRows));
+
+            float * readRow = (float *) _TIFFmalloc(width*sizeof(float));
+            for (uint32_t r = 0; r < height; ++r)
+            {
+                if(TIFFReadScanline(tif, readRow, r, 0) < 0)
+                {
+                    FAIL("Failed to read TIFF image");
+                }
+                float expectedVal = 0.0f;
+                if(r % 2 == 0)
+                {
+                    expectedVal = 1.0f;
+                }
+
+                for (isx::isize_t c = 0; c < numCols; ++c)
+                {
+                    REQUIRE(readRow[c] == expectedVal);
+                }
+            }
+
+            if(readRow)
+            {
+                _TIFFfree(readRow);
+            }
+            
+            TIFFClose(tif);
+        }        
+
+        std::remove(fn.c_str());    
+        
+    }
+
     isx::CoreShutdown();
     std::remove(fileName.c_str());
-    std::remove(exportedFileName.c_str());
+    std::remove(exportedTraceFileName.c_str());
 }

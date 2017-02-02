@@ -1,9 +1,11 @@
 #include "isxCellSetExporter.h"
-
+#include "isxPathUtils.h"
+#include "isxExport.h"
 
 #include <fstream>
 #include <iomanip>
 #include <limits>
+
 
 namespace isx {
 
@@ -46,87 +48,134 @@ runCellSetExporter(CellSetExporterParams inParams, AsyncCheckInCB_t inCheckInCB)
         }
     }
 
-    std::ofstream strm(inParams.m_outputFilename, std::ios::trunc);
+    // For progress report
+    isize_t numSections = isize_t(inParams.m_outputTraceFilename.empty() == false) + 
+                            isize_t(inParams.m_outputImageFilename.empty() == false);
+    float progress = 0.f;
 
-    if (!strm.good())
+
+    /// Traces to CSV
+    if(inParams.m_outputTraceFilename.empty() == false)
     {
-        ISX_THROW(isx::ExceptionFileIO, "Error writing to output file.");
-    }
-    
-    isx::DurationInSeconds baseTime{};
-    switch (inParams.m_writeTimeRelativeTo)
-    {
-        case CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM:
+        std::ofstream strm(inParams.m_outputTraceFilename, std::ios::trunc);
+
+        if (!strm.good())
         {
-            baseTime = srcs[0]->getTimingInfo().getStart().getSecsSinceEpoch();;
-            break;
+            ISX_THROW(isx::ExceptionFileIO, "Error writing to output file.");
         }
-        case CellSetExporterParams::WriteTimeRelativeTo::UNIX_EPOCH:
+        
+        isx::DurationInSeconds baseTime{};
+        switch (inParams.m_writeTimeRelativeTo)
         {
-            baseTime = isx::DurationInSeconds{};
-            break;
+            case CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM:
+            {
+                baseTime = srcs[0]->getTimingInfo().getStart().getSecsSinceEpoch();;
+                break;
+            }
+            case CellSetExporterParams::WriteTimeRelativeTo::UNIX_EPOCH:
+            {
+                baseTime = isx::DurationInSeconds{};
+                break;
+            }
+            default:
+                ISX_THROW(isx::ExceptionUserInput, "Invalid setting for writeTimeRelativeTo");
         }
-        default:
-            ISX_THROW(isx::ExceptionUserInput, "Invalid setting for writeTimeRelativeTo");
-    }
 
-    // calculate total number of lines to write (for progress reporting)
-    isize_t numLinesTotal = 0; 
-    isize_t numLinesWritten = 0;
-    for (auto & cs: srcs)
-    {
-        numLinesTotal += cs->getTimingInfo().getNumTimes();
-    }
-
-    // write column headers
-    strm << "Time(s), ";
-    for (isize_t i = 0; i < numCells - 1; ++i)
-    {
-        strm << srcs[0]->getCellName(i) << ", ";
-    }
-    strm << srcs[0]->getCellName(numCells - 1) << "\n";
-    
-    // iterate over input cell sets
-    for (auto & cs: srcs)
-    {
-        // loop over samples
-        const isize_t numSamples = cs->getTimingInfo().getNumTimes();
-        for (isize_t sample = 0; sample < numSamples; ++sample)
+        // calculate total number of lines to write (for progress reporting)
+        isize_t numLinesTotal = 0; 
+        isize_t numLinesWritten = 0;
+        for (auto & cs: srcs)
         {
-            // write time point
-            {
-                auto tm = cs->getTimingInfo().convertIndexToMidTime(sample).getSecsSinceEpoch();
-                auto timeToWrite = (tm - baseTime).toDouble();
-                strm << std::setprecision(timeDecimals);
-                strm << timeToWrite << ", ";
-            }
-            
-            strm << std::setprecision(maxDecimalsForFloat);
+            numLinesTotal += cs->getTimingInfo().getNumTimes();
+        }
 
-            // loop over individual cells
-            for (isize_t cell = 0; cell < numCells - 1; ++cell)
+        // write column headers
+        strm << "Time(s), ";
+        for (isize_t i = 0; i < numCells - 1; ++i)
+        {
+            strm << srcs[0]->getCellName(i) << ", ";
+        }
+        strm << srcs[0]->getCellName(numCells - 1) << "\n";
+        
+        // iterate over input cell sets
+        for (auto & cs: srcs)
+        {
+            // loop over samples
+            const isize_t numSamples = cs->getTimingInfo().getNumTimes();
+            for (isize_t sample = 0; sample < numSamples; ++sample)
             {
-                // write cell's data value
-                auto tr = cs->getTrace(cell);
-                strm << tr->getValue(sample) << ", ";
-            }
-            // write last cell's data value
-            auto tr = cs->getTrace(numCells - 1);
-            strm << tr->getValue(sample);
+                // write time point
+                {
+                    auto tm = cs->getTimingInfo().convertIndexToMidTime(sample).getSecsSinceEpoch();
+                    auto timeToWrite = (tm - baseTime).toDouble();
+                    strm << std::setprecision(timeDecimals);
+                    strm << timeToWrite << ", ";
+                }
+                
+                strm << std::setprecision(maxDecimalsForFloat);
 
-            // write newline before next time point
-            strm << "\n";
-            ++numLinesWritten;
-            cancelled = inCheckInCB(float(numLinesWritten) / float(numLinesTotal));
+                // loop over individual cells
+                for (isize_t cell = 0; cell < numCells - 1; ++cell)
+                {
+                    // write cell's data value
+                    auto tr = cs->getTrace(cell);
+                    strm << tr->getValue(sample) << ", ";
+                }
+                // write last cell's data value
+                auto tr = cs->getTrace(numCells - 1);
+                strm << tr->getValue(sample);
+
+                // write newline before next time point
+                strm << "\n";
+                ++numLinesWritten;
+                progress = float(numLinesWritten) / float(numLinesTotal) / float(numSections);
+                cancelled = inCheckInCB(progress);
+                if (cancelled)
+                {
+                    break;
+                }
+            }
             if (cancelled)
             {
                 break;
             }
         }
-        if (cancelled)
+    }
+
+
+    /// Images to TIFF
+    if(inParams.m_outputImageFilename.empty() == false)
+    {
+        // If many srcs are provided, it's enough to use the first one only since
+        // cell images in a cellset series are the same for different segments
+        auto & cs =  srcs[0];
+        std::string dirname = getDirName(inParams.m_outputImageFilename);
+        std::string basename = getBaseName(inParams.m_outputImageFilename);
+        std::string extension = getExtension(inParams.m_outputImageFilename);        
+        
+        for (isize_t cell = 0; cell < numCells; ++cell)
         {
-            break;
+            std::string cellname = cs->getCellName(cell);
+            std::string fn = dirname + "/" + basename + "_" + cellname + "." + extension;
+            
+            SpImage_t cellIm = cs->getImage(cell); 
+            toTiff(fn, cellIm);    
+
+            cancelled = inCheckInCB(progress + float(cell)/float(numCells)/float(numSections));
+            if (cancelled)
+            {
+                // Remove previously created files - Do this here and not in finishedCB because 
+                // only here we know exactly which files we wrote out
+                for (isize_t c = 0; c <= cell; ++c)
+                {
+                    std::string cellname = cs->getCellName(c);
+                    std::string fn = dirname + "/" + basename + "_" + cellname + "." + extension;
+                    std::remove(fn.c_str());
+                }
+                break;
+            }
         }
+
     }
 
     if (cancelled)

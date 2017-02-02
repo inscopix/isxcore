@@ -18,21 +18,24 @@ struct CellSetExporterParams
     
     /// convenience constructor to fill struct members in one shot
     /// \param inSrcs                input cellsets
-    /// \param inFilenameForOutput   filename for output file
+    /// \param inTraceFilename       filename for trace output file
+    /// \param inImagesFilename      base filename for cell images output file
     /// \param inWriteTimeRelativeTo number of decimals written per cell value
     CellSetExporterParams(
         const std::vector<SpCellSet_t> & inSrcs, 
-        const std::string & inFilenameForOutput,
+        const std::string & inTraceFilename,
+        const std::string & inImagesFilename,
         WriteTimeRelativeTo inWriteTimeRelativeTo)
     : m_srcs(inSrcs)
-    , m_outputFilename(inFilenameForOutput)
+    , m_outputTraceFilename(inTraceFilename)
+    , m_outputImageFilename(inImagesFilename)
     , m_writeTimeRelativeTo(inWriteTimeRelativeTo)
     {}
 
     /// default constructor
     /// 
     CellSetExporterParams() :
-    CellSetExporterParams(std::vector<SpCellSet_t>{}, std::string(), WriteTimeRelativeTo(0))
+    CellSetExporterParams(std::vector<SpCellSet_t>{}, std::string(), std::string(), WriteTimeRelativeTo(0))
     {}
     
     /// \return export operation name to display to user
@@ -40,9 +43,10 @@ struct CellSetExporterParams
     std::string
     getOpName();
 
-    std::vector<SpCellSet_t> m_srcs;                ///< input cellsets
-    std::string              m_outputFilename;      ///< name of output file
-    WriteTimeRelativeTo      m_writeTimeRelativeTo; ///< how to write time stamps in file
+    std::vector<SpCellSet_t> m_srcs;                    ///< input cellsets
+    std::string              m_outputTraceFilename;      ///< name of output file for traces
+    std::string              m_outputImageFilename;      ///< base filename for output images
+    WriteTimeRelativeTo      m_writeTimeRelativeTo;     ///< how to write time stamps in file
 };
 
 /// Runs CellSetExporter
