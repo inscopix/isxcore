@@ -187,7 +187,20 @@ NVistaHdf5Movie::initialize(
 
     if (inSpacingInfo.isValid())
     {
-        m_spacingInfo = inSpacingInfo;
+        // TODO sweet : Even if the spacing info is valid, we don't trust
+        // the width/height because the acquisition software does not store
+        // the actual width/height after downsampling.
+        // Therefore, we try to get it from the HDF5 file and use the given
+        // width/height as a fallback only.
+        if (m_movies.size() > 0)
+        {
+            const SizeInPixels_t numPixels(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
+            m_spacingInfo = SpacingInfo(numPixels, inSpacingInfo.getPixelSize(), inSpacingInfo.getTopLeft());
+        }
+        else
+        {
+            m_spacingInfo = inSpacingInfo;
+        }
     }
     else
     {
