@@ -106,7 +106,7 @@ runCellSetExporter(CellSetExporterParams inParams, AsyncCheckInCB_t inCheckInCB)
             {
                 // write time point
                 {
-                    auto tm = cs->getTimingInfo().convertIndexToMidTime(sample).getSecsSinceEpoch();
+                    auto tm = cs->getTimingInfo().convertIndexToStartTime(sample).getSecsSinceEpoch();
                     auto timeToWrite = (tm - baseTime).toDouble();
                     strm << std::setprecision(timeDecimals);
                     strm << timeToWrite << ", ";

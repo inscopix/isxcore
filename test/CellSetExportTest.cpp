@@ -91,11 +91,11 @@ TEST_CASE("CellSetExportTest", "[core]")
         
         const std::string expected =
             "Time(s), Kunal, Mark, Abbas, C3, C4\n"
-            "0.025, 0, 42, 84, 126, 168\n"
-            "0.075, 0.01, 42.01, 84.01, 126.01, 168.01\n"
-            "0.125, 0.02, 42.02, 84.02, 126.02, 168.02\n"
-            "0.175, 0.03, 42.02999, 84.03001, 126.03, 168.03\n"
-            "0.225, 0.04, 42.03999, 84.04001, 126.04, 168.04\n";
+            "0, 0, 42, 84, 126, 168\n"
+            "0.05, 0.01, 42.01, 84.01, 126.01, 168.01\n"
+            "0.1, 0.02, 42.02, 84.02, 126.02, 168.02\n"
+            "0.15, 0.03, 42.02999, 84.03001, 126.03, 168.03\n"
+            "0.2, 0.04, 42.03999, 84.04001, 126.04, 168.04\n";
         
         std::ifstream strm(exportedTraceFileName);
         std::unique_ptr<char[]> buf(new char[expected.length() + 1]);   // account for null termination
@@ -125,11 +125,11 @@ TEST_CASE("CellSetExportTest", "[core]")
         
         const std::string expected =
             "Time(s), Lonely1\n"
-            "0.025, 84\n"
-            "0.075, 84.01\n"
-            "0.125, 84.02\n"
-            "0.175, 84.03001\n"
-            "0.225, 84.04001\n";
+            "0, 84\n"
+            "0.05, 84.01\n"
+            "0.1, 84.02\n"
+            "0.15, 84.03001\n"
+            "0.2, 84.04001\n";
 
         std::ifstream strm(exportedTraceFileName);
         std::unique_ptr<char[]> buf(new char[expected.length() + 1]);   // account for null termination
@@ -217,6 +217,44 @@ TEST_CASE("CellSetExportTest", "[core]")
 
         std::remove(fn.c_str());    
         
+    }
+
+    SECTION("Test for overflow when getting sample times")
+    {
+        // write sample data
+        {
+            isx::Time start2(2016, 1, 1, 0, 0, 0, isx::DurationInSeconds(67, 1000));
+            isx::DurationInSeconds step2(100, 2000);
+            isx::TimingInfo timingInfo2(start2, step2, numFrames);
+            isx::SpCellSet_t cellSet = isx::writeCellSet(fileName, timingInfo2, spacingInfo);
+            cellSet->writeImageAndTrace(0, originalImage, originalTraces[0], "Kunal");
+            cellSet->writeImageAndTrace(1, originalImage, originalTraces[1], "Mark");
+            cellSet->writeImageAndTrace(2, originalImage, originalTraces[2], "Abbas");
+            cellSet->writeImageAndTrace(3, originalImage, originalTraces[3]);
+            cellSet->writeImageAndTrace(4, originalImage, originalTraces[4]);
+        }
+        // export
+        isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
+        isx::CellSetExporterParams params(
+            std::vector<isx::SpCellSet_t>{cellSet},
+            exportedTraceFileName,
+            "",
+            isx::CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM);
+        isx::runCellSetExporter(params, [](float){return false;});
+        // check that sample times are as expected
+        const std::string expected =
+            "Time(s), Kunal, Mark, Abbas, C3, C4\n"
+            "0, 0, 42, 84, 126, 168\n"
+            "0.05, 0.01, 42.01, 84.01, 126.01, 168.01\n"
+            "0.1, 0.02, 42.02, 84.02, 126.02, 168.02\n"
+            "0.15, 0.03, 42.02999, 84.03001, 126.03, 168.03\n"
+            "0.2, 0.04, 42.03999, 84.04001, 126.04, 168.04\n";
+
+        std::ifstream strm(exportedTraceFileName);
+        std::unique_ptr<char[]> buf(new char[expected.length() + 1]);   // account for null termination
+        strm.get(buf.get(), expected.length() + 1, '$');                // get reads count - 1 chars
+        std::string actual(buf.get());
+        REQUIRE(actual == expected);
     }
 
     isx::CoreShutdown();
