@@ -4,6 +4,8 @@
 #include "isxPathUtils.h"
 
 #include <fstream>
+#include <QDir>
+#include <QFile>
 
 namespace isx
 {
@@ -18,6 +20,15 @@ Project::Project(const std::string & inFileName)
     , m_fileName(inFileName)
 {
     read();
+    
+    std::string dataPath = getDataPath();
+    QDir dir(QString::fromStdString(dataPath));
+    if(!dir.exists())
+    {
+        ISX_THROW(ExceptionFileIO, "Unable to locate data path: ", dataPath);
+    }
+
+    m_name = isx::getBaseName(inFileName);
     m_valid = true;
     setUnmodified();
 }
@@ -31,11 +42,64 @@ Project::Project(const std::string & inFileName, const std::string & inName)
     {
         ISX_THROW(ExceptionFileIO, "The file name already exists: ", inFileName);
     }
-    m_root = std::make_shared<Group>("/");
-    m_valid = true;
+    m_root = std::make_shared<Group>("/");    
     setUnmodified();
+    initDataDir();
+    m_valid = true;
 }
 
+Project::~Project()
+{
+    // Remove the project directory if empty
+    std::string dataPath = getDataPath();
+    QDir dataDir(QString::fromStdString(dataPath));
+    
+    std::string projPath = isx::getDirName(m_fileName);
+    QDir projDir(QString::fromStdString(projPath));
+    if(projDir.exists() && (projDir.entryInfoList(QDir::NoDotAndDotDot|QDir::AllEntries).count() == 1) && 
+        dataDir.exists() && (dataDir.entryInfoList(QDir::NoDotAndDotDot|QDir::AllEntries).count() == 0))
+    {
+        if(!dataDir.rmdir(dataDir.absolutePath()))
+        {
+            ISX_LOG_ERROR("Unable to delete empty directory: ", dataPath);
+        }
+
+        if(!projDir.rmdir(projDir.absolutePath()))
+        {
+            ISX_LOG_ERROR("Unable to delete empty directory: ", projPath);
+        }
+        
+    }
+    else if(projDir.exists() && (projDir.entryInfoList(QDir::NoDotAndDotDot|QDir::AllEntries).count() == 0))
+    {
+        if(!projDir.rmdir(projDir.absolutePath()))
+        {
+            ISX_LOG_ERROR("Unable to delete empty directory: ", projPath);
+        }
+    }
+
+}
+
+std::string 
+Project::getDataPath() const
+{
+    return isx::getDirName(m_fileName) + "/" + isx::getBaseName(m_fileName) + "_data";
+}
+
+void 
+Project::initDataDir()
+{
+    // Ensure the data path exists
+    std::string dataPath = getDataPath();
+    QDir dir(QString::fromStdString(dataPath));
+    if (!dir.exists())
+    {
+        if(!dir.mkpath(QString::fromStdString(dataPath)))
+        {
+            ISX_THROW(ExceptionFileIO, "Unable to create data directory: ", dataPath, ". Verify you have write permissions to this path.");
+        }        
+    }
+}
 void
 Project::save()
 {
@@ -245,9 +309,116 @@ Project::getFileName() const
 }
 
 void
-Project::setFileName(const std::string & inFileName)
-{
+Project::setFileName(const std::string & inFileName, bool inMoveData)
+{   
+    if(inFileName == m_fileName)
+    {
+        return;
+    }
+
+    // Make sure the path exists
+    std::string dirName = getDirName(inFileName);
+    QDir projDir(QString::fromStdString(dirName));
+    if (!projDir.exists())
+    {
+        if(!projDir.mkpath(QString::fromStdString(dirName)))
+        {
+            ISX_THROW(ExceptionFileIO, "Unable to create project directory: ", dirName, ". Verify you have write permissions to this path.");
+        }        
+    }
+
+    std::string oldPath = getDataPath();
+    std::string prevName = m_fileName;
     m_fileName = inFileName;
+    std::string newPath = getDataPath();
+
+    QDir dataDir(QString::fromStdString(oldPath));
+    if(inMoveData)
+    {
+        /// Move/rename the data path        
+        if(!dataDir.rename(QString::fromStdString(oldPath), QString::fromStdString(newPath)))
+        {
+            m_fileName = prevName;
+            ISX_THROW(ExceptionFileIO, "Unable to create data directory: ", newPath, ". Verify you have write permissions to this path.");
+        }
+        // Remove the old project directory
+        std::string oldDirName = getDirName(prevName);
+        QDir oldProjDir(QString::fromStdString(oldDirName));
+        oldProjDir.rmdir(oldProjDir.absolutePath());
+    }
+    else
+    {
+        // Copy the data to the new location
+        initDataDir();
+        QString src = QString::fromStdString(oldPath) + "/";
+        QString dst = QString::fromStdString(newPath) + "/";
+        for (QString f : dataDir.entryList(QDir::Files)) 
+        {         
+            if(!QFile::copy(src + f, dst + f))
+            {
+                m_fileName = prevName;
+                ISX_THROW(ExceptionFileIO, "Unable to copy data files to: ", newPath);
+            }
+        }
+
+    }  
+
+    // Update the file paths for data files of project items 
+    // NOTE salpert 1/25/2017 Remove this when we implement relative file names in the project
+    if(oldPath != newPath)
+    {
+        for (auto & item : getAllItems())
+        {
+            if (item->getItemType() == ProjectItem::Type::DATASET)
+            {
+                auto dataSet = static_cast<DataSet *>(item);
+                std::string fn = dataSet->getFileName();
+                if(fn.find(oldPath) != std::string::npos)
+                {
+                    fn.replace(0, oldPath.size(), newPath);
+                    dataSet->setFileName(fn);
+                } 
+
+                if(dataSet->hasHistory())
+                {
+                    // Update historical items 
+                    DataSet * prev = (DataSet *) (dataSet->getPrevious());
+                    while(prev)
+                    {
+                        std::string fn = prev->getFileName();
+                        if(fn.find(oldPath) != std::string::npos)
+                        {
+                            fn.replace(0, oldPath.size(), newPath);
+                            prev->setFileName(fn);
+                        }
+                        prev = (DataSet *) (prev->getPrevious());
+                    }
+                }               
+            }
+            else if((item->getItemType() == ProjectItem::Type::SERIES) && (item->hasHistory()))
+            {
+                auto series = static_cast<Series *>(item);
+
+                Series * prev = (Series *) (series->getPrevious());
+                while(prev)
+                {
+                    for(auto & ds : prev->getDataSets())
+                    {
+                        std::string fn = ds->getFileName();
+                        if(fn.find(oldPath) != std::string::npos)
+                        {
+                            fn.replace(0, oldPath.size(), newPath);
+                            ds->setFileName(fn);
+                        }
+                    }
+                    prev = (Series *) (prev->getPrevious());
+                }                
+            }
+        }
+    }
+
+    m_name = isx::getBaseName(m_fileName);
+
 }
 
 bool
@@ -278,6 +449,18 @@ bool
 Project::isModified() const
 {
     return m_root->isModified();
+}
+
+void 
+Project::discard()
+{
+    std::string projPath = isx::getDirName(m_fileName);
+    QDir dir(QString::fromStdString(projPath));
+    if(!dir.removeRecursively())
+    {
+        ISX_LOG_ERROR("Some files could not be removed from: ", projPath);
+    }
+
 }
 
 void

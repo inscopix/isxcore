@@ -121,7 +121,15 @@ makeUniqueFilePath(const std::string & inPath, const isize_t inWidth)
     const std::string extension = getExtension(inPath);
     for (isize_t i = 0; pathExists(outPath) && i < 1000; ++i)
     {
-        outPath = appendNumberToPath(base, i, inWidth) + "." + extension;
+        if(extension.empty())
+        {
+            outPath = appendNumberToPath(base, i, inWidth);
+        }
+        else
+        {
+            outPath = appendNumberToPath(base, i, inWidth) + "." + extension;
+        }
+        
     }
     return outPath;
 }

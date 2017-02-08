@@ -59,6 +59,10 @@ public:
     /// \throw  ExceptionDataIO If the project data cannot be serialized.
     Project(const std::string & inFileName, const std::string & inName);
 
+    /// Destructor
+    ///
+    ~Project();
+
     /// Write the file to disk.
     ///
     void save();
@@ -165,9 +169,13 @@ public:
     ///
     std::string getFileName() const;
 
+    /// \return the path for data files
+    ///
+    std::string getDataPath() const;
+
     /// Sets the file name of this project's file.
     ///
-    void setFileName(const std::string & inFileName);
+    void setFileName(const std::string & inFileName, bool inMoveData);
 
     /// Create a unique path in this project given a requested one.
     ///
@@ -186,6 +194,10 @@ public:
     /// \return whether the file has unsaved changes.
     ///
     bool isModified() const;
+
+    /// Discard the project and delete all data files
+    ///
+    void discard();
 
 private:
 
@@ -228,6 +240,10 @@ private:
     ///
     void setUnmodified();
 
+    /// Initialize data directory
+    ///
+    void initDataDir();
+
     /// \return All items in the project.
     ///
     std::vector<ProjectItem *> getAllItems() const;
@@ -235,6 +251,7 @@ private:
     /// \param  inItem  The item of which to get all child items recursively.
     /// \return         The recursively retrieved child items.
     std::vector<ProjectItem *> getAllItems(const ProjectItem * inItem) const;
+
 };
 
 }

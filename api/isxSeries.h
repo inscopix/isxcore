@@ -64,10 +64,6 @@ public:
     /// \return the historical details
     const HistoricalDetails getHistory() const;
 
-    /// \return the previous historical item
-    ///
-    Series * getPrevious();
-
     /// Set the previous series that gave origin to this one
     /// \param inSeries the previous series
     void setPrevious(const std::shared_ptr<Series> & inSeries);

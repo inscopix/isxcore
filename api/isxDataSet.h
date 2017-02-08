@@ -67,6 +67,10 @@ public:
     ///
     std::string getFileName() const;
 
+    /// Update the filename associated with this dataset
+    /// \param inFileName the new filename
+    void setFileName(const std::string & inFileName);
+
     /// Get the property map
     /// \return the property map
     const Properties & getProperties() const;

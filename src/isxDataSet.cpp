@@ -55,6 +55,13 @@ DataSet::getFileName() const
     return m_fileName;
 }
 
+void 
+DataSet::setFileName(const std::string & inFileName)
+{
+    m_fileName = inFileName;
+    m_modified = true;
+}
+
 const DataSet::Properties &
 DataSet::getProperties() const
 {
