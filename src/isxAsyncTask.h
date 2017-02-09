@@ -23,7 +23,12 @@ public:
     /// \param inTask task to run asynchronously
     /// \param inProgressCB callback function to call with current progress (0.0: not started, 1.0: complete)
     /// \param inFinishedCB callback function to call when task finished
-    AsyncTask(AsyncFunc_t inTask, AsyncProgressCB_t inProgressCB, AsyncFinishedCB_t inFinishedCB);
+    /// \param inThreadForFinishedCB tells which thread to use for invocation of finishedCB.
+    AsyncTask(
+            AsyncFunc_t inTask,
+            AsyncProgressCB_t inProgressCB,
+            AsyncFinishedCB_t inFinishedCB,
+            AsyncTaskThreadForFinishedCB inThreadForFinishedCB);
 
     virtual
     ~AsyncTask() override;
@@ -50,13 +55,14 @@ public:
     getExceptionPtr() const override;
 
 private:
-    bool            m_cancelPending = false;
-    AsyncFunc_t     m_task;
-    AsyncProgressCB_t    m_progressCB;
-    AsyncFinishedCB_t    m_finishedCB;
+    bool                            m_cancelPending = false;
+    AsyncFunc_t                     m_task;
+    AsyncProgressCB_t               m_progressCB;
+    AsyncFinishedCB_t               m_finishedCB;
+    AsyncTaskThreadForFinishedCB    m_threadForFinishedCB = AsyncTaskThreadForFinishedCB::USE_MAIN;
 
-    AsyncTaskStatus m_taskStatus = AsyncTaskStatus::PENDING;
-    std::exception_ptr  m_exception;
+    AsyncTaskStatus                 m_taskStatus = AsyncTaskStatus::PENDING;
+    std::exception_ptr              m_exception;
 };
     
 } // namespace isx
