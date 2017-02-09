@@ -46,7 +46,12 @@ public:
         file.flush();
         file.close();
     }
-
+    
+    const std::string &
+    getLogFileName() const
+    {
+        return m_filename;
+    }
     
 private: 
 
@@ -96,7 +101,6 @@ Logger::instance()
 }
 
 void
-
 Logger::log(const std::string & text)
 {
     if (isInitialized())
@@ -105,8 +109,20 @@ Logger::log(const std::string & text)
         const std::string strNow = now.toString();
         const std::string total = strNow + ": " + text;
 
-        m_pImpl->log(total);
+        instance()->m_pImpl->log(total);
     }
 }
 
+const std::string &
+Logger::getLogFileName()
+{
+    if (isInitialized())
+    {
+        return instance()->m_pImpl->getLogFileName();
+    }
+    
+    static std::string emptyString;
+    return emptyString;
+}
+    
 }

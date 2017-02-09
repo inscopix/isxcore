@@ -94,11 +94,7 @@ void log_(Rest && ...rest)
     std::cout << str;
     std::cout << std::flush;
 #endif
-    Logger * logger = Logger::instance();
-    if(logger)
-    {
-        logger->log(str);
-    }
+    Logger::log(str);
 }
 
 /// Strips the leading directory name from a file name.
