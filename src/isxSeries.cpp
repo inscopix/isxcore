@@ -189,43 +189,50 @@ Series::getHistoricalSeries()
 bool
 Series::checkDataSet(DataSet * inDataSet, std::string & outMessage)
 {
-    if (!checkDataSetType(inDataSet->getType(), outMessage))
+    try
     {
-        return false;
-    }
-
-    if (m_dataSets.empty())
-    {
-        return true;
-    }
-
-    DataSet * refDs = m_dataSets.at(0).get();
-
-    if (!checkDataType(refDs->getDataType(), inDataSet->getDataType(), outMessage))
-    {
-        return false;
-    }
-
-    if (!checkSpacingInfo(refDs->getSpacingInfo(), inDataSet->getSpacingInfo(), outMessage))
-    {
-        return false;
-    }
-
-    const TimingInfo & timingInfo = inDataSet->getTimingInfo();
-    for (size_t i = 0; i < m_dataSets.size(); ++i)
-    {
-        if (i > 0)
-        {
-            refDs = m_dataSets.at(i).get();
-        }
-        if (!checkTimingInfo(refDs->getTimingInfo(), timingInfo, outMessage))
+        if (!checkDataSetType(inDataSet->getType(), outMessage))
         {
             return false;
         }
-    }
 
-    if(!checkHistory(refDs->getHistory(), inDataSet->getHistory(), outMessage))
+        if (m_dataSets.empty())
+        {
+            return true;
+        }
+
+        DataSet * refDs = m_dataSets.at(0).get();
+
+        if (!checkDataType(refDs->getDataType(), inDataSet->getDataType(), outMessage))
+        {
+            return false;
+        }
+
+        if (!checkSpacingInfo(refDs->getSpacingInfo(), inDataSet->getSpacingInfo(), outMessage))
+        {
+            return false;
+        }
+
+        const TimingInfo & timingInfo = inDataSet->getTimingInfo();
+        for (size_t i = 0; i < m_dataSets.size(); ++i)
+        {
+            if (i > 0)
+            {
+                refDs = m_dataSets.at(i).get();
+            }
+            if (!checkTimingInfo(refDs->getTimingInfo(), timingInfo, outMessage))
+            {
+                return false;
+            }
+        }
+
+        if(!checkHistory(refDs->getHistory(), inDataSet->getHistory(), outMessage))
+        {
+            return false;
+        }
+    } catch (isx::Exception & inException)
     {
+        outMessage = inException.what();
         return false;
     }
 
