@@ -169,14 +169,14 @@ std::shared_ptr<Group>
 Group::fromJsonString(const std::string & inString)
 {
     const json jsonObj = json::parse(inString);
-    const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj["itemType"]));
+    const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj.at("itemType")));
     ISX_ASSERT(itemType == ProjectItem::Type::GROUP);
-    const std::string name = jsonObj["name"];
+    const std::string name = jsonObj.at("name");
     auto outGroup = std::make_shared<Group>(name);
-    for (const auto & jsonItem : jsonObj["items"])
+    for (const auto & jsonItem : jsonObj.at("items"))
     {
         std::shared_ptr<ProjectItem> item;
-        const ProjectItem::Type itemType = ProjectItem::Type(isize_t(jsonItem["itemType"]));
+        const ProjectItem::Type itemType = ProjectItem::Type(isize_t(jsonItem.at("itemType")));
         switch (itemType)
         {
             case ProjectItem::Type::GROUP:

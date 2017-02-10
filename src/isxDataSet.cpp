@@ -416,21 +416,21 @@ DataSet::fromJsonString(const std::string & inString)
     }
 
     const json jsonObj = json::parse(inString);    
-    const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj["itemType"]));
+    const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj.at("itemType")));
     ISX_ASSERT(itemType == ProjectItem::Type::DATASET);
-    const std::string name = jsonObj["name"];
-    const DataSet::Type dataSetType = DataSet::Type(size_t(jsonObj["dataSetType"]));
-    const std::string fileName = jsonObj["fileName"];
-    const HistoricalDetails hd = convertJsonToHistory(jsonObj["history"]);
-    const DataSet::Properties properties = convertJsonToProperties(jsonObj["properties"]);
+    const std::string name = jsonObj.at("name");
+    const DataSet::Type dataSetType = DataSet::Type(size_t(jsonObj.at("dataSetType")));
+    const std::string fileName = jsonObj.at("fileName");
+    const HistoricalDetails hd = convertJsonToHistory(jsonObj.at("history"));
+    const DataSet::Properties properties = convertJsonToProperties(jsonObj.at("properties"));
 
     auto outDataSet = std::make_shared<DataSet>(name, dataSetType, fileName, hd, properties);
-    for (auto derivedJson : jsonObj["derived"])
+    for (auto derivedJson : jsonObj.at("derived"))
     {
         auto derived = fromJsonString(derivedJson.dump());
         outDataSet->insertDerivedDataSet(derived);
     }
-    outDataSet->setPrevious(DataSet::fromJsonString(jsonObj["previous"].dump()));
+    outDataSet->setPrevious(DataSet::fromJsonString(jsonObj.at("previous").dump()));
     return outDataSet;
 }
 

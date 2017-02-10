@@ -443,18 +443,18 @@ Series::fromJsonString(const std::string & inString)
     }
 
     const json jsonObj = json::parse(inString);
-    const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj["itemType"]));
+    const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj.at("itemType")));
     ISX_ASSERT(itemType == ProjectItem::Type::SERIES);
-    const std::string name = jsonObj["name"];
+    const std::string name = jsonObj.at("name");
     auto outSeries = std::make_shared<Series>(name);
-    for (const auto & jsonDataSet : jsonObj["dataSets"])
+    for (const auto & jsonDataSet : jsonObj.at("dataSets"))
     {
         std::shared_ptr<DataSet> dataSet = DataSet::fromJsonString(jsonDataSet.dump());
         outSeries->insertDataSet(dataSet);
     }
     if (jsonObj.find("previous") != jsonObj.end())
     {
-        outSeries->setPrevious(Series::fromJsonString(jsonObj["previous"].dump()));
+        outSeries->setPrevious(Series::fromJsonString(jsonObj.at("previous").dump()));
     }
     
     return outSeries;
