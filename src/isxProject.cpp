@@ -167,8 +167,8 @@ Project::findItem(const std::string & inPath) const
             break;
         }
     }
-    
-    if (path == "")
+
+    if (path == "" && ret != nullptr)
     {
         ISX_ASSERT(ret->getPath() == inPath);
     }
