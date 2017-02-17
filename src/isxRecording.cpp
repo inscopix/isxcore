@@ -41,6 +41,11 @@ public:
                     "Unsupported extension.\n");
             }
         }
+        else
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failed to open unexisting movie file for reading: ", m_path);
+        }
     }
 
     /// Destructor

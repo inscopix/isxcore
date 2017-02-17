@@ -12,10 +12,10 @@
 
 namespace isx
 {
-
+template <typename T> class IoTaskTracker;
+    
 /// Forward declare needed because CellSetFile is in src.
 class CellSetFile;
-class IoTaskTracker;
 /// A class for a containing cells extracted from a movie
 ///
 /// Currently all reads/writes happen on calling threads and
@@ -117,8 +117,9 @@ private:
     bool m_valid = false;
 
     /// The cell set file to read/write from/to.
-    std::shared_ptr<CellSetFile> m_file;
-    std::shared_ptr<IoTaskTracker>      m_ioTaskTracker;
+    std::shared_ptr<CellSetFile>                m_file;
+    std::shared_ptr<IoTaskTracker<FTrace_t>>    m_traceIoTaskTracker;
+    std::shared_ptr<IoTaskTracker<Image>>       m_imageIoTaskTracker;
 };
 
 }

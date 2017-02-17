@@ -187,3 +187,66 @@ TEST_CASE("MovieFactoryMosaicMovie", "[core]")
     isx::CoreShutdown();
 }
 
+TEST_CASE("MovieFactoryReadNVokeMovie", "[core]")
+{
+    isx::CoreInitialize();
+
+    SECTION("Read an nVoke XML file")
+    {
+        const std::string fileName = g_resources["unitTestDataPath"] + "/nVoke/recording_20170130_165221.xml";
+
+        const isx::Time start(2017, 1, 30, 16, 52, 21, isx::DurationInSeconds(754, 1000));
+        const isx::DurationInSeconds step(100, 2001);
+        const isx::isize_t numTimes = 3;
+        const isx::TimingInfo timingInfo(start, step, numTimes);
+
+        const isx::SizeInPixels_t numPixels(1440, 1080);
+        const isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
+        const isx::PointInMicrons_t topLeft(0, 0);
+        const isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
+
+        const isx::SpMovie_t movie = isx::readMovie(fileName);
+
+        REQUIRE(movie->getTimingInfo() == timingInfo);
+        REQUIRE(movie->getSpacingInfo() == spacingInfo);
+
+        isx::SpVideoFrame_t firstFrame = movie->getFrame(0);
+        uint16_t * firstFrameArray = firstFrame->getPixelsAsU16();
+        REQUIRE(firstFrameArray[0] == 178);
+
+        isx::SpVideoFrame_t lastFrame = movie->getFrame(numTimes - 1);
+        uint16_t * lastFrameArray = lastFrame->getPixelsAsU16();
+        REQUIRE(lastFrameArray[0] == 179);
+    }
+
+    SECTION("Read a downsampled nVoke XML file")
+    {
+        const std::string fileName = g_resources["unitTestDataPath"] + "/nVoke/recording_20170130_165321.xml";
+
+        const isx::Time start(2017, 1, 30, 16, 53, 21, isx::DurationInSeconds(95, 1000));
+        const isx::DurationInSeconds step(100, 2001);
+        const isx::isize_t numTimes = 4;
+        const isx::TimingInfo timingInfo(start, step, numTimes);
+
+        const isx::SizeInPixels_t numPixels(720, 540);
+        const isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE * 2, isx::DEFAULT_PIXEL_SIZE * 2);
+        const isx::PointInMicrons_t topLeft(0, 0);
+        const isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
+
+        const isx::SpMovie_t movie = isx::readMovie(fileName);
+
+        REQUIRE(movie->getTimingInfo() == timingInfo);
+        REQUIRE(movie->getSpacingInfo() == spacingInfo);
+
+        isx::SpVideoFrame_t firstFrame = movie->getFrame(0);
+        uint16_t * firstFrameArray = firstFrame->getPixelsAsU16();
+        REQUIRE(firstFrameArray[0] == 181);
+
+        isx::SpVideoFrame_t lastFrame = movie->getFrame(numTimes - 1);
+        uint16_t * lastFrameArray = lastFrame->getPixelsAsU16();
+        REQUIRE(lastFrameArray[0] == 183);
+    }
+
+
+    isx::CoreShutdown();
+}

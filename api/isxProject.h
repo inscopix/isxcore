@@ -59,6 +59,10 @@ public:
     /// \throw  ExceptionDataIO If the project data cannot be serialized.
     Project(const std::string & inFileName, const std::string & inName);
 
+    /// Destructor
+    ///
+    ~Project();
+
     /// Write the file to disk.
     ///
     void save();
@@ -70,13 +74,25 @@ public:
     ///
     /// \throw  ExceptionDataIO If the item does not exist.
     ProjectItem * getItem(const std::string & inPath) const;
-
+    
+    /// This method exists because resolving an item's path and locating it
+    /// in the project tree must be done by searching two different subtrees
+    /// at each branch point (level in project tree).
+    /// This method tries to locate the item by searching
+    /// in the following order (at each branch point)
+    /// 1 - look at "previous" item to see if it matches
+    /// 2 - if current item is a dataset, search derived datasets
+    /// 3 - if current item is a series, search members of the series
+    /// \param inPath   The project path of the item to find.
+    /// \return         The item if it was found, nullptr if not.
+    ProjectItem * findItem(const std::string & inPath) const;
+    
     /// Remove an item by its project path.
     ///
     /// \param  inPath  The path of the item to remove.
     ///
     /// \throw  ExceptionDataIO If the item does not exist.
-    void removeItem(const std::string & inPath) const;
+    std::shared_ptr<ProjectItem> removeItem(const std::string & inPath) const;
 
     /// Move an item into a new destination/parent item.
     ///
@@ -102,6 +118,7 @@ public:
     /// \param  inPath      The path of the data set to create.
     /// \param  inType      The type of the data set to create.
     /// \param  inFileName  The file name of the data set to create.
+    /// \param  inHistory   The historical details for the dataset
     /// \param  inProperties The property map for the data set to create.
     /// \return             The data set created.
     ///
@@ -114,6 +131,7 @@ public:
             const std::string & inPath,
             const DataSet::Type inType,
             const std::string & inFileName,
+            const HistoricalDetails & inHistory,
             const DataSet::Properties & inProperties = DataSet::Properties());
 
     /// Create a series by its project path.
@@ -151,9 +169,17 @@ public:
     ///
     std::string getFileName() const;
 
+    /// \return the path for data files
+    ///
+    std::string getDataPath() const;
+
+    /// \return the path for the project file
+    ///
+    std::string getProjectPath() const;
+
     /// Sets the file name of this project's file.
     ///
-    void setFileName(const std::string & inFileName);
+    void setFileName(const std::string & inFileName, bool inMoveData);
 
     /// Create a unique path in this project given a requested one.
     ///
@@ -172,6 +198,10 @@ public:
     /// \return whether the file has unsaved changes.
     ///
     bool isModified() const;
+
+    /// Discard the project and delete all data files
+    ///
+    void discard();
 
 private:
 
@@ -214,6 +244,10 @@ private:
     ///
     void setUnmodified();
 
+    /// Initialize data directory
+    ///
+    void initDataDir();
+
     /// \return All items in the project.
     ///
     std::vector<ProjectItem *> getAllItems() const;
@@ -221,6 +255,7 @@ private:
     /// \param  inItem  The item of which to get all child items recursively.
     /// \return         The recursively retrieved child items.
     std::vector<ProjectItem *> getAllItems(const ProjectItem * inItem) const;
+
 };
 
 }

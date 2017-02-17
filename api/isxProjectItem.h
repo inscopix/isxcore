@@ -43,6 +43,15 @@ public:
     ///
     virtual void setName(const std::string & inName) = 0;
 
+
+    /// \return The non-historical descendant of an item
+    /// 
+    virtual ProjectItem * getMostRecent() const = 0;
+
+    /// \return The previous item (this items's ancestor)
+    ///
+    virtual ProjectItem * getPrevious() const = 0;
+    
     /// \return The parent of this item.
     ///
     virtual ProjectItem * getParent() const = 0;
@@ -94,14 +103,28 @@ public:
     virtual void setUnmodified() = 0;
 
     /// \param  inPretty    If true make the serialization pretty, ugly otherwise.
+    /// \param  inPathToOmit the path from filenames to omit for serialization (to obtain relative paths)
     /// \return             The serialized JSON string of the item.
-    virtual std::string toJsonString(const bool inPretty = false) const = 0;
+    virtual std::string toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string()) const = 0;
 
     /// Exact comparison.
     ///
     /// \param  inOther     The items with which to compare.
     /// \return             True if the items are exactly equal.
     virtual bool operator==(const ProjectItem & inOther) const = 0;
+
+    /// Return whether the item has history
+    /// \return true if there are ancestors items, false otherwise
+    virtual bool hasHistory() const = 0;
+
+    /// \return the number of historical data sets
+    virtual isize_t getNumHistoricalItems() const = 0;
+
+    /// \return whether this is an historical item or not
+    virtual bool isHistorical() const = 0;
+
+    /// \return a JSON-formatted string containing the Historical Details 
+    virtual std::string getHistoricalDetails() const = 0;
 
     /// Get a child of this item by name.
     ///

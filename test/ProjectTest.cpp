@@ -49,7 +49,8 @@ TEST_CASE("Project-Project", "[core]")
     SECTION("Open an existing project after creating a data set.")
     {
         isx::Project project(projectFileName, projectName);
-        const isx::DataSet * expected = project.createDataSet("/movie", isx::DataSet::Type::MOVIE, "movie.isxd");
+        isx::HistoricalDetails hd("mainTest", "");
+        const isx::DataSet * expected = project.createDataSet("/movie", isx::DataSet::Type::MOVIE, "movie.isxd", hd);
         project.save();
 
         isx::Project readProject(projectFileName);
@@ -84,13 +85,15 @@ TEST_CASE("Project-createDataSet", "[core]")
 
     SECTION("Create a movie data set in a project")
     {
-        isx::DataSet * dataSet = project.createDataSet("/myDataSet", isx::DataSet::Type::MOVIE, movie1File);
+        isx::HistoricalDetails hd1("movie1", "");
+        isx::DataSet * dataSet = project.createDataSet("/myDataSet", isx::DataSet::Type::MOVIE, movie1File, hd1);
 
         REQUIRE(dataSet->getParent() == project.getRootGroup());
         REQUIRE(dataSet->getName() == "myDataSet");
         REQUIRE(dataSet->getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(dataSet->getPath() == "/myDataSet");
         REQUIRE(dataSet->getFileName() == isx::getAbsolutePath(movie1File));
+        REQUIRE(dataSet->getHistory() == hd1);
         REQUIRE(project.getItem("/myDataSet") == dataSet);
     }
 
@@ -98,12 +101,13 @@ TEST_CASE("Project-createDataSet", "[core]")
     {
         isx::Series * series = project.createSeries("/series");
 
-        const isx::DataSet * movie1 = project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+        const isx::DataSet * movie1 = project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
 
         REQUIRE(movie1->getParent() == series);
         REQUIRE(movie1->getName() == "movie1");
         REQUIRE(movie1->getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(movie1->getFileName() == isx::getAbsolutePath(movie1File));
+        REQUIRE(movie1->getHistory() == isx::HistoricalDetails());
         REQUIRE(movie1->getPath() == "/series/movie1");
     }
 
@@ -111,19 +115,21 @@ TEST_CASE("Project-createDataSet", "[core]")
     {
         isx::Series * series = project.createSeries("/series");
 
-        const isx::DataSet * movie1 = project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
-        const isx::DataSet * movie2 = project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File);
+        const isx::DataSet * movie1 = project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
+        const isx::DataSet * movie2 = project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File, isx::HistoricalDetails());
 
         REQUIRE(movie1->getParent() == series);
         REQUIRE(movie1->getName() == "movie1");
         REQUIRE(movie1->getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(movie1->getFileName() == isx::getAbsolutePath(movie1File));
+        REQUIRE(movie1->getHistory() == isx::HistoricalDetails());
         REQUIRE(movie1->getPath() == "/series/movie1");
 
         REQUIRE(movie2->getParent() == series);
         REQUIRE(movie2->getName() == "movie2");
         REQUIRE(movie2->getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(movie2->getFileName() == isx::getAbsolutePath(movie2File));
+        REQUIRE(movie2->getHistory() == isx::HistoricalDetails());
         REQUIRE(movie2->getPath() == "/series/movie2");
     }
 
@@ -131,8 +137,8 @@ TEST_CASE("Project-createDataSet", "[core]")
     {
         isx::Series * series = project.createSeries("/series");
 
-        const isx::DataSet * movie2 = project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File);
-        const isx::DataSet * movie1 = project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+        const isx::DataSet * movie2 = project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File, isx::HistoricalDetails());
+        const isx::DataSet * movie1 = project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
 
         const std::vector<isx::ProjectItem *> children = series->getChildren();
         REQUIRE(*static_cast<isx::DataSet *>(children.at(0)) == *movie1);
@@ -143,10 +149,10 @@ TEST_CASE("Project-createDataSet", "[core]")
     {
         isx::Series * series = project.createSeries("/series");
 
-        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
 
         ISX_REQUIRE_EXCEPTION(
-                project.createDataSet("/series/movie2Cropped", isx::DataSet::Type::MOVIE, movie2CroppedFile),
+                project.createDataSet("/series/movie2Cropped", isx::DataSet::Type::MOVIE, movie2CroppedFile, isx::HistoricalDetails()),
                 isx::ExceptionSeries,
                 "The spacing info is different than that of the reference.");
     }
@@ -155,10 +161,10 @@ TEST_CASE("Project-createDataSet", "[core]")
     {
         isx::Series * series = project.createSeries("/series");
 
-        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
 
         ISX_REQUIRE_EXCEPTION(
-                project.createDataSet("/series/movie2Step2", isx::DataSet::Type::MOVIE, movie2Step2File),
+                project.createDataSet("/series/movie2Step2", isx::DataSet::Type::MOVIE, movie2Step2File, isx::HistoricalDetails()),
                 isx::ExceptionSeries,
                 "The timing info has a different frame rate than the reference.");
     }
@@ -167,10 +173,10 @@ TEST_CASE("Project-createDataSet", "[core]")
     {
         isx::Series * series = project.createSeries("/series");
 
-        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
 
         ISX_REQUIRE_EXCEPTION(
-                project.createDataSet("/series/movie1Overlap", isx::DataSet::Type::MOVIE, movie1OverlapFile),
+                project.createDataSet("/series/movie1Overlap", isx::DataSet::Type::MOVIE, movie1OverlapFile, isx::HistoricalDetails()),
                 isx::ExceptionSeries,
                 "The timing info temporally overlaps with the reference.");
     }
@@ -180,7 +186,7 @@ TEST_CASE("Project-createDataSet", "[core]")
         isx::Series * series = project.createSeries("/series");
 
         ISX_REQUIRE_EXCEPTION(
-                project.createDataSet("/series/behavior", isx::DataSet::Type::BEHAVIOR, "behavior.mpg"),
+                project.createDataSet("/series/behavior", isx::DataSet::Type::BEHAVIOR, "behavior.mpg", isx::HistoricalDetails()),
                 isx::ExceptionSeries,
                 "A series can only contain nVista movies.");
     }
@@ -189,10 +195,10 @@ TEST_CASE("Project-createDataSet", "[core]")
     {
         isx::Series * series = project.createSeries("/series");
 
-        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
+        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
 
         ISX_REQUIRE_EXCEPTION(
-                project.createDataSet("/series/movie2F32", isx::DataSet::Type::MOVIE, movie2F32File),
+                project.createDataSet("/series/movie2F32", isx::DataSet::Type::MOVIE, movie2F32File, isx::HistoricalDetails()),
                 isx::ExceptionSeries,
                 "The data type is different than that of the reference.");
     }
@@ -203,13 +209,14 @@ TEST_CASE("Project-removeItem", "[core]")
 {
     const std::string projectFileName = g_resources["unitTestDataPath"] + "/project.isxp";
     std::remove(projectFileName.c_str());
-    const std::string projectName = "myProject";
+    const std::string projectName = "myProject";    
 
     isx::Project project(projectFileName, projectName);
 
     SECTION("Remove a movie data set in an otherwise empty project")
     {
-        project.createDataSet("/movie", isx::DataSet::Type::MOVIE, "movie.isxd");
+        isx::HistoricalDetails hd1("movie1", "");
+        project.createDataSet("/movie", isx::DataSet::Type::MOVIE, "movie.isxd", hd1);
 
         project.removeItem("/movie");
 
@@ -245,6 +252,8 @@ TEST_CASE("Project-moveItem", "[core]")
         movie1OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File;
     createSeriesTestData(movie1File, movie2File, movie3File,
             movie1OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File);
+
+    isx::HistoricalDetails hd1("movie1", "");
 
     SECTION("Identity move of a series")
     {
@@ -284,7 +293,7 @@ TEST_CASE("Project-moveItem", "[core]")
 
     SECTION("Move a data set into an empty series")
     {
-        project.createDataSet("/movie_1", isx::DataSet::Type::MOVIE, movie1File);
+        project.createDataSet("/movie_1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
         project.createSeries("/series");
 
         project.moveItem("/movie_1", "/series");
@@ -302,8 +311,8 @@ TEST_CASE("Project-moveItem", "[core]")
     {
         project.createSeries("/series");
 
-        project.createDataSet("/series/movie_1", isx::DataSet::Type::MOVIE, movie1File);
-        project.createDataSet("/movie_2", isx::DataSet::Type::MOVIE, movie2File);
+        project.createDataSet("/series/movie_1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
+        project.createDataSet("/movie_2", isx::DataSet::Type::MOVIE, movie2File, isx::HistoricalDetails());
 
         project.moveItem("/movie_2", "/series");
 
@@ -326,8 +335,8 @@ TEST_CASE("Project-moveItem", "[core]")
     {
         project.createSeries("/series");
 
-        project.createDataSet("/movie_1", isx::DataSet::Type::MOVIE, movie1File);
-        project.createDataSet("/series/movie_2", isx::DataSet::Type::MOVIE, movie2File);
+        project.createDataSet("/movie_1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
+        project.createDataSet("/series/movie_2", isx::DataSet::Type::MOVIE, movie2File, isx::HistoricalDetails());
 
         project.moveItem("/movie_1", "/series");
 
@@ -350,8 +359,8 @@ TEST_CASE("Project-moveItem", "[core]")
     {
         project.createSeries("/series");
 
-        const isx::DataSet * movie1 = project.createDataSet("/movie_1", isx::DataSet::Type::MOVIE, movie1File);
-        project.createDataSet("/series/movie_2", isx::DataSet::Type::MOVIE, movie2Step2File);
+        const isx::DataSet * movie1 = project.createDataSet("/movie_1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
+        project.createDataSet("/series/movie_2", isx::DataSet::Type::MOVIE, movie2Step2File, isx::HistoricalDetails());
 
         ISX_REQUIRE_EXCEPTION(
                 project.moveItem("/movie_1", "/series"),
@@ -394,8 +403,8 @@ TEST_CASE("Project-flattenSeries", "[core]")
     SECTION("Flatten a project with only one series")
     {
         project.createSeries("/series");
-        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
-        project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File);
+        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
+        project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File, isx::HistoricalDetails());
 
         project.flattenSeries("/series");
 
@@ -411,11 +420,11 @@ TEST_CASE("Project-flattenSeries", "[core]")
 
     SECTION("Flatten a project with one series in a data set sandwich")
     {
-        isx::DataSet * movie0 = project.createDataSet("/movie0", isx::DataSet::Type::MOVIE, "movie0.isxd");
+        isx::DataSet * movie0 = project.createDataSet("/movie0", isx::DataSet::Type::MOVIE, "movie0.isxd", isx::HistoricalDetails());
         project.createSeries("/series");
-        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File);
-        project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File);
-        isx::DataSet * behavior = project.createDataSet("/behavior", isx::DataSet::Type::BEHAVIOR, "behavior.mpg");
+        project.createDataSet("/series/movie1", isx::DataSet::Type::MOVIE, movie1File, isx::HistoricalDetails());
+        project.createDataSet("/series/movie2", isx::DataSet::Type::MOVIE, movie2File, isx::HistoricalDetails());
+        isx::DataSet * behavior = project.createDataSet("/behavior", isx::DataSet::Type::BEHAVIOR, "behavior.mpg", isx::HistoricalDetails());
 
         project.flattenSeries("/series");
 
@@ -479,16 +488,17 @@ TEST_CASE("MOS-444", "[core]")
     std::remove(projectFileName.c_str());
     const std::string projectName = "myProject";
     const std::string movieFileName = g_resources["unitTestDataPath"] + "/recording_20160426_145041.xml";
+    isx::HistoricalDetails hd1("movie1", "");
 
     SECTION("Create a data set, move it into a group, then create it again")
     {
         isx::Project project(projectFileName, projectName);
-        project.createDataSet("/movie", isx::DataSet::Type::MOVIE, movieFileName);
+        project.createDataSet("/movie", isx::DataSet::Type::MOVIE, movieFileName, isx::HistoricalDetails());
         project.createSeries("/series");
         project.moveItem("/movie", "/series");
 
         ISX_REQUIRE_EXCEPTION(
-                project.createDataSet("/movie", isx::DataSet::Type::MOVIE, movieFileName),
+                project.createDataSet("/movie", isx::DataSet::Type::MOVIE, movieFileName, isx::HistoricalDetails()),
                 isx::ExceptionFileIO,
                 "There is already a data set with the file name: " + isx::getAbsolutePath(movieFileName));
 

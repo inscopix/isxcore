@@ -30,7 +30,7 @@ TEST_CASE("AsyncTaskHandle", "[core]") {
                 taskRanUpToException = true;
                 ISX_THROW(isx::Exception, "Expected: exception on worker.");
                 return isx::AsyncTaskStatus::COMPLETE;
-            }, progressCB, finishedCB);
+            }, progressCB, finishedCB, isx::AsyncTaskThreadForFinishedCB::USE_MAIN);
 
         asyncTask->schedule();
         

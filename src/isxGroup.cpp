@@ -51,6 +51,18 @@ Group::setName(const std::string & inName)
     m_modified = true;
 }
 
+ProjectItem * 
+Group::getMostRecent() const 
+{
+    return nullptr;
+}
+
+ProjectItem *
+Group::getPrevious() const
+{
+    return nullptr;
+}
+
 ProjectItem *
 Group::getParent() const
 {
@@ -136,7 +148,7 @@ Group::setUnmodified()
 }
 
 std::string
-Group::toJsonString(const bool inPretty) const
+Group::toJsonString(const bool inPretty, const std::string & inPathToOmit) const
 {
     json jsonObj;
     jsonObj["itemType"] = size_t(getItemType());
@@ -144,7 +156,7 @@ Group::toJsonString(const bool inPretty) const
     jsonObj["items"] = json::array();
     for (const auto & item : m_items)
     {
-        jsonObj["items"].push_back(json::parse(item->toJsonString()));
+        jsonObj["items"].push_back(json::parse(item->toJsonString(inPretty, inPathToOmit)));
     }
     if (inPretty)
     {
@@ -154,32 +166,32 @@ Group::toJsonString(const bool inPretty) const
 }
 
 std::shared_ptr<Group>
-Group::fromJsonString(const std::string & inString)
+Group::fromJsonString(const std::string & inString, const std::string & inAbsolutePathToPrepend)
 {
     const json jsonObj = json::parse(inString);
-    const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj["itemType"]));
+    const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj.at("itemType")));
     ISX_ASSERT(itemType == ProjectItem::Type::GROUP);
-    const std::string name = jsonObj["name"];
+    const std::string name = jsonObj.at("name");
     auto outGroup = std::make_shared<Group>(name);
-    for (const auto & jsonItem : jsonObj["items"])
+    for (const auto & jsonItem : jsonObj.at("items"))
     {
         std::shared_ptr<ProjectItem> item;
-        const ProjectItem::Type itemType = ProjectItem::Type(isize_t(jsonItem["itemType"]));
+        const ProjectItem::Type itemType = ProjectItem::Type(isize_t(jsonItem.at("itemType")));
         switch (itemType)
         {
             case ProjectItem::Type::GROUP:
             {
-                item = Group::fromJsonString(jsonItem.dump());
+                item = Group::fromJsonString(jsonItem.dump(), inAbsolutePathToPrepend);
                 break;
             }
             case ProjectItem::Type::SERIES:
             {
-                item = Series::fromJsonString(jsonItem.dump());
+                item = Series::fromJsonString(jsonItem.dump(), inAbsolutePathToPrepend);
                 break;
             }
             case ProjectItem::Type::DATASET:
             {
-                item = DataSet::fromJsonString(jsonItem.dump());
+                item = DataSet::fromJsonString(jsonItem.dump(), inAbsolutePathToPrepend);
                 break;
             }
             default:
@@ -208,6 +220,29 @@ Group::operator ==(const ProjectItem & other) const
         equal &= *m_items.at(i) == *otherGroup->m_items.at(i);
     }
     return equal;
+}
+bool 
+Group::hasHistory() const 
+{
+    return false;
+}
+
+isize_t 
+Group::getNumHistoricalItems() const
+{
+    return 0;
+}
+
+bool 
+Group::isHistorical() const
+{
+    return false;
+}
+
+std::string 
+Group::getHistoricalDetails() const
+{
+    return std::string();
 }
 
 } // namespace isx

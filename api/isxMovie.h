@@ -7,14 +7,14 @@
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
 #include "isxVideoFrame.h"
+#include "isxAsyncTaskResult.h"
 
 namespace isx
 {
 
 /// The type of callback for getting a frame asynchronously
-typedef std::function<void(const SpVideoFrame_t & inVideoFrame)> MovieGetFrameCB_t;
-typedef std::function<SpVideoFrame_t()> GetFrameCB_t;
-
+using MovieGetFrameCB_t = std::function<void(AsyncTaskResult<SpVideoFrame_t>)>;
+using GetFrameCB_t = std::function<SpVideoFrame_t()>;
 
 /// Interface for Movies
 ///

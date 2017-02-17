@@ -35,6 +35,9 @@ json convertPointInMicronsToJson(const PointInMicrons_t & inPointInMicrons);
 json convertSpacingInfoToJson(const SpacingInfo & inSpacingInfo);
 SpacingInfo convertJsonToSpacingInfo(const json & j);
 
+json convertHistoryToJson(const HistoricalDetails & inHistory);
+HistoricalDetails convertJsonToHistory(const json & j);
+
 json convertPropertiesToJson(const DataSet::Properties & inProperties);
 DataSet::Properties convertJsonToProperties(const json & j);
 

@@ -38,14 +38,18 @@ TEST_CASE("Series-insertDataSet", "[core]")
     createSeriesTestData(movie1File, movie2File, movie3File,
             movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File);
 
-    auto movie1 = std::make_shared<isx::DataSet>("movie1", isx::DataSet::Type::MOVIE, movie1File);
-    auto movie2 = std::make_shared<isx::DataSet>("movie2", isx::DataSet::Type::MOVIE, movie2File);
-    auto movie3 = std::make_shared<isx::DataSet>("movie3", isx::DataSet::Type::MOVIE, movie3File);
-    auto movie2Overlap = std::make_shared<isx::DataSet>("movie2Overlap", isx::DataSet::Type::MOVIE, movie2OverlapFile);
-    auto movie2Step2 = std::make_shared<isx::DataSet>("movie2Step2", isx::DataSet::Type::MOVIE, movie2Step2File);
-    auto movie2Cropped = std::make_shared<isx::DataSet>("movie2Cropped", isx::DataSet::Type::MOVIE, movie2CroppedFile);
-    auto movie2F32 = std::make_shared<isx::DataSet>("movie2F32", isx::DataSet::Type::MOVIE, movie2F32File);
-    auto behavMovie = std::make_shared<isx::DataSet>("behavior", isx::DataSet::Type::BEHAVIOR, "behavior.mpg");
+    isx::HistoricalDetails hd;
+    isx::HistoricalDetails hdPreprocessed("Preprocessing", "");
+
+    auto movie1 = std::make_shared<isx::DataSet>("movie1", isx::DataSet::Type::MOVIE, movie1File, hd);
+    auto movie2 = std::make_shared<isx::DataSet>("movie2", isx::DataSet::Type::MOVIE, movie2File, hd);
+    auto movie3 = std::make_shared<isx::DataSet>("movie3", isx::DataSet::Type::MOVIE, movie3File, hd);
+    auto movie2Overlap = std::make_shared<isx::DataSet>("movie2Overlap", isx::DataSet::Type::MOVIE, movie2OverlapFile, hd);
+    auto movie2Step2 = std::make_shared<isx::DataSet>("movie2Step2", isx::DataSet::Type::MOVIE, movie2Step2File, hd);
+    auto movie2Cropped = std::make_shared<isx::DataSet>("movie2Cropped", isx::DataSet::Type::MOVIE, movie2CroppedFile, hd);
+    auto movie2F32 = std::make_shared<isx::DataSet>("movie2F32", isx::DataSet::Type::MOVIE, movie2F32File, hd);
+    auto behavMovie = std::make_shared<isx::DataSet>("behavior", isx::DataSet::Type::BEHAVIOR, "behavior.mpg", hd);
+    auto movie2Preprocessed = std::make_shared<isx::DataSet>("movie2Preprocessed", isx::DataSet::Type::MOVIE, movie2File, hdPreprocessed);
 
     SECTION("Insert one data set")
     {
@@ -138,6 +142,15 @@ TEST_CASE("Series-insertDataSet", "[core]")
                 "A series can only contain nVista movies.");
     }
 
+    SECTION("Try to insert a movie with different history")
+    {
+        series.insertDataSet(movie1);
+
+        ISX_REQUIRE_EXCEPTION(
+                series.insertDataSet(movie2Preprocessed),
+                isx::ExceptionSeries,
+                "The history details are different than those of the reference.");
+    }
 }
 
 TEST_CASE("Series-removeDataSet", "[core]")
@@ -149,9 +162,11 @@ TEST_CASE("Series-removeDataSet", "[core]")
     createSeriesTestData(movie1File, movie2File, movie3File,
             movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File);
 
-    auto movie1 = std::make_shared<isx::DataSet>("movie1", isx::DataSet::Type::MOVIE, movie1File);
-    auto movie2 = std::make_shared<isx::DataSet>("movie2", isx::DataSet::Type::MOVIE, movie2File);
-    auto movie3 = std::make_shared<isx::DataSet>("movie3", isx::DataSet::Type::MOVIE, movie3File);
+    isx::HistoricalDetails hd;
+
+    auto movie1 = std::make_shared<isx::DataSet>("movie1", isx::DataSet::Type::MOVIE, movie1File, hd);
+    auto movie2 = std::make_shared<isx::DataSet>("movie2", isx::DataSet::Type::MOVIE, movie2File, hd);
+    auto movie3 = std::make_shared<isx::DataSet>("movie3", isx::DataSet::Type::MOVIE, movie3File, hd);
 
     series.insertDataSet(movie1);
     series.insertDataSet(movie2);
@@ -204,8 +219,9 @@ TEST_CASE("Series-toFromJsonString", "[core]")
     createSeriesTestData(movie1File, movie2File, movie3File,
             movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File);
 
-    auto movie1 = std::make_shared<isx::DataSet>("movie1", isx::DataSet::Type::MOVIE, movie1File);
-    auto movie2 = std::make_shared<isx::DataSet>("movie2", isx::DataSet::Type::MOVIE, movie2File);
+    isx::HistoricalDetails hd;
+    auto movie1 = std::make_shared<isx::DataSet>("movie1", isx::DataSet::Type::MOVIE, movie1File, hd);
+    auto movie2 = std::make_shared<isx::DataSet>("movie2", isx::DataSet::Type::MOVIE, movie2File, hd);
 
     SECTION("An empty series")
     {

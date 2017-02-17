@@ -155,7 +155,8 @@ namespace isx
 
         std::weak_ptr<CellSet> weakThis = shared_from_this();
 
-        SpFTrace_t trace = std::make_shared<FTrace_t>(timingInfoGapless);        
+        AsyncTaskResult<SpFTrace_t> asyncTaskResult;
+        asyncTaskResult.setValue(std::make_shared<FTrace_t>(timingInfoGapless));
 
         isize_t counter = 0;
         bool isLast = false;
@@ -165,8 +166,8 @@ namespace isx
         {
             isLast = (counter == (m_cellSets.size() - 1));
 
-
-            CellSetGetTraceCB_t finishedCB = [weakThis, &trace, offset, isLast, inCallback] (const SpFTrace_t & inTrace)
+            CellSetGetTraceCB_t finishedCB =
+                [weakThis, &asyncTaskResult, offset, isLast, inCallback] (AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
             {
                 auto sharedThis = weakThis.lock();
                 if (!sharedThis)
@@ -174,15 +175,28 @@ namespace isx
                     return;
                 }
 
-                isize_t numTimes = inTrace->getTimingInfo().getNumTimes();
-                isize_t numBytes = numTimes * sizeof(float);
-                float * vals = trace->getValues();
-                vals += offset;
-                memcpy((char *)vals, (char *)inTrace->getValues(), numBytes);
-
-                if(isLast)
+                if (inAsyncTaskResult.getException())
                 {
-                    inCallback(trace);
+                    asyncTaskResult.setException(inAsyncTaskResult.getException());
+                }
+                else
+                {
+                    // only continue copying if previous segments didn't throw
+                    if (!asyncTaskResult.getException())
+                    {
+                        auto traceSegment = inAsyncTaskResult.get();
+                        auto traceSeries = asyncTaskResult.get();
+                        isize_t numTimes = traceSegment->getTimingInfo().getNumTimes();
+                        isize_t numBytes = numTimes * sizeof(float);
+                        float * vals = traceSeries->getValues();
+                        vals += offset;
+                        memcpy((char *)vals, (char *)traceSegment->getValues(), numBytes);
+                    }
+                }
+
+                if (isLast)
+                {
+                    inCallback(asyncTaskResult);
                 }
             };
 

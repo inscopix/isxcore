@@ -4,6 +4,7 @@
 #include "isxJsonUtils.h"
 #include "isxMovieFactory.h"
 #include "isxCellSetFactory.h"
+#include "isxPathUtils.h"
 
 #include <fstream>
 #include "json.hpp"
@@ -30,6 +31,7 @@ DataSet::DataSet(
         const std::string & inName,
         Type inType,
         const std::string & inFileName,
+        const HistoricalDetails & inHistory,
         const Properties & inProperties)
     : m_valid(true)
     , m_modified(false)
@@ -37,6 +39,7 @@ DataSet::DataSet(
     , m_type(inType)
     , m_fileName(inFileName)
     , m_parent(nullptr)
+    , m_history(inHistory)
     , m_properties(inProperties)
 {
 }
@@ -53,10 +56,23 @@ DataSet::getFileName() const
     return m_fileName;
 }
 
+void 
+DataSet::setFileName(const std::string & inFileName)
+{
+    m_fileName = inFileName;
+    m_modified = true;
+}
+
 const DataSet::Properties &
 DataSet::getProperties() const
 {
     return m_properties;
+}
+
+const HistoricalDetails & 
+DataSet::getHistory() const
+{
+    return m_history;
 }
 
 void
@@ -122,6 +138,11 @@ DataSet::insertDerivedDataSet(std::shared_ptr<DataSet> & inDataSet)
     m_modified = true;
 }
 
+isize_t DataSet::getNumDerivedDataSets() const
+{
+    return m_derived.size();
+}
+
 std::vector<DataSet *>
 DataSet::getDerivedDataSets() const
 {
@@ -148,6 +169,23 @@ DataSet::removeDerivedDataSet(const std::string & inName)
         }
     }
     ISX_THROW(ExceptionDataIO, "Could not find derived data set with name: ", inName);
+}
+
+void 
+DataSet::setPrevious(const std::shared_ptr<DataSet> & inDataSet)
+{
+    if (inDataSet)
+    {
+        inDataSet->setHistorical();
+        inDataSet->setParent(this);
+    }
+    m_previous = inDataSet;
+}
+
+ProjectItem *
+DataSet::getPrevious() const
+{
+    return m_previous.get();
 }
 
 DataSet::Type
@@ -212,6 +250,7 @@ DataSet::fromJsonString(
                     dataSet->getName(),
                     dataSet->getType(),
                     dataSet->getFileName(),
+                    dataSet->getHistory(),
                     dataSet->getProperties()
         ));
 
@@ -224,6 +263,7 @@ DataSet::fromJsonString(
                     derived->getName(),
                     derived->getType(),
                     derived->getFileName(),
+                    derived->getHistory(),
                     derived->getProperties()
             ));
         }
@@ -255,6 +295,24 @@ DataSet::setName(const std::string & inName)
     m_modified = true;
 }
 
+ProjectItem * 
+DataSet::getMostRecent() const 
+{
+    ProjectItem * descendant = getParent();
+    if(descendant)
+    {
+        while(descendant->isHistorical())
+        {
+            descendant = descendant->getParent();
+            if(!descendant)
+            {
+                break;
+            }
+        }
+    }
+    return descendant;
+}
+
 ProjectItem *
 DataSet::getParent() const
 {
@@ -265,7 +323,7 @@ void
 DataSet::setParent(ProjectItem * inParent)
 {
     m_parent = inParent;
-    m_modified = true;
+    m_modified = true;    
 }
 
 std::vector<ProjectItem *>
@@ -317,24 +375,39 @@ DataSet::setUnmodified()
 }
 
 std::string
-DataSet::toJsonString(const bool inPretty) const
+DataSet::toJsonString(const bool inPretty, const std::string & inPathToOmit) const
 {
     json outJson;
     outJson["itemType"] = size_t(ProjectItem::Type::DATASET);
     outJson["name"] = m_name;
     outJson["dataSetType"] = isize_t(m_type);
-    // TODO sweet : when a dataset in a project is serialized, we should
-    // store the relative path to the project file name, so that if that
-    // sub-tree gets moved, then the paths are still accurate.
-    // For any file names that are above the project file, we should store
-    // absolute paths.
-    outJson["fileName"] = m_fileName;
+
+    std::string fileName = m_fileName;
+    if(!inPathToOmit.empty())
+    {
+        std::string::size_type p = m_fileName.find(inPathToOmit, 0);
+        if(p != std::string::npos)
+        {
+            ISX_ASSERT(p == 0);
+            fileName = m_fileName.substr(p + inPathToOmit.size() + 1); 
+        }
+    }
+
+    outJson["fileName"] = fileName;
+    outJson["history"] = convertHistoryToJson(m_history);
     outJson["properties"] = convertPropertiesToJson(m_properties);
-    outJson["derived"] = json::array();
+    outJson["derived"] = json::array();    
     for (const auto & derived : m_derived)
     {
-        outJson["derived"].push_back(json::parse(derived->toJsonString()));
+        outJson["derived"].push_back(json::parse(derived->toJsonString(inPretty, inPathToOmit)));
     }
+
+    outJson["previous"] = json::object();
+    if(m_previous)
+    {
+        outJson["previous"] = json::parse(m_previous->toJsonString(inPretty, inPathToOmit));
+    }
+
     if (inPretty)
     {
         return outJson.dump(4);
@@ -343,22 +416,35 @@ DataSet::toJsonString(const bool inPretty) const
 }
 
 std::shared_ptr<DataSet>
-DataSet::fromJsonString(const std::string & inString)
+DataSet::fromJsonString(const std::string & inString, const std::string & inAbsolutePathToPrepend)
 {
-    const json jsonObj = json::parse(inString);
-    const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj["itemType"]));
-    ISX_ASSERT(itemType == ProjectItem::Type::DATASET);
-    const std::string name = jsonObj["name"];
-    const DataSet::Type dataSetType = DataSet::Type(size_t(jsonObj["dataSetType"]));
-    const std::string fileName = jsonObj["fileName"];
-    const DataSet::Properties properties = convertJsonToProperties(jsonObj["properties"]);
-
-    auto outDataSet = std::make_shared<DataSet>(name, dataSetType, fileName, properties);
-    for (auto derivedJson : jsonObj["derived"])
+    if (inString == json::object().dump())
     {
-        auto derived = fromJsonString(derivedJson.dump());
+        return std::shared_ptr<DataSet>();
+    }
+
+    const json jsonObj = json::parse(inString);    
+    const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj.at("itemType")));
+    ISX_ASSERT(itemType == ProjectItem::Type::DATASET);
+    const std::string name = jsonObj.at("name");
+    const DataSet::Type dataSetType = DataSet::Type(size_t(jsonObj.at("dataSetType")));
+    
+    std::string fileName = jsonObj.at("fileName");
+    if(isRelative(fileName) && !inAbsolutePathToPrepend.empty())
+    {
+        fileName = inAbsolutePathToPrepend + "/" + fileName;
+    }
+
+    const HistoricalDetails hd = convertJsonToHistory(jsonObj.at("history"));
+    const DataSet::Properties properties = convertJsonToProperties(jsonObj.at("properties"));
+
+    auto outDataSet = std::make_shared<DataSet>(name, dataSetType, fileName, hd, properties);
+    for (auto derivedJson : jsonObj.at("derived"))
+    {
+        auto derived = fromJsonString(derivedJson.dump(), inAbsolutePathToPrepend);
         outDataSet->insertDerivedDataSet(derived);
     }
+    outDataSet->setPrevious(DataSet::fromJsonString(jsonObj.at("previous").dump(), inAbsolutePathToPrepend));
     return outDataSet;
 }
 
@@ -375,7 +461,8 @@ DataSet::operator ==(const ProjectItem & other) const
         && (m_type == otherDataSet->m_type)
         && (m_fileName == otherDataSet->m_fileName)
         && (m_properties == otherDataSet->m_properties)
-        && (m_derived.size() == otherDataSet->m_derived.size());
+        && (m_derived.size() == otherDataSet->m_derived.size())
+        && (m_history == otherDataSet->m_history);
     for (size_t i = 0; equal && i < m_derived.size(); ++i)
     {
         equal &= *m_derived.at(i) == *otherDataSet->m_derived.at(i);
@@ -411,6 +498,72 @@ DataSet::getDataType()
         readMetaData();
     }
     return m_dataType;
+}
+
+bool 
+DataSet::isPartOfSeries() const
+{
+    bool res = false;
+    if(m_parent)
+    {
+        res = m_parent->getItemType() == ProjectItem::Type::SERIES;
+    }
+    return res;
+}
+
+bool 
+DataSet::hasHistory() const
+{
+    return (m_previous != nullptr);
+}
+
+isize_t 
+DataSet::getNumHistoricalItems() const
+{
+    isize_t num = 0;
+    if(m_previous)
+    {
+        num += 1;
+        num += m_previous->getNumHistoricalItems();
+    }
+    return num;
+}
+
+void 
+DataSet::setHistorical()
+{
+    m_historical = true;
+}
+
+std::string 
+DataSet::getHistoricalDetails() const
+{
+    std::string str = "Operation Name: " + m_history.getOperation() + "\n"
+        + "Input Parameters: \n" + m_history.getInputParameters();
+
+    return str;
+}
+
+bool 
+DataSet::isHistorical() const
+{
+    return m_historical;
+}
+
+std::vector<std::shared_ptr<DataSet>> 
+DataSet::getHistoricalDataSets() const
+{
+    std::vector<std::shared_ptr<DataSet>> outDataSets;
+    if(m_previous)
+    {
+        outDataSets.push_back(m_previous);        
+        std::vector<std::shared_ptr<DataSet>> ancestors = m_previous->getHistoricalDataSets();
+        if(ancestors.empty() == false)
+        {
+            outDataSets.insert(outDataSets.end(), ancestors.begin(), ancestors.end());    
+        }        
+    }
+    return outDataSets;
 }
 
 void

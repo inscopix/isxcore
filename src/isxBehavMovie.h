@@ -11,8 +11,7 @@
 
 namespace isx
 {
-
-class IoTaskTracker;
+template <typename T> class IoTaskTracker;
 
 /// Encapsulates behavioral movie information and data.
 /// All data IO operations are performed by the IoQueue thread.
@@ -65,8 +64,8 @@ private:
     bool m_valid;
 
     /// The shared pointer to the movie file that stores data.
-    std::shared_ptr<BehavMovieFile>     m_file;
-    std::shared_ptr<IoTaskTracker>      m_ioTaskTracker;
+    std::shared_ptr<BehavMovieFile>             m_file;
+    std::shared_ptr<IoTaskTracker<VideoFrame>>  m_ioTaskTracker;
 };
 
 } // namespace isx

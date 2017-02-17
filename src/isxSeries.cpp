@@ -4,6 +4,7 @@
 #include "isxSpacingInfo.h"
 #include "isxTimingInfo.h"
 #include "isxMovieFactory.h"
+#include "isxPathUtils.h"
 
 #include "json.hpp"
 
@@ -25,6 +26,12 @@ Series::Series(const std::string & inName)
     , m_parent(nullptr)
     , m_name(inName)
 {
+}
+
+isize_t 
+Series::getNumDataSets() const
+{
+    return m_dataSets.size();
 }
 
 std::vector<DataSet *>
@@ -94,43 +101,141 @@ Series::removeDataSet(const std::string & inName)
     ISX_THROW(ExceptionDataIO, "Could not find data set with the name: ", inName);
 }
 
+bool 
+Series::hasHistory() const
+{
+    return (m_previous != nullptr);
+}
+
+isize_t 
+Series::getNumHistoricalItems() const
+{
+    isize_t num = 0;
+    if(m_previous)
+    {
+        num += 1;
+        num += m_previous->getNumHistoricalItems();
+    }
+    return num;
+}
+
+const HistoricalDetails 
+Series::getHistory() const
+{
+    if(m_dataSets.size())
+    {
+         return m_dataSets[0]->getHistory();
+    }
+
+    return HistoricalDetails();
+}
+
+void 
+Series::setPrevious(const std::shared_ptr<Series> & inSeries)
+{
+    if (inSeries)
+    {
+        inSeries->setHistorical();
+        inSeries->setParent(this);
+    }
+    m_previous = inSeries;
+}
+
+ProjectItem *
+Series::getPrevious() const
+{
+    return m_previous.get();
+}
+
+void 
+Series::setHistorical()
+{
+    m_historical = true;
+}
+
+bool 
+Series::isHistorical() const
+{
+    return m_historical;
+}
+
+std::string 
+Series::getHistoricalDetails() const
+{
+    std::string str;
+    if(m_dataSets.size())
+    {
+        str = m_dataSets[0]->getHistoricalDetails();
+    }
+    return str;
+}
+
+std::vector<std::shared_ptr<Series>> 
+Series::getHistoricalSeries()
+{
+    std::vector<std::shared_ptr<Series>> outSeries;
+    if(m_previous)
+    {
+        outSeries.push_back(m_previous);        
+        std::vector<std::shared_ptr<Series>> ancestors = m_previous->getHistoricalSeries();
+        if(ancestors.empty() == false)
+        {
+            outSeries.insert(outSeries.end(), ancestors.begin(), ancestors.end());    
+        }        
+    }
+    return outSeries;    
+}
+
 bool
 Series::checkDataSet(DataSet * inDataSet, std::string & outMessage)
 {
-    if (!checkDataSetType(inDataSet->getType(), outMessage))
+    try
     {
-        return false;
-    }
-
-    if (m_dataSets.empty())
-    {
-        return true;
-    }
-
-    DataSet * refDs = m_dataSets.at(0).get();
-
-    if (!checkDataType(refDs->getDataType(), inDataSet->getDataType(), outMessage))
-    {
-        return false;
-    }
-
-    if (!checkSpacingInfo(refDs->getSpacingInfo(), inDataSet->getSpacingInfo(), outMessage))
-    {
-        return false;
-    }
-
-    const TimingInfo & timingInfo = inDataSet->getTimingInfo();
-    for (size_t i = 0; i < m_dataSets.size(); ++i)
-    {
-        if (i > 0)
-        {
-            refDs = m_dataSets.at(i).get();
-        }
-        if (!checkTimingInfo(refDs->getTimingInfo(), timingInfo, outMessage))
+        if (!checkDataSetType(inDataSet->getType(), outMessage))
         {
             return false;
         }
+
+        if (m_dataSets.empty())
+        {
+            return true;
+        }
+
+        DataSet * refDs = m_dataSets.at(0).get();
+
+        if (!checkDataType(refDs->getDataType(), inDataSet->getDataType(), outMessage))
+        {
+            return false;
+        }
+
+        if (!checkSpacingInfo(refDs->getSpacingInfo(), inDataSet->getSpacingInfo(), outMessage))
+        {
+            return false;
+        }
+
+        const TimingInfo & timingInfo = inDataSet->getTimingInfo();
+        for (size_t i = 0; i < m_dataSets.size(); ++i)
+        {
+            if (i > 0)
+            {
+                refDs = m_dataSets.at(i).get();
+            }
+            if (!checkTimingInfo(refDs->getTimingInfo(), timingInfo, outMessage))
+            {
+                return false;
+            }
+        }
+
+        if(!checkHistory(refDs->getHistory(), inDataSet->getHistory(), outMessage))
+        {
+            return false;
+        }
+    } catch (isx::Exception & inException)
+    {
+        outMessage = inException.what();
+        return false;
     }
+
     return true;
 }
 
@@ -180,6 +285,20 @@ Series::checkTimingInfo(
     return true;
 }
 
+bool 
+Series::checkHistory(
+        const HistoricalDetails & inRef,
+        const HistoricalDetails & inNew,
+        std::string & outMessage)
+{
+    if (inRef != inNew)
+    {
+        outMessage = "The history details are different than those of the reference.";
+        return false;
+    }
+    return true;
+}
+
 bool
 Series::checkSpacingInfo(
         const SpacingInfo & inRef,
@@ -217,6 +336,24 @@ Series::setName(const std::string & inName)
 {
     m_name = inName;
     m_modified = true;
+}
+
+ProjectItem * 
+Series::getMostRecent() const 
+{
+    ProjectItem * descendant = getParent();
+    if(descendant)
+    {
+        while(descendant->isHistorical())
+        {
+            descendant = descendant->getParent();
+            if(!descendant)
+            {
+                break;
+            }
+        }
+    }
+    return descendant;
 }
 
 ProjectItem *
@@ -280,7 +417,7 @@ Series::setUnmodified()
 }
 
 std::string
-Series::toJsonString(const bool inPretty) const
+Series::toJsonString(const bool inPretty, const std::string & inPathToOmit) const
 {
     json jsonObj;
     jsonObj["itemType"] = size_t(getItemType());
@@ -288,8 +425,15 @@ Series::toJsonString(const bool inPretty) const
     jsonObj["dataSets"] = json::array();
     for (const auto & dataSet : m_dataSets)
     {
-        jsonObj["dataSets"].push_back(json::parse(dataSet->toJsonString()));
+        jsonObj["dataSets"].push_back(json::parse(dataSet->toJsonString(inPretty, inPathToOmit)));
     }
+
+    jsonObj["previous"] = json::object();
+    if (m_previous)
+    {
+        jsonObj["previous"] = json::parse(m_previous->toJsonString(inPretty, inPathToOmit));
+    }
+
     if (inPretty)
     {
         return jsonObj.dump(4);
@@ -298,18 +442,28 @@ Series::toJsonString(const bool inPretty) const
 }
 
 std::shared_ptr<Series>
-Series::fromJsonString(const std::string & inString)
+Series::fromJsonString(const std::string & inString, const std::string & inAbsolutePathToPrepend)
 {
-    const json jsonObj = json::parse(inString);
-    const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj["itemType"]));
-    ISX_ASSERT(itemType == ProjectItem::Type::SERIES);
-    const std::string name = jsonObj["name"];
-    auto outSeries = std::make_shared<Series>(name);
-    for (const auto & jsonDataSet : jsonObj["dataSets"])
+    if (inString == json::object().dump())
     {
-        std::shared_ptr<DataSet> dataSet = DataSet::fromJsonString(jsonDataSet.dump());
+        return std::shared_ptr<Series>();
+    }
+
+    const json jsonObj = json::parse(inString);
+    const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj.at("itemType")));
+    ISX_ASSERT(itemType == ProjectItem::Type::SERIES);
+    const std::string name = jsonObj.at("name");
+    auto outSeries = std::make_shared<Series>(name);
+    for (const auto & jsonDataSet : jsonObj.at("dataSets"))
+    {
+        std::shared_ptr<DataSet> dataSet = DataSet::fromJsonString(jsonDataSet.dump(), inAbsolutePathToPrepend);
         outSeries->insertDataSet(dataSet);
     }
+    if (jsonObj.find("previous") != jsonObj.end())
+    {
+        outSeries->setPrevious(Series::fromJsonString(jsonObj.at("previous").dump(), inAbsolutePathToPrepend));
+    }
+    
     return outSeries;
 }
 

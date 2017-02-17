@@ -6,6 +6,7 @@
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
 #include "isxVariant.h"
+#include "isxHistoricalDetails.h"
 
 #include <string>
 #include <map>
@@ -50,10 +51,12 @@ public:
     /// \param  inName      The name of the data set.
     /// \param  inType      The type of the data set.
     /// \param  inFileName  The file name of the data set.
+    /// \param  inHistory   The historical details for the dataset
     /// \param  inProperties The property map for the dataset
     DataSet(const std::string & inName,
             Type inType,
             const std::string & inFileName,
+            const HistoricalDetails & inHistory,
             const Properties & inProperties = Properties());
 
     /// \return     The type of this data set.
@@ -64,9 +67,17 @@ public:
     ///
     std::string getFileName() const;
 
+    /// Update the filename associated with this dataset
+    /// \param inFileName the new filename
+    void setFileName(const std::string & inFileName);
+
     /// Get the property map
     /// \return the property map
     const Properties & getProperties() const;
+    
+    /// Get the history for this dataset
+    /// \return the historical details
+    const HistoricalDetails & getHistory() const;
 
     /// Set the Properties of this DataSet
     /// \param inDataSetProperties new Properties to set
@@ -89,6 +100,10 @@ public:
     /// \param inValue value
     void setPropertyValue(const std::string & inPropertyName, Variant inValue);
 
+    /// \return the number of derived datasets 
+    ///
+    isize_t getNumDerivedDataSets() const;
+
     /// \return     All the derived data sets of this.
     ///
     std::vector<DataSet *> getDerivedDataSets() const;
@@ -105,6 +120,10 @@ public:
     /// \return         The removed data set.
     /// \throw  ExceptionDataIO If a data set with the given name cannot be found.
     std::shared_ptr<DataSet> removeDerivedDataSet(const std::string & inName);
+
+    /// Set the previous dataset that gave origin to this one
+    /// \param inDataSet the previous dataset
+    void setPrevious(const std::shared_ptr<DataSet> & inDataSet);
 
     /// Serialize vector of DataSets and derived DataSets to a JSON string
     /// \return JSON string for the DataSet(s)
@@ -133,10 +152,11 @@ public:
     /// Create a data set from a serialized JSON string.
     ///
     /// \param  inString    The serialized JSON string.
+    /// \param  inAbsolutePathToPrepend The path the is preprended to any relative filenames in the dataset
     /// \return             The deserialized data set.
     ///
     /// \throw  ExceptionDataIO If the string cannot be parsed.
-    static std::shared_ptr<DataSet> fromJsonString(const std::string & inString);
+    static std::shared_ptr<DataSet> fromJsonString(const std::string & inString, const std::string & inAbsolutePathToPrepend = std::string());
 
     /// \return The timing info associated with this data set.
     ///
@@ -156,6 +176,14 @@ public:
     /// \throw  ExceptionDataIO If the data type cannot be parsed.
     DataType getDataType();
 
+    /// \return whether this data set is contained in a series or not
+    ///
+    bool isPartOfSeries() const;          
+
+    /// \return a vector containing all historical data sets
+    ///
+    std::vector<std::shared_ptr<DataSet>> getHistoricalDataSets() const;
+
     // Overrides: see isxProjectItem.h for docs.
     ProjectItem::Type getItemType() const override;
 
@@ -164,6 +192,10 @@ public:
     std::string getName() const override;
 
     void setName(const std::string & inName) override;
+
+    ProjectItem * getMostRecent() const override;
+    
+    ProjectItem * getPrevious() const override;
 
     ProjectItem * getParent() const override;
 
@@ -181,9 +213,17 @@ public:
 
     void setUnmodified() override;
 
-    std::string toJsonString(const bool inPretty = false) const override;
+    std::string toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string()) const override;
 
     bool operator ==(const ProjectItem & other) const override;
+
+    bool hasHistory() const override;
+
+    isize_t getNumHistoricalItems() const override;
+
+    bool isHistorical() const override;
+
+    std::string getHistoricalDetails() const override;
 
 private:
 
@@ -192,6 +232,9 @@ private:
 
     /// True if this has unsaved changes.
     bool m_modified;
+
+    /// True if this is an historical data set;
+    bool m_historical = false; 
 
     /// The name of this data set.
     std::string m_name;
@@ -207,6 +250,12 @@ private:
 
     /// The parent item to which this belongs.
     ProjectItem * m_parent;
+
+    /// The previous dataset that was used to create this one. 
+    std::shared_ptr<DataSet> m_previous;
+
+    /// Historical details for the dataset
+    HistoricalDetails m_history;
 
     /// Dataset properties
     Properties m_properties;
@@ -228,6 +277,9 @@ private:
     /// \throw  ExceptionFileIO     If the read fails.
     /// \throw  ExceptionDataIO     If the file format is not recognized.
     void readMetaData();
+
+    /// Set this dataset as historical
+    void setHistorical();  
 
 }; // class DataSet
 

@@ -7,10 +7,15 @@ namespace isx
 {
 AsyncTask::AsyncTask() {}
 
-AsyncTask::AsyncTask(AsyncFunc_t inTask, AsyncProgressCB_t inProgressCB, AsyncFinishedCB_t inFinishedCB)
+AsyncTask::AsyncTask(
+        AsyncFunc_t inTask,
+        AsyncProgressCB_t inProgressCB,
+        AsyncFinishedCB_t inFinishedCB,
+        AsyncTaskThreadForFinishedCB inThreadForFinishedCB)
 : m_task(inTask)
 , m_progressCB(inProgressCB)
 , m_finishedCB(inFinishedCB)
+, m_threadForFinishedCB(inThreadForFinishedCB)
 {}
 
 AsyncTask::~AsyncTask() {}
@@ -62,14 +67,21 @@ AsyncTask::schedule()
         }
         if (m_finishedCB)
         {
-            DispatchQueue::mainQueue()->dispatch([weakThis, this](){
-                SpAsyncTaskHandle_t sharedThis = weakThis.lock();
-                if (!sharedThis)
-                {
-                    return;
-                }
+            if (m_threadForFinishedCB == AsyncTaskThreadForFinishedCB::USE_MAIN)
+            {
+                DispatchQueue::mainQueue()->dispatch([weakThis, this](){
+                    SpAsyncTaskHandle_t sharedThis = weakThis.lock();
+                    if (!sharedThis)
+                    {
+                        return;
+                    }
+                    m_finishedCB(m_taskStatus);
+                });
+            }
+            else
+            {
                 m_finishedCB(m_taskStatus);
-            });
+            }
         }
     });
 }
@@ -86,47 +98,14 @@ AsyncTask::getExceptionPtr() const
     return m_exception;
 }
 
-SpAsyncTaskHandle_t 
-CreateAsyncTask(AsyncFunc_t inTask, AsyncProgressCB_t inProgressCB, AsyncFinishedCB_t inFinishedCB)
+SpAsyncTaskHandle_t
+CreateAsyncTask(
+        AsyncFunc_t inTask,
+        AsyncProgressCB_t inProgressCB,
+        AsyncFinishedCB_t inFinishedCB,
+        AsyncTaskThreadForFinishedCB inThreadForFinishedCB)
 {
-    return std::make_shared<AsyncTask>(inTask, inProgressCB, inFinishedCB);
-}
-
-void
-checkAsyncTaskStatus(
-        const SpAsyncTaskHandle_t & inTask,
-        AsyncTaskStatus inStatus,
-        const std::string & inTaskName)
-{
-    const std::string taskStr = "async task (" + inTaskName + ")";
-    switch (inStatus)
-    {
-        case AsyncTaskStatus::ERROR_EXCEPTION:
-            {
-                try
-                {
-                    std::rethrow_exception(inTask->getExceptionPtr());
-                }
-                catch(std::exception & e)
-                {
-                    ISX_LOG_ERROR("Exception occurred during ", taskStr, ": ", e.what());
-                }
-                break;
-            }
-
-        case AsyncTaskStatus::UNKNOWN_ERROR:
-            ISX_LOG_ERROR("An error occurred during ", taskStr, ".");
-            break;
-
-        case AsyncTaskStatus::CANCELLED:
-            ISX_LOG_INFO(taskStr, " cancelled.");
-            break;
-
-        case AsyncTaskStatus::COMPLETE:
-        case AsyncTaskStatus::PENDING:      // won't happen - case is here only to quiet compiler
-        case AsyncTaskStatus::PROCESSING:   // won't happen - case is here only to quiet compiler
-            break;
-    }
+    return std::make_shared<AsyncTask>(inTask, inProgressCB, inFinishedCB, inThreadForFinishedCB);
 }
 
 } // namespace isx

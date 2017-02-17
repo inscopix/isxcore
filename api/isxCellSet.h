@@ -6,9 +6,10 @@
 #include "isxCoreFwd.h"
 #include "isxImage.h"
 #include "isxTrace.h"
+#include "isxAsyncTaskResult.h"
+
 #include <string>
 #include <functional>
-
 
 namespace isx
 {
@@ -18,14 +19,13 @@ class CellSet
 {
 public:
 /// The type of callback for reading a trace from disk
-typedef std::function<SpFTrace_t()> GetTraceCB_t;
+using GetTraceCB_t = std::function<SpFTrace_t()>;
 /// The type of callback for getting a cell trace asynchronously
-typedef std::function<void(const SpFTrace_t & inTrace)> CellSetGetTraceCB_t;
-
+using CellSetGetTraceCB_t = std::function<void(AsyncTaskResult<SpFTrace_t>)>;
 /// The type of callback that reads an image from disk
-typedef std::function<SpImage_t()> GetImageCB_t;
+using GetImageCB_t = std::function<SpImage_t()>;
 /// The type of callback for getting a cell image asynchronously
-typedef std::function<void(const SpImage_t & inTrace)> CellSetGetImageCB_t;
+using CellSetGetImageCB_t = std::function<void(AsyncTaskResult<SpImage_t>)>;
 
 /// \return whether this is a valid cell set object.
 ///

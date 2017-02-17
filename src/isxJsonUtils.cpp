@@ -3,6 +3,19 @@
 
 #include <fstream>
 
+// Note aschildan Feb 9, 2017
+// Disable operator[] which is unchecked and results in undefined behavior if
+// the provided key is not found.  Disabling this forces client code to use the
+// at(key) method which throws an exception if the key is not found.
+// This makes it easier to deal with unexpected / incompatible JSON.
+// See MOS-547 (opening old project files)
+// When merging a new version of this json library, please copy this explanation
+// and the code related to disabling operator[] to the new version.
+// See setting of this #define in json.hpp
+#ifndef ISX_JSON_NO_BRACKET_OPERATOR
+#error Please disable basic::json operator[]
+#endif
+
 namespace isx
 {
 
@@ -19,8 +32,8 @@ convertRatioToJson(const Ratio & inRatio)
 Ratio
 convertJsonToRatio(const json & j)
 {
-    int64_t num = j["num"];
-    int64_t den = j["den"];
+    int64_t num = j.at("num");
+    int64_t den = j.at("den");
     return Ratio(num, den);
 }
 
@@ -37,8 +50,8 @@ convertTimeToJson(const Time & inTime)
 Time
 convertJsonToTime(const json & j)
 {
-    DurationInSeconds secsSinceEpoch = convertJsonToRatio(j["secsSinceEpoch"]);
-    int32_t utcOffset = j["utcOffset"];
+    DurationInSeconds secsSinceEpoch = convertJsonToRatio(j.at("secsSinceEpoch"));
+    int32_t utcOffset = j.at("utcOffset");
     return Time(secsSinceEpoch, utcOffset);
 }
 
@@ -58,14 +71,14 @@ convertTimingInfoToJson(const TimingInfo & inTimingInfo)
 TimingInfo
 convertJsonToTimingInfo(const json & j)
 {
-    isize_t numTimes = j["numTimes"];
-    DurationInSeconds step = convertJsonToRatio(j["period"]);
-    Time start = convertJsonToTime(j["start"]);
+    isize_t numTimes = j.at("numTimes");
+    DurationInSeconds step = convertJsonToRatio(j.at("period"));
+    Time start = convertJsonToTime(j.at("start"));
     isize_t dropped_present = j.count("dropped");
     std::vector<isize_t> droppedFrames;
     if (dropped_present)
     {
-        droppedFrames = j["dropped"].get<std::vector<isize_t>>();
+        droppedFrames = j.at("dropped").get<std::vector<isize_t>>();
     }    
     return TimingInfo(start, step, numTimes, droppedFrames);
 }
@@ -83,24 +96,24 @@ convertSizeInPixelsToJson(const SizeInPixels_t & inSizeInPixels)
 SizeInPixels_t
 convertJsonToSizeInPixels(const json & j)
 {
-    isize_t x = j["x"];
-    isize_t y = j["y"];
+    isize_t x = j.at("x");
+    isize_t y = j.at("y");
     return SizeInPixels_t(x, y);
 }
 
 SizeInMicrons_t
 convertJsonToSizeInMicrons(const json & j)
 {
-    Ratio x = convertJsonToRatio(j["x"]);
-    Ratio y = convertJsonToRatio(j["y"]);
+    Ratio x = convertJsonToRatio(j.at("x"));
+    Ratio y = convertJsonToRatio(j.at("y"));
     return SizeInMicrons_t(x, y);
 }
 
 PointInMicrons_t
 convertJsonToPointInMicrons(const json & j)
 {
-    Ratio x = convertJsonToRatio(j["x"]);
-    Ratio y = convertJsonToRatio(j["y"]);
+    Ratio x = convertJsonToRatio(j.at("x"));
+    Ratio y = convertJsonToRatio(j.at("y"));
     return PointInMicrons_t(x, y);
 }
 
@@ -138,13 +151,32 @@ convertSpacingInfoToJson(const SpacingInfo & inSpacingInfo)
 SpacingInfo
 convertJsonToSpacingInfo(const json & j)
 {
-    SizeInPixels_t numPixels = convertJsonToSizeInPixels(j["numPixels"]);
-    SizeInMicrons_t pixelSize = convertJsonToSizeInMicrons(j["pixelSize"]);
-    PointInMicrons_t topLeft = convertJsonToPointInMicrons(j["topLeft"]);
+    SizeInPixels_t numPixels = convertJsonToSizeInPixels(j.at("numPixels"));
+    SizeInMicrons_t pixelSize = convertJsonToSizeInMicrons(j.at("pixelSize"));
+    PointInMicrons_t topLeft = convertJsonToPointInMicrons(j.at("topLeft"));
     return SpacingInfo(numPixels, pixelSize, topLeft);
 }
 
-json convertPropertiesToJson(const DataSet::Properties & inProperties)
+json 
+convertHistoryToJson(const HistoricalDetails & inHistory)
+{
+    json outJson;
+    outJson["operation"] = inHistory.getOperation();
+    outJson["inputParameters"] = json::parse(inHistory.getInputParameters());
+    return outJson;
+}
+
+HistoricalDetails 
+convertJsonToHistory(const json & j)
+{
+    std::string operationName = j.at("operation");
+    std::string inputParams = j.at("inputParameters").dump(4);
+    HistoricalDetails outHistory(operationName, inputParams);
+    return outHistory;
+}
+
+json 
+convertPropertiesToJson(const DataSet::Properties & inProperties)
 {
     json outJson = json::object();
     for (auto & p : inProperties)
@@ -155,7 +187,8 @@ json convertPropertiesToJson(const DataSet::Properties & inProperties)
     return outJson;
 }
 
-DataSet::Properties convertJsonToProperties(const json & j)
+DataSet::Properties 
+convertJsonToProperties(const json & j)
 {
     DataSet::Properties properties;
     for (json::const_iterator it = j.begin(); it != j.end(); ++it) 

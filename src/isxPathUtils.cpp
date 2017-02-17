@@ -68,6 +68,14 @@ getDefaultProjectPath()
     return dirName.toStdString();
 }
 
+bool 
+isRelative(const std::string &inPath)
+{
+    std::string dirName = isx::getDirName(inPath);
+    QDir dir(QString::fromStdString(dirName));
+    return dir.isRelative();
+}
+
 std::string
 getRelativePath(
         const std::string & inPath,
@@ -121,7 +129,15 @@ makeUniqueFilePath(const std::string & inPath, const isize_t inWidth)
     const std::string extension = getExtension(inPath);
     for (isize_t i = 0; pathExists(outPath) && i < 1000; ++i)
     {
-        outPath = appendNumberToPath(base, i, inWidth) + "." + extension;
+        if(extension.empty())
+        {
+            outPath = appendNumberToPath(base, i, inWidth);
+        }
+        else
+        {
+            outPath = appendNumberToPath(base, i, inWidth) + "." + extension;
+        }
+        
     }
     return outPath;
 }

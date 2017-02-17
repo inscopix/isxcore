@@ -38,9 +38,15 @@ public:
 
     /// Add a line to the log
     /// \param text text to be logged
+    static
     void
     log(const std::string & text);
 
+    /// \return log filename
+    ///
+    static
+    const std::string &
+    getLogFileName();
 
 private:
     Logger(const std::string & inLogFileName);

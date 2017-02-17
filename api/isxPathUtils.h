@@ -81,6 +81,11 @@ std::vector<std::string> getPathTokens(const std::string & inPath);
 /// \return     A writable directory name for Mosaic data.
 std::string getDefaultProjectPath();
 
+
+/// \return whether a path is relative or not
+/// \param inPath the path of interest
+bool isRelative(const std::string &inPath);
+
 /// Get a path relative to a directory name.
 ///
 /// If the path is on a Windows filesystem and is on a different drive

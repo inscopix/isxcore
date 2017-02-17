@@ -261,9 +261,10 @@ TEST_CASE("CellSetTest", "[core]")
             cellSet->writeImageAndTrace(i, originalImage, originalTrace);
         }
 
-        isx::CellSet::CellSetGetTraceCB_t callBack = [originalTrace, &doneCount](const isx::SpFTrace_t inTrace)
+        isx::CellSet::CellSetGetTraceCB_t callBack = [originalTrace, &doneCount](isx::AsyncTaskResult<isx::SpFTrace_t> inAsyncTaskResult)
         {
-            requireEqualTraces(inTrace, originalTrace);
+            REQUIRE(!inAsyncTaskResult.getException());
+            requireEqualTraces(inAsyncTaskResult.get(), originalTrace);
             ++doneCount;
 
         };
@@ -296,9 +297,10 @@ TEST_CASE("CellSetTest", "[core]")
             cellSet->writeImageAndTrace(i, originalImage, originalTrace);
         }
 
-        isx::CellSet::CellSetGetImageCB_t callBack = [originalImage, &doneCount](const isx::SpImage_t inImage)
+        isx::CellSet::CellSetGetImageCB_t callBack = [originalImage, &doneCount](isx::AsyncTaskResult<isx::SpImage_t> inAsyncTaskResult)
         {
-            requireEqualImages(inImage, originalImage);
+            REQUIRE(!inAsyncTaskResult.getException());
+            requireEqualImages(inAsyncTaskResult.get(), originalImage);
             ++doneCount;
         };
         for (size_t i = 0; i < 3; ++i)
@@ -326,6 +328,8 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
 {
 
     isx::CoreInitialize();
+
+    isx::HistoricalDetails hd("Imported", "");
 
     SECTION("Test with completely filled frame")
     {
@@ -382,6 +386,7 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
                 "/movie-full-frame",
                 isx::DataSet::Type::MOVIE,
                 movieFile,
+                hd,
                 {
                   {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
                   {isx::DataSet::PROP_DATA_MAX, isx::Variant(1.f)},
@@ -391,7 +396,8 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
         project.createDataSet(
                 "/movie-full-frame/cellset-full-frame",
                 isx::DataSet::Type::CELLSET,
-                cellSetFile);
+                cellSetFile,
+                hd);
         project.save();
     }
 
