@@ -255,22 +255,38 @@ Project::createSeries(const std::string & inPath, const int inIndex)
     return series.get();
 }
 
-void
-Project::flattenSeries(const std::string & inPath)
+bool
+Project::canFlattenSeries(
+        const std::string & inPath,
+        std::string & outMessage,
+        Series *& outSeries) const
 {
     ProjectItem * item = getItem(inPath);
     if (item->getItemType() != ProjectItem::Type::SERIES)
     {
-        ISX_THROW(ExceptionDataIO, "The requested item is not a series.");
+        outMessage = "The requested item is not a series.";
+        return false;
     }
 
-    Series * series = static_cast<Series *>(item);
-    auto dataSets = series->getDataSets();
-    if(dataSets.size() && (dataSets[0]->getHistory() != HistoricalDetails()))
+    outSeries = static_cast<Series *>(item);
+    if (outSeries->hasHistory())
     {
-        ISX_THROW(ExceptionUserInput, "Series of processed movies cannot be ungrouped.");
+        outMessage = "Series of processed movies cannot be ungrouped.";
+        return false;
     }
-    
+    return true;
+}
+
+void
+Project::flattenSeries(const std::string & inPath)
+{
+    std::string errorMessage;
+    Series * series = nullptr;
+    if (!canFlattenSeries(inPath, errorMessage, series))
+    {
+        ISX_THROW(ExceptionSeries, errorMessage);
+    }
+
     ProjectItem * parent = series->getParent();
     // TODO sweet : before moving the items we need to check that the
     // destination doesn't contain any conflicting names.

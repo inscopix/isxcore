@@ -144,11 +144,22 @@ public:
     /// \throw  ExceptionDataIO    If an item with the path already exists.
     Series * createSeries(const std::string & inPath, const int inIndex = -1);
 
+    /// Check if a series can be flattened.
+    ///
+    /// \param  inPath      The path of the series to flatten.
+    /// \param  outMessage  The error message the series cannot be flattened.
+    /// \param  outSeries   The series to flatten.
+    /// \return             True if the path represents a series that can be flattened.
+    bool canFlattenSeries(
+            const std::string & inPath,
+            std::string & outMessage,
+            Series *& outSeries) const;
+
     /// Flatten a series by its project path.
     ///
     /// This will remove the series and move its data sets into its parent.
     ///
-    /// \param  inPath  The path of the series to flatten.
+    /// \param  inPath      The path of the series to flatten.
     ///
     /// \throw  ExceptionDataIO If a series does not exist.
     void flattenSeries(const std::string & inPath);
