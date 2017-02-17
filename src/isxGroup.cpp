@@ -148,7 +148,7 @@ Group::setUnmodified()
 }
 
 std::string
-Group::toJsonString(const bool inPretty) const
+Group::toJsonString(const bool inPretty, const std::string & inPathToOmit) const
 {
     json jsonObj;
     jsonObj["itemType"] = size_t(getItemType());
@@ -156,7 +156,7 @@ Group::toJsonString(const bool inPretty) const
     jsonObj["items"] = json::array();
     for (const auto & item : m_items)
     {
-        jsonObj["items"].push_back(json::parse(item->toJsonString()));
+        jsonObj["items"].push_back(json::parse(item->toJsonString(inPretty, inPathToOmit)));
     }
     if (inPretty)
     {
@@ -166,7 +166,7 @@ Group::toJsonString(const bool inPretty) const
 }
 
 std::shared_ptr<Group>
-Group::fromJsonString(const std::string & inString)
+Group::fromJsonString(const std::string & inString, const std::string & inAbsolutePathToPrepend)
 {
     const json jsonObj = json::parse(inString);
     const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj.at("itemType")));
@@ -181,17 +181,17 @@ Group::fromJsonString(const std::string & inString)
         {
             case ProjectItem::Type::GROUP:
             {
-                item = Group::fromJsonString(jsonItem.dump());
+                item = Group::fromJsonString(jsonItem.dump(), inAbsolutePathToPrepend);
                 break;
             }
             case ProjectItem::Type::SERIES:
             {
-                item = Series::fromJsonString(jsonItem.dump());
+                item = Series::fromJsonString(jsonItem.dump(), inAbsolutePathToPrepend);
                 break;
             }
             case ProjectItem::Type::DATASET:
             {
-                item = DataSet::fromJsonString(jsonItem.dump());
+                item = DataSet::fromJsonString(jsonItem.dump(), inAbsolutePathToPrepend);
                 break;
             }
             default:

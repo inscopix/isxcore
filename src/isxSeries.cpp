@@ -417,7 +417,7 @@ Series::setUnmodified()
 }
 
 std::string
-Series::toJsonString(const bool inPretty) const
+Series::toJsonString(const bool inPretty, const std::string & inPathToOmit) const
 {
     json jsonObj;
     jsonObj["itemType"] = size_t(getItemType());
@@ -425,13 +425,13 @@ Series::toJsonString(const bool inPretty) const
     jsonObj["dataSets"] = json::array();
     for (const auto & dataSet : m_dataSets)
     {
-        jsonObj["dataSets"].push_back(json::parse(dataSet->toJsonString()));
+        jsonObj["dataSets"].push_back(json::parse(dataSet->toJsonString(inPretty, inPathToOmit)));
     }
 
     jsonObj["previous"] = json::object();
     if (m_previous)
     {
-        jsonObj["previous"] = json::parse(m_previous->toJsonString());
+        jsonObj["previous"] = json::parse(m_previous->toJsonString(inPretty, inPathToOmit));
     }
 
     if (inPretty)
@@ -442,7 +442,7 @@ Series::toJsonString(const bool inPretty) const
 }
 
 std::shared_ptr<Series>
-Series::fromJsonString(const std::string & inString)
+Series::fromJsonString(const std::string & inString, const std::string & inAbsolutePathToPrepend)
 {
     if (inString == json::object().dump())
     {
@@ -456,12 +456,12 @@ Series::fromJsonString(const std::string & inString)
     auto outSeries = std::make_shared<Series>(name);
     for (const auto & jsonDataSet : jsonObj.at("dataSets"))
     {
-        std::shared_ptr<DataSet> dataSet = DataSet::fromJsonString(jsonDataSet.dump());
+        std::shared_ptr<DataSet> dataSet = DataSet::fromJsonString(jsonDataSet.dump(), inAbsolutePathToPrepend);
         outSeries->insertDataSet(dataSet);
     }
     if (jsonObj.find("previous") != jsonObj.end())
     {
-        outSeries->setPrevious(Series::fromJsonString(jsonObj.at("previous").dump()));
+        outSeries->setPrevious(Series::fromJsonString(jsonObj.at("previous").dump(), inAbsolutePathToPrepend));
     }
     
     return outSeries;

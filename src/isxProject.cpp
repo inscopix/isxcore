@@ -308,6 +308,12 @@ Project::getFileName() const
     return m_fileName;
 }
 
+std::string 
+Project::getProjectPath() const
+{
+    return isx::getDirName(m_fileName);
+}
+
 void
 Project::setFileName(const std::string & inFileName, bool inMoveData)
 {   
@@ -364,7 +370,6 @@ Project::setFileName(const std::string & inFileName, bool inMoveData)
     }  
 
     // Update the file paths for data files of project items 
-    // NOTE salpert 1/25/2017 Remove this when we implement relative file names in the project
     if(oldPath != newPath)
     {
         for (auto & item : getAllItems())
@@ -477,7 +482,7 @@ Project::read()
             ISX_THROW(ExceptionDataIO, "Expected type to be Project. Instead got ", type);
         }
         m_name = jsonObject["name"];
-        m_root = Group::fromJsonString(jsonObject["rootGroup"].dump());
+        m_root = Group::fromJsonString(jsonObject["rootGroup"].dump(), getProjectPath());
     }
     catch (const std::exception & error)
     {
@@ -498,7 +503,7 @@ Project::write() const
         jsonObject["type"] = "Project";
         jsonObject["name"] = m_name;
         jsonObject["mosaicVersion"] = CoreVersionVector();
-        jsonObject["rootGroup"] = json::parse(m_root->toJsonString());
+        jsonObject["rootGroup"] = json::parse(m_root->toJsonString(false, getProjectPath()));
     }
     catch (const std::exception & error)
     {

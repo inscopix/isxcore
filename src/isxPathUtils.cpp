@@ -68,6 +68,14 @@ getDefaultProjectPath()
     return dirName.toStdString();
 }
 
+bool 
+isRelative(const std::string &inPath)
+{
+    std::string dirName = isx::getDirName(inPath);
+    QDir dir(QString::fromStdString(dirName));
+    return dir.isRelative();
+}
+
 std::string
 getRelativePath(
         const std::string & inPath,

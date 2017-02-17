@@ -4,6 +4,7 @@
 #include "isxJsonUtils.h"
 #include "isxMovieFactory.h"
 #include "isxCellSetFactory.h"
+#include "isxPathUtils.h"
 
 #include <fstream>
 #include "json.hpp"
@@ -374,30 +375,37 @@ DataSet::setUnmodified()
 }
 
 std::string
-DataSet::toJsonString(const bool inPretty) const
+DataSet::toJsonString(const bool inPretty, const std::string & inPathToOmit) const
 {
     json outJson;
     outJson["itemType"] = size_t(ProjectItem::Type::DATASET);
     outJson["name"] = m_name;
     outJson["dataSetType"] = isize_t(m_type);
-    // TODO sweet : when a dataset in a project is serialized, we should
-    // store the relative path to the project file name, so that if that
-    // sub-tree gets moved, then the paths are still accurate.
-    // For any file names that are above the project file, we should store
-    // absolute paths.
-    outJson["fileName"] = m_fileName;
+
+    std::string fileName = m_fileName;
+    if(!inPathToOmit.empty())
+    {
+        std::string::size_type p = m_fileName.find(inPathToOmit, 0);
+        if(p != std::string::npos)
+        {
+            ISX_ASSERT(p == 0);
+            fileName = m_fileName.substr(p + inPathToOmit.size() + 1); 
+        }
+    }
+
+    outJson["fileName"] = fileName;
     outJson["history"] = convertHistoryToJson(m_history);
     outJson["properties"] = convertPropertiesToJson(m_properties);
     outJson["derived"] = json::array();    
     for (const auto & derived : m_derived)
     {
-        outJson["derived"].push_back(json::parse(derived->toJsonString()));
+        outJson["derived"].push_back(json::parse(derived->toJsonString(inPretty, inPathToOmit)));
     }
 
     outJson["previous"] = json::object();
     if(m_previous)
     {
-        outJson["previous"] = json::parse(m_previous->toJsonString());
+        outJson["previous"] = json::parse(m_previous->toJsonString(inPretty, inPathToOmit));
     }
 
     if (inPretty)
@@ -408,7 +416,7 @@ DataSet::toJsonString(const bool inPretty) const
 }
 
 std::shared_ptr<DataSet>
-DataSet::fromJsonString(const std::string & inString)
+DataSet::fromJsonString(const std::string & inString, const std::string & inAbsolutePathToPrepend)
 {
     if (inString == json::object().dump())
     {
@@ -420,17 +428,23 @@ DataSet::fromJsonString(const std::string & inString)
     ISX_ASSERT(itemType == ProjectItem::Type::DATASET);
     const std::string name = jsonObj.at("name");
     const DataSet::Type dataSetType = DataSet::Type(size_t(jsonObj.at("dataSetType")));
-    const std::string fileName = jsonObj.at("fileName");
+    
+    std::string fileName = jsonObj.at("fileName");
+    if(isRelative(fileName) && !inAbsolutePathToPrepend.empty())
+    {
+        fileName = inAbsolutePathToPrepend + "/" + fileName;
+    }
+
     const HistoricalDetails hd = convertJsonToHistory(jsonObj.at("history"));
     const DataSet::Properties properties = convertJsonToProperties(jsonObj.at("properties"));
 
     auto outDataSet = std::make_shared<DataSet>(name, dataSetType, fileName, hd, properties);
     for (auto derivedJson : jsonObj.at("derived"))
     {
-        auto derived = fromJsonString(derivedJson.dump());
+        auto derived = fromJsonString(derivedJson.dump(), inAbsolutePathToPrepend);
         outDataSet->insertDerivedDataSet(derived);
     }
-    outDataSet->setPrevious(DataSet::fromJsonString(jsonObj.at("previous").dump()));
+    outDataSet->setPrevious(DataSet::fromJsonString(jsonObj.at("previous").dump(), inAbsolutePathToPrepend));
     return outDataSet;
 }
 

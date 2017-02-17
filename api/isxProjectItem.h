@@ -103,8 +103,9 @@ public:
     virtual void setUnmodified() = 0;
 
     /// \param  inPretty    If true make the serialization pretty, ugly otherwise.
+    /// \param  inPathToOmit the path from filenames to omit for serialization (to obtain relative paths)
     /// \return             The serialized JSON string of the item.
-    virtual std::string toJsonString(const bool inPretty = false) const = 0;
+    virtual std::string toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string()) const = 0;
 
     /// Exact comparison.
     ///

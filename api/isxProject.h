@@ -173,6 +173,10 @@ public:
     ///
     std::string getDataPath() const;
 
+    /// \return the path for the project file
+    ///
+    std::string getProjectPath() const;
+
     /// Sets the file name of this project's file.
     ///
     void setFileName(const std::string & inFileName, bool inMoveData);

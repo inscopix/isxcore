@@ -28,10 +28,11 @@ public:
     /// Create a group from a serialized JSON string.
     ///
     /// \param  inString    The serialized JSON string.
+    /// \param  inAbsolutePathToPrepend The path the is preprended to any relative filenames in the group
     /// \return             The deserialized group.
     ///
     /// \throw  ExceptionDataIO If the string cannot be parsed.
-    static std::shared_ptr<Group> fromJsonString(const std::string & inString);
+    static std::shared_ptr<Group> fromJsonString(const std::string & inString, const std::string & inAbsolutePathToPrepend = std::string());
 
     // Overrides: see isxProjectItem.h for docs.
     ProjectItem::Type getItemType() const override;
@@ -62,7 +63,7 @@ public:
 
     void setUnmodified() override;
 
-    std::string toJsonString(const bool inPretty = false) const override;
+    std::string toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string()) const override;
 
     bool operator ==(const ProjectItem & other) const override;
 

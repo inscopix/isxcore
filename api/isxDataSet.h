@@ -152,10 +152,11 @@ public:
     /// Create a data set from a serialized JSON string.
     ///
     /// \param  inString    The serialized JSON string.
+    /// \param  inAbsolutePathToPrepend The path the is preprended to any relative filenames in the dataset
     /// \return             The deserialized data set.
     ///
     /// \throw  ExceptionDataIO If the string cannot be parsed.
-    static std::shared_ptr<DataSet> fromJsonString(const std::string & inString);
+    static std::shared_ptr<DataSet> fromJsonString(const std::string & inString, const std::string & inAbsolutePathToPrepend = std::string());
 
     /// \return The timing info associated with this data set.
     ///
@@ -212,7 +213,7 @@ public:
 
     void setUnmodified() override;
 
-    std::string toJsonString(const bool inPretty = false) const override;
+    std::string toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string()) const override;
 
     bool operator ==(const ProjectItem & other) const override;
 
