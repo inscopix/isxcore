@@ -2,82 +2,10 @@
 #include "isxMosaicMovie.h"
 #include "catch.hpp"
 #include "isxTest.h"
+#include "MosaicMovieTest.h"
 
 #include <stdio.h>
 #include <algorithm>
-
-namespace
-{
-
-isx::SpWritableMovie_t
-writeTestU16Movie(
-        const std::string & inFileName,
-        const isx::TimingInfo & inTimingInfo,
-        const isx::SpacingInfo & inSpacingInfo)
-{
-    isx::isize_t numFrames = inTimingInfo.getNumTimes();
-    isx::isize_t numPixels = inSpacingInfo.getTotalNumPixels();
-    isx::isize_t rowSizeInBytes = sizeof(uint16_t) * inSpacingInfo.getNumColumns();
-
-    isx::SpWritableMovie_t movie = std::make_shared<isx::MosaicMovie>(
-            inFileName, inTimingInfo, inSpacingInfo, isx::DataType::U16);
-    for (isx::isize_t f = 0; f < numFrames; ++f)
-    {
-        isx::SpVideoFrame_t frame = std::make_shared<isx::VideoFrame>(
-            inSpacingInfo,
-            rowSizeInBytes,
-            1, // numChannels
-            isx::DataType::U16,
-            inTimingInfo.convertIndexToStartTime(f),
-            f);
-
-        uint16_t * pPixels = frame->getPixelsAsU16();
-        for (isx::isize_t p = 0; p < numPixels; ++p)
-        {
-            *pPixels = uint16_t((f * numPixels) + p);
-            pPixels++;
-        }
-
-        movie->writeFrame(frame);
-    }
-    return movie;
-}
-
-isx::SpWritableMovie_t
-writeTestF32Movie(
-        const std::string & inFileName,
-        const isx::TimingInfo & inTimingInfo,
-        const isx::SpacingInfo & inSpacingInfo)
-{
-    isx::isize_t numFrames = inTimingInfo.getNumTimes();
-    isx::isize_t numPixels = inSpacingInfo.getTotalNumPixels();
-    isx::isize_t rowSizeInBytes = sizeof(float) * inSpacingInfo.getNumColumns();
-
-    isx::SpWritableMovie_t movie = std::make_shared<isx::MosaicMovie>(
-            inFileName, inTimingInfo, inSpacingInfo, isx::DataType::F32);
-    for (isx::isize_t f = 0; f < numFrames; ++f)
-    {
-        isx::SpVideoFrame_t frame = std::make_shared<isx::VideoFrame>(
-            inSpacingInfo,
-            rowSizeInBytes,
-            1, // numChannels
-            isx::DataType::F32,
-            inTimingInfo.convertIndexToStartTime(f),
-            f);
-
-        float * pPixels = frame->getPixelsAsF32();
-        for (isx::isize_t p = 0; p < numPixels; ++p)
-        {
-            *pPixels = float((f * numPixels) + p);
-            pPixels++;
-        }
-
-        movie->writeFrame(frame);
-    }
-    return movie;
-}
-
-} // namespace
 
 TEST_CASE("MosaicMovieU16", "[core-internal]")
 {
@@ -183,7 +111,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
 
     SECTION("Write frame data and verify read matches it.")
     {
-        isx::SpWritableMovie_t movie = writeTestU16Movie(fileName, timingInfo, spacingInfo);
+        isx::SpWritableMovie_t movie = writeTestU16MovieGeneric(fileName, timingInfo, spacingInfo);
         REQUIRE(movie->isValid());
         REQUIRE(movie->getTimingInfo() == timingInfo);
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
@@ -346,7 +274,7 @@ TEST_CASE("MosaicMovieF32", "[core-internal]")
 
     SECTION("Write frame data and verify read matches it.")
     {
-        isx::SpWritableMovie_t movie = writeTestF32Movie(fileName, timingInfo, spacingInfo);
+        isx::SpWritableMovie_t movie = writeTestF32MovieGeneric(fileName, timingInfo, spacingInfo);
         REQUIRE(movie->isValid());
         REQUIRE(movie->getTimingInfo() == timingInfo);
         REQUIRE(movie->getSpacingInfo() == spacingInfo);

@@ -177,7 +177,7 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
 
     SECTION("Write frame data and verify read matches it.")
     {
-        writeTestU16Movie(fileName, timingInfo, spacingInfo);
+        ::writeTestU16Movie(fileName, timingInfo, spacingInfo);
         isx::MosaicMovieFile movie(fileName);
         REQUIRE(movie.isValid());
         REQUIRE(movie.getTimingInfo() == timingInfo);
@@ -295,7 +295,7 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal]")
 
     SECTION("Write frame data and verify read matches it.")
     {
-        writeTestF32Movie(fileName, timingInfo, spacingInfo);
+        ::writeTestF32Movie(fileName, timingInfo, spacingInfo);
         isx::MosaicMovieFile movie(fileName);
 
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
