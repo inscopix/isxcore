@@ -49,10 +49,17 @@ struct CellSetExporterParams
     WriteTimeRelativeTo      m_writeTimeRelativeTo;     ///< how to write time stamps in file
 };
 
+/// CellSet exporter output parameters 
+struct CellSetExporterOutputParams
+{
+    // There are no output parameters for exporting cellsets.
+};
+
 /// Runs CellSetExporter
 /// \param inParams parameters for this CellSet export
+/// \param inOutputParams a shared pointer for output parameters
 /// \param inCheckInCB check-in callback function that is periodically invoked with progress and to tell algo whether to cancel / abort
-AsyncTaskStatus runCellSetExporter(CellSetExporterParams inParams, AsyncCheckInCB_t inCheckInCB);
+AsyncTaskStatus runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB);
 
 } // namespace isx
 

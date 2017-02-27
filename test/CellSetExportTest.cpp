@@ -87,7 +87,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             exportedTraceFileName,
             std::string(),
             isx::CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM);
-        isx::runCellSetExporter(params, [](float){return false;});
+        isx::runCellSetExporter(params, nullptr, [](float){return false;});
         
         const std::string expected =
             "Time(s), Kunal, Mark, Abbas, C3, C4\n"
@@ -121,7 +121,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             exportedTraceFileName,
             std::string(),
             isx::CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM);
-        isx::runCellSetExporter(params, [](float){return false;});
+        isx::runCellSetExporter(params, nullptr, [](float){return false;});
         
         const std::string expected =
             "Time(s), Lonely1\n"
@@ -166,7 +166,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             std::string(),
             exportedImageFileName,
             isx::CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM);
-        isx::runCellSetExporter(params, [](float){return false;});
+        isx::runCellSetExporter(params, nullptr, [](float){return false;});
 
         // read output TIFF and verify
         std::string cellname = cellSet->getCellName(0);
@@ -240,7 +240,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             exportedTraceFileName,
             "",
             isx::CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM);
-        isx::runCellSetExporter(params, [](float){return false;});
+        isx::runCellSetExporter(params, nullptr, [](float){return false;});
         // check that sample times are as expected
         const std::string expected =
             "Time(s), Kunal, Mark, Abbas, C3, C4\n"

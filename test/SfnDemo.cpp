@@ -11,7 +11,7 @@
 
 TEST_CASE("SfnDemo", "[data][!hide]")
 {
-    const std::string dataDir = g_resources["realTestDataPath"] + "/prism_probe_P39";
+    const std::string dataDir = isx::getAbsolutePath(g_resources["realTestDataPath"]) + "/prism_probe_P39";
     const std::string origDataDir = dataDir + "/orig";
     const std::string procDataDir = dataDir + "/proc";
     const std::string behavioralDataDir = dataDir + "/noldus";
@@ -167,7 +167,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
 
 TEST_CASE("SfnDemoOrig", "[data][!hide]")
 {
-    const std::string dataDir = g_resources["realTestDataPath"] + "/prism_probe_P39";
+    const std::string dataDir = isx::getAbsolutePath(g_resources["realTestDataPath"]) + "/prism_probe_P39";
     const std::string origDataDir = dataDir + "/orig";
     const std::string procDataDir = dataDir + "/proc";
     const std::string behavioralDataDir = dataDir + "/noldus";

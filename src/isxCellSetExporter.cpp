@@ -16,7 +16,7 @@ CellSetExporterParams::getOpName()
 }
     
 AsyncTaskStatus 
-runCellSetExporter(CellSetExporterParams inParams, AsyncCheckInCB_t inCheckInCB)
+runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
 {
     const int32_t timeDecimals = std::numeric_limits<double>::digits10 + 1;
     const int32_t maxDecimalsForFloat = std::numeric_limits<float>::digits10 + 1;
@@ -180,6 +180,11 @@ runCellSetExporter(CellSetExporterParams inParams, AsyncCheckInCB_t inCheckInCB)
 
     if (cancelled)
     {
+        if(!inParams.m_outputTraceFilename.empty())
+        {
+            std::remove(inParams.m_outputTraceFilename.c_str());
+        }
+
         return AsyncTaskStatus::CANCELLED;
     }
 

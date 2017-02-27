@@ -30,7 +30,8 @@ public:
     {
         MOVIE = 0,
         CELLSET,
-        BEHAVIOR
+        BEHAVIOR,
+        GPIO
     };
 
     // Property names as used in the property map
