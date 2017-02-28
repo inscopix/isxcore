@@ -108,6 +108,39 @@ TEST_CASE("RecordingTest", "[core]") {
         REQUIRE(movDroppedFrames == xmlDroppedFrames);
 
     }
+
+
+    SECTION("Load recording XML - Split movie with dropped frames", "[core]")
+    {
+        std::string testXML = g_resources["unitTestDataPath"] + "/recording_20160706_132714_modified.xml";
+        std::string testHDF5_1 = g_resources["unitTestDataPath"] + "/recording_20160706_132714-001.hdf5";
+        
+        isx::SpRecording_t rXml  = std::make_shared<isx::Recording>(testXML);
+        isx::SpRecording_t rHdf1 = std::make_shared<isx::Recording>(testHDF5_1);
+
+        isx::SpMovie_t mXml  = rXml->getMovie();
+        isx::SpMovie_t mHdf1 = rHdf1->getMovie();
+
+        isx::SpVideoFrame_t frameXml = mXml->getFrame(47); /// With 2 dropped frames in the first movie, frame 47 should be the first frame of the second HDF5 file
+        isx::SpVideoFrame_t frameHdf1 = mHdf1->getFrame(0);
+
+        isx::isize_t numPixels = mXml->getSpacingInfo().getTotalNumPixels();
+
+        uint16_t * pXml = frameXml->getPixelsAsU16();
+        uint16_t * pHdf1 = frameHdf1->getPixelsAsU16();
+
+        for (isx::isize_t i(0); i < numPixels; ++i)
+        {
+            REQUIRE(pXml[i] == pHdf1[i]);
+
+            if(i > 20)
+            {
+                break;
+            }
+        }        
+        
+    }
+
     isx::CoreShutdown();
 
 }

@@ -257,7 +257,7 @@ NVistaHdf5Movie::getFrameInternal(isize_t inFrameNumber)
     isize_t idx = getMovieIndex(newFrameNumber);
     if (idx > 0)
     {
-        newFrameNumber = inFrameNumber - m_cumulativeFrames[idx - 1];
+        newFrameNumber = newFrameNumber - m_cumulativeFrames[idx - 1];
     }
 
     m_movies[idx]->getFrame(newFrameNumber, outFrame);
