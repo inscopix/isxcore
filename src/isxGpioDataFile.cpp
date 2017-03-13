@@ -401,8 +401,9 @@ GpioDataFile::writeHeader(
         ISX_THROW(isx::ExceptionDataIO,
             "Unknown error while generating file header.");
     }
-    
-    writeJsonHeader(j, file);
+
+// TODO: MOS-584 merge fix
+//    writeJsonHeader(j, file);
     file.flush();
 }
 
