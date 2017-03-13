@@ -26,6 +26,14 @@ public:
     virtual
     void
     writeFrame(const SpVideoFrame_t & inVideoFrame) = 0;
+    
+    /// Close this file for writing.  This writes the header containing
+    /// metadata at the end of the file.  Any attempts to write frames after
+    /// this is called will result in an exception.
+    ///
+    virtual
+    void
+    closeForWriting() = 0;
 
     /// Creates a new frame indexed within this movie.
     ///

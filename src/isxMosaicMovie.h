@@ -65,6 +65,9 @@ public:
 
     void writeFrame(const SpVideoFrame_t & inVideoFrame) override;
 
+    void
+    closeForWriting() override;
+
     SpVideoFrame_t makeVideoFrame(isize_t inIndex) override;
 
     const isx::TimingInfo & getTimingInfo() const override;

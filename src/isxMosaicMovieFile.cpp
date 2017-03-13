@@ -1,10 +1,12 @@
 #include "isxMosaicMovieFile.h"
 #include "isxException.h"
-#include "isxJsonUtils.h"
+#include "isxStopWatch.h"
 
 #include <sys/stat.h>
 
 #include <cstring>
+
+
 
 namespace isx
 {
@@ -32,17 +34,26 @@ MosaicMovieFile::MosaicMovieFile(
 
 MosaicMovieFile::~MosaicMovieFile()
 {
-    if(m_file.is_open() && m_file.good())
+    if (isValid())
     {
-        m_file.close();
-        if (!m_file.good())
+        if (!m_fileClosedForWriting)
         {
-            ISX_LOG_ERROR("Error closing the stream for file", m_fileName,
-            " eof: ", m_file.eof(), 
-            " bad: ", m_file.bad(), 
-            " fail: ", m_file.fail());
+            ISX_LOG_ERROR("MosaicMovieFile destroyed before calling closeForWriting.  File may be corrupt: ", m_fileName);
+            closeForWriting();
         }
-    }    
+
+        if (m_file.is_open() && m_file.good())
+        {
+            m_file.close();
+            if (!m_file.good())
+            {
+                ISX_LOG_ERROR("Error closing the stream for file", m_fileName,
+                " eof: ", m_file.eof(), 
+                " bad: ", m_file.bad(), 
+                " fail: ", m_file.fail());
+            }
+        }
+    }
 }
 
 void
@@ -56,6 +67,7 @@ MosaicMovieFile::initialize(const std::string & inFileName)
             "Failed to open movie file for reading: ", m_fileName);
     }
     readHeader();
+    m_fileClosedForWriting = true;
     // TODO sweet : check that data if of expected size.
     m_valid = true;
 }
@@ -77,10 +89,37 @@ MosaicMovieFile::initialize(
         ISX_THROW(isx::ExceptionFileIO,
             "Failed to open movie file for read/write: ", m_fileName);
     }
-    writeHeader();
+
     m_valid = true;
 }
 
+void
+MosaicMovieFile::closeForWriting()
+{
+    if (isValid())
+    {
+        try
+        {
+            if (!m_fileClosedForWriting)
+            {
+                writeHeader();
+                m_fileClosedForWriting = true;
+            }
+        } 
+        catch(isx::Exception &)
+        {
+        }
+        catch(std::exception & e)
+        {
+            ISX_LOG_ERROR("Exception closing file ", m_fileName, ": ", e.what());
+        }
+        catch(...)
+        {
+            ISX_LOG_ERROR("Unkown exception closing file ", m_fileName);
+        }
+    }
+}
+    
 bool
 MosaicMovieFile::isValid() const
 {
@@ -126,10 +165,17 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
 void
 MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
 {
+    if (m_fileClosedForWriting)
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+                  "Writing frame after file was closed for writing.", m_fileName);
+    }
+
     const DataType frameDataType = inVideoFrame->getDataType();
     if (frameDataType == m_dataType)
     {
         m_file.write(inVideoFrame->getPixels(), getFrameSizeInBytes());
+        m_headerOffset = m_file.tellp();
     }
     else
     {
@@ -180,8 +226,7 @@ MosaicMovieFile::getDataType() const
 void
 MosaicMovieFile::readHeader()
 {
-    json j = readJsonHeader(m_file);
-    m_headerOffset = m_file.tellg();
+    json j = readJsonHeaderAtEnd(m_file, m_headerOffset);
 
     try
     {
@@ -228,9 +273,14 @@ MosaicMovieFile::writeHeader()
         ISX_THROW(isx::ExceptionDataIO,
             "Unknown error while generating movie header.");
     }
-    
-    writeJsonHeader(j, m_file);
+    // Seek to end of file before writing header.
+    // Linux was complaining when writing frames to a movie,
+    // then reading from it and only after reading closing 
+    // the file (and thus writing the header). flush was
+    // causing a segfault
+    m_file.seekp(0, std::ios_base::end);
     m_headerOffset = m_file.tellp();
+    writeJsonHeaderAtEnd(j, m_file);
     flush();
 }
 
@@ -276,13 +326,16 @@ MosaicMovieFile::seekForReadFrame(isize_t inFrameNumber)
     }
 
     const isize_t frameSizeInBytes = getFrameSizeInBytes();
-    const isize_t offsetInBytes = inFrameNumber * frameSizeInBytes;
-    m_file.seekg(m_headerOffset);
-    m_file.seekg(offsetInBytes, std::ios_base::cur);
+    const std::ios::pos_type offsetInBytes = inFrameNumber * frameSizeInBytes;
+    m_file.seekg(offsetInBytes);
     if (!m_file.good())
     {
         ISX_THROW(isx::ExceptionFileIO,
             "Error seeking movie frame for read.", m_fileName);
+    }
+    if (offsetInBytes >= m_headerOffset)
+    {
+        m_file.setstate(std::ios::badbit);
     }
 }
 
@@ -295,7 +348,5 @@ void MosaicMovieFile::flush()
         ISX_THROW(isx::ExceptionFileIO, "Error flushing the file stream.");
     }
 }
-
-
 
 } // namespace isx

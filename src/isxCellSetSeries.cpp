@@ -80,7 +80,16 @@ namespace isx
         return m_valid;
     }
 
-    std::string 
+    void
+    CellSetSeries::closeForWriting()
+    {
+        for (auto & c: m_cellSets)
+        {
+            c->closeForWriting();
+        }
+    }
+
+    std::string
     CellSetSeries::getFileName() const 
     {   
         return "**CellSetSeries";        

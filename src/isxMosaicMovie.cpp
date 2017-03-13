@@ -198,6 +198,12 @@ MosaicMovie::writeFrame(const SpVideoFrame_t & inVideoFrame)
     }
 }
 
+void
+MosaicMovie::closeForWriting()
+{
+    m_file->closeForWriting();
+}
+
 SpVideoFrame_t
 MosaicMovie::makeVideoFrame(isize_t inIndex)
 {

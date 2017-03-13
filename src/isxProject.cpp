@@ -488,7 +488,7 @@ void
 Project::read()
 {
     std::ifstream file(m_fileName);
-    json jsonObject = readJsonHeader(file, false);
+    json jsonObject = readJson(file);
 
     try
     {
@@ -531,7 +531,7 @@ Project::write() const
     }
 
     std::ofstream file(m_fileName, std::ios::trunc);
-    writeJsonHeader(jsonObject, file, false);
+    writeJson(jsonObject, file);
 }
 
 bool

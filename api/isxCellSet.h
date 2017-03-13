@@ -33,6 +33,14 @@ virtual
 bool
 isValid() const = 0;
 
+/// Close this file for writing.  This writes the header containing
+/// metadata at the end of the file.  Any attempts to write data after
+/// this is called will result in an exception.
+///
+virtual
+void
+closeForWriting() = 0;
+
 /// \return     The name of the file storing this cell set.
 ///
 virtual 
@@ -123,7 +131,8 @@ getImageAsync(isize_t inIndex, CellSetGetImageCB_t inCallback) = 0;
 /// \param  inName      The cell name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the given index
 /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or writing fails.
 /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
-virtual 
+/// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+virtual
 void 
 writeImageAndTrace(
         isize_t inIndex,
@@ -145,7 +154,8 @@ isCellValid(isize_t inIndex) = 0;
 /// \param inIndex the cell of interest
 /// \param inIsValid whether to reject or accept a cell in the set
 /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
-virtual 
+/// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+virtual
 void 
 setCellValid(isize_t inIndex, bool inIsValid) = 0;
 
@@ -159,7 +169,8 @@ getCellName(isize_t inIndex) = 0;
 /// Set the cell name 
 /// \param inIndex the cell of interest
 /// \param inName the assigned name (it will be truncated to 15 characters, if longer than that)
-virtual 
+/// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+virtual
 void 
 setCellName(isize_t inIndex, const std::string & inName) = 0;
 

@@ -237,7 +237,8 @@ TEST_CASE("readDataSetType", "[core]")
 
     SECTION("Movie")
     {
-        isx::writeMosaicMovie(fileName, timingInfo, spacingInfo, isx::DataType::U16);
+        auto m(isx::writeMosaicMovie(fileName, timingInfo, spacingInfo, isx::DataType::U16));
+        m->closeForWriting();
 
         isx::DataSet::Type type = isx::readDataSetType(fileName);
 
@@ -399,7 +400,8 @@ TEST_CASE("DataSetSeriesToFromJson", "[core]")
     const isx::TimingInfo timingInfo0(isx::Time(2016, 11, 8, 9, 24, 55), isx::DurationInSeconds(50, 1000), 5);
     const isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(3, 4));
     std::remove(dsFileNameInput0.c_str());
-    isx::writeMosaicMovie(dsFileNameInput0, timingInfo0, spacingInfo, isx::DataType::U16);
+    auto m(isx::writeMosaicMovie(dsFileNameInput0, timingInfo0, spacingInfo, isx::DataType::U16));
+    m->closeForWriting();
 
     const isx::DataSet * ds0 = project.createDataSet(
             dsPath0,
@@ -415,7 +417,8 @@ TEST_CASE("DataSetSeriesToFromJson", "[core]")
     const std::string dsFileNameDInput0 = g_resources["unitTestDataPath"] + "/myCellSetD0.isxd";
 
     std::remove(dsFileNameDInput0.c_str());
-    isx::writeCellSet(dsFileNameDInput0, timingInfo0, spacingInfo);
+    auto cs(isx::writeCellSet(dsFileNameDInput0, timingInfo0, spacingInfo));
+    cs->closeForWriting();
 
     const isx::DataSet * dds0 = project.createDataSet(
             dsPathD0,
@@ -435,7 +438,8 @@ TEST_CASE("DataSetSeriesToFromJson", "[core]")
 
     const isx::TimingInfo timingInfo1(isx::Time(2016, 11, 8, 9, 34, 55), isx::DurationInSeconds(50, 1000), 5);
     std::remove(dsFileNameInput1.c_str());
-    isx::writeMosaicMovie(dsFileNameInput1, timingInfo1, spacingInfo, isx::DataType::U16);
+    auto mov(isx::writeMosaicMovie(dsFileNameInput1, timingInfo1, spacingInfo, isx::DataType::U16));
+    mov->closeForWriting();
 
     const isx::DataSet * ds1 = project.createDataSet(
             dsPath1,
@@ -451,7 +455,8 @@ TEST_CASE("DataSetSeriesToFromJson", "[core]")
     const std::string dsFileNameDInput1 = g_resources["unitTestDataPath"] + "/myCellSetD1.isxd";
 
     std::remove(dsFileNameDInput1.c_str());
-    isx::writeCellSet(dsFileNameDInput1, timingInfo1, spacingInfo);
+    cs = isx::writeCellSet(dsFileNameDInput1, timingInfo1, spacingInfo);
+    cs->closeForWriting();
 
     const isx::DataSet * dds1 = project.createDataSet(
             dsPathD1,
@@ -574,7 +579,8 @@ TEST_CASE("PreviousDataSets", "[core]")
     const isx::TimingInfo timingInfo0(isx::Time(2016, 11, 8, 9, 24, 55), isx::DurationInSeconds(50, 1000), 5);
     const isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(3, 4));
     std::remove(dsFileNameInput0.c_str());
-    isx::writeMosaicMovie(dsFileNameInput0, timingInfo0, spacingInfo, isx::DataType::U16);
+    auto m(isx::writeMosaicMovie(dsFileNameInput0, timingInfo0, spacingInfo, isx::DataType::U16));
+    m->closeForWriting();
 
     isx::DataSet * ds0 = project.createDataSet(
             dsPath0,
@@ -590,7 +596,8 @@ TEST_CASE("PreviousDataSets", "[core]")
     const std::string dsFileNameDInput0 = g_resources["unitTestDataPath"] + "/myCellSetD0.isxd";
 
     std::remove(dsFileNameDInput0.c_str());
-    isx::writeCellSet(dsFileNameDInput0, timingInfo0, spacingInfo);
+    auto cs(isx::writeCellSet(dsFileNameDInput0, timingInfo0, spacingInfo));
+    cs->closeForWriting();
 
     isx::DataSet * dds0 = project.createDataSet(
             dsPathD0,
@@ -609,7 +616,8 @@ TEST_CASE("PreviousDataSets", "[core]")
 
     const isx::TimingInfo timingInfo1(isx::Time(2016, 11, 8, 9, 34, 55), isx::DurationInSeconds(50, 1000), 5);
     std::remove(dsFileNameInput1.c_str());
-    isx::writeMosaicMovie(dsFileNameInput1, timingInfo1, spacingInfo, isx::DataType::U16);
+    auto mov(isx::writeMosaicMovie(dsFileNameInput1, timingInfo1, spacingInfo, isx::DataType::U16));
+    mov->closeForWriting();
 
     std::shared_ptr<isx::DataSet> ds1 = std::make_shared<isx::DataSet>(
             dsName1,
@@ -624,7 +632,8 @@ TEST_CASE("PreviousDataSets", "[core]")
     const std::string dsFileNameDInput1 = g_resources["unitTestDataPath"] + "/myCellSetD1.isxd";
 
     std::remove(dsFileNameDInput1.c_str());
-    isx::writeCellSet(dsFileNameDInput1, timingInfo1, spacingInfo);
+    cs = isx::writeCellSet(dsFileNameDInput1, timingInfo1, spacingInfo);
+    cs->closeForWriting();
 
     std::shared_ptr<isx::DataSet> dds1 = std::make_shared<isx::DataSet>(
             dsNameD1,

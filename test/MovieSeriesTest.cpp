@@ -44,6 +44,7 @@ writeTestU16Movie(
         }
         movie->writeFrame(frame);
     }
+    movie->closeForWriting();
     return movie;
 }
 } // namespace

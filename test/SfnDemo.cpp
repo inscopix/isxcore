@@ -64,7 +64,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             for (const auto & name : series.second)
             {
                 const std::string movieName = name + "-mc";
-                const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
+                const std::string movieFile = procDataDir + "/" + movieName + "_he.isxd";
                 REQUIRE(isx::pathExists(movieFile));
                 const std::string moviePath = seriesPath + "/" + importPrefix + movieName;
                 project.createDataSet(
@@ -112,10 +112,10 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             for (const auto & name : series.second)
             {
                 const std::string movieName = name + "-mc_DFF";
-                const std::string movieFile = procDataDir + "/" + movieName + ".isxd";
+                const std::string movieFile = procDataDir + "/" + movieName + "_he.isxd";
                 REQUIRE(isx::pathExists(movieFile));
                 const std::string moviePath = seriesPath + "/" + importPrefix + movieName;
-                const std::string cellSetFile = procDataDir + "/" + name + "-rois.isxd";
+                const std::string cellSetFile = procDataDir + "/" + name + "-rois_he.isxd";
                 REQUIRE(isx::pathExists(cellSetFile));
                 project.createDataSet(
                         moviePath,

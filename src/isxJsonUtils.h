@@ -14,6 +14,9 @@ namespace isx
 // for convenience
 using json = nlohmann::json;
 
+using CellNames_t = std::vector<std::string>;
+using CellValidities_t = std::vector<bool>;
+
 json convertRatioToJson(const Ratio & inRatio);
 Ratio convertJsonToRatio(const json & j);
 
@@ -46,13 +49,12 @@ DataSet::Properties convertJsonToProperties(const json & j);
 /// This reads from the beginning of the stream.
 ///
 /// \param  inStream    The input stream from which to read.
-/// \param  inNullTerm  If true, read until a null terminator.
 /// \return             The JSON structure.
 ///
 /// \throw  isx::ExceptionFileIO    If reading the stream fails.
 /// \throw  isx::ExceptionDataIO    If parsing the JSON header fails.
 json
-readJsonHeader(std::istream & inStream, bool inNullTerm = true);
+readJson(std::istream & inStream);
 
 /// Writes a JSON header to an output stream.
 ///
@@ -60,15 +62,33 @@ readJsonHeader(std::istream & inStream, bool inNullTerm = true);
 ///
 /// \param  inJsonObject    The JSON structure.
 /// \param  inStream        The output stream to which to write.
-/// \param  inNullTerm      If true, write a null terminator at the end
-///                         of the header.
 ///
 /// \throw  isx::ExceptionFileIO    If writing the header fails.
 void
-writeJsonHeader(
-        const json & inJsonObject,
-        std::ostream & inStream,
-        bool inNullTerm = true);
+writeJson(
+    const json & inJsonObject,
+    std::ostream & inStream);
+
+json
+convertCellNamesToJson(const CellNames_t & inCellNames);
+CellNames_t
+convertJsonToCellNames(const json & inJson);
+json
+convertCellValiditiesToJson(const CellValidities_t & inCellValidities);
+CellValidities_t
+convertJsonToCellValidities(const json & inJson);
+    
+/// Reads a JSON header from an input stream.
+///
+json
+readJsonHeaderAtEnd(std::istream & inStream, std::ios::pos_type & outHeaderPosition);
+
+/// Writes a JSON header to an output stream.
+///
+void
+writeJsonHeaderAtEnd(
+    const json & inJsonObject,
+    std::ostream & inStream);
 
 } // namespace isx
 

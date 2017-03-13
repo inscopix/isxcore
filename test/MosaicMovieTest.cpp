@@ -35,6 +35,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
     {
         auto movie = std::make_shared<isx::MosaicMovie>(
                 fileName, timingInfo, spacingInfo, dataType);
+        movie->closeForWriting();
         REQUIRE(movie->isValid());
         REQUIRE(movie->getDataType() == dataType);
     }
@@ -60,6 +61,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
             std::fill(frame->getPixelsAsU16(), frame->getPixelsAsU16() + numPixels, 0xCAFE);
             movie->writeFrame(frame);
         }
+        movie->closeForWriting();
 
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
@@ -91,7 +93,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
                 void * p = frame->getPixels();
                 movie->writeFrame(frame);
             }
-            
+            movie->closeForWriting();
         }
         auto movie = std::make_shared<isx::MosaicMovie>(fileName);
         REQUIRE(movie->isValid());
@@ -154,6 +156,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
             std::fill(frame->getPixelsAsU16(), frame->getPixelsAsU16() + numPixels, 0xCAFE);
             movie->writeFrame(frame);
         }
+        movie->closeForWriting();
 
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
@@ -198,6 +201,7 @@ TEST_CASE("MosaicMovieF32", "[core-internal]")
     {
         auto movie = std::make_shared<isx::MosaicMovie>(
                 fileName, timingInfo, spacingInfo, dataType);
+        movie->closeForWriting();
         REQUIRE(movie->isValid());
         REQUIRE(movie->getDataType() == isx::DataType::F32);
     }
@@ -219,6 +223,7 @@ TEST_CASE("MosaicMovieF32", "[core-internal]")
             std::fill(frame->getPixelsAsF32(), frame->getPixelsAsF32() + numPixels, 3.14159265f);
             movie->writeFrame(frame);
         }
+        movie->closeForWriting();
         REQUIRE(movie->isValid());
         REQUIRE(movie->getTimingInfo() == timingInfo);
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
@@ -254,7 +259,7 @@ TEST_CASE("MosaicMovieF32", "[core-internal]")
                 void * p = frame->getPixels();
                 movie->writeFrame(frame);
             }
-            
+            movie->closeForWriting();
         }
         auto movie = std::make_shared<isx::MosaicMovie>(fileName);
         REQUIRE(movie->isValid());
@@ -297,12 +302,50 @@ TEST_CASE("MosaicMovieF32", "[core-internal]")
                 fileName, timingInfo, spacingInfo, dataType);
 
         isx::SpVideoFrame_t frame = movie->makeVideoFrame(3);
+        movie->closeForWriting();
 
         REQUIRE(frame->getImage().getSpacingInfo() == spacingInfo);
         REQUIRE(frame->getNumChannels() == 1);
         REQUIRE(frame->getDataType() == dataType);
         REQUIRE(frame->getTimeStamp() == timingInfo.convertIndexToStartTime(3));
         REQUIRE(frame->getFrameIndex() == 3);
+    }
+
+    SECTION("Write after calling closeForWriting.")
+    {
+        isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
+        {
+            auto movie = std::make_shared<isx::MosaicMovie>(
+                fileName, timingInfo, spacingInfo, dataType);
+            
+            for (isx::isize_t f = 0; f < numFrames - 1; ++f)
+            {
+                auto frame = std::make_shared<isx::VideoFrame>(
+                    spacingInfo,
+                    sizeof(float) * sizePixels.getWidth(),
+                    1,
+                    dataType,
+                    timingInfo.convertIndexToStartTime(f),
+                    f);
+                std::fill(frame->getPixelsAsF32(), frame->getPixelsAsF32() + numPixels, 3.14159265f);
+                movie->writeFrame(frame);
+            }
+            movie->closeForWriting();
+            
+            const auto f = numFrames - 1;
+            auto frame = std::make_shared<isx::VideoFrame>(
+                spacingInfo,
+                sizeof(float) * sizePixels.getWidth(),
+                1,
+                dataType,
+                timingInfo.convertIndexToStartTime(f),
+                f);
+            std::fill(frame->getPixelsAsF32(), frame->getPixelsAsF32() + numPixels, 3.14159265f);
+            ISX_REQUIRE_EXCEPTION(
+                movie->writeFrame(frame),
+                isx::ExceptionFileIO,
+                "Writing frame after file was closed for writing." + fileName);
+        }
     }
 
     isx::CoreShutdown();
@@ -314,7 +357,7 @@ TEST_CASE("Corrupt file", "[core-meme]")
 
     SECTION("Header-only file")
     {
-        std::string fileName = g_resources["unitTestDataPath"] + "/negative/NullDataSet.isxd";
+        std::string fileName = g_resources["unitTestDataPath"] + "/negative/NullDataSet_he.isxd";
         
         auto movie = std::make_shared<isx::MosaicMovie>(fileName);
         REQUIRE(movie->isValid());

@@ -141,6 +141,7 @@ TEST_CASE("CellSetTest", "[core]")
         REQUIRE(cellSet->getTimingInfo() == timingInfo);
         REQUIRE(cellSet->getSpacingInfo() == spacingInfo);
         REQUIRE(cellSet->getNumCells() == 0);
+        cellSet->closeForWriting();
     }
 
     SECTION("Read constructor")
@@ -148,6 +149,7 @@ TEST_CASE("CellSetTest", "[core]")
         {
             isx::SpCellSet_t cellSet = isx::writeCellSet(
                     fileName, timingInfo, spacingInfo);
+            cellSet->closeForWriting();
         }
         isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
 
@@ -163,6 +165,7 @@ TEST_CASE("CellSetTest", "[core]")
         isx::SpCellSet_t cellSet = isx::writeCellSet(
                 fileName, timingInfo, spacingInfo);
         cellSet->writeImageAndTrace(0, originalImage, originalTrace);
+        cellSet->closeForWriting();
 
         REQUIRE(cellSet->getNumCells() == 1);
         REQUIRE(cellSet->isCellValid(0) == true);
@@ -176,6 +179,7 @@ TEST_CASE("CellSetTest", "[core]")
             isx::SpCellSet_t cellSet = isx::writeCellSet(
                     fileName, timingInfo, spacingInfo);
             cellSet->writeImageAndTrace(0, originalImage, originalTrace, "mycell");
+            cellSet->closeForWriting();
         }
         isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
 
@@ -196,7 +200,7 @@ TEST_CASE("CellSetTest", "[core]")
 
         cellSet->setCellName(0, "newName");
         REQUIRE(cellSet->getCellName(0).compare("newName") == 0);
-        
+        cellSet->closeForWriting();
     }
 
     SECTION("Set data for 3 cells and check values are correct")
@@ -210,6 +214,7 @@ TEST_CASE("CellSetTest", "[core]")
         cellSet->setCellValid(0, true);
         cellSet->setCellValid(1, false);
         cellSet->setCellValid(2, true);
+        cellSet->closeForWriting();
 
         REQUIRE(cellSet->getNumCells() == 3);
         REQUIRE(cellSet->isCellValid(0) == true);
@@ -235,6 +240,7 @@ TEST_CASE("CellSetTest", "[core]")
             cellSet->setCellValid(0, true);
             cellSet->setCellValid(1, false);
             cellSet->setCellValid(2, true);
+            cellSet->closeForWriting();
         }
         isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
 
@@ -260,6 +266,7 @@ TEST_CASE("CellSetTest", "[core]")
         {
             cellSet->writeImageAndTrace(i, originalImage, originalTrace);
         }
+        cellSet->closeForWriting();
 
         isx::CellSet::CellSetGetTraceCB_t callBack = [originalTrace, &doneCount](isx::AsyncTaskResult<isx::SpFTrace_t> inAsyncTaskResult)
         {
@@ -296,6 +303,7 @@ TEST_CASE("CellSetTest", "[core]")
         {
             cellSet->writeImageAndTrace(i, originalImage, originalTrace);
         }
+        cellSet->closeForWriting();
 
         isx::CellSet::CellSetGetImageCB_t callBack = [originalImage, &doneCount](isx::AsyncTaskResult<isx::SpImage_t> inAsyncTaskResult)
         {
@@ -380,6 +388,7 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
         }
 
         cellSet->writeImageAndTrace(0, image, trace);
+        cellSet->closeForWriting();
 
         isx::Project project(projectFile, "Full Frame");
         project.createDataSet(

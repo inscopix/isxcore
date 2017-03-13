@@ -42,6 +42,12 @@ CellSetSimple::isValid() const
     return m_valid;
 }
 
+void
+CellSetSimple::closeForWriting()
+{
+    m_file->closeForWriting();
+}
+
 std::string
 CellSetSimple::getFileName() const
 {

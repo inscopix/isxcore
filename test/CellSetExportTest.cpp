@@ -78,6 +78,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             cellSet->writeImageAndTrace(2, originalImage, originalTraces[2], "Abbas");
             cellSet->writeImageAndTrace(3, originalImage, originalTraces[3]);
             cellSet->writeImageAndTrace(4, originalImage, originalTraces[4]);
+            cellSet->closeForWriting();
         }
         
         // export and then verify
@@ -112,6 +113,7 @@ TEST_CASE("CellSetExportTest", "[core]")
                 fileName, timingInfo, spacingInfo);
             
             cellSet->writeImageAndTrace(0, originalImage, originalTraces[2], "Lonely1");
+            cellSet->closeForWriting();
         }
         
         // export and then verify
@@ -157,6 +159,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             } 
             
             cellSet->writeImageAndTrace(0, originalImage, originalTraces[2], "Lonely1");
+            cellSet->closeForWriting();
         }
         
         // export 
@@ -232,6 +235,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             cellSet->writeImageAndTrace(2, originalImage, originalTraces[2], "Abbas");
             cellSet->writeImageAndTrace(3, originalImage, originalTraces[3]);
             cellSet->writeImageAndTrace(4, originalImage, originalTraces[4]);
+            cellSet->closeForWriting();
         }
         // export
         isx::SpCellSet_t cellSet = isx::readCellSet(fileName);

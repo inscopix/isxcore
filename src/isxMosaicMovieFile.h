@@ -6,6 +6,7 @@
 #include "isxVideoFrame.h"
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
+#include "isxJsonUtils.h"
 
 #include <ios>
 #include <fstream>
@@ -64,6 +65,13 @@ public:
     /// \return True if the movie file is valid, false otherwise.
     ///
     bool isValid() const;
+    
+    /// Close this file for writing.  This writes the header containing
+    /// metadata at the end of the file.  Any attempts to write frames after
+    /// this is called will result in an exception.
+    ///
+    void
+    closeForWriting();
 
     /// Read a frame in the file by index.
     ///
@@ -81,6 +89,8 @@ public:
     /// \throw  isx::ExceptionDataIO    If the frame data type does not match
     ///                                 the movie data type.
     /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
+    ///
+    /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void writeFrame(const SpVideoFrame_t & inVideoFrame);
 
     /// Initialize for reading.
@@ -152,6 +162,8 @@ private:
     /// The file stream
     std::fstream m_file;
 
+    bool m_fileClosedForWriting = false;
+    
     /// Read the header to populate information about the movie.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the header from the file fails.
@@ -183,7 +195,7 @@ private:
     /// Flush the stream
     ///
     void flush();
-
+    
 };
 
 }

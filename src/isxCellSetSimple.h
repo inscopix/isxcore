@@ -62,6 +62,9 @@ public:
     bool 
     isValid() const override;
 
+    void
+    closeForWriting() override;
+
     std::string 
     getFileName() const override;
 

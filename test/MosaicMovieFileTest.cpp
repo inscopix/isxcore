@@ -39,6 +39,7 @@ writeTestU16Movie(
 
         movie.writeFrame(frame);
     }
+    movie.closeForWriting();
 }
 
 void
@@ -71,6 +72,7 @@ writeTestF32Movie(
 
         movie.writeFrame(frame);
     }
+    movie.closeForWriting();
 }
 
 } // namespace
@@ -100,6 +102,7 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
     SECTION("Write constructor.")
     {
         isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo, dataType);
+        movie.closeForWriting();
         REQUIRE(movie.isValid());
         REQUIRE(movie.getTimingInfo() == timingInfo);
         REQUIRE(movie.getSpacingInfo() == spacingInfo);
@@ -124,6 +127,7 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
                 std::fill(frame->getPixelsAsU16(), frame->getPixelsAsU16() + numPixels, 0xCAFE);
                 movie.writeFrame(frame);
             }
+            movie.closeForWriting();
         }
         
         isx::MosaicMovieFile movie(fileName);
@@ -157,6 +161,7 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
                 void * p = frame->getPixels();
                 movie.writeFrame(frame);
             }
+            movie.closeForWriting();
         }
 
         isx::MosaicMovieFile movie(fileName);
@@ -217,6 +222,7 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal]")
     SECTION("Write constructor.")
     {
         isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo, dataType);
+        movie.closeForWriting();
         REQUIRE(movie.isValid());
         REQUIRE(movie.getFileName() == fileName);
         REQUIRE(movie.getTimingInfo() == timingInfo);
@@ -242,6 +248,7 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal]")
                 std::fill(frame->getPixelsAsF32(), frame->getPixelsAsF32() + numPixels, 3.14159265f);
                 movie.writeFrame(frame);
             }
+            movie.closeForWriting();
         }
         
         isx::MosaicMovieFile movie(fileName);
@@ -275,6 +282,7 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal]")
                 void * p = frame->getPixels();
                 movie.writeFrame(frame);
             }
+            movie.closeForWriting();
         }
 
         isx::MosaicMovieFile movie(fileName);
@@ -307,6 +315,42 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal]")
             {
                 REQUIRE(frameBuf[p] == (f * numPixels) + p);
             }
+        }
+    }
+    
+    SECTION("Write after calling closeForWriting.")
+    {
+        isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
+        {
+            isx::MosaicMovieFile movie(fileName, timingInfo, spacingInfo, dataType);           
+            
+            for (isx::isize_t f = 0; f < numFrames - 1; ++f)
+            {
+                auto frame = std::make_shared<isx::VideoFrame>(
+                    spacingInfo,
+                    sizeof(float) * sizePixels.getWidth(),
+                    1,
+                    dataType,
+                    timingInfo.convertIndexToStartTime(f),
+                    f);
+                std::fill(frame->getPixelsAsF32(), frame->getPixelsAsF32() + numPixels, 3.14159265f);
+                movie.writeFrame(frame);
+            }
+            movie.closeForWriting();
+            
+            const auto f = numFrames - 1;
+            auto frame = std::make_shared<isx::VideoFrame>(
+                spacingInfo,
+                sizeof(float) * sizePixels.getWidth(),
+                1,
+                dataType,
+                timingInfo.convertIndexToStartTime(f),
+                f);
+            std::fill(frame->getPixelsAsF32(), frame->getPixelsAsF32() + numPixels, 3.14159265f);
+            ISX_REQUIRE_EXCEPTION(
+                movie.writeFrame(frame),
+                isx::ExceptionFileIO,
+                "Writing frame after file was closed for writing." + fileName);
         }
     }
 }

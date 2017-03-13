@@ -192,8 +192,8 @@ DataSet::Type
 readDataSetType(const std::string & inFileName)
 {
     std::ifstream file(inFileName, std::ios::binary);
-    json j = readJsonHeader(file);
-
+    std::ios::pos_type dummy;
+    json j = readJsonHeaderAtEnd(file, dummy);
     try
     {
         return DataSet::Type(int(j["type"]));

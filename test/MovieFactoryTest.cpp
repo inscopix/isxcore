@@ -160,6 +160,7 @@ TEST_CASE("MovieFactoryMosaicMovie", "[core]")
     SECTION("Write a Mosaic movie file")
     {
         isx::SpWritableMovie_t movie = isx::writeMosaicMovie(fileName, timingInfo, spacingInfo, dataType);
+        movie->closeForWriting();
         REQUIRE(movie->isValid());
     }
 
@@ -168,6 +169,7 @@ TEST_CASE("MovieFactoryMosaicMovie", "[core]")
         {
             isx::SpWritableMovie_t movie = isx::writeMosaicMovie(fileName, timingInfo, spacingInfo, dataType);
             writeTestData(movie);
+            movie->closeForWriting();
         }
 
         isx::SpMovie_t movie = isx::readMovie(fileName);

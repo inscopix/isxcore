@@ -7,6 +7,7 @@
 #include "isxSpacingInfo.h"
 #include "isxImage.h"
 #include "isxTrace.h"
+#include "isxJsonUtils.h"
 
 
 namespace isx
@@ -56,6 +57,13 @@ public:
     ///
     bool isValid() const; 
 
+    /// Close this file for writing.  This writes the header containing
+    /// metadata at the end of the file.  Any attempts to write data after
+    /// this is called will result in an exception.
+    ///
+    void
+    closeForWriting();
+    
     /// \return     The name of the file.
     ///
     std::string getFileName() const;
@@ -91,6 +99,7 @@ public:
     /// If cell ID already exists, it will overwrite its data. Otherwise, it will be appended
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or writing fails.
     /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
+    /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData, const std::string & inName = std::string());
     
     /// \return if the cell is valid 
@@ -102,6 +111,7 @@ public:
     /// \param inCellId the cell of interest
     /// \param inIsValid whether to reject or accept a cell in the set
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
+    /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void setCellValid(isize_t inCellId, bool inIsValid);
 
     /// Get the name for a cell in the set
@@ -112,8 +122,8 @@ public:
     /// Set the cell name in the cell header
     /// \param inCellId the cell of interest
     /// \param inName the assigned name (it will be truncated to 15 characters, if longer than that)
+    /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void setCellName(isize_t inCellId, const std::string & inName);
-
 
 private:
 
@@ -136,29 +146,24 @@ private:
     std::ios::pos_type m_headerOffset;
 
     /// The cell names
-    std::vector<std::string> m_cellNames;
+    CellNames_t m_cellNames;
+    
+    /// Cell validity flags
+    CellValidities_t m_cellValidities;
 
     /// The file stream
     std::fstream m_file;
 
     /// The stream open mode
     std::ios_base::openmode m_openmode;
+    
+    bool m_fileClosedForWriting = false;
 
     /// Read the header to populate information about the cell set.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the header from the file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the header fails.
     void readHeader();
-
-    /// Read the all the cell names for the cells in the datasets and hold them in memory
-    ///
-    /// \throw  isx::ExceptionFileIO    If reading from the file fails.
-    void readCellNames();
-
-    /// Get the name for a cell in the set
-    /// \param inCellId the cell of interest
-    /// \return a string with the name 
-    std::string readCellName(isize_t inCellId);
 
     /// Write the header containing information about the cell set.
     ///
@@ -171,23 +176,6 @@ private:
     /// \throw  isx::ExceptionFileIO    If seeking to a unexistent cell or reading fails.
     void seekToCell(isize_t inCellId);
 
-
-    /// \return the size of the cell ID in bytes (in the cell header)
-    ///
-    isize_t cellIdSizeInBytes();
-
-    /// \return the size of the valid/invalid flag in bytes (in the cell header)
-    ///
-    isize_t cellValiditySizeInBytes();
-
-    /// \return the size of the cell name field in bytes (in the cell header)
-    ///
-    isize_t cellNameSizeInBytes();
-
-    /// \return the size of the reserved portion of the cell header in bytes
-    ///
-    isize_t reservedSizeInBytes();
-
     /// \return the size of the segmentation image in bytes (in the cell header)
     ///
     isize_t segmentationImageSizeInBytes();
@@ -196,14 +184,9 @@ private:
     ///
     isize_t traceSizeInBytes();
 
-    /// \return the size of the cell header in bytes (in the cell header)
-    ///
-    isize_t cellHeaderSizeInBytes();
-
     /// Flush the stream
     ///
     void flush();
-
 
 };
 }

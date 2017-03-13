@@ -60,7 +60,8 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         // Write simple cell sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], timingInfos[i], spacingInfo);            
+            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], timingInfos[i], spacingInfo);
+            cs->closeForWriting();
         }
 
         isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
@@ -82,7 +83,8 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         // Write simple cell sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], tis[i], spacingInfo);            
+            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], tis[i], spacingInfo);
+            cs->closeForWriting();
         }
 
         isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
@@ -109,7 +111,8 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         // Write simple cell sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], timingInfos[i], spacingInfos[i]);            
+            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], timingInfos[i], spacingInfos[i]);
+            cs->closeForWriting();
         }
 
         ISX_REQUIRE_EXCEPTION(
@@ -133,6 +136,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
                 trace->setValue(i, float(i));                
                 cs->writeImageAndTrace(0, cellImage, trace);
             }           
+            cs->closeForWriting();
         }
 
         ISX_REQUIRE_EXCEPTION(
@@ -150,6 +154,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
             isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], tis[i], spacingInfo);            
+            cs->closeForWriting();
         }
 
         ISX_REQUIRE_EXCEPTION(
@@ -171,6 +176,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
             isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], tis[i], spacingInfo);            
+            cs->closeForWriting();
         }
 
         ISX_REQUIRE_EXCEPTION(
@@ -190,6 +196,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
             trace->setValue(i, float(i));                
             cs->writeImageAndTrace(0, cellImage, trace);
+            cs->closeForWriting();
         }
 
         isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
@@ -219,6 +226,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
             totalNumSamples += timingInfos[i].getNumTimes();
             trace->setValue(i, float(i));                
             cs->writeImageAndTrace(0, cellImage, trace);
+            cs->closeForWriting();
         }
 
         isx::SpCellSet_t css = isx::readCellSetSeries(filenames);

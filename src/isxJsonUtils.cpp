@@ -1,7 +1,9 @@
 #include "isxJsonUtils.h"
 #include "isxException.h"
 
+#include <iostream>
 #include <fstream>
+#include <sstream>
 
 // Note aschildan Feb 9, 2017
 // Disable operator[] which is unchecked and results in undefined behavior if
@@ -208,32 +210,109 @@ convertJsonToProperties(const json & j)
 }
 
 json
-readJsonHeader(std::istream & inStream, bool inNullTerm)
+readJson(std::istream & inStream)
 {
     if (!inStream.good())
     {
-        ISX_THROW(isx::ExceptionFileIO, "Error while reading JSON header.");
+        ISX_THROW(isx::ExceptionFileIO, "Error while reading JSON.");
     }
 
     inStream.seekg(std::ios_base::beg);
     if (!inStream.good())
     {
-        ISX_THROW(isx::ExceptionFileIO, "Error while seeking to JSON header.");
+        ISX_THROW(isx::ExceptionFileIO, "Error while seeking to JSON.");
     }
 
     json jsonObject;
     try
     {
-        if (inNullTerm)
-        {
-            std::string jsonStr;
-            std::getline(inStream, jsonStr, '\0');
-            jsonObject = json::parse(jsonStr);
-        }
-        else
-        {
-            inStream >> jsonObject;
-        }
+        inStream >> jsonObject;
+    }
+    catch (const std::exception & error)
+    {
+        ISX_THROW(isx::ExceptionDataIO, "Error while parsing JSON: ", error.what());
+    }
+    catch (...)
+    {
+        ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing JSON.");
+    }
+
+    return jsonObject;
+}
+    
+void
+writeJson(
+    const json & inJsonObject,
+    std::ostream & inStream)
+{
+    if (!inStream.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Failed to open stream when writing JSON.");
+    }
+
+    inStream.seekp(std::ios_base::beg);
+    inStream << std::setw(4) << inJsonObject;
+
+    if (!inStream.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Failed to write JSON.");
+    }
+}
+    
+json
+convertCellNamesToJson(const CellNames_t & inCellNames)
+{
+    return inCellNames;
+}
+
+CellNames_t
+convertJsonToCellNames(const json & inJson)
+{
+    return inJson.get<CellNames_t>();
+}
+
+json
+convertCellValiditiesToJson(const CellValidities_t & inCellValidities)
+{
+    return inCellValidities;
+}
+
+CellValidities_t
+convertJsonToCellValidities(const json & inJson)
+{
+    return inJson.get<CellValidities_t>();
+}
+    
+json
+readJsonHeaderAtEnd(std::istream & inStream, std::ios::pos_type & outHeaderPosition)
+{
+    if (!inStream.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Error while reading JSON header at end.");
+    }
+
+    isx::isize_t sz = 0;
+    inStream.seekg(-int32_t(sizeof(sz)), std::ios_base::end);
+    if (!inStream.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Error while seeking to length of JSON header at end.");
+    }
+    inStream.read(reinterpret_cast<char *>(&sz), sizeof(sz));
+    
+    int64_t offset = int64_t(sz) + 1 + sizeof(sz);
+    inStream.seekg(-offset, std::ios_base::end);
+    outHeaderPosition = inStream.tellg();
+    if (!inStream.good())
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Error while seeking to beginning of JSON header at end.");
+    }
+    std::string jsonStr;
+    json jsonObject;
+    try
+    {
+        std::getline(inStream, jsonStr, '\0');
+        jsonObject = json::parse(jsonStr);
     }
     catch (const std::exception & error)
     {
@@ -248,28 +327,29 @@ readJsonHeader(std::istream & inStream, bool inNullTerm)
 }
 
 void
-writeJsonHeader(
-        const json & inJsonObject,
-        std::ostream & inStream,
-        bool inNullTerm)
+writeJsonHeaderAtEnd(
+    const json & inJsonObject,
+    std::ostream & inStream)
 {
+    std::stringstream st;
+    
     if (!inStream.good())
     {
         ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open stream when writing JSON header.");
+                  "Failed to access stream when writing JSON footer.");
     }
 
-    inStream.seekp(std::ios_base::beg);
-    inStream << std::setw(4) << inJsonObject;
-    if (inNullTerm)
-    {
-        inStream << '\0';
-    }
-
+    st << std::setw(4) << inJsonObject;
+    isx::isize_t sz = st.str().length();
+    
+    inStream << st.str() << '\0';
+    inStream.write(reinterpret_cast<char *>(&sz), sizeof(sz));
+    
     if (!inStream.good())
     {
-        ISX_THROW(isx::ExceptionFileIO, "Failed to write JSON header.");
+        ISX_THROW(isx::ExceptionFileIO, "Failed to write JSON footer.");
     }
+    
 }
 
 } // namespace isx

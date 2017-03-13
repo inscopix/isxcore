@@ -2,7 +2,6 @@
 #include "isxImage.h"
 #include "isxException.h"
 #include "isxAssert.h"
-#include "isxJsonUtils.h"
 
 namespace isx
 {
@@ -22,7 +21,7 @@ namespace isx
                 "Failed to open cell set file for reading: ", m_fileName);
         }
         readHeader();
-        readCellNames();
+        m_fileClosedForWriting = true;
         m_valid = true;
     }
 
@@ -40,23 +39,55 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO,
                 "Failed to open cell set file for read/write: ", m_fileName);
         }
-        writeHeader();
-        m_valid = true;            
+        m_valid = true;
     }
 
     CellSetFile::~CellSetFile()
     {
-        if(m_file.is_open() && m_file.good())
+        if (isValid())
         {
-            m_file.close();
-            if (!m_file.good())
+            ISX_ASSERT(m_fileClosedForWriting);
+            if (!m_fileClosedForWriting)
             {
-                ISX_LOG_ERROR("Error closing the stream for file", m_fileName,
-                " eof: ", m_file.eof(), 
-                " bad: ", m_file.bad(), 
-                " fail: ", m_file.fail());
+                closeForWriting();
             }
-        }    
+            
+            if(m_file.is_open() && m_file.good())
+            {
+                m_file.close();
+                if (!m_file.good())
+                {
+                    ISX_LOG_ERROR("Error closing the stream for file", m_fileName,
+                    " eof: ", m_file.eof(), 
+                    " bad: ", m_file.bad(), 
+                    " fail: ", m_file.fail());
+                }
+            }
+        }
+    }
+    
+    void
+    CellSetFile::closeForWriting()
+    {
+        try
+        {
+            if (!m_fileClosedForWriting)
+            {
+                writeHeader();
+                m_fileClosedForWriting = true;
+            }
+        }
+        catch(isx::Exception &)
+        {
+        }
+        catch(std::exception & e)
+        {
+            ISX_LOG_ERROR("Exception closing file ", m_fileName, ": ", e.what());
+        }
+        catch(...)
+        {
+            ISX_LOG_ERROR("Unkown exception closing file ", m_fileName);
+        }
     }
 
     bool 
@@ -95,7 +126,7 @@ namespace isx
         seekToCell(inCellId);      
         
         // Calculate bytes till beginning of cell data
-        isize_t offsetInBytes = cellValiditySizeInBytes() + cellNameSizeInBytes() + reservedSizeInBytes() + segmentationImageSizeInBytes();
+        isize_t offsetInBytes = segmentationImageSizeInBytes();
         
         m_file.seekg(offsetInBytes, std::ios_base::cur);
         if (!m_file.good())
@@ -120,8 +151,8 @@ namespace isx
         
         seekToCell(inCellId);    
         
-        // Calculate bytes till beginning of the segmentation image
-        isize_t offsetInBytes = cellValiditySizeInBytes() + cellNameSizeInBytes() + reservedSizeInBytes();
+        // "Calculate" bytes till beginning of the segmentation image
+        isize_t offsetInBytes = 0;
         
         m_file.seekg(offsetInBytes, std::ios_base::cur);
         if (!m_file.good())
@@ -147,6 +178,12 @@ namespace isx
     void 
     CellSetFile::writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData, const std::string & inName)
     {
+        if (m_fileClosedForWriting)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Writing data after file was closed for writing.", m_fileName);
+        }
+
         // Check that image is F32
         const DataType dataType = inSegmentationImage.getDataType();
         if (dataType != DataType::F32)
@@ -164,54 +201,28 @@ namespace isx
         isize_t fSamples = m_timingInfo.getNumTimes();
         ISX_ASSERT(inSamples == fSamples);
         
-           
-        if (inCellId >= m_numCells)
+        auto name = inName != "" ? inName : "C" + std::to_string(inCellId);
+        
+        if (inCellId == m_numCells)
         {
-            // Append cell data            
-            uint32_t nextCellId = (uint32_t)m_numCells;
-            m_file.seekp(0, std::ios_base::end);
-            m_file.write((char *) &nextCellId, sizeof(uint32_t));
-            if (!m_file.good())
-            {
-                ISX_THROW(isx::ExceptionFileIO,
-                    "Failed to write cell ID: ", m_fileName);
-            }
+            m_cellNames.push_back(name);
+            m_cellValidities.push_back(true);
 
-            m_cellNames.push_back(std::string());
-            
             ++m_numCells;
+        }
+        else if (inCellId < m_numCells)
+        {
+            // Overwrite existing cell
+            seekToCell(inCellId);
+ 
+            m_cellNames.at(inCellId) = name;
+            m_cellValidities.at(inCellId) = true;
         }
         else
         {
-            // Overwrite existing cell
-            seekToCell(inCellId);            
+            ISX_THROW(isx::ExceptionDataIO,
+                      "Writing cell indexes out of order is unsupported.");
         }
-        
-        char valid = 1;
-        m_file.write(&valid, sizeof(char));
-
-        // Write cell name
-        std::string name = inName;
-        if(inName.empty())
-        {
-            name = "C" + std::to_string(inCellId);
-        }
-        else if(inName.size() > 15)
-        {
-            name = inName.substr(0, 15);
-        }
-
-        m_cellNames[inCellId] = name;
-        
-        while(name.size() < 16)
-        {
-            name += '\0';
-        }
-
-        m_file.write(name.data(), name.length());
-        char * zeroBuf = new char[reservedSizeInBytes()];
-        m_file.write(zeroBuf, reservedSizeInBytes());
-        delete [] zeroBuf;
 
         m_file.write(inSegmentationImage.getPixels(), inImageSizeInBytes);
         m_file.write(reinterpret_cast<char*>(inData.getValues()), traceSizeInBytes());
@@ -220,89 +231,48 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO,
                 "Failed to write cell data to file: ", m_fileName);
         }
+        m_headerOffset = m_file.tellp();
         flush();
     }
 
     bool 
     CellSetFile::isCellValid(isize_t inCellId) 
     {
-        
-        seekToCell(inCellId); 
-        
-        char isValid = 0;
-        m_file.read(&isValid, sizeof(char));
-        if (!m_file.good())
-        {
-            ISX_THROW(isx::ExceptionFileIO, "Error reading cell information.");
-        }
-        return isValid == 1 ? true : false;
+        return m_cellValidities.at(inCellId);
     }
-    
+
     void 
     CellSetFile::setCellValid(isize_t inCellId, bool inIsValid)
     {
-        seekToCell(inCellId); 
-                
-        char isValid = inIsValid ? 1 : 0;
-        m_file.write((char *)&isValid, sizeof(char));
-        if (!m_file.good())
+        if (m_fileClosedForWriting)
         {
-            ISX_THROW(isx::ExceptionFileIO, "Error writing cell information.");
-        } 
-        flush();
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Writing data after file was closed for writing.", m_fileName);
+        }
+        m_cellValidities.at(inCellId) = inIsValid;
     }
 
     std::string 
     CellSetFile::getCellName(isize_t inCellId) 
     {
-        return m_cellNames[inCellId];
+        return m_cellNames.at(inCellId);
     }
 
     void 
     CellSetFile::setCellName(isize_t inCellId, const std::string & inName)
     {
-       
-        // Overwrite existing cell
-        seekToCell(inCellId); 
-                
-        // Calculate bytes till beginning of the segmentation image
-        isize_t offsetInBytes = cellValiditySizeInBytes();
-        
-        m_file.seekp(offsetInBytes, std::ios_base::cur);
-        if (!m_file.good())
+        if (m_fileClosedForWriting)
         {
-            ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell name.");
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Writing data after file was closed for writing.", m_fileName);
         }
-
-        // Write cell name
-        std::string name = inName;
-        if(inName.empty())
-        {
-            name = "C" + std::to_string(inCellId);
-        }
-        else if(inName.size() > 15)
-        {
-            name = inName.substr(0, 15);
-        }
-
-        m_cellNames[inCellId] = name;
-
-        name += '\0';
-
-        m_file.write(name.data(), name.length());
-        if (!m_file.good())
-        {
-            ISX_THROW(isx::ExceptionFileIO, "Error writing cell name.");
-        } 
-        flush();
-        
+        m_cellNames.at(inCellId) = inName;
     }
     
     void 
     CellSetFile::readHeader()
     {
-        json j = readJsonHeader(m_file);
-        m_headerOffset = m_file.tellg();
+        json j = readJsonHeaderAtEnd(m_file, m_headerOffset);
 
         try
         {
@@ -315,6 +285,8 @@ namespace isx
             }
             m_timingInfo = convertJsonToTimingInfo(j["timingInfo"]);
             m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
+            m_cellNames = convertJsonToCellNames(j["CellNames"]);
+            m_cellValidities = convertJsonToCellValidities(j["CellValidities"]);
         }
         catch (const std::exception & error)
         {
@@ -325,60 +297,14 @@ namespace isx
             ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing cell set header.");
         }
 
-        m_file.seekg( 0, std::ios::end);
-        std::streamoff offsetInCells = m_file.tellg() - m_headerOffset;
-        isize_t bytesInCells = 0;
-
-        if(offsetInCells > 0)
+        const isize_t bytesPerCell = segmentationImageSizeInBytes() + traceSizeInBytes();
+        m_numCells = isize_t(m_headerOffset) / bytesPerCell;
+        if (m_numCells != m_cellNames.size() || m_numCells != m_cellValidities.size())
         {
-            bytesInCells = (isize_t) offsetInCells;
-        }
-
-        isize_t bytesPerCell = cellHeaderSizeInBytes() + traceSizeInBytes();
-        m_numCells = bytesInCells / bytesPerCell;
-    }
-
-    void 
-    CellSetFile::readCellNames() 
-    {
-        if (m_numCells != 0)
-        {
-            m_cellNames.resize(m_numCells);
-
-            for (isize_t id(0); id < m_numCells; ++id)
-            {
-                m_cellNames[id] = readCellName(id);
-            }
+            ISX_THROW(isx::ExceptionDataIO, "Number of cells in header does not match number of cells in file.");
         }
     }
 
-    std::string 
-    CellSetFile::readCellName(isize_t inCellId)
-    {
-        seekToCell(inCellId);
-
-        // Calculate bytes till beginning of the segmentation image
-        isize_t offsetInBytes = cellValiditySizeInBytes();
-
-        m_file.seekg(offsetInBytes, std::ios_base::cur);
-        if (!m_file.good())
-        {
-            ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell name.");
-        }
-
-        char name[16];
-        m_file.read(name, 16);
-
-        if (!m_file.good())
-        {
-            ISX_THROW(isx::ExceptionFileIO, "Error reading cell name.");
-        }
-
-        std::string strName(name);
-
-        return strName;
-    }
-    
     void 
     CellSetFile::writeHeader()
     {
@@ -390,6 +316,8 @@ namespace isx
             j["timingInfo"] = convertTimingInfoToJson(m_timingInfo);
             j["spacingInfo"] = convertSpacingInfoToJson(m_spacingInfo);
             j["mosaicVersion"] = CoreVersionVector();
+            j["CellNames"] = convertCellNamesToJson(m_cellNames);
+            j["CellValidities"] = convertCellValiditiesToJson(m_cellValidities);
         }
         catch (const std::exception & error)
         {
@@ -402,88 +330,51 @@ namespace isx
                 "Unknown error while generating cell set header.");
         }
 
-        writeJsonHeader(j, m_file);
+        m_file.seekp(0, std::ios_base::end);
         m_headerOffset = m_file.tellp();
+        writeJsonHeaderAtEnd(j, m_file);
+
         flush();
     }
     
     void 
     CellSetFile::seekToCell(isize_t inCellId)
     {
-        isize_t pos = m_headerOffset;
-        
-        if(inCellId >= m_numCells)
+        isize_t pos = 0;
+        if (inCellId >= m_numCells)
         {
             ISX_THROW(isx::ExceptionFileIO,
                 "Unable to seek to cell ID ", inCellId, " in file: ", m_fileName);
         }        
         
-        isize_t cellSize = cellHeaderSizeInBytes() + traceSizeInBytes();
+        isize_t cellSize = segmentationImageSizeInBytes() + traceSizeInBytes();
         
         pos += cellSize * inCellId;
 
         m_file.seekg(pos, std::ios_base::beg);
         
-        uint32_t currentId;
-        m_file.read((char *) &currentId, sizeof(uint32_t));
-        if (!m_file.good())
+        if (!m_file.good() || pos >= isize_t(m_headerOffset))
         {
             ISX_THROW(isx::ExceptionFileIO, "Error reading cell id.");
         }
-        ISX_ASSERT(currentId == (uint32_t)inCellId);   
 
-        if(m_openmode & std::ios_base::out)
+        if (m_openmode & std::ios_base::out)
         {
             m_file.seekp(m_file.tellg(), std::ios_base::beg);   // Make sure write and read pointers are tied together
         }
-
     }
 
-    isize_t 
-    CellSetFile::cellIdSizeInBytes()
-    {
-        return sizeof(uint32_t);
-    }
-
-    isize_t 
-    CellSetFile::cellValiditySizeInBytes()
-    {
-        return sizeof(char);
-    }
-
-    isize_t 
-    CellSetFile::cellNameSizeInBytes()
-    {
-        return (sizeof(char)*16);
-    }
-    
-    isize_t 
-    CellSetFile::reservedSizeInBytes()
-    {
-        return (128 - (cellIdSizeInBytes() + cellValiditySizeInBytes() + cellNameSizeInBytes()));
-    }
-
-    isize_t 
+    isize_t
     CellSetFile::segmentationImageSizeInBytes()
     {
         return m_spacingInfo.getTotalNumPixels() * sizeof(float);
     }
-
     
     isize_t 
     CellSetFile::traceSizeInBytes()
     {
         return m_timingInfo.getNumTimes() * sizeof(float);
     }
-
-    
-    isize_t 
-    CellSetFile::cellHeaderSizeInBytes()
-    {
-        isize_t bytes = 128 + segmentationImageSizeInBytes();
-        return bytes;
-    }
-
 
     void CellSetFile::flush()
     {

@@ -50,12 +50,16 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         REQUIRE(file.numberOfCells() == 0);
         REQUIRE(file.getTimingInfo() == timingInfo);
         REQUIRE(file.getSpacingInfo() == spacingInfo);
+        file.closeForWriting();
     }
 
     SECTION("Constructor for existing file")
     {
-        isx::CellSetFile newFile(fileName, timingInfo, spacingInfo);
-        REQUIRE(newFile.isValid());
+        {
+            isx::CellSetFile newFile(fileName, timingInfo, spacingInfo);
+            REQUIRE(newFile.isValid());
+            newFile.closeForWriting();
+        }
         isx::CellSetFile existingFile(fileName);
         REQUIRE(existingFile.isValid());
         REQUIRE(existingFile.numberOfCells() == 0);
@@ -79,6 +83,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         REQUIRE(file.numberOfCells() == 2);
         REQUIRE(file.isCellValid(1) == true);
         REQUIRE(file.getCellName(1).compare("testName") == 0);
+        file.closeForWriting();
     }
 
     SECTION("Read trace")
@@ -87,7 +92,8 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         REQUIRE(file.isValid());
         file.writeCellData(0, originalImage, originalTrace);  
         REQUIRE(file.numberOfCells() == 1);
-        
+        file.closeForWriting();
+
         isx::SpFTrace_t trace = file.readTrace(0);
         float * values = trace->getValues();
 
@@ -117,6 +123,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         REQUIRE(file.isValid());
         file.writeCellData(0, originalImage, originalTrace);  
         REQUIRE(file.numberOfCells() == 1);
+        file.closeForWriting();
 
         isx::SpImage_t im = file.readSegmentationImage(0);
         bool pixelsAreEqual = false;
@@ -150,6 +157,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         REQUIRE(file.isCellValid(0) == false);
         file.setCellValid(0, true);
         REQUIRE(file.isCellValid(0) == true);
+        file.closeForWriting();
     }
 
     SECTION("Set/Get cell name")
@@ -163,7 +171,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
 
         file.setCellName(0, "newName");
         REQUIRE(file.getCellName(0).compare("newName") == 0);
-        
+        file.closeForWriting();
     }
 
     SECTION("Write 10 cells then read it back in")
@@ -174,6 +182,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
             {
                 file.writeCellData(i, originalImage, originalTrace);
             }
+            file.closeForWriting();
         }
 
         isx::CellSetFile file(fileName);
@@ -205,4 +214,38 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         }
     }
 
+    SECTION("Modify image / cell data after calling closeForWriting")
+    {
+        isx::CellSetFile file(fileName, timingInfo, spacingInfo);
+        file.writeCellData(0, originalImage, originalTrace);
+        file.closeForWriting();
+        
+        ISX_REQUIRE_EXCEPTION(
+            file.writeCellData(0, originalImage, originalTrace),
+            isx::ExceptionFileIO,
+            "Writing data after file was closed for writing." + fileName);
+    }
+    
+    SECTION("Modify cell validity after calling closeForWriting")
+    {
+        isx::CellSetFile file(fileName, timingInfo, spacingInfo);
+        file.writeCellData(0, originalImage, originalTrace);
+        file.closeForWriting();
+        
+        ISX_REQUIRE_EXCEPTION(
+            file.setCellValid(0, true),
+            isx::ExceptionFileIO,
+            "Writing data after file was closed for writing." + fileName);
+    }
+
+    SECTION("Modify cell name after calling closeForWriting")
+    {
+        isx::CellSetFile file(fileName, timingInfo, spacingInfo);
+        file.writeCellData(0, originalImage, originalTrace);
+        file.closeForWriting();
+        ISX_REQUIRE_EXCEPTION(
+            file.setCellName(0, "newName"),
+            isx::ExceptionFileIO,
+            "Writing data after file was closed for writing." + fileName);
+    }
 }
