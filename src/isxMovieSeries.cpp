@@ -99,50 +99,21 @@ const
     return m_valid;
 }
 
-std::pair<isize_t, isize_t>
-MovieSeries::getMovieIndexAndFrameIndexFromGlobalFrameIndex(isize_t inFrameIndex) const
-{
-    isize_t fn = inFrameIndex;
-    for (isize_t i = 0; i < m_moviesFirstFrameInGlobal.size(); ++i)
-    {
-        const isize_t bi = m_moviesFirstFrameInGlobal[i];
-        const isize_t ei = bi + m_movies[i]->getTimingInfo().getNumTimes();
-        if (bi <= fn && fn < ei)
-        {
-            return std::make_pair(i, fn - bi);
-        }
-        else if (i < m_movies.size() - 1)
-        {
-            // not the last individual movie, m_movie[i+1] is valid
-            isize_t bn = m_moviesFirstFrameInGlobal[i+1];
-            if (ei <= fn && fn < bn)
-            {
-                // return movie index out of range to indicate the
-                // requested index is inbetween individual movies
-                // so we can return a placeholder frame
-                return std::make_pair(m_movies.size(), 0);
-            }
-        }
-    }
-    // the index beyond the end of the last individual movie
-    // return an out-of-range index for the first movie
-    return std::make_pair(0, m_movies[0]->getTimingInfo().getNumTimes());
-}
    
 SpVideoFrame_t
 MovieSeries::getFrame(isize_t inFrameNumber)
 {
     size_t movieIndex = 0;
     size_t frameIndex = 0;
-    std::tie(movieIndex, frameIndex) = getMovieIndexAndFrameIndexFromGlobalFrameIndex(inFrameNumber);
+    std::tie(movieIndex, frameIndex) = getSegmentIndexAndSampleIndexFromGlobalSampleIndex(m_globalTimingInfo, m_timingInfos, inFrameNumber);
     auto ret = makeVideoFrameInternal(inFrameNumber);
-    if (movieIndex == 0 && frameIndex >= m_movies[0]->getTimingInfo().getNumTimes())
+    if (movieIndex == m_movies.size()) 
     {
         ISX_THROW(isx::ExceptionDataIO,
                   "The index of the frame (", inFrameNumber, ") is out of range (0-",
                   m_moviesFirstFrameInGlobal.back() + m_movies.back()->getTimingInfo().getNumTimes(), ").");
     }
-    else if (movieIndex == m_movies.size())
+    else if (frameIndex >= m_movies[movieIndex]->getTimingInfo().getNumTimes()) 
     {
         // in between individual movies
         // --> return placeholder frame
@@ -161,15 +132,15 @@ MovieSeries::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
     size_t movieIndex = 0;
     size_t frameIndex = 0;
-    std::tie(movieIndex, frameIndex) = getMovieIndexAndFrameIndexFromGlobalFrameIndex(inFrameNumber);
+    std::tie(movieIndex, frameIndex) = getSegmentIndexAndSampleIndexFromGlobalSampleIndex(m_globalTimingInfo, m_timingInfos, inFrameNumber);
     auto ret = makeVideoFrameInternal(inFrameNumber);
-    if (movieIndex == 0 && frameIndex >= m_movies[0]->getTimingInfo().getNumTimes())
+    if (movieIndex == m_movies.size()) 
     {
         ISX_THROW(isx::ExceptionDataIO,
                   "The index of the frame (", inFrameNumber, ") is out of range (0-",
                   m_moviesFirstFrameInGlobal.back() + m_movies.back()->getTimingInfo().getNumTimes(), ").");
     }
-    else if (movieIndex == m_movies.size())
+    else if (frameIndex >= m_movies[movieIndex]->getTimingInfo().getNumTimes()) 
     {
         // in between individual movies
         // --> return placeholder frame

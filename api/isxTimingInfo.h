@@ -167,6 +167,9 @@ private:
 /// type of container for multiple TimingInfo objects for MovieSeries, TraceSeries
 using TimingInfos_t = std::vector<TimingInfo>;
 
+std::pair<isize_t, isize_t>
+getSegmentIndexAndSampleIndexFromGlobalSampleIndex(TimingInfo inGlobalTimingInfo, const TimingInfos_t & inTimingInfos, isize_t inGlobalSampleIndex);
+
 } // namespace
 
 #endif // ISX_TIMING_INFO_H

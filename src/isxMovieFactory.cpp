@@ -3,7 +3,6 @@
 #include "isxNVistaHdf5Movie.h"
 #include "isxBehavMovie.h"
 #include "isxMovieSeries.h"
-#include "isxGaplessMovieSeries.h"
 #include "isxRecording.h"
 #include "isxPathUtils.h"
 

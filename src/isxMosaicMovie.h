@@ -83,6 +83,7 @@ public:
 
     void serialize(std::ostream & strm) const override;
 
+
 private:
 
     /// True if the movie file is valid, false otherwise.

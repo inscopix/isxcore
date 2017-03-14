@@ -106,8 +106,6 @@ private:
     
     TimingInfo                          m_timingInfo;       // Global timing info
     std::vector<SpCellSet_t>            m_cellSets;
-
-
     
 
 };

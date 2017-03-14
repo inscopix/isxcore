@@ -205,4 +205,34 @@ TimingInfo::getDefault(isize_t inFrames, const std::vector<isize_t> & inDroppedF
     return TimingInfo(start, step, inFrames, inDroppedFrames);
 }
 
+std::pair<isize_t, isize_t>
+getSegmentIndexAndSampleIndexFromGlobalSampleIndex(TimingInfo inGlobalTimingInfo, const TimingInfos_t & inTimingInfos, isize_t inGlobalSampleIndex)
+{
+    isize_t fn = inGlobalSampleIndex;
+    for (isize_t i = 0; i < inTimingInfos.size(); ++i)
+    {
+        const isize_t bi = inGlobalTimingInfo.convertTimeToIndex(inTimingInfos[i].getStart());
+        const isize_t ei = bi + inTimingInfos[i].getNumTimes();
+        if (bi <= fn && fn < ei)
+        {
+            return std::make_pair(i, fn - bi);
+        }
+        else if (i < inTimingInfos.size() - 1)
+        {
+            // not the last individual segment, segment [i+1] is valid
+            isize_t bn = inGlobalTimingInfo.convertTimeToIndex(inTimingInfos[i+1].getStart());
+            if (ei <= fn && fn < bn)
+            {
+                // return frame index out of range to indicate the
+                // requested index is inbetween individual segments
+                // so we can return a placeholder frame
+                return std::make_pair(i, inTimingInfos[i].getNumTimes());
+            }
+        }
+    }
+    // the index beyond the end of the last individual segment
+    // return an out-of-range index for the segment
+    return std::make_pair(inTimingInfos.size(), 0); 
+}
+
 } // namespace

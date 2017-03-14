@@ -228,6 +228,5 @@ CellSetSimple::cancelPendingReads()
     m_traceIoTaskTracker->cancelPendingTasks();
 }
 
-
 }
 

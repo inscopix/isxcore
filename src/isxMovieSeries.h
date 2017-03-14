@@ -13,7 +13,6 @@ namespace isx
 {
 
 /// Class for managing and interfacing with a series of movies, accurately tracking time gaps between movies.
-/// ==> Also see GaplessMovieSeries for a class that ignores the time gaps between movies.
 /// Movies in a MovieSeries have to
 /// - have matching SpacingInfo
 /// - have matching data- or frame rate
@@ -97,6 +96,8 @@ public:
     ///                             the reference.
     static void checkDataType(const DataType inRef, const DataType inNew);
 
+    
+
     // Overrides - see base classes for documentation
     bool
     isValid()
@@ -121,12 +122,9 @@ public:
     std::string getFileName() const override;
 
     void serialize(std::ostream & strm) const override;
+   
 
 private:
-    
-    std::pair<isize_t, isize_t>
-    getMovieIndexAndFrameIndexFromGlobalFrameIndex(isize_t inFrameIndex) const;
-    
     SpVideoFrame_t
     makeVideoFrameInternal(isize_t inIndex) const;
 
@@ -134,7 +132,7 @@ private:
     bool m_valid = false;
     
     TimingInfo                          m_globalTimingInfo;
-    TimingInfos_t                         m_timingInfos;
+    TimingInfos_t                       m_timingInfos;
     SpacingInfo                         m_spacingInfo;
 
     std::vector<SpMovie_t>              m_movies;

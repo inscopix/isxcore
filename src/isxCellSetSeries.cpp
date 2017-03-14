@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <cmath>
 
 namespace isx
 {
@@ -284,6 +285,5 @@ namespace isx
         }
     }
 
-
-
+    
 }
