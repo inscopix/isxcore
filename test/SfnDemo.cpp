@@ -9,6 +9,8 @@
 
 #include <fstream>
 
+#if 0
+
 TEST_CASE("SfnDemo", "[data][!hide]")
 {
     const std::string dataDir = isx::getAbsolutePath(g_resources["realTestDataPath"]) + "/prism_probe_P39";
@@ -255,3 +257,4 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
     }
 
 }
+#endif

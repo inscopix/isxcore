@@ -391,7 +391,7 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
         cellSet->closeForWriting();
 
         isx::Project project(projectFile, "Full Frame");
-        project.createDataSet(
+        auto s = project.createDataSetInRoot(
                 "/movie-full-frame",
                 isx::DataSet::Type::MOVIE,
                 movieFile,
@@ -402,11 +402,14 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
                   {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
                   {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
                 });
-        project.createDataSet(
-                "/movie-full-frame/cellset-full-frame",
-                isx::DataSet::Type::CELLSET,
-                cellSetFile,
-                hd);
+        isx::DataSet::Properties prop;
+        auto ds = std::make_shared<isx::Series>(
+            "cellset-full-frame",
+            isx::DataSet::Type::CELLSET,
+            cellSetFile,
+            hd,
+            prop);
+        s->insertUnitarySeries(ds);
         project.save();
     }
 

@@ -24,6 +24,10 @@ public:
     ///
     /// \param  inName      The name of this group.
     Group(const std::string & inName);
+    
+    /// Destructor.
+    ///
+    ~Group();
 
     /// Create a group from a serialized JSON string.
     ///
@@ -32,50 +36,80 @@ public:
     /// \return             The deserialized group.
     ///
     /// \throw  ExceptionDataIO If the string cannot be parsed.
-    static std::shared_ptr<Group> fromJsonString(const std::string & inString, const std::string & inAbsolutePathToPrepend = std::string());
+    static SpGroup_t fromJsonString(const std::string & inString, const std::string & inAbsolutePathToPrepend = std::string());
+    
+    /// \return number of this Group's members.
+    ///
+    isize_t
+    getNumGroupMembers() const;
+    
+    /// \return vector containing raw pointers to this Group's members.
+    ///
+    std::vector<ProjectItem *>
+    getGroupMembers() const;
+    
+    /// \return Retrieve this Group's members by index.
+    ///
+    ProjectItem *
+    getGroupMember(isize_t inIndex) const;
+    
+    /// Insert a new item into this Group as a member.
+    /// \param inItem   New item to be inserted.
+    /// \param inIndex  Position at which to insert into the group.
+    ///
+    /// \throw ExceptionDataIO  If inItem is the same as this Group instance.
+    /// \throw ExceptionDataIO  If inItem is an ancestor of this Group.
+    /// \throw ExceptionDataIO  If this Group already has a member with the same name as inItem's name.
+    /// \throw ExceptionDataIO  If inItem is still in another Group.
+    void
+    insertGroupMember(SpProjectItem_t inItem, const isize_t inIndex);
+    
+    /// Remove a Group member
+    /// \param inItem   Member to remove.
+    /// \return The project item that was removed.
+    SpProjectItem_t
+    removeGroupMember(ProjectItem * inItem);
 
+    /// \return index of this Series in its owning Group
+    ///
+    isize_t
+    getMemberIndex() const;
+
+    /// \return a unique name that is different from all current Group members' names
+    /// \param inName basename to use for creating the unique name
+    ///
+    std::string
+    createUniqueGroupName(const std::string & inName) const;
+    
     // Overrides: see isxProjectItem.h for docs.
     ProjectItem::Type getItemType() const override;
 
     bool isValid() const override;
 
-    std::string getName() const override;
+    const std::string & getName() const override;
 
     void setName(const std::string & inName) override;
 
-    ProjectItem * getMostRecent() const override;
-
-    ProjectItem * getPrevious() const override;
-
-    ProjectItem * getParent() const override;
-
-    void setParent(ProjectItem * inParent) override;
-
-    std::vector<ProjectItem *> getChildren() const override;
-
-    size_t getNumChildren() const override;
-
-    void insertChild(std::shared_ptr<ProjectItem> inItem, const int inIndex = -1) override;
-
-    std::shared_ptr<ProjectItem> removeChild(const std::string & inName) override;
-
+    void setContainer(ProjectItem * inContainer) override;
+    
+    ProjectItem * getContainer() const override;
+    
     bool isModified() const override;
-
+    
     void setUnmodified() override;
 
     std::string toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string()) const override;
-
+    
     bool operator ==(const ProjectItem & other) const override;
-
-    bool hasHistory() const override;
-
-    isize_t getNumHistoricalItems() const override;
-
-    bool isHistorical() const override;
-
-    std::string getHistoricalDetails() const override;
-
+    
 private:
+    
+    bool
+    isGroupMember(const ProjectItem * inItem) const;
+
+    bool
+    isGroupMember(const std::string & inName) const;
+    
 
     /// True if this data set is valid.
     bool m_valid;
@@ -83,16 +117,23 @@ private:
     /// True if this has unsaved changes.
     bool m_modified;
 
-    /// The parent of this group.
-    ProjectItem * m_parent;
+    /// The container that holds this group.
+    Group * m_container;
 
     /// The name of this group.
     std::string m_name;
 
     /// The items in this group.
-    std::vector<std::shared_ptr<ProjectItem>> m_items;
+    std::vector<SpProjectItem_t> m_items;
 
 };
+
+/// STL overload for print to a stream.
+///
+/// \param   inStream   The output stream to which to print.
+/// \param   inGroup    The group to print.
+/// \return             The modified stream.
+std::ostream & operator<<(::std::ostream & inStream, const Group & inGroup);
 
 } // namespace isx
 

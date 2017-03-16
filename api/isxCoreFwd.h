@@ -19,7 +19,10 @@ namespace isx
     FWD_DECLARE_WITH_PTRS(Recording);
     FWD_DECLARE_WITH_PTRS(CellSet);
     FWD_DECLARE_WITH_PTRS(MovieSeries);
+    FWD_DECLARE_WITH_PTRS(ProjectItem);
     FWD_DECLARE_WITH_PTRS(Group);
+    FWD_DECLARE_WITH_PTRS(Series);
+    FWD_DECLARE_WITH_PTRS(DataSet);
     FWD_DECLARE_WITH_PTRS(Project);
     FWD_DECLARE_WITH_PTRS(ProjectFile);
     FWD_DECLARE_WITH_PTRS(Hdf5FileHandle);

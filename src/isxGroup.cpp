@@ -3,8 +3,11 @@
 #include "isxAssert.h"
 #include "isxDataSet.h"
 #include "isxSeries.h"
+#include "isxPathUtils.h"
 
 #include "json.hpp"
+
+#include <algorithm>
 
 namespace isx
 {
@@ -14,17 +17,19 @@ using json = nlohmann::json;
 Group::Group()
     : m_valid(false)
     , m_modified(false)
-    , m_parent(nullptr)
+    , m_container(nullptr)
 {
 }
 
 Group::Group(const std::string & inName)
     : m_valid(true)
     , m_modified(false)
-    , m_parent(nullptr)
+    , m_container(nullptr)
     , m_name(inName)
 {
 }
+
+Group::~Group() = default;
 
 ProjectItem::Type
 Group::getItemType() const
@@ -38,7 +43,7 @@ Group::isValid() const
     return m_valid;
 }
 
-std::string
+const std::string &
 Group::getName() const
 {
     return m_name;
@@ -51,102 +56,157 @@ Group::setName(const std::string & inName)
     m_modified = true;
 }
 
-ProjectItem * 
-Group::getMostRecent() const 
-{
-    return nullptr;
-}
-
 ProjectItem *
-Group::getPrevious() const
+Group::getGroupMember(isize_t inIndex) const
 {
-    return nullptr;
-}
-
-ProjectItem *
-Group::getParent() const
-{
-    return m_parent;
-}
-
-void
-Group::setParent(ProjectItem * inParent)
-{
-    m_parent = inParent;
-}
-
-std::vector<ProjectItem *>
-Group::getChildren() const
-{
-    std::vector<ProjectItem *> outChildren;
-    for (const auto & child : m_items)
+    if (inIndex >= m_items.size())
     {
-        outChildren.push_back(child.get());
+        ISX_THROW(ExceptionDataIO, "There is no group member with index: ", inIndex);
     }
-    return outChildren;
-}
 
+    return m_items.at(inIndex).get();
+}
+    
 size_t
-Group::getNumChildren() const
+Group::getNumGroupMembers() const
 {
     return m_items.size();
 }
+    
+std::vector<ProjectItem *>
+Group::getGroupMembers() const
+{
+    std::vector<ProjectItem *> ret;
+    for (const auto & i : m_items)
+    {
+        ret.push_back(i.get());
+    }
+    return ret;
+}
 
 void
-Group::insertChild(std::shared_ptr<ProjectItem> inItem, const int inIndex)
+Group::insertGroupMember(std::shared_ptr<ProjectItem> inItem, const isize_t inIndex)
 {
-    validateItemToBeInserted(inItem.get());
-
-    const std::string name = inItem->getName();
-    if (isChild(name))
+    if (inItem.get() == static_cast<ProjectItem *>(this))
     {
-        ISX_THROW(ExceptionDataIO, "There is already an item with the name: ", name);
+        ISX_THROW(ExceptionDataIO, "An item cannot be inserted in itself.");
     }
 
-    // If the child still has a parent, this should remove it
-    ProjectItem * parent = inItem->getParent();
-    if (parent != nullptr && parent->isChild(name))
+    auto container = getContainer();
+    while (container != nullptr)
     {
-        parent->removeChild(name);
+        if (inItem.get() == container)
+        {
+            ISX_THROW(ExceptionDataIO, "The inserted item is an ancestor of this.");
+        }
+        container = container->getContainer();
     }
 
-    const isize_t destIndex = convertIndex(inIndex, m_items.size());
+    if (isGroupMember(inItem.get()))
+    {
+        ISX_THROW(ExceptionDataIO, "There is already an item with the name: ", inItem->getName());
+    }
 
-    inItem->setParent(this);
-    m_items.insert(m_items.begin() + destIndex, inItem);
+    // Throw if the item is still in another container
+    if (inItem->getContainer())
+    {
+        ISX_THROW(ExceptionDataIO, "New item is still inside of another container: ", inItem->getName());
+    }
+
+    auto index = std::min(inIndex, m_items.size());
+
+    inItem->setContainer(this);
+    m_items.insert(m_items.begin() + index, inItem);
     m_modified = true;
 }
 
-std::shared_ptr<ProjectItem>
-Group::removeChild(const std::string & inName)
+SpProjectItem_t
+Group::removeGroupMember(ProjectItem * inItem)
 {
-    for (auto it = m_items.begin(); it != m_items.end(); ++it)
-    {
-        if ((*it)->getName() == inName)
+    auto it = std::find_if(m_items.begin(), m_items.end(), [inItem](const SpProjectItem_t & s)
         {
-            std::shared_ptr<ProjectItem> item = *it;
-            item->setParent(nullptr);
-            m_items.erase(it);
-            m_modified = true;
-            return item;
-        }
+            return s.get() == inItem;
+        });
+    
+    if (it == m_items.end())
+    {
+        ISX_THROW(ExceptionDataIO, "Could not find item with the name: ", inItem->getName());
     }
-    ISX_THROW(ExceptionDataIO, "Could not find item with the name: ", inName);
+    auto item = *it;
+    item->setContainer(nullptr);
+    m_items.erase(it);
+    m_modified = true;
+    return item;
+}
+    
+isize_t
+Group::getMemberIndex() const
+{
+    isize_t index = 0;
+    ISX_ASSERT(m_container, "Orphaned child does not have a owning group.");
+
+    if (m_container == nullptr)
+    {
+        return index;
+    }
+    for (const auto & m : m_container->getGroupMembers())
+    {
+        if (m == this)
+        {
+            return index;
+        }
+        ++index;
+    }
+    ISX_ASSERT(false, "Non-orphaned child cannot be found in parent.");
+    return index;
+}
+    
+void
+Group::setContainer(ProjectItem * inContainer)
+{
+    if (inContainer->getItemType() != ProjectItem::Type::GROUP)
+    {
+        ISX_THROW(Exception, "Group can only be in another group.");
+    }
+    else
+    {
+        m_container = static_cast<Group *>(inContainer);
+    }
+}
+
+ProjectItem *
+Group::getContainer() const
+{
+    return m_container;
 }
 
 bool
 Group::isModified() const
 {
-    return m_modified || areChildrenModified();
+    if (m_modified)
+    {
+        return true;
+    }
+    for (const auto & i : m_items)
+    {
+        if (i->isModified())
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void
 Group::setUnmodified()
 {
     m_modified = false;
-    setChildrenUnmodified();
+    for (const auto & i : m_items)
+    {
+        i->setUnmodified();
+    }
 }
-
+    
 std::string
 Group::toJsonString(const bool inPretty, const std::string & inPathToOmit) const
 {
@@ -172,7 +232,7 @@ Group::fromJsonString(const std::string & inString, const std::string & inAbsolu
     const ProjectItem::Type itemType = ProjectItem::Type(size_t(jsonObj.at("itemType")));
     ISX_ASSERT(itemType == ProjectItem::Type::GROUP);
     const std::string name = jsonObj.at("name");
-    auto outGroup = std::make_shared<Group>(name);
+    auto ret = std::make_shared<Group>(name);
     for (const auto & jsonItem : jsonObj.at("items"))
     {
         std::shared_ptr<ProjectItem> item;
@@ -189,19 +249,14 @@ Group::fromJsonString(const std::string & inString, const std::string & inAbsolu
                 item = Series::fromJsonString(jsonItem.dump(), inAbsolutePathToPrepend);
                 break;
             }
-            case ProjectItem::Type::DATASET:
-            {
-                item = DataSet::fromJsonString(jsonItem.dump(), inAbsolutePathToPrepend);
-                break;
-            }
             default:
             {
                 ISX_THROW(ExceptionDataIO, "Project item type not recognized: ", size_t(itemType));
             }
         }
-        outGroup->insertChild(item);
+        ret->insertGroupMember(item, ret->getNumGroupMembers());
     }
-    return outGroup;
+    return ret;
 }
 
 bool
@@ -221,28 +276,37 @@ Group::operator ==(const ProjectItem & other) const
     }
     return equal;
 }
-bool 
-Group::hasHistory() const 
+    
+bool
+Group::isGroupMember(const ProjectItem * inItem) const
 {
-    return false;
+    return isGroupMember(inItem->getName());
 }
 
-isize_t 
-Group::getNumHistoricalItems() const
+bool
+Group::isGroupMember(const std::string & inName) const
 {
-    return 0;
+    return std::any_of(m_items.begin(), m_items.end(), [inName](const SpProjectItem_t & s)
+        {
+            return s->getName() == inName;
+        });
+}
+    
+std::string
+Group::createUniqueGroupName(const std::string & inName) const
+{
+    std::string ret = inName;
+    for (isize_t i = 0; isGroupMember(ret) && i < 1000; ++i)
+    {
+        ret = appendNumberToPath(inName, i, 3);
+    }
+    return ret;
 }
 
-bool 
-Group::isHistorical() const
+std::ostream &
+operator<<(::std::ostream & inStream, const Group & inGroup)
 {
-    return false;
+    inStream << inGroup.toJsonString(true);
+    return inStream;
 }
-
-std::string 
-Group::getHistoricalDetails() const
-{
-    return std::string();
-}
-
 } // namespace isx

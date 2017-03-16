@@ -22,14 +22,13 @@ TEST_CASE("Group-Group", "[core]")
 
         REQUIRE(group.isValid());
         REQUIRE(group.getName() == "myGroup");
-        REQUIRE(group.getParent() == nullptr);
-        REQUIRE(group.getPath() == "myGroup");
-        REQUIRE(group.getNumChildren() == 0);
+        REQUIRE(group.getContainer() == nullptr);
+        REQUIRE(group.getNumGroupMembers() == 0);
     }
 
 }
 
-TEST_CASE("Group-insertChild", "[core]")
+TEST_CASE("Group-insertGroupMember", "[core]")
 {
     isx::Group group("myGroup");
     auto subGroup = std::make_shared<isx::Group>("subGroup");
@@ -39,75 +38,64 @@ TEST_CASE("Group-insertChild", "[core]")
 
     SECTION("Insert a sub-group at the end of a group")
     {
-        group.insertChild(subGroup);
+        group.insertGroupMember(subGroup, 0);
 
-        REQUIRE(group.getChild("subGroup") == subGroup.get());
+        REQUIRE(group.getGroupMember(0) == static_cast<isx::ProjectItem *>(subGroup.get()));
     }
 
     SECTION("Insert the same sub-group into two groups")
     {
-        group.insertChild(subGroup);
-
+        group.insertGroupMember(subGroup, 0);
         isx::Group group2("myGroup2");
-        group2.insertChild(subGroup);
-
         ISX_REQUIRE_EXCEPTION(
-                group.getChild("subGroup"),
+                group2.insertGroupMember(subGroup, 0),
                 isx::ExceptionDataIO,
-                "Could not find child with the name: subGroup");
+                "New item is still inside of another container: subGroup");
 
-        REQUIRE(group2.getChild("subGroup") == subGroup.get());
+        REQUIRE(group.getGroupMember(0) == static_cast<isx::ProjectItem *>(subGroup.get()));
     }
 
     SECTION("Insert a series at the end of a group")
     {
-        group.insertChild(series);
+        group.insertGroupMember(series, 0);
 
-        REQUIRE(group.getChild("series") == series.get());
+        REQUIRE(group.getGroupMember(0) == static_cast<isx::ProjectItem *>(series.get()));
     }
 
-    SECTION("Insert a dataset at the end of a group")
+    SECTION("Try to insert two series with the same name in a group")
     {
-        group.insertChild(dataSet);
-
-        REQUIRE(group.getChild("dataSet") == dataSet.get());
-    }
-
-    SECTION("Try to insert two datasets with the same name in a group")
-    {
-        group.insertChild(dataSet);
-        auto dataSet2 = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie2.isxd", hd);
+        group.insertGroupMember(series, 0);
+        auto series2 = std::make_shared<isx::Series>("series");
         ISX_REQUIRE_EXCEPTION(
-                group.insertChild(dataSet2),
+                group.insertGroupMember(series2, 0),
                 isx::ExceptionDataIO,
-                "There is already an item with the name: dataSet");
+                "There is already an item with the name: series");
     }
 
-    SECTION("Insert two datasets with different names to the end of a group")
+    SECTION("Insert two series with different names to the end of a group")
     {
-        group.insertChild(dataSet);
-        auto dataSet2 = std::make_shared<isx::DataSet>("dataSet2", isx::DataSet::Type::MOVIE, "movie2.isxd", hd);
-        group.insertChild(dataSet2);
+        group.insertGroupMember(series, 0);
+        auto series2 = std::make_shared<isx::Series>("series2");
+        group.insertGroupMember(series2, 1);
 
-        REQUIRE(group.getChild("dataSet") == dataSet.get());
-        REQUIRE(group.getChild("dataSet2") == dataSet2.get());
+        REQUIRE(group.getGroupMember(0) == static_cast<isx::ProjectItem *>(series.get()));
+        REQUIRE(group.getGroupMember(1) == static_cast<isx::ProjectItem *>(series2.get()));
     }
 
-    SECTION("Insert two datasets with different names to a group in an interesting order")
+    SECTION("Insert two series with different names to a group in an interesting order")
     {
-        group.insertChild(dataSet);
-        auto dataSet2 = std::make_shared<isx::DataSet>("dataSet2", isx::DataSet::Type::MOVIE, "movie2.isxd", hd);
-        group.insertChild(dataSet2, 0);
-
-        std::vector<isx::ProjectItem *> children = group.getChildren();
-        REQUIRE(children.at(0) == dataSet2.get());
-        REQUIRE(children.at(1) == dataSet.get());
+        group.insertGroupMember(series, 0);
+        auto series2 = std::make_shared<isx::Series>("series2");
+        group.insertGroupMember(series2, 0);
+        
+        REQUIRE(group.getGroupMember(1) == static_cast<isx::ProjectItem *>(series.get()));
+        REQUIRE(group.getGroupMember(0) == static_cast<isx::ProjectItem *>(series2.get()));
     }
 
     SECTION("Try to insert a group in itself")
     {
         ISX_REQUIRE_EXCEPTION(
-                subGroup->insertChild(subGroup),
+                subGroup->insertGroupMember(subGroup, 0),
                 isx::ExceptionDataIO,
                 "An item cannot be inserted in itself.");
     }
@@ -115,9 +103,9 @@ TEST_CASE("Group-insertChild", "[core]")
     SECTION("Try to insert an ancestor of a group")
     {
         auto group2 = std::make_shared<isx::Group>("group");
-        group2->insertChild(subGroup);
+        group2->insertGroupMember(subGroup, 0);
         ISX_REQUIRE_EXCEPTION(
-                subGroup->insertChild(group2),
+                subGroup->insertGroupMember(group2, 0),
                 isx::ExceptionDataIO,
                 "The inserted item is an ancestor of this.");
     }
@@ -129,57 +117,55 @@ TEST_CASE("Group-removeChild", "[core]")
     isx::Group group("myGroup");
     auto subGroup = std::make_shared<isx::Group>("subGroup");
     auto series = std::make_shared<isx::Series>("series");
-    isx::HistoricalDetails hd("test", "");
-    auto dataSet = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie.isxd", hd);
+    auto series2 = std::make_shared<isx::Series>("series2");
+    auto series3 = std::make_shared<isx::Series>("series3");
 
-    group.insertChild(subGroup);
-    group.insertChild(series);
-    group.insertChild(dataSet);
+    group.insertGroupMember(subGroup, 0);
+    group.insertGroupMember(series, 1);
+    group.insertGroupMember(series2, 2);
 
     SECTION("Remove an item at the end")
     {
-        group.removeChild("dataSet");
+        group.removeGroupMember(series2.get());
 
-        REQUIRE(group.getChildren().size() == 2);
-        REQUIRE(group.getChild("subGroup") == subGroup.get());
-        REQUIRE(group.getChild("series") == series.get());
+        REQUIRE(group.getNumGroupMembers() == 2);
+        REQUIRE(group.getGroupMember(0) == static_cast<isx::ProjectItem *>(subGroup.get()));
+        REQUIRE(group.getGroupMember(1) == static_cast<isx::ProjectItem *>(series.get()));
 
         ISX_REQUIRE_EXCEPTION(
-                group.getChild("dataSet"),
+                group.getGroupMember(2),
                 isx::ExceptionDataIO,
-                "Could not find child with the name: dataSet");
+                "There is no group member with index: 2");
     }
 
     SECTION("Remove an item in the middle")
     {
-        group.removeChild("series");
+        group.removeGroupMember(series.get());
 
-        REQUIRE(group.getChildren().size() == 2);
-        REQUIRE(group.getChild("subGroup") == subGroup.get());
-        REQUIRE(group.getChild("dataSet") == dataSet.get());
+        REQUIRE(group.getNumGroupMembers() == 2);
+        REQUIRE(group.getGroupMember(0) == static_cast<isx::ProjectItem *>(subGroup.get()));
+        REQUIRE(group.getGroupMember(1) == static_cast<isx::ProjectItem *>(series2.get()));
 
         ISX_REQUIRE_EXCEPTION(
-                group.getChild("series"),
+                group.getGroupMember(2),
                 isx::ExceptionDataIO,
-                "Could not find child with the name: series");
+                "There is no group member with index: 2");
     }
 
     SECTION("Remove an item that does not exist")
     {
         ISX_REQUIRE_EXCEPTION(
-                group.removeChild("movie"),
-                isx::ExceptionDataIO,
-                "Could not find item with the name: movie");
+            group.removeGroupMember(series3.get()),
+            isx::ExceptionDataIO,
+            "Could not find item with the name: series3");
     }
-
 }
 
 TEST_CASE("Group-toFromJsonString", "[core]")
 {
     auto subGroup = std::make_shared<isx::Group>("subGroup");
     auto series = std::make_shared<isx::Series>("series");
-    isx::HistoricalDetails hd("test", "");
-    auto dataSet = std::make_shared<isx::DataSet>("dataSet", isx::DataSet::Type::MOVIE, "movie.isxd", hd);
+    auto series2 = std::make_shared<isx::Series>("series2");
 
     SECTION("An empty group")
     {
@@ -194,9 +180,9 @@ TEST_CASE("Group-toFromJsonString", "[core]")
     SECTION("A group containing a sub-group, series and data set")
     {
         isx::Group expected("group");
-        expected.insertChild(subGroup);
-        expected.insertChild(series);
-        expected.insertChild(dataSet);
+        expected.insertGroupMember(subGroup, 0);
+        expected.insertGroupMember(series, 1);
+        expected.insertGroupMember(series2, 2);
 
         const std::string jsonString = expected.toJsonString();
         const std::shared_ptr<isx::Group> actual = isx::Group::fromJsonString(jsonString);
@@ -215,26 +201,21 @@ TEST_CASE("Group-getIndex", "[core]")
     auto group3 = std::make_shared<isx::Group>("group3");
     auto group4 = std::make_shared<isx::Group>("group4");
 
-    root.insertChild(group1);
-    group2->insertChild(group3);
-    group2->insertChild(group4);
-    root.insertChild(group2);
-
-    SECTION("Get the index of the root group")
-    {
-        REQUIRE(root.getIndex() == -1);
-    }
+    root.insertGroupMember(group1, 0);
+    group2->insertGroupMember(group3, 0);
+    group2->insertGroupMember(group4, 0);
+    root.insertGroupMember(group2, 0);
 
     SECTION("Get the index of the groups immediately owned by root")
     {
-        REQUIRE(group1->getIndex() == 0);
-        REQUIRE(group2->getIndex() == 1);
+        REQUIRE(group1->getMemberIndex() == 1);
+        REQUIRE(group2->getMemberIndex() == 0);
     }
 
     SECTION("Get the index of the groups immediately owned by group2")
     {
-        REQUIRE(group3->getIndex() == 0);
-        REQUIRE(group4->getIndex() == 1);
+        REQUIRE(group3->getMemberIndex() == 1);
+        REQUIRE(group4->getMemberIndex() == 0);
     }
 
 }

@@ -16,7 +16,7 @@ namespace isx
 
 /// A data set represents a movie, cell set, etc. that is backed by one or many files.
 ///
-class DataSet : public ProjectItem
+class DataSet
 {
 public:
 
@@ -76,9 +76,9 @@ public:
     /// \return the property map
     const Properties & getProperties() const;
     
-    /// Get the history for this dataset
+    /// Get the historical details for this dataset
     /// \return the historical details
-    const HistoricalDetails & getHistory() const;
+    const HistoricalDetails & getHistoricalDetails() const;
 
     /// Set the Properties of this DataSet
     /// \param inDataSetProperties new Properties to set
@@ -101,52 +101,35 @@ public:
     /// \param inValue value
     void setPropertyValue(const std::string & inPropertyName, Variant inValue);
 
-    /// \return the number of derived datasets 
-    ///
-    isize_t getNumDerivedDataSets() const;
-
-    /// \return     All the derived data sets of this.
-    ///
-    std::vector<DataSet *> getDerivedDataSets() const;
-
-    /// Insert a derived data set into this.
-    ///
-    /// \param  inDataSet   The data set to add.
-    /// \throw  ExceptionDataIO If this item already has a child with the name of the data set.
-    void insertDerivedDataSet(std::shared_ptr<DataSet> & inDataSet);
-
-    /// Remove a derived data set by name.
-    ///
-    /// \param  inName  The name of the data set to remove.
-    /// \return         The removed data set.
-    /// \throw  ExceptionDataIO If a data set with the given name cannot be found.
-    std::shared_ptr<DataSet> removeDerivedDataSet(const std::string & inName);
-
-    /// Set the previous dataset that gave origin to this one
-    /// \param inDataSet the previous dataset
-    void setPrevious(const std::shared_ptr<DataSet> & inDataSet);
-
     /// Serialize vector of DataSets and derived DataSets to a JSON string
     /// \return JSON string for the DataSet(s)
     /// \param inPath project path for the dataset
+    /// \param inDerivedPath project path for the derived dataset
+    /// \param inTitle title to be shown for the dataset
     /// \param inDataSets vector of datasets
     /// \param inDerivedDataSets vector of derived datasets
     static
     std::string
     toJsonString(
         const std::string & inPath,
+        const std::string & inDerivedPath,
+        const std::string & inTitle,
         const std::vector<const DataSet *> & inDataSets,
         const std::vector<const DataSet *> & inDerivedDataSets);
 
     /// Create DataSet(s) from a JSON string
     /// \param inDataSetJson string containing JSON info for one or two DataSets
     /// \param outPath is set to the full path (in project) of the original DataSet
+    /// \param outDerivedPath is set to the full path (in project) of the derived DataSet
+    /// \param outTitle is set to the title to be shown for the dataset
     /// \param outOriginals the original dataset described in the JSON string
     /// \param outDeriveds the derived dataset (if there is such in the JSON string)
     static
     void
     fromJsonString(const std::string & inDataSetJson,
         std::string & outPath,
+        std::string & outDerivedPath,
+        std::string & outTitle,
         std::vector<DataSet> & outOriginals,
         std::vector<DataSet> & outDeriveds);
 
@@ -177,54 +160,39 @@ public:
     /// \throw  ExceptionDataIO If the data type cannot be parsed.
     DataType getDataType();
 
-    /// \return whether this data set is contained in a series or not
+    /// \return Validity of this DataSet
     ///
-    bool isPartOfSeries() const;          
+    bool isValid() const;
 
-    /// \return a vector containing all historical data sets
+    /// \return Name of this DataSet
     ///
-    std::vector<std::shared_ptr<DataSet>> getHistoricalDataSets() const;
+    std::string getName() const;
 
-    // Overrides: see isxProjectItem.h for docs.
-    ProjectItem::Type getItemType() const override;
+    /// Set the name of this DataSet
+    /// \param inName new name to set for this DataSet
+    ///
+    void setName(const std::string & inName);
 
-    bool isValid() const override;
+    /// /return Whether this DataSet has been modified.
+    ///
+    bool isModified() const;
 
-    std::string getName() const override;
+    /// Indicate that this DataSet has been modified.
+    ///
+    void setUnmodified();
 
-    void setName(const std::string & inName) override;
+    /// \return JSON representation of this DataSet
+    std::string toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string()) const;
 
-    ProjectItem * getMostRecent() const override;
+    /// \return Whether this DataSet is equal to another given DataSet
+    /// \param other Other DataSet
+    ///
+    bool operator ==(const DataSet & other) const;
     
-    ProjectItem * getPrevious() const override;
-
-    ProjectItem * getParent() const override;
-
-    void setParent(ProjectItem * inParent) override;
-
-    std::vector<ProjectItem *> getChildren() const override;
-
-    size_t getNumChildren() const override;
-
-    void insertChild(std::shared_ptr<ProjectItem> inItem, const int inIndex = -1) override;
-
-    std::shared_ptr<ProjectItem> removeChild(const std::string & inName) override;
-
-    bool isModified() const override;
-
-    void setUnmodified() override;
-
-    std::string toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string()) const override;
-
-    bool operator ==(const ProjectItem & other) const override;
-
-    bool hasHistory() const override;
-
-    isize_t getNumHistoricalItems() const override;
-
-    bool isHistorical() const override;
-
-    std::string getHistoricalDetails() const override;
+    /// Get history for this DataSet
+    /// \return string containing history information
+    std::string
+    getHistory() const;
 
 private:
 
@@ -233,9 +201,6 @@ private:
 
     /// True if this has unsaved changes.
     bool m_modified;
-
-    /// True if this is an historical data set;
-    bool m_historical = false; 
 
     /// The name of this data set.
     std::string m_name;
@@ -246,14 +211,8 @@ private:
     /// The file name of this data set.
     std::string m_fileName;
 
-    /// The derived data sets.
-    std::vector<std::shared_ptr<DataSet>> m_derived;
-
-    /// The parent item to which this belongs.
-    ProjectItem * m_parent;
-
-    /// The previous dataset that was used to create this one. 
-    std::shared_ptr<DataSet> m_previous;
+    /// The Series to which this DataSet belongs.
+    Series * m_series;
 
     /// Historical details for the dataset
     HistoricalDetails m_history;
@@ -278,9 +237,6 @@ private:
     /// \throw  ExceptionFileIO     If the read fails.
     /// \throw  ExceptionDataIO     If the file format is not recognized.
     void readMetaData();
-
-    /// Set this dataset as historical
-    void setHistorical();  
 
 }; // class DataSet
 

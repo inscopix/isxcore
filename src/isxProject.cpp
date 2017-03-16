@@ -2,6 +2,7 @@
 #include "isxException.h"
 #include "isxJsonUtils.h"
 #include "isxPathUtils.h"
+#include "isxSeriesIdentifier.h"
 
 #include <fstream>
 #include <QDir>
@@ -110,117 +111,13 @@ Project::save()
     }
 }
 
-ProjectItem *
-Project::getItem(const std::string & inPath) const
-{
-    const std::vector<std::string> itemNames = getPathTokens(inPath);
-    if (itemNames.front() != "/")
-    {
-        ISX_THROW(ExceptionDataIO, "All items paths must be absolute.");
-    }
-    ProjectItem * outItem = m_root.get();
-    for (auto it = (itemNames.begin() + 1); it != itemNames.end(); ++it)
-    {
-        outItem = outItem->getChild(*it);
-    }
-    return outItem;
-}
-
-ProjectItem *
-Project::findItem(const std::string & inPath) const
-{
-    ProjectItem * ret = m_root.get();
-    
-    ISX_ASSERT(inPath[0] == '/');
-    auto path = inPath.substr(1);
-    
-    while (path != "")
-    {
-        // extract elements of "path" into variable "name"
-        // remove "name" from "path"
-        std::string name;
-        auto pos = path.find("/");
-        if (pos == path.npos)
-        {
-            name = path;
-            path = "";
-        }
-        else
-        {
-            name = path.substr(0, pos);
-            path = path.substr(pos + 1);
-        }
-
-        // search for "name", as historical item first, then children (derived datasets / series members)
-        if (ret->getPrevious() && ret->getPrevious()->getName() == name)
-        {
-            ret = ret->getPrevious();
-        }
-        else if (ret->isChild(name))
-        {
-            ret = ret->getChild(name);
-        }
-        else
-        {
-            // not found
-            ret = nullptr;
-            break;
-        }
-    }
-
-    if (path == "" && ret != nullptr)
-    {
-        ISX_ASSERT(ret->getPath() == inPath);
-    }
-
-    return ret;
-}
-
-std::shared_ptr<ProjectItem>
-Project::removeItem(const std::string & inPath) const
-{
-    ProjectItem * item = getItem(inPath);
-    ProjectItem * parent = item->getParent();
-    ISX_ASSERT(parent != nullptr);
-    return parent->removeChild(item->getName());
-}
-
-void
-Project::moveItem(
-        const std::string & inSrc,
-        const std::string & inDest,
-        const int inIndex)
-{
-    const std::string parentPath = getDirName(inSrc);
-    const std::string itemName = getBaseName(inSrc);
-    ProjectItem * parent = getItem(parentPath);
-    ISX_ASSERT(parent != nullptr);
-
-    const int origIndex = parent->getChild(itemName)->getIndex();
-    std::shared_ptr<ProjectItem> item = parent->removeChild(itemName);
-
-    ProjectItem * dest = getItem(inDest);
-
-    // NOTE sweet : the insertion might fail depending on the destination
-    // so we must put it back if that's the case.
-    try
-    {
-        dest->insertChild(item, inIndex);
-    }
-    catch (...)
-    {
-        parent->insertChild(item, origIndex);
-        throw;
-    }
-}
-
-DataSet *
-Project::createDataSet(
-        const std::string & inPath,
-        const DataSet::Type inType,
-        const std::string & inFileName,
-        const HistoricalDetails & inHistory,
-        const DataSet::Properties & inProperties)
+SpSeries_t
+Project::createDataSetInRoot(
+    const std::string & inName,
+    const DataSet::Type inType,
+    const std::string & inFileName,
+    const HistoricalDetails & inHistory,
+    const DataSet::Properties & inProperties)
 {
     // NOTE sweet : when creating a data set through the project, the
     // absolute path gets stored, so that other clients of this data set
@@ -231,45 +128,27 @@ Project::createDataSet(
     {
         ISX_THROW(ExceptionFileIO, "There is already a data set with the file name: ", absFileName);
     }
-
-    const std::string groupPath = getDirName(inPath);
-    const std::string name = getBaseName(inPath);
-    ProjectItem * parent = getItem(groupPath);
-    ISX_ASSERT(parent != nullptr);
-
-    auto outDataSet = std::make_shared<DataSet>(name, inType, absFileName, inHistory, inProperties);
-    parent->insertChild(outDataSet);
-    return outDataSet.get();
+    
+    auto s = std::make_shared<Series>(inName, inType, inFileName, inHistory, inProperties);
+    m_root->insertGroupMember(s, m_root->getNumGroupMembers());
+    return s;
 }
 
-Series *
-Project::createSeries(const std::string & inPath, const int inIndex)
+SpSeries_t
+Project::createSeriesInRoot(const std::string & inName)
 {
-    const std::string groupPath = getDirName(inPath);
-    const std::string name = getBaseName(inPath);
-    ProjectItem * parent = getItem(groupPath);
-    ISX_ASSERT(parent != nullptr);
-
-    auto series = std::make_shared<Series>(name);
-    parent->insertChild(series, inIndex);
-    return series.get();
+    auto s = std::make_shared<Series>(inName);
+    m_root->insertGroupMember(s, m_root->getNumGroupMembers());
+    return s;
 }
 
 bool
 Project::canFlattenSeries(
-        const std::string & inPath,
-        std::string & outMessage,
-        Series *& outSeries) const
+        Series * inSeries,
+        std::string & outMessage) const
 {
-    ProjectItem * item = getItem(inPath);
-    if (item->getItemType() != ProjectItem::Type::SERIES)
-    {
-        outMessage = "The requested item is not a series.";
-        return false;
-    }
-
-    outSeries = static_cast<Series *>(item);
-    if (outSeries->hasHistory())
+    ISX_ASSERT(inSeries);
+    if (inSeries->getNumChildren() > 0)
     {
         outMessage = "Series of processed movies cannot be ungrouped.";
         return false;
@@ -278,26 +157,45 @@ Project::canFlattenSeries(
 }
 
 void
-Project::flattenSeries(const std::string & inPath)
+Project::flattenSeries(Series * inSeries)
 {
+    ISX_ASSERT(!inSeries->isUnitary());
+
     std::string errorMessage;
-    Series * series = nullptr;
-    if (!canFlattenSeries(inPath, errorMessage, series))
+    if (!canFlattenSeries(inSeries, errorMessage))
     {
         ISX_THROW(ExceptionSeries, errorMessage);
     }
 
-    ProjectItem * parent = series->getParent();
+    auto item = inSeries->getContainer();
+    ISX_ASSERT(item->getItemType() == ProjectItem::Type::GROUP);
+    if (item->getItemType() != ProjectItem::Type::GROUP)
+    {
+        return;
+    }
+    auto group = static_cast<Group *>(item);
     // TODO sweet : before moving the items we need to check that the
     // destination doesn't contain any conflicting names.
-    int index = series->getIndex();
-    for (auto dataSet : series->getDataSets())
+    auto index = inSeries->getMemberIndex();
+    for (auto dataSet : inSeries->getDataSets())
     {
-        std::shared_ptr<DataSet> ds = series->removeDataSet(dataSet->getName());
-        parent->insertChild(ds, index);
+        // create unitary Series and insert into owning group
+        SpProjectItem_t newItem = inSeries->removeDataSet(dataSet);
+        group->insertGroupMember(newItem, index);
         ++index;
     }
-    parent->removeChild(series->getName());
+    group->removeGroupMember(inSeries);
+}
+
+Series *
+Project::findSeriesFromIdentifier(const std::string & inId) const
+{
+    auto s = SeriesIdentifier::getSeries(inId);
+    if (s == nullptr)
+    {
+        ISX_THROW(ExceptionSeries, "Could not find Series for Id: ", inId);
+    }
+    return s;
 }
 
 Group *
@@ -383,58 +281,35 @@ Project::setFileName(const std::string & inFileName, bool inMoveData)
             }
         }
 
-    }  
+    }
 
     // Update the file paths for data files of project items 
     if(oldPath != newPath)
     {
-        for (auto & item : getAllItems())
+        std::function<void(Series *, const std::string &, const std::string &)> updateSeriesPath;
+        updateSeriesPath = [updateSeriesPath](
+            Series * inSeries,
+            const std::string & inOldPath,
+            const std::string & inNewPath)
         {
-            if (item->getItemType() == ProjectItem::Type::DATASET)
+            for (auto & ds : inSeries->getDataSets())
             {
-                auto dataSet = static_cast<DataSet *>(item);
-                std::string fn = dataSet->getFileName();
-                if(fn.find(oldPath) != std::string::npos)
+                std::string fn = ds->getFileName();
+                if (fn.find(inOldPath) != std::string::npos)
                 {
-                    fn.replace(0, oldPath.size(), newPath);
-                    dataSet->setFileName(fn);
-                } 
-
-                if(dataSet->hasHistory())
-                {
-                    // Update historical items 
-                    DataSet * prev = (DataSet *) (dataSet->getPrevious());
-                    while(prev)
-                    {
-                        std::string fn = prev->getFileName();
-                        if(fn.find(oldPath) != std::string::npos)
-                        {
-                            fn.replace(0, oldPath.size(), newPath);
-                            prev->setFileName(fn);
-                        }
-                        prev = (DataSet *) (prev->getPrevious());
-                    }
-                }               
+                    fn.replace(0, inOldPath.size(), inNewPath);
+                    ds->setFileName(fn);
+                }
             }
-            else if((item->getItemType() == ProjectItem::Type::SERIES) && (item->hasHistory()))
+            for (auto & s : inSeries->getChildren())
             {
-                auto series = static_cast<Series *>(item);
-
-                Series * prev = (Series *) (series->getPrevious());
-                while(prev)
-                {
-                    for(auto & ds : prev->getDataSets())
-                    {
-                        std::string fn = ds->getFileName();
-                        if(fn.find(oldPath) != std::string::npos)
-                        {
-                            fn.replace(0, oldPath.size(), newPath);
-                            ds->setFileName(fn);
-                        }
-                    }
-                    prev = (Series *) (prev->getPrevious());
-                }                
+                updateSeriesPath(s, inOldPath, inNewPath);
             }
+        };
+
+        for (auto & s : getAllSeries())
+        {
+            updateSeriesPath(s, oldPath, newPath);
         }
     }
 
@@ -442,28 +317,10 @@ Project::setFileName(const std::string & inFileName, bool inMoveData)
 
 }
 
-bool
-Project::isPath(const std::string & inPath) const
-{
-    for (const auto & item : getAllItems())
-    {
-        if (item->getPath() == inPath)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
 std::string
 Project::createUniquePath(const std::string & inPath) const
 {
-    std::string outPath = inPath;
-    for (isize_t i = 0; isPath(outPath) && i < 1000; ++i)
-    {
-        outPath = appendNumberToPath(inPath, i, 3);
-    }
-    return outPath;
+    return m_root->createUniqueGroupName(inPath);
 }
 
 bool
@@ -537,12 +394,11 @@ Project::write() const
 bool
 Project::isFileName(const std::string & inFileName)
 {
-    for (const auto & item : getAllItems())
+    for (const auto & s : getAllSeries())
     {
-        if (item->getItemType() == ProjectItem::Type::DATASET)
+        for (const auto & ds : s->getDataSets())
         {
-            auto dataSet = static_cast<const DataSet *>(item);
-            if (dataSet->getFileName() == inFileName)
+            if (getAbsolutePath(ds->getFileName()) == inFileName)
             {
                 return true;
             }
@@ -556,24 +412,31 @@ Project::setUnmodified()
 {
     m_root->setUnmodified();
 }
-
-std::vector<ProjectItem *>
-Project::getAllItems() const
+    
+std::vector<Series *>
+Project::getAllSeries() const
 {
-    return getAllItems(m_root.get());
+    return getAllSeries(m_root.get());
 }
 
-std::vector<ProjectItem *>
-Project::getAllItems(const ProjectItem * inItem) const
+std::vector<Series *>
+Project::getAllSeries(const Group * inItem) const
 {
-    std::vector<ProjectItem *> outItems;
-    for (const auto & child : inItem->getChildren())
+    std::vector<Series *> ret;
+    for (const auto & m : inItem->getGroupMembers())
     {
-        outItems.push_back(child);
-        std::vector<ProjectItem *> grandChildren = getAllItems(child);
-        outItems.insert(outItems.end(), grandChildren.begin(), grandChildren.end());
+        if (m->getItemType() == ProjectItem::Type::GROUP)
+        {
+            const auto & mm = getAllSeries(static_cast<Group *>(m));
+            ret.insert(ret.end(), mm.begin(), mm.end());
+        }
+        else
+        {
+            ISX_ASSERT(m->getItemType() == ProjectItem::Type::SERIES);
+            ret.push_back(static_cast<Series *>(m));
+        }
     }
-    return outItems;
+    return ret;
 }
 
 } // namespace isx
