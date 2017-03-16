@@ -9,8 +9,6 @@
 
 #include <fstream>
 
-#if 0
-
 TEST_CASE("SfnDemo", "[data][!hide]")
 {
     const std::string dataDir = isx::getAbsolutePath(g_resources["realTestDataPath"]) + "/prism_probe_P39";
@@ -50,7 +48,6 @@ TEST_CASE("SfnDemo", "[data][!hide]")
     const float dffMax = 0.2f;
     const std::string operation = "Import";
     const std::string params = "";
-    const std::string importPrefix = "1-IMP: ";
     isx::HistoricalDetails hd(operation, params);
 
     SECTION("Project for SfN demo - motion corrected nVista movies only")
@@ -58,29 +55,30 @@ TEST_CASE("SfnDemo", "[data][!hide]")
         const std::string fileName = dataDir + "/project-sfn_demo_mc.isxp";
         std::remove(fileName.c_str());
         isx::Project project(fileName, "SfN 2016 Demo (MC)");
-
         for (const auto series : allSeries)
         {
-            const std::string seriesPath = "/" + importPrefix + series.first;
-            project.createSeries(seriesPath);
+            const isx::DataSet::Properties prop =
+            {
+                {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
+                {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
+                {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
+                {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
+            };
+            
+            auto s = project.createSeriesInRoot(series.first);
             for (const auto & name : series.second)
             {
                 const std::string movieName = name + "-mc";
                 const std::string movieFile = procDataDir + "/" + movieName + "_he.isxd";
                 REQUIRE(isx::pathExists(movieFile));
-                const std::string moviePath = seriesPath + "/" + importPrefix + movieName;
-                project.createDataSet(
-                        moviePath,
+                auto us = std::make_shared<isx::Series>(
+                        movieName,
                         isx::DataSet::Type::MOVIE,
                         movieFile,
                         hd,
-                        {
-                            {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
-                            {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
-                            {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
-                            {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
-                        }
+                        prop
                 );
+                s->insertUnitarySeries(us);
             }
         }
 
@@ -89,12 +87,11 @@ TEST_CASE("SfnDemo", "[data][!hide]")
         {
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
             REQUIRE(isx::pathExists(movieFile));
-            const std::string moviePath = "/" + importPrefix + bms;
-            project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile, hd,
-                    {
-                        {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
-                    }
-            );
+            const isx::DataSet::Properties prop =
+            {
+                {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
+            };
+            project.createDataSetInRoot(bms, isx::DataSet::Type::BEHAVIOR, movieFile, hd,prop);
             ++b;
         }
 
@@ -109,33 +106,41 @@ TEST_CASE("SfnDemo", "[data][!hide]")
 
         for (const auto series : allSeries)
         {
-            const std::string seriesPath = "/" + importPrefix + series.first;
-            project.createSeries(seriesPath);
+            auto s = project.createSeriesInRoot(series.first);
+            auto css = std::make_shared<isx::Series>("Manual ROIs");
+            s->addChild(css);
+
             for (const auto & name : series.second)
             {
                 const std::string movieName = name + "-mc_DFF";
                 const std::string movieFile = procDataDir + "/" + movieName + "_he.isxd";
                 REQUIRE(isx::pathExists(movieFile));
-                const std::string moviePath = seriesPath + "/" + importPrefix + movieName;
-                const std::string cellSetFile = procDataDir + "/" + name + "-rois_he.isxd";
+                const std::string cellName = name + "-rois_he.isxd";
+                const std::string cellSetFile = procDataDir + "/" + cellName;
                 REQUIRE(isx::pathExists(cellSetFile));
-                project.createDataSet(
-                        moviePath,
+                const isx::DataSet::Properties prop =
+                {
+                    {isx::DataSet::PROP_DATA_MIN, isx::Variant(dffMin)},
+                    {isx::DataSet::PROP_DATA_MAX, isx::Variant(dffMax)},
+                    {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
+                    {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
+                };
+                const isx::DataSet::Properties propCs;
+                auto m = std::make_shared<isx::Series>(
+                        movieName,
                         isx::DataSet::Type::MOVIE,
                         movieFile,
                         hd,
-                        {
-                            {isx::DataSet::PROP_DATA_MIN, isx::Variant(dffMin)},
-                            {isx::DataSet::PROP_DATA_MAX, isx::Variant(dffMax)},
-                            {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
-                            {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
-                        }
+                        prop
                 );
-                project.createDataSet(
-                        moviePath + "/Manual ROIs",
+                s->insertUnitarySeries(m);
+                auto cs = std::make_shared<isx::Series>(
+                        cellName,
                         isx::DataSet::Type::CELLSET,
                         cellSetFile,
-                        hd);
+                        hd,
+                        propCs);
+                css->insertUnitarySeries(cs);
 
                 // NOTE sweet : also check that timing/spacing info is consistent
                 if (isx::pathExists(movieFile) && isx::pathExists(cellSetFile))
@@ -153,12 +158,11 @@ TEST_CASE("SfnDemo", "[data][!hide]")
         {
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
             REQUIRE(isx::pathExists(movieFile));
-            const std::string moviePath = "/" + importPrefix + bms;
-            project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile, hd,
-                    {
-                        {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
-                    }
-            );
+            const isx::DataSet::Properties prop =
+            {
+                {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
+            };
+            project.createDataSetInRoot(bms, isx::DataSet::Type::BEHAVIOR, movieFile, hd,prop);
             ++b;
         }
 
@@ -206,7 +210,6 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
     const float dffMax = 0.2f;
     const std::string operation = "Import";
     const std::string params = "";
-    const std::string importPrefix = "1-IMP: ";
     isx::HistoricalDetails hd(operation, params);
 
     SECTION("Project for SfN demo - original nVista movies only")
@@ -217,25 +220,25 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
 
         for (const auto series : allSeries)
         {
-            const std::string seriesPath = "/" + importPrefix + series.first;
-            project.createSeries(seriesPath);
+            project.createSeriesInRoot(series.first);
             const auto names = series.second;
             for (const auto & name : names)
             {
                 const std::string movieFile = origDataDir + "/" + name + ".xml";
                 REQUIRE(isx::pathExists(movieFile));
-                const std::string moviePath = seriesPath + "/" + importPrefix + name;
-                project.createDataSet(
-                        moviePath,
+                const isx::DataSet::Properties prop =
+                {
+                    {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
+                    {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
+                    {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
+                    {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
+                };
+                auto us = std::make_shared<isx::Series>(
+                        name,
                         isx::DataSet::Type::MOVIE,
                         movieFile,
                         hd,
-                        {
-                            {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
-                            {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
-                            {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
-                            {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
-                        }
+                        prop
                 );
             }
         }
@@ -244,12 +247,12 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
         for (const auto & bms : behavioralMovies)
         {
             const std::string movieFile = behavioralDataDir + "/" + bms + ".mpg";
-            const std::string moviePath = "/" + importPrefix + bms;
-            project.createDataSet(moviePath, isx::DataSet::Type::BEHAVIOR, movieFile, hd,
-                    {
-                        {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
-                    }
-            );
+            REQUIRE(isx::pathExists(movieFile));
+            const isx::DataSet::Properties prop =
+            {
+                {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
+            };
+            project.createDataSetInRoot(bms, isx::DataSet::Type::BEHAVIOR, movieFile, hd,prop);
             ++b;
         }
 
@@ -257,4 +260,3 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
     }
 
 }
-#endif
