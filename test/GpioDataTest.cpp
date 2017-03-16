@@ -69,8 +69,8 @@ void testParsing(
                     "Failed to open gpio file for reading: ", fullName);
             }
 
-            // TODO: MOS-584 merge fix
-            isx::json j ;//= isx::readJsonHeader(file);
+            std::ios::pos_type headerPos;
+            isx::json j = isx::readJsonHeaderAtEnd(file, headerPos);
             auto & expectedHdr = inJsonHeaders.at(idx);
             REQUIRE(j == expectedHdr);
 
@@ -78,6 +78,8 @@ void testParsing(
             uint32_t timeStampSec, timeStampUSec;
             char state;
             double powerLevel;
+
+            file.seekg(0, std::ios_base::beg);
 
             file.read((char *) &timeStampSec, sizeof(uint32_t));
             file.read((char *) &timeStampUSec, sizeof(uint32_t));
@@ -115,7 +117,7 @@ void testParsing(
 }
 
 // TODO: MOS-584 merge fix
-TEST_CASE("GpioDataTest", "[core] [!hide] [temporarily_disabled]")
+TEST_CASE("GpioDataTest", "[core]")
 {
 
     isx::CoreInitialize();

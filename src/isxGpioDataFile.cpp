@@ -271,9 +271,14 @@ GpioDataFile::parse()
 void 
 GpioDataFile::closeFiles()
 {
-    // Close all output files
     for (auto it = m_outputFiles.begin(); it != m_outputFiles.end(); ++it) 
     {
+        // write footer 
+        json j = json::parse(m_outputFooters.at(it->first));
+        writeJsonHeaderAtEnd(j, *(it->second));
+        it->second->flush();
+        
+        // close file
         it->second->close();
         delete it->second;
     }
@@ -337,7 +342,7 @@ GpioDataFile::writeToFile(
 
     auto search = m_outputFiles.find(filename);
 
-    // If we haven't started writing the file, open it in write mode and write the json header
+    // If we haven't started writing the file, open it in write mode and create the json header
     std::ofstream * file;
     if(search == m_outputFiles.end())
     {
@@ -347,7 +352,7 @@ GpioDataFile::writeToFile(
             ISX_THROW(isx::ExceptionFileIO,
                 "Failed to open output file for write: ", filename);
         }
-        writeHeader(*file, inFileSuffix, inMode, inTriggerFollow);
+        addHeader(filename, inFileSuffix, inMode, inTriggerFollow);
         m_outputFiles[filename] = file;
         m_outputModes[filename] = inMode;
     }
@@ -382,8 +387,8 @@ GpioDataFile::writeToFile(
 }
 
 void 
-GpioDataFile::writeHeader(
-            std::ofstream & file, 
+GpioDataFile::addHeader(
+            const std::string & inFileName, 
             const std::string & inSignal, 
             const std::string & inMode,
             const std::string & inTriggerFollow)
@@ -402,9 +407,7 @@ GpioDataFile::writeHeader(
             "Unknown error while generating file header.");
     }
 
-// TODO: MOS-584 merge fix
-//    writeJsonHeader(j, file);
-    file.flush();
+    m_outputFooters[inFileName] = j.dump();
 }
 
 void 

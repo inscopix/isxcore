@@ -218,12 +218,12 @@ namespace isx
             double inPowerLevel);
 
         /// Writes the json header for an output file
-        /// \param file             The file stream
+        /// \param inFileName       The output file name
         /// \param inSignal         The signal type for this file
         /// \param inMode           LED mode or GPIO mode used during acquisition (see s_gpioModeMap and s_ledModeMap)
         /// \param inTriggerFollow  The channel used during trigger or follow mode
-        void writeHeader(
-            std::ofstream & file, 
+        void addHeader(
+            const std::string & inFileName, 
             const std::string & inSignal, 
             const std::string & inMode,
             const std::string & inTriggerFollow);
@@ -239,6 +239,9 @@ namespace isx
 
         /// A map containing the names of the output files and their streams. 
         std::map<std::string, std::ofstream *> m_outputFiles;
+
+        /// A map containing the names of the output files and their file headers (footers). 
+        std::map<std::string, std::string> m_outputFooters;
 
         /// A map containing the the names of the output files and their corresponding modes
         /// This is used to check for consistency in the packets
