@@ -229,9 +229,9 @@ Project::getProjectPath() const
 }
 
 void
-Project::setFileName(const std::string & inFileName, bool inMoveData)
+Project::setFileName(const std::string & inFileName, bool inFromTemporary)
 {   
-    if(inFileName == m_fileName)
+    if (inFileName == m_fileName)
     {
         return;
     }
@@ -247,47 +247,94 @@ Project::setFileName(const std::string & inFileName, bool inMoveData)
         }        
     }
 
+    // Given a ProjectPath and a ProjectName, the directory structure is as follows:
+    // ProjectPath/ProjectName              <= projDir
+    //     /ProjectName.isxp
+    //     /ProjectName_data                <= dataDir
+    //         /recording_xyz.isxd
+    
+    // 1) If coming from temp project, attempt to move old dataDir to new dataDir.
+    // 2) If that succeeds -> done (there is no .isxp for temp project).
+    // 3) Create new dataDir.
+    // 4) Copy data from old dataDir to new project dataDir.
+    // 5) If coming from temp project, delete old data files
+    // 6) If coming from temp project, delete old dataDir and old projDir.
+    // 7) Adjust stored absolute paths in datasets of current project
+    
     std::string oldPath = getDataPath();
     std::string prevName = m_fileName;
     m_fileName = inFileName;
     std::string newPath = getDataPath();
 
-    QDir dataDir(QString::fromStdString(oldPath));
-    if(inMoveData)
+    QDir oldDataDir(QString::fromStdString(oldPath));
+
+    bool wasMoved = false;
+    if (inFromTemporary)
     {
-        /// Move/rename the data path        
-        if(!dataDir.rename(QString::fromStdString(oldPath), QString::fromStdString(newPath)))
+        // Step 1
+        // Move/rename the data path
+        if (oldDataDir.rename(QString::fromStdString(oldPath), QString::fromStdString(newPath)))
         {
-            m_fileName = prevName;
-            ISX_THROW(ExceptionFileIO, "Unable to create data directory: ", newPath, ". Verify you have write permissions to this path.");
+            // Remove the old project directory
+            std::string oldDirName = getDirName(prevName);
+            QDir oldProjDir(QString::fromStdString(oldDirName));
+            oldProjDir.rmdir(oldProjDir.absolutePath());
+            wasMoved = true;
         }
-        // Remove the old project directory
-        std::string oldDirName = getDirName(prevName);
-        QDir oldProjDir(QString::fromStdString(oldDirName));
-        oldProjDir.rmdir(oldProjDir.absolutePath());
     }
-    else
+
+    if (!wasMoved)
     {
-        // Copy the data to the new location
+        // Step 3
         initDataDir();
-        QString src = QString::fromStdString(oldPath) + "/";
-        QString dst = QString::fromStdString(newPath) + "/";
-        for (QString f : dataDir.entryList(QDir::Files)) 
-        {         
-            if(!QFile::copy(src + f, dst + f))
+        const QString src = QString::fromStdString(oldPath) + "/";
+        const QString dst = QString::fromStdString(newPath) + "/";
+        for (QString f : oldDataDir.entryList(QDir::Files))     // maybe only iterate over isxd files that are actually in the project?
+        {
+            const QString srcFile = src + f;
+            const QString dstFile = dst + f;
+            // Step 4
+            if (!QFile::copy(srcFile, dstFile))
             {
                 m_fileName = prevName;
                 ISX_THROW(ExceptionFileIO, "Unable to copy data files to: ", newPath);
             }
+
+            // Step 5
+            if (inFromTemporary)
+            {
+                QDir oldProjDir(src);
+                bool res = oldProjDir.remove(srcFile);
+                if (res == false)
+                {
+                    ISX_LOG_WARNING("remove ", srcFile.toStdString(), " returned: ", res);
+                }
+            }
         }
 
+        // Step 6
+        if (inFromTemporary)
+        {
+            std::string oldDirName = getDirName(prevName);
+            QDir oldProjDir(QString::fromStdString(oldDirName));
+            bool res = oldProjDir.rmdir(oldDataDir.absolutePath());
+            if (res == false)
+            {
+                ISX_LOG_WARNING("rmdir ", oldDataDir.absolutePath().toStdString(), " returned: ", res);
+            }
+            res = oldProjDir.rmdir(oldProjDir.absolutePath());
+            if (res == false)
+            {
+                ISX_LOG_WARNING("rmdir ", oldProjDir.absolutePath().toStdString(), " returned: ", res);
+            }
+        }
     }
 
-    // Update the file paths for data files of project items 
-    if(oldPath != newPath)
+    // Update the file paths for data files of project items (Step 7)
+    if (oldPath != newPath)
     {
-        std::function<void(Series *, const std::string &, const std::string &)> updateSeriesPath;
-        updateSeriesPath = [updateSeriesPath](
+        std::function<void(Series *, const std::string &, const std::string &)> updateSeriesPath =
+        [&updateSeriesPath] (
             Series * inSeries,
             const std::string & inOldPath,
             const std::string & inNewPath)

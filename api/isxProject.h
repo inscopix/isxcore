@@ -146,7 +146,7 @@ public:
 
     /// Sets the file name of this project's file.
     ///
-    void setFileName(const std::string & inFileName, bool inMoveData);
+    void setFileName(const std::string & inFileName, bool inFromTemporary);
 
     /// Create a unique path in this project given a requested one.
     ///
