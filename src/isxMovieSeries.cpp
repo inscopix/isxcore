@@ -117,7 +117,7 @@ MovieSeries::getFrame(isize_t inFrameNumber)
     {
         // in between individual movies
         // --> return placeholder frame
-        std::memset(ret->getPixels(), 0, ret->getImageSizeInBytes());
+        ret->setFrameType(VideoFrame::Type::INGAP);
     }
     else
     {
@@ -146,7 +146,7 @@ MovieSeries::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
         // --> return placeholder frame
         AsyncTaskResult<SpVideoFrame_t> atr;
         atr.setValue(ret);
-        std::memset(ret->getPixels(), 0, ret->getImageSizeInBytes());
+        ret->setFrameType(VideoFrame::Type::INGAP);
         DispatchQueue::poolQueue()->dispatch([inCallback, atr]()
             {
                 inCallback(atr);

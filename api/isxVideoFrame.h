@@ -14,6 +14,15 @@ namespace isx
 class VideoFrame
 {
 public:
+    /// Enumerator that indicates what kind of video frame this is
+    /// 
+    enum class Type
+    {
+        VALID,      ///< A valid frame
+        DROPPED,    ///< A dropped frame
+        CROPPED,    ///< A frame that has been cropped out of the movie
+        INGAP       ///< A frame in between movie segments
+    };
 
     /// Empty constructor for allocation only.
     ///
@@ -73,6 +82,16 @@ public:
     ///
     DataType
     getDataType() const;
+
+    /// \return the type of video frame this is
+    ///
+    VideoFrame::Type 
+    getFrameType() const;
+
+    /// Sets the type of video frame
+    /// \param inType the type to be set
+    void 
+    setFrameType(VideoFrame::Type inType);
 
     /// \return the number of bytes between the first pixels of two neighboring rows
     /// note that this could be different from getPixelSizeInBytes() * getWidth()
@@ -150,6 +169,9 @@ private:
 
     /// The index of this frame in its movie.
     isize_t     m_frameIndex = 0;
+
+    /// The type of frame for this object
+    VideoFrame::Type        m_type = Type::VALID;
 
 };
 

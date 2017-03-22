@@ -57,6 +57,18 @@ VideoFrame::getDataType() const
     return m_image.getDataType();
 }
 
+VideoFrame::Type 
+VideoFrame::getFrameType() const
+{
+    return m_type;
+}
+
+void 
+VideoFrame::setFrameType(VideoFrame::Type inType)
+{
+    m_type = inType;
+}
+
 isize_t
 VideoFrame::getRowBytes() const
 {

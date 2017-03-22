@@ -143,8 +143,8 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
 
     if(ti.isDropped(inFrameNumber))
     {
-        /// TODO: salpert 12/7/2016 return a placeholder frame displaying "No Data" or something similar
         std::memset(outFrame->getPixels(), 0, outFrame->getImageSizeInBytes());
+        outFrame->setFrameType(VideoFrame::Type::DROPPED);
         return outFrame;
     }
 
