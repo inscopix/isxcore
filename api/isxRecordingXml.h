@@ -1,9 +1,11 @@
 #include "isxObject.h"
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
+#include "isxVariant.h"
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 
 namespace isx {
@@ -39,6 +41,9 @@ namespace isx {
         /// \return the spacing info
         ///
         SpacingInfo getSpacingInfo();
+
+        /// \return additional properties map
+        const std::map<std::string, Variant> & getAdditionalProperties() const;
         
         /// serialize to stream
         ///

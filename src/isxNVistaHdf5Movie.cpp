@@ -26,12 +26,13 @@ NVistaHdf5Movie::NVistaHdf5Movie(
     const SpHdf5FileHandle_t & inHdf5FileHandle,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo,
-    const std::vector<isize_t> & inDroppedFrames)
+    const std::vector<isize_t> & inDroppedFrames,
+    const std::map<std::string, Variant> & inAdditionalProperties)
     : m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
     std::vector<SpH5File_t> files(1, inHdf5FileHandle->get());
 
-    initialize(inFileName, files, inTimingInfo, inSpacingInfo, inDroppedFrames);
+    initialize(inFileName, files, inTimingInfo, inSpacingInfo, inDroppedFrames, inAdditionalProperties);
 }
 
 NVistaHdf5Movie::NVistaHdf5Movie(
@@ -39,7 +40,8 @@ NVistaHdf5Movie::NVistaHdf5Movie(
     const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo, 
-    const std::vector<isize_t> & inDroppedFrames)
+    const std::vector<isize_t> & inDroppedFrames,
+    const std::map<std::string, Variant> & inAdditionalProperties)
     : m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
     std::vector<SpH5File_t> files;
@@ -48,7 +50,13 @@ NVistaHdf5Movie::NVistaHdf5Movie(
         files.push_back(inHdf5FileHandles[i]->get());
     }
 
-    initialize(inFileName, files, inTimingInfo, inSpacingInfo, inDroppedFrames);
+    initialize(inFileName, files, inTimingInfo, inSpacingInfo, inDroppedFrames, inAdditionalProperties);
+}
+
+const std::map<std::string, Variant> & 
+NVistaHdf5Movie::getAdditionalProperties() const
+{
+    return m_additionalProperties;
 }
 
 bool
@@ -151,7 +159,8 @@ NVistaHdf5Movie::initialize(
     const std::vector<SpH5File_t> & inHdf5Files,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo,
-    const std::vector<isize_t> & inDroppedFrames)
+    const std::vector<isize_t> & inDroppedFrames,
+    const std::map<std::string, Variant> & inAdditionalProperties)
 {
     ISX_ASSERT(inHdf5Files.size());
 
@@ -206,6 +215,8 @@ NVistaHdf5Movie::initialize(
     {
         initSpacingInfo(inHdf5Files);
     }
+
+    m_additionalProperties = inAdditionalProperties;
 
     m_valid = true;
     

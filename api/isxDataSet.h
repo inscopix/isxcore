@@ -22,6 +22,8 @@ public:
 
     /// type of DataSet Properties
     using Properties = std::map<std::string, Variant>;
+    /// type of metadata properties
+    using Metadata = std::vector<std::pair<std::string, std::string>>;
 
     /// The type of data set.
     ///
@@ -194,6 +196,10 @@ public:
     std::string
     getHistory() const;
 
+    /// \return all metadata for this dataset in the form of key-value pairs
+    ///  
+    Metadata getMetadata();
+
 private:
 
     /// True if this data set is valid.
@@ -219,6 +225,9 @@ private:
 
     /// Dataset properties
     Properties m_properties;
+
+    /// Dataset properties read from the nVista file
+    Properties m_readOnlyProperties;
 
     /// The timing info of this data set.
     TimingInfo m_timingInfo;

@@ -22,6 +22,12 @@ public:
         m_value = convertTimeToJson(inValue);
     }
 
+    Impl(const std::string & inValue)
+    {
+        m_metatype = MetaType::STRING;
+        m_value = inValue;
+    }
+
 
     ~Impl(){}
 
@@ -99,6 +105,15 @@ Variant::Impl::setValue(const isx::Time & inValue)
     m_value = convertTimeToJson(inValue);
 }
 
+/// Template function specialization for std::string
+template<>
+void 
+Variant::Impl::setValue(const std::string & inValue)
+{
+    m_metatype = MetaType::STRING;
+    m_value = inValue;
+}
+
 /// Template function specialization for float
 template <>
 float 
@@ -127,6 +142,19 @@ Variant::Impl::value() const
     return value;
 }
 
+/// Template function specialization for std::string
+template <>
+std::string  
+Variant::Impl::value() const
+{    
+    if(m_metatype != MetaType::STRING)
+    {
+        ISX_THROW(ExceptionUserInput, "The type of the stored value cannot be converted to std::string.");
+    }
+    std::string value = m_value;  
+    return value;
+}
+
 Variant::Variant()
 {
     m_pImpl.reset(new Impl());
@@ -142,6 +170,11 @@ Variant::Variant(const Time & inValue)
     m_pImpl.reset(new Impl(inValue));
 }
 
+Variant::Variant(const std::string & inValue)
+{
+    m_pImpl.reset(new Impl(inValue));
+}
+
 Variant::Variant(const Variant & inOther) :
     Variant()
 {
@@ -153,6 +186,10 @@ Variant::Variant(const Variant & inOther) :
     else if (type == MetaType::ISXTIME)
     {
         setValue(inOther.value<isx::Time>());
+    }
+    else if (type == MetaType::STRING)
+    {
+        setValue(inOther.value<std::string>());
     }
 
 }
@@ -207,7 +244,9 @@ void Variant::operator = (const Variant & right)
 
 template void Variant::setValue<float>(const float &);
 template void Variant::setValue<Time>(const Time &);
+template void Variant::setValue<std::string>(const std::string &);
 template float Variant::value<float>() const;
 template Time Variant::value<Time>() const;
+template std::string Variant::value<std::string>() const;
 
 } // namespace isx

@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+
 namespace isx
 {
     class RecordingXml::Impl
@@ -91,7 +92,31 @@ namespace isx
                                 else if (attrs.value("name") == "dropped")
                                 {
                                     droppedFrames = reader.readElementText();
-                                }                               
+                                }
+                                else if (attrs.value("name") == "exposure")
+                                {
+                                    m_additionalProperties["Exposure"] = isx::Variant(reader.readElementText().toStdString());
+                                } 
+                                else if (attrs.value("name") == "led_power")
+                                {
+                                    m_additionalProperties["LED Power"] = isx::Variant(reader.readElementText().toStdString());
+                                }
+                                else if (attrs.value("name") == "led_session")
+                                {
+                                    m_additionalProperties["Total Time LED was ON in Session"] = isx::Variant(reader.readElementText().toStdString());
+                                } 
+                                else if (attrs.value("name") == "gain")
+                                {
+                                    m_additionalProperties["Gain"] = isx::Variant(reader.readElementText().toStdString());
+                                }
+                                else if (attrs.value("name") == "record_sched_name")
+                                {
+                                    m_additionalProperties["Recording Schedule Name"] = isx::Variant(reader.readElementText().toStdString());
+                                } 
+                                else if (attrs.value("name") == "version")
+                                {
+                                    m_additionalProperties["Acquisition SW Version"] = isx::Variant(reader.readElementText().toStdString());
+                                }                                
                                 else
                                 {
                                     reader.skipCurrentElement();
@@ -158,6 +183,11 @@ namespace isx
             return m_hdf5FileNames;
         }
 
+        const std::map<std::string, Variant> & getAdditionalProperties() const
+        {
+            return m_additionalProperties;
+        }
+
         void
         serialize(std::ostream& strm) const
         {
@@ -171,7 +201,8 @@ namespace isx
         std::vector<std::string> m_hdf5FileNames;
         TimingInfo m_timingInfo;
         SpacingInfo m_spacingInfo;
-        std::vector<isize_t> m_droppedFrameNums;     
+        std::vector<isize_t> m_droppedFrameNums;    
+        std::map<std::string, Variant> m_additionalProperties; 
 
         void initTimingInfo(const QString & inStart, const QString & inFps, const QString & inNumFrames, const QString & inDroppedFrames)
         {
@@ -297,6 +328,12 @@ namespace isx
     RecordingXml::getSpacingInfo()
     {
         return m_pImpl->getSpacingInfo();
+    }
+
+    const std::map<std::string, Variant> & 
+    RecordingXml::getAdditionalProperties() const
+    {
+        return m_pImpl->getAdditionalProperties();
     }
 
     void

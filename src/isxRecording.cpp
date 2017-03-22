@@ -122,7 +122,7 @@ public:
         SpacingInfo si = xml.getSpacingInfo();
         std::vector<isize_t> droppedFrames = xml.getDroppedFrames();
 
-        m_movie = std::make_shared<NVistaHdf5Movie>(m_path, m_fileHandles, ti, si, droppedFrames);
+        m_movie = std::make_shared<NVistaHdf5Movie>(m_path, m_fileHandles, ti, si, droppedFrames, xml.getAdditionalProperties());
 
         // no exception until here --> this is a valid file
         m_isValid = true;

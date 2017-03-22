@@ -6,6 +6,7 @@
 #include "isxHdf5Movie.h"
 #include "isxVideoFrame.h"
 #include "isxMutex.h"
+#include "isxVariant.h"
 
 #include <memory>
 #include <map>
@@ -33,11 +34,13 @@ public:
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
     /// \param inDroppedFrames the list of frame numbers that were dropped (from external source such as xml)
+    /// \param inAdditionalProperties the list of additional information for the movie (from external source such as xml)
     NVistaHdf5Movie(const std::string &inFileName,
         const SpHdf5FileHandle_t & inHdf5FileHandle,
         const TimingInfo & inTimingInfo = TimingInfo(),
         const SpacingInfo & inSpacingInfo = SpacingInfo(),
-        const std::vector<isize_t> & inDroppedFrames = std::vector<isize_t>());
+        const std::vector<isize_t> & inDroppedFrames = std::vector<isize_t>(),
+        const std::map<std::string, Variant> & inAdditionalProperties = std::map<std::string, Variant>());
 
     /// Construct a new movie from vector of existing HDF5 datasets
     ///
@@ -46,11 +49,17 @@ public:
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
     /// \param inDroppedFrames the list of frame numbers that were dropped (from external source such as xml)
+    /// \param inAdditionalProperties the list of additional information for the movie (from external source such as xml)
     NVistaHdf5Movie(const std::string &inFileName,
         const std::vector<SpHdf5FileHandle_t> & inHdf5FileHandles,
         const TimingInfo & inTimingInfo = TimingInfo(),
         const SpacingInfo & inSpacingInfo = SpacingInfo(),
-        const std::vector<isize_t> & inDroppedFrames = std::vector<isize_t>());
+        const std::vector<isize_t> & inDroppedFrames = std::vector<isize_t>(),
+        const std::map<std::string, Variant> & inAdditionalProperties = std::map<std::string, Variant>());
+
+    /// \return additional properties found in XML file (if initialized from XML)
+    ///
+    const std::map<std::string, Variant> & getAdditionalProperties() const;
 
     // Overrides
     bool
@@ -102,6 +111,8 @@ private:
     
     std::string m_fileName;
 
+    std::map<std::string, Variant> m_additionalProperties;
+
     std::shared_ptr<IoTaskTracker<VideoFrame>>   m_ioTaskTracker;
 
     /// Handles most of the initialization.
@@ -110,11 +121,13 @@ private:
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
     /// \param inDroppedFrames the list of frame numbers that were dropped (from external source such as xml)
+    /// \param inAdditionalProperties the list of additional information for the movie
     void initialize(const std::string & inFileName,
         const std::vector<SpH5File_t> & inHdf5Files,
         const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo,
-        const std::vector<isize_t> & inDroppedFrames);
+        const std::vector<isize_t> & inDroppedFrames,
+        const std::map<std::string, Variant> & inAdditionalProperties);
 
     /// Initialize timing info from the HDF5
     ///

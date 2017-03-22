@@ -20,6 +20,7 @@ public:
     {
         FLOAT,
         ISXTIME,
+        STRING,
         NONE
     };
 
@@ -34,6 +35,10 @@ public:
     /// Constructor for Time value
     ///
     explicit Variant(const Time & inValue);
+
+    /// Constructor for a string value
+    ///
+    explicit Variant(const std::string & inValue);
 
     /// Copy constructor
     /// \param inOther the other Variant to copy

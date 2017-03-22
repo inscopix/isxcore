@@ -5,6 +5,7 @@
 #include "isxMovieFactory.h"
 #include "isxCellSetFactory.h"
 #include "isxPathUtils.h"
+#include "isxNVistaHdf5Movie.h"
 
 #include <fstream>
 #include "json.hpp"
@@ -236,6 +237,79 @@ DataSet::setUnmodified()
     m_modified = false;
 }
 
+DataSet::Metadata 
+DataSet::getMetadata() 
+{
+    if (!m_hasMetaData)
+    {
+        readMetaData();
+    }
+
+    Metadata metadata; 
+    std::stringstream ss;
+    
+    // File Name
+    metadata.push_back(std::pair<std::string, std::string>("File Name", m_fileName));
+
+    // Timing Info
+    ss << m_timingInfo.getStart();
+    metadata.push_back(std::pair<std::string, std::string>("Start time", ss.str()));
+    ss.str("");
+    
+    ss << m_timingInfo.getEnd();
+    metadata.push_back(std::pair<std::string, std::string>("End time", ss.str()));
+    ss.str("");
+
+    ss << m_timingInfo.getDuration().toDouble();
+    metadata.push_back(std::pair<std::string, std::string>("Duration In Seconds", ss.str()));
+    ss.str("");
+
+    ss << m_timingInfo.getStep().toDouble();
+    metadata.push_back(std::pair<std::string, std::string>("Step In Seconds", ss.str()));
+    ss.str("");
+
+    ss << m_timingInfo.getNumTimes();
+    metadata.push_back(std::pair<std::string, std::string>("Number Of Time Samples", ss.str()));
+    ss.str("");
+
+    ss << m_timingInfo.getDroppedCount();
+    metadata.push_back(std::pair<std::string, std::string>("Number Of Dropped Frames", ss.str()));
+    ss.str("");
+
+    const std::vector<isize_t> droppedFrames = m_timingInfo.getDroppedFrames();
+    for ( auto & df : droppedFrames)
+    {
+        ss << df << " ";
+    }    
+    metadata.push_back(std::pair<std::string, std::string>("Dropped Frames", ss.str()));
+    ss.str("");
+
+    // Spacing Info
+    SizeInMicrons_t size = m_spacingInfo.getPixelSize();
+    ss << "(" << size.getX().toDouble() << ", " << size.getY().toDouble() << ")";
+    metadata.push_back(std::pair<std::string, std::string>("Pixel Size In Microns", ss.str()));
+    ss.str("");
+
+    ss << m_spacingInfo.getNumRows();
+    metadata.push_back(std::pair<std::string, std::string>("Number Of Rows", ss.str()));
+    ss.str("");
+
+    ss << m_spacingInfo.getNumColumns();
+    metadata.push_back(std::pair<std::string, std::string>("Number Of Columns", ss.str()));
+    ss.str("");
+
+    // Additional properties
+    for (auto & p : m_readOnlyProperties)
+    {
+        Variant::MetaType type = p.second.getType();
+        ISX_ASSERT(type == Variant::MetaType::STRING);
+        metadata.push_back(std::pair<std::string, std::string>(p.first, p.second.value<std::string>()));
+    }
+
+    return metadata;
+
+}
+
 std::string
 DataSet::toJsonString(const bool inPretty, const std::string & inPathToOmit) const
 {
@@ -343,6 +417,12 @@ DataSet::readMetaData()
         m_spacingInfo = movie->getSpacingInfo();
         m_dataType = movie->getDataType();
         m_hasMetaData = true;
+
+        const auto nVistaMovie = std::dynamic_pointer_cast<isx::NVistaHdf5Movie>(movie);
+        if(nVistaMovie)
+        {
+            m_readOnlyProperties = nVistaMovie->getAdditionalProperties();     
+        }
     }
     else if (m_type == Type::CELLSET)
     {
@@ -351,6 +431,21 @@ DataSet::readMetaData()
         m_spacingInfo = cellSet->getSpacingInfo();
         m_dataType = isx::DataType::F32;
         m_hasMetaData = true;
+    }
+    else if (m_type == Type::BEHAVIOR)
+    {
+        
+        Variant v;
+        if(getPropertyValue(PROP_MOVIE_START_TIME, v))
+        {
+            Time startTime = v.value<Time>();
+            const SpMovie_t movie = readBehavioralMovie(m_fileName, startTime);
+            m_timingInfo = movie->getTimingInfo();
+            m_spacingInfo = movie->getSpacingInfo();
+            m_dataType = movie->getDataType();
+            m_hasMetaData = true;
+        }
+        
     }
 }
 

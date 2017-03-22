@@ -150,11 +150,11 @@ Time::serialize(std::ostream& strm) const
     QTimeZone timeZone(m_utcOffset);
     QDateTime dateTime = QDateTime::fromMSecsSinceEpoch(secsInt * 1000, timeZone);
 
-    std::string dateTimeStr = dateTime.toString("yyyyMMdd-hhmmss").toStdString();
+    std::string dateTimeStr = dateTime.toString("yyyy/MM/dd-hh:mm:ss").toStdString();
     DurationInSeconds secsOffset = m_secsSinceEpoch - secsInt;
     std::string timeZoneStr = timeZone.displayName(dateTime).toStdString();
 
-    strm << dateTimeStr << " " << secsOffset << " " << timeZoneStr;
+    strm << dateTimeStr << " " << secsOffset.toDouble() << " " << timeZoneStr;
 }
 
 Time

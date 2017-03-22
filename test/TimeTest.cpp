@@ -120,7 +120,7 @@ TEST_CASE("TimeTest", "[core]") {
     SECTION("String conversion")
     {
         isx::Time time(1970, 1, 1, 0, 0, 0, 0);
-        std::string expected = "19700101-000000 0 / 1 UTC";
+        std::string expected = "1970/01/01-00:00:00 0 UTC";
         std::string actual = time.toString();
         REQUIRE(actual == expected);
     }
