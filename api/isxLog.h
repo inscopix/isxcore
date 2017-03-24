@@ -26,6 +26,12 @@
 /// Logs the arguments as strings in an info message.
 #define ISX_LOG_INFO(...) isx::internal::log_(__VA_ARGS__)
 
+/// \def ISX_LOG_INFO_NO_PRINT(...)
+///
+/// Logs the arguments as strings in an info message that is serialized to a file.
+#define ISX_LOG_INFO_NO_PRINT(...) isx::internal::logNoPrint_(__VA_ARGS__)
+
+
 /// \def ISX_LOG_WARNING(...)
 ///
 /// Logs the arguments as strings in a warning message.
@@ -94,6 +100,16 @@ void log_(Rest && ...rest)
     std::cout << str;
     std::cout << std::flush;
 #endif
+    Logger::log(str);
+}
+
+/// Appends variadic arguments to a log file.
+///
+/// \param  rest    The arguments to the log file.
+template<typename ...Rest>
+void logNoPrint_(Rest && ...rest)
+{
+    std::string str = isx::internal::varArgsToString(std::forward<Rest>(rest)..., "\n");
     Logger::log(str);
 }
 

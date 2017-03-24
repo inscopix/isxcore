@@ -12,7 +12,7 @@ namespace isx
 /// status of an asynchronous task
 enum class AsyncTaskStatus    
 {
-    PENDING,                ///< task is pending / not done processing
+    PENDING = 0,                ///< task is pending / not done processing
     PROCESSING,             ///< task is processing
     COMPLETE,               ///< task completed successfully
     CANCELLED,              ///< task was cancelled

@@ -3,6 +3,7 @@
 #include "isxJsonUtils.h"
 #include "isxPathUtils.h"
 #include "isxSeriesIdentifier.h"
+#include "isxReportUtils.h"
 
 #include <fstream>
 #include <QDir>
@@ -130,6 +131,8 @@ Project::createDataSetInRoot(
     }
     
     auto s = std::make_shared<Series>(inName, inType, inFileName, inHistory, inProperties);
+    DataSet *ds = s->getDataSet(0);
+    reportImportData(ds);
     m_root->insertGroupMember(s, m_root->getNumGroupMembers());
     return s;
 }

@@ -53,7 +53,7 @@ TEST_CASE("Project-Project", "[core]")
         const auto expected = project.createDataSetInRoot(
             "movie",
             isx::DataSet::Type::MOVIE,
-            "movie.isxd",
+            g_resources["unitTestDataPath"] + "/recording_20160426_145041-dff_he.isxd",
             hd);
         project.save();
 

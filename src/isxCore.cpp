@@ -4,6 +4,7 @@
 #include "isxVersion.h"
 #include "isxException.h"
 #include "isxLogger.h"
+#include "isxReportUtils.h"
 
 namespace isx
 {
@@ -61,17 +62,19 @@ namespace isx
     void CoreInitialize(const std::string & inLogFileName)
     {
         DispatchQueue::initializeDefaultQueues();
-        IoQueue::initialize();
-        /// Note: Logger MUST be initialized after the IO queue, as it utilizes it to write to a file
+        IoQueue::initialize();        
         Logger::initialize(inLogFileName);
+        reportSessionStart();
+        reportSystemInfo();
     }
     bool CoreIsInitialized()
-    {
+    {   
         return DispatchQueue::isInitialized()
             && IoQueue::isInitialized();
     }
     void CoreShutdown()
     {
+        reportSessionEnd();
         IoQueue::destroy();
         DispatchQueue::destroyDefaultQueues();
     }

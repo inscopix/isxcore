@@ -20,7 +20,6 @@ class Logger::Impl : public std::enable_shared_from_this<Logger::Impl>
 public:
     Impl(const std::string & inLogFileName)
     {
-        //QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
         m_filename = inLogFileName;
         std::string path = getDirName(m_filename);
 
@@ -79,8 +78,6 @@ Logger::initialize(const std::string & inLogFileName)
     if (!isInitialized())
     {
         s_instance.reset(new Logger(inLogFileName));
-        const std::string str("Initialized session\n");
-        s_instance->log(str);
     }
 }
 
