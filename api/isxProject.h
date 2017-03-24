@@ -67,6 +67,9 @@ public:
     ///
     void save();
 
+    /// Write filename.isxp.tmp to file
+    void saveTmp();
+
     /// Create a data set at the root of this project.
     ///
     /// \param  inName      The name of the DataSet to create
@@ -195,9 +198,12 @@ private:
     void read();
 
     /// Write this project to its file.
+    /// \param inFilename a filename other than m_fileName to be used. .
+    void write(const std::string & inFilename) const;
+
+    /// \return the temporary filename
     ///
-    /// This requires the file name to already be set.
-    void write() const;
+    std::string getTmpFileName() const;
 
     /// Checks if the file name is already used by a data set in this project.
     ///

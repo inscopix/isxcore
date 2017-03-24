@@ -107,8 +107,18 @@ Project::save()
 {
     if (m_valid)
     {
-        write();
+        write(m_fileName);
         setUnmodified();
+    }
+}
+
+void 
+Project::saveTmp()
+{
+    if (m_valid)
+    {
+        std::string tmp = getTmpFileName();
+        write(tmp);
     }
 }
 
@@ -261,10 +271,11 @@ Project::setFileName(const std::string & inFileName, bool inFromTemporary)
     // 3) Create new dataDir.
     // 4) Copy data from old dataDir to new project dataDir.
     // 5) If coming from temp project, delete old data files
-    // 6) If coming from temp project, delete old dataDir and old projDir.
+    // 6) If coming from temp project, delete old dataDir, old temp project file and old projDir.
     // 7) Adjust stored absolute paths in datasets of current project
     
     std::string oldPath = getDataPath();
+    std::string prevTmpFileName = getTmpFileName();
     std::string prevName = m_fileName;
     m_fileName = inFileName;
     std::string newPath = getDataPath();
@@ -324,6 +335,11 @@ Project::setFileName(const std::string & inFileName, bool inFromTemporary)
             if (res == false)
             {
                 ISX_LOG_WARNING("rmdir ", oldDataDir.absolutePath().toStdString(), " returned: ", res);
+            }
+            res = oldProjDir.remove(QString::fromStdString(prevTmpFileName));
+            if (res == false)
+            {
+                ISX_LOG_WARNING("remove ", prevTmpFileName, " returned: ", res);
             }
             res = oldProjDir.rmdir(oldProjDir.absolutePath());
             if (res == false)
@@ -418,7 +434,7 @@ Project::read()
 }
 
 void
-Project::write() const
+Project::write(const std::string & inFilename) const
 {
     json jsonObject;
     try
@@ -437,8 +453,14 @@ Project::write() const
         ISX_THROW(ExceptionDataIO, "Unknown error while generating project header.");
     }
 
-    std::ofstream file(m_fileName, std::ios::trunc);
+    std::ofstream file(inFilename, std::ios::trunc);
     writeJson(jsonObject, file);
+}
+
+std::string 
+Project::getTmpFileName() const
+{
+    return m_fileName + ".tmp";
 }
 
 bool
