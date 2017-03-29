@@ -108,67 +108,121 @@ BehavMovieFile::isPtsMatch(int64_t inTargetPts, int64_t inTestPts) const
     return inTestPts >= (inTargetPts - fudge);
 }
 
-SpVideoFrame_t
-BehavMovieFile::readFrame(isize_t inFrameNumber)
+int64_t
+BehavMovieFile::seekFrameAndReadPacket(isize_t inFrameNumber)
 {
     static const isize_t sGopSize = 10; // TODO aschildan 10/12/2016: need to calculate this, this value is extracted from noldus video
     
-    ISX_ASSERT(m_videoCodecCtx && m_formatCtx);
-
-    int64_t requestedPts = timeBaseUnitsForFrames(inFrameNumber) + m_videoPtsStartOffset;
-    int64_t deltaFromCurrent = requestedPts - m_lastPktPts;
-    int64_t deltaFromExpected = deltaFromCurrent - timeBaseUnitsForFrames(1);
+    const int64_t requestedPts = timeBaseUnitsForFrames(inFrameNumber) + m_videoPtsStartOffset;
+    const int64_t deltaFromCurrent = requestedPts - m_lastPktPts;
+    const int64_t deltaFromExpected = deltaFromCurrent - timeBaseUnitsForFrames(1);
     ISX_BEHAV_READ_LOG_DEBUG("deltaFromExpected: ", deltaFromExpected, ", thresh: ", int64_t(m_videoPtsFrameDelta.toDouble() + 0.5f));
-    
-    bool seeking = false;
     
     if (inFrameNumber == 0)
     {
         av_seek_frame(m_formatCtx, m_videoStreamIndex, 0, AVSEEK_FLAG_ANY | AVSEEK_FLAG_BACKWARD);
         avcodec_flush_buffers(m_videoCodecCtx);
-        seeking = true;
+        auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
+        if (readRet < 0)
+        {
+            ISX_LOG_ERROR("Error in BehavMovieFile::seekFrame: ", readRet);
+        }
     }
     else if (-deltaFromExpected > timeBaseUnitsForFrames(1)
-           || deltaFromExpected > timeBaseUnitsForFrames(sGopSize))
+             || deltaFromExpected > timeBaseUnitsForFrames(sGopSize))
     {
         // We get here and start seeking if the next frame is more than one frame
         // before the expected frame or more than the gop-size after the expected frame
-        
+
         if (inFrameNumber == m_lastVideoFrameNumber + 1)
         {
             ISX_BEHAV_READ_LOG_DEBUG("Last frame had timestamp for this frame, repeating it.");
         }
         
-        
-        isize_t seekFrameNumber = inFrameNumber - sGopSize;
-        int64_t seekPts = timeBaseUnitsForFrames(seekFrameNumber) + m_videoPtsStartOffset;
-        
-        if (inFrameNumber < sGopSize)
-        {
-            seekFrameNumber = 0;
-            seekPts = 0;
-        }
-        
+        int64_t seekFrameNumber = int64_t(inFrameNumber) - int64_t(sGopSize);
+        int64_t seekPts = requestedPts;
         int flags = AVSEEK_FLAG_ANY | ((deltaFromCurrent < 0) ? AVSEEK_FLAG_BACKWARD : 0);
-        ISX_BEHAV_READ_LOG_DEBUG("req: ", requestedPts, ", seek: ", seekPts);
-        av_seek_frame(m_formatCtx, m_videoStreamIndex, seekPts, flags);
-        avcodec_flush_buffers(m_videoCodecCtx);
-        seeking = true;
+        
+        int64_t pts = AV_NOPTS_VALUE;
+        
+        while (pts == AV_NOPTS_VALUE || pts > requestedPts)
+        {
+            if (seekFrameNumber < 0)
+            {
+                av_seek_frame(m_formatCtx, m_videoStreamIndex, 0, flags);
+                avcodec_flush_buffers(m_videoCodecCtx);
+                auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
+                
+                if (readRet < 0)
+                {
+                    ISX_THROW(isx::ExceptionFileIO,
+                              "Failed to read video packet: ", m_fileName);
+                }
+            }
+            else
+            {
+                av_seek_frame(m_formatCtx, m_videoStreamIndex, seekPts, flags);
+                avcodec_flush_buffers(m_videoCodecCtx);
+
+                auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
+                
+                if (readRet < 0)
+                {
+                    ISX_THROW(isx::ExceptionFileIO,
+                              "Failed to read video packet: ", m_fileName);
+                }
+
+                pts = m_pPacket->pts;
+                if (pts > requestedPts)
+                {
+                    ISX_BEHAV_READ_LOG_DEBUG("seekFrame scanning back: requestedPts: ", requestedPts, ", seekPts: ", seekPts, ", pts:" , pts);
+
+                    av_packet_unref(m_pPacket.get());
+
+                    // if we need to seek again, we will seek backward from current
+                    flags |= AVSEEK_FLAG_BACKWARD;
+                    --seekFrameNumber;
+                    seekPts = timeBaseUnitsForFrames(seekFrameNumber) + m_videoPtsStartOffset;
+                }
+            }
+        }
+
+        ISX_BEHAV_READ_LOG_DEBUG("seekFrame done: requestedPts: ", requestedPts, ", seekPts: ", seekPts);
     }
-
-    AVFrame * pFrame = av_frame_alloc();
-    int recvResult = 0;
-    int64_t pts = AV_NOPTS_VALUE;
-
-    if (!seeking)
+    else
     {
-        recvResult = avcodec_receive_frame(m_videoCodecCtx, pFrame);
-        pts = pFrame->pkt_pts;
+        auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
+        if (readRet < 0)
+        {
+            ISX_LOG_ERROR("Error in BehavMovieFile::seekFrame: ", readRet);
+        }
     }
+
+    if (avcodec_send_packet(m_videoCodecCtx, m_pPacket.get()) != 0)
+    {
+        av_packet_unref(m_pPacket.get());
+        ISX_THROW(isx::ExceptionFileIO,
+                  "Failed to decode video packet: ", m_fileName);
+    }
+
+    return requestedPts;
+}
+    
+SpVideoFrame_t
+BehavMovieFile::readFrame(isize_t inFrameNumber)
+{
+    ISX_ASSERT(m_videoCodecCtx && m_formatCtx);
+    
+    auto requestedPts = seekFrameAndReadPacket(inFrameNumber);
+    auto pFrame = av_frame_alloc();
+
+    auto recvResult = avcodec_receive_frame(m_videoCodecCtx, pFrame);
+    auto pts = pFrame->pkt_pts;
 
     while (!isPtsMatch(requestedPts, pts)
            && av_read_frame(m_formatCtx, m_pPacket.get()) >= 0)
     {
+        ISX_BEHAV_READ_LOG_DEBUG("req: ", requestedPts, ", packet pts: ", m_pPacket->pts);
         if (avcodec_send_packet(m_videoCodecCtx, m_pPacket.get()) != 0)
         {
             ISX_THROW(isx::ExceptionFileIO,

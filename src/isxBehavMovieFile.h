@@ -102,6 +102,11 @@ private:
     /// \return true if the two given Presentation Time Stamps (pts) match
     bool
     isPtsMatch(int64_t inTargetPts, int64_t inTestPts) const;
+    
+    /// Seek to given frame in stream (if needed) and read packet
+    ///
+    int64_t
+    seekFrameAndReadPacket(isize_t inFrameNumber);
 
     /// True if the movie file is valid, false otherwise.
     bool m_valid = false;
