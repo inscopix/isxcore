@@ -102,6 +102,12 @@ public:
     ///        indices in this movie.
     /// \return the start time of the window associated with inIndex
     Time convertIndexToStartTime(isize_t inIndex) const;
+    
+    /// Computes the start time of the last sample in the data set.
+    /// This is different from getEnd() which returns the end time of the last sample.
+    ///
+    /// \return the start time of the last sample in the data set.
+    Time getLastStartTime() const;
 
     /// \return     True if this overlaps in time with another timing info.
     ///

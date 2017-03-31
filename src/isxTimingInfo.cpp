@@ -117,6 +117,12 @@ TimingInfo::convertIndexToStartTime(isize_t inIndex) const
     Time ret = m_start + (m_step * index);
     return ret;
 }
+   
+Time
+TimingInfo::getLastStartTime() const
+{
+    return convertIndexToStartTime(getNumTimes() - 1);
+}
 
 bool
 TimingInfo::overlapsWith(const TimingInfo & inOther) const

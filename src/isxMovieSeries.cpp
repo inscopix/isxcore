@@ -3,6 +3,7 @@
 #include "isxException.h"
 #include "isxDispatchQueue.h"
 #include "isxSeries.h"
+#include "isxIoTaskTracker.h"
 
 #include <algorithm>
 #include <functional>
@@ -15,6 +16,7 @@ MovieSeries::MovieSeries()
 {}
 
 MovieSeries::MovieSeries(const std::vector<std::string> & inFileNames)
+    : m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
     ISX_ASSERT(inFileNames.size() > 0);
     if (inFileNames.size() == 0)
@@ -144,13 +146,13 @@ MovieSeries::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
     {
         // in between individual movies
         // --> return placeholder frame
-        AsyncTaskResult<SpVideoFrame_t> atr;
-        atr.setValue(ret);
         ret->setFrameType(VideoFrame::Type::INGAP);
-        DispatchQueue::poolQueue()->dispatch([inCallback, atr]()
-            {
-                inCallback(atr);
-            });
+        
+        GetFrameCB_t getFrameCB = [ret, inFrameNumber]()
+        {
+            return ret;
+        };
+        m_ioTaskTracker->schedule(getFrameCB, inCallback);
     }
     else
     {
@@ -174,6 +176,7 @@ MovieSeries::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 void
 MovieSeries::cancelPendingReads()
 {
+    m_ioTaskTracker->cancelPendingTasks();
     for (auto & m: m_movies)
     {
         m->cancelPendingReads();

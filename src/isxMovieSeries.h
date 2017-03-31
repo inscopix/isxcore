@@ -11,6 +11,7 @@
 
 namespace isx
 {
+    template <typename T> class IoTaskTracker;
 
 /// Class for managing and interfacing with a series of movies, accurately tracking time gaps between movies.
 /// Movies in a MovieSeries have to
@@ -131,12 +132,15 @@ private:
     /// True if the movie file is valid, false otherwise.
     bool m_valid = false;
     
-    TimingInfo                          m_globalTimingInfo;
-    TimingInfos_t                       m_timingInfos;
-    SpacingInfo                         m_spacingInfo;
+    TimingInfo                                  m_globalTimingInfo;
+    TimingInfos_t                               m_timingInfos;
+    SpacingInfo                                 m_spacingInfo;
 
-    std::vector<SpMovie_t>              m_movies;
-    std::vector<isize_t>                m_moviesFirstFrameInGlobal;
+    std::vector<SpMovie_t>                      m_movies;
+    std::vector<isize_t>                        m_moviesFirstFrameInGlobal;
+
+    std::shared_ptr<IoTaskTracker<VideoFrame>>  m_ioTaskTracker;
+
 };
 
 } // namespace isx
