@@ -138,26 +138,27 @@ BehavMovieFile::seekFrameAndReadPacket(isize_t inFrameNumber)
         {
             ISX_BEHAV_READ_LOG_DEBUG("Last frame had timestamp for this frame, repeating it.");
         }
-        
+
         int64_t seekFrameNumber = int64_t(inFrameNumber) - int64_t(sGopSize);
         int64_t seekPts = requestedPts;
         int flags = AVSEEK_FLAG_ANY | ((deltaFromCurrent < 0) ? AVSEEK_FLAG_BACKWARD : 0);
-        
+
         int64_t pts = AV_NOPTS_VALUE;
-        
-        while (pts == AV_NOPTS_VALUE || pts > requestedPts)
+
+        while (pts == AV_NOPTS_VALUE ||  pts > requestedPts)
         {
-            if (seekFrameNumber < 0)
+            if (seekFrameNumber <= 0)
             {
                 av_seek_frame(m_formatCtx, m_videoStreamIndex, 0, flags);
                 avcodec_flush_buffers(m_videoCodecCtx);
                 auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
-                
+
                 if (readRet < 0)
                 {
                     ISX_THROW(isx::ExceptionFileIO,
                               "Failed to read video packet: ", m_fileName);
                 }
+                break;
             }
             else
             {
@@ -165,7 +166,7 @@ BehavMovieFile::seekFrameAndReadPacket(isize_t inFrameNumber)
                 avcodec_flush_buffers(m_videoCodecCtx);
 
                 auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
-                
+
                 if (readRet < 0)
                 {
                     ISX_THROW(isx::ExceptionFileIO,
