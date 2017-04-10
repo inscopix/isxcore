@@ -94,6 +94,12 @@ public:
     /// \return     The address of the first byte of image data.
     char *
     getPixels();
+    
+    /// const version of above
+    ///
+    const
+    char *
+    getPixels() const;
 
     /// Get the address of the first pixel of image data as uint8_t.
     ///
@@ -116,6 +122,12 @@ public:
     ///                                 not uint16_t.
     uint16_t *
     getPixelsAsU16();
+    
+    /// const version of above
+    ///
+    const
+    uint16_t *
+    getPixelsAsU16() const;
 
     /// Get the address of the first pixel of image data as float.
     ///
@@ -127,6 +139,12 @@ public:
     ///                                 not float.
     float *
     getPixelsAsF32();
+
+    /// const version of above
+    ///
+    const
+    float *
+    getPixelsAsF32() const;
 
     /// \return the value of the requested pixel as float
     /// \param row row index

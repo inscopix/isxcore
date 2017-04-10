@@ -160,7 +160,7 @@ private:
     DurationInSeconds m_step;
 
     /// The number of time samples.
-    isize_t m_numTimes;
+    isize_t m_numTimes = 0;
 
     /// Whether the object is valid or not
     bool m_isValid = false;

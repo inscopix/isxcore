@@ -98,13 +98,20 @@ Image::getImageSizeInBytes() const
 char *
 Image::getPixels()
 {
+    return const_cast<char *>(const_cast<const Image *>(this)->getPixels());
+}
+
+const
+char *
+Image::getPixels() const
+{
     if (m_pixels)
     {
         return &(m_pixels[0]);
     }
     return 0;
 }
-
+    
 uint8_t *
 Image::getPixelsAsU8()
 {
@@ -119,24 +126,39 @@ Image::getPixelsAsU8()
 uint16_t *
 Image::getPixelsAsU16()
 {
+    return const_cast<uint16_t *>(const_cast<const Image *>(this)->getPixelsAsU16());
+}
+
+const
+uint16_t *
+Image::getPixelsAsU16() const
+{
     if (m_dataType != DataType::U16)
     {
         ISX_THROW(isx::ExceptionDataIO,
                 "U16 pixels requested, but underlying data type is ", m_dataType);
     }
-    return reinterpret_cast<uint16_t *>(getPixels());
+    return reinterpret_cast<const uint16_t *>(getPixels());
 }
 
 float *
 Image::getPixelsAsF32()
+{
+    return const_cast<float *>(const_cast<const Image *>(this)->getPixelsAsF32());
+}
+
+const
+float *
+Image::getPixelsAsF32() const
 {
     if (m_dataType != DataType::F32)
     {
         ISX_THROW(isx::ExceptionDataIO,
                 "F32 pixels requested, but underlying data type is ", m_dataType);
     }
-    return reinterpret_cast<float *>(getPixels());
+    return reinterpret_cast<const float *>(getPixels());
 }
+
 
 float 
 Image::getPixelValueAsF32(isize_t row, isize_t col)
