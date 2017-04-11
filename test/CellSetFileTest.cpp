@@ -75,13 +75,13 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         /// Cell trace with default name
         file.writeCellData(0, originalImage, originalTrace);
         REQUIRE(file.numberOfCells() == 1);
-        REQUIRE(file.isCellValid(0) == true);
+        REQUIRE(file.getCellStatus(0) == isx::CellSet::CellStatus::UNDECIDED);
         REQUIRE(file.getCellName(0).compare("C0") == 0);
 
         /// Cell trace with given name
         file.writeCellData(1, originalImage, originalTrace, "testName");
         REQUIRE(file.numberOfCells() == 2);
-        REQUIRE(file.isCellValid(1) == true);
+        REQUIRE(file.getCellStatus(0) == isx::CellSet::CellStatus::UNDECIDED);
         REQUIRE(file.getCellName(1).compare("testName") == 0);
         file.closeForWriting();
     }
@@ -152,11 +152,11 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         REQUIRE(file.isValid());
         file.writeCellData(0, originalImage, originalTrace);  
         REQUIRE(file.numberOfCells() == 1);
-        REQUIRE(file.isCellValid(0) == true);
-        file.setCellValid(0, false);
-        REQUIRE(file.isCellValid(0) == false);
-        file.setCellValid(0, true);
-        REQUIRE(file.isCellValid(0) == true);
+        REQUIRE(file.getCellStatus(0) == isx::CellSet::CellStatus::UNDECIDED);
+        file.setCellStatus(0, isx::CellSet::CellStatus::REJECTED);
+        REQUIRE(file.getCellStatus(0) == isx::CellSet::CellStatus::REJECTED);
+        file.setCellStatus(0, isx::CellSet::CellStatus::ACCEPTED);
+        REQUIRE(file.getCellStatus(0) == isx::CellSet::CellStatus::ACCEPTED);
         file.closeForWriting();
     }
 
@@ -166,7 +166,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         REQUIRE(file.isValid());
         file.writeCellData(0, originalImage, originalTrace);  
         REQUIRE(file.numberOfCells() == 1);
-        REQUIRE(file.isCellValid(0) == true);
+        REQUIRE(file.getCellStatus(0) == isx::CellSet::CellStatus::UNDECIDED);
         REQUIRE(file.getCellName(0).compare("C0") == 0);
 
         file.setCellName(0, "newName");
@@ -194,7 +194,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
 
         for (size_t i = 0; i < 10; ++i)
         {
-            REQUIRE(file.isCellValid(i) == true);
+            REQUIRE(file.getCellStatus(i) == isx::CellSet::CellStatus::UNDECIDED);
 
             isx::SpFTrace_t trace = file.readTrace(i);
             float * values = trace->getValues();
@@ -233,7 +233,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         file.closeForWriting();
         
         ISX_REQUIRE_EXCEPTION(
-            file.setCellValid(0, true),
+            file.setCellStatus(0, isx::CellSet::CellStatus::ACCEPTED),
             isx::ExceptionFileIO,
             "Writing data after file was closed for writing." + fileName);
     }

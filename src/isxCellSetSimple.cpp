@@ -11,12 +11,12 @@ CellSetSimple::CellSetSimple()
 {
 }
 
-CellSetSimple::CellSetSimple(const std::string & inFileName)
+CellSetSimple::CellSetSimple(const std::string & inFileName, bool enableWrite)
     : m_valid(false)
     , m_traceIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_imageIoTaskTracker(new IoTaskTracker<Image>())
 {
-    m_file = std::make_shared<CellSetFile>(inFileName);
+    m_file = std::make_shared<CellSetFile>(inFileName, enableWrite);
     m_valid = true;
 }
 
@@ -197,16 +197,16 @@ CellSetSimple::writeImageAndTrace(
     }
 }
 
-bool
-CellSetSimple::isCellValid(isize_t inIndex)
+CellSet::CellStatus 
+CellSetSimple::getCellStatus(isize_t inIndex)
 {
-    return m_file->isCellValid(inIndex);
+    return m_file->getCellStatus(inIndex);
 }
 
 void
-CellSetSimple::setCellValid(isize_t inIndex, bool inIsValid)
+CellSetSimple::setCellStatus(isize_t inIndex, CellSet::CellStatus inStatus)
 {
-    m_file->setCellValid(inIndex, inIsValid);
+    m_file->setCellStatus(inIndex, inStatus);
 }
 
 std::string 

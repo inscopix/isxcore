@@ -32,9 +32,10 @@ public:
     /// header.
     ///
     /// \param  inFileNames  The name of the cell set file to read.
+    /// \param  enableWrite     Set to true to open in read-write mode
     /// \throw  isx::ExceptionFileIO    If reading the cell set file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the cell set file fails.
-    CellSetSeries(const std::vector<std::string> & inFileNames);
+    CellSetSeries(const std::vector<std::string> & inFileNames, bool enableWrite = false);
 
     /// Destructor.
     ///
@@ -81,11 +82,12 @@ public:
             SpFTrace_t & inTrace,
             const std::string & inName = std::string()) override; 
 
-    bool 
-    isCellValid(isize_t inIndex) override;
+
+    CellSet::CellStatus 
+    getCellStatus(isize_t inIndex) override;
 
     void 
-    setCellValid(isize_t inIndex, bool inIsValid) override;
+    setCellStatus(isize_t inIndex, CellSet::CellStatus inStatus) override;
 
     std::string 
     getCellName(isize_t inIndex) override;

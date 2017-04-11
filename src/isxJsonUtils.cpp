@@ -273,15 +273,30 @@ convertJsonToCellNames(const json & inJson)
 }
 
 json
-convertCellValiditiesToJson(const CellValidities_t & inCellValidities)
+convertCellStatusesToJson(const CellStatuses_t & inCellStatuses)
 {
-    return inCellValidities;
+    std::vector<int> intCellStatuses(inCellStatuses.size());
+    isize_t i = 0;
+    for (auto & s : inCellStatuses)
+    {
+        intCellStatuses[i] = (int)s;
+        ++i;
+    }
+    return intCellStatuses;
 }
 
-CellValidities_t
-convertJsonToCellValidities(const json & inJson)
+CellStatuses_t
+convertJsonToCellStatuses(const json & inJson)
 {
-    return inJson.get<CellValidities_t>();
+    std::vector<int> intCellStatuses = inJson.get<std::vector<int>>();
+    CellStatuses_t cellStatuses(intCellStatuses.size());
+    isize_t i = 0;
+    for (auto & s : intCellStatuses)
+    {
+        cellStatuses[i] = (CellSet::CellStatus)s;
+        ++i;
+    }
+    return cellStatuses;
 }
     
 json

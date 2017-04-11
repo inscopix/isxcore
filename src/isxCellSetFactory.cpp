@@ -17,16 +17,16 @@ SpCellSet_t writeCellSet(
 }
 
 
-SpCellSet_t readCellSet(const std::string & inFileName)
+SpCellSet_t readCellSet(const std::string & inFileName, bool enableWrite)
 {
-    SpCellSet_t cs = std::make_shared<CellSetSimple>(inFileName);
+    SpCellSet_t cs = std::make_shared<CellSetSimple>(inFileName, enableWrite);
     return cs;
 }
 
 
-SpCellSet_t readCellSetSeries(const std::vector<std::string> & inFileNames)
+SpCellSet_t readCellSetSeries(const std::vector<std::string> & inFileNames, bool enableWrite)
 {
-    SpCellSet_t cs = std::make_shared<CellSetSeries>(inFileNames);
+    SpCellSet_t cs = std::make_shared<CellSetSeries>(inFileNames, enableWrite);
     return cs;
 }
 

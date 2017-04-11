@@ -16,7 +16,7 @@ namespace isx
 
     }
 
-    CellSetSeries::CellSetSeries(const std::vector<std::string> & inFileNames)
+    CellSetSeries::CellSetSeries(const std::vector<std::string> & inFileNames, bool enableWrite)
         : m_valid(false)
     {
         ISX_ASSERT(inFileNames.size() > 0);
@@ -27,7 +27,7 @@ namespace isx
 
         for(const auto &fn : inFileNames)
         {
-            m_cellSets.emplace_back(readCellSet(fn));
+            m_cellSets.emplace_back(readCellSet(fn, enableWrite));
         }
 
         std::sort(m_cellSets.begin(), m_cellSets.end(), [](SpCellSet_t a, SpCellSet_t b)
@@ -246,18 +246,18 @@ namespace isx
         ISX_ASSERT(false);
     } 
 
-    bool 
-    CellSetSeries::isCellValid(isize_t inIndex) 
+    CellSet::CellStatus 
+    CellSetSeries::getCellStatus(isize_t inIndex)
     {
-        return m_cellSets[0]->isCellValid(inIndex);
+        return m_cellSets[0]->getCellStatus(inIndex);
     }
 
     void 
-    CellSetSeries::setCellValid(isize_t inIndex, bool inIsValid) 
+    CellSetSeries::setCellStatus(isize_t inIndex, CellSet::CellStatus inStatus)
     {
         for(const auto &cs : m_cellSets)
         {
-            cs->setCellValid(inIndex, inIsValid);
+            cs->setCellStatus(inIndex, inStatus);
         }
     }
 

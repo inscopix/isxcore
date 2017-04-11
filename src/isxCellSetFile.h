@@ -8,6 +8,7 @@
 #include "isxImage.h"
 #include "isxTrace.h"
 #include "isxJsonUtils.h"
+#include "isxCellSet.h" 
 
 
 namespace isx
@@ -30,10 +31,11 @@ public:
     /// header.
     ///
     /// \param  inFileName  The name of the cell set file.
+    /// \param  enableWrite     Set to true to open in read-write mode
     ///
     /// \throw  isx::ExceptionFileIO    If reading the cell set file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the cell set file fails.
-    CellSetFile(const std::string & inFileName);
+    CellSetFile(const std::string & inFileName, bool enableWrite = false);
 
     /// Write constructor.
     ///
@@ -102,17 +104,17 @@ public:
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData, const std::string & inName = std::string());
     
-    /// \return if the cell is valid 
+    /// \return the status of the cell
     /// \param inCellId the cell of interest
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
-    bool isCellValid(isize_t inCellId);
+    CellSet::CellStatus getCellStatus(isize_t inCellId);
     
     /// Set a cell in the set to be valid/invalid (used for rejecting or accepting segmented cell)
     /// \param inCellId the cell of interest
-    /// \param inIsValid whether to reject or accept a cell in the set
+    /// \param inStatus accepted/rejected/undecided status
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
-    void setCellValid(isize_t inCellId, bool inIsValid);
+    void setCellStatus(isize_t inCellId, CellSet::CellStatus inStatus);
 
     /// Get the name for a cell in the set
     /// \param inCellId the cell of interest
@@ -149,7 +151,7 @@ private:
     CellNames_t m_cellNames;
     
     /// Cell validity flags
-    CellValidities_t m_cellValidities;
+    CellStatuses_t m_cellStatuses;
 
     /// The file stream
     std::fstream m_file;

@@ -27,6 +27,14 @@ using GetImageCB_t = std::function<SpImage_t()>;
 /// The type of callback for getting a cell image asynchronously
 using CellSetGetImageCB_t = std::function<void(AsyncTaskResult<SpImage_t>)>;
 
+/// The cell statuses 
+///
+enum class CellStatus {
+    ACCEPTED = 0,              ///< Cell has been reviewed and accepted
+    UNDECIDED,                 ///< Unreviewed or undecided
+    REJECTED                   ///< Rejected
+};
+
 /// \return whether this is a valid cell set object.
 ///
 virtual
@@ -140,24 +148,24 @@ writeImageAndTrace(
         SpFTrace_t & inTrace,
         const std::string & inName = std::string()) = 0;
 
-/// \return             True if the cell is valid
+/// \return             The current status of the cell
 /// \param  inIndex     The index of the cell.
 /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
 virtual 
-bool 
-isCellValid(isize_t inIndex) = 0;
+CellStatus 
+getCellStatus(isize_t inIndex) = 0;
 
 /// Set a cell in the set to be valid/invalid.
 ///
 /// This is used for rejecting or accepting a cell.
 ///
 /// \param inIndex the cell of interest
-/// \param inIsValid whether to reject or accept a cell in the set
+/// \param inStatus the new status for the cell
 /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
 /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
 virtual
 void 
-setCellValid(isize_t inIndex, bool inIsValid) = 0;
+setCellStatus(isize_t inIndex, CellStatus inStatus) = 0;
 
 /// Get the name for a cell in the set
 /// \param inIndex the cell of interest

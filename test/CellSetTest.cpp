@@ -168,7 +168,7 @@ TEST_CASE("CellSetTest", "[core]")
         cellSet->closeForWriting();
 
         REQUIRE(cellSet->getNumCells() == 1);
-        REQUIRE(cellSet->isCellValid(0) == true);
+        REQUIRE(cellSet->getCellStatus(0) == isx::CellSet::CellStatus::UNDECIDED);
         requireEqualImages(cellSet->getImage(0), originalImage);
         requireEqualTraces(cellSet->getTrace(0), originalTrace);
     }
@@ -184,7 +184,7 @@ TEST_CASE("CellSetTest", "[core]")
         isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
 
         REQUIRE(cellSet->getNumCells() == 1);
-        REQUIRE(cellSet->isCellValid(0) == true);
+        REQUIRE(cellSet->getCellStatus(0) == isx::CellSet::CellStatus::UNDECIDED);
         REQUIRE(cellSet->getCellName(0).compare("mycell") == 0);
         requireEqualImages(cellSet->getImage(0), originalImage);
         requireEqualTraces(cellSet->getTrace(0), originalTrace);
@@ -195,7 +195,7 @@ TEST_CASE("CellSetTest", "[core]")
                     fileName, timingInfo, spacingInfo);
         cellSet->writeImageAndTrace(0, originalImage, originalTrace);
         REQUIRE(cellSet->getNumCells() == 1);
-        REQUIRE(cellSet->isCellValid(0) == true);
+        REQUIRE(cellSet->getCellStatus(0) == isx::CellSet::CellStatus::UNDECIDED);
         REQUIRE(cellSet->getCellName(0).compare("C0") == 0);
 
         cellSet->setCellName(0, "newName");
@@ -211,15 +211,15 @@ TEST_CASE("CellSetTest", "[core]")
         {
             cellSet->writeImageAndTrace(i, originalImage, originalTrace);
         }
-        cellSet->setCellValid(0, true);
-        cellSet->setCellValid(1, false);
-        cellSet->setCellValid(2, true);
+        cellSet->setCellStatus(0, isx::CellSet::CellStatus::ACCEPTED);
+        cellSet->setCellStatus(1, isx::CellSet::CellStatus::UNDECIDED);
+        cellSet->setCellStatus(2, isx::CellSet::CellStatus::REJECTED);
         cellSet->closeForWriting();
 
         REQUIRE(cellSet->getNumCells() == 3);
-        REQUIRE(cellSet->isCellValid(0) == true);
-        REQUIRE(cellSet->isCellValid(1) == false);
-        REQUIRE(cellSet->isCellValid(2) == true);
+        REQUIRE(cellSet->getCellStatus(0) == isx::CellSet::CellStatus::ACCEPTED);
+        REQUIRE(cellSet->getCellStatus(1) == isx::CellSet::CellStatus::UNDECIDED);
+        REQUIRE(cellSet->getCellStatus(2) == isx::CellSet::CellStatus::REJECTED);
 
         for (size_t i = 0; i < 3; ++i)
         {
@@ -237,17 +237,17 @@ TEST_CASE("CellSetTest", "[core]")
             {
                 cellSet->writeImageAndTrace(i, originalImage, originalTrace);
             }
-            cellSet->setCellValid(0, true);
-            cellSet->setCellValid(1, false);
-            cellSet->setCellValid(2, true);
+            cellSet->setCellStatus(0, isx::CellSet::CellStatus::ACCEPTED);
+            cellSet->setCellStatus(1, isx::CellSet::CellStatus::UNDECIDED);
+            cellSet->setCellStatus(2, isx::CellSet::CellStatus::REJECTED);
             cellSet->closeForWriting();
         }
         isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
 
         REQUIRE(cellSet->getNumCells() == 3);
-        REQUIRE(cellSet->isCellValid(0) == true);
-        REQUIRE(cellSet->isCellValid(1) == false);
-        REQUIRE(cellSet->isCellValid(2) == true);
+        REQUIRE(cellSet->getCellStatus(0) == isx::CellSet::CellStatus::ACCEPTED);
+        REQUIRE(cellSet->getCellStatus(1) == isx::CellSet::CellStatus::UNDECIDED);
+        REQUIRE(cellSet->getCellStatus(2) == isx::CellSet::CellStatus::REJECTED);
 
         for (size_t i = 0; i < 3; ++i)
         {

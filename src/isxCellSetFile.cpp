@@ -10,10 +10,16 @@ namespace isx
         
     }
 
-    CellSetFile::CellSetFile(const std::string & inFileName) : 
+    CellSetFile::CellSetFile(const std::string & inFileName, bool enableWrite) : 
         m_fileName(inFileName)
     {
         m_openmode = std::ios::binary | std::ios_base::in;
+
+        if (enableWrite)
+        {
+            m_openmode |= std::ios_base::out;
+        }
+
         m_file.open(m_fileName, m_openmode);
         if (!m_file.good() || !m_file.is_open())
         {
@@ -21,7 +27,7 @@ namespace isx
                 "Failed to open cell set file for reading: ", m_fileName);
         }
         readHeader();
-        m_fileClosedForWriting = true;
+        m_fileClosedForWriting = !enableWrite;
         m_valid = true;
     }
 
@@ -206,7 +212,7 @@ namespace isx
         if (inCellId == m_numCells)
         {
             m_cellNames.push_back(name);
-            m_cellValidities.push_back(true);
+            m_cellStatuses.push_back(CellSet::CellStatus::UNDECIDED);
 
             ++m_numCells;
         }
@@ -216,7 +222,7 @@ namespace isx
             seekToCell(inCellId);
  
             m_cellNames.at(inCellId) = name;
-            m_cellValidities.at(inCellId) = true;
+            m_cellStatuses.at(inCellId) = CellSet::CellStatus::UNDECIDED;
         }
         else
         {
@@ -235,21 +241,21 @@ namespace isx
         flush();
     }
 
-    bool 
-    CellSetFile::isCellValid(isize_t inCellId) 
+    CellSet::CellStatus 
+    CellSetFile::getCellStatus(isize_t inCellId) 
     {
-        return m_cellValidities.at(inCellId);
+        return m_cellStatuses.at(inCellId);
     }
 
     void 
-    CellSetFile::setCellValid(isize_t inCellId, bool inIsValid)
+    CellSetFile::setCellStatus(isize_t inCellId, CellSet::CellStatus inStatus)
     {
         if (m_fileClosedForWriting)
         {
             ISX_THROW(isx::ExceptionFileIO,
                       "Writing data after file was closed for writing.", m_fileName);
         }
-        m_cellValidities.at(inCellId) = inIsValid;
+        m_cellStatuses.at(inCellId) = inStatus;
     }
 
     std::string 
@@ -286,7 +292,7 @@ namespace isx
             m_timingInfo = convertJsonToTimingInfo(j["timingInfo"]);
             m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
             m_cellNames = convertJsonToCellNames(j["CellNames"]);
-            m_cellValidities = convertJsonToCellValidities(j["CellValidities"]);
+            m_cellStatuses = convertJsonToCellStatuses(j["CellStatuses"]);
         }
         catch (const std::exception & error)
         {
@@ -299,7 +305,7 @@ namespace isx
 
         const isize_t bytesPerCell = segmentationImageSizeInBytes() + traceSizeInBytes();
         m_numCells = isize_t(m_headerOffset) / bytesPerCell;
-        if (m_numCells != m_cellNames.size() || m_numCells != m_cellValidities.size())
+        if (m_numCells != m_cellNames.size() || m_numCells != m_cellStatuses.size())
         {
             ISX_THROW(isx::ExceptionDataIO, "Number of cells in header does not match number of cells in file.");
         }
@@ -317,7 +323,7 @@ namespace isx
             j["spacingInfo"] = convertSpacingInfoToJson(m_spacingInfo);
             j["mosaicVersion"] = CoreVersionVector();
             j["CellNames"] = convertCellNamesToJson(m_cellNames);
-            j["CellValidities"] = convertCellValiditiesToJson(m_cellValidities);
+            j["CellStatuses"] = convertCellStatusesToJson(m_cellStatuses);
         }
         catch (const std::exception & error)
         {
@@ -330,7 +336,13 @@ namespace isx
                 "Unknown error while generating cell set header.");
         }
 
-        m_file.seekp(0, std::ios_base::end);
+        if (m_numCells > 0)
+        {
+            seekToCell(m_numCells - 1);
+            isize_t cellSize = segmentationImageSizeInBytes() + traceSizeInBytes();
+            m_file.seekp(cellSize, std::ios_base::cur);
+        }
+        
         m_headerOffset = m_file.tellp();
         writeJsonHeaderAtEnd(j, m_file);
 

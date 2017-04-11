@@ -29,23 +29,25 @@ SpCellSet_t writeCellSet(
 /// If the extension is not recognized, this fails.
 ///
 /// \param  inFileName      The name of the cell set file to read.
+/// \param  enableWrite     Set to true to open in read-write mode
 /// \return                 The imported cell set.
 ///
 /// \throw  isx::ExceptionFileIO    If reading the cell set file fails.
 /// \throw  isx::ExceptionDataIO    If parsing the cell set file fails or
 ///                                 if the extension is not recognized.
-SpCellSet_t readCellSet(const std::string & inFileName);
+SpCellSet_t readCellSet(const std::string & inFileName, bool enableWrite = false);
 
 /// Read an existing series of cell sets from a vector of files.
 /// If the extension is not recognizedfor ane of the filenames, this fails.
 ///
 /// \param  inFileNames     A vector containing the names of the cell set files to read.
+/// \param  enableWrite     Set to true to open in read-write mode
 /// \return                 The imported cell set.
 ///
 /// \throw  isx::ExceptionFileIO    If reading of any of the cell set files fails.
 /// \throw  isx::ExceptionDataIO    If parsing for any the cell set files fails or
 ///                                 if their extension is not recognized.
-SpCellSet_t readCellSetSeries(const std::vector<std::string> & inFileNames);
+SpCellSet_t readCellSetSeries(const std::vector<std::string> & inFileNames, bool enableWrite = false);
 }
 
 #endif // ISX_CELLSET_FACTORY_H

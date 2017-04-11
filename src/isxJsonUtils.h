@@ -5,6 +5,7 @@
 #include "isxSpacingInfo.h"
 #include "isxGroup.h"
 #include "isxDataSet.h"
+#include "isxCellSet.h"
 
 #include "json.hpp"
 
@@ -15,7 +16,7 @@ namespace isx
 using json = nlohmann::json;
 
 using CellNames_t = std::vector<std::string>;
-using CellValidities_t = std::vector<bool>;
+using CellStatuses_t = std::vector<CellSet::CellStatus>;
 
 json convertRatioToJson(const Ratio & inRatio);
 Ratio convertJsonToRatio(const json & j);
@@ -74,9 +75,9 @@ convertCellNamesToJson(const CellNames_t & inCellNames);
 CellNames_t
 convertJsonToCellNames(const json & inJson);
 json
-convertCellValiditiesToJson(const CellValidities_t & inCellValidities);
-CellValidities_t
-convertJsonToCellValidities(const json & inJson);
+convertCellStatusesToJson(const CellStatuses_t & inCellStatuses);
+CellStatuses_t
+convertJsonToCellStatuses(const json & inJson);
     
 /// Reads a JSON header from an input stream.
 ///
