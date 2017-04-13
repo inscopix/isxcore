@@ -21,7 +21,8 @@ public:
         VALID,      ///< A valid frame
         DROPPED,    ///< A dropped frame
         CROPPED,    ///< A frame that has been cropped out of the movie
-        INGAP       ///< A frame in between movie segments
+        INGAP,       ///< A frame in between movie segments
+        NOTIMESTAMP  ///< No data for the requested timestamp
     };
 
     /// Empty constructor for allocation only.
