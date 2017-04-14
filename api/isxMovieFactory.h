@@ -81,7 +81,7 @@ SpMovie_t readMosaicMovie(const std::string & inFileName);
 ///
 /// \throw  isx::ExceptionFileIO    If the movie file cannot be read.
 /// \throw  isx::ExceptionDataIO    If parsing the movie file failed.
-SpMovie_t readNVistaHdf5Movie(const std::string & inFileName);
+SpMovie_t readInscopixMovie(const std::string & inFileName);
 
 /// Read an behavioral movie from a file.
 ///

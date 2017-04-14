@@ -2,9 +2,10 @@
 #include "isxException.h"
 #include "isxAssert.h"
 #include "isxHdf5FileHandle.h"
-
+#include "isxPathUtils.h"
 #include "isxRecordingXml.h"
 #include "isxNVistaHdf5Movie.h"
+#include "isxNVistaTiffMovie.h"
 
 #include <iostream>
 #include <fstream>
@@ -35,6 +36,10 @@ public:
             {
                 initializeFromXml();
             }
+            else if ((extension == "tif") || (extension == "tiff"))
+            {
+                initializeFromTiff();
+            }
             else
             {
                 ISX_THROW(isx::ExceptionFileIO,
@@ -52,16 +57,27 @@ public:
     ///
     ~Impl(){}
 
+    void initializeFromTiff()
+    {
+        
+        m_movie = std::make_shared<NVistaTiffMovie>(m_path);
+
+        // no exception until here --> this is a valid file
+        m_isValid = true;
+    }
+
     void initializeFromHdf5()
     {
+        std::vector<SpHdf5FileHandle_t> fileHandles;
+        std::vector<SpH5File_t> files;
         try
         {
             // Turn off the auto-printing when failure occurs so that we can
             // handle the errors appropriately
             H5::Exception::dontPrint();
 
-            m_files.push_back(std::make_shared<H5::H5File>(m_path.c_str(), H5F_ACC_RDONLY));
-            m_fileHandles.push_back(std::make_shared<Hdf5FileHandle>(m_files[0], H5F_ACC_RDONLY));
+            files.push_back(std::make_shared<H5::H5File>(m_path.c_str(), H5F_ACC_RDONLY));
+            fileHandles.push_back(std::make_shared<Hdf5FileHandle>(files[0], H5F_ACC_RDONLY));
             
         }  // end of try block
 
@@ -82,7 +98,7 @@ public:
             ISX_ASSERT(false, "Unhandled exception.");
         }
         
-        m_movie = std::make_shared<NVistaHdf5Movie>(m_path, m_fileHandles[0]);
+        m_movie = std::make_shared<NVistaHdf5Movie>(m_path, fileHandles[0]);
 
         // no exception until here --> this is a valid file
         m_isValid = true;
@@ -92,37 +108,55 @@ public:
     {
         isx::RecordingXml xml(m_path);
 
-        /// TODO salpert 8/5/2016 - XML could contain TIFF filenames. We need to verify that these are actually hdf5
-        std::vector<std::string> hdf5files = xml.getFileNames();
+        std::vector<std::string> fileNames = xml.getFileNames();
+        std::string dir = m_path.substr(0, m_path.find_last_of("/") + 1);
+        for (unsigned int i(0); i < fileNames.size(); ++i)
+        {
+            fileNames[i] = dir + fileNames[i];
+        }
 
-        if (hdf5files.empty())
-        {
-            ISX_THROW(isx::ExceptionFileIO, "The file does not contain any HDF5 files to load");
-        }
-        
-        std::vector<std::string> paths;
-        try
-        {
-            std::string dir = m_path.substr(0, m_path.find_last_of("/") + 1);
-            for (unsigned int i(0); i < hdf5files.size(); ++i)
-            {
-                hdf5files[i] = dir + hdf5files[i];
-                m_files.push_back(std::make_shared<H5::H5File>(hdf5files[i].c_str(), H5F_ACC_RDONLY));
-                m_fileHandles.push_back(std::make_shared<Hdf5FileHandle>(m_files[i], H5F_ACC_RDONLY));
-            }
-        }
-        catch (const H5::FileIException& error)
-        {
-            ISX_THROW(isx::ExceptionFileIO,
-                "Failure caused by H5 File operations.\n", error.getDetailMsg());
-        }
-        
-        // Get timingInfo and spacingInfo and use it to initialize movie
         TimingInfo ti = xml.getTimingInfo();
         SpacingInfo si = xml.getSpacingInfo();
         std::vector<isize_t> droppedFrames = xml.getDroppedFrames();
+        std::map<std::string, Variant> props = xml.getAdditionalProperties();
 
-        m_movie = std::make_shared<NVistaHdf5Movie>(m_path, m_fileHandles, ti, si, droppedFrames, xml.getAdditionalProperties());
+        if (fileNames.empty())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "The file does not contain any HDF5 files to load");
+        }
+
+        std::string extension = isx::getExtension(fileNames.front());
+
+        if(extension == "hdf5")
+        {
+            std::vector<SpHdf5FileHandle_t> fileHandles;
+            std::vector<SpH5File_t> files;
+            std::vector<std::string> paths;
+            try
+            {
+                for (unsigned int i(0); i < fileNames.size(); ++i)
+                {
+                    files.push_back(std::make_shared<H5::H5File>(fileNames[i].c_str(), H5F_ACC_RDONLY));
+                    fileHandles.push_back(std::make_shared<Hdf5FileHandle>(files[i], H5F_ACC_RDONLY));
+                }
+            }
+            catch (const H5::FileIException& error)
+            {
+                ISX_THROW(isx::ExceptionFileIO,
+                    "Failure caused by H5 File operations.\n", error.getDetailMsg());
+            }
+
+            m_movie = std::make_shared<NVistaHdf5Movie>(m_path, fileHandles, ti, si, droppedFrames, props);
+        }
+        else if (extension == "tif")
+        {
+            m_movie = std::make_shared<NVistaTiffMovie>(fileNames, ti, si, droppedFrames, props);
+        }
+        else
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                    "Unsupported extension.\n");
+        }
 
         // no exception until here --> this is a valid file
         m_isValid = true;
@@ -135,22 +169,6 @@ public:
     isValid() const
     {
         return m_isValid;
-    }
-    
-    /// \return Hdf5FileHandle
-    ///
-    SpHdf5FileHandle_t
-    getHdf5FileHandle() const
-    {
-        return m_fileHandles[0];
-    }
-
-    /// \return Hdf5FileHandle
-    ///
-    std::vector<SpHdf5FileHandle_t>
-        getHdf5FileHandles() const
-    {
-        return m_fileHandles;
     }
 
     void
@@ -181,10 +199,8 @@ private:
 
     bool m_isValid = false;
     std::string m_path;
-    
-    std::vector<SpH5File_t>         m_files;
-    std::vector<SpHdf5FileHandle_t> m_fileHandles;
-    SpMovie_t              m_movie;
+
+    SpMovie_t                       m_movie;
 };
 
 Recording::Recording()
@@ -205,18 +221,6 @@ bool
 Recording::isValid() const
 {
     return m_pImpl->isValid();
-}
-
-SpHdf5FileHandle_t
-Recording::getHdf5FileHandle()
-{
-    return m_pImpl->getHdf5FileHandle();
-}
-
-std::vector<SpHdf5FileHandle_t>
-Recording::getHdf5FileHandles() const
-{
-    return m_pImpl->getHdf5FileHandles();
 }
 
 void

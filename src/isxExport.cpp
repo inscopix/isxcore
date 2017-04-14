@@ -2,6 +2,7 @@
 #include "isxImage.h"
 #include "isxException.h"
 #include "isxCore.h"
+#include "isxTiffBuffer.h"
 #include <tiffio.h>
 #include <cstring>
 
@@ -13,31 +14,6 @@
 #endif
 
 namespace isx {
-
-class TIFFBuffer
-{
-public:
-    TIFFBuffer(isize_t inBytes)
-    {
-        m_buf = _TIFFmalloc(tsize_t(inBytes));
-    }
-    TIFFBuffer(const TIFFBuffer &) = delete;
-    TIFFBuffer & operator=(const TIFFBuffer &) = delete;
-    ~TIFFBuffer()
-    {
-        if (m_buf != nullptr)
-        {
-            _TIFFfree(m_buf);
-        }
-    }
-    void * get() const
-    {
-        return m_buf;
-    };
-
-private:
-    void * m_buf = nullptr;
-};
 
     
 void toTiff(const std::string & inFileName, const SpImage_t & inImage)

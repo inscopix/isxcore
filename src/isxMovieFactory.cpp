@@ -30,9 +30,9 @@ readMovie(const std::string & inFileName)
     {
         return readMosaicMovie(inFileName);
     }
-    else if ((extension == "hdf5") || (extension == "xml"))
+    else if ((extension == "hdf5") || (extension == "xml") || (extension == "tif"))
     {
-        return readNVistaHdf5Movie(inFileName);
+        return readInscopixMovie(inFileName);
     }
     else
     {
@@ -55,7 +55,7 @@ readMosaicMovie(const std::string & inFileName)
 }
 
 SpMovie_t
-readNVistaHdf5Movie(const std::string & inFileName)
+readInscopixMovie(const std::string & inFileName)
 {
     SpRecording_t recording = std::make_shared<Recording>(inFileName);
     SpMovie_t movie = recording->getMovie();

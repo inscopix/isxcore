@@ -1,4 +1,4 @@
-#include "isxNVistaHdf5Movie.h"
+#include "isxNVistaTiffMovie.h"
 #include "isxCore.h"
 #include "catch.hpp"
 #include "isxTest.h"
@@ -11,62 +11,59 @@
 #include <atomic>
 #include <numeric>
 
-TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
-    std::string testFileName = g_resources["unitTestDataPath"] + "/recording_20160426_145041.hdf5";
-    std::string testFileNameXML = g_resources["unitTestDataPath"] + "/recording_20160706_132714.xml";
-
-    std::shared_ptr<H5::H5File> h5File = std::make_shared<H5::H5File>(testFileName, H5F_ACC_RDONLY);
-    isx::SpHdf5FileHandle_t testFile = std::make_shared<isx::Hdf5FileHandle>(h5File, H5F_ACC_RDONLY);
+TEST_CASE("NVistaTiffMovieTest", "[core-internal]") {
+    std::string testFileName = g_resources["unitTestDataPath"] + "/recording_20161104_145443.tif";
+    std::string testFileNameXML = g_resources["unitTestDataPath"] + "/recording_20161104_145443.xml";
 
     isx::CoreInitialize();
 
     SECTION("create movie from one dataset") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName);
         REQUIRE(m->isValid());
         REQUIRE(m->getDataType() == isx::DataType::U16);
     }
 
     SECTION("getTimingInfo().getNumTimes()") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName);
         REQUIRE(m->isValid());
-        REQUIRE(m->getTimingInfo().getNumTimes() == 33);
+        REQUIRE(m->getTimingInfo().getNumTimes() == 39);
     }
 
     SECTION("getSpacingInfo().getNumColumns") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName);
         REQUIRE(m->isValid());
-        REQUIRE(m->getSpacingInfo().getNumColumns() == 500);
+        REQUIRE(m->getSpacingInfo().getNumColumns() == 1440);
     }
 
     SECTION("getSpacingInfo().getNumRows") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName);
         REQUIRE(m->isValid());
-        REQUIRE(m->getSpacingInfo().getNumRows() == 500);
+        REQUIRE(m->getSpacingInfo().getNumRows() == 1080);
     }
 
     SECTION("getFrame for frame number") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName);
         REQUIRE(m->isValid());
         isx::SpVideoFrame_t nvf = m->getFrame(0);
         unsigned char * t = reinterpret_cast<unsigned char *>(nvf->getPixels());
-        REQUIRE(t[0] == 0x43);
-        REQUIRE(t[1] == 0x3);
+        REQUIRE(t[0] == 0xF2);
+        REQUIRE(t[1] == 0x00);
     }
 
     SECTION("getTimingInfo().getDuration()") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName);
         REQUIRE(m->isValid());
-        REQUIRE(m->getTimingInfo().getDuration().toDouble() == 3.168);
+        REQUIRE(m->getTimingInfo().getDuration().toDouble() == 1.95);
     }
 
     SECTION("toString") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
-        REQUIRE(m->toString() == "/images");
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName);
+        REQUIRE(m->toString() == testFileName);
     }
 
     SECTION("Get frames corresponding to dropped frames", "[core]")
     {
-        std::string testXML = g_resources["unitTestDataPath"] + "/recording_20140729_145048.xml";
+        std::string testXML = g_resources["unitTestDataPath"] + "/recording_20161104_145443.xml";
         isx::SpRecording_t rXml  = std::make_shared<isx::Recording>(testXML);
         isx::SpMovie_t mov  = rXml->getMovie();
 
@@ -87,30 +84,26 @@ TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
     isx::CoreShutdown();
 }
 
-TEST_CASE("Hdf5MovieTestAsync", "[core]") {
-    std::string testFileName = g_resources["unitTestDataPath"] + "/recording_20160426_145041.hdf5";
-
-    std::shared_ptr<H5::H5File> h5File = std::make_shared<H5::H5File>(testFileName, H5F_ACC_RDONLY);
-    isx::SpHdf5FileHandle_t testFile = std::make_shared<isx::Hdf5FileHandle>(h5File, H5F_ACC_RDONLY);
-
+TEST_CASE("TiffMovieTestAsync", "[core]") {
+    std::string testFileName = g_resources["unitTestDataPath"] + "/recording_20161104_145443.tif";
 
     isx::CoreInitialize();
     
     bool isDataCorrect = true;
     std::atomic_int doneCount(0);
     
-    uint8_t f0_data[] = { 0x43, 0x03, 0x18, 0x03, 0x55, 0x03, 0x60, 0x03 };
-    uint8_t f1_data[] = { 0x2D, 0x03, 0x0C, 0x03, 0x15, 0x03, 0x36, 0x03 };
-    uint8_t f2_data[] = { 0xE4, 0x02, 0x0D, 0x03, 0x1D, 0x03, 0xEB, 0x02 };
-    uint8_t f3_data[] = { 0xB8 ,0x02, 0xB8, 0x02, 0xAE, 0x02, 0xD0, 0x02 };
-    uint8_t f4_data[] = { 0x92, 0x02, 0xA3, 0x02, 0xAD, 0x02, 0x91, 0x02 };
+    uint8_t f0_data[] = { 0xf2, 0x00, 0xec, 0x00, 0xea, 0x00, 0xeb, 0x00 };
+    uint8_t f1_data[] = { 0xe4, 0x00, 0xeb, 0x00, 0xe7, 0x00, 0xdf, 0x00 };
+    uint8_t f2_data[] = { 0xee, 0x00, 0xdf, 0x00, 0xe9, 0x00, 0xe8, 0x00 };
+    uint8_t f3_data[] = { 0xeb, 0x00, 0xe2, 0x00, 0xe8, 0x00, 0xe3, 0x00 };
+    uint8_t f4_data[] = { 0xe8, 0x00, 0xdf, 0x00, 0xe6, 0x00, 0xe0, 0x00 };
     
     std::vector<uint8_t *> expected = { f0_data, f1_data, f2_data, f3_data, f4_data };
     
     size_t numTestFrames = expected.size();
     size_t numTestBytesPerFrame = sizeof(f0_data);
     
-    isx::SpMovie_t m = std::make_shared<isx::NVistaHdf5Movie>(testFileName, testFile);
+    isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName);
     REQUIRE(m->isValid());
     isx::MovieGetFrameCB_t cb = [&](isx::AsyncTaskResult<isx::SpVideoFrame_t> inAsyncTaskResult){
         REQUIRE(!inAsyncTaskResult.getException());
