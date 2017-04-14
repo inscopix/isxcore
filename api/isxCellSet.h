@@ -30,9 +30,9 @@ using CellSetGetImageCB_t = std::function<void(AsyncTaskResult<SpImage_t>)>;
 /// The cell statuses 
 ///
 enum class CellStatus {
-    ACCEPTED = 0,              ///< Cell has been reviewed and accepted
-    UNDECIDED,                 ///< Unreviewed or undecided
-    REJECTED                   ///< Rejected
+    ACCEPTED = 1,                   ///< Cell has been reviewed and accepted
+    UNDECIDED = 0,                  ///< Unreviewed or undecided
+    REJECTED = -1                   ///< Rejected
 };
 
 /// \return whether this is a valid cell set object.

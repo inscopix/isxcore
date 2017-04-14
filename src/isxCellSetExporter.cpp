@@ -90,12 +90,20 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
         }
 
         // write column headers
-        strm << "Time(s), ";
+        strm << " , ";
         for (isize_t i = 0; i < numCells - 1; ++i)
         {
             strm << srcs[0]->getCellName(i) << ", ";
         }
         strm << srcs[0]->getCellName(numCells - 1) << "\n";
+
+        // write cell statuses
+        strm << "Time(s)/Cell Status, ";
+        for (isize_t i = 0; i < numCells - 1; ++i)
+        {
+            strm << (int)srcs[0]->getCellStatus(i) << ", ";
+        }
+        strm << (int)srcs[0]->getCellStatus(numCells - 1) << "\n";
         
         // iterate over input cell sets
         for (auto & cs: srcs)

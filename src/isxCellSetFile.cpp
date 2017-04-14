@@ -256,6 +256,7 @@ namespace isx
                       "Writing data after file was closed for writing.", m_fileName);
         }
         m_cellStatuses.at(inCellId) = inStatus;
+        writeHeader();
     }
 
     std::string 
