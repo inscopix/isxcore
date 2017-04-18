@@ -124,7 +124,7 @@ MovieSeries::getFrame(isize_t inFrameNumber)
     else
     {
         auto f = m_movies[movieIndex]->getFrame(frameIndex);
-        ret->moveCompatibleImage(f->getImage());
+        ret->moveFrameContent(f);
     }
     return ret;
 }
@@ -162,7 +162,7 @@ MovieSeries::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
                 if (!inAsyncTaskResult.getException() && inAsyncTaskResult.get())
                 {
                     atr.setValue(ret);
-                    ret->moveCompatibleImage(inAsyncTaskResult.get()->getImage());
+                    ret->moveFrameContent(inAsyncTaskResult.get());
                 }
                 else
                 {

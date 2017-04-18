@@ -141,7 +141,13 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
         ti.convertIndexToStartTime(inFrameNumber),
         inFrameNumber);
 
-    if(ti.isDropped(inFrameNumber))
+    if (ti.isCropped(inFrameNumber))
+    {
+        std::memset(outFrame->getPixels(), 0, outFrame->getImageSizeInBytes());
+        outFrame->setFrameType(VideoFrame::Type::CROPPED);
+        return outFrame;
+    }
+    else if (ti.isDropped(inFrameNumber))
     {
         std::memset(outFrame->getPixels(), 0, outFrame->getImageSizeInBytes());
         outFrame->setFrameType(VideoFrame::Type::DROPPED);

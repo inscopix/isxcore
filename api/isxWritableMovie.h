@@ -37,6 +37,8 @@ public:
 
     /// Creates a new frame indexed within this movie.
     ///
+    /// This does not set the frame type (valid, dropped, etc.) for performance reasons.
+    ///
     /// \param  inIndex     The index of the frame in the given movie.
     /// \return             The created frame.
     virtual

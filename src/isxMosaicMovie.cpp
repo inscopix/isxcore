@@ -162,9 +162,9 @@ void
 MosaicMovie::writeFrame(const SpVideoFrame_t & inVideoFrame)
 {
     const TimingInfo & ti = getTimingInfo();
-    if(ti.isDropped(inVideoFrame->getFrameIndex()))
+    if (!ti.isIndexValid(inVideoFrame->getFrameIndex()))
     {
-        ISX_LOG_WARNING("Attempt to write frame that is dropped.");
+        ISX_ASSERT(false, "Attempt to write invalid frame.");
         return;
     }
 

@@ -284,6 +284,22 @@ DataSet::getMetadata()
     metadata.push_back(std::pair<std::string, std::string>("Dropped Frames", ss.str()));
     ss.str("");
 
+    ss << m_timingInfo.getCroppedCount();
+    metadata.push_back(std::pair<std::string, std::string>("Number Of Cropped Frames", ss.str()));
+    ss.str("");
+
+    const IndexRanges_t croppedFrames = m_timingInfo.getCropped();
+    for (size_t c = 0; c < croppedFrames.size(); ++c)
+    {
+        ss << croppedFrames[c];
+        if (c < (croppedFrames.size() - 1))
+        {
+            ss << ", ";
+        }
+    }
+    metadata.push_back(std::pair<std::string, std::string>("Cropped Frames", ss.str()));
+    ss.str("");
+
     // Spacing Info
     SizeInMicrons_t size = m_spacingInfo.getPixelSize();
     ss << "(" << size.getX().toDouble() << ", " << size.getY().toDouble() << ")";

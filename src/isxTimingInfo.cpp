@@ -1,4 +1,6 @@
 #include "isxTimingInfo.h"
+#include "isxAssert.h"
+
 #include <cmath>
 #include <algorithm>
 
@@ -9,13 +11,19 @@ TimingInfo::TimingInfo()
 {
 }
 
-TimingInfo::TimingInfo(const Time & start, const DurationInSeconds & step, isize_t numTimes, const std::vector<isize_t> & droppedFrames)
+TimingInfo::TimingInfo(
+        const Time & start,
+        const DurationInSeconds & step,
+        isize_t numTimes,
+        const std::vector<isize_t> & droppedFrames,
+        const IndexRanges_t & cropped)
 : m_start(start)
 , m_step(step)
 , m_numTimes(numTimes)
-, m_droppedFrames(droppedFrames)
 {
-    std::sort(m_droppedFrames.begin(), m_droppedFrames.end());
+    // NOTE sweet : the order here is important because we want to crop dropped frames.
+    m_cropped = sortAndCompactIndexRanges(cropped);
+    cropSortAndSetDroppedFrames(droppedFrames);
     m_isValid = true;
 }
 
@@ -138,7 +146,8 @@ TimingInfo::operator ==(const TimingInfo& other) const
     return (m_start == other.m_start)
         && (m_step == other.m_step)
         && (m_numTimes == other.m_numTimes)
-        && (m_droppedFrames == other.m_droppedFrames);
+        && (m_droppedFrames == other.m_droppedFrames)
+        && (m_cropped == other.m_cropped);
 }
 
 void
@@ -184,21 +193,81 @@ TimingInfo::isDropped(isize_t inIndex) const
     return std::binary_search(df.begin(), df.end(), inIndex);    
 }
 
+const IndexRanges_t &
+TimingInfo::getCropped() const
+{
+    return m_cropped;
+}
+
+isize_t
+TimingInfo::getCroppedCount() const
+{
+    isize_t count = 0;
+    for (const auto & r : m_cropped)
+    {
+        count += r.getSize();
+    }
+    return count;
+}
+
+bool
+TimingInfo::isCropped(isize_t inIndex) const
+{
+    for (const auto & r : m_cropped)
+    {
+        if (r.contains(inIndex))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+TimingInfo::isIndexValid(const isize_t inIndex) const
+{
+    return !(isCropped(inIndex) || isDropped(inIndex));
+}
+
+isize_t
+TimingInfo::getNumValidTimes() const
+{
+    ISX_ASSERT((int64_t(m_numTimes) - int64_t(getDroppedCount()) - int64_t(getCroppedCount())) >= 0);
+    return m_numTimes - getDroppedCount() - getCroppedCount();
+}
 
 isize_t 
 TimingInfo::timeIdxToRecordedIdx(isize_t inIndex) const
 {
-    /// ISX_ASSERT(!isDropped(inIndex))? inIndex should not be a dropped index but I don't want to perform this 
-    /// search for every requested frame (for the second time). 
+    // Note that this internally asserts that the input index is not dropped.
     auto it = std::find_if(
         m_droppedFrames.begin(),
         m_droppedFrames.end(),
         [&inIndex](const isize_t &index)
-        { return index > inIndex; });
+        {
+            ISX_ASSERT(index != inIndex);
+            return index > inIndex;
+        }
+    );
+
+    // This count depends on the cropped frames being sorted in ascending order
+    // and also depends on inIndex not being a cropped frame.
+    // This also asserts that the input index is not cropped.
+    isize_t numCroppedBefore = 0;
+    for (const auto & r : m_cropped)
+    {
+        ISX_ASSERT(!r.contains(inIndex));
+        if (r.m_first > inIndex)
+        {
+            break;
+        }
+        numCroppedBefore += r.getSize();
+    }
 
     isize_t numDroppedBefore = it - m_droppedFrames.begin();
-    isize_t recordedIdx = inIndex - numDroppedBefore;
-    
+    ISX_ASSERT(inIndex >= (numDroppedBefore + numCroppedBefore));
+    isize_t recordedIdx = inIndex - numDroppedBefore - numCroppedBefore;
+
     return recordedIdx;
 }
 
@@ -211,8 +280,22 @@ TimingInfo::getDefault(isize_t inFrames, const std::vector<isize_t> & inDroppedF
     return TimingInfo(start, step, inFrames, inDroppedFrames);
 }
 
+void
+TimingInfo::cropSortAndSetDroppedFrames(const std::vector<isize_t> & inDroppedFrames)
+{
+    m_droppedFrames.clear();
+    for (const auto df : inDroppedFrames)
+    {
+        if (!isCropped(df))
+        {
+            m_droppedFrames.push_back(df);
+        }
+    }
+    std::sort(m_droppedFrames.begin(), m_droppedFrames.end());
+}
+
 std::pair<isize_t, isize_t>
-getSegmentIndexAndSampleIndexFromGlobalSampleIndex(TimingInfo inGlobalTimingInfo, const TimingInfos_t & inTimingInfos, isize_t inGlobalSampleIndex)
+getSegmentIndexAndSampleIndexFromGlobalSampleIndex(const TimingInfo inGlobalTimingInfo, const TimingInfos_t & inTimingInfos, isize_t inGlobalSampleIndex)
 {
     isize_t fn = inGlobalSampleIndex;
     for (isize_t i = 0; i < inTimingInfos.size(); ++i)
@@ -241,4 +324,4 @@ getSegmentIndexAndSampleIndexFromGlobalSampleIndex(TimingInfo inGlobalTimingInfo
     return std::make_pair(inTimingInfos.size(), 0); 
 }
 
-} // namespace
+} // namespace isx

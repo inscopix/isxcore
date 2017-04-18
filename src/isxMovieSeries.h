@@ -126,6 +126,8 @@ public:
    
 
 private:
+    /// Note that this does not set the type of frame (valid, dropped, etc.)
+    /// for performance reasons.
     SpVideoFrame_t
     makeVideoFrameInternal(isize_t inIndex) const;
 

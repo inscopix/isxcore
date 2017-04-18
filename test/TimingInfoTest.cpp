@@ -1,5 +1,7 @@
 #include "isxTest.h"
 #include "isxTimingInfo.h"
+#include "isxStopWatch.h"
+
 #include "catch.hpp"
 
 TEST_CASE("TimingInfoTest", "[core]")
@@ -42,7 +44,6 @@ TEST_CASE("TimingInfoTest", "[core]")
         isx::TimingInfo timingInfo(start, step, numTimes);
         REQUIRE(timingInfo.getDuration() == 1);
     }
-
 }
 
 TEST_CASE("TimingInfoConversionTest", "[core]")
@@ -234,4 +235,317 @@ TEST_CASE("TimingInfoConversionTest", "[core]")
 
     }
 
+}
+
+TEST_CASE("TimingInfo-cropped", "[core]")
+{
+    const isx::Time start(1970, 1, 1, 0, 0, 0);
+    const isx::DurationInSeconds step(50, 1000);
+    const isx::isize_t numTimes = 10;
+
+    SECTION("Empty cropped indices")
+    {
+        const isx::IndexRanges_t ranges;
+        const isx::TimingInfo ti(start, step, numTimes, {}, ranges);
+
+        REQUIRE(ti.getCropped().empty());
+        REQUIRE(ti.getCroppedCount() == 0);
+
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            const isx::isize_t storedIndex = ti.timeIdxToRecordedIdx(t);
+            if (storedIndex != t)
+            {
+                FAIL("Converted frame " << t << " to stored index " << storedIndex);
+            }
+        }
+    }
+
+    SECTION("Single cropped index")
+    {
+        const isx::IndexRanges_t ranges = {isx::IndexRange(2)};
+        const isx::TimingInfo ti(start, step, numTimes, {}, ranges);
+
+        REQUIRE(ranges == ti.getCropped());
+        REQUIRE(ti.getCroppedCount() == 1);
+        isx::isize_t offset = 0;
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            if (t == 2)
+            {
+                if (!ti.isCropped(t))
+                {
+                    FAIL("Frame " << t << " should be cropped, but isCropped returns false.");
+                }
+                ++offset;
+            }
+            else
+            {
+                if (ti.isCropped(t))
+                {
+                    FAIL("Frame " << t << " should be not cropped, but isCropped returns true.");
+                }
+                const isx::isize_t storedIndex = ti.timeIdxToRecordedIdx(t);
+                if (storedIndex != (t - offset))
+                {
+                    FAIL("Converted frame " << t << " to stored index " << storedIndex);
+                }
+            }
+        }
+    }
+
+    SECTION("Single and range of cropped indices")
+    {
+        const isx::IndexRanges_t ranges = {isx::IndexRange(2), isx::IndexRange(5, 8)};
+        const isx::TimingInfo ti(start, step, numTimes, {}, ranges);
+
+        REQUIRE(ranges == ti.getCropped());
+        REQUIRE(ti.getCroppedCount() == 5);
+        isx::isize_t offset = 0;
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            if (t == 2 || (t >= 5 && t <= 8))
+            {
+                if (!ti.isCropped(t))
+                {
+                    FAIL("Frame " << t << " should be cropped, but isCropped returns false.");
+                }
+                ++offset;
+            }
+            else
+            {
+                if (ti.isCropped(t))
+                {
+                    FAIL("Frame " << t << " should not be cropped, but isCropped returns true.");
+                }
+                const isx::isize_t storedIndex = ti.timeIdxToRecordedIdx(t);
+                if (storedIndex != (t - offset))
+                {
+                    FAIL("Converted frame " << t << " to stored index " << storedIndex);
+                }
+            }
+        }
+    }
+
+    SECTION("Two ranges of cropped indices")
+    {
+        const isx::IndexRanges_t ranges = {isx::IndexRange(2, 3), isx::IndexRange(5, 8)};
+        const isx::TimingInfo ti(start, step, numTimes, {}, ranges);
+
+        REQUIRE(ranges == ti.getCropped());
+        REQUIRE(ti.getCroppedCount() == 6);
+        isx::isize_t offset = 0;
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            if ((t >= 2 && t <= 3) || (t >= 5 && t <= 8))
+            {
+                if (!ti.isCropped(t))
+                {
+                    FAIL("Frame " << t << " should be cropped, but isCropped returns false.");
+                }
+                ++offset;
+            }
+            else
+            {
+                if (ti.isCropped(t))
+                {
+                    FAIL("Frame " << t << " should not be cropped, but isCropped returns true.");
+                }
+                const isx::isize_t storedIndex = ti.timeIdxToRecordedIdx(t);
+                if (storedIndex != (t - offset))
+                {
+                    FAIL("Converted frame " << t << " to stored index " << storedIndex);
+                }
+            }
+        }
+    }
+
+    SECTION("Two overlapping ranges of cropped indices get simplified to one")
+    {
+        const isx::IndexRanges_t ranges = {isx::IndexRange(2, 4), isx::IndexRange(4, 6)};
+        const isx::TimingInfo ti(start, step, numTimes, {}, ranges);
+
+        const isx::IndexRanges_t expectedRanges = {isx::IndexRange(2, 6)};
+        REQUIRE(ti.getCropped() == expectedRanges);
+    }
+
+    SECTION("One range absorbs another range of cropped indices")
+    {
+        const isx::IndexRanges_t ranges = {isx::IndexRange(2, 8), isx::IndexRange(4, 6)};
+        const isx::TimingInfo ti(start, step, numTimes, {}, ranges);
+
+        const isx::IndexRanges_t expectedRanges = {isx::IndexRange(2, 8)};
+        REQUIRE(ti.getCropped() == expectedRanges);
+    }
+
+    SECTION("Two equal ranges of cropped indices")
+    {
+        const isx::IndexRanges_t ranges = {isx::IndexRange(2, 6), isx::IndexRange(2, 6)};
+        const isx::TimingInfo ti(start, step, numTimes, {}, ranges);
+
+        const isx::IndexRanges_t expectedRanges = {isx::IndexRange(2, 6)};
+        REQUIRE(ti.getCropped() == expectedRanges);
+    }
+
+    SECTION("Three adjacent ranges followed by separated range")
+    {
+        const isx::IndexRanges_t ranges = {
+            isx::IndexRange(2, 6), 
+            isx::IndexRange(7, 7),
+            isx::IndexRange(8, 12),
+            isx::IndexRange(24, 42)
+        };
+        const isx::TimingInfo ti(start, step, numTimes, {}, ranges);
+
+        const isx::IndexRanges_t expectedRanges = {
+            isx::IndexRange(2, 12),
+            isx::IndexRange(24, 42)
+        };
+        REQUIRE(ti.getCropped() == expectedRanges);
+    }
+
+}
+
+TEST_CASE("TimingInfo-validIndices", "[core]")
+{
+    const isx::Time start(1970, 1, 1, 0, 0, 0);
+    const isx::DurationInSeconds step(50, 1000);
+    const isx::isize_t numTimes = 10;
+
+    SECTION("No dropped or cropped frames")
+    {
+        const isx::TimingInfo ti(start, step, numTimes, {}, {});
+
+        REQUIRE(ti.getNumValidTimes() == 10);
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            if (!ti.isIndexValid(t))
+            {
+                FAIL("Index " << t << " should be valid.");
+            }
+        }
+    }
+
+    SECTION("Some dropped frames")
+    {
+        const isx::TimingInfo ti(start, step, numTimes, {4, 8}, {});
+
+        REQUIRE(ti.getNumValidTimes() == 8);
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            if (ti.isDropped(t))
+            {
+                if (ti.isIndexValid(t))
+                {
+                    FAIL("Index " << t << " should not be valid.");
+                }
+            }
+            else
+            {
+                if (!ti.isIndexValid(t))
+                {
+                    FAIL("Index " << t << " should be valid.");
+                }
+            }
+        }
+    }
+
+    SECTION("Some cropped frames")
+    {
+        const isx::TimingInfo ti(start, step, numTimes, {}, {3, isx::IndexRange(5, 7)});
+
+        REQUIRE(ti.getNumValidTimes() == 6);
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            if (ti.isCropped(t))
+            {
+                if (ti.isIndexValid(t))
+                {
+                    FAIL("Index " << t << " should not be valid.");
+                }
+            }
+            else
+            {
+                if (!ti.isIndexValid(t))
+                {
+                    FAIL("Index " << t << " should be valid.");
+                }
+            }
+        }
+    }
+
+    SECTION("Some dropped and cropped frames")
+    {
+        const isx::TimingInfo ti(start, step, numTimes, {2}, {isx::IndexRange(4, 7)});
+
+        REQUIRE(ti.getNumValidTimes() == 5);
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            if (ti.isDropped(t) || ti.isCropped(t))
+            {
+                if (ti.isIndexValid(t))
+                {
+                    FAIL("Index " << t << " should not be valid.");
+                }
+            }
+            else
+            {
+                if (!ti.isIndexValid(t))
+                {
+                    FAIL("Index " << t << " should be valid.");
+                }
+            }
+        }
+    }
+
+}
+
+TEST_CASE("TimingInfo-droppedAndCroppedBench", "[core][!hide]")
+{
+    const isx::Time start;
+    const isx::DurationInSeconds step(50, 1000);
+
+    SECTION("100000 frames, 1000 ranges of 5 cropped indices and 1000 isolated dropped indices")
+    {
+        const isx::isize_t numTimes = 100000;
+        std::vector<isx::isize_t> droppedFrames;
+        isx::IndexRanges_t cropped;
+        for (isx::isize_t t = 0; t < numTimes; t += 100)
+        {
+            cropped.push_back(isx::IndexRange(t, t + 4));
+            droppedFrames.push_back(t + 6);
+        }
+        const isx::TimingInfo ti(start, step, numTimes, droppedFrames, cropped);
+
+        isx::StopWatch globalTimer;
+        globalTimer.start();
+        float maxDurationInMs = 0.f;
+        float maxIndex = 0;
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            isx::StopWatch localTimer;
+            localTimer.start();
+            if (ti.isIndexValid(t))
+            {
+                const isx::isize_t storedIndex = ti.timeIdxToRecordedIdx(t);
+                (void)(storedIndex);
+            }
+            localTimer.stop();
+
+            const float localDurationInMs = localTimer.getElapsedMs();
+            if (localDurationInMs > maxDurationInMs)
+            {
+                maxDurationInMs = localDurationInMs;
+                maxIndex = t;
+            }
+        }
+        globalTimer.stop();
+        const float durationInMs = globalTimer.getElapsedMs();
+        const float durationInMsPerTime = durationInMs / numTimes;
+        ISX_LOG_INFO(
+                "Scanning 100000 time points with 1000 ranges of 5 cropped indices "
+                "and 1000 dropped indices took ", durationInMs, " ms. ",
+                "That's ", durationInMsPerTime, " ms per frame. ",
+                "The maximum duration was ", maxDurationInMs, " ms for frame ", maxIndex);
+    }
 }

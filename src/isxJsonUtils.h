@@ -24,6 +24,9 @@ Ratio convertJsonToRatio(const json & j);
 json convertTimeToJson(const Time & inTime);
 Time convertJsonToTime(const json & j);
 
+json convertIndexRangesToJson(const IndexRanges_t & inRanges);
+IndexRanges_t convertJsonToIndexRanges(const json & j);
+
 json convertTimingInfoToJson(const TimingInfo & inTimingInfo);
 TimingInfo convertJsonToTimingInfo(const json & j);
 

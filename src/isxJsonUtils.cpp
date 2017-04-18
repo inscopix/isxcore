@@ -58,6 +58,23 @@ convertJsonToTime(const json & j)
 }
 
 json
+convertIndexRangesToJson(const IndexRanges_t & inRanges)
+{
+    return json::parse(isx::convertIndexRangesToString(inRanges));
+}
+
+IndexRanges_t
+convertJsonToIndexRanges(const json & j)
+{
+    IndexRanges_t outRanges;
+    for (const std::string & str : j)
+    {
+        outRanges.push_back(IndexRange(str));
+    }
+    return outRanges;
+}
+
+json
 convertTimingInfoToJson(const TimingInfo & inTimingInfo)
 {
     json j;
@@ -67,6 +84,7 @@ convertTimingInfoToJson(const TimingInfo & inTimingInfo)
     j["start"] = convertTimeToJson(inTimingInfo.getStart());
     std::vector<isize_t> droppedFrames = inTimingInfo.getDroppedFrames();
     j["dropped"] = droppedFrames;
+    j["cropped"] = convertIndexRangesToJson(inTimingInfo.getCropped());
     return j;
 }
 
@@ -76,13 +94,17 @@ convertJsonToTimingInfo(const json & j)
     isize_t numTimes = j.at("numTimes");
     DurationInSeconds step = convertJsonToRatio(j.at("period"));
     Time start = convertJsonToTime(j.at("start"));
-    isize_t dropped_present = j.count("dropped");
     std::vector<isize_t> droppedFrames;
-    if (dropped_present)
+    if (j.count("dropped") > 0)
     {
         droppedFrames = j.at("dropped").get<std::vector<isize_t>>();
-    }    
-    return TimingInfo(start, step, numTimes, droppedFrames);
+    }
+    IndexRanges_t cropped;
+    if (j.count("cropped") > 0)
+    {
+        cropped = convertJsonToIndexRanges(j.at("cropped"));
+    }
+    return TimingInfo(start, step, numTimes, droppedFrames, cropped);
 }
 
 json

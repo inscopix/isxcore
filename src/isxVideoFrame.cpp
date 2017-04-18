@@ -110,20 +110,20 @@ VideoFrame::getPixelsAsF32()
 {
     return m_image.getPixelsAsF32();
 }
-    
+
 void
-VideoFrame::moveCompatibleImage(Image & inImage)
+VideoFrame::moveFrameContent(SpVideoFrame_t inFrame)
 {
-    if (!(inImage.getSpacingInfo() == getImage().getSpacingInfo())
-      || inImage.getRowBytes() != getImage().getRowBytes()
-      || inImage.getNumChannels() != getImage().getNumChannels()
-      || inImage.getDataType() != getImage().getDataType())
+    if (!(inFrame->m_image.getSpacingInfo() == m_image.getSpacingInfo())
+      || inFrame->getRowBytes() != getRowBytes()
+      || inFrame->getNumChannels() != getNumChannels()
+      || inFrame->getDataType() != getDataType())
     {
-        ISX_THROW(ExceptionDataIO, "Attemptimg o move incompatible image.");
+        ISX_THROW(ExceptionDataIO, "Attemptimg o move incompatible frame.");
     }
 
-    m_image = std::move(inImage);
+    m_image = std::move(inFrame->getImage());
+    m_type = inFrame->getFrameType();
 }
-
 
 } // namespace isx

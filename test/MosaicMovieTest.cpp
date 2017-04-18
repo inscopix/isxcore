@@ -137,7 +137,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
 
         auto movie = std::make_shared<isx::MosaicMovie>(
                 fileName, ti, spacingInfo, dataType);
-    
+
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
@@ -161,10 +161,18 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
             isx::SpVideoFrame_t frame = movie->getFrame(f);
+            if (f == 2 || f == 4)
+            {
+                REQUIRE(frame->getFrameType() == isx::VideoFrame::Type::DROPPED);
+            }
+            else
+            {
+                REQUIRE(frame->getFrameType() == isx::VideoFrame::Type::VALID);
+            }
             uint16_t * frameBuf = frame->getPixelsAsU16();
             for (isx::isize_t p = 0; p < numPixels; ++p)
             {
-                if(f == 2 || f == 4)
+                if (f == 2 || f == 4)
                 {
                     REQUIRE(frameBuf[p] == 0x0000);
                 }
@@ -377,6 +385,84 @@ TEST_CASE("Corrupt file", "[core-meme]")
         catch (...)
         {
             FAIL("Failed to throw an isx::ExceptionFileIO");
+        }
+    }
+
+    isx::CoreShutdown();
+}
+
+TEST_CASE("MosaicMovie-croppedFrames", "[core]")
+{
+    isx::CoreInitialize();
+
+    const std::string fileName = g_resources["unitTestDataPath"] + "/movie.isxd";
+    std::remove(fileName.c_str());
+
+    const isx::SpacingInfo si(isx::SizeInPixels_t(4, 3));
+    const isx::DataType dataType = isx::DataType::U16;
+
+    const isx::Time start(1970, 1, 1, 0, 0, 0);
+    const isx::DurationInSeconds step(50, 1000);
+    const isx::isize_t numTimes = 10;
+
+    isx::TimingInfo ti(start, step, numTimes);
+
+    SECTION("Single cropped frame")
+    {
+        const isx::IndexRanges_t ranges = {isx::IndexRange(2)};
+        ti = isx::TimingInfo(start, step, numTimes, {}, ranges);
+    }
+
+    SECTION("Single and range of cropped frames")
+    {
+        const isx::IndexRanges_t ranges = {isx::IndexRange(2), isx::IndexRange(5, 8)};
+        ti = isx::TimingInfo(start, step, numTimes, {}, ranges);
+    }
+
+    SECTION("Two ranges of cropped frames")
+    {
+        const isx::IndexRanges_t ranges = {isx::IndexRange(2, 3), isx::IndexRange(5, 8)};
+        ti = isx::TimingInfo(start, step, numTimes, {}, ranges);
+    }
+
+    auto movie = std::make_shared<isx::MosaicMovie>(fileName, ti, si, dataType);
+
+    const isx::isize_t numPixels = si.getTotalNumPixels();
+    for (isx::isize_t t = 0; t < numTimes; ++t)
+    {
+        if (ti.isCropped(t))
+        {
+            continue;
+        }
+        auto frame = movie->makeVideoFrame(t);
+        uint16_t * pixels = frame->getPixelsAsU16();
+        std::fill(pixels, pixels + numPixels, uint16_t(t));
+        movie->writeFrame(frame);
+    }
+    movie->closeForWriting();
+
+    for (isx::isize_t t = 0; t < numTimes; ++t)
+    {
+        isx::SpVideoFrame_t frame = movie->getFrame(t);
+        if (ti.isCropped(t))
+        {
+            REQUIRE(frame->getFrameType() == isx::VideoFrame::Type::CROPPED);
+        }
+        else
+        {
+            REQUIRE(frame->getFrameType() == isx::VideoFrame::Type::VALID);
+        }
+        uint16_t * frameBuf = frame->getPixelsAsU16();
+        for (isx::isize_t p = 0; p < numPixels; ++p)
+        {
+            if (ti.isCropped(t))
+            {
+                REQUIRE(frameBuf[p] == 0);
+            }
+            else
+            {
+                REQUIRE(frameBuf[p] == t);
+            }
         }
     }
 
