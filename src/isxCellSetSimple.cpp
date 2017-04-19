@@ -203,6 +203,12 @@ CellSetSimple::getCellStatus(isize_t inIndex)
     return m_file->getCellStatus(inIndex);
 }
 
+std::string
+CellSetSimple::getCellStatusString(isize_t inIndex)
+{
+    return m_file->getCellStatusString(inIndex);
+}
+
 void
 CellSetSimple::setCellStatus(isize_t inIndex, CellSet::CellStatus inStatus)
 {

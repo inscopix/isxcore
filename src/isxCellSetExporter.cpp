@@ -101,9 +101,9 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
         strm << "Time(s)/Cell Status, ";
         for (isize_t i = 0; i < numCells - 1; ++i)
         {
-            strm << (int)srcs[0]->getCellStatus(i) << ", ";
+            strm << srcs[0]->getCellStatusString(i) << ", ";
         }
-        strm << (int)srcs[0]->getCellStatus(numCells - 1) << "\n";
+        strm << srcs[0]->getCellStatusString(numCells - 1) << "\n";
         
         // iterate over input cell sets
         for (auto & cs: srcs)

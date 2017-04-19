@@ -103,6 +103,9 @@ public:
     CellSet::CellStatus 
     getCellStatus(isize_t inIndex) override;
 
+    std::string
+    getCellStatusString(isize_t inIndex) override;
+
     void 
     setCellStatus(isize_t inIndex, CellSet::CellStatus inStatus) override;
 

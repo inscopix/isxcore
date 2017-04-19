@@ -252,6 +252,12 @@ namespace isx
         return m_cellSets[0]->getCellStatus(inIndex);
     }
 
+    std::string
+    CellSetSeries::getCellStatusString(isize_t inIndex)
+    {
+        return m_cellSets[0]->getCellStatusString(inIndex);
+    }
+
     void 
     CellSetSeries::setCellStatus(isize_t inIndex, CellSet::CellStatus inStatus)
     {

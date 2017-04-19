@@ -92,7 +92,7 @@ TEST_CASE("CellSetExportTest", "[core]")
         
         const std::string expected =
             " , Kunal, Mark, Abbas, C3, C4\n"
-            "Time(s)/Cell Status, 0, 0, 0, 0, 0\n"
+            "Time(s)/Cell Status, undecided, undecided, undecided, undecided, undecided\n"
             "0, 0, 42, 84, 126, 168\n"
             "0.05, 0.01, 42.01, 84.01, 126.01, 168.01\n"
             "0.1, 0.02, 42.02, 84.02, 126.02, 168.02\n"
@@ -128,7 +128,7 @@ TEST_CASE("CellSetExportTest", "[core]")
         
         const std::string expected =
             " , Lonely1\n"
-            "Time(s)/Cell Status, 0\n"
+            "Time(s)/Cell Status, undecided\n"
             "0, 84\n"
             "0.05, 84.01\n"
             "0.1, 84.02\n"
@@ -250,7 +250,7 @@ TEST_CASE("CellSetExportTest", "[core]")
         // check that sample times are as expected
         const std::string expected =
             " , Kunal, Mark, Abbas, C3, C4\n"
-            "Time(s)/Cell Status, 0, 0, 0, 0, 0\n"
+            "Time(s)/Cell Status, undecided, undecided, undecided, undecided, undecided\n"
             "0, 0, 42, 84, 126, 168\n"
             "0.05, 0.01, 42.01, 84.01, 126.01, 168.01\n"
             "0.1, 0.02, 42.02, 84.02, 126.02, 168.02\n"

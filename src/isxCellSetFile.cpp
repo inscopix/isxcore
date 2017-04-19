@@ -247,6 +247,22 @@ namespace isx
         return m_cellStatuses.at(inCellId);
     }
 
+    std::string
+    CellSetFile::getCellStatusString(isize_t inCellId)
+    {
+        switch (m_cellStatuses.at(inCellId))
+        {
+            case CellSet::CellStatus::ACCEPTED:
+                return "accepted";
+            case CellSet::CellStatus::REJECTED:
+                return "rejected";
+            case CellSet::CellStatus::UNDECIDED:
+                return "undecided";
+        }
+
+        return "";
+    }
+
     void 
     CellSetFile::setCellStatus(isize_t inCellId, CellSet::CellStatus inStatus)
     {

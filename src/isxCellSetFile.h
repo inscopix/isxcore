@@ -108,6 +108,13 @@ public:
     /// \param inCellId the cell of interest
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     CellSet::CellStatus getCellStatus(isize_t inCellId);
+
+
+    /// \return the status of the cell
+    /// \param inCellId the cell of interest
+    /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
+    std::string
+    getCellStatusString(isize_t inCellId);
     
     /// Set a cell in the set to be valid/invalid (used for rejecting or accepting segmented cell)
     /// \param inCellId the cell of interest

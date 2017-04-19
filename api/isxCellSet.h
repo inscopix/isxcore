@@ -30,9 +30,9 @@ using CellSetGetImageCB_t = std::function<void(AsyncTaskResult<SpImage_t>)>;
 /// The cell statuses 
 ///
 enum class CellStatus {
-    ACCEPTED = 1,                   ///< Cell has been reviewed and accepted
-    UNDECIDED = 0,                  ///< Unreviewed or undecided
-    REJECTED = -1                   ///< Rejected
+    ACCEPTED = 0,                   ///< Cell has been reviewed and accepted
+    UNDECIDED = 1,                  ///< Unreviewed or undecided
+    REJECTED = 2                    ///< Rejected
 };
 
 /// \return whether this is a valid cell set object.
@@ -154,6 +154,13 @@ writeImageAndTrace(
 virtual 
 CellStatus 
 getCellStatus(isize_t inIndex) = 0;
+
+/// \return             The current status of the cell
+/// \param  inIndex     The index of the cell.
+/// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
+virtual
+std::string
+getCellStatusString(isize_t inIndex) = 0;
 
 /// Set a cell in the set to be valid/invalid.
 ///
