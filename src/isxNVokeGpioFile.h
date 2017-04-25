@@ -2,6 +2,8 @@
 #define ISX_GPIO_DATA_FILE_H
 #include "isxCore.h"
 #include "isxAsync.h"
+#include "isxTimingInfo.h"
+#include "isxGpioFile.h"
 #include <string>
 #include <vector>
 #include <fstream>
@@ -111,7 +113,7 @@ namespace isx
 
     /// A class that parses an nVoke GPIO file and separates the data packets by stream
     /// 
-    class GpioDataFile
+    class NVokeGpioFile
     {
     public:
 
@@ -134,16 +136,16 @@ namespace isx
  
         /// Default contructor
         /// Constructs an invalid file object
-        GpioDataFile();
+        NVokeGpioFile();
 
         /// Constructor for a valid file object
         /// \param inFileName  the name of the file to read
         /// \param inOutputDir the directory that is going to contain the files for individual streams
-        GpioDataFile(const std::string & inFileName, const std::string & inOutputDir);
+        NVokeGpioFile(const std::string & inFileName, const std::string & inOutputDir);
 
         /// Destructor
         ///
-        ~GpioDataFile();
+        ~NVokeGpioFile();
 
         /// \return id this is a valid object
         /// 
@@ -184,49 +186,57 @@ namespace isx
         /// \param inTime a 3 byte array containing the byte data to convert
         uint32_t getUsecs(uint8_t * inTime);
 
-        /// Writes a GPIO packet to a file
+        /// Parses a GPIO packet 
         /// \param inPkt the data packet
-        void writeGpioPkt(const std::vector<uint8_t> & inPkt);
+        void parseGpioPkt(const std::vector<uint8_t> & inPkt);
 
-        /// Writes a LED packet to a file
+        /// Parses a LED packet to a file
         /// \param inPkt the data packet
-        void writeLedPkt(const std::vector<uint8_t> & inPkt);
+        void parseLedPkt(const std::vector<uint8_t> & inPkt);
 
-        /// Writes an analog follow packet to a file
+        /// Parses an analog follow packet to a file
         /// \param inPkt the data packet
-        void writeAnalogFollowPkt(const std::vector<uint8_t> & inPkt);
+        void parseAnalogFollowPkt(const std::vector<uint8_t> & inPkt);
+
+        /// Closes the analog file and writes its footer
+        void closeAnalogFile();
+
+        /// Writes and closes all event data (digital packets)
+        void closeEventsFile();
 
         /// Close and delete output file streams
         /// 
         void closeFiles();
 
         /// Writes the data to an output file
-        /// \param inFileSuffix     The signal type that will be used a suffix for the output file
+        /// \param inChannel        The signal type that will be used a suffix for the output file
         /// \param inMode           LED mode or GPIO mode used during acquisition (see s_gpioModeMap and s_ledModeMap)
         /// \param inTriggerFollow  The channel used during trigger or follow mode
-        /// \param inTimeStampSec   The Seconds from unix epoch
-        /// \param inTimeStampUSec  The micro seconds portion of the timestamp
-        /// \param inState          Whether on or off (if in digital mode)
-        /// \param inPowerLevel     The LED power level in units of mW/mm^2
-        void writeToFile(
-            const std::string & inFileSuffix, 
+        /// \param inData           The data packet to write out        
+        void writeAnalogPktToFile(
+            const std::string & inChannel, 
             const std::string & inMode,
             const std::string & inTriggerFollow, 
-            const uint32_t inTimeStampSec, 
-            const uint32_t inTimeStampUSec, 
-            bool inState, 
-            double inPowerLevel);
+            const GpioFile::DataPkt & inData);
 
-        /// Writes the json header for an output file
-        /// \param inFileName       The output file name
-        /// \param inSignal         The signal type for this file
-        /// \param inMode           LED mode or GPIO mode used during acquisition (see s_gpioModeMap and s_ledModeMap)
-        /// \param inTriggerFollow  The channel used during trigger or follow mode
-        void addHeader(
-            const std::string & inFileName, 
-            const std::string & inSignal, 
+        std::string getChannelHeader(
+            const std::string & inChannel, 
             const std::string & inMode,
             const std::string & inTriggerFollow);
+
+        /// Writes the json header for an output file
+        /// \param inChannelOffsets       A map containing channel names and their offsets in the file
+        std::string getFooter(const std::map<std::string, int> & inChannelOffsets);
+
+        void addEventPkt(
+            const std::string & inChannel, 
+            const std::string & inMode,
+            const std::string & inTriggerFollow, 
+            const GpioFile::DataPkt & inData);
+
+        void updatePktTimes(const GpioFile::DataPkt & inData);
+
+        void updateTimingInfo();
 
         /// True if the movie file is valid, false otherwise.
         bool m_valid = false;
@@ -237,15 +247,17 @@ namespace isx
         /// The directory where output files will be written.
         std::string m_outputDir;
 
-        /// A map containing the names of the output files and their streams. 
-        std::map<std::string, std::ofstream *> m_outputFiles;
+        std::string m_eventsFileName;
+        std::string m_analogFileName;
+        std::ofstream * m_analogFile = nullptr;
 
-        /// A map containing the names of the output files and their file headers (footers). 
-        std::map<std::string, std::string> m_outputFooters;
-
-        /// A map containing the the names of the output files and their corresponding modes
+        /// A map containing the the names of the channel and their corresponding modes
         /// This is used to check for consistency in the packets
         std::map<std::string, std::string> m_outputModes; 
+
+        /// A map containing the channel name and a map of channel header (json string) and data packet vector
+        /// This is used to buffer digital (event) data and write it to a digital output file at the end, organized by channel
+        std::map<std::string, std::pair<std::string, std::vector<GpioFile::DataPkt>>> m_eventData;
 
         /// A map used to keep track of event counters per channel (channel, counter)
         std::map<uint8_t, uint8_t> m_signalEventCounters;
@@ -257,6 +269,10 @@ namespace isx
 
         /// Check in callback for reporting progress
         AsyncCheckInCB_t m_checkInCB;
+
+        TimingInfo  m_timingInfo;
+        Time        m_startTime;
+        Time        m_endTime;
 
         static std::map<uint8_t, std::string> s_dataTypeMap;
         static std::map<uint8_t, std::string> s_gpioModeMap;

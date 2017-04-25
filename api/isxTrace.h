@@ -78,6 +78,13 @@ public:
         m_values[index] = value;
     }
 
+    /// Set the dropped frames vector for this timing info object
+    /// \param inDroppedFrames The vector of dropped indexes
+    void setDroppedFrames(const std::vector<isize_t> & inDroppedFrames)
+    {
+        m_timingInfo.setDroppedFrames(inDroppedFrames);
+    }
+
 
 
 private:
@@ -96,6 +103,14 @@ private:
     /// shared_ptr type an trace of floats
     ///
     typedef std::shared_ptr<FTrace_t> SpFTrace_t;
+
+    // type for trace of floats
+    ///
+    typedef Trace<double> DTrace_t;
+
+    /// shared_ptr type an trace of floats
+    ///
+    typedef std::shared_ptr<DTrace_t> SpDTrace_t;
 
 } // namespace
 

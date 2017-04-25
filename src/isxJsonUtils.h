@@ -50,10 +50,10 @@ DataSet::Properties convertJsonToProperties(const json & j);
 
 /// Reads a JSON header from an input stream.
 ///
-/// This reads from the beginning of the stream.
+/// This reads from the current position of the stream.
 ///
-/// \param  inStream    The input stream from which to read.
-/// \return             The JSON structure.
+/// \param  inStream        The input stream from which to read.
+/// \return                 The JSON structure.
 ///
 /// \throw  isx::ExceptionFileIO    If reading the stream fails.
 /// \throw  isx::ExceptionDataIO    If parsing the JSON header fails.

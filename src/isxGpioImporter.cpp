@@ -1,5 +1,5 @@
 #include "isxGpioImporter.h"
-#include "isxGpioDataFile.h"
+#include "isxNVokeGpioFile.h"
 
 namespace isx
 {
@@ -13,7 +13,7 @@ GpioDataParams::getOpName()
 AsyncTaskStatus runGpioDataImporter(GpioDataParams inParams, std::shared_ptr<GpioDataOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
 {
 
-    GpioDataFile raw(inParams.fileName, inParams.outputDir);
+    NVokeGpioFile raw(inParams.fileName, inParams.outputDir);
     raw.setCheckInCallback(inCheckInCB);
 
     isx::AsyncTaskStatus result = raw.parse();

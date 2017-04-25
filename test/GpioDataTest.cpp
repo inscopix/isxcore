@@ -1,4 +1,4 @@
-#include "isxGpioDataFile.h"
+#include "isxNVokeGpioFile.h"
 #include "isxTest.h"
 #include "isxPathUtils.h"
 #include "isxJsonUtils.h"
@@ -14,11 +14,12 @@ void testParsing(
     const std::string & inFileName,
     const std::string & inOutputDir,
     const std::vector<std::string> & inExpectedSuffixes,
-    const std::vector<isx::json> inJsonHeaders, 
-    const std::vector<uint32_t> & inSecs,
-    const std::vector<double> & inMicroSecs, 
-    const std::vector<char> & inStates,
-    const std::vector<double> & inPowerLevel
+    const std::vector<isx::json> inFileJsonHeaders, 
+    const std::vector<std::vector<isx::json>> inChannelJsonHeaders,
+    const std::vector<std::vector<uint32_t>> & inSecs,
+    const std::vector<std::vector<double>> & inMicroSecs, 
+    const std::vector<std::vector<char>> & inStates,
+    const std::vector<std::vector<double>> & inPowerLevel
     )
 {
     std::string dir = isx::getDirName(inFileName);
@@ -30,7 +31,7 @@ void testParsing(
         std::remove(fullName.c_str());
     }
 
-    isx::GpioDataFile raw(inFileName, inOutputDir);
+    isx::NVokeGpioFile raw(inFileName, inOutputDir);
     try
     {
         raw.parse();
@@ -61,7 +62,7 @@ void testParsing(
         
         if(found)
         {
-            // Compare json headers
+            // Compare file json headers
             std::fstream file(fullName, std::ios::binary | std::ios_base::in);
             if (!file.good() || !file.is_open())
             {
@@ -71,32 +72,49 @@ void testParsing(
 
             std::ios::pos_type headerPos;
             isx::json j = isx::readJsonHeaderAtEnd(file, headerPos);
-            auto & expectedHdr = inJsonHeaders.at(idx);
+            auto & expectedHdr = inFileJsonHeaders.at(idx);
             REQUIRE(j == expectedHdr);
 
-            // Compare first values
-            uint32_t timeStampSec, timeStampUSec;
-            char state;
-            double powerLevel;
+            auto & channelHeaders = inChannelJsonHeaders.at(idx);
+            auto & timeSecs = inSecs.at(idx);
+            auto & timeMicroSecs = inMicroSecs.at(idx);
+            auto & states = inStates.at(idx);
+            auto & powerLevels = inPowerLevel.at(idx);
+            auto offsets = j["channel offsets"];
 
-            file.seekg(0, std::ios_base::beg);
-
-            file.read((char *) &timeStampSec, sizeof(uint32_t));
-            file.read((char *) &timeStampUSec, sizeof(uint32_t));
-            file.read((char *) &state, sizeof(char));
-            file.read((char *) &powerLevel, sizeof(double));
-            if (!file.good())
+            isx::isize_t channelIdx = 0;
+            for(auto & expectedHeader : channelHeaders)
             {
-                ISX_THROW(isx::ExceptionFileIO,
-                    "Failed to read values from  gpio file: ", fullName);
-            }            
+                /// Read channel header and compare
+                std::string channel = expectedHeader.at("channel");
+                file.seekg(offsets.at(channel), std::ios_base::beg);
+                isx::json header = isx::readJson(file);
+                REQUIRE(header == expectedHeader);
 
-            REQUIRE(timeStampSec == inSecs.at(idx));
+                /// Read first data value for channel
+                uint32_t timeStampSec, timeStampUSec;
+                char state;
+                double powerLevel;
 
-            double dTimeStampUSec = ((double)timeStampUSec) / 1000000.0;
-            REQUIRE(std::abs(dTimeStampUSec - inMicroSecs.at(idx)) < 0.001);
-            REQUIRE(state == inStates.at(idx));
-            REQUIRE(std::abs(powerLevel - inPowerLevel.at(idx)) < 0.01);
+                file.read((char *) &timeStampSec, sizeof(uint32_t));
+                file.read((char *) &timeStampUSec, sizeof(uint32_t));
+                file.read((char *) &state, sizeof(char));
+                file.read((char *) &powerLevel, sizeof(double));
+                if (!file.good())
+                {
+                    ISX_THROW(isx::ExceptionFileIO,
+                        "Failed to read values from  gpio file: ", fullName);
+                }            
+
+                REQUIRE(timeStampSec == timeSecs.at(channelIdx));
+
+                double dTimeStampUSec = ((double)timeStampUSec) / 1000000.0;
+                REQUIRE(std::abs(dTimeStampUSec - timeMicroSecs.at(channelIdx)) < 0.001);
+                REQUIRE(state == states.at(channelIdx));
+                REQUIRE(std::abs(powerLevel - powerLevels.at(channelIdx)) < 0.01);
+
+                ++channelIdx;
+            }      
 
         }
         else
@@ -106,9 +124,7 @@ void testParsing(
         }
 
         idx++;
-    }
-
-    
+    }    
 
     for(auto & fn : filenames)
     {
@@ -131,30 +147,45 @@ TEST_CASE("GpioDataTest", "[core]")
 
         ///////////////////////////////////////////////////////////////
         // Expected values *********************************************
-        std::vector<std::string> expectedSuffixes {
-            "_GPIO4_AI",
-            "_SYNC"
-        };        
+        std::vector<std::string> expectedSuffixes {"_analog", "_events"};        
         
-        isx::json gpio4; 
-        gpio4["type"] = size_t(isx::DataSet::Type::GPIO);
-        gpio4["signal"] = "GPIO4_AI";
-        gpio4["mode"] = "";
-        gpio4["GPIO Trigger/Follow"] = "";
+        isx::Time start(isx::DurationInSeconds(1478277469, 1) + isx::DurationInSeconds(294107, 1000000));
+        isx::DurationInSeconds step(1, 1000);
+        isx::isize_t numTimes = 3640;
+        isx::TimingInfo ti(start, step, numTimes);
 
-        isx::json sync; 
-        sync["type"] = size_t(isx::DataSet::Type::GPIO);
-        sync["signal"] = "SYNC";
+        isx::json analogHeader;
+        std::map<std::string, int> analogChannelOffsets{{"GPIO4_AI", 0}};
+        analogHeader["type"] = size_t(isx::DataSet::Type::GPIO);
+        analogHeader["channel offsets"] = analogChannelOffsets;
+        analogHeader["timing info"] = convertTimingInfoToJson(ti);
+
+        isx::json eventsHeader;
+        std::map<std::string, int> eventsChannelOffsets{{"SYNC", 0}};
+        eventsHeader["type"] = size_t(isx::DataSet::Type::GPIO);
+        eventsHeader["channel offsets"] = eventsChannelOffsets;
+        eventsHeader["timing info"] = convertTimingInfoToJson(ti);
+        
+        std::vector<isx::json> fileHeaders{analogHeader, eventsHeader};
+
+        isx::json analog;
+        analog["channel"] = "GPIO4_AI";
+        analog["mode"] = "";
+        analog["GPIO Trigger/Follow"] = "";
+        analog["Number of Packets"] = 0;
+
+        isx::json sync;
+        sync["channel"] = "SYNC";
         sync["mode"] = "Output Manual Mode";
         sync["GPIO Trigger/Follow"] = "";
+        sync["Number of Packets"] = 145;
 
+        std::vector<std::vector<isx::json>> channelHeaders{std::vector<isx::json>{analog}, std::vector<isx::json>{sync}};
 
-        std::vector<isx::json> headers{gpio4, sync};
-
-        std::vector<uint32_t> secsFromUnix{ 1478277469, 1478277469};
-        std::vector<double> microSecs{.2941, .3118};
-        std::vector<char> states{0, 0};
-        std::vector<double> power{ 2.6556396484375, 0.0 };
+        std::vector<std::vector<uint32_t>> secsFromUnix{ std::vector<uint32_t>{1478277469}, std::vector<uint32_t>{1478277469}};
+        std::vector<std::vector<double>> microSecs{std::vector<double>{.2941}, std::vector<double>{.3118}};
+        std::vector<std::vector<char>> states{std::vector<char>{0}, std::vector<char>{0}};
+        std::vector<std::vector<double>> power{std::vector<double>{2.6556396484375}, std::vector<double>{0.0} };
 
         // End of expected values ********************************************
         //////////////////////////////////////////////////////////////////////
@@ -163,7 +194,8 @@ TEST_CASE("GpioDataTest", "[core]")
             fileName,
             outputDir,
             expectedSuffixes,
-            headers, 
+            fileHeaders,
+            channelHeaders, 
             secsFromUnix,
             microSecs, 
             states,
@@ -177,37 +209,45 @@ TEST_CASE("GpioDataTest", "[core]")
 
         ///////////////////////////////////////////////////////////////
         // Expected values *********************************************
-        std::vector<std::string> expectedSuffixes {
-            "_EX_LED",
-            "_SYNC",
-            "_TRIG"
-        };
-    
-        isx::json exled; 
-        exled["type"] = size_t(isx::DataSet::Type::GPIO);
-        exled["signal"] = "EX_LED";
+        std::vector<std::string> expectedSuffixes {"_events"};        
+        
+        isx::Time start(isx::DurationInSeconds(1485470243, 1) + isx::DurationInSeconds(163233, 1000000));
+        isx::DurationInSeconds step(1, 1000);
+        isx::isize_t numTimes = 9153;
+        isx::TimingInfo ti(start, step, numTimes);
+
+        isx::json eventsHeader;
+        std::map<std::string, int> channelOffsets{{"EX_LED", 0}, {"SYNC", 153}, {"TRIG", 3232}};
+        eventsHeader["type"] = size_t(isx::DataSet::Type::GPIO);
+        eventsHeader["channel offsets"] = channelOffsets;
+        eventsHeader["timing info"] = convertTimingInfoToJson(ti);
+        
+        std::vector<isx::json> fileHeaders{eventsHeader};
+
+        isx::json exled;
+        exled["channel"] = "EX_LED";
         exled["mode"] = "Manual Mode";
         exled["GPIO Trigger/Follow"] = "GPIO1";
+        exled["Number of Packets"] = 2;
 
-        isx::json sync; 
-        sync["type"] = size_t(isx::DataSet::Type::GPIO);
-        sync["signal"] = "SYNC";
+        isx::json sync;
+        sync["channel"] = "SYNC";
         sync["mode"] = "Output Manual Mode";
         sync["GPIO Trigger/Follow"] = "";
+        sync["Number of Packets"] = 174;
 
-        isx::json trig; 
-        trig["type"] = size_t(isx::DataSet::Type::GPIO);
-        trig["signal"] = "TRIG";
+        isx::json trig;
+        trig["channel"] = "TRIG";
         trig["mode"] = "Output Manual Mode";
         trig["GPIO Trigger/Follow"] = "";
+        trig["Number of Packets"] = 4;
 
+        std::vector<std::vector<isx::json>> channelHeaders{std::vector<isx::json>{exled, sync, trig}};
 
-        std::vector<isx::json> headers{exled, sync, trig};
-
-        std::vector<uint32_t> secsFromUnix{ 1485470246, 1485470247, 1485470243};
-        std::vector<double> microSecs{.24098, .0386, .16323};
-        std::vector<char> states{1, 1, 1};
-        std::vector<double> power{ 1.5, 0.0, 0.0 };
+        std::vector<std::vector<uint32_t>> secsFromUnix{ std::vector<uint32_t>{1485470246, 1485470247, 1485470243}};
+        std::vector<std::vector<double>> microSecs{std::vector<double>{.24098, .0386, .16323}};
+        std::vector<std::vector<char>> states{std::vector<char>{1, 1, 1}};
+        std::vector<std::vector<double>> power{ std::vector<double>{1.5, 0.0, 0.0} };
 
         // End of expected values ********************************************
         //////////////////////////////////////////////////////////////////////
@@ -216,7 +256,8 @@ TEST_CASE("GpioDataTest", "[core]")
             fileName,
             outputDir,
             expectedSuffixes,
-            headers, 
+            fileHeaders,
+            channelHeaders, 
             secsFromUnix,
             microSecs, 
             states,

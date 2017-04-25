@@ -180,6 +180,12 @@ TimingInfo::getDroppedFrames() const
     return m_droppedFrames;
 }
 
+void 
+TimingInfo::setDroppedFrames(const std::vector<isize_t> & inDroppedFrames)
+{
+    m_droppedFrames = inDroppedFrames;
+}
+
 isize_t
 TimingInfo::getDroppedCount() const
 {

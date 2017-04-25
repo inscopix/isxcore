@@ -411,6 +411,7 @@ void
 Project::read()
 {
     std::ifstream file(m_fileName);
+    file.seekg(std::ios_base::beg);
     json jsonObject = readJson(file);
 
     try
@@ -454,6 +455,7 @@ Project::write(const std::string & inFilename) const
     }
 
     std::ofstream file(inFilename, std::ios::trunc);
+    file.seekp(std::ios_base::beg);
     writeJson(jsonObject, file);
 }
 

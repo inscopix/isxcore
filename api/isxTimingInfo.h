@@ -139,6 +139,10 @@ public:
     ///
     const std::vector<isize_t> & getDroppedFrames() const;
 
+    /// Set the dropped frames vector for this timing info object
+    /// \param inDroppedFrames The vector of dropped indexes
+    void setDroppedFrames(const std::vector<isize_t> & inDroppedFrames);
+
     /// \return the number of dropped frames
     /// Provided for convenience. Same as getDroppedFrames().size();
     isize_t getDroppedCount() const;

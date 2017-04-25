@@ -239,7 +239,6 @@ readJson(std::istream & inStream)
         ISX_THROW(isx::ExceptionFileIO, "Error while reading JSON.");
     }
 
-    inStream.seekg(std::ios_base::beg);
     if (!inStream.good())
     {
         ISX_THROW(isx::ExceptionFileIO, "Error while seeking to JSON.");
@@ -248,8 +247,10 @@ readJson(std::istream & inStream)
     json jsonObject;
     try
     {
-        inStream >> jsonObject;
-    }
+        std::string jsonStr;
+        std::getline(inStream, jsonStr, '\0');
+        jsonObject = json::parse(jsonStr);
+    }        
     catch (const std::exception & error)
     {
         ISX_THROW(isx::ExceptionDataIO, "Error while parsing JSON: ", error.what());
@@ -273,8 +274,10 @@ writeJson(
             "Failed to open stream when writing JSON.");
     }
 
-    inStream.seekp(std::ios_base::beg);
+   
     inStream << std::setw(4) << inJsonObject;
+
+    inStream << '\0';
 
     if (!inStream.good())
     {
@@ -388,5 +391,6 @@ writeJsonHeaderAtEnd(
     }
     
 }
+
 
 } // namespace isx

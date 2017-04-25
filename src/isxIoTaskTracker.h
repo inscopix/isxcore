@@ -6,6 +6,7 @@
 #include "isxCore.h"
 #include "isxMovie.h"
 #include "isxVideoFrame.h"
+#include "isxLogicalTrace.h"
 #include "isxTrace.h"
 #include "isxImage.h"
 #include "isxMutex.h"
@@ -123,6 +124,8 @@ private:
 extern template class IoTaskTracker<VideoFrame>;
 extern template class IoTaskTracker<FTrace_t>;
 extern template class IoTaskTracker<Image>;
+extern template class IoTaskTracker<DTrace_t>;
+extern template class IoTaskTracker<LogicalTrace>;
     
 } // namespace isx
 #endif // def ISX_IO_TASK_TRACKER_H

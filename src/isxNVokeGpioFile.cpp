@@ -1,4 +1,4 @@
-#include "isxGpioDataFile.h"
+#include "isxNVokeGpioFile.h"
 #include "isxPathUtils.h"
 #include "isxJsonUtils.h"
 #include "isxException.h"
@@ -8,7 +8,7 @@
 namespace isx
 {
 
-std::map<uint8_t, std::string> GpioDataFile::s_dataTypeMap = 
+std::map<uint8_t, std::string> NVokeGpioFile::s_dataTypeMap = 
 {
     {0x01, "GPIO1"},
     {0x02, "GPIO2"},
@@ -23,7 +23,7 @@ std::map<uint8_t, std::string> GpioDataFile::s_dataTypeMap =
     {0x55, "sync_pkt"}
 };
 
-std::map<uint8_t, std::string> GpioDataFile::s_gpioModeMap = 
+std::map<uint8_t, std::string> NVokeGpioFile::s_gpioModeMap = 
 {
     {0x00, "Output Manual Mode"},
     {0x01, "TTL Input Mode"},
@@ -31,7 +31,7 @@ std::map<uint8_t, std::string> GpioDataFile::s_gpioModeMap =
     {0x03, "Output Pulse Train Mode Inverted"}
 };
 
-std::map<uint8_t, std::string> GpioDataFile::s_ledGpioFollowMap = 
+std::map<uint8_t, std::string> NVokeGpioFile::s_ledGpioFollowMap = 
 {
     {0x00, "GPIO1"},
     {0x20, "GPIO2"},
@@ -39,7 +39,7 @@ std::map<uint8_t, std::string> GpioDataFile::s_ledGpioFollowMap =
     {0x60, "GPIO4"}
 };
 
-std::map<uint8_t, std::string> GpioDataFile::s_ledStateMap = 
+std::map<uint8_t, std::string> NVokeGpioFile::s_ledStateMap = 
 {
     {0x00, "off"},
     {0x01, "on"},
@@ -47,7 +47,7 @@ std::map<uint8_t, std::string> GpioDataFile::s_ledStateMap =
     {0x03, "ramp_down"}
 };
 
-std::map<uint8_t, std::string> GpioDataFile::s_ledModeMap = 
+std::map<uint8_t, std::string> NVokeGpioFile::s_ledModeMap = 
 {
     {0x00, "Manual Mode"},
     {0x01, "Manual Mode"},
@@ -60,12 +60,12 @@ std::map<uint8_t, std::string> GpioDataFile::s_ledModeMap =
 };
 
 
-GpioDataFile::GpioDataFile()
+NVokeGpioFile::NVokeGpioFile()
 {
 
 }
 
-GpioDataFile::GpioDataFile(const std::string & inFileName, const std::string & inOutputDir)
+NVokeGpioFile::NVokeGpioFile(const std::string & inFileName, const std::string & inOutputDir)
     : m_fileName(inFileName)
     , m_outputDir(inOutputDir)
 {
@@ -85,7 +85,7 @@ GpioDataFile::GpioDataFile(const std::string & inFileName, const std::string & i
     m_valid = true;
 }
 
-GpioDataFile::~GpioDataFile()
+NVokeGpioFile::~NVokeGpioFile()
 {
     if(m_file.is_open() && m_file.good())
     {
@@ -101,13 +101,13 @@ GpioDataFile::~GpioDataFile()
 }
 
 bool 
-GpioDataFile::isValid()
+NVokeGpioFile::isValid()
 {
     return m_valid;
 }
 
 const std::string & 
-GpioDataFile::getFileName()
+NVokeGpioFile::getFileName()
 {
     return m_fileName;
 }
@@ -115,20 +115,20 @@ GpioDataFile::getFileName()
 
 
 void 
-GpioDataFile::setCheckInCallback(AsyncCheckInCB_t inCheckInCB)
+NVokeGpioFile::setCheckInCallback(AsyncCheckInCB_t inCheckInCB)
 {
     m_checkInCB = inCheckInCB;
 }
 
 bool 
-GpioDataFile::isSyncPacket(uint8_t * data)
+NVokeGpioFile::isSyncPacket(uint8_t * data)
 {
     SyncPkt * syncPkt = (SyncPkt *) data;
     return (*syncPkt == SyncPkt::syncValues());
 }
 
 AsyncTaskStatus 
-GpioDataFile::parse()
+NVokeGpioFile::parse()
 {   
     float progress = 0.f;
     bool cancelled = false;
@@ -197,7 +197,7 @@ GpioDataFile::parse()
                 {
                     m_file.read((char *)buf.data(), GPIO_PKT_LENGTH);
                     ISX_ASSERT(buf[1] == GPIO_PKT_LENGTH);
-                    writeGpioPkt(buf);
+                    parseGpioPkt(buf);
                     readPosition = m_file.tellg();
                 }
                 else
@@ -215,7 +215,7 @@ GpioDataFile::parse()
                 {
                     m_file.read((char *)buf.data(), LED_PKT_LENGTH);
                     ISX_ASSERT(buf[1] == LED_PKT_LENGTH);
-                    writeLedPkt(buf);
+                    parseLedPkt(buf);
                     readPosition = m_file.tellg();
                 }
                 else
@@ -230,7 +230,7 @@ GpioDataFile::parse()
                 {
                     m_file.read((char *)buf.data(), ANALOG_FOLLOW_PKT_LENGTH);
                     ISX_ASSERT(buf[1] == ANALOG_FOLLOW_PKT_LENGTH);
-                    writeAnalogFollowPkt(buf);
+                    parseAnalogFollowPkt(buf);
                     readPosition = m_file.tellg();
                 }
                 else
@@ -269,23 +269,69 @@ GpioDataFile::parse()
 }
 
 void 
-GpioDataFile::closeFiles()
+NVokeGpioFile::closeAnalogFile()
 {
-    for (auto it = m_outputFiles.begin(); it != m_outputFiles.end(); ++it) 
+    if(!m_analogFileName.empty())
     {
-        // write footer 
-        json j = json::parse(m_outputFooters.at(it->first));
-        writeJsonHeaderAtEnd(j, *(it->second));
-        it->second->flush();
-        
-        // close file
-        it->second->close();
-        delete it->second;
+        std::map<std::string, int> offsets;
+        offsets[s_dataTypeMap.at((int)SignalType::GPIO4_AI)] = 0;
+        std::string footer = getFooter(offsets);
+        writeJsonHeaderAtEnd(json::parse(footer), *m_analogFile);
+        m_analogFile->flush();
+        m_analogFile->close();
+        delete m_analogFile;
     }
 }
 
 void 
-GpioDataFile::checkEventCounter(uint8_t * data)
+NVokeGpioFile::closeEventsFile()
+{
+    if(!m_eventData.empty())
+    {
+        m_eventsFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_events.isxd";
+        std::ofstream file(m_eventsFileName, std::ios::binary | std::ios::trunc | std::ios::out);
+
+        if (!file.good() || !file.is_open())
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                "Failed to open output file for write: ", m_analogFileName);
+        }
+
+        std::map<std::string, int> offsets;
+
+        for (auto & channel : m_eventData)
+        {
+            offsets[channel.first] = (int)file.tellp();
+
+            auto & header = channel.second.first;
+            auto & data = channel.second.second;
+            json jsonHeader = json::parse(header);
+            jsonHeader["Number of Packets"] = data.size();
+            writeJson(jsonHeader, file);
+
+            for (auto & pkt : data)
+            {
+                file.write((char *) &pkt, sizeof(pkt));
+            }            
+        }
+
+        std::string footer = getFooter(offsets);
+        writeJsonHeaderAtEnd(json::parse(footer), file);
+        file.flush();
+        file.close();
+    }
+}
+
+void 
+NVokeGpioFile::closeFiles()
+{
+    updateTimingInfo();
+    closeAnalogFile();
+    closeEventsFile();
+}
+
+void 
+NVokeGpioFile::checkEventCounter(uint8_t * data)
 {
     if((SignalType)data[0] == SignalType::SYNCPKT)
     {
@@ -317,89 +363,91 @@ GpioDataFile::checkEventCounter(uint8_t * data)
 
 
 void 
-GpioDataFile::getOutputFileNames(std::vector<std::string> & outFileNames)
+NVokeGpioFile::getOutputFileNames(std::vector<std::string> & outFileNames)
 {
     outFileNames.clear();
-    for (auto it = m_outputFiles.begin(); it != m_outputFiles.end(); ++it) 
+    if (!m_eventsFileName.empty())
     {
-        outFileNames.push_back(it->first);
+        outFileNames.push_back(m_eventsFileName);
     }
+
+    if (!m_analogFileName.empty())
+    {
+        outFileNames.push_back(m_analogFileName);
+    }    
 }
 
 
 void 
-GpioDataFile::writeToFile(
-    const std::string & inFileSuffix, 
+NVokeGpioFile::writeAnalogPktToFile(
+    const std::string & inChannel, 
     const std::string & inMode,
     const std::string & inTriggerFollow, 
-    const uint32_t inTimeStampSec, 
-    const uint32_t inTimeStampUSec, 
-    bool inState, 
-    double inPowerLevel)
-{
-    // Get destination file name
-    std::string filename = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_" + inFileSuffix + ".isxd";
-
-    auto search = m_outputFiles.find(filename);
-
+    const GpioFile::DataPkt & inData)
+{    
     // If we haven't started writing the file, open it in write mode and create the json header
-    std::ofstream * file;
-    if(search == m_outputFiles.end())
+    if(m_analogFileName.empty())
     {
-        file = new std::ofstream(filename, std::ios::binary | std::ios::trunc | std::ios::out);
-        if (!file->good() || !file->is_open())
+        // Get destination file name
+        m_analogFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_analog.isxd";
+
+        m_analogFile = new std::ofstream(m_analogFileName, std::ios::binary | std::ios::trunc | std::ios::out);
+        if (!m_analogFile->good() || !m_analogFile->is_open())
         {
             ISX_THROW(isx::ExceptionFileIO,
-                "Failed to open output file for write: ", filename);
+                "Failed to open output file for write: ", m_analogFileName);
         }
-        addHeader(filename, inFileSuffix, inMode, inTriggerFollow);
-        m_outputFiles[filename] = file;
-        m_outputModes[filename] = inMode;
+
+        std::string channelHeader = getChannelHeader(inChannel, inMode, inTriggerFollow);
+        json j = json::parse(channelHeader);
+        m_analogFile->seekp(std::ios_base::beg);
+        writeJson(j, *m_analogFile);
+
+        m_outputModes[inChannel] = inMode;
     }
     else
     {
-        file = m_outputFiles.at(filename);
-
         // Check that the acquisition mode is not changed in the middle of the recording
-        ISX_ASSERT(m_outputModes.at(filename) == inMode);
-        
+        ISX_ASSERT(m_outputModes.at(inChannel) == inMode);
     }
 
     // Write binary data
-    char state = 0;
-    if(inState)
-    {
-        state = 1;
-    }
-
-    file->write((char *) &inTimeStampSec, sizeof(inTimeStampSec));
-    file->write((char *) &inTimeStampUSec, sizeof(inTimeStampUSec));
-    file->write((char *) &state, sizeof(state));
-    file->write((char *) &inPowerLevel, sizeof(inPowerLevel));
-
-    if (!file->good())
+    m_analogFile->write((char *) &inData, sizeof(inData));
+    
+    if (!m_analogFile->good())
     {
         ISX_THROW(isx::ExceptionFileIO,
-            "Error writing output data file: ", filename);
+            "Error writing output data file: ", m_analogFileName);
     }
-    file->flush();
+    m_analogFile->flush();
 
 }
 
-void 
-GpioDataFile::addHeader(
-            const std::string & inFileName, 
-            const std::string & inSignal, 
+std::string  
+NVokeGpioFile::getChannelHeader(
+            const std::string & inChannel, 
             const std::string & inMode,
             const std::string & inTriggerFollow)
+{
+    json j;        
+    j["channel"] = inChannel;
+    j["mode"] = inMode;
+    j["GPIO Trigger/Follow"] = inTriggerFollow;
+    j["Number of Packets"] = 0;
+
+    return j.dump();
+}
+
+std::string  
+NVokeGpioFile::getFooter(const std::map<std::string, int> & inChannelOffsets)
 {
     json j;
     try
     {
         j["type"] = size_t(DataSet::Type::GPIO);
-        j["signal"] = inSignal;
-        j["mode"] = inMode;
-        j["GPIO Trigger/Follow"] = inTriggerFollow;        
+        j["channel offsets"] = inChannelOffsets;
+        j["timing info"] = convertTimingInfoToJson(m_timingInfo);
+ 
     }
     catch (...)
     {
@@ -407,11 +455,36 @@ GpioDataFile::addHeader(
             "Unknown error while generating file header.");
     }
 
-    m_outputFooters[inFileName] = j.dump();
+    return j.dump();
 }
 
 void 
-GpioDataFile::writeGpioPkt(const std::vector<uint8_t> & inPkt)
+NVokeGpioFile::addEventPkt(
+            const std::string & inChannel, 
+            const std::string & inMode,
+            const std::string & inTriggerFollow, 
+            const GpioFile::DataPkt & inData)
+{
+    auto search = m_eventData.find(inChannel);
+
+    if(search == m_eventData.end())
+    {       
+        std::string header = getChannelHeader(inChannel, inMode, inTriggerFollow);
+        std::vector<GpioFile::DataPkt> data{inData};
+        m_eventData[inChannel] = std::make_pair(header, data);
+        m_outputModes[inChannel] = inMode;
+    }
+    else
+    {
+        auto & pair = m_eventData[inChannel];
+        pair.second.push_back(inData);
+        // Check that the acquisition mode is not changed in the middle of the recording
+        ISX_ASSERT(m_outputModes.at(inChannel) == inMode);
+    }
+}
+
+void 
+NVokeGpioFile::parseGpioPkt(const std::vector<uint8_t> & inPkt)
 {
     ISX_ASSERT(inPkt.size() >= GPIO_PKT_LENGTH);
     GpioPkt * pkt = (GpioPkt *) inPkt.data();
@@ -422,14 +495,15 @@ GpioDataFile::writeGpioPkt(const std::vector<uint8_t> & inPkt)
     std::string triggerFollow; 
 
     uint32_t unixTimeInSecs = getUnixTimeInSecs(pkt->timeSecs);
-    uint32_t usecs = getUsecs(pkt->timeUSecs);
+    uint32_t usecs = getUsecs(pkt->timeUSecs);    
 
-    writeToFile(dataType, mode, triggerFollow, unixTimeInSecs, usecs, state, 0.0);
-
+    GpioFile::DataPkt data(unixTimeInSecs, usecs, state, 0.0);
+    updatePktTimes(data);
+    addEventPkt(dataType, mode, triggerFollow, data);
 }
 
 void 
-GpioDataFile::writeLedPkt(const std::vector<uint8_t> & inPkt)
+NVokeGpioFile::parseLedPkt(const std::vector<uint8_t> & inPkt)
 {
     ISX_ASSERT(inPkt.size() >= LED_PKT_LENGTH);
     LedPkt * pkt = (LedPkt *) inPkt.data();
@@ -447,12 +521,13 @@ GpioDataFile::writeLedPkt(const std::vector<uint8_t> & inPkt)
     uint32_t unixTimeInSecs = getUnixTimeInSecs(pkt->timeSecs);
     uint32_t usecs = getUsecs(pkt->timeUSecs);
 
-    writeToFile(dataType, mode, triggerFollow, unixTimeInSecs, usecs, state, dPower);
-
+    GpioFile::DataPkt data(unixTimeInSecs, usecs, state, dPower);
+    updatePktTimes(data);
+    addEventPkt(dataType, mode, triggerFollow, data);
 }
 
 void 
-GpioDataFile::writeAnalogFollowPkt(const std::vector<uint8_t> & inPkt)
+NVokeGpioFile::parseAnalogFollowPkt(const std::vector<uint8_t> & inPkt)
 {
     ISX_ASSERT(inPkt.size() >= ANALOG_FOLLOW_PKT_LENGTH);
     AnalogFollowPkt * pkt = (AnalogFollowPkt *) inPkt.data();
@@ -469,12 +544,16 @@ GpioDataFile::writeAnalogFollowPkt(const std::vector<uint8_t> & inPkt)
         uint16_t lSample = (uint16_t)pkt->analogSamples[2*i + 1] & 0x00FF;;
         uint16_t sample = (hSample << 8) + lSample;
         double dSample = double(sample) / 655360.0 * double(maxPower);   // In units of mW/mm^2
-        writeToFile(dataType, std::string(), std::string(), unixTimeInSecs, usecs + (uint32_t)(1000*i), false, dSample);
+
+        uint32_t usecsForPkt = usecs + (uint32_t)(1000*i);
+        GpioFile::DataPkt data(unixTimeInSecs, usecsForPkt, false, dSample);
+        updatePktTimes(data);
+        writeAnalogPktToFile(dataType, std::string(), std::string(), data);
     }
 }
 
 uint32_t 
-GpioDataFile::getUnixTimeInSecs(uint8_t * inTime)
+NVokeGpioFile::getUnixTimeInSecs(uint8_t * inTime)
 {
     uint32_t outUnixTimeInSecs = 0;
     for(isize_t i(0); i < 4; ++i)
@@ -486,7 +565,7 @@ GpioDataFile::getUnixTimeInSecs(uint8_t * inTime)
 }
 
 uint32_t 
-GpioDataFile::getUsecs(uint8_t * inTime)
+NVokeGpioFile::getUsecs(uint8_t * inTime)
 {
     uint32_t outUsecs = 0;
     for(isize_t i(0); i < 3; ++i)
@@ -502,6 +581,26 @@ GpioDataFile::getUsecs(uint8_t * inTime)
     }
 
     return outUsecs;
+}
+
+void 
+NVokeGpioFile::updatePktTimes(const GpioFile::DataPkt & inData)
+{
+    if(m_startTime == Time())
+    {
+        m_startTime = inData.getTime();
+    }
+    else
+    {
+        m_endTime = inData.getTime();
+    }
+}
+
+void NVokeGpioFile::updateTimingInfo()
+{
+    DurationInSeconds step(1, 1000);
+    isize_t numTimes = (isize_t)((m_endTime.getSecsSinceEpoch().toDouble() - m_startTime.getSecsSinceEpoch().toDouble()) / (step.toDouble())) + 1;
+    m_timingInfo = TimingInfo(m_startTime, step, numTimes);   
 }
 
 
