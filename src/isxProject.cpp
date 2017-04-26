@@ -130,21 +130,40 @@ Project::createDataSetInRoot(
     const HistoricalDetails & inHistory,
     const DataSet::Properties & inProperties)
 {
-    // NOTE sweet : when creating a data set through the project, the
-    // absolute path gets stored, so that other clients of this data set
-    // can use that file name without referring to the path of the project
-    // file name.
-    std::string absFileName = getAbsolutePath(inFileName);
-    if (isFileName(absFileName))
-    {
-        ISX_THROW(ExceptionFileIO, "There is already a data set with the file name: ", absFileName);
-    }
-    
+    throwIfIsFileName(inFileName);
+
     auto s = std::make_shared<Series>(inName, inType, inFileName, inHistory, inProperties);
     DataSet *ds = s->getDataSet(0);
     reportImportData(ds);
     m_root->insertGroupMember(s, m_root->getNumGroupMembers());
     return s;
+}
+
+SpSeries_t
+Project::createDataSetInSeries(
+    const std::string & inParentId,
+    const std::string & inName,
+    const DataSet::Type inType,
+    const std::string & inFileName,
+    const HistoricalDetails & inHistory,
+    std::string & outErrorMessage,
+    const DataSet::Properties & inProperties)
+{
+    throwIfIsFileName(inFileName);
+
+    Series * parent = findSeriesFromIdentifier(inParentId);
+    SpSeries_t child = nullptr;
+    if (parent != nullptr)
+    {
+        child = std::make_shared<Series>(inName, inType, inFileName, inHistory, inProperties);
+        DataSet * ds = child->getDataSet(0);
+        reportImportData(ds);
+        if (!parent->addChildWithCompatibilityCheck(child, outErrorMessage))
+        {
+            child = nullptr;
+        }
+    }
+    return child;
 }
 
 SpSeries_t
@@ -367,10 +386,6 @@ Project::setFileName(const std::string & inFileName, bool inFromTemporary)
                     ds->setFileName(fn);
                 }
             }
-            for (auto & s : inSeries->getChildren())
-            {
-                updateSeriesPath(s, inOldPath, inNewPath);
-            }
         };
 
         for (auto & s : getAllSeries())
@@ -465,20 +480,31 @@ Project::getTmpFileName() const
     return m_fileName + ".tmp";
 }
 
-bool
-Project::isFileName(const std::string & inFileName)
+void
+Project::throwIfIsFileName(const std::string & inFileName)
 {
+    bool isFileName = false;
+    const std::string absFileName = getAbsolutePath(inFileName);
     for (const auto & s : getAllSeries())
     {
         for (const auto & ds : s->getDataSets())
         {
-            if (getAbsolutePath(ds->getFileName()) == inFileName)
+            if (getAbsolutePath(ds->getFileName()) == absFileName)
             {
-                return true;
+                isFileName = true;
+                break;
             }
         }
+        if (isFileName)
+        {
+            break;
+        }
     }
-    return false;
+
+    if (isFileName)
+    {
+        ISX_THROW(ExceptionFileIO, "There is already a data set with the file name: ", absFileName);
+    }
 }
 
 void
@@ -486,7 +512,7 @@ Project::setUnmodified()
 {
     m_root->setUnmodified();
 }
-    
+
 std::vector<Series *>
 Project::getAllSeries() const
 {
@@ -507,8 +533,22 @@ Project::getAllSeries(const Group * inItem) const
         else
         {
             ISX_ASSERT(m->getItemType() == ProjectItem::Type::SERIES);
-            ret.push_back(static_cast<Series *>(m));
+            const auto & mm = getAllSeries(static_cast<Series *>(m));
+            ret.insert(ret.end(), mm.begin(), mm.end());
         }
+    }
+    return ret;
+}
+
+std::vector<Series *>
+Project::getAllSeries(Series * inSeries) const
+{
+    std::vector<Series *> ret;
+    ret.push_back(inSeries);
+    for (const auto child : inSeries->getChildren())
+    {
+        const auto & mm = getAllSeries(child);
+        ret.insert(ret.end(), mm.begin(), mm.end());
     }
     return ret;
 }

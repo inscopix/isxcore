@@ -1,6 +1,7 @@
 #include "isxSeries.h"
 #include "isxDataSet.h"
 #include "isxMovieFactory.h"
+#include "isxCellSetFactory.h"
 
 #include "catch.hpp"
 #include "isxTest.h"
@@ -269,4 +270,429 @@ TEST_CASE("Series-toFromJsonString", "[core]")
         REQUIRE(*actual == series);
     }
 
+}
+
+// Utility functions for the following tests.
+isx::SpSeries_t
+makeMovieSeries(
+        const std::string & inName,
+        const std::string & inFilePath,
+        const isx::TimingInfo & inTimingInfo,
+        const isx::SpacingInfo & inSpacingInfo)
+{
+    std::remove(inFilePath.c_str());
+    const isx::SpWritableMovie_t movie = isx::writeMosaicMovie(inFilePath, inTimingInfo, inSpacingInfo, isx::DataType::U16);
+    movie->closeForWriting();
+    const isx::HistoricalDetails history;
+    const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::MOVIE, inFilePath, history);
+    return std::make_shared<isx::Series>(dataSet);
+}
+
+isx::SpSeries_t
+makeBehavioralMovieSeries(
+        const std::string & inName,
+        const std::string & inFilePath,
+        const isx::Time & inStart)
+{
+    const isx::SpMovie_t movie = isx::readBehavioralMovie(inFilePath, inStart);
+    const isx::HistoricalDetails history;
+    const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::BEHAVIOR, inFilePath, history);
+    return std::make_shared<isx::Series>(dataSet);
+}
+
+isx::SpSeries_t
+makeCellSetSeries(
+        const std::string & inName,
+        const std::string & inFilePath,
+        const isx::TimingInfo & inTimingInfo,
+        const isx::SpacingInfo & inSpacingInfo)
+{
+    std::remove(inFilePath.c_str());
+    const isx::SpCellSet_t cellSet = isx::writeCellSet(inFilePath, inTimingInfo, inSpacingInfo);
+    cellSet->closeForWriting();
+    const isx::HistoricalDetails history;
+    const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::CELLSET, inFilePath, history);
+    return std::make_shared<isx::Series>(dataSet);
+}
+
+isx::SpSeries_t
+makeSeries(const std::string & inName, const std::vector<isx::SpSeries_t> & inMembers)
+{
+    auto series = std::make_shared<isx::Series>(inName);
+    for (const auto & m : inMembers)
+    {
+        series->insertUnitarySeries(m);
+    }
+    return series;
+}
+
+TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
+{
+    // Parent has type U16 and has two potential time segments:
+    // - 20 samples at 20 Hz starting at 18:15:49
+    // - 15 samples at 20 Hz starting at 18:15:51 (2 seconds or 20 samples later)
+    // and two potential number of pixels.
+    const isx::DataType dataType = isx::DataType::U16;
+    const isx::DurationInSeconds step(50, 1000);
+
+    const isx::SpacingInfo si1(isx::SizeInPixels_t(4, 3));
+    const isx::SpacingInfo si2(isx::SizeInPixels_t(3, 2));
+
+    const isx::Time start1(2017, 4, 18, 15, 49);
+    const isx::isize_t numTimes1 = 20;
+    const isx::TimingInfo ti1(start1, step, numTimes1);
+
+    const isx::Time start2(2017, 4, 18, 15, 51);
+    const isx::isize_t numTimes2 = 15;
+    const isx::TimingInfo ti2(start2, step, numTimes2);
+
+    const std::string parentFilePath1 = g_resources["unitTestDataPath"] + "/Series-addChildWithCompatibilityCheck-parent1.isxd";
+    const std::string parentFilePath2 = g_resources["unitTestDataPath"] + "/Series-addChildWithCompatibilityCheck-parent2.isxd";
+
+    const std::string childFilePath1 = g_resources["unitTestDataPath"] + "/Series-addChildWithCompatibilityCheck-child1.isxd";
+    const std::string childFilePath2 = g_resources["unitTestDataPath"] + "/Series-addChildWithCompatibilityCheck-child2.isxd";
+
+    std::string errorMessage;
+
+    SECTION("Parent has one movie")
+    {
+        const isx::SpSeries_t parentSeries = makeMovieSeries("parent", parentFilePath1, ti1, si1);
+
+        SECTION("Child has one movie with the same timing info as the parent")
+        {
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, ti1, si1);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one movie that is temporally contained in the parent")
+        {
+            const isx::TimingInfo childTi(start1 + step, step, numTimes1 - 4);
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one movie that begins before the parent")
+        {
+            const isx::TimingInfo childTi(start1 - step, step, numTimes1);
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one movie that ends after the parent")
+        {
+            const isx::TimingInfo childTi(ti1.getEnd() + step, step, numTimes1);
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one movie with different number of pixels to the parent")
+        {
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, ti1, si2);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset with the same timing info as the parent")
+        {
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, ti1, si1);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset that is temporally contained in the parent")
+        {
+            const isx::TimingInfo childTi(start1 + step, step, numTimes1 - 2);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset that begins before the parent")
+        {
+            const isx::TimingInfo childTi(start1 - step, step, numTimes1);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset that ends after the parent")
+        {
+            const isx::TimingInfo childTi(ti1.getEnd() + step, step, numTimes1);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset with different number of pixels to the parent")
+        {
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, ti1, si2);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one behavioral movie")
+        {
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", start1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        // TODO sweet : add a test to ensure GPIO datasets cannot be added
+    }
+
+    SECTION("Parent has two movies")
+    {
+        const isx::SpSeries_t movie1 = makeMovieSeries("movie1", parentFilePath1, ti1, si1);
+        const isx::SpSeries_t movie2 = makeMovieSeries("movie2", parentFilePath2, ti2, si1);
+        const isx::SpSeries_t parentSeries = makeSeries("parent", {movie1, movie2});
+
+        SECTION("Child has one movie with the same timing span as the parent")
+        {
+            const isx::TimingInfo childTi(start1, step, numTimes1 + numTimes2 + 20);
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one movie that is temporally contained in the parent")
+        {
+            const isx::TimingInfo childTi(start1 + step, step, numTimes1 - 4);
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one movie that begins before the parent")
+        {
+            const isx::TimingInfo childTi(start1 - step, step, numTimes1);
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one movie that ends after the parent")
+        {
+            const isx::TimingInfo childTi(ti2.getEnd() + step, step, numTimes1);
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one movie with a different number of pixels to the parent")
+        {
+            const isx::TimingInfo childTi(start1, step, numTimes1 + numTimes2 + 20);
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, childTi, si2);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset with the same timing span as the parent")
+        {
+            const isx::TimingInfo childTi(start1, step, numTimes1 + numTimes2 + 20);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset that is temporally contained in the parent")
+        {
+            const isx::TimingInfo childTi(start1 + step, step, numTimes1 - 2);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset that begins before the parent")
+        {
+            const isx::TimingInfo childTi(start1 - step, step, numTimes1);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset that ends after the parent")
+        {
+            const isx::TimingInfo childTi(ti2.getEnd() + step, step, numTimes1);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset with a different number of pixels to the parent")
+        {
+            const isx::TimingInfo childTi(start1, step, numTimes1 + numTimes2 + 20);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si2);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one behavioral movie")
+        {
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", start1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        // TODO sweet : add a test to ensure GPIO datasets cannot be added
+    }
+
+    SECTION("Parent has one cellset")
+    {
+        const isx::SpSeries_t parentSeries = makeCellSetSeries("parent", parentFilePath1, ti1, si1);
+
+        SECTION("Child has one cellset with the same timing info as the parent")
+        {
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, ti1, si1);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset that is temporally contained in the parent")
+        {
+            const isx::TimingInfo childTi(start1 + step, step, numTimes1 - 2);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset that begins before the parent")
+        {
+            const isx::TimingInfo childTi(start1 - step, step, numTimes1);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset that ends after the parent")
+        {
+            const isx::TimingInfo childTi(ti1.getEnd() + step, step, numTimes1);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one movie with the same timing info as the parent")
+        {
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, ti1, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset with a different number of pixels to the parent")
+        {
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, ti1, si2);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one behavioral movie")
+        {
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", start1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        // TODO sweet : add a test to ensure GPIO datasets cannot be added
+    }
+
+    SECTION("Parent has two cellsets")
+    {
+        const isx::SpSeries_t cellSet1 = makeCellSetSeries("cellSet1", parentFilePath1, ti1, si1);
+        const isx::SpSeries_t cellSet2 = makeCellSetSeries("cellSet2", parentFilePath2, ti2, si1);
+        const isx::SpSeries_t parentSeries = makeSeries("parent", {cellSet1, cellSet2});
+
+        SECTION("Child has one cellset with the same timing span as the parent")
+        {
+            const isx::TimingInfo childTi(start1, step, numTimes1 + numTimes2 + 20);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset that is temporally contained in the parent")
+        {
+            const isx::TimingInfo childTi(start1 + step, step, numTimes1 - 2);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset that begins before the parent")
+        {
+            const isx::TimingInfo childTi(start1 - step, step, numTimes1);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset that ends after the parent")
+        {
+            const isx::TimingInfo childTi(ti2.getEnd() + step, step, numTimes1);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one movie with the same timing span as the parent")
+        {
+            const isx::TimingInfo childTi(start1, step, numTimes1 + numTimes2 + 20);
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, childTi, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset with a different number of pixels to the parent")
+        {
+            const isx::TimingInfo childTi(start1, step, numTimes1 + numTimes2 + 20);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, childTi, si2);
+
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one behavioral movie")
+        {
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", start1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        // TODO sweet : add a test to ensure GPIO datasets cannot be added
+    }
+
+    SECTION("Parent has one behavioral movie")
+    {
+        const isx::SpSeries_t parentSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", start1);
+
+        SECTION("Child has one movie")
+        {
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, ti1, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset")
+        {
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, ti1, si1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one behavioral movie")
+        {
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", start1);
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+    }
+
+    // TODO sweet : add a test to ensure GPIO datasets cannot be parents
+
+    std::remove(parentFilePath1.c_str());
+    std::remove(parentFilePath2.c_str());
+    std::remove(childFilePath1.c_str());
+    std::remove(childFilePath2.c_str());
 }

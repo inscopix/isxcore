@@ -142,10 +142,27 @@ public:
     getNumChildren() const;
     
     /// Add a child to this Series.
-    ///
-    void
+    /// \return True if the child was added.
+    bool
     addChild(SpSeries_t inSeries);
-    
+
+    /// Add a child to this series only if it passes a compatibility check.
+    ///
+    /// This is used when importing a series into the project tree and not
+    /// in the root group.
+    ///
+    /// \param  inSeries        The series to add.
+    /// \param  outErrorMessage The reason why the compatibility check failed.
+    /// \return                 True if the compatibility check passed and the
+    ///                         child was inserted, false otherwise.
+    bool
+    addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErrorMessage);
+
+    /// \return True if this can be a parent for a derived series.
+    ///
+    bool
+    isASuitableParent(std::string & outErrorMessage) const;
+
     /// Retrieve child by index.
     /// \return child Series at given index.
     /// \param inIndex index of child to retrieve.
@@ -347,7 +364,13 @@ private:
     
     void
     setParent(Series * inSeries);
-    
+
+    bool
+    checkSeriesIsTemporallyContained(const SpSeries_t inSeries) const;
+
+    bool
+    checkSeriesHasSameNumPixels(const SpSeries_t inSeries) const;
+
     /// True if this series is valid.
     bool                                m_valid;
 

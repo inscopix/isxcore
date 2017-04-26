@@ -90,6 +90,18 @@ public:
         const HistoricalDetails & inHistory,
         const DataSet::Properties & inProperties = DataSet::Properties());
 
+    /// Create a dataset in a series.
+    ///
+    SpSeries_t
+    createDataSetInSeries(
+        const std::string & inParentId,
+        const std::string & inName,
+        const DataSet::Type inType,
+        const std::string & inFileName,
+        const HistoricalDetails & inHistory,
+        std::string & outErrorMessage,
+        const DataSet::Properties & inProperties = DataSet::Properties());
+
     /// Create a series in root of this project
     ///
     /// \param  inName      The name of the series to create.
@@ -173,11 +185,6 @@ public:
     ///
     void discard();
 
-    /// \return All Series in the project.
-    ///
-    std::vector<Series *>
-    getAllSeries() const;
-
 private:
 
     /// True if the project is valid, false otherwise.
@@ -205,11 +212,12 @@ private:
     ///
     std::string getTmpFileName() const;
 
-    /// Checks if the file name is already used by a data set in this project.
+    /// Throw if the file name is already used in this project.
     ///
-    /// \param  inFileName  The file name to check.
-    /// \return             True if this project contains a data set with given file name.
-    bool isFileName(const std::string & inFileName);
+    /// \param  inFileName          The file name to check.
+    /// \throw  ExceptionFileIO     If the project contains a data set with
+    ///                             the given file name.
+    void throwIfIsFileName(const std::string & inFileName);
 
     /// Sets all the groups/datasets in the project as unmodified
     ///
@@ -219,11 +227,20 @@ private:
     ///
     void initDataDir();
 
+    /// \return All Series in the project.
+    ///
+    std::vector<Series *>
+    getAllSeries() const;
+
     /// \param  inItem  The Group of which to get all contained Series recursively.
     /// \return         The recursively retrieved member Series.
     std::vector<Series *>
     getAllSeries(const Group * inItem) const;
 
+    /// \param  inItem  The Series of which to get all derived Series recursively.
+    /// \return         The recursively retrieved children of Series.
+    std::vector<Series *>
+    getAllSeries(Series * inItem) const;
 };
 
 }

@@ -271,7 +271,7 @@ Series::getNumChildren() const
     return m_children.size();
 }
 
-void
+bool
 Series::addChild(SpSeries_t inSeries)
 {
     ISX_ASSERT(inSeries);
@@ -281,7 +281,124 @@ Series::addChild(SpSeries_t inSeries)
         inSeries->setParent(this);
         m_children.push_back(inSeries);
         m_modified = true;
+        return true;
     }
+    return false;
+}
+
+bool
+Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErrorMessage)
+{
+    if (inSeries != nullptr)
+    {
+        const DataSet::Type thisType = getType();
+        const DataSet::Type childType = inSeries->getType();
+
+        switch (thisType)
+        {
+            case DataSet::Type::MOVIE:
+            {
+                if (childType == DataSet::Type::MOVIE)
+                {
+                    if (!checkSeriesIsTemporallyContained(inSeries))
+                    {
+                        outErrorMessage = "A movie can only derive movies that are within its time span.";
+                        return false;
+                    }
+                }
+                else if (childType == DataSet::Type::CELLSET)
+                {
+                    if (!checkSeriesHasSameNumPixels(inSeries))
+                    {
+                        outErrorMessage = "A movie can only derive cellsets with the same number of pixels.";
+                        return false;
+                    }
+
+                    if (!checkSeriesIsTemporallyContained(inSeries))
+                    {
+                        outErrorMessage = "A movie can only derive cellsets that are within its time span.";
+                        return false;
+                    }
+                }
+                else
+                {
+                    outErrorMessage = "A movie can only derive movies and cellsets.";
+                    return false;
+                }
+                break;
+            }
+            case DataSet::Type::CELLSET:
+            {
+                if (childType == DataSet::Type::CELLSET)
+                {
+                    if (!checkSeriesIsTemporallyContained(inSeries))
+                    {
+                        outErrorMessage = "A cellset can only derive cellsets that are within its time span.";
+                        return false;
+                    }
+                }
+                else
+                {
+                    outErrorMessage = "A cellset can only derive other cellsets.";
+                    return false;
+                }
+                break;
+            }
+            case DataSet::Type::BEHAVIOR:
+            case DataSet::Type::GPIO:
+            default:
+            {
+                if (!isASuitableParent(outErrorMessage))
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    return addChild(inSeries);
+}
+
+bool
+Series::isASuitableParent(std::string & outErrorMessage) const
+{
+    const DataSet::Type type = getType();
+    if (type == DataSet::Type::BEHAVIOR || type == DataSet::Type::GPIO)
+    {
+        outErrorMessage = "Only movies and cellsets can derive other datasets.";
+        return false;
+    }
+    return true;
+}
+
+bool
+Series::checkSeriesIsTemporallyContained(const SpSeries_t inSeries) const
+{
+    const std::vector<DataSet *> & thisDss = getDataSets();
+    ISX_ASSERT(thisDss.size() > 0);
+    const Time thisStart = thisDss.front()->getTimingInfo().getStart();
+    const Time thisEnd = thisDss.back()->getTimingInfo().getEnd();
+
+    const std::vector<DataSet *> & childDss = inSeries->getDataSets();
+    ISX_ASSERT(childDss.size() > 0);
+    const Time childStart = childDss.front()->getTimingInfo().getStart();
+    const Time childEnd = childDss.back()->getTimingInfo().getEnd();
+
+    return childStart >= thisStart && childEnd <= thisEnd;
+}
+
+bool
+Series::checkSeriesHasSameNumPixels(const SpSeries_t inSeries) const
+{
+    // First dataset of a series should have representative spacing info
+    const std::vector<DataSet *> & thisDss = getDataSets();
+    ISX_ASSERT(thisDss.size() > 0);
+    const SizeInPixels_t thisNumPixels = thisDss.front()->getSpacingInfo().getNumPixels();
+
+    const std::vector<DataSet *> & childDss = inSeries->getDataSets();
+    ISX_ASSERT(childDss.size() > 0);
+    const SizeInPixels_t childNumPixels = childDss.front()->getSpacingInfo().getNumPixels();
+
+    return thisNumPixels == childNumPixels;
 }
 
 Series *
