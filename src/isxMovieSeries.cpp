@@ -78,7 +78,7 @@ MovieSeries::MovieSeries(const std::vector<std::string> & inFileNames)
     // each individual movie's TimingInfo
     for (isize_t i = 0; i < m_movies.size(); ++i)
     {
-        const auto startInGlobal = m_globalTimingInfo.convertIndexToStartTime(m_moviesFirstFrameInGlobal[i]);
+        const auto startInGlobal = m_globalTimingInfo.convertIndexToStartTime(m_moviesFirstFrameInGlobal[i]).floorToDenomOf(start.getSecsSinceEpoch());
         const auto numTimes = m_movies[i]->getTimingInfo().getNumTimes();
         m_timingInfos.push_back(TimingInfo(startInGlobal, step, numTimes));
     }

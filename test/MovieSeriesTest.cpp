@@ -69,11 +69,13 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
         std::remove(fn.c_str());
     }
 
+    // NOTE sweet : use 1000 for the denom, so that flooring has flooring to that
+    // is so lossy. See MOS-805 for some context.
     std::array<isx::TimingInfo, 3> timingInfos =
     { {
-        { isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 3 },
-        { isx::Time(2222, 4, 1, 3, 1, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 4 },
-        { isx::Time(2222, 4, 1, 3, 2, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 5 }
+        { isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1000)), isx::Ratio(1, 20), 3 },
+        { isx::Time(2222, 4, 1, 3, 1, 0, isx::DurationInSeconds(0, 1000)), isx::Ratio(1, 20), 4 },
+        { isx::Time(2222, 4, 1, 3, 2, 0, isx::DurationInSeconds(0, 1000)), isx::Ratio(1, 20), 5 }
     } };
 
     isx::SizeInPixels_t sizePixels(4, 3);
