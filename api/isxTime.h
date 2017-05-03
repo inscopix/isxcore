@@ -133,6 +133,11 @@ public:
     Time
     floorToDenomOf(const Ratio & inRatio) const;
 
+    /// \return string containing the this Time in ISO8601 form
+    ///
+    std::string
+    getAsIso8601String() const;
+
     // Overrides
     void serialize(std::ostream & strm) const override;
 

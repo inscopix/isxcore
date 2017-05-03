@@ -157,6 +157,19 @@ Time::serialize(std::ostream& strm) const
     strm << dateTimeStr << " " << secsOffset.toDouble() << " " << timeZoneStr;
 }
 
+std::string
+Time::getAsIso8601String() const
+{
+    double msDouble = m_secsSinceEpoch.toDouble() * 1000.0;
+    int64_t msInt = int64_t(floor(msDouble + 0.5));
+    
+    auto qdt = QDateTime::fromMSecsSinceEpoch(msInt);
+    qdt.setTimeSpec(Qt::OffsetFromUTC);
+    qdt.setUtcOffset(m_utcOffset);
+    auto qs = qdt.toString(Qt::ISODateWithMs);
+    return qs.toStdString();
+}
+
 Time
 Time::now()
 {
