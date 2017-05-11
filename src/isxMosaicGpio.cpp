@@ -40,13 +40,13 @@ MosaicGpio::isAnalog() const
     return m_file->isAnalog();
 }
 
-const std::string & 
+std::string
 MosaicGpio::getFileName() const
 {
     return m_file->getFileName();
 }
 
-const isize_t 
+isize_t 
 MosaicGpio::numberOfChannels()
 {
     return m_file->numberOfChannels();
@@ -141,6 +141,19 @@ const isx::TimingInfo &
 MosaicGpio::getTimingInfo() const
 {
     return m_file->getTimingInfo();
+}
+
+isx::TimingInfos_t
+MosaicGpio::getTimingInfosForSeries() const
+{
+    return TimingInfos_t{m_file->getTimingInfo()};
+}
+
+void
+MosaicGpio::cancelPendingReads()
+{
+    m_analogIoTaskTracker->cancelPendingTasks();
+    m_logicalIoTaskTracker->cancelPendingTasks();
 }
 
 }

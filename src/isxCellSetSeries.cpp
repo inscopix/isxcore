@@ -4,6 +4,7 @@
 #include "isxAsyncTaskHandle.h"
 #include "isxDispatchQueue.h"
 #include "isxSeries.h"
+#include "isxSeriesUtils.h"
 
 #include <algorithm>
 #include <cstring>
@@ -61,11 +62,7 @@ namespace isx
             }
         }
 
-        Time start = m_cellSets[0]->getTimingInfo().getStart();
-        DurationInSeconds step = m_cellSets[0]->getTimingInfo().getStep();
-        Time end = m_cellSets.back()->getTimingInfo().getEnd();
-        isize_t totalNumTimes = (isize_t)(DurationInSeconds(end - start).toDouble() / step.toDouble());
-        m_timingInfo = TimingInfo(start, step, totalNumTimes);
+        m_timingInfo = makeGlobalTimingInfo(getTimingInfosForSeries());
 
         m_valid = true;
     }
@@ -128,14 +125,7 @@ namespace isx
     TimingInfo 
     CellSetSeries::getGaplessTimingInfo()
     {
-        isize_t totalNumTimes = 0;
-        for (const auto &cs : m_cellSets)
-        {
-            totalNumTimes += cs->getTimingInfo().getNumTimes();
-        }
-        TimingInfo first = m_cellSets.front()->getTimingInfo();
-        TimingInfo timingInfoGapless(first.getStart(), first.getStep(), totalNumTimes);
-        return timingInfoGapless;
+        return makeGaplessTimingInfo(getTimingInfosForSeries());
     }
 
     SpFTrace_t 

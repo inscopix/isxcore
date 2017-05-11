@@ -3,8 +3,6 @@
 
 #include "isxProjectItem.h"
 #include "isxDataSet.h"
-#include "isxTimingInfo.h"
-#include "isxSpacingInfo.h"
 #include "isxCoreFwd.h"
 
 #include <memory>

@@ -1,6 +1,5 @@
-#ifndef GPIO_IMPORTER_H
-#define GPIO_IMPORTER_H
-
+#ifndef ISX_GPIO_IMPORTER_H
+#define ISX_GPIO_IMPORTER_H
 
 #include "isxAsyncTaskHandle.h"
 #include <string>
@@ -33,7 +32,9 @@ namespace isx
     /// GPIO data output parameters
     struct GpioDataOutputParams
     {
-        std::vector<std::string> filenames;         ///< Output filenames
+        std::vector<std::string> filenames;         ///< Output filenames. If both logical and analog
+                                                    ///< data are available, the logical data file name
+                                                    ///< will be first.
     };
 
     /// Imports a GPIO data file
@@ -43,4 +44,4 @@ namespace isx
     AsyncTaskStatus runGpioDataImporter(GpioDataParams inParams, std::shared_ptr<GpioDataOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB);
 }
 
-#endif // GPIO_IMPORTER_H
+#endif // ISX_GPIO_IMPORTER_H

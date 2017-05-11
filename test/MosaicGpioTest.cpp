@@ -8,7 +8,7 @@
 #include <chrono>
 #include <thread>
 
-TEST_CASE("GpioTest", "[core]")
+TEST_CASE("MosaicGpioTest", "[core]")
 {
     isx::CoreInitialize();
 
