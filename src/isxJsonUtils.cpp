@@ -392,5 +392,4 @@ writeJsonHeaderAtEnd(
     
 }
 
-
 } // namespace isx

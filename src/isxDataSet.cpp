@@ -24,7 +24,6 @@ const std::string DataSet::PROP_MOVIE_START_TIME = "movieStartTime";
 DataSet::DataSet()
     : m_valid(false)
     , m_modified(false)
-    , m_series(nullptr)
 {
 }
 
@@ -39,7 +38,6 @@ DataSet::DataSet(
     , m_name(inName)
     , m_type(inType)
     , m_fileName(inFileName)
-    , m_series(nullptr)
     , m_history(inHistory)
     , m_properties(inProperties)
 {
@@ -136,75 +134,6 @@ readDataSetType(const std::string & inFileName)
     }
 }
 
-std::string
-DataSet::toJsonString(
-    const std::string & inPath,
-    const std::string & inDerivedPath,
-    const std::string & inTitle,
-    const std::vector<const DataSet *> & inDataSets,
-    const std::vector<const DataSet *> & inDerivedDataSets)
-{
-    json jv;
-    ISX_ASSERT(inDataSets.size() == inDerivedDataSets.size());
-
-    for (isize_t i = 0; i < inDataSets.size(); ++i)
-    {
-        json j;
-        j["original"] = json::parse(inDataSets.at(i)->toJsonString());
-        if (inDerivedDataSets[i])
-        {
-            j["derived"] = json::parse(inDerivedDataSets.at(i)->toJsonString());
-        }
-        jv["dataSets"].push_back(j);
-    }
-    jv["path"] = inPath;
-    jv["derivedPath"] = inDerivedPath;
-    jv["title"] = inTitle;
-    return jv.dump();
-}
-
-void
-DataSet::fromJsonString(
-    const std::string & inDataSetJson,
-    std::string & outPath,
-    std::string & outDerivedPath,
-    std::string & outTitle,
-    std::vector<DataSet> & outOriginals,
-    std::vector<DataSet> & outDeriveds)
-{
-    json j = json::parse(inDataSetJson);
-    const isize_t numDataSets = isize_t(j["dataSets"].size());
-
-    for (isize_t i = 0; i < numDataSets; ++i)
-    {
-        outPath = j["path"];
-        outDerivedPath = j["derivedPath"];
-        outTitle = j["title"];
-        const std::string jsonString = (j["dataSets"][i]["original"]).dump();
-        std::shared_ptr<DataSet> dataSet = DataSet::fromJsonString(jsonString);
-        outOriginals.push_back(DataSet(
-                    dataSet->getName(),
-                    dataSet->getType(),
-                    dataSet->getFileName(),
-                    dataSet->getHistoricalDetails(),
-                    dataSet->getProperties()
-        ));
-
-        isize_t derived_present = j["dataSets"][i].count("derived");
-        if (derived_present)
-        {
-            const std::string jsonString = (j["dataSets"][i]["derived"]).dump();
-            std::shared_ptr<DataSet> derived = DataSet::fromJsonString(jsonString);
-            outDeriveds.push_back(DataSet(
-                    derived->getName(),
-                    derived->getType(),
-                    derived->getFileName(),
-                    derived->getHistoricalDetails(),
-                    derived->getProperties()
-            ));
-        }
-    }
-}
 
 bool
 DataSet::isValid() const
