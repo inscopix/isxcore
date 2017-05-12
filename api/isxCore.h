@@ -36,6 +36,15 @@ namespace isx
             std::ostream & inStream,
             DataType inDataType);
 
+    /// Convert a non-negative number to a string.
+    ///
+    /// \param  inNumber    The number to convert.
+    /// \param  inWidth     The minimum width of the string.
+    /// \return             The resulting string.
+    std::string convertNumberToPaddedString(
+            const size_t inNumber,
+            const size_t inWidth);
+
     void CoreInitialize(const std::string & inLogFileName = std::string());
     bool CoreIsInitialized();
     void CoreShutdown();

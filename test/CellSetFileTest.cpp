@@ -2,6 +2,23 @@
 #include "catch.hpp"
 #include "isxTest.h"
 
+void
+writeDefaultCells(
+        const std::string & inFileName,
+        const isx::TimingInfo & inTimingInfo,
+        const isx::SpacingInfo & inSpacingInfo,
+        isx::Image & inImage,
+        isx::Trace<float> & inTrace,
+        const size_t inNumCells)
+{
+    isx::CellSetFile file(inFileName, inTimingInfo, inSpacingInfo);
+    for (size_t i = 0; i < inNumCells; ++i)
+    {
+        file.writeCellData(i, inImage, inTrace);
+    }
+    file.closeForWriting();
+}
+
 TEST_CASE("CellSetFileTest", "[core-internal]")
 {
 	std::string fileName = g_resources["unitTestDataPath"] + "/cellset.isxd";
@@ -76,7 +93,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         file.writeCellData(0, originalImage, originalTrace);
         REQUIRE(file.numberOfCells() == 1);
         REQUIRE(file.getCellStatus(0) == isx::CellSet::CellStatus::UNDECIDED);
-        REQUIRE(file.getCellName(0).compare("C0") == 0);
+        REQUIRE(file.getCellName(0).compare("") == 0);
 
         /// Cell trace with given name
         file.writeCellData(1, originalImage, originalTrace, "testName");
@@ -167,7 +184,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         file.writeCellData(0, originalImage, originalTrace);  
         REQUIRE(file.numberOfCells() == 1);
         REQUIRE(file.getCellStatus(0) == isx::CellSet::CellStatus::UNDECIDED);
-        REQUIRE(file.getCellName(0).compare("C0") == 0);
+        REQUIRE(file.getCellName(0).compare("") == 0);
 
         file.setCellName(0, "newName");
         REQUIRE(file.getCellName(0).compare("newName") == 0);
@@ -195,6 +212,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         for (size_t i = 0; i < 10; ++i)
         {
             REQUIRE(file.getCellStatus(i) == isx::CellSet::CellStatus::UNDECIDED);
+            REQUIRE(file.getCellName(i) == "C" + std::to_string(i));
 
             isx::SpFTrace_t trace = file.readTrace(i);
             float * values = trace->getValues();
@@ -248,4 +266,98 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
             isx::ExceptionFileIO,
             "Writing data after file was closed for writing." + fileName);
     }
+
+    SECTION("Check default names for 1 cell")
+    {
+        writeDefaultCells(fileName, timingInfo, spacingInfo, originalImage, originalTrace, 1);
+
+        isx::CellSetFile file(fileName);
+        REQUIRE(file.getCellName(0) == "C0");
+    }
+
+    SECTION("Check default names for 9 cells")
+    {
+        const size_t numCells = 9;
+        writeDefaultCells(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numCells);
+
+        isx::CellSetFile file(fileName);
+        for (size_t i = 0; i < numCells; ++i)
+        {
+            REQUIRE(file.getCellName(i) == "C" + std::to_string(i));
+        }
+    }
+
+    SECTION("Check default names for 10 cells")
+    {
+        const size_t numCells = 10;
+        writeDefaultCells(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numCells);
+
+        isx::CellSetFile file(fileName);
+        for (size_t i = 0; i < numCells; ++i)
+        {
+            REQUIRE(file.getCellName(i) == "C" + std::to_string(i));
+        }
+    }
+
+    SECTION("Check default names for 11 cells")
+    {
+        const size_t numCells = 11;
+        writeDefaultCells(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numCells);
+
+        isx::CellSetFile file(fileName);
+        for (size_t i = 0; i < numCells; ++i)
+        {
+            if (i < 10)
+            {
+                REQUIRE(file.getCellName(i) == "C0" + std::to_string(i));
+            }
+            else
+            {
+                REQUIRE(file.getCellName(i) == "C" + std::to_string(i));
+            }
+        }
+    }
+
+    SECTION("Check default names for 100 cells")
+    {
+        const size_t numCells = 100;
+        writeDefaultCells(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numCells);
+
+        isx::CellSetFile file(fileName);
+        for (size_t i = 0; i < numCells; ++i)
+        {
+            if (i < 10)
+            {
+                REQUIRE(file.getCellName(i) == "C0" + std::to_string(i));
+            }
+            else
+            {
+                REQUIRE(file.getCellName(i) == "C" + std::to_string(i));
+            }
+        }
+    }
+
+    SECTION("Check default names for 101 cells")
+    {
+        const size_t numCells = 101;
+        writeDefaultCells(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numCells);
+
+        isx::CellSetFile file(fileName);
+        for (size_t i = 0; i < numCells; ++i)
+        {
+            if (i < 10)
+            {
+                REQUIRE(file.getCellName(i) == "C00" + std::to_string(i));
+            }
+            else if (i < 100)
+            {
+                REQUIRE(file.getCellName(i) == "C0" + std::to_string(i));
+            }
+            else
+            {
+                REQUIRE(file.getCellName(i) == "C" + std::to_string(i));
+            }
+        }
+    }
+
 }

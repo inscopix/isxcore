@@ -196,7 +196,7 @@ TEST_CASE("CellSetTest", "[core]")
         cellSet->writeImageAndTrace(0, originalImage, originalTrace);
         REQUIRE(cellSet->getNumCells() == 1);
         REQUIRE(cellSet->getCellStatus(0) == isx::CellSet::CellStatus::UNDECIDED);
-        REQUIRE(cellSet->getCellName(0).compare("C0") == 0);
+        REQUIRE(cellSet->getCellName(0).compare("") == 0);
 
         cellSet->setCellName(0, "newName");
         REQUIRE(cellSet->getCellName(0).compare("newName") == 0);

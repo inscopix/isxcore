@@ -59,6 +59,16 @@ namespace isx
         return inStream;
     }
 
+    std::string
+    convertNumberToPaddedString(const size_t inNumber, const size_t inWidth)
+    {
+        std::stringstream ss;
+        ss.width(inWidth);
+        ss.fill('0');
+        ss << inNumber;
+        return ss.str();
+    }
+
     void CoreInitialize(const std::string & inLogFileName)
     {
         DispatchQueue::initializeDefaultQueues();

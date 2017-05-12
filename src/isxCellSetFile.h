@@ -197,6 +197,11 @@ private:
     ///
     void flush();
 
+    /// Replace empty cell names with names of format C%0Xu.
+    /// X is the width of the number string and is automatically determined by
+    /// the number of cells.
+    void replaceEmptyNames();
+
 };
 }
 #endif // ISX_CELL_SET_FILE_H

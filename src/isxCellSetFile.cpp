@@ -2,6 +2,9 @@
 #include "isxImage.h"
 #include "isxException.h"
 #include "isxAssert.h"
+#include "isxPathUtils.h"
+
+#include <cmath>
 
 namespace isx
 {
@@ -206,12 +209,10 @@ namespace isx
         isize_t inSamples = inData.getTimingInfo().getNumTimes();
         isize_t fSamples = m_timingInfo.getNumTimes();
         ISX_ASSERT(inSamples == fSamples);
-        
-        auto name = inName != "" ? inName : "C" + std::to_string(inCellId);
-        
+
         if (inCellId == m_numCells)
         {
-            m_cellNames.push_back(name);
+            m_cellNames.push_back(inName);
             m_cellStatuses.push_back(CellSet::CellStatus::UNDECIDED);
 
             ++m_numCells;
@@ -221,7 +222,7 @@ namespace isx
             // Overwrite existing cell
             seekToCell(inCellId);
  
-            m_cellNames.at(inCellId) = name;
+            m_cellNames.at(inCellId) = inName;
             m_cellStatuses.at(inCellId) = CellSet::CellStatus::UNDECIDED;
         }
         else
@@ -339,6 +340,7 @@ namespace isx
             j["timingInfo"] = convertTimingInfoToJson(m_timingInfo);
             j["spacingInfo"] = convertSpacingInfoToJson(m_spacingInfo);
             j["mosaicVersion"] = CoreVersionVector();
+            replaceEmptyNames();
             j["CellNames"] = convertCellNamesToJson(m_cellNames);
             j["CellStatuses"] = convertCellStatusesToJson(m_cellStatuses);
         }
@@ -414,6 +416,21 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO, "Error flushing the file stream.");
         }
     }
-    
-    
+
+    void
+    CellSetFile::replaceEmptyNames()
+    {
+        size_t width = 1;
+        if (m_numCells > 10)
+        {
+            width = size_t(std::floor(std::log10(m_numCells - 1)) + 1);
+        }
+        for (isize_t i = 0; i < m_numCells; ++i)
+        {
+            if (m_cellNames[i].empty())
+            {
+                m_cellNames[i] = "C" + convertNumberToPaddedString(i, width);
+            }
+        }
+    }
 }
