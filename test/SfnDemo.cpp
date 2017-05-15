@@ -91,7 +91,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             {
                 {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
             };
-            project.createDataSetInRoot(bms, isx::DataSet::Type::BEHAVIOR, movieFile, hd,prop);
+            project.importDataSetInRoot(bms, isx::DataSet::Type::BEHAVIOR, movieFile, hd,prop);
             ++b;
         }
 
@@ -162,7 +162,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             {
                 {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
             };
-            project.createDataSetInRoot(bms, isx::DataSet::Type::BEHAVIOR, movieFile, hd,prop);
+            project.importDataSetInRoot(bms, isx::DataSet::Type::BEHAVIOR, movieFile, hd,prop);
             ++b;
         }
 
@@ -252,7 +252,7 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
             {
                 {isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(behavioralStartTimes[b])}
             };
-            project.createDataSetInRoot(bms, isx::DataSet::Type::BEHAVIOR, movieFile, hd,prop);
+            project.importDataSetInRoot(bms, isx::DataSet::Type::BEHAVIOR, movieFile, hd,prop);
             ++b;
         }
 

@@ -6,6 +6,7 @@
 #include "isxMovieFactory.h"
 #include "isxCellSetFactory.h"
 #include "isxVariant.h"
+#include "isxPathUtils.h"
 
 #include "catch.hpp"
 
@@ -116,4 +117,55 @@ TEST_CASE("DataSet-toFromJsonString", "[core]")
 
         REQUIRE(*actual == expected);
     }
+}
+
+// Utility functions for the following tests.
+namespace
+{
+
+isx::SpDataSet_t
+makeMovieDataSet(
+        const std::string & inName,
+        const std::string & inFilePath,
+        const isx::TimingInfo & inTimingInfo,
+        const isx::SpacingInfo & inSpacingInfo,
+        const bool inImported = false)
+{
+    std::remove(inFilePath.c_str());
+    const isx::SpWritableMovie_t movie = isx::writeMosaicMovie(inFilePath, inTimingInfo, inSpacingInfo, isx::DataType::U16);
+    movie->closeForWriting();
+    const isx::HistoricalDetails history;
+    const isx::DataSet::Properties properties;
+    return std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::MOVIE, inFilePath, history, properties, inImported);
+}
+
+std::string
+makeDeleteFilesFilePath(const std::string & inName)
+{
+    return g_resources["unitTestDataPath"] + "/DataSet-deleteFiles-" + inName + ".isxd";
+}
+
+} // namespace
+
+TEST_CASE("DataSet-deleteFile", "[core]")
+{
+    const isx::TimingInfo ti(isx::Time(), isx::DurationInSeconds(50, 1000), 4);
+    const isx::SpacingInfo si(isx::SizeInPixels_t(2, 3));
+    const std::string filePath = makeDeleteFilesFilePath("movie");
+
+    SECTION("Delete an imported dataset file")
+    {
+        isx::SpDataSet_t ds = makeMovieDataSet("movie", filePath, ti, si, true);
+        ds->deleteFile();
+        REQUIRE(isx::pathExists(ds->getFileName()));
+    }
+
+    SECTION("Delete an non-imported dataset file")
+    {
+        isx::SpDataSet_t ds = makeMovieDataSet("movie", filePath, ti, si, false);
+        ds->deleteFile();
+        REQUIRE(!isx::pathExists(ds->getFileName()));
+    }
+
+    std::remove(filePath.c_str());
 }

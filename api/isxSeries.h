@@ -51,12 +51,13 @@ public:
     /// \param  inFileName  The file name of the data set to create.
     /// \param  inHistory   The historical details for the dataset
     /// \param  inProperties The property map for the data set to create.
-    ///
+    /// \param  inImported  True if the data set is imported, false otherwise.
     Series(const std::string & inName,
         const DataSet::Type inType,
         const std::string & inFileName,
         const HistoricalDetails & inHistory,
-        const DataSet::Properties & inProperties);
+        const DataSet::Properties & inProperties,
+        const bool inImported = true);
 
     /// Create a series with a single DataSet.
     ///
@@ -174,9 +175,9 @@ public:
     getChild(const std::string & inName) const;
     
     /// \return all children of this Series
-    ///
+    /// \param  inRecurse   If true, recursively get all children.
     std::vector<Series *>
-    getChildren() const;
+    getChildren(const bool inRecurse = false) const;
     
     /// \return parent of this Series
     ///
@@ -304,7 +305,22 @@ public:
     ///
     WpSeries_t
     getWeakRef();
-    
+
+    /// Delete the files that this represents.
+    ///
+    void deleteFiles() const;
+
+    /// \return     True if this series has been processed or is part of a
+    ///             series that has been processed, false otherwise.
+    ///             Note that this actually checks for children in this or
+    ///             its containing series and assumes those children could
+    ///             have only come from processing.
+    bool isProcessed() const;
+
+    /// \return     True if this is a member of a series that has been
+    ///             processed, false otherwise.
+    bool isAMemberOfASeries() const;
+
     std::string
     toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string())
     const

@@ -39,10 +39,11 @@ Series::Series(const std::string & inName,
     const DataSet::Type inType,
     const std::string & inFileName,
     const HistoricalDetails & inHistory,
-    const DataSet::Properties & inProperties)
+    const DataSet::Properties & inProperties,
+    const bool inImported)
     : m_valid(true)
     , m_modified(false)
-    , m_dataSet(std::make_shared<DataSet>(inName, inType, inFileName, inHistory, inProperties))
+    , m_dataSet(std::make_shared<DataSet>(inName, inType, inFileName, inHistory, inProperties, inImported))
     , m_container(nullptr)
     , m_name(inName)
     , m_identifier(new SeriesIdentifier(this))
@@ -361,6 +362,13 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
 bool
 Series::isASuitableParent(std::string & outErrorMessage) const
 {
+    // An empty series is always suitable.
+    // TODO sweet : instead of having this check to stop getType
+    // failing, we might want to add a NONE type to DataSet::Type.
+    if (!isUnitary() && m_unitarySeries.empty())
+    {
+        return true;
+    }
     const DataSet::Type type = getType();
     if (type == DataSet::Type::BEHAVIOR || type == DataSet::Type::GPIO)
     {
@@ -424,15 +432,18 @@ Series::getChild(const std::string & inName) const
 }
 
 std::vector<Series *>
-Series::getChildren() const
+Series::getChildren(const bool inRecurse) const
 {
     std::vector<Series *> ret;
-    
     for (const auto & c : m_children)
     {
         ret.push_back(c.get());
+        if (inRecurse)
+        {
+            const auto descendants = c->getChildren(true);
+            ret.insert(ret.end(), descendants.begin(), descendants.end());
+        }
     }
-
     return ret;
 }
 
@@ -608,6 +619,10 @@ void
 Series::setName(const std::string & inName)
 {
     m_name = inName;
+    if (m_dataSet != nullptr)
+    {
+        m_dataSet->setName(inName);
+    }
     m_modified = true;
 }
 
@@ -786,6 +801,36 @@ WpSeries_t
 Series::getWeakRef()
 {
     return shared_from_this();
+}
+
+void
+Series::deleteFiles() const
+{
+    for (const auto & ds : getDataSets())
+    {
+        ds->deleteFile();
+    }
+}
+
+bool
+Series::isProcessed() const
+{
+    if (isAMemberOfASeries())
+    {
+        auto cs = static_cast<const isx::Series *>(m_container);
+        return cs->m_children.size() > 0;
+    }
+    else
+    {
+        return m_children.size() > 0;
+    }
+    return false;
+}
+
+bool
+Series::isAMemberOfASeries() const
+{
+    return isUnitary() && m_container != nullptr && m_container->getItemType() == isx::ProjectItem::Type::SERIES;
 }
 
 std::ostream &

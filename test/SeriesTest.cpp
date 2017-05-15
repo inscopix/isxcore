@@ -2,6 +2,7 @@
 #include "isxDataSet.h"
 #include "isxMovieFactory.h"
 #include "isxCellSetFactory.h"
+#include "isxPathUtils.h"
 
 #include "catch.hpp"
 #include "isxTest.h"
@@ -273,18 +274,23 @@ TEST_CASE("Series-toFromJsonString", "[core]")
 }
 
 // Utility functions for the following tests.
+namespace
+{
+
 isx::SpSeries_t
 makeMovieSeries(
         const std::string & inName,
         const std::string & inFilePath,
         const isx::TimingInfo & inTimingInfo,
-        const isx::SpacingInfo & inSpacingInfo)
+        const isx::SpacingInfo & inSpacingInfo,
+        const bool inImported = false)
 {
     std::remove(inFilePath.c_str());
     const isx::SpWritableMovie_t movie = isx::writeMosaicMovie(inFilePath, inTimingInfo, inSpacingInfo, isx::DataType::U16);
     movie->closeForWriting();
     const isx::HistoricalDetails history;
-    const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::MOVIE, inFilePath, history);
+    const isx::DataSet::Properties properties;
+    const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::MOVIE, inFilePath, history, properties, inImported);
     return std::make_shared<isx::Series>(dataSet);
 }
 
@@ -325,6 +331,8 @@ makeSeries(const std::string & inName, const std::vector<isx::SpSeries_t> & inMe
     }
     return series;
 }
+
+} // namespace
 
 TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
 {
@@ -695,4 +703,142 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
     std::remove(parentFilePath2.c_str());
     std::remove(childFilePath1.c_str());
     std::remove(childFilePath2.c_str());
+}
+
+// Utility functions for below test case
+namespace
+{
+
+std::string
+makeGetChildrenFilePath(const std::string & inName)
+{
+    return g_resources["unitTestDataPath"] + "/Series-getChildren-" + inName + ".isxd";
+}
+
+} // namespace
+
+TEST_CASE("Series-getChildren", "[core]")
+{
+    const isx::TimingInfo ti(isx::Time(), isx::DurationInSeconds(50, 1000), 4);
+    const isx::SpacingInfo si(isx::SizeInPixels_t(2, 3));
+
+    isx::SpSeries_t series = std::make_shared<isx::Series>("series");
+    isx::SpSeries_t child1 = makeMovieSeries("child1", makeGetChildrenFilePath("child1"), ti, si);
+    isx::SpSeries_t child2 = makeMovieSeries("child2", makeGetChildrenFilePath("child2"), ti, si);
+    isx::SpSeries_t child3 = makeMovieSeries("child3", makeGetChildrenFilePath("child3"), ti, si);
+    isx::SpSeries_t grandChild1 = makeMovieSeries("grandChild1", makeGetChildrenFilePath("grandChild1"), ti, si);
+    isx::SpSeries_t grandChild2 = makeMovieSeries("grandChild2", makeGetChildrenFilePath("grandChild2"), ti, si);
+    isx::SpSeries_t grandChild3 = makeMovieSeries("grandChild3", makeGetChildrenFilePath("grandChild3"), ti, si);
+    isx::SpSeries_t greatGrandChild1 = makeMovieSeries("greatGrandChild1", makeGetChildrenFilePath("greatGrandChild1"), ti, si);
+
+    series->addChild(child1);
+    child1->addChild(grandChild1);
+    child1->addChild(grandChild2);
+    grandChild2->addChild(greatGrandChild1);
+
+    series->addChild(child2);
+    child2->addChild(grandChild3);
+
+    series->addChild(child3);
+
+    SECTION("Get children only")
+    {
+        const std::vector<isx::Series *> expected = {child1.get(), child2.get(), child3.get()};
+        REQUIRE(series->getChildren(false) == expected);
+    }
+
+    SECTION("Get all descendants")
+    {
+        const std::vector<isx::Series *> expected = {child1.get(), grandChild1.get(), grandChild2.get(), greatGrandChild1.get(), child2.get(), grandChild3.get(), child3.get()};
+        REQUIRE(series->getChildren(true) == expected);
+    }
+
+    SECTION("Get children of child1.get()")
+    {
+        const std::vector<isx::Series *> expected = {grandChild1.get(), grandChild2.get()};
+        REQUIRE(child1.get()->getChildren(false) == expected);
+    }
+
+    SECTION("Get descendants of child1.get()")
+    {
+        const std::vector<isx::Series *> expected = {grandChild1.get(), grandChild2.get(), greatGrandChild1.get()};
+        REQUIRE(child1.get()->getChildren(true) == expected);
+    }
+
+    for (const auto & s : series->getChildren(true))
+    {
+        for (const auto & d : s->getDataSets())
+        {
+            std::remove(d->getFileName().c_str());
+        }
+    }
+}
+
+namespace
+{
+
+std::string
+makeDeleteFilesFilePath(const std::string & inName)
+{
+    return g_resources["unitTestDataPath"] + "/Series-deleteFiles-" + inName + ".isxd";
+}
+
+} // namespace
+
+TEST_CASE("Series-deleteFiles", "[core]")
+{
+    const isx::TimingInfo ti1(isx::Time(), isx::DurationInSeconds(50, 1000), 4);
+    const isx::TimingInfo ti2(isx::Time() + isx::DurationInSeconds(1000, 1000), isx::DurationInSeconds(50, 1000), 4);
+    const isx::SpacingInfo si(isx::SizeInPixels_t(2, 3));
+    isx::SpSeries_t series = std::make_shared<isx::Series>("series");
+
+    SECTION("Delete two non-imported files in a series")
+    {
+        isx::SpSeries_t us1 = makeMovieSeries("us1", makeDeleteFilesFilePath("us1"), ti1, si, false);
+        isx::SpSeries_t us2 = makeMovieSeries("us2", makeDeleteFilesFilePath("us2"), ti2, si, false);
+
+        series->insertUnitarySeries(us1);
+        series->insertUnitarySeries(us2);
+
+        series->deleteFiles();
+
+        REQUIRE(!isx::pathExists(us1->getDataSet(0)->getFileName()));
+        REQUIRE(!isx::pathExists(us2->getDataSet(0)->getFileName()));
+    }
+
+    SECTION("Delete an imported and non-imported file in a series")
+    {
+        isx::SpSeries_t us1 = makeMovieSeries("us1", makeDeleteFilesFilePath("us1"), ti1, si, true);
+        isx::SpSeries_t us2 = makeMovieSeries("us2", makeDeleteFilesFilePath("us2"), ti2, si, false);
+
+        series->insertUnitarySeries(us1);
+        series->insertUnitarySeries(us2);
+
+        series->deleteFiles();
+
+        REQUIRE(isx::pathExists(us1->getDataSet(0)->getFileName()));
+        REQUIRE(!isx::pathExists(us2->getDataSet(0)->getFileName()));
+    }
+
+    SECTION("Delete imported files in a series")
+    {
+        isx::SpSeries_t us1 = makeMovieSeries("us1", makeDeleteFilesFilePath("us1"), ti1, si, true);
+        isx::SpSeries_t us2 = makeMovieSeries("us2", makeDeleteFilesFilePath("us2"), ti2, si, true);
+
+        series->insertUnitarySeries(us1);
+        series->insertUnitarySeries(us2);
+
+        series->deleteFiles();
+
+        REQUIRE(isx::pathExists(us1->getDataSet(0)->getFileName()));
+        REQUIRE(isx::pathExists(us2->getDataSet(0)->getFileName()));
+    }
+
+    for (const auto & s : series->getChildren(true))
+    {
+        for (const auto & d : s->getDataSets())
+        {
+            std::remove(d->getFileName().c_str());
+        }
+    }
 }

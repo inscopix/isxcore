@@ -123,7 +123,7 @@ Project::saveTmp()
 }
 
 SpSeries_t
-Project::createDataSetInRoot(
+Project::importDataSetInRoot(
     const std::string & inName,
     const DataSet::Type inType,
     const std::string & inFileName,
@@ -132,7 +132,7 @@ Project::createDataSetInRoot(
 {
     throwIfIsFileName(inFileName);
 
-    auto s = std::make_shared<Series>(inName, inType, inFileName, inHistory, inProperties);
+    auto s = std::make_shared<Series>(inName, inType, inFileName, inHistory, inProperties, true);
     DataSet *ds = s->getDataSet(0);
     reportImportData(ds);
     m_root->insertGroupMember(s, m_root->getNumGroupMembers());
@@ -140,7 +140,7 @@ Project::createDataSetInRoot(
 }
 
 SpSeries_t
-Project::createDataSetInSeries(
+Project::importDataSetInSeries(
     const std::string & inParentId,
     const std::string & inName,
     const DataSet::Type inType,
@@ -155,7 +155,7 @@ Project::createDataSetInSeries(
     SpSeries_t child = nullptr;
     if (parent != nullptr)
     {
-        child = std::make_shared<Series>(inName, inType, inFileName, inHistory, inProperties);
+        child = std::make_shared<Series>(inName, inType, inFileName, inHistory, inProperties, true);
         DataSet * ds = child->getDataSet(0);
         reportImportData(ds);
         if (!parent->addChildWithCompatibilityCheck(child, outErrorMessage))
@@ -545,11 +545,8 @@ Project::getAllSeries(Series * inSeries) const
 {
     std::vector<Series *> ret;
     ret.push_back(inSeries);
-    for (const auto child : inSeries->getChildren())
-    {
-        const auto & mm = getAllSeries(child);
-        ret.insert(ret.end(), mm.begin(), mm.end());
-    }
+    const std::vector<Series *> descendants = inSeries->getChildren(true);
+    ret.insert(ret.end(), descendants.begin(), descendants.end());
     return ret;
 }
 

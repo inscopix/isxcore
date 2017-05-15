@@ -21,6 +21,7 @@ namespace isx
     void reportCreationOfSeries(Series * inSeries);
     void reportAddDataSetToSeries(const std::string & seriesName, DataSet * inDataSet);
     void reportVisualizerLayoutChange(int oldLayout, int newLayout);
+    void reportDeleteDataFile(const std::string & inFileName);
 }
 
 #endif // ISX_REPORT_UTILS_H

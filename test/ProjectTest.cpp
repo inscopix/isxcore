@@ -50,7 +50,7 @@ TEST_CASE("Project-Project", "[core]")
     {
         isx::Project project(projectFileName, projectName);
         isx::HistoricalDetails hd("mainTest", "");
-        const auto expected = project.createDataSetInRoot(
+        const auto expected = project.importDataSetInRoot(
             "movie",
             isx::DataSet::Type::MOVIE,
             g_resources["unitTestDataPath"] + "/recording_20160426_145041-dff_he.isxd",
@@ -65,6 +65,8 @@ TEST_CASE("Project-Project", "[core]")
         
         REQUIRE(readDs->getName() == ds->getName());
         REQUIRE(isx::getFileName(readDs->getFileName()) == isx::getFileName(ds->getFileName()));
+        REQUIRE(ds->isImported());
+        REQUIRE(readDs->isImported());
     }
 
     SECTION("Open an existing project after creating a series.")
@@ -207,7 +209,7 @@ TEST_CASE("MOS-444", "[core]")
         s->insertUnitarySeries(ps1);
 
         ISX_REQUIRE_EXCEPTION(
-                project.createDataSetInRoot(
+                project.importDataSetInRoot(
                     "movie-alt",
                     isx::DataSet::Type::MOVIE,
                     movieFileName,

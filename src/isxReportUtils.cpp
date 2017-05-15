@@ -256,4 +256,9 @@ namespace isx
     {
         ISX_LOG_INFO_NO_PRINT("Visualizer layout changed from ", oldLayout, " to ", newLayout);
     }
+
+    void reportDeleteDataFile(const std::string & inFileName)
+    {
+        ISX_LOG_INFO_NO_PRINT("Deleting data file ", inFileName);
+    }
 }

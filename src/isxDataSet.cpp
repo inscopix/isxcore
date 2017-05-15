@@ -6,6 +6,7 @@
 #include "isxCellSetFactory.h"
 #include "isxPathUtils.h"
 #include "isxNVistaHdf5Movie.h"
+#include "isxReportUtils.h"
 
 #include <fstream>
 #include "json.hpp"
@@ -32,7 +33,8 @@ DataSet::DataSet(
         Type inType,
         const std::string & inFileName,
         const HistoricalDetails & inHistory,
-        const Properties & inProperties)
+        const Properties & inProperties,
+        const bool inImported)
     : m_valid(true)
     , m_modified(false)
     , m_name(inName)
@@ -40,6 +42,7 @@ DataSet::DataSet(
     , m_fileName(inFileName)
     , m_history(inHistory)
     , m_properties(inProperties)
+    , m_imported(inImported)
 {
 }
 
@@ -255,6 +258,25 @@ DataSet::getMetadata()
 
 }
 
+bool
+DataSet::isImported() const
+{
+    return m_imported;
+}
+
+void
+DataSet::deleteFile() const
+{
+    if (!isImported())
+    {
+        reportDeleteDataFile(m_fileName);
+        if (std::remove(m_fileName.c_str()) != 0)
+        {
+            ISX_LOG_ERROR("Failed to delete file ", m_fileName);
+        }
+    }
+}
+
 std::string
 DataSet::toJsonString(const bool inPretty, const std::string & inPathToOmit) const
 {
@@ -276,6 +298,7 @@ DataSet::toJsonString(const bool inPretty, const std::string & inPathToOmit) con
     outJson["fileName"] = fileName;
     outJson["history"] = convertHistoryToJson(m_history);
     outJson["properties"] = convertPropertiesToJson(m_properties);
+    outJson["imported"] = m_imported;
 
     if (inPretty)
     {
@@ -304,8 +327,9 @@ DataSet::fromJsonString(const std::string & inString, const std::string & inAbso
 
     const HistoricalDetails hd = convertJsonToHistory(jsonObj.at("history"));
     const DataSet::Properties properties = convertJsonToProperties(jsonObj.at("properties"));
+    const bool imported = jsonObj.at("imported");
 
-    auto outDataSet = std::make_shared<DataSet>(name, dataSetType, fileName, hd, properties);
+    auto outDataSet = std::make_shared<DataSet>(name, dataSetType, fileName, hd, properties, imported);
     return outDataSet;
 }
 

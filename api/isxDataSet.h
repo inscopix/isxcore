@@ -56,11 +56,13 @@ public:
     /// \param  inFileName  The file name of the data set.
     /// \param  inHistory   The historical details for the dataset
     /// \param  inProperties The property map for the dataset
+    /// \param  inImported  True if the data set is imported, false otherwise.
     DataSet(const std::string & inName,
             Type inType,
             const std::string & inFileName,
             const HistoricalDetails & inHistory,
-            const Properties & inProperties = Properties());
+            const Properties & inProperties = Properties(),
+            const bool inImported = true);
 
     /// \return     The type of this data set.
     ///
@@ -168,6 +170,14 @@ public:
     ///  
     Metadata getMetadata();
 
+    /// \return     True if this is imported, false otherwise.
+    ///
+    bool isImported() const;
+
+    /// Delete the file that this represents if this is not imported.
+    ///
+    void deleteFile() const;
+
 private:
 
     /// True if this data set is valid.
@@ -205,6 +215,10 @@ private:
 
     /// True if the meta data has been read.
     bool m_hasMetaData = false;
+
+    /// True if this was imported, false otherwise.
+    /// Imported data sets should not delete the files they own.
+    bool m_imported = true;
 
     /// Read the meta data from the data set file.
     ///

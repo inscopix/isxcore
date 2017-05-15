@@ -391,7 +391,7 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
         cellSet->closeForWriting();
 
         isx::Project project(projectFile, "Full Frame");
-        auto s = project.createDataSetInRoot(
+        auto s = project.importDataSetInRoot(
                 "/movie-full-frame",
                 isx::DataSet::Type::MOVIE,
                 movieFile,

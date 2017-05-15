@@ -83,7 +83,7 @@ public:
     /// \throw  ExceptionFileIO If a data set with the given file name already
     ///                         exists in this project.
     SpSeries_t
-    createDataSetInRoot(
+    importDataSetInRoot(
         const std::string & inName,
         const DataSet::Type inType,
         const std::string & inFileName,
@@ -93,7 +93,7 @@ public:
     /// Create a dataset in a series.
     ///
     SpSeries_t
-    createDataSetInSeries(
+    importDataSetInSeries(
         const std::string & inParentId,
         const std::string & inName,
         const DataSet::Type inType,
