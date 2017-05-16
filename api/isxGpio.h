@@ -20,9 +20,9 @@ class Gpio
 public:
 
     /// The type of callback for reading a trace from disk
-    using GetAnalogDataCB_t = std::function<SpDTrace_t()>;
+    using GetAnalogDataCB_t = std::function<SpFTrace_t()>;
     /// The type of callback for getting an analog GPIO trace asynchronously
-    using GpioGetAnalogDataCB_t = std::function<void(AsyncTaskResult<SpDTrace_t>)>;
+    using GpioGetAnalogDataCB_t = std::function<void(AsyncTaskResult<SpFTrace_t>)>;
     /// The type of callback for reading a logical trace from disk
     using GetLogicalDataCB_t = std::function<SpLogicalTrace_t()>;
     /// The type of callback for getting a logical trace asynchronously
@@ -60,7 +60,7 @@ public:
     /// \return the trace for the analog channel or nullptr if the file doesn't contain analog data
     ///
     virtual
-    SpDTrace_t
+    SpFTrace_t
     getAnalogData() = 0;
 
     /// Get an analog trace asynchronously

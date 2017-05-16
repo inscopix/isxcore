@@ -21,48 +21,50 @@ public:
 
     #pragma pack(push, 1)
     /// The data packet contained in the GPIO file
-    struct DataPkt
+    /// Note: The value and state of the GPIO are both enconded in a 32-bit variable (m_value). 
+    /// The value cannot be negative. Additionally, the state is stored in the data packet 
+    /// using the MSB (sign bit) that would correspond to the 32-bit floating point value. 
+    /// m_value = [state bit, 31-bit float value]
+    class DataPkt
     {
+    
+    public:
         /// Default constructor
         ///
-        DataPkt() {}
-        
+        DataPkt();
+
         /// Alternative contructor
-        /// \param inTimeStampSec   The timestamp in secs from unix epoch
-        /// \param inTimeStampUSec  The microsecs portion of the timestamp
+        /// \param inTimeStampUSec  The timestamp in usecs from unix epoch
         /// \param inState          The state on/off
-        /// \param inValue     Power level of LED lights
+        /// \param inValue          Power level of LED lights. This value cannot be negative.
         DataPkt(
-            const uint32_t inTimeStampSec, 
-            const uint32_t inTimeStampUSec, 
-            const bool inState, 
-            const double inValue) :
-            timeStampSec(inTimeStampSec),
-            timeStampUSec(inTimeStampUSec),
-            state(0),
-            value(inValue)
-        {
-            if(inState)
-            {
-                state = 1;
-            }
-        }
+            const uint64_t inTimeStampUSec,
+            const bool inState,
+            const float inValue);
+
+        /// \return the state 
+        ///
+        bool getState();
+
+        /// \return the value
+        /// 
+        float getValue();
 
         /// \return the timestamp for this packet
         ///
-        Time getTime() const
+        Time getTime() const;
+
+        uint64_t m_timeStampUSec;               ///< Time from Unix epoch in microsecs
+        union
         {
-            DurationInSeconds secsFromUnixEpoch(isize_t(timeStampSec), 1);
-            DurationInSeconds usecs(timeStampUSec, 1000000);
-            secsFromUnixEpoch += usecs;
-            return Time(secsFromUnixEpoch);
-        }
-        
-        uint32_t    timeStampSec;       ///< Time from Unix epoch in secs
-        uint32_t    timeStampUSec;      ///< Micro secs portion of the time stamp
-        char        state;              ///< On/Off
-        double      value;              ///< The recorded value, used for LED power and analog traces
-    };
+            uint64_t m_data;                    ///< Generic 64-bit structure to hold unformatted data
+            struct
+            {
+                uint32_t m_value;               ///< The recorded value, used for LED power, analog traces, and digital state (0,1)
+                uint32_t m_reserved;
+            };
+        };
+    };    
     #pragma pack(pop)
 
     /// Empty constructor.
@@ -111,7 +113,7 @@ public:
 
     /// \return the trace for the analog channel or nullptr if the file doesn't contain analog data
     /// 
-    SpDTrace_t 
+    SpFTrace_t 
     getAnalogData();
 
     /// \return the logical trace for the requested channel or nullptr if the file doesn't contain data for that channel

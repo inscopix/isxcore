@@ -178,13 +178,10 @@ namespace isx
         void checkEventCounter(uint8_t * data);
         
 
-        /// Parse the unix time from a data packet. 
-        /// \param inTime a 4 byte array containing the byte data to convert
-        uint32_t getUnixTimeInSecs(uint8_t * inTime);
-
-        /// Parse the microsecs portion of the timestamp from a data packet. 
-        /// \param inTime a 3 byte array containing the byte data to convert
-        uint32_t getUsecs(uint8_t * inTime);
+        /// Parse the unix time from a data packet in microsecs. 
+        /// \param inSecs a 4 byte array containing the byte data to convert
+        /// \param inUSecs a 3 byte array containing the byte data to convert
+        uint64_t getUsecs(uint8_t * inSecs, uint8_t * inUSecs);
 
         /// Parses a GPIO packet 
         /// \param inPkt the data packet

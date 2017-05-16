@@ -47,7 +47,7 @@ public:
     const std::vector<std::string>
     getChannelList() const override;
 
-    SpDTrace_t
+    SpFTrace_t
     getAnalogData() override;
 
     void
@@ -71,7 +71,7 @@ public:
 private:
 
     std::shared_ptr<GpioFile>      m_file;
-    std::shared_ptr<IoTaskTracker<DTrace_t>>          m_analogIoTaskTracker;
+    std::shared_ptr<IoTaskTracker<FTrace_t>>          m_analogIoTaskTracker;
     std::shared_ptr<IoTaskTracker<LogicalTrace>>      m_logicalIoTaskTracker;
 
 }; // class MosaicGpio

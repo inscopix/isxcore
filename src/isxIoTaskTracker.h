@@ -124,7 +124,6 @@ private:
 extern template class IoTaskTracker<VideoFrame>;
 extern template class IoTaskTracker<FTrace_t>;
 extern template class IoTaskTracker<Image>;
-extern template class IoTaskTracker<DTrace_t>;
 extern template class IoTaskTracker<LogicalTrace>;
     
 } // namespace isx

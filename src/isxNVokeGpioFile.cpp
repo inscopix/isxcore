@@ -494,10 +494,9 @@ NVokeGpioFile::parseGpioPkt(const std::vector<uint8_t> & inPkt)
     std::string mode = s_gpioModeMap.at((pkt->stateMode & GPIO_MODE_MASK));
     std::string triggerFollow; 
 
-    uint32_t unixTimeInSecs = getUnixTimeInSecs(pkt->timeSecs);
-    uint32_t usecs = getUsecs(pkt->timeUSecs);    
+    uint64_t usecs = getUsecs(pkt->timeSecs, pkt->timeUSecs);    
 
-    GpioFile::DataPkt data(unixTimeInSecs, usecs, state, 0.0);
+    GpioFile::DataPkt data(usecs, state, 0.0f);
     updatePktTimes(data);
     addEventPkt(dataType, mode, triggerFollow, data);
 }
@@ -518,10 +517,9 @@ NVokeGpioFile::parseLedPkt(const std::vector<uint8_t> & inPkt)
     bool state = (pkt->powerState & LED_STATE_MASK) > 0 ? true : false;
     std::string mode = s_ledModeMap.at((pkt->followMode & LED_MODE_MASK));
     
-    uint32_t unixTimeInSecs = getUnixTimeInSecs(pkt->timeSecs);
-    uint32_t usecs = getUsecs(pkt->timeUSecs);
+    uint64_t usecs = getUsecs(pkt->timeSecs, pkt->timeUSecs);
 
-    GpioFile::DataPkt data(unixTimeInSecs, usecs, state, dPower);
+    GpioFile::DataPkt data(usecs, state, float(dPower));
     updatePktTimes(data);
     addEventPkt(dataType, mode, triggerFollow, data);
 }
@@ -535,8 +533,7 @@ NVokeGpioFile::parseAnalogFollowPkt(const std::vector<uint8_t> & inPkt)
     std::string dataType = s_dataTypeMap.at(pkt->header.dataType);
     uint8_t maxPower = (pkt->ogMaxPower[0] & AF_POWER_LAST) | (pkt->ogMaxPower[1] & AF_POWER_FIRST);
     
-    uint32_t unixTimeInSecs = getUnixTimeInSecs(pkt->timeSecs);
-    uint32_t usecs = getUsecs(pkt->timeUSecs);
+    uint64_t usecs = getUsecs(pkt->timeSecs, pkt->timeUSecs);
 
     for (isize_t i(0); i < 10; ++i)
     {
@@ -545,36 +542,34 @@ NVokeGpioFile::parseAnalogFollowPkt(const std::vector<uint8_t> & inPkt)
         uint16_t sample = (hSample << 8) + lSample;
         double dSample = double(sample) / 655360.0 * double(maxPower);   // In units of mW/mm^2
 
-        uint32_t usecsForPkt = usecs + (uint32_t)(1000*i);
-        GpioFile::DataPkt data(unixTimeInSecs, usecsForPkt, false, dSample);
+        uint64_t usecsForPkt = usecs + (uint64_t)(1000*i);
+        GpioFile::DataPkt data(usecsForPkt, false, float(dSample));
         updatePktTimes(data);
         writeAnalogPktToFile(dataType, std::string(), std::string(), data);
     }
 }
 
-uint32_t 
-NVokeGpioFile::getUnixTimeInSecs(uint8_t * inTime)
+uint64_t 
+NVokeGpioFile::getUsecs(uint8_t * inSecs, uint8_t * inUSecs)
 {
-    uint32_t outUnixTimeInSecs = 0;
-    for(isize_t i(0); i < 4; ++i)
-    {
-        uint32_t bytedata = (uint32_t)inTime[i] & 0x000000FF;
-        outUnixTimeInSecs += (bytedata << (3-i)*8);
-    }
-    return outUnixTimeInSecs;
-}
+    uint64_t outUsecs = 0;
 
-uint32_t 
-NVokeGpioFile::getUsecs(uint8_t * inTime)
-{
-    uint32_t outUsecs = 0;
+    uint64_t unixTimeInSecs = 0;
+    for (isize_t i(0); i < 4; ++i)
+    {
+        uint64_t bytedata = (uint64_t)inSecs[i] & 0x00000000000000FF;
+        unixTimeInSecs += (bytedata << (3 - i) * 8);
+    }
+
+    outUsecs += unixTimeInSecs * 1000000;
+
     for(isize_t i(0); i < 3; ++i)
     {
-        uint32_t bytedata = (uint32_t)inTime[i] & 0x000000FF;
+        uint64_t bytedata = (uint64_t)inUSecs[i] & 0x00000000000000FF;
         
         if(i == 0)
         {
-            bytedata &= 0x0000000F;
+            bytedata &= 0x000000000000000F;
         }
 
         outUsecs += (bytedata << (2-i)*8);

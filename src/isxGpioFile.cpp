@@ -3,7 +3,50 @@
 #include <limits>
 
 namespace isx
-{   
+{
+
+GpioFile::DataPkt::DataPkt()
+{
+
+}
+
+GpioFile::DataPkt::DataPkt(
+    const uint64_t inTimeStampUSec,
+    const bool inState,
+    const float inValue) :
+    m_timeStampUSec(inTimeStampUSec)
+{
+    float val = std::abs(inValue);
+    if (inState)
+    {
+        val = -val;
+    }
+    uint32_t * newVal = (uint32_t *)&val;
+    m_value = *newVal;    
+}
+
+bool 
+GpioFile::DataPkt::getState()
+{
+    uint32_t state = m_value & 0x80000000;
+    return (state != 0);
+}
+
+float 
+GpioFile::DataPkt::getValue()
+{
+    float * fval = (float *)&m_value;
+    return std::abs(*fval);
+}
+
+Time 
+GpioFile::DataPkt::getTime() const
+{
+    DurationInSeconds secsFromUnixEpoch(isize_t(m_timeStampUSec / 1000000), 1);
+    DurationInSeconds usecs(m_timeStampUSec % 1000000, 1000000);
+    secsFromUnixEpoch += usecs;
+    return Time(secsFromUnixEpoch);
+}
 
 
 GpioFile::GpioFile()
@@ -76,7 +119,7 @@ GpioFile::getChannelList() const
     return keys;
 }
 
-SpDTrace_t 
+SpFTrace_t 
 GpioFile::getAnalogData()
 {
     if(!m_analog)
@@ -100,7 +143,7 @@ GpioFile::getAnalogData()
         ISX_THROW(isx::ExceptionFileIO, "Error reading GPIO file.");
     }
 
-    SpDTrace_t trace = std::make_shared<DTrace_t>(m_timingInfo);
+    SpFTrace_t trace = std::make_shared<FTrace_t>(m_timingInfo);
     std::vector<isize_t> droppedFrames;
     isize_t prevIndex = 0;
 
@@ -109,7 +152,7 @@ GpioFile::getAnalogData()
         DataPkt & pkt = data[i];
         Time time = pkt.getTime();
         isize_t index = m_timingInfo.convertTimeToIndex(time);
-        trace->setValue(index, pkt.value);
+        trace->setValue(index, pkt.getValue());
 
         if((i == 0) && (index != 0))
         {
@@ -134,7 +177,7 @@ GpioFile::getAnalogData()
 
     for(isize_t i(0); i < droppedFrames.size(); ++i)
     {
-        trace->setValue(droppedFrames.at(i), std::numeric_limits<double>::quiet_NaN());
+        trace->setValue(droppedFrames.at(i), std::numeric_limits<float>::quiet_NaN());
     }
 
     trace->setDroppedFrames(droppedFrames);
@@ -167,13 +210,14 @@ GpioFile::getLogicalData(const std::string & inChannelName)
     for(isize_t i(0); i < numPkts; ++i)
     {
         DataPkt & pkt = data[i];
-        if(pkt.value == 0.0)
+        float val = pkt.getValue();
+        if(val == 0.0f)
         {
-            logicalTrace->addValue(pkt.getTime(), double(pkt.state));
+            logicalTrace->addValue(pkt.getTime(), pkt.getState());
         }
         else
         {
-            logicalTrace->addValue(pkt.getTime(), pkt.value * double(pkt.state));
+            logicalTrace->addValue(pkt.getTime(), val * pkt.getState());
         }        
     }
 

@@ -16,10 +16,9 @@ void testParsing(
     const std::vector<std::string> & inExpectedSuffixes,
     const std::vector<isx::json> inFileJsonHeaders, 
     const std::vector<std::vector<isx::json>> inChannelJsonHeaders,
-    const std::vector<std::vector<uint32_t>> & inSecs,
-    const std::vector<std::vector<double>> & inMicroSecs, 
-    const std::vector<std::vector<char>> & inStates,
-    const std::vector<std::vector<double>> & inPowerLevel
+    const std::vector<std::vector<uint64_t>> & inMicroSecs, 
+    const std::vector<std::vector<bool>> & inStates,
+    const std::vector<std::vector<float>> & inPowerLevel
     )
 {
     std::string dir = isx::getDirName(inFileName);
@@ -76,7 +75,6 @@ void testParsing(
             REQUIRE(j == expectedHdr);
 
             auto & channelHeaders = inChannelJsonHeaders.at(idx);
-            auto & timeSecs = inSecs.at(idx);
             auto & timeMicroSecs = inMicroSecs.at(idx);
             auto & states = inStates.at(idx);
             auto & powerLevels = inPowerLevel.at(idx);
@@ -92,26 +90,18 @@ void testParsing(
                 REQUIRE(header == expectedHeader);
 
                 /// Read first data value for channel
-                uint32_t timeStampSec, timeStampUSec;
-                char state;
-                double powerLevel;
+                isx::GpioFile::DataPkt pkt;
 
-                file.read((char *) &timeStampSec, sizeof(uint32_t));
-                file.read((char *) &timeStampUSec, sizeof(uint32_t));
-                file.read((char *) &state, sizeof(char));
-                file.read((char *) &powerLevel, sizeof(double));
+                file.read((char *) &pkt, sizeof(pkt));                
                 if (!file.good())
                 {
                     ISX_THROW(isx::ExceptionFileIO,
                         "Failed to read values from  gpio file: ", fullName);
-                }            
+                }
 
-                REQUIRE(timeStampSec == timeSecs.at(channelIdx));
-
-                double dTimeStampUSec = ((double)timeStampUSec) / 1000000.0;
-                REQUIRE(std::abs(dTimeStampUSec - timeMicroSecs.at(channelIdx)) < 0.001);
-                REQUIRE(state == states.at(channelIdx));
-                REQUIRE(std::abs(powerLevel - powerLevels.at(channelIdx)) < 0.01);
+                REQUIRE(pkt.m_timeStampUSec == timeMicroSecs.at(channelIdx));
+                REQUIRE(pkt.getState() == states.at(channelIdx));
+                REQUIRE(pkt.getValue() == powerLevels.at(channelIdx));
 
                 ++channelIdx;
             }      
@@ -182,10 +172,9 @@ TEST_CASE("GpioDataTest", "[core]")
 
         std::vector<std::vector<isx::json>> channelHeaders{std::vector<isx::json>{analog}, std::vector<isx::json>{sync}};
 
-        std::vector<std::vector<uint32_t>> secsFromUnix{ std::vector<uint32_t>{1478277469}, std::vector<uint32_t>{1478277469}};
-        std::vector<std::vector<double>> microSecs{std::vector<double>{.2941}, std::vector<double>{.3118}};
-        std::vector<std::vector<char>> states{std::vector<char>{0}, std::vector<char>{0}};
-        std::vector<std::vector<double>> power{std::vector<double>{2.6556396484375}, std::vector<double>{0.0} };
+        std::vector<std::vector<uint64_t>> usecsFromUnix{ std::vector<uint64_t>{(uint64_t)1478277469 * 1000000 + 294107}, std::vector<uint64_t>{(uint64_t)1478277469 * 1000000 + 311800}};
+        std::vector<std::vector<bool>> states{std::vector<bool>{false}, std::vector<bool>{false}};
+        std::vector<std::vector<float>> power{std::vector<float>{float(2.6556396484375)}, std::vector<float>{0.0f} };
 
         // End of expected values ********************************************
         //////////////////////////////////////////////////////////////////////
@@ -196,8 +185,7 @@ TEST_CASE("GpioDataTest", "[core]")
             expectedSuffixes,
             fileHeaders,
             channelHeaders, 
-            secsFromUnix,
-            microSecs, 
+            usecsFromUnix,
             states,
             power);
     }
@@ -217,7 +205,7 @@ TEST_CASE("GpioDataTest", "[core]")
         isx::TimingInfo ti(start, step, numTimes);
 
         isx::json eventsHeader;
-        std::map<std::string, int> channelOffsets{{"EX_LED", 0}, {"SYNC", 153}, {"TRIG", 3232}};
+        std::map<std::string, int> channelOffsets{{"EX_LED", 0}, {"SYNC", 151}, {"TRIG", 3056}};
         eventsHeader["type"] = size_t(isx::DataSet::Type::GPIO);
         eventsHeader["channel offsets"] = channelOffsets;
         eventsHeader["timing info"] = convertTimingInfoToJson(ti);
@@ -244,10 +232,9 @@ TEST_CASE("GpioDataTest", "[core]")
 
         std::vector<std::vector<isx::json>> channelHeaders{std::vector<isx::json>{exled, sync, trig}};
 
-        std::vector<std::vector<uint32_t>> secsFromUnix{ std::vector<uint32_t>{1485470246, 1485470247, 1485470243}};
-        std::vector<std::vector<double>> microSecs{std::vector<double>{.24098, .0386, .16323}};
-        std::vector<std::vector<char>> states{std::vector<char>{1, 1, 1}};
-        std::vector<std::vector<double>> power{ std::vector<double>{1.5, 0.0, 0.0} };
+        std::vector<std::vector<uint64_t>> usecsFromUnix{ std::vector<uint64_t>{(uint64_t)1485470246 * 1000000 + 240986, (uint64_t)1485470247 * 1000000 + 38600, (uint64_t)1485470243 * 1000000 + 163233}};
+        std::vector<std::vector<bool>> states{std::vector<bool>{true, true, true}};
+        std::vector<std::vector<float>> power{ std::vector<float>{1.5f, 0.0f, 0.0f} };
 
         // End of expected values ********************************************
         //////////////////////////////////////////////////////////////////////
@@ -258,8 +245,7 @@ TEST_CASE("GpioDataTest", "[core]")
             expectedSuffixes,
             fileHeaders,
             channelHeaders, 
-            secsFromUnix,
-            microSecs, 
+            usecsFromUnix,
             states,
             power);
 

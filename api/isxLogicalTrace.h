@@ -47,14 +47,14 @@ public:
 
     /// \return the set of values and their timestamps
     ///
-    const std::map<Time, double> & getValues() const
+    const std::map<Time, float> & getValues() const
     {
         return m_values;
     }
 
     /// Set the values for this trace
     /// \param inValues the map of timestamps and values
-    void setValues(const std::map<Time, double> & inValues)
+    void setValues(const std::map<Time, float> & inValues)
     {
         m_values = inValues;
     }
@@ -62,7 +62,7 @@ public:
     /// Adds a value to the time-value map
     /// \param inTime the timestamp
     /// \param inValue the value to add
-    void addValue(const Time & inTime, double inValue)
+    void addValue(const Time & inTime, float inValue)
     {
         m_values[inTime] = inValue;
     }
@@ -80,7 +80,7 @@ private:
 
     /// The temporal domain of the function.
     TimingInfo m_timingInfo;
-    std::map<Time, double> m_values;
+    std::map<Time, float>  m_values;
     std::string            m_name;
 
 

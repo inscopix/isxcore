@@ -118,17 +118,17 @@ GpioSeries::getGaplessTimingInfo()
     return makeGaplessTimingInfo(getTimingInfosForSeries());
 }
 
-SpDTrace_t
+SpFTrace_t
 GpioSeries::getAnalogData()
 {
-    SpDTrace_t trace = std::make_shared<DTrace_t>(getGaplessTimingInfo());
-    double * v = trace->getValues();
+    SpFTrace_t trace = std::make_shared<FTrace_t>(getGaplessTimingInfo());
+    float * v = trace->getValues();
     for (const auto & g : m_gpios)
     {
-        SpDTrace_t partialTrace = g->getAnalogData();
-        double * vPartial = partialTrace->getValues();
+        SpFTrace_t partialTrace = g->getAnalogData();
+        float * vPartial = partialTrace->getValues();
         const isize_t numSamples = partialTrace->getTimingInfo().getNumTimes();
-        memcpy((char *)v, (char *)vPartial, sizeof(double) * numSamples);
+        memcpy((char *)v, (char *)vPartial, sizeof(float) * numSamples);
         v += numSamples;
     }
     return trace;
@@ -139,8 +139,8 @@ GpioSeries::getAnalogDataAsync(GpioGetAnalogDataCB_t inCallback)
 {
     std::weak_ptr<Gpio> weakThis = shared_from_this();
 
-    AsyncTaskResult<SpDTrace_t> asyncTaskResult;
-    asyncTaskResult.setValue(std::make_shared<DTrace_t>(getGaplessTimingInfo()));
+    AsyncTaskResult<SpFTrace_t> asyncTaskResult;
+    asyncTaskResult.setValue(std::make_shared<FTrace_t>(getGaplessTimingInfo()));
 
     isize_t counter = 0;
     bool isLast = false;
@@ -151,7 +151,7 @@ GpioSeries::getAnalogDataAsync(GpioGetAnalogDataCB_t inCallback)
         isLast = (counter == (m_gpios.size() - 1));
 
         GpioGetAnalogDataCB_t finishedCB =
-            [weakThis, &asyncTaskResult, offset, isLast, inCallback] (AsyncTaskResult<SpDTrace_t> inAsyncTaskResult)
+            [weakThis, &asyncTaskResult, offset, isLast, inCallback] (AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
             {
                 auto sharedThis = weakThis.lock();
                 if (!sharedThis)
@@ -171,9 +171,9 @@ GpioSeries::getAnalogDataAsync(GpioGetAnalogDataCB_t inCallback)
                         auto traceSegment = inAsyncTaskResult.get();
                         auto traceSeries = asyncTaskResult.get();
                         const isize_t numSamples = traceSegment->getTimingInfo().getNumTimes();
-                        double * vals = traceSeries->getValues();
+                        float * vals = traceSeries->getValues();
                         vals += offset;
-                        memcpy((char *)vals, (char *)traceSegment->getValues(), sizeof(double) * numSamples);
+                        memcpy((char *)vals, (char *)traceSegment->getValues(), sizeof(float) * numSamples);
                     }
                 }
 

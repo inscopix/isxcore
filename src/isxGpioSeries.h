@@ -55,7 +55,7 @@ public:
     const std::vector<std::string>
     getChannelList() const override;
 
-    SpDTrace_t
+    SpFTrace_t
     getAnalogData() override;
 
     void

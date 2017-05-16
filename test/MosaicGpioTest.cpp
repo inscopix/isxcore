@@ -20,7 +20,7 @@ TEST_CASE("MosaicGpioTest", "[core]")
 
     SECTION("Analog data")
     {
-        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_analog.isxd");
+        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_analog_2.isxd");
         std::shared_ptr<isx::MosaicGpio> gpio = std::make_shared<isx::MosaicGpio>(fileName); 
         REQUIRE(gpio->isValid());
         REQUIRE(gpio->isAnalog());
@@ -30,21 +30,21 @@ TEST_CASE("MosaicGpioTest", "[core]")
         REQUIRE(channels.size() == 1);
         REQUIRE(channels.at(0) == "GPIO4_AI");
 
-        isx::SpDTrace_t trace = gpio->getAnalogData();
+        isx::SpFTrace_t trace = gpio->getAnalogData();
         REQUIRE(trace);
-        double val = trace->getValue(0);
+        float val = trace->getValue(0);
         REQUIRE(val == 2.6556396484375);
     }
 
     SECTION("Analog data - async")
     {
-        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_analog.isxd");
+        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_analog_2.isxd");
         std::shared_ptr<isx::MosaicGpio> gpio = std::make_shared<isx::MosaicGpio>(fileName); 
 
         std::atomic_int doneCount(0);
         size_t numTraces = 1;
 
-        isx::MosaicGpio::GpioGetAnalogDataCB_t callBack = [&doneCount](isx::AsyncTaskResult<isx::SpDTrace_t> inAsyncTaskResult)
+        isx::MosaicGpio::GpioGetAnalogDataCB_t callBack = [&doneCount](isx::AsyncTaskResult<isx::SpFTrace_t> inAsyncTaskResult)
         {
             REQUIRE(!inAsyncTaskResult.getException()); 
             auto trace = inAsyncTaskResult.get();
@@ -69,7 +69,7 @@ TEST_CASE("MosaicGpioTest", "[core]")
 
     SECTION("Logical data")
     {
-        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_events.isxd");
+        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_events_2.isxd");
         std::shared_ptr<isx::MosaicGpio> gpio = std::make_shared<isx::MosaicGpio>(fileName);  
         REQUIRE(gpio->isValid());
         REQUIRE(!gpio->isAnalog());
@@ -81,13 +81,13 @@ TEST_CASE("MosaicGpioTest", "[core]")
         REQUIRE(channels.at(1) == "SYNC");
         REQUIRE(channels.at(2) == "TRIG");
 
-        isx::SpDTrace_t trace = gpio->getAnalogData();
+        isx::SpFTrace_t trace = gpio->getAnalogData();
         REQUIRE(trace == nullptr);
         
         isx::SpLogicalTrace_t ledTrace = gpio->getLogicalData("EX_LED");
         REQUIRE(ledTrace != nullptr);
 
-        const std::map<isx::Time, double> ledVals = ledTrace->getValues();
+        const std::map<isx::Time, float> ledVals = ledTrace->getValues();
         REQUIRE(ledVals.size() == 2);
     }
 
@@ -95,7 +95,7 @@ TEST_CASE("MosaicGpioTest", "[core]")
     {
         std::atomic_int doneCount(0);
         size_t numTraces = 3;
-        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_events.isxd");
+        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_events_2.isxd");
         std::shared_ptr<isx::MosaicGpio> gpio = std::make_shared<isx::MosaicGpio>(fileName); 
         std::map<std::string, double> values{{"EX_LED", 1.5}, {"SYNC", 1.0}, {"TRIG", 1.0}};
 

@@ -16,7 +16,7 @@ MosaicGpio::MosaicGpio()
 
 MosaicGpio::MosaicGpio(const std::string & inFileName)
     : m_file(new GpioFile(inFileName))
-    , m_analogIoTaskTracker(new IoTaskTracker<DTrace_t>())
+    , m_analogIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_logicalIoTaskTracker(new IoTaskTracker<LogicalTrace>())
 {
 
@@ -58,14 +58,14 @@ MosaicGpio::getChannelList() const
     return m_file->getChannelList();
 }
 
-SpDTrace_t 
+SpFTrace_t 
 MosaicGpio::getAnalogData()
 {
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("getAnalogGpio");
-    AsyncTaskResult<SpDTrace_t> asyncTaskResult;
-    getAnalogDataAsync([&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpDTrace_t> inAsyncTaskResult)
+    AsyncTaskResult<SpFTrace_t> asyncTaskResult;
+    getAnalogDataAsync([&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
         {
             mutex.lock("getAnalogGpio async");
             asyncTaskResult = inAsyncTaskResult;
@@ -92,7 +92,7 @@ MosaicGpio::getAnalogDataAsync(GpioGetAnalogDataCB_t inCallback)
             {
                 return m_file->getAnalogData();
             }
-            return SpDTrace_t();
+            return SpFTrace_t();
         };
     m_analogIoTaskTracker->schedule(getAnalogCB, inCallback);
 

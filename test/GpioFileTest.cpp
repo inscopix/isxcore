@@ -15,7 +15,7 @@ TEST_CASE("GpioFileTest", "[core]")
 
     SECTION("Analog data file")
     {
-        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_analog.isxd");
+        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_analog_2.isxd");
         isx::GpioFile file(fileName); 
         REQUIRE(file.isValid());
         REQUIRE(file.isAnalog());
@@ -25,15 +25,15 @@ TEST_CASE("GpioFileTest", "[core]")
         REQUIRE(channels.size() == 1);
         REQUIRE(channels.at(0) == "GPIO4_AI");
 
-        isx::SpDTrace_t trace = file.getAnalogData();
+        isx::SpFTrace_t trace = file.getAnalogData();
         REQUIRE(trace);
-        double val = trace->getValue(0);
+        float val = trace->getValue(0);
         REQUIRE(val == 2.6556396484375);
     }
 
     SECTION("Logical data file")
     {
-        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_events.isxd");
+        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_events_2.isxd");
         isx::GpioFile file(fileName); 
         REQUIRE(file.isValid());
         REQUIRE(!file.isAnalog());
@@ -45,13 +45,13 @@ TEST_CASE("GpioFileTest", "[core]")
         REQUIRE(channels.at(1) == "SYNC");
         REQUIRE(channels.at(2) == "TRIG");
 
-        isx::SpDTrace_t trace = file.getAnalogData();
+        isx::SpFTrace_t trace = file.getAnalogData();
         REQUIRE(trace == nullptr);
         
         isx::SpLogicalTrace_t ledTrace = file.getLogicalData("EX_LED");
         REQUIRE(ledTrace != nullptr);
 
-        const std::map<isx::Time, double> ledVals = ledTrace->getValues();
+        const std::map<isx::Time, float> ledVals = ledTrace->getValues();
         REQUIRE(ledVals.size() == 2);
     }
 
