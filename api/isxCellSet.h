@@ -195,6 +195,12 @@ virtual
 void 
 cancelPendingReads() = 0;
 
+/// \return     True if this came from drawing ROIs, false otherwise.
+///
+virtual
+bool
+isRoiSet() const = 0;
+
 };
 
 }

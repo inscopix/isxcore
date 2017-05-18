@@ -141,6 +141,7 @@ TEST_CASE("CellSetTest", "[core]")
         REQUIRE(cellSet->getTimingInfo() == timingInfo);
         REQUIRE(cellSet->getSpacingInfo() == spacingInfo);
         REQUIRE(cellSet->getNumCells() == 0);
+        REQUIRE(!cellSet->isRoiSet());
         cellSet->closeForWriting();
     }
 
@@ -158,6 +159,24 @@ TEST_CASE("CellSetTest", "[core]")
         REQUIRE(cellSet->getTimingInfo() == timingInfo);
         REQUIRE(cellSet->getSpacingInfo() == spacingInfo);
         REQUIRE(cellSet->getNumCells() == 0);
+        REQUIRE(!cellSet->isRoiSet());
+    }
+
+    SECTION("Create an ROI set")
+    {
+        {
+            isx::SpCellSet_t cellSet = isx::writeCellSet(
+                    fileName, timingInfo, spacingInfo, true);
+            cellSet->closeForWriting();
+        }
+        isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
+
+        REQUIRE(cellSet->isValid());
+        REQUIRE(cellSet->getFileName() == fileName);
+        REQUIRE(cellSet->getTimingInfo() == timingInfo);
+        REQUIRE(cellSet->getSpacingInfo() == spacingInfo);
+        REQUIRE(cellSet->getNumCells() == 0);
+        REQUIRE(cellSet->isRoiSet());
     }
 
     SECTION("Set data for one cell and check values are correct")

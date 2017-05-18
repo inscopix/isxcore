@@ -16,13 +16,15 @@ namespace isx
 /// \param  inFileName      The name of the cell set file.
 /// \param  inTimingInfo    The timing information of the cell set.
 /// \param  inSpacingInfo   The spacing information of the cell set.
+/// \param  inIsRoiSet      True if this came from drawing ROIs, false otherwise.
 /// \return                 The mosaic cell set created.
 ///
 /// \throw  isx::ExceptionFileIO    If writing the cell set file fails.
 SpCellSet_t writeCellSet(
         const std::string & inFileName,
         const TimingInfo & inTimingInfo,
-        const SpacingInfo & inSpacingInfo);
+        const SpacingInfo & inSpacingInfo,
+        const bool inIsRoiSet = false);
 
 /// Read an existing cell set from a file.
 ///

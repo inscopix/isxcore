@@ -23,12 +23,13 @@ CellSetSimple::CellSetSimple(const std::string & inFileName, bool enableWrite)
 CellSetSimple::CellSetSimple(
         const std::string & inFileName,
         const TimingInfo & inTimingInfo,
-        const SpacingInfo & inSpacingInfo)
+        const SpacingInfo & inSpacingInfo,
+        const bool inIsRoiSet)
     : m_valid(false)
     , m_traceIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_imageIoTaskTracker(new IoTaskTracker<Image>())
 {
-    m_file = std::make_shared<CellSetFile>(inFileName, inTimingInfo, inSpacingInfo);
+    m_file = std::make_shared<CellSetFile>(inFileName, inTimingInfo, inSpacingInfo, inIsRoiSet);
     m_valid = true;
 }
 
@@ -232,6 +233,12 @@ CellSetSimple::cancelPendingReads()
 {
     m_imageIoTaskTracker->cancelPendingTasks();
     m_traceIoTaskTracker->cancelPendingTasks();
+}
+
+bool
+CellSetSimple::isRoiSet() const
+{
+    return m_file->isRoiSet();
 }
 
 }

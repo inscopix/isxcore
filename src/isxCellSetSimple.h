@@ -49,11 +49,13 @@ public:
     /// \param  inFileName      The name of the cell set file to write.
     /// \param  inTimingInfo    The timing information of the cell set.
     /// \param  inSpacingInfo   The spacing information of the cell set.
+    /// \param  inIsRoiSet      True if this came from drawing ROIs, false otherwise.
     /// \throw  isx::ExceptionFileIO    If writing the cell set file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the cell set data fails.
     CellSetSimple(const std::string & inFileName,
             const TimingInfo & inTimingInfo,
-            const SpacingInfo & inSpacingInfo);
+            const SpacingInfo & inSpacingInfo,
+            const bool inIsRoiSet = false);
 
     /// Destructor.
     ///
@@ -117,6 +119,9 @@ public:
 
     void 
     cancelPendingReads() override;
+
+    bool
+    isRoiSet() const override;
 
 private:
 

@@ -44,12 +44,14 @@ public:
     /// \param  inFileName      The name of the cell set file.
     /// \param  inTimingInfo    The timing information of the cell set.
     /// \param  inSpacingInfo   The spacing information of the cell set.
+    /// \param  inIsRoiSet      True if this came from drawing ROIs, false otherwise.
     ///
     /// \throw  isx::ExceptionFileIO    If writing the cell set file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the cell set data fails.
     CellSetFile(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
-                const SpacingInfo & inSpacingInfo);
+                const SpacingInfo & inSpacingInfo,
+                const bool inIsRoiSet = false);
 
     /// Destructor.
     ///
@@ -134,6 +136,10 @@ public:
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void setCellName(isize_t inCellId, const std::string & inName);
 
+    /// \return     True if this came from drawing ROIs, false otherwise.
+    ///
+    bool isRoiSet() const;
+
 private:
 
     /// True if the cell set file is valid, false otherwise.
@@ -167,6 +173,9 @@ private:
     std::ios_base::openmode m_openmode;
     
     bool m_fileClosedForWriting = false;
+
+    /// True if this came from drawing ROIs, false otherwise.
+    bool m_isRoiSet = false;
 
     /// Read the header to populate information about the cell set.
     ///

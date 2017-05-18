@@ -36,10 +36,12 @@ namespace isx
 
     CellSetFile::CellSetFile(const std::string & inFileName, 
                 const TimingInfo & inTimingInfo,
-                const SpacingInfo & inSpacingInfo) 
+                const SpacingInfo & inSpacingInfo,
+                const bool inIsRoiSet) 
                 : m_fileName(inFileName)
                 , m_timingInfo(inTimingInfo)
                 , m_spacingInfo(inSpacingInfo)
+                , m_isRoiSet(inIsRoiSet)
     {
         m_openmode = std::ios::binary | std::ios_base::in | std::ios_base::out | std::ios::trunc;
         m_file.open(m_fileName, m_openmode);
@@ -292,7 +294,13 @@ namespace isx
         }
         m_cellNames.at(inCellId) = inName;
     }
-    
+
+    bool
+    CellSetFile::isRoiSet() const
+    {
+        return m_isRoiSet;
+    }
+
     void 
     CellSetFile::readHeader()
     {
@@ -311,6 +319,7 @@ namespace isx
             m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
             m_cellNames = convertJsonToCellNames(j["CellNames"]);
             m_cellStatuses = convertJsonToCellStatuses(j["CellStatuses"]);
+            m_isRoiSet = j["isRoiSet"];
         }
         catch (const std::exception & error)
         {
@@ -343,6 +352,7 @@ namespace isx
             replaceEmptyNames();
             j["CellNames"] = convertCellNamesToJson(m_cellNames);
             j["CellStatuses"] = convertCellStatusesToJson(m_cellStatuses);
+            j["isRoiSet"] = m_isRoiSet;
         }
         catch (const std::exception & error)
         {

@@ -25,6 +25,9 @@ typedef SpatialVector<Ratio> VectorInMicrons_t;
 typedef SpatialPoint<Ratio> PointInMicrons_t;
 typedef SpatialSize<Ratio> SizeInMicrons_t;
 
+// Types used when dealing with contours
+typedef std::vector<PointInPixels_t> Contour_t;
+typedef std::vector<Contour_t> Contours_t;
 
 const Ratio DEFAULT_PIXEL_SIZE(22, 10);
 

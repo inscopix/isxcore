@@ -10,9 +10,10 @@ namespace isx
 SpCellSet_t writeCellSet(
         const std::string & inFileName,
         const TimingInfo & inTimingInfo,
-        const SpacingInfo & inSpacingInfo)
+        const SpacingInfo & inSpacingInfo,
+        const bool inIsRoiSet)
 {
-    SpCellSet_t cs = std::make_shared<CellSetSimple>(inFileName, inTimingInfo, inSpacingInfo);
+    SpCellSet_t cs = std::make_shared<CellSetSimple>(inFileName, inTimingInfo, inSpacingInfo, inIsRoiSet);
     return cs;
 }
 

@@ -281,5 +281,16 @@ namespace isx
         }
     }
 
-    
+    bool
+    CellSetSeries::isRoiSet() const
+    {
+        for (const auto & cs : m_cellSets)
+        {
+            if (!cs->isRoiSet())
+            {
+                return false;
+            }
+        }
+        return m_cellSets.size() > 0;
+    }
 }

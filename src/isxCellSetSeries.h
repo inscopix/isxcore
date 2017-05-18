@@ -101,6 +101,9 @@ public:
     void 
     cancelPendingReads() override;
 
+    bool
+    isRoiSet() const override;
+
 private:
 
 
