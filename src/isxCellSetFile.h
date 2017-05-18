@@ -174,6 +174,8 @@ private:
     
     bool m_fileClosedForWriting = false;
 
+    const static size_t s_version = 0;
+
     /// True if this came from drawing ROIs, false otherwise.
     bool m_isRoiSet = false;
 

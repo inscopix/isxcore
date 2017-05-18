@@ -48,6 +48,8 @@ HistoricalDetails convertJsonToHistory(const json & j);
 json convertPropertiesToJson(const DataSet::Properties & inProperties);
 DataSet::Properties convertJsonToProperties(const json & j);
 
+json getProducerAsJson();
+
 /// Reads a JSON header from an input stream.
 ///
 /// This reads from the current position of the stream.

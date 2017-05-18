@@ -277,6 +277,7 @@ namespace isx
         static std::map<uint8_t, std::string> s_ledStateMap;
         static std::map<uint8_t, std::string> s_ledModeMap;
 
+        const static size_t s_outputFileVersion = 0;
     };
 }
 #endif // ISX_GPIO_DATA_FILE_H

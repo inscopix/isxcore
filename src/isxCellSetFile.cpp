@@ -348,10 +348,11 @@ namespace isx
             j["dataType"] = "float";
             j["timingInfo"] = convertTimingInfoToJson(m_timingInfo);
             j["spacingInfo"] = convertSpacingInfoToJson(m_spacingInfo);
-            j["mosaicVersion"] = CoreVersionVector();
             replaceEmptyNames();
             j["CellNames"] = convertCellNamesToJson(m_cellNames);
             j["CellStatuses"] = convertCellStatusesToJson(m_cellStatuses);
+            j["producer"] = getProducerAsJson();
+            j["fileVersion"] = s_version;
             j["isRoiSet"] = m_isRoiSet;
         }
         catch (const std::exception & error)

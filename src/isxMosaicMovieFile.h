@@ -163,7 +163,9 @@ private:
     std::fstream m_file;
 
     bool m_fileClosedForWriting = false;
-    
+
+    const static size_t s_version = 0;
+
     /// Read the header to populate information about the movie.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the header from the file fails.

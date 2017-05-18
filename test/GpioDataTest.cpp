@@ -149,13 +149,17 @@ TEST_CASE("GpioDataTest", "[core]")
         analogHeader["type"] = size_t(isx::DataSet::Type::GPIO);
         analogHeader["channel offsets"] = analogChannelOffsets;
         analogHeader["timing info"] = convertTimingInfoToJson(ti);
+        analogHeader["producer"] = isx::getProducerAsJson();
+        analogHeader["fileVersion"] = 0;
 
         isx::json eventsHeader;
         std::map<std::string, int> eventsChannelOffsets{{"SYNC", 0}};
         eventsHeader["type"] = size_t(isx::DataSet::Type::GPIO);
         eventsHeader["channel offsets"] = eventsChannelOffsets;
         eventsHeader["timing info"] = convertTimingInfoToJson(ti);
-        
+        eventsHeader["producer"] = isx::getProducerAsJson();
+        eventsHeader["fileVersion"] = 0;
+
         std::vector<isx::json> fileHeaders{analogHeader, eventsHeader};
 
         isx::json analog;
@@ -209,7 +213,9 @@ TEST_CASE("GpioDataTest", "[core]")
         eventsHeader["type"] = size_t(isx::DataSet::Type::GPIO);
         eventsHeader["channel offsets"] = channelOffsets;
         eventsHeader["timing info"] = convertTimingInfoToJson(ti);
-        
+        eventsHeader["producer"] = isx::getProducerAsJson();
+        eventsHeader["fileVersion"] = 0;
+
         std::vector<isx::json> fileHeaders{eventsHeader};
 
         isx::json exled;

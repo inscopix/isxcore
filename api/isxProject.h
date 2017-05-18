@@ -199,6 +199,9 @@ private:
     /// The file name of the project file.
     std::string m_fileName;
 
+    /// The file version
+    const static size_t s_version = 0;
+
     /// Read this project from its file.
     ///
     /// This requires the file name to already be set.

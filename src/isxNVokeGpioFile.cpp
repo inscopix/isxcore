@@ -447,7 +447,8 @@ NVokeGpioFile::getFooter(const std::map<std::string, int> & inChannelOffsets)
         j["type"] = size_t(DataSet::Type::GPIO);
         j["channel offsets"] = inChannelOffsets;
         j["timing info"] = convertTimingInfoToJson(m_timingInfo);
- 
+        j["producer"] = getProducerAsJson();
+        j["fileVersion"] = s_outputFileVersion;
     }
     catch (...)
     {

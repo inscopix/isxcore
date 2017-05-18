@@ -431,11 +431,6 @@ Project::read()
 
     try
     {
-        std::string type = jsonObject["type"];
-        if (type.compare("Project") != 0)
-        {
-            ISX_THROW(ExceptionDataIO, "Expected type to be Project. Instead got ", type);
-        }
         m_name = jsonObject["name"];
         m_root = Group::fromJsonString(jsonObject["rootGroup"].dump(), getProjectPath());
     }
@@ -455,10 +450,10 @@ Project::write(const std::string & inFilename) const
     json jsonObject;
     try
     {
-        jsonObject["type"] = "Project";
         jsonObject["name"] = m_name;
-        jsonObject["mosaicVersion"] = CoreVersionVector();
         jsonObject["rootGroup"] = json::parse(m_root->toJsonString(false, getProjectPath()));
+        jsonObject["producer"] = getProducerAsJson();
+        jsonObject["fileVersion"] = s_version;
     }
     catch (const std::exception & error)
     {

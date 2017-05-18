@@ -267,7 +267,8 @@ MosaicMovieFile::writeHeader()
         j["type"] = size_t(DataSet::Type::MOVIE);
         j["timingInfo"] = convertTimingInfoToJson(getTimingInfo());
         j["spacingInfo"] = convertSpacingInfoToJson(m_spacingInfo);
-        j["mosaicVersion"] = CoreVersionVector();
+        j["producer"] = getProducerAsJson();
+        j["fileVersion"] = s_version;
     }
     catch (const std::exception & error)
     {
