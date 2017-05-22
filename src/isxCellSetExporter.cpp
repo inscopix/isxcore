@@ -67,12 +67,12 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
         isx::DurationInSeconds baseTime{};
         switch (inParams.m_writeTimeRelativeTo)
         {
-            case CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM:
+            case WriteTimeRelativeTo::FIRST_DATA_ITEM:
             {
                 baseTime = srcs[0]->getTimingInfo().getStart().getSecsSinceEpoch();;
                 break;
             }
-            case CellSetExporterParams::WriteTimeRelativeTo::UNIX_EPOCH:
+            case WriteTimeRelativeTo::UNIX_EPOCH:
             {
                 baseTime = isx::DurationInSeconds{};
                 break;

@@ -87,7 +87,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             std::vector<isx::SpCellSet_t>{cellSet},
             exportedTraceFileName,
             std::string(),
-            isx::CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM);
+            isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
         isx::runCellSetExporter(params, nullptr, [](float){return false;});
         
         const std::string expected =
@@ -123,7 +123,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             std::vector<isx::SpCellSet_t>{cellSet},
             exportedTraceFileName,
             std::string(),
-            isx::CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM);
+            isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
         isx::runCellSetExporter(params, nullptr, [](float){return false;});
         
         const std::string expected =
@@ -170,7 +170,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             std::vector<isx::SpCellSet_t>{cellSet},
             std::string(),
             exportedImageFileName,
-            isx::CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM);
+            isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
         isx::runCellSetExporter(params, nullptr, [](float){return false;});
 
         // read output TIFF and verify
@@ -245,7 +245,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             std::vector<isx::SpCellSet_t>{cellSet},
             exportedTraceFileName,
             "",
-            isx::CellSetExporterParams::WriteTimeRelativeTo::FIRST_DATA_ITEM);
+            isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
         isx::runCellSetExporter(params, nullptr, [](float){return false;});
         // check that sample times are as expected
         const std::string expected =

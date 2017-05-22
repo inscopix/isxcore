@@ -34,37 +34,7 @@ GpioSeries::GpioSeries(const std::vector<std::string> & inFileNames)
         return a->getTimingInfo().getStart() < b->getTimingInfo().getStart();
     });
 
-    // cell sets are sorted by start time now, check if they meet requirements
-    const isize_t refNumChannels = m_gpios[0]->numberOfChannels();
-    const bool refIsAnalog = m_gpios[0]->isAnalog();
-    const std::vector<std::string> refChannelList = m_gpios[0]->getChannelList();
-    std::string errorMessage;
-    for (isize_t i = 1; i < m_gpios.size(); ++i)
-    {
-        const auto & g = m_gpios[i];
-
-        if (g->isAnalog() != refIsAnalog)
-        {
-            ISX_THROW(ExceptionSeries, "GPIO series member with mismatching analog/digital data: ", g->getFileName());
-        }
-
-        if (g->numberOfChannels() != refNumChannels)
-        {
-            ISX_THROW(ExceptionSeries, "GPIO series member with mismatching number of logical channels: ", g->getFileName());
-        }
-
-        if (g->getChannelList() != refChannelList)
-        {
-            ISX_THROW(ExceptionSeries, "GPIO series member with mismatching channel names: ", g->getFileName());
-        }
-
-        const auto & tip = m_gpios[i-1]->getTimingInfo();
-        const auto & tic = m_gpios[i]->getTimingInfo();
-        if (!Series::checkTimingInfo(tip, tic, errorMessage))
-        {
-            ISX_THROW(ExceptionSeries, errorMessage);
-        }
-    }
+    checkGpioSeriesMembers(m_gpios);
 
     m_timingInfo = makeGlobalTimingInfo(getTimingInfosForSeries());
 

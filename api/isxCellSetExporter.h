@@ -3,24 +3,18 @@
 
 #include "isxCellSet.h"
 #include "isxAsyncTaskHandle.h"
+#include "isxExport.h"
 
 namespace isx {
 
 /// struct that defines CellSetExporter's input data, output data and input parameters
 struct CellSetExporterParams
 {
-    /// Enum to select how to write time stamps in exported file
-    enum class WriteTimeRelativeTo
-    {
-        FIRST_DATA_ITEM,    ///< write time stamps relative to start time of data set
-        UNIX_EPOCH          ///< write time stamps relative to unix epoch
-    };
-    
     /// convenience constructor to fill struct members in one shot
     /// \param inSrcs                input cellsets
     /// \param inTraceFilename       filename for trace output file
     /// \param inImagesFilename      base filename for cell images output file
-    /// \param inWriteTimeRelativeTo number of decimals written per cell value
+    /// \param inWriteTimeRelativeTo time reference point
     CellSetExporterParams(
         const std::vector<SpCellSet_t> & inSrcs, 
         const std::string & inTraceFilename,
