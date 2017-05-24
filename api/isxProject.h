@@ -185,6 +185,26 @@ public:
     ///
     void discard();
 
+    /// \return     True if all data files referenced in this project exist on
+    ///             the filesystem, false otherwise.
+    bool allDataFilesExist() const;
+
+    /// \return     The series in this project with some missing data files.
+    ///
+    std::vector<Series *> getSeriesWithMissingFiles() const;
+
+    /// Locate missing series' files in the given directory.
+    /// This will update the series' file paths in place.
+    ///
+    /// \param  inDirectory The directory in which to locate the files.
+    /// \param  inSeries    The series to locate.
+    /// \param  outLocated  The series that were found.
+    /// \return             True if all series' files were found.
+    bool locateMissingFiles(
+            const std::string & inDirectory,
+            const std::vector<Series *> & inSeries,
+            std::vector<Series *> & outLocated);
+
 private:
 
     /// True if the project is valid, false otherwise.
@@ -230,8 +250,8 @@ private:
     ///
     void initDataDir();
 
-    /// \return All Series in the project.
-    ///
+    /// \return All Series in the project not including those that are members of
+    ///         a series (i.e. children only).
     std::vector<Series *>
     getAllSeries() const;
 

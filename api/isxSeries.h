@@ -99,6 +99,14 @@ public:
     getType()
     const;
 
+    /// Add a unitary Series (containing exactly one data set) to this series
+    /// without any checks.
+    /// This Series takes over ownership of the DataSet in the unitary Series.
+    ///
+    /// \param  inUnitarySeries   The Series to be inserted.
+    void
+    addUnitarySeries(const SpSeries_t & inUnitarySeries);
+
     /// Insert a unitary Series (containing exactly one data set) into this series.
     /// This Series takes over ownership of the DataSet in the unitary Series.
     ///
@@ -321,6 +329,10 @@ public:
     ///             processed, false otherwise.
     bool isAMemberOfASeries() const;
 
+    /// \return     True if this series datasets' files can all be found on the
+    ///             filesystem, false otherwise.
+    bool filesExist() const;
+
     std::string
     toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string())
     const
@@ -384,6 +396,9 @@ private:
 
     bool
     checkSeriesHasSameNumPixels(const SpSeries_t inSeries) const;
+
+    void
+    checkBeforeAddOrInsertUnitarySeries(const SpSeries_t & inUnitarySeries) const;
 
     /// True if this series is valid.
     bool                                m_valid;

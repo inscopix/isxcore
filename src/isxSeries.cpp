@@ -120,7 +120,7 @@ Series::getType() const
 }
 
 void
-Series::insertUnitarySeries(const SpSeries_t & inUnitarySeries)
+Series::checkBeforeAddOrInsertUnitarySeries(const SpSeries_t & inUnitarySeries) const
 {
     if (isUnitary())
     {
@@ -129,18 +129,34 @@ Series::insertUnitarySeries(const SpSeries_t & inUnitarySeries)
 
     if (!inUnitarySeries->isUnitary())
     {
-        ISX_THROW(ExceptionSeries, "Only unitary Sereis can be inserted!");
+        ISX_THROW(ExceptionSeries, "Only unitary Series can be inserted!");
     }
 
     if (hasUnitarySeries(inUnitarySeries.get()))
     {
         ISX_THROW(ExceptionDataIO, "There is already a data set with the name: ", inUnitarySeries->getName());
     }
-    
+
     if (inUnitarySeries->getContainer() != nullptr)
     {
         ISX_THROW(ExceptionDataIO, "Series is already in another container!");
     }
+}
+
+void
+Series::addUnitarySeries(const SpSeries_t & inUnitarySeries)
+{
+    checkBeforeAddOrInsertUnitarySeries(inUnitarySeries);
+
+    inUnitarySeries->setContainer(this);
+    m_unitarySeries.push_back(inUnitarySeries);
+    m_modified = true;
+}
+
+void
+Series::insertUnitarySeries(const SpSeries_t & inUnitarySeries)
+{
+    checkBeforeAddOrInsertUnitarySeries(inUnitarySeries);
 
     auto ds = inUnitarySeries->getDataSet(0);
 
@@ -368,6 +384,10 @@ Series::isASuitableParent(std::string & outErrorMessage) const
     if (!isUnitary() && m_unitarySeries.empty())
     {
         return true;
+    }
+    if (!filesExist())
+    {
+        return false;
     }
     const DataSet::Type type = getType();
     if (type == DataSet::Type::BEHAVIOR || type == DataSet::Type::GPIO)
@@ -724,7 +744,7 @@ Series::fromJsonString(const std::string & inString, const std::string & inAbsol
         {
             SpDataSet_t dataSet = DataSet::fromJsonString(jsonDataSet.dump(), inAbsolutePathToPrepend);
             auto tmpUnitarySeries = std::make_shared<Series>(dataSet);
-            ret->insertUnitarySeries(tmpUnitarySeries);
+            ret->addUnitarySeries(tmpUnitarySeries);
         }
     }
     if (jsonObj.find("children") != jsonObj.end())
@@ -831,6 +851,19 @@ bool
 Series::isAMemberOfASeries() const
 {
     return isUnitary() && m_container != nullptr && m_container->getItemType() == isx::ProjectItem::Type::SERIES;
+}
+
+bool
+Series::filesExist() const
+{
+    for (const auto ds : getDataSets())
+    {
+        if (!ds->fileExists())
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 std::ostream &

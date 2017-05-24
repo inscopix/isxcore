@@ -27,7 +27,6 @@ public:
 
     /// The type of data set.
     ///
-    /// TODO sweet : add image and trace when we have files for them.
     enum class Type
     {
         MOVIE = 0,
@@ -178,6 +177,17 @@ public:
     ///
     void deleteFile() const;
 
+    /// \return     True if this dataset's file can be found on the filesystem.
+    ///
+    bool fileExists() const;
+
+    /// Tries to locate this dataset's file in the given directory and updates
+    /// the file name accordingly.
+    ///
+    /// \param  inDirectory The path of the directory in which to look.
+    /// \return             True if the file was located.
+    bool locateFile(const std::string & inDirectory);
+
 private:
 
     /// True if this data set is valid.
@@ -211,7 +221,7 @@ private:
     SpacingInfo m_spacingInfo;
 
     /// The data type of this data set.
-    DataType m_dataType;
+    DataType m_dataType = DataType::U16;
 
     /// True if the meta data has been read.
     bool m_hasMetaData = false;

@@ -120,23 +120,38 @@ DataSet::setPropertyValue(const std::string & inPropertyName, Variant inValue)
 DataSet::Type
 readDataSetType(const std::string & inFileName)
 {
-    std::ifstream file(inFileName, std::ios::binary);
-    std::ios::pos_type dummy;
-    json j = readJsonHeaderAtEnd(file, dummy);
-    try
+    const std::string extension = isx::getExtension(inFileName);
+    if ((extension == "hdf5") || (extension == "xml") || (extension == "tif"))
     {
-        return DataSet::Type(int(j["type"]));
+        return DataSet::Type::MOVIE;
     }
-    catch (const std::exception & error)
+    else if (extension == "isxd")
     {
-        ISX_THROW(isx::ExceptionDataIO, "Error parsing data file header: ", error.what());
+        std::ifstream file(inFileName, std::ios::binary);
+        std::ios::pos_type dummy;
+        json j = readJsonHeaderAtEnd(file, dummy);
+        try
+        {
+            return DataSet::Type(int(j["type"]));
+        }
+        catch (const std::exception & error)
+        {
+            ISX_THROW(ExceptionDataIO, "Error parsing data file header: ", error.what());
+        }
+        catch (...)
+        {
+            ISX_THROW(ExceptionDataIO, "Unknown error while parsing data file header.");
+        }
     }
-    catch (...)
+    else if ((extension == "mpg") || (extension == "mp4"))
     {
-        ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing data file header.");
+        return DataSet::Type::BEHAVIOR;
+    }
+    else
+    {
+        ISX_THROW(ExceptionFileIO, "File extension not supported: ", extension);
     }
 }
-
 
 bool
 DataSet::isValid() const
@@ -277,6 +292,36 @@ DataSet::deleteFile() const
     }
 }
 
+bool
+DataSet::fileExists() const
+{
+    return pathExists(m_fileName);
+}
+
+bool
+DataSet::locateFile(const std::string & inDirectory)
+{
+    bool located = false;
+    const std::string fileName = isx::getFileName(m_fileName);
+    const std::string newFilePath = inDirectory + "/" + fileName;
+    if (pathExists(newFilePath))
+    {
+        try
+        {
+            if (m_type == readDataSetType(newFilePath))
+            {
+                m_fileName = newFilePath;
+                located = true;
+            }
+        }
+        catch (const std::exception & e)
+        {
+            ISX_LOG_WARNING("Failed to locate file with error: ", e.what());
+        }
+    }
+    return located;
+}
+
 std::string
 DataSet::toJsonString(const bool inPretty, const std::string & inPathToOmit) const
 {
@@ -379,6 +424,12 @@ DataSet::getDataType()
 void
 DataSet::readMetaData()
 {
+    if (!fileExists())
+    {
+        ISX_LOG_ERROR("Tried to read metadata from dataset with missing file: ", m_fileName);
+        return;
+    }
+
     if (m_type == Type::MOVIE)
     {
         const SpMovie_t movie = readMovie(m_fileName);

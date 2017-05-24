@@ -11,7 +11,6 @@
 
 namespace isx
 {
-
 Project::Project()
     : m_valid(false)
 {
@@ -420,6 +419,69 @@ Project::discard()
         ISX_LOG_ERROR("Some files could not be removed from: ", projPath);
     }
 
+}
+
+bool
+Project::allDataFilesExist() const
+{
+    for (const auto s : getAllSeries())
+    {
+        if (!s->filesExist())
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::vector<Series *>
+Project::getSeriesWithMissingFiles() const
+{
+    std::vector<Series *> missing;
+    for (const auto s : getAllSeries())
+    {
+        if (!s->filesExist())
+        {
+            missing.push_back(s);
+        }
+    }
+    return missing;
+}
+
+bool
+Project::locateMissingFiles(
+        const std::string & inDirectory,
+        const std::vector<Series *> & inSeries,
+        std::vector<Series *> & outLocated)
+{
+    outLocated.clear();
+    bool allLocated = true;
+    for (const auto s : inSeries)
+    {
+        if (!s->filesExist())
+        {
+            bool allDataSetsLocated = true;
+            for (const auto ds : s->getDataSets())
+            {
+                if (!ds->fileExists())
+                {
+                    if (!ds->locateFile(inDirectory))
+                    {
+                        allDataSetsLocated = false;
+                    }
+                }
+            }
+            if (allDataSetsLocated)
+            {
+                outLocated.push_back(s);
+            }
+            else
+            {
+                allLocated = false;
+            }
+        }
+    }
+    return allLocated;
 }
 
 void
