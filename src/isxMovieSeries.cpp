@@ -4,6 +4,7 @@
 #include "isxDispatchQueue.h"
 #include "isxSeries.h"
 #include "isxIoTaskTracker.h"
+#include "isxSeriesUtils.h"
 
 #include <algorithm>
 #include <functional>
@@ -34,24 +35,10 @@ MovieSeries::MovieSeries(const std::vector<std::string> & inFileNames)
         });
 
     // movies are sorted by start time now, check if they meet requirements
-    const auto & refSi = m_movies[0]->getSpacingInfo();
-    const DataType refDataType = m_movies[0]->getDataType();
     std::string errorMessage;
     for (isize_t i = 1; i < m_movies.size(); ++i)
     {
-        const auto & m = m_movies[i];
-        if (!Series::checkDataType(refDataType, m->getDataType(), errorMessage))
-        {
-            ISX_THROW(ExceptionSeries, errorMessage);
-        }
-        if (!Series::checkSpacingInfo(refSi, m->getSpacingInfo(), errorMessage))
-        {
-            ISX_THROW(ExceptionSeries, errorMessage);
-        }
-
-        const auto & tip = m_movies[i-1]->getTimingInfo();
-        const auto & tic = m_movies[i]->getTimingInfo();
-        if (!Series::checkTimingInfo(tip, tic, errorMessage))
+        if (!checkNewMemberOfSeries({m_movies[i - 1]}, m_movies[i], errorMessage))
         {
             ISX_THROW(ExceptionSeries, errorMessage);
         }

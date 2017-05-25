@@ -32,7 +32,15 @@ runGpioExporter(
         inCheckInCB(1.f);
         return AsyncTaskStatus::COMPLETE;
     }
-    checkGpioSeriesMembers(gpios);
+
+    std::string errorMessage;
+    for (isize_t i = 1; i < gpios.size(); ++i)
+    {
+        if (!checkNewMemberOfSeries({gpios[i - 1]}, gpios[i], errorMessage))
+        {
+            ISX_THROW(ExceptionSeries, errorMessage);
+        }
+    }
 
     const SpGpio_t & refGpio = gpios.front();
     const isize_t numChannels = refGpio->numberOfChannels();

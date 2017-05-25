@@ -34,7 +34,15 @@ GpioSeries::GpioSeries(const std::vector<std::string> & inFileNames)
         return a->getTimingInfo().getStart() < b->getTimingInfo().getStart();
     });
 
-    checkGpioSeriesMembers(m_gpios);
+    // gpios are sorted by start time now, check if they meet requirements
+    std::string errorMessage;
+    for (isize_t i = 1; i < m_gpios.size(); ++i)
+    {
+        if (!checkNewMemberOfSeries({m_gpios[i - 1]}, m_gpios[i], errorMessage))
+        {
+            ISX_THROW(ExceptionSeries, errorMessage);
+        }
+    }
 
     m_timingInfo = makeGlobalTimingInfo(getTimingInfosForSeries());
 
@@ -165,7 +173,8 @@ GpioSeries::getLogicalData(const std::string & inChannelName)
     SpLogicalTrace_t trace = std::make_shared<LogicalTrace>(getGaplessTimingInfo(), inChannelName);
     for (const auto & g : m_gpios)
     {
-        for (const auto & kv : g->getLogicalData(inChannelName)->getValues())
+        const SpLogicalTrace_t gTrace = g->getLogicalData(inChannelName);
+        for (const auto & kv : gTrace->getValues())
         {
             trace->addValue(kv.first, kv.second);
         }

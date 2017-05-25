@@ -51,6 +51,36 @@ TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
         }
 
         const isx::SpGpio_t gpios = isx::readGpioSeries(eventsFilePaths);
+
+        const isx::SpLogicalTrace_t exLedTrace = gpios->getLogicalData("EX_LED");
+        const std::map<isx::Time, float> & exLedValues = exLedTrace->getValues();
+        for (const auto & kv : exLedValues)
+        {
+            REQUIRE(kv.second == 0.5f);
+        }
+
+        const isx::SpLogicalTrace_t syncTrace = gpios->getLogicalData("SYNC");
+        const std::map<isx::Time, float> & syncValues = syncTrace->getValues();
+        size_t counter = 0;
+        for (const auto & kv : syncValues)
+        {
+            if (counter == 0)
+            {
+                REQUIRE(kv.second == 1.f);
+            }
+            else if (counter == 34226)
+            {
+                REQUIRE(kv.second == 1.f);
+            }
+            ++counter;
+        }
+
+        const isx::SpLogicalTrace_t trigTrace = gpios->getLogicalData("TRIG");
+        const std::map<isx::Time, float> & trigValues = trigTrace->getValues();
+        for (const auto & kv : trigValues)
+        {
+            REQUIRE(kv.second == 1.f);
+        }
     }
 
     SECTION("Logical and analog GPIO sets")
@@ -73,7 +103,7 @@ TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
         const std::vector<std::string> filePaths = {eventsFilePaths[0], analogFilePaths[0]};
 
         ISX_REQUIRE_EXCEPTION(isx::readGpioSeries(filePaths), isx::ExceptionSeries,
-                "GPIO series member with mismatching analog/digital data: " + filePaths.back());
+                "GPIO series member with mismatching analog/digital data.");
     }
 
     SECTION("Two logical GPIO sets with a different number channels")
@@ -91,7 +121,7 @@ TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
         }
 
         ISX_REQUIRE_EXCEPTION(isx::readGpioSeries(eventsFilePaths), isx::ExceptionSeries,
-                "GPIO series member with mismatching number of logical channels: " + eventsFilePaths.back());
+                "GPIO series member with mismatching channels.");
     }
 
     SECTION("Two logical GPIO sets with temporal overlap (they're actually the same)")

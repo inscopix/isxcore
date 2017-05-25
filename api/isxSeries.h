@@ -209,83 +209,13 @@ public:
     HistoricalDetails
     getHistoricalDetails() const;
     
-    /// Checks that a data set can be added to this series.
+    /// Checks that a new member dataset can be added to this series.
     ///
     /// \param  inDataSet   The data set to check.
     /// \param  outMessage  The reason why the data set can't be added to the series.
     /// \return             True if the data set can be added to a series, false otherwise.
     bool
-    checkDataSet(DataSet * inDataSet, std::string & outMessage);
-
-    /// Checks that the data set type is compatible with this series.
-    ///
-    /// \param  inRef       The reference data set type.
-    /// \param  inNew       The new data set type.
-    /// \param  outMessage  The reason why the data set type is not compatible.
-    /// \return             True if the new data set type is compatible for a series,
-    ///                     false otherwise.
-    static
-    bool
-    checkDataSetType(
-        const DataSet::Type inRef,
-        const DataSet::Type inNew,
-        std::string & outMessage);
-
-    /// Checks that the data type is consistent with that of a reference in a series.
-    ///
-    /// \param  inRef       The reference data type.
-    /// \param  inNew       The new data type.
-    /// \param  outMessage  The reason why the timing info is inconsistent.
-    /// \return             True if the new data type is not consistent with
-    ///                     the reference, false otherwise.
-    static
-    bool
-    checkDataType(
-        const DataType inRef,
-        const DataType inNew,
-        std::string & outMessage);
-
-    /// Checks that the timing info is consistent with that of a reference in a series.
-    ///
-    /// \param  inRef       The reference timing info.
-    /// \param  inNew       The new timing info.
-    /// \param  outMessage  The reason why the timing info is inconsistent.
-    /// \return             True if the new timing info is consistent with
-    ///                     the reference, false otherwise.
-    static
-    bool
-    checkTimingInfo(
-        const TimingInfo & inRef,
-        const TimingInfo & inNew,
-        std::string & outMessage);
-
-    /// Checks that the spacing info is consistent with that of a reference in a series.
-    ///
-    /// \param  inRef       The reference spacing info.
-    /// \param  inNew       The new spacing info.
-    /// \param  outMessage  The reason why the timing info is inconsistent.
-    /// \return             True if the new spacing info is consistent with
-    ///                     the reference, false otherwise.
-    static
-    bool
-    checkSpacingInfo(
-        const SpacingInfo & inRef,
-        const SpacingInfo & inNew,
-        std::string & outMessage);
-
-    /// Checks that the history details are consistent with those of a reference in a series.
-    ///
-    /// \param  inRef       The reference history.
-    /// \param  inNew       The new history.
-    /// \param  outMessage  The error message.
-    /// \return             True if the new history is consistent with
-    ///                     the reference, false otherwise.
-    static
-    bool
-    checkHistory(
-        const HistoricalDetails & inRef,
-        const HistoricalDetails & inNew,
-        std::string & outMessage);
+    checkNewMember(DataSet * inDataSet, std::string & outMessage);
 
     /// Create a series from a serialized JSON string.
     ///

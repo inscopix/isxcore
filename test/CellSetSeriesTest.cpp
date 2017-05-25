@@ -142,7 +142,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         ISX_REQUIRE_EXCEPTION(
             isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
             isx::ExceptionSeries,
-            "CellSetSeries with mismatching number of cells: " + filenames.at(2));
+            "CellSet series member with mismatching number of cells.");
     }
 
     SECTION("Non-compatible set of cellsets - non-overlapping time windows")

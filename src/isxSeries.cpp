@@ -7,6 +7,9 @@
 #include "isxPathUtils.h"
 #include "isxJsonUtils.h"
 #include "isxSeriesIdentifier.h"
+#include "isxSeriesUtils.h"
+#include "isxCellSetFactory.h"
+#include "isxGpio.h"
 
 #include "json.hpp"
 
@@ -161,7 +164,7 @@ Series::insertUnitarySeries(const SpSeries_t & inUnitarySeries)
     auto ds = inUnitarySeries->getDataSet(0);
 
     std::string message;
-    if (!checkDataSet(ds, message))
+    if (!checkNewMember(ds, message))
     {
         ISX_THROW(ExceptionSeries, message);
     }
@@ -489,131 +492,82 @@ Series::removeChild(isize_t inIndex)
 }
 
 bool
-Series::checkDataSet(DataSet * inDataSet, std::string & outMessage)
+Series::checkNewMember(DataSet * inDataSet, std::string & outMessage)
 {
-    try
+    auto dss = getDataSets();
+    if (dss.empty())
     {
-        auto dss = getDataSets();
-        if (dss.empty())
-        {
-            return true;
-        }
+        return true;
+    }
 
-        DataSet * refDs = dss.at(0);
+    DataSet * refDs = dss.at(0);
+    DataSet::Type refType = refDs->getType();
 
-        if (!checkDataSetType(refDs->getType(), inDataSet->getType(), outMessage))
-        {
-            return false;
-        }
+    // Do some checks that are independent of dataset type
+    if (!checkSeriesDataSetType(refType, inDataSet->getType(), outMessage))
+    {
+        return false;
+    }
 
-        if (!checkDataType(refDs->getDataType(), inDataSet->getDataType(), outMessage))
-        {
-            return false;
-        }
+    if (!checkSeriesHistory(refDs->getHistoricalDetails(), inDataSet->getHistoricalDetails(), outMessage))
+    {
+        return false;
+    }
 
-        if (!checkSpacingInfo(refDs->getSpacingInfo(), inDataSet->getSpacingInfo(), outMessage))
+    // Type specific checks
+    switch (refType)
+    {
+        case DataSet::Type::MOVIE:
+        case DataSet::Type::BEHAVIOR:
         {
-            return false;
-        }
-
-        const TimingInfo & timingInfo = inDataSet->getTimingInfo();
-        for (size_t i = 0; i < dss.size(); ++i)
-        {
-            if (i > 0)
+            std::vector<SpMovie_t> existingMovies;
+            for (const auto & ds : getDataSets())
             {
-                refDs = dss.at(i);
+                existingMovies.push_back(readMovie(ds->getFileName()));
             }
-            if (!checkTimingInfo(refDs->getTimingInfo(), timingInfo, outMessage))
+            const SpMovie_t newMovie = readMovie(inDataSet->getFileName());
+            if (!checkNewMemberOfSeries(existingMovies, newMovie, outMessage))
             {
                 return false;
             }
+            break;
         }
 
-        if(!checkHistory(refDs->getHistoricalDetails(), inDataSet->getHistoricalDetails(), outMessage))
+        case DataSet::Type::CELLSET:
         {
-            return false;
+            std::vector<SpCellSet_t> existingCellSets;
+            for (const auto & ds : getDataSets())
+            {
+                existingCellSets.push_back(readCellSet(ds->getFileName()));
+            }
+            const SpCellSet_t newCellSet = readCellSet(inDataSet->getFileName());
+            if (!checkNewMemberOfSeries(existingCellSets, newCellSet, outMessage))
+            {
+                return false;
+            }
+            break;
         }
-    } catch (Exception & inException)
-    {
-        outMessage = inException.what();
-        return false;
+
+        case DataSet::Type::GPIO:
+        {
+            std::vector<SpGpio_t> existingGpios;
+            for (const auto & ds : getDataSets())
+            {
+                existingGpios.push_back(readGpio(ds->getFileName()));
+            }
+            const SpGpio_t newGpio = readGpio(inDataSet->getFileName());
+            if (!checkNewMemberOfSeries(existingGpios, newGpio, outMessage))
+            {
+                return false;
+            }
+            break;
+        }
+
+        default:
+            outMessage = "Reference type unrecognized: " + std::to_string(size_t(refType));
+            return false;
     }
 
-    return true;
-}
-
-bool
-Series::checkDataSetType(
-        const DataSet::Type inRef,
-        const DataSet::Type inNew,
-        std::string & outMessage)
-{
-    if (inRef != inNew)
-    {
-        outMessage = "The DataSet type is different from that of the reference.";
-        return false;
-    }
-    return true;
-}
-
-bool
-Series::checkDataType(
-        const DataType inRef,
-        const DataType inNew,
-        std::string & outMessage)
-{
-    if (inRef != inNew)
-    {
-        outMessage = "The data type is different from that of the reference.";
-        return false;
-    }
-    return true;
-}
-
-bool
-Series::checkTimingInfo(
-        const TimingInfo & inRef,
-        const TimingInfo & inNew,
-        std::string & outMessage)
-{
-    if (inNew.getStep() != inRef.getStep())
-    {
-        outMessage = "The timing info has a different frame rate than the reference.";
-        return false;
-    }
-    if (inNew.overlapsWith(inRef))
-    {
-        outMessage = "The timing info temporally overlaps with the reference.";
-        return false;
-    }
-    return true;
-}
-
-bool 
-Series::checkHistory(
-        const HistoricalDetails & inRef,
-        const HistoricalDetails & inNew,
-        std::string & outMessage)
-{
-    if (inRef != inNew)
-    {
-        outMessage = "The history details are different than those of the reference.";
-        return false;
-    }
-    return true;
-}
-
-bool
-Series::checkSpacingInfo(
-        const SpacingInfo & inRef,
-        const SpacingInfo & inNew,
-        std::string & outMessage)
-{
-    if (!(inRef == inNew))
-    {
-        outMessage = "The spacing info is different than that of the reference.";
-        return false;
-    }
     return true;
 }
 

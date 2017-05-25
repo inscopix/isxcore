@@ -7,6 +7,7 @@
 #include "isxPathUtils.h"
 #include "isxNVistaHdf5Movie.h"
 #include "isxReportUtils.h"
+#include "isxGpio.h"
 
 #include <fstream>
 #include "json.hpp"
@@ -454,7 +455,6 @@ DataSet::readMetaData()
     }
     else if (m_type == Type::BEHAVIOR)
     {
-        
         Variant v;
         if(getPropertyValue(PROP_MOVIE_START_TIME, v))
         {
@@ -465,7 +465,13 @@ DataSet::readMetaData()
             m_dataType = movie->getDataType();
             m_hasMetaData = true;
         }
-        
+    }
+    else if (m_type == Type::GPIO)
+    {
+        const SpGpio_t gpio = readGpio(m_fileName);
+        m_timingInfo = gpio->getTimingInfo();
+        m_dataType = isx::DataType::F32;
+        m_hasMetaData = true;
     }
 }
 

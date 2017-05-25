@@ -37,26 +37,10 @@ namespace isx
         });
 
         // cell sets are sorted by start time now, check if they meet requirements
-        const auto & refSi = m_cellSets[0]->getSpacingInfo();
-        const isize_t refNumCells = m_cellSets[0]->getNumCells();
         std::string errorMessage;
         for (isize_t i = 1; i < m_cellSets.size(); ++i)
         {
-            const auto & cs = m_cellSets[i];
-
-            if (cs->getNumCells() != refNumCells)
-            {
-                ISX_THROW(ExceptionSeries, "CellSetSeries with mismatching number of cells: ", cs->getFileName());
-            }
-
-            if (!Series::checkSpacingInfo(refSi, cs->getSpacingInfo(), errorMessage))
-            {
-                ISX_THROW(ExceptionSeries, errorMessage);
-            }
-
-            const auto & tip = m_cellSets[i-1]->getTimingInfo();
-            const auto & tic = m_cellSets[i]->getTimingInfo();
-            if (!Series::checkTimingInfo(tip, tic, errorMessage))
+            if (!checkNewMemberOfSeries({m_cellSets[i - 1]}, m_cellSets[i], errorMessage))
             {
                 ISX_THROW(ExceptionSeries, errorMessage);
             }
