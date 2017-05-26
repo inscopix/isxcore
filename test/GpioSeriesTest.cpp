@@ -140,7 +140,7 @@ TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
         }
 
         ISX_REQUIRE_EXCEPTION(isx::readGpioSeries(eventsFilePaths), isx::ExceptionSeries,
-                "The timing info temporally overlaps with the reference.");
+                "Unable to insert data that temporally overlaps with other parts of the series. Data sets in a series must all be non-overlapping.");
     }
 
     for (const auto & f : eventsFilePaths)

@@ -12,7 +12,7 @@ namespace isx {
 std::string
 CellSetExporterParams::getOpName()
 {
-    return "Export CellSet";
+    return "Export Cell Set";
 }
     
 AsyncTaskStatus 

@@ -353,6 +353,26 @@ DataSet::toJsonString(const bool inPretty, const std::string & inPathToOmit) con
     return outJson.dump();
 }
 
+/*static*/
+std::string 
+DataSet::getTypeString(Type inType)
+{
+    switch (inType)
+    {
+    case Type::MOVIE: 
+        return std::string("Movie");
+    case Type::CELLSET:
+        return std::string("Cell Set");
+    case Type::BEHAVIOR:
+        return std::string("Behavior");
+    case Type::GPIO:
+        return std::string("GPIO");
+    default: 
+        return std::string("");
+    }
+    
+}
+
 std::shared_ptr<DataSet>
 DataSet::fromJsonString(const std::string & inString, const std::string & inAbsolutePathToPrepend)
 {

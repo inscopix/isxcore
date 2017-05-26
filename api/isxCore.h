@@ -27,6 +27,10 @@ namespace isx
     /// \return             The size of the given data type in bytes.
     isize_t getDataTypeSizeInBytes(DataType inDataType);
 
+    /// \return a string that describes the data type 
+    /// \param inDataType the detaype enum 
+    std::string getDataTypeString(DataType inDataType);
+
     /// Overload of ostream << operator for DataType.
     ///
     /// \param   inStream   The output stream to which to print.

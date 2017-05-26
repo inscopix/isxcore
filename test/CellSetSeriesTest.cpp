@@ -118,7 +118,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         ISX_REQUIRE_EXCEPTION(
             isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
             isx::ExceptionSeries,
-            "The spacing info is different than that of the reference.");
+            "The new data set has different spacing information than the rest of the series. Spacing information must be equal among series' components.");
     }
 
     SECTION("Non-compatible set of cellsets - number of cells")
@@ -160,7 +160,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         ISX_REQUIRE_EXCEPTION(
             isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
             isx::ExceptionSeries,
-            "The timing info temporally overlaps with the reference.");
+            "Unable to insert data that temporally overlaps with other parts of the series. Data sets in a series must all be non-overlapping.");
     }
 
     SECTION("Non-compatible set of cellsets - framerate")
@@ -182,7 +182,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         ISX_REQUIRE_EXCEPTION(
             isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
             isx::ExceptionSeries,
-            "The timing info has a different frame rate than the reference.");
+            "Unable to add a data set with a different frame rate than the rest of the series.");
     }
 
     SECTION("Get image")

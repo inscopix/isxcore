@@ -418,7 +418,7 @@ Project::discard()
     {
         ISX_LOG_ERROR("Some files could not be removed from: ", projPath);
     }
-
+    m_valid = false;
 }
 
 bool

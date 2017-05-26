@@ -31,6 +31,29 @@ namespace isx
         }
     }
 
+    std::string getDataTypeString(DataType inDataType)
+    {
+        switch (inDataType)
+        {
+        case DataType::U8:
+        {
+            return std::string("uint8");
+        }
+        case DataType::U16:
+        {
+            return std::string("uint16");
+        }
+        case DataType::F32:
+        {
+            return std::string("float");
+        }
+        default:
+        {
+            return std::string("");
+        }
+        }
+    }
+
     std::ostream & operator<<(std::ostream & inStream, DataType inDataType)
     {
         switch (inDataType)

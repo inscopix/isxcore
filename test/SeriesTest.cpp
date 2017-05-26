@@ -109,7 +109,7 @@ TEST_CASE("Series-insertUnitarySeries", "[core]")
         ISX_REQUIRE_EXCEPTION(
                 series.insertUnitarySeries(movie2OverlapSeries),
                 isx::ExceptionSeries,
-                "The timing info temporally overlaps with the reference.");
+                "Unable to insert data that temporally overlaps with other parts of the series. Data sets in a series must all be non-overlapping.");
     }
 
     SECTION("Try to insert a movie that has a different frame rate than an existing movie in the series")
@@ -119,7 +119,7 @@ TEST_CASE("Series-insertUnitarySeries", "[core]")
         ISX_REQUIRE_EXCEPTION(
                 series.insertUnitarySeries(movie2Step2Series),
                 isx::ExceptionSeries,
-                "The timing info has a different frame rate than the reference.");
+                "Unable to add a data set with a different frame rate than the rest of the series.");
     }
 
     SECTION("Try to insert a movie that has different spacing info than an existing movie in the series")
@@ -129,7 +129,7 @@ TEST_CASE("Series-insertUnitarySeries", "[core]")
         ISX_REQUIRE_EXCEPTION(
                 series.insertUnitarySeries(movie2CroppedSeries),
                 isx::ExceptionSeries,
-                "The spacing info is different than that of the reference.");
+                "The new data set has different spacing information than the rest of the series. Spacing information must be equal among series' components.");
     }
 
     SECTION("Try to insert a movie that has different data type than an existing movie in the series")
@@ -139,7 +139,7 @@ TEST_CASE("Series-insertUnitarySeries", "[core]")
         ISX_REQUIRE_EXCEPTION(
                 series.insertUnitarySeries(movie2F32Series),
                 isx::ExceptionSeries,
-                "The data type is different from that of the reference.");
+                "Unable to add data of type float to a series with data of type uint16.");
     }
 
     SECTION("Try to insert a behavioral movie")
@@ -149,7 +149,7 @@ TEST_CASE("Series-insertUnitarySeries", "[core]")
         ISX_REQUIRE_EXCEPTION(
                 series.insertUnitarySeries(behavMovieSeries),
                 isx::ExceptionSeries,
-                "The DataSet type is different from that of the reference.");
+                "Unable to add a data set of type Behavior to a series of type Movie.");
     }
 
     SECTION("Try to insert a movie with different history")
@@ -159,7 +159,7 @@ TEST_CASE("Series-insertUnitarySeries", "[core]")
         ISX_REQUIRE_EXCEPTION(
                 series.insertUnitarySeries(movie2PreprocessedSeries),
                 isx::ExceptionSeries,
-                "The history details are different than those of the reference.");
+                "The new data set has a different processing history than the rest of the series' components. Only unprocessed data sets can be moved into a series.");
     }
 }
 

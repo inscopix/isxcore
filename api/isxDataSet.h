@@ -187,6 +187,9 @@ public:
     /// \param  inDirectory The path of the directory in which to look.
     /// \return             True if the file was located.
     bool locateFile(const std::string & inDirectory);
+    /// \return a string describing the data set type
+    /// \param inType the data set type to convert to string
+    static std::string getTypeString(Type inType);
 
 private:
 

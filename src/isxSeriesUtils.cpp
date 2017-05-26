@@ -19,7 +19,7 @@ checkSeriesDataSetType(
 {
     if (inRef != inNew)
     {
-        outMessage = "The DataSet type is different from that of the reference.";
+        outMessage = "Unable to add a data set of type " + DataSet::getTypeString(inNew) + " to a series of type " + DataSet::getTypeString(inRef) + ".";;
         return false;
     }
     return true;
@@ -33,7 +33,7 @@ checkSeriesDataType(
 {
     if (inRef != inNew)
     {
-        outMessage = "The data type is different from that of the reference.";
+        outMessage = "Unable to add data of type " + isx::getDataTypeString(inNew) + " to a series with data of type " + isx::getDataTypeString(inRef) +".";
         return false;
     }
     return true;
@@ -47,12 +47,12 @@ checkSeriesTimingInfo(
 {
     if (inNew.getStep() != inRef.getStep())
     {
-        outMessage = "The timing info has a different frame rate than the reference.";
+        outMessage = "Unable to add a data set with a different frame rate than the rest of the series.";
         return false;
     }
     if (inNew.overlapsWith(inRef))
     {
-        outMessage = "The timing info temporally overlaps with the reference.";
+        outMessage = "Unable to insert data that temporally overlaps with other parts of the series. Data sets in a series must all be non-overlapping.";
         return false;
     }
     return true;
@@ -66,7 +66,7 @@ checkSeriesHistory(
 {
     if (inRef != inNew)
     {
-        outMessage = "The history details are different than those of the reference.";
+        outMessage = "The new data set has a different processing history than the rest of the series' components. Only unprocessed data sets can be moved into a series.";
         return false;
     }
     return true;
@@ -80,7 +80,7 @@ checkSeriesSpacingInfo(
 {
     if (!(inRef == inNew))
     {
-        outMessage = "The spacing info is different than that of the reference.";
+        outMessage = "The new data set has different spacing information than the rest of the series. Spacing information must be equal among series' components.";
         return false;
     }
     return true;
