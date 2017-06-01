@@ -57,12 +57,39 @@ Project::~Project()
     
     std::string projPath = isx::getDirName(m_fileName);
     QDir projDir(QString::fromStdString(projPath));
-    if(projDir.exists() && (projDir.entryInfoList(QDir::NoDotAndDotDot|QDir::AllEntries).count() == 1) && 
+
+    bool savedProject = false;
+    bool tempExists = false;
+    if (projDir.exists())
+    {
+        QFileInfoList list = projDir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
+
+        for (auto & fi : list)
+        {
+            std::string path = fi.absoluteFilePath().toStdString();
+            if (path == m_fileName)
+            {
+                savedProject = true;
+            }
+            else if (path == getTmpFileName())
+            {
+                tempExists = true;
+            }
+
+        }
+    }
+
+    if(!savedProject &&
         dataDir.exists() && (dataDir.entryInfoList(QDir::NoDotAndDotDot|QDir::AllEntries).count() == 0))
     {
         if(!dataDir.rmdir(dataDir.absolutePath()))
         {
             ISX_LOG_ERROR("Unable to delete empty directory: ", dataPath);
+        }
+
+        if (tempExists)
+        {
+            std::remove(getTmpFileName().c_str());
         }
 
         if(!projDir.rmdir(projDir.absolutePath()))
