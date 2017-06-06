@@ -61,7 +61,7 @@ readInscopixMovie(const std::string & inFileName)
     SpMovie_t movie = recording->getMovie();
     return movie;
 }
-    
+
 SpMovie_t
 readBehavioralMovie(const std::string & inFileName, const Time & inStartTime)
 {
