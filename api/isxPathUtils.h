@@ -130,6 +130,12 @@ std::string appendNumberToPath(
 /// \return         True if making the directory was successful.
 bool makeDirectory(const std::string & inPath);
 
+/// Remove a directory recursively.
+///
+/// \param  inPath  The path of the directory to remove.
+/// \return         True if removing the directory was completely successful.
+bool removeDirectory(const std::string & inPath);
+
 /// Make a unique path on the file system by appending a zero padded
 /// non-negative number.
 ///

@@ -117,6 +117,13 @@ makeDirectory(const std::string & inPath)
     return dir.mkdir(QString::fromStdString(getBaseName(inPath)));
 }
 
+bool
+removeDirectory(const std::string & inPath)
+{
+    QDir dir(QString::fromStdString(inPath));
+    return dir.removeRecursively();
+}
+
 std::string
 makeUniqueFilePath(const std::string & inPath, const isize_t inWidth)
 {
@@ -133,7 +140,6 @@ makeUniqueFilePath(const std::string & inPath, const isize_t inWidth)
         {
             outPath = appendNumberToPath(base, i, inWidth) + "." + extension;
         }
-        
     }
     return outPath;
 }
