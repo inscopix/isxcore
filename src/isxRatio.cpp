@@ -3,6 +3,39 @@
 #include <iostream>
 #include <cmath>
 
+namespace
+{
+
+/// Get the greatest common divisor/factor of two integers.
+///
+/// This uses the modulo version of Euclid's algorithm.
+///
+/// \param x First integer.
+/// \param y Second integer.
+/// \return  The greatest common divisor of x and y.
+int64_t getGreatestCommonDivisor(int64_t x, int64_t y)
+{
+    int64_t z;
+    while (y != 0)
+    {
+        z = y;
+        y = x % y;
+        x = z;
+    }
+    return x;
+}
+
+/// \param x First integer.
+/// \param y Second integer.
+/// \return  The least common multiple of x and y.
+int64_t getLeastCommonMultiple(int64_t x, int64_t y)
+{
+    const int64_t gcd = ::getGreatestCommonDivisor(x, y);
+    return x * (y / gcd);
+}
+
+} // namespace
+
 namespace isx
 {
 
@@ -40,17 +73,12 @@ Ratio::toDouble() const
 Ratio
 Ratio::operator +(const Ratio & other) const
 {
-    int64_t num, den;
     if (m_den == other.m_den)
     {
-        num = m_num + other.m_num;
-        den = m_den;
+        return Ratio(m_num + other.m_num, m_den);
     }
-    else
-    {
-        num = (m_num * other.m_den) + (m_den * other.m_num);
-        den = m_den * other.m_den;
-    }
+    const int64_t den = ::getLeastCommonMultiple(m_den, other.m_den);
+    const int64_t num = (m_num * (den / m_den)) + (other.m_num * (den / other.m_den));
     return Ratio(num, den);
 }
 
@@ -64,17 +92,12 @@ Ratio::operator +=(const Ratio & other)
 Ratio
 Ratio::operator -(const Ratio & other) const
 {
-    int64_t num, den;
     if (m_den == other.m_den)
     {
-        num = m_num - other.m_num;
-        den = m_den;
+        return Ratio(m_num - other.m_num, m_den);
     }
-    else
-    {
-        num = (m_num * other.m_den) - (m_den * other.m_num);
-        den = m_den * other.m_den;
-    }
+    const int64_t den = ::getLeastCommonMultiple(m_den, other.m_den);
+    const int64_t num = (m_num * (den / m_den)) - (other.m_num * (den / other.m_den));
     return Ratio(num, den);
 }
 

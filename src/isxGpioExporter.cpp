@@ -57,7 +57,7 @@ runGpioExporter(
         }
         case WriteTimeRelativeTo::UNIX_EPOCH:
         {
-            baseTime = Time();
+            // baseTime is already the unix epoch
             break;
         }
         default:

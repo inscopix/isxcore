@@ -132,7 +132,6 @@ private:
 
 }; // class
 
-
 } // namespace
 
 #endif // ISX_RATIO_H
