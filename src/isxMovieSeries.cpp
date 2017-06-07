@@ -46,26 +46,19 @@ MovieSeries::MovieSeries(const std::vector<std::string> & inFileNames)
 
     // individual movie files are compatible, initialize
     m_spacingInfo = m_movies[0]->getSpacingInfo();
-    const auto start = m_movies[0]->getTimingInfo().getStart();
-    const auto end   = m_movies.back()->getTimingInfo().getEnd();
     const auto step  = m_movies[0]->getTimingInfo().getStep();
+    const auto start = Time(m_movies[0]->getTimingInfo().getStart().getSecsSinceEpoch().expandWithDenomOf(step));
+    const auto end = Time(m_movies.back()->getTimingInfo().getEnd().getSecsSinceEpoch());
+    const auto duration = end - start;
+    const auto numTimesRatio = duration / step;
+    const auto numTimes = isize_t(std::floor(numTimesRatio.toDouble()));
 
-    // calculate each individual movie's first frame in global (MovieSeries') frame indexes
-    for (const auto & m: m_movies)
-    {
-        const auto secsFromStart = m->getTimingInfo().getStart() - start;
-        const auto ffIndexD = std::ceil((secsFromStart / step).toDouble());
-        const auto ffIndex = isize_t(ffIndexD);
-        m_moviesFirstFrameInGlobal.push_back(ffIndex);
-    }
+    m_globalTimingInfo = TimingInfo(start, step, numTimes);
 
-    m_globalTimingInfo = TimingInfo(start, step,
-        m_moviesFirstFrameInGlobal.back() + m_movies.back()->getTimingInfo().getNumTimes());
-    
     // each individual movie's TimingInfo
     for (isize_t i = 0; i < m_movies.size(); ++i)
     {
-        const auto startInGlobal = m_globalTimingInfo.convertIndexToStartTime(m_moviesFirstFrameInGlobal[i]).floorToDenomOf(start.getSecsSinceEpoch());
+        const auto startInGlobal = Time(m_movies[i]->getTimingInfo().getStart().getSecsSinceEpoch().expandWithDenomOf(step));
         const auto numTimes = m_movies[i]->getTimingInfo().getNumTimes();
         m_timingInfos.push_back(TimingInfo(startInGlobal, step, numTimes));
     }
@@ -98,9 +91,9 @@ MovieSeries::getFrame(isize_t inFrameNumber)
     auto ret = makeVideoFrameInternal(inFrameNumber);
     if (movieIndex == m_movies.size()) 
     {
+        auto lastFrame = m_globalTimingInfo.convertTimeToIndex(m_globalTimingInfo.getEnd());
         ISX_THROW(isx::ExceptionDataIO,
-                  "The index of the frame (", inFrameNumber, ") is out of range (0-",
-                  m_moviesFirstFrameInGlobal.back() + m_movies.back()->getTimingInfo().getNumTimes(), ").");
+                  "The index of the frame (", inFrameNumber, ") is out of range (0-", lastFrame, ").");
     }
     else if (frameIndex >= m_movies[movieIndex]->getTimingInfo().getNumTimes()) 
     {
@@ -125,9 +118,9 @@ MovieSeries::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
     auto ret = makeVideoFrameInternal(inFrameNumber);
     if (movieIndex == m_movies.size()) 
     {
+        auto lastFrame = m_globalTimingInfo.convertTimeToIndex(m_globalTimingInfo.getEnd());
         ISX_THROW(isx::ExceptionDataIO,
-                  "The index of the frame (", inFrameNumber, ") is out of range (0-",
-                  m_moviesFirstFrameInGlobal.back() + m_movies.back()->getTimingInfo().getNumTimes(), ").");
+                  "The index of the frame (", inFrameNumber, ") is out of range (0-", lastFrame, ").");
     }
     else if (frameIndex >= m_movies[movieIndex]->getTimingInfo().getNumTimes()) 
     {

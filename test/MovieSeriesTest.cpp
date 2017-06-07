@@ -135,7 +135,7 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
         }
         
         // note that total number of frames goes up because last movie is shifted to
-        isx::TimingInfo expectedTimingInfo(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 2406);
+        isx::TimingInfo expectedTimingInfo(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 2405);
         
         isx::TimingInfos_t expectedTimingInfos;
         for (const auto fn: filenames)
@@ -143,7 +143,7 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
             auto m = std::make_shared<isx::MosaicMovie>(fn);
             expectedTimingInfos.push_back(m->getTimingInfo());
         }
-        expectedTimingInfos[2] = isx::TimingInfo(isx::Time(2222, 4, 1, 3, 2, 0, isx::DurationInSeconds(1, 20)), isx::Ratio(1, 20), 5);
+        expectedTimingInfos[2] = isx::TimingInfo(isx::Time(2222, 4, 1, 3, 2, 0, isx::DurationInSeconds(1, 40)), isx::Ratio(1, 20), 5);
         
         auto movie = std::make_shared<isx::MovieSeries>(filenames);
         REQUIRE(movie->isValid());

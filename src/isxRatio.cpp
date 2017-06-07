@@ -119,8 +119,21 @@ Ratio::operator *(const Ratio & other) const
 Ratio
 Ratio::operator /(const Ratio & other) const
 {
-    int64_t num = m_num * other.m_den;
-    int64_t den = m_den * other.m_num;
+    if (m_den == other.m_den)
+    {
+        return Ratio(m_num, other.m_num);
+    }
+
+    int64_t d1 = getGreatestCommonDivisor(m_num, other.m_num);
+    int64_t d2 = getGreatestCommonDivisor(m_den, other.m_den);
+    int64_t a = m_num / d1;
+    int64_t c = other.m_num / d1;
+    int64_t d = other.m_den / d2;
+    int64_t b = m_den / d2;
+
+    
+    int64_t num = a * d;
+    int64_t den = c * b;
     return Ratio(num, den);
 }
 
@@ -139,6 +152,10 @@ Ratio::operator !=(const Ratio & other) const
 bool
 Ratio::operator <(const Ratio & other) const
 {
+    if (m_den == other.m_den)
+    {
+        return m_num < other.m_num;
+    }
     return (m_num * other.m_den) < (m_den * other.m_num);
 }
 
@@ -166,6 +183,12 @@ Ratio::floorToDenomOf(const Ratio & other) const
     double tv = toDouble();
     int64_t od = other.getDen();
     return Ratio(int64_t(std::floor(tv * double(od))), od);
+}
+
+Ratio
+Ratio::expandWithDenomOf(const Ratio & other) const
+{
+    return Ratio(m_num * other.m_den, m_den * other.m_den);
 }
 
 void

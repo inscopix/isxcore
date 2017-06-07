@@ -119,6 +119,11 @@ public:
     ///
     Ratio floorToDenomOf(const Ratio & other) const;
 
+    /// \return this Ratio expanded with denominator of other Ratio.
+    /// \param other Ratio from which to use the denominator for expansion.
+    ///
+    Ratio expandWithDenomOf(const Ratio & other) const;
+    
     // Overrides
     void serialize(std::ostream & strm) const override;
 

@@ -111,10 +111,7 @@ private:
     TimingInfo                                  m_globalTimingInfo;
     TimingInfos_t                               m_timingInfos;
     SpacingInfo                                 m_spacingInfo;
-
     std::vector<SpMovie_t>                      m_movies;
-    std::vector<isize_t>                        m_moviesFirstFrameInGlobal;
-
     std::shared_ptr<IoTaskTracker<VideoFrame>>  m_ioTaskTracker;
 
 };
