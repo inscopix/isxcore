@@ -126,6 +126,11 @@ namespace isx
         return APP_VERSION_PATCH;
     }
 
+    bool isBeta()
+    {
+        return APP_IS_BETA;
+    }
+
     std::vector<int>
     CoreVersionVector()
     {

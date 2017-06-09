@@ -56,6 +56,7 @@ namespace isx
     int CoreVersionMajor();
     int CoreVersionMinor();
     int CoreVersionPatch();
+    bool isBeta();
 
     /// \return     The version numbers in a vector.
     ///
