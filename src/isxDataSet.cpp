@@ -313,6 +313,7 @@ DataSet::locateFile(const std::string & inDirectory)
             {
                 m_fileName = newFilePath;
                 located = true;
+                m_modified = true;
             }
         }
         catch (const std::exception & e)

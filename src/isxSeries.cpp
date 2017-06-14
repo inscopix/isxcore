@@ -488,6 +488,7 @@ Series::removeChild(isize_t inIndex)
 {
     SpSeries_t ret = m_children.at(inIndex);
     m_children.erase(m_children.begin() + inIndex);
+    m_modified = true;
     return ret;
 }
 
@@ -614,6 +615,14 @@ Series::isModified() const
             return true;
         }
     }
+    for (const auto & i : m_children)
+    {
+        if (i->isModified())
+        {
+            return true;
+        }
+    }
+
     return false;
 }
 
@@ -626,6 +635,10 @@ Series::setUnmodified()
         m_dataSet->setUnmodified();
     }
     for (const auto & i : m_unitarySeries)
+    {
+        i->setUnmodified();
+    }
+    for (const auto & i : m_children)
     {
         i->setUnmodified();
     }
