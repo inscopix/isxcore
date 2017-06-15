@@ -41,7 +41,8 @@ public:
     static const std::string PROP_VIS_MIN;      ///< Min visualization range [0..1]
     static const std::string PROP_VIS_MAX;      ///< Max visualization range [0..1]
     static const std::string PROP_MOVIE_START_TIME;      ///< Movie start time - used for behavioral movies
-
+    static const std::string PROP_BEHAV_GOP_SIZE;        ///< Behavioral movie GOP size
+    static const std::string PROP_BEHAV_NUM_FRAMES;      ///< Behavioral movie num frames
 
     /// Empty constructor.
     ///

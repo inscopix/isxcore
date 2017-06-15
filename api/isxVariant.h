@@ -21,6 +21,7 @@ public:
         FLOAT,
         ISXTIME,
         STRING,
+        INT64,
         NONE
     };
 
@@ -39,7 +40,11 @@ public:
     /// Constructor for a string value
     ///
     explicit Variant(const std::string & inValue);
-
+    
+    /// Constructor for an int64_t value
+    ///
+    explicit Variant(int64_t inValue);
+    
     /// Copy constructor
     /// \param inOther the other Variant to copy
     Variant(const Variant & inOther);

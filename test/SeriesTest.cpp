@@ -298,9 +298,9 @@ isx::SpSeries_t
 makeBehavioralMovieSeries(
         const std::string & inName,
         const std::string & inFilePath,
-        const isx::Time & inStart)
+        const isx::DataSet::Properties & inProperties)
 {
-    const isx::SpMovie_t movie = isx::readBehavioralMovie(inFilePath, inStart);
+    const isx::SpMovie_t movie = isx::readBehavioralMovie(inFilePath, inProperties);
     const isx::HistoricalDetails history;
     const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::BEHAVIOR, inFilePath, history);
     return std::make_shared<isx::Series>(dataSet);
@@ -345,6 +345,12 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
 
     const isx::SpacingInfo si1(isx::SizeInPixels_t(4, 3));
     const isx::SpacingInfo si2(isx::SizeInPixels_t(3, 2));
+
+    const isx::DataSet::Properties props1{
+        { isx::DataSet::PROP_MOVIE_START_TIME, isx::Variant(isx::Time()) },
+        { isx::DataSet::PROP_BEHAV_GOP_SIZE, isx::Variant(int64_t(10)) },
+        { isx::DataSet::PROP_BEHAV_NUM_FRAMES, isx::Variant(int64_t(16)) }
+    };
 
     const isx::Time start1(2017, 4, 18, 15, 49);
     const isx::isize_t numTimes1 = 20;
@@ -444,7 +450,7 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
 
         SECTION("Child has one behavioral movie")
         {
-            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", start1);
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", props1);
 
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
@@ -540,7 +546,7 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
 
         SECTION("Child has one behavioral movie")
         {
-            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", start1);
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", props1);
 
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
@@ -599,7 +605,7 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
 
         SECTION("Child has one behavioral movie")
         {
-            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", start1);
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", props1);
 
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
@@ -663,7 +669,7 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
 
         SECTION("Child has one behavioral movie")
         {
-            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", start1);
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", props1);
 
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
@@ -673,7 +679,7 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
 
     SECTION("Parent has one behavioral movie")
     {
-        const isx::SpSeries_t parentSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", start1);
+        const isx::SpSeries_t parentSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", props1);
 
         SECTION("Child has one movie")
         {
@@ -691,7 +697,7 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
 
         SECTION("Child has one behavioral movie")
         {
-            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", start1);
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", props1);
 
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }

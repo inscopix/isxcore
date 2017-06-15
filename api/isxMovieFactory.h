@@ -4,6 +4,7 @@
 #include "isxMovie.h"
 #include "isxWritableMovie.h"
 #include "isxCoreFwd.h"
+#include "isxDataSet.h"
 
 #include <string>
 #include <vector>
@@ -59,12 +60,13 @@ SpMovie_t readMovie(const std::string & inFileName);
 /// If the extension is not recognizedfor ane of the filenames, this fails.
 ///
 /// \param  inFileNames     A vector containing the names of the movie files to read.
+/// \param  inProperties    A vector containing the properties of each of the movie files.  Currently only used for behavioral movies.
 /// \return                 The imported movie.
 ///
 /// \throw  isx::ExceptionFileIO    If reading of any of the movie files fails.
 /// \throw  isx::ExceptionDataIO    If parsing for any the movie files fails or
 ///                                 if their extension is not recognized.
-SpMovie_t readMovieSeries(const std::vector<std::string> & inFileNames);
+SpMovie_t readMovieSeries(const std::vector<std::string> & inFileNames, const std::vector<DataSet::Properties> & inProperties = {});
 
 /// Read an existing mosaic movie from a file.
 ///
@@ -86,13 +88,23 @@ SpMovie_t readInscopixMovie(const std::string & inFileName);
 /// Read an behavioral movie from a file.
 ///
 /// \param  inFileName      The name of the behavioral movie file to read.
-/// \param  inStartTime     The start time for the movie - used for synchronization with other data sets
+/// \param  inProperties    The properties for this movie, including start time, # frames,
+///                         and gopsize (cached so we don't have to scan the file every time
+///                         an object is instantiated)
 /// \return                 The imported movie.
 ///
 /// \throw  isx::ExceptionFileIO    If the movie file cannot be read.
 /// \throw  isx::ExceptionDataIO    If parsing the movie file failed.
-SpMovie_t readBehavioralMovie(const std::string & inFileName, const Time & inStartTime);
+SpMovie_t readBehavioralMovie(const std::string & inFileName, const DataSet::Properties & inProperties);
 
+    
+/// Determine if a file is a behaviroal movie file by its extension.
+///
+/// \param  inFileName      The filename to check.
+/// \return                 True if filename has an extension for a behavioral movie that is supported.
+///
+bool isBehavioralMovieFileExtension(const std::string & inFileName);
+    
 } // namespace isx
 
 #endif // ifndef ISX_MOVIE_FACTORY_H

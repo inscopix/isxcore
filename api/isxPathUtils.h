@@ -56,7 +56,7 @@ std::string getDirName(const std::string & inPath);
 ///
 /// For example:
 /// - "movie.isxd" -> "isxd"
-/// - "movie.isxd.gz" -> "isxd.gz"
+/// - "movie.isxd.gz" -> "gz"
 /// - "outputs" -> ""
 /// - "outputs/movie.isxd" -> "isxd"
 /// - "outputs/day1" -> ""

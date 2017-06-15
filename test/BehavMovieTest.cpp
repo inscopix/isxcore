@@ -17,17 +17,6 @@ TEST_CASE("BehavMovie", "[core]")
 
     isx::CoreInitialize();
 
-    SECTION("init from trimmed Noldus file")
-    {
-        isx::SpMovie_t movie = isx::readBehavioralMovie(testFileName, isx::Time());
-
-        REQUIRE(movie->isValid());
-        const isx::TimingInfo ti = movie->getTimingInfo();
-        REQUIRE(ti.getStart() == isx::Time());
-        REQUIRE(ti.getStep() == isx::Ratio(1, 25));
-        REQUIRE(ti.getNumTimes() == 16);
-    }
-    
     SECTION("read async and verify frame data")
     {
         bool isDataCorrect = true;
@@ -42,7 +31,12 @@ TEST_CASE("BehavMovie", "[core]")
         size_t numTestFrames = expected.size();
         size_t numTestBytesPerFrame = sizeof(f0_data);
         
-        isx::SpMovie_t movie = isx::readBehavioralMovie(testFileName, isx::Time());
+        isx::DataSet::Properties props;
+        props[isx::DataSet::PROP_MOVIE_START_TIME]  = isx::Variant(isx::Time());
+        props[isx::DataSet::PROP_BEHAV_GOP_SIZE]    = isx::Variant(int64_t(10));
+        props[isx::DataSet::PROP_BEHAV_NUM_FRAMES]  = isx::Variant(int64_t(16));
+
+        isx::SpMovie_t movie = isx::readBehavioralMovie(testFileName, props);
 
         isx::MovieGetFrameCB_t cb = [&](isx::AsyncTaskResult<isx::SpVideoFrame_t> inAsyncTaskResult){
             REQUIRE(!inAsyncTaskResult.getException());

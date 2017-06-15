@@ -518,8 +518,22 @@ Series::checkNewMember(DataSet * inDataSet, std::string & outMessage)
     // Type specific checks
     switch (refType)
     {
-        case DataSet::Type::MOVIE:
         case DataSet::Type::BEHAVIOR:
+        {
+            std::vector<SpMovie_t> existingMovies;
+            for (const auto & ds : getDataSets())
+            {
+                existingMovies.push_back(readBehavioralMovie(ds->getFileName(), ds->getProperties()));
+            }
+            const SpMovie_t newMovie = readBehavioralMovie(inDataSet->getFileName(), inDataSet->getProperties());
+            if (!checkNewMemberOfSeries(existingMovies, newMovie, outMessage))
+            {
+                return false;
+            }
+            break;
+        }
+
+        case DataSet::Type::MOVIE:
         {
             std::vector<SpMovie_t> existingMovies;
             for (const auto & ds : getDataSets())

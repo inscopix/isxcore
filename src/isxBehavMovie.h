@@ -27,14 +27,13 @@ public:
 
     /// Read constructor.
     ///
-    /// This opens an existing movie from a file.
-    ///
-    /// \param  inFileName  The name of the movie file.
-    /// \param  inStartTime The start time for the movie
-    ///
+    /// \param  inFileName      The name of the movie file.
+    /// \param  inProperties    The properties for this movie, including start time, # frames,
+    ///                         and gopsize (cached so we don't have to scan the file every time
+    ///                         an object is instantiated)
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
-    BehavMovie(const std::string & inFileName, const Time & inStartTime);
+    BehavMovie(const std::string & inFileName, const DataSet::Properties & inProperties);
 
     // Overrides - see base classes for documentation
     bool isValid() const override;

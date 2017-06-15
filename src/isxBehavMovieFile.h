@@ -6,6 +6,8 @@
 #include "isxVideoFrame.h"
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
+#include "isxDataSet.h"
+#include "isxAsync.h"
 
 #include <limits>
 
@@ -31,19 +33,27 @@ public:
 
     /// Read constructor.
     ///
-    /// This opens a movie file and populates TimingInfo and SpacingInfo
-    /// objects.
-    ///
-    /// \param  inFileName  The name of the movie file.
-    /// \param  inStartTime The start time for the movie
-    ///
+    /// \param  inFileName      The name of the movie file.
+    /// \param  inProperties    The properties for this movie, including start time, # frames,
+    ///                         and gopsize (cached so we don't have to scan the file every time
+    ///                         an object is instantiated)
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
-    BehavMovieFile(const std::string & inFileName, const Time & inStartTime);
+    BehavMovieFile(const std::string & inFileName, const DataSet::Properties & inProperties);
 
     /// Destructor
     ///
     ~BehavMovieFile();
+    
+    /// Retrieve properties (# frames and gopsize) for a behavioral movie with the given filename.
+    ///
+    /// \param inFileName       The name of the movie file.
+    /// \param outProperties    Reference of a Properties object to fill with # frames and gopsize.
+    /// \param inCheckInCB      Callback function to call periodically to report progress and check
+    ///                         for cancellation.
+    static
+    bool
+    getBehavMovieProperties(const std::string & inFileName, DataSet::Properties & outProperties, AsyncCheckInCB_t inCheckInCB = nullptr);
     
     /// \return True if the movie file is valid, false otherwise.
     ///
@@ -91,8 +101,17 @@ public:
     getDataType() const;
 
 private:
+    /// Read constructor, used to create instance and get # frames and gopsize from it.
+    ///
+    /// \param  inFileName      The name of the movie file.
+    ///
+    BehavMovieFile(const std::string & inFileName);
+
     bool
-    initializeFromStream(int inIndex);
+    scanAllFrames(int64_t & outFrameCount, int64_t & outGopSize, AsyncCheckInCB_t inCheckInCB);
+
+    bool
+    initializeFromStream(const Time & inStartTime, int64_t inGopSize, int64_t inNumFrames);
 
     /// \return duration of number of frames in units of ffmpeg's time_base
     /// used for calculating time stamps
@@ -108,14 +127,15 @@ private:
     int64_t
     seekFrameAndReadPacket(isize_t inFrameNumber);
 
+    /// Find next packet for given stream index
+    void
+    readPacketFromStream(int inStreamIndex, const std::string & inContextForError);
+
     /// True if the movie file is valid, false otherwise.
     bool m_valid = false;
 
     /// The name of the movie file.
     std::string m_fileName;
-
-    /// The start time used to define the timing info
-    Time        m_startTime;
 
     /// The timing information of the movie.
     TimingInfos_t m_timingInfos;
@@ -137,9 +157,10 @@ private:
     std::unique_ptr<AVPacket>   m_pPacket;
     Ratio                       m_timeBase;
     
-    isize_t                     m_lastVideoFrameNumber = std::numeric_limits<uint64_t>::max();
+    isize_t                     m_lastVideoFrameNumber = 0;
     int64_t                     m_lastPktPts = -1;
 
+    isize_t                     m_gopSize = 0;
 };
 
 } // namespace isx

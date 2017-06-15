@@ -87,7 +87,7 @@ TEST_CASE("PathUtils-getExtension", "[core]")
 
     SECTION("File name with extension with two periods")
     {
-        REQUIRE(isx::getExtension("movie.isxd.gz") == "isxd.gz");
+        REQUIRE(isx::getExtension("movie.isxd.gz") == "gz");
     }
 
     SECTION("File name without extension")

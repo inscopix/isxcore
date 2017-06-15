@@ -12,6 +12,8 @@ extern "C" {
 #include <cmath>
 #include <algorithm>
 #include <limits>
+#include <memory>
+#include <fstream>
 
 //#if ISX_OS_MACOS
 //#pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -26,18 +28,89 @@ extern "C" {
 #define ISX_BEHAV_READ_LOG_DEBUG(...)
 #endif
 
+
+
+#define USE_ALTERNATE_SEEK 0
+
+namespace
+{
+#ifdef NDEBUG
+    void dummyAvLogFunction(void *, int, const char *, va_list)
+    {
+        
+    }
+#endif
+
+    std::string
+    isxAvErrorCodeToString(int inErrorCode)
+    {
+        char buf[AV_ERROR_MAX_STRING_SIZE];
+        av_strerror(inErrorCode, &buf[0], AV_ERROR_MAX_STRING_SIZE);
+        return std::string(&buf[0]);
+    }
+}
+
 namespace isx
 {
 
 BehavMovieFile::BehavMovieFile()
 {}
 
-BehavMovieFile::BehavMovieFile(const std::string & inFileName, const Time & inStartTime)
+BehavMovieFile::BehavMovieFile(const std::string & inFileName, const DataSet::Properties & inProperties)
+    : BehavMovieFile(inFileName)
+{
+    Time startTime;
+    int64_t gopSize = -1;
+    int64_t numFrames = -1;
+    if (inProperties.find(DataSet::PROP_MOVIE_START_TIME) != inProperties.end())
+    {
+        auto t = inProperties.at(DataSet::PROP_MOVIE_START_TIME);
+        startTime = t.value<Time>();
+    }
+    else
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Could not find start time property.");
+    }
+
+    if (inProperties.find(DataSet::PROP_BEHAV_GOP_SIZE) != inProperties.end())
+    {
+        auto t = inProperties.at(DataSet::PROP_BEHAV_GOP_SIZE);
+        gopSize = t.value<int64_t>();
+    }
+    else
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Could not find gop size property.");
+    }
+
+    if (inProperties.find(DataSet::PROP_BEHAV_NUM_FRAMES) != inProperties.end())
+    {
+        auto t = inProperties.at(DataSet::PROP_BEHAV_NUM_FRAMES);
+        numFrames = t.value<int64_t>();
+    }
+    else
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Could not find number of frames property.");
+    }
+
+    if (!initializeFromStream(startTime, gopSize, numFrames))
+    {
+        return;
+    }
+
+    m_dataType = DataType::U8; // TODO aschildan 10/19/2016: adjust this when we support color movies
+
+    m_valid = true;
+}
+
+BehavMovieFile::BehavMovieFile(const std::string & inFileName)
 {
     m_fileName = inFileName;
-    m_startTime = inStartTime;
 
     av_register_all();  // aschildan 10/10/2016: could/should be moved to coreInitialize
+
+#ifdef NDEBUG
+    av_log_set_callback(dummyAvLogFunction);
+#endif
 
     if (avformat_open_input(&m_formatCtx, m_fileName.c_str(), nullptr, nullptr) != 0)
     {
@@ -67,15 +140,8 @@ BehavMovieFile::BehavMovieFile(const std::string & inFileName, const Time & inSt
         ISX_THROW(isx::ExceptionFileIO,
             "Failed to find video stream: ", m_fileName);
     }
-    
-    if (!initializeFromStream(firstVideoStreamIndex))
-    {
-        return;
-    }
-
+    m_videoStreamIndex = firstVideoStreamIndex;
     m_pPacket.reset(new AVPacket);
-    
-    m_dataType = DataType::U8; // TODO aschildan 10/19/2016: adjust this when we support color movies
 
     m_valid = true;
 }
@@ -108,19 +174,43 @@ BehavMovieFile::isPtsMatch(int64_t inTargetPts, int64_t inTestPts) const
     return inTestPts >= (inTargetPts - fudge);
 }
 
+void
+BehavMovieFile::readPacketFromStream(int inStreamIndex, const std::string & inContextForError)
+{
+    bool isMatchingStream = false;
+    
+    while (!isMatchingStream)
+    {
+        auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
+        if (readRet < 0)
+        {
+            ISX_THROW(
+                isx::ExceptionFileIO,
+                inContextForError, " failed to read packet: ",
+                m_fileName,
+                " - ",
+                isxAvErrorCodeToString(readRet));
+        }
+        isMatchingStream = m_pPacket && m_pPacket->stream_index == inStreamIndex;
+        if (isMatchingStream)
+        {
+            if (m_pPacket->pts == AV_NOPTS_VALUE)
+            {
+                ISX_THROW(isx::ExceptionFileIO, "Video packet has no PTS: ", m_fileName);
+            }
+        }
+    }
+}
+    
 int64_t
 BehavMovieFile::seekFrameAndReadPacket(isize_t inFrameNumber)
 {
-    static const isize_t sGopSize = 10; // TODO aschildan 10/12/2016: need to calculate this, this value is extracted from noldus video
-    
+#if USE_ALTERNATE_SEEK
     const int64_t requestedPts = timeBaseUnitsForFrames(inFrameNumber) + m_videoPtsStartOffset;
-    const int64_t deltaFromCurrent = requestedPts - m_lastPktPts;
-    const int64_t deltaFromExpected = deltaFromCurrent - timeBaseUnitsForFrames(1);
-    ISX_BEHAV_READ_LOG_DEBUG("deltaFromExpected: ", deltaFromExpected, ", thresh: ", int64_t(m_videoPtsFrameDelta.toDouble() + 0.5f));
     
     if (inFrameNumber == 0)
     {
-        av_seek_frame(m_formatCtx, m_videoStreamIndex, 0, AVSEEK_FLAG_ANY | AVSEEK_FLAG_BACKWARD);
+        av_seek_frame(m_formatCtx, m_videoStreamIndex, 0, AVSEEK_FLAG_BACKWARD);
         avcodec_flush_buffers(m_videoCodecCtx);
         auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
         if (readRet < 0)
@@ -128,8 +218,62 @@ BehavMovieFile::seekFrameAndReadPacket(isize_t inFrameNumber)
             ISX_LOG_ERROR("Error in BehavMovieFile::seekFrame: ", readRet);
         }
     }
+    else
+    {
+        auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
+        if (readRet < 0)
+        {
+            ISX_LOG_ERROR("Error in BehavMovieFile::seekFrame: ", readRet);
+        }
+        // do we need to seek to a different GOP?
+        bool seekToGOP = requestedPts < m_pPacket->pts - timeBaseUnitsForFrames(2);
+        seekToGOP = seekToGOP || requestedPts >= (m_pPacket->pts + timeBaseUnitsForFrames(m_gopSize));
+        if (seekToGOP)
+        {
+            ISX_BEHAV_READ_LOG_DEBUG("BehavMovieFile::seekFrame: requestedPts: ", requestedPts, ", m_pPacket->pts: ", m_pPacket->pts);
+            av_packet_unref(m_pPacket.get());
+            
+            int64_t minSeekFrameNumber = std::max(int64_t(0), int64_t(inFrameNumber) - int64_t(m_gopSize));
+            int64_t seekPts = timeBaseUnitsForFrames(minSeekFrameNumber) + m_videoPtsStartOffset;
+            int64_t minPts = seekPts;
+            int64_t maxPts = requestedPts;
+            ISX_BEHAV_READ_LOG_DEBUG("BehavMovieFile::seekFrame: seeking to : ", seekPts);
+            //ISX_LOG_DEBUG("BehavMovieFile::seekFrame: seeking to : ", seekPts);
+            auto res = avformat_seek_file(m_formatCtx, m_videoStreamIndex, minPts, seekPts, maxPts, 0);
+            if (res < 0)
+            {
+                ISX_LOG_ERROR("Error in BehavMovieFile::seekFrame - avformat_seek_file: ", res);
+            }
+            readRet = av_read_frame(m_formatCtx, m_pPacket.get());
+            if (readRet < 0)
+            {
+                ISX_LOG_ERROR("Error in BehavMovieFile::seekFrame - av_read_frame: ", readRet);
+            }
+//            ISX_ASSERT(m_pPacket->pts <= seekPts);//requestedPts);
+            if (m_pPacket->pts > requestedPts)
+            {
+                ISX_LOG_DEBUG("m_pPacket->pts > requestedPts!");
+            }
+        }
+    }
+
+    return requestedPts;
+#else
+    const int64_t requestedPts = timeBaseUnitsForFrames(inFrameNumber) + m_videoPtsStartOffset;
+    const int64_t deltaFromCurrent = requestedPts - m_lastPktPts;
+    const int64_t deltaFromExpected = deltaFromCurrent - timeBaseUnitsForFrames(1);
+    ISX_BEHAV_READ_LOG_DEBUG("deltaFromExpected: ", deltaFromExpected, ", thresh: ", int64_t(m_videoPtsFrameDelta.toDouble() + 0.5f));
+    bool atEndOfFile = m_lastVideoFrameNumber >= (m_timingInfos.at(0).getNumTimes() - 1);
+    
+    if (inFrameNumber == 0)
+    {
+        av_seek_frame(m_formatCtx, m_videoStreamIndex, 0, AVSEEK_FLAG_BACKWARD);
+        avcodec_flush_buffers(m_videoCodecCtx);
+        readPacketFromStream(m_videoStreamIndex, "BehavMovieFile::seekFrameAndReadPacket(0)");
+    }
     else if (-deltaFromExpected > timeBaseUnitsForFrames(1)
-             || deltaFromExpected > timeBaseUnitsForFrames(sGopSize))
+             || deltaFromExpected > timeBaseUnitsForFrames(m_gopSize)
+             || atEndOfFile)
     {
         // We get here and start seeking if the next frame is more than one frame
         // before the expected frame or more than the gop-size after the expected frame
@@ -139,9 +283,9 @@ BehavMovieFile::seekFrameAndReadPacket(isize_t inFrameNumber)
             ISX_BEHAV_READ_LOG_DEBUG("Last frame had timestamp for this frame, repeating it.");
         }
 
-        int64_t seekFrameNumber = int64_t(inFrameNumber) - int64_t(sGopSize);
-        int64_t seekPts = requestedPts;
-        int flags = AVSEEK_FLAG_ANY | ((deltaFromCurrent < 0) ? AVSEEK_FLAG_BACKWARD : 0);
+        int64_t seekFrameNumber = int64_t(inFrameNumber) - int64_t(m_gopSize);
+        int64_t seekPts = timeBaseUnitsForFrames(seekFrameNumber) + m_videoPtsStartOffset;
+        int flags = (deltaFromCurrent < 0) ? AVSEEK_FLAG_BACKWARD : 0;
 
         int64_t pts = AV_NOPTS_VALUE;
 
@@ -151,27 +295,23 @@ BehavMovieFile::seekFrameAndReadPacket(isize_t inFrameNumber)
             {
                 av_seek_frame(m_formatCtx, m_videoStreamIndex, 0, flags);
                 avcodec_flush_buffers(m_videoCodecCtx);
-                auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
-
-                if (readRet < 0)
-                {
-                    ISX_THROW(isx::ExceptionFileIO,
-                              "Failed to read video packet: ", m_fileName);
-                }
+                readPacketFromStream(m_videoStreamIndex, "BehavMovieFile::seekFrameAndReadPacket(<=0)");
                 break;
             }
             else
             {
-                av_seek_frame(m_formatCtx, m_videoStreamIndex, seekPts, flags);
-                avcodec_flush_buffers(m_videoCodecCtx);
-
-                auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
-
-                if (readRet < 0)
+                auto seekRet = av_seek_frame(m_formatCtx, m_videoStreamIndex, seekPts, flags);
+                if (seekRet < 0)
                 {
-                    ISX_THROW(isx::ExceptionFileIO,
-                              "Failed to read video packet: ", m_fileName);
+                    ISX_THROW(
+                        isx::ExceptionFileIO,
+                        "Failed to read video packet: ",
+                        m_fileName,
+                        " - ",
+                        isxAvErrorCodeToString(seekRet));
                 }
+                avcodec_flush_buffers(m_videoCodecCtx);
+                readPacketFromStream(m_videoStreamIndex, "BehavMovieFile::seekFrameAndReadPacket after seek");
 
                 pts = m_pPacket->pts;
                 if (pts > requestedPts)
@@ -192,11 +332,7 @@ BehavMovieFile::seekFrameAndReadPacket(isize_t inFrameNumber)
     }
     else
     {
-        auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
-        if (readRet < 0)
-        {
-            ISX_LOG_ERROR("Error in BehavMovieFile::seekFrame: ", readRet);
-        }
+        readPacketFromStream(m_videoStreamIndex, "BehavMovieFile::seekFrameAndReadPacket next frame");
     }
 
     if (avcodec_send_packet(m_videoCodecCtx, m_pPacket.get()) != 0)
@@ -207,6 +343,7 @@ BehavMovieFile::seekFrameAndReadPacket(isize_t inFrameNumber)
     }
 
     return requestedPts;
+#endif
 }
     
 SpVideoFrame_t
@@ -215,14 +352,23 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
     ISX_ASSERT(m_videoCodecCtx && m_formatCtx);
     
     auto requestedPts = seekFrameAndReadPacket(inFrameNumber);
-    auto pFrame = av_frame_alloc();
 
+#if USE_ALTERNATE_SEEK
+    if (avcodec_send_packet(m_videoCodecCtx, m_pPacket.get()) != 0)
+    {
+        av_packet_unref(m_pPacket.get());
+        ISX_THROW(isx::ExceptionFileIO,
+                  "Failed to decode video packet: ", m_fileName);
+    }
+#endif
+
+    auto pFrame = av_frame_alloc();
     auto recvResult = avcodec_receive_frame(m_videoCodecCtx, pFrame);
     auto pts = pFrame->pkt_pts;
 
-    while (!isPtsMatch(requestedPts, pts)
-           && av_read_frame(m_formatCtx, m_pPacket.get()) >= 0)
+    while (!isPtsMatch(requestedPts, pts))
     {
+        readPacketFromStream(m_videoStreamIndex, "read for decode");
         ISX_BEHAV_READ_LOG_DEBUG("req: ", requestedPts, ", packet pts: ", m_pPacket->pts);
         if (avcodec_send_packet(m_videoCodecCtx, m_pPacket.get()) != 0)
         {
@@ -254,7 +400,24 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
         }
     }
 
-    ISX_ASSERT(pFrame->format == AVPixelFormat::AV_PIX_FMT_YUV420P);
+    switch(pFrame->format)
+    {
+        case AV_PIX_FMT_YUV420P:
+        case AV_PIX_FMT_YUYV422:
+        case AV_PIX_FMT_YUV422P:
+        case AV_PIX_FMT_YUV444P:
+        case AV_PIX_FMT_YUV410P:
+        case AV_PIX_FMT_YUV411P:
+        case AV_PIX_FMT_YUVJ420P:
+        case AV_PIX_FMT_YUVJ422P:
+        case AV_PIX_FMT_YUVJ444P:
+        case AV_PIX_FMT_YUV440P:
+        case AV_PIX_FMT_YUVJ440P:
+        case AV_PIX_FMT_YUVA420P:
+            break;
+        default:
+            ISX_THROW(isx::ExceptionFileIO, "Invalid frame format: ", pFrame->format);
+    }
 
     ISX_ASSERT(isize_t(pFrame->width) == m_spacingInfo.getNumPixels().getWidth());
     ISX_ASSERT(isize_t(pFrame->height) == m_spacingInfo.getNumPixels().getHeight());
@@ -275,6 +438,7 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
         "\t type: ", pictureTypeNames[pFrame->pict_type],
         "\tcpn: ", pFrame->coded_picture_number,
         "\tdpn: ", pFrame->display_picture_number);
+    
     m_lastPktPts = pFrame->pkt_pts;
     Time t = getTimingInfo().convertIndexToStartTime(inFrameNumber);
     auto ret = std::make_shared<VideoFrame>(
@@ -325,10 +489,63 @@ BehavMovieFile::getDataType() const
 {
     return m_dataType;
 }
+    
+bool
+BehavMovieFile::scanAllFrames(int64_t & outFrameCount, int64_t & outGopSize, AsyncCheckInCB_t inCheckInCB)
+{
+    // find length of file
+    int64_t fileLength = -1;
+    {
+        std::fstream s;
+        s.open(m_fileName, std::ios::binary | std::ios_base::in);
+        s.seekg(0, std::ios_base::end);
+        fileLength = int64_t(s.tellg());
+        s.close();
+    }
 
+    int readRes = 0;
+    int64_t frameCount = 0;
+    int64_t gopSize = 0;
+    int64_t lastIFrame = -1;
+    while (!(readRes = av_read_frame(m_formatCtx, m_pPacket.get())))
+    {
+        if (m_pPacket->stream_index == m_videoStreamIndex)
+        {
+            if (m_pPacket->pts == AV_NOPTS_VALUE)
+            {
+                ISX_THROW(isx::ExceptionFileIO, "Video packets have no PTS: " ,m_fileName);
+            }
+            if (m_pPacket->flags & AV_PKT_FLAG_KEY)
+            {
+                if (lastIFrame != -1)
+                {
+                    gopSize = std::max(gopSize, frameCount - lastIFrame);
+                }
+                lastIFrame = frameCount;
+            }
+            ++frameCount;
+        }
+        av_packet_unref(m_pPacket.get());
+        if (inCheckInCB)
+        {
+            auto cancel = inCheckInCB(float(double(m_formatCtx->pb->pos) / double(fileLength)));
+            if (cancel)
+            {
+                return false;
+            }
+        }
+    }
+//    Ratio avDuration = Ratio(m_videoStream->duration, 1);
+//    auto durationInSeconds = (avDuration * m_timeBase).toDouble();
+//    ISX_LOG_DEBUG("durationInSeconds: ", durationInSeconds, ", last_pts: ", (Ratio(last_pts) * m_timeBase).toDouble());
+    outFrameCount = frameCount;
+    outGopSize = gopSize;
+    
+    return true;
+}
 
 bool
-BehavMovieFile::initializeFromStream(int inIndex)
+BehavMovieFile::initializeFromStream(const Time & inStartTime, int64_t inGopSize, int64_t inNumFrames)
 {
     //
     // this code is lifted from stream_component_open() in ffplay.c
@@ -339,7 +556,7 @@ BehavMovieFile::initializeFromStream(int inIndex)
     AVDictionary *opts = NULL;
     int ret = 0;
 
-    if (inIndex >= int(m_formatCtx->nb_streams))
+    if (m_videoStreamIndex >= int(m_formatCtx->nb_streams))
     {
         return false;
     }
@@ -350,7 +567,7 @@ BehavMovieFile::initializeFromStream(int inIndex)
         return false;
     }
 
-    ret = avcodec_parameters_to_context(avctx, m_formatCtx->streams[inIndex]->codecpar);
+    ret = avcodec_parameters_to_context(avctx, m_formatCtx->streams[m_videoStreamIndex]->codecpar);
     if (ret < 0)
     {
         avcodec_free_context(&avctx);
@@ -358,7 +575,7 @@ BehavMovieFile::initializeFromStream(int inIndex)
               "Failed to get codec parameters: ", m_fileName);
     }
 
-    av_codec_set_pkt_timebase(avctx, m_formatCtx->streams[inIndex]->time_base);
+    av_codec_set_pkt_timebase(avctx, m_formatCtx->streams[m_videoStreamIndex]->time_base);
 
     codec = avcodec_find_decoder(avctx->codec_id);
 
@@ -386,29 +603,35 @@ BehavMovieFile::initializeFromStream(int inIndex)
                   "Failed to open codec: ", m_fileName);
     }
     
-    m_formatCtx->streams[inIndex]->discard = AVDISCARD_DEFAULT;
+    m_formatCtx->streams[m_videoStreamIndex]->discard = AVDISCARD_DEFAULT;
     switch (avctx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
         ISX_ASSERT(!"Not supported.");
         break;
     case AVMEDIA_TYPE_VIDEO:
         {
-            m_videoStreamIndex = inIndex;
-            m_videoStream = m_formatCtx->streams[inIndex];
+            m_videoStream = m_formatCtx->streams[m_videoStreamIndex];
+
+            auto hasBframes = m_videoStream->codecpar ? m_videoStream->codecpar->video_delay != 0 : false;
+            hasBframes = hasBframes || avctx->has_b_frames != 0;
+            if (hasBframes)
+            {
+                ISX_THROW(isx::ExceptionFileIO, "Can't decode video with bipredictive frames.");
+            }
+
             m_videoCodecCtx = avctx;
             m_spacingInfo = SpacingInfo(isx::SizeInPixels_t(avctx->width, avctx->height));
 
             m_timeBase = Ratio(m_videoStream->time_base.num, m_videoStream->time_base.den);
+
             Ratio avDuration = Ratio(m_videoStream->duration, 1);
-            Ratio durationInSeconds = (avDuration * m_timeBase);
-            
-            Ratio frameRate(m_videoStream->avg_frame_rate.num, m_videoStream->avg_frame_rate.den);
-            double numFramesD = (durationInSeconds * frameRate).toDouble();
-            isize_t numFrames = isize_t(std::floor(numFramesD));
-            
-            m_timingInfos = TimingInfos_t{TimingInfo(m_startTime, frameRate.getInverse(), numFrames)};
-            
-            m_videoPtsFrameDelta = getTimingInfo().getStep() * m_timeBase.getInverse();
+            auto durationInSeconds = (avDuration * m_timeBase).toDouble();
+            Ratio inverseDuration(1000, int64_t(durationInSeconds * 1000.0));
+            Ratio numFrames(inNumFrames);
+            Ratio frameRate = numFrames * inverseDuration;
+            m_timingInfos = TimingInfos_t{TimingInfo(inStartTime, frameRate.getInverse(), inNumFrames)};
+            m_gopSize = inGopSize;
+            m_videoPtsFrameDelta = getTimingInfo().getStep() / m_timeBase;
             m_videoPtsStartOffset = m_videoStream->start_time;
         }
         break;
@@ -428,6 +651,27 @@ int64_t
 BehavMovieFile::timeBaseUnitsForFrames(isize_t inFrameNumber) const
 {
     return int64_t(std::floor((Ratio(inFrameNumber, 1) * m_videoPtsFrameDelta).toDouble() + 0.5f));
+}
+    
+    
+    
+    
+bool
+BehavMovieFile::getBehavMovieProperties(
+    const std::string & inFileName,
+    DataSet::Properties & outProperties,
+    AsyncCheckInCB_t inCheckInCB)
+{
+    std::unique_ptr<BehavMovieFile> m(new BehavMovieFile(inFileName));
+    int64_t gopSize = -1;
+    int64_t numFrames = -1;
+    if (m->scanAllFrames(numFrames, gopSize, inCheckInCB))
+    {
+        outProperties[DataSet::PROP_BEHAV_NUM_FRAMES] = Variant(numFrames);
+        outProperties[DataSet::PROP_BEHAV_GOP_SIZE] = Variant(gopSize);
+        return true;
+    }
+    return false;
 }
     
 } // namespace isx

@@ -6,6 +6,8 @@
 #include "isxRecording.h"
 #include "isxPathUtils.h"
 
+#include <ctype.h>
+#include <algorithm>
 
 namespace isx
 {
@@ -42,9 +44,9 @@ readMovie(const std::string & inFileName)
 }
     
 SpMovie_t
-readMovieSeries(const std::vector<std::string> & inFileNames)
+readMovieSeries(const std::vector<std::string> & inFileNames, const std::vector<DataSet::Properties> & inProperties)
 {
-    return std::make_shared<MovieSeries>(inFileNames);
+    return std::make_shared<MovieSeries>(inFileNames, inProperties);
 }
 
 SpMovie_t
@@ -63,10 +65,18 @@ readInscopixMovie(const std::string & inFileName)
 }
 
 SpMovie_t
-readBehavioralMovie(const std::string & inFileName, const Time & inStartTime)
+readBehavioralMovie(const std::string & inFileName, const DataSet::Properties & inProperties)
 {
-    SpMovie_t movie = std::make_shared<BehavMovie>(inFileName, inStartTime);
+    SpMovie_t movie = std::make_shared<BehavMovie>(inFileName, inProperties);
     return movie;
 }
 
+bool
+isBehavioralMovieFileExtension(const std::string & inFileName)
+{
+    auto e = isx::getExtension(inFileName);
+    std::transform(e.begin(), e.end(), e.begin(), ::tolower);
+    return ((e == "mpg") || (e == "mpeg") || (e == "mp4") || (e == "avi"));
+}
+    
 } // namespace isx

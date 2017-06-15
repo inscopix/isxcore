@@ -35,7 +35,7 @@ std::string
 getExtension(const std::string & inPath)
 {
     QFileInfo pathInfo(QString::fromStdString(inPath));
-    return pathInfo.completeSuffix().toStdString();
+    return pathInfo.suffix().toStdString();
 }
 
 std::vector<std::string>

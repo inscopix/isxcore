@@ -3,6 +3,7 @@
 
 #include "isxMovie.h"
 #include "isxMosaicMovieFile.h"
+#include "isxDataSet.h"
 
 #include <memory>
 #include <string>
@@ -43,12 +44,13 @@ public:
     /// This creates a MovieSeries from a set of existing movie files.
     ///
     /// \param  inFileNames The vector containing the names of the movie files.
+    /// \param  inProperties The optional vector containing the properties for each of the movie files, currently only used for behavioral.
     ///
     /// \throw  isx::ExceptionFileIO    If reading any of the movie files fails.
     /// \throw  isx::ExceptionDataIO    If parsing any of the movie files fails.
     /// \throw  isx::ExceptionDataIO    If the givne movie files do not meet
     ///                                 the requirements of a MovieSeries.
-    MovieSeries(const std::vector<std::string> & inFileNames);
+    MovieSeries(const std::vector<std::string> & inFileNames, const std::vector<DataSet::Properties> & inProperties = {});
 
     /// Write constructor.
     ///

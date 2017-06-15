@@ -28,6 +28,11 @@ public:
         m_value = inValue;
     }
 
+    Impl(int64_t inValue)
+    {
+        m_metatype = MetaType::INT64;
+        m_value = inValue;
+    }
 
     ~Impl(){}
 
@@ -114,6 +119,15 @@ Variant::Impl::setValue(const std::string & inValue)
     m_value = inValue;
 }
 
+/// Template function specialization for int64_t
+template<>
+void 
+Variant::Impl::setValue(const int64_t & inValue)
+{
+    m_metatype = MetaType::INT64;
+    m_value = inValue;
+}
+
 /// Template function specialization for float
 template <>
 float 
@@ -155,6 +169,19 @@ Variant::Impl::value() const
     return value;
 }
 
+/// Template function specialization for int64_t
+template <>
+int64_t
+Variant::Impl::value() const
+{    
+    if(m_metatype != MetaType::INT64)
+    {
+        ISX_THROW(ExceptionUserInput, "The type of the stored value cannot be converted to int64_t.");
+    }
+    int64_t value = m_value;  
+    return value;
+}
+
 Variant::Variant()
 {
     m_pImpl.reset(new Impl());
@@ -175,6 +202,11 @@ Variant::Variant(const std::string & inValue)
     m_pImpl.reset(new Impl(inValue));
 }
 
+Variant::Variant(int64_t inValue)
+{
+    m_pImpl.reset(new Impl(inValue));
+}
+
 Variant::Variant(const Variant & inOther) :
     Variant()
 {
@@ -190,6 +222,10 @@ Variant::Variant(const Variant & inOther) :
     else if (type == MetaType::STRING)
     {
         setValue(inOther.value<std::string>());
+    }
+    else if (type == MetaType::INT64)
+    {
+        setValue(inOther.value<int64_t>());
     }
 
 }
@@ -245,8 +281,10 @@ void Variant::operator = (const Variant & right)
 template void Variant::setValue<float>(const float &);
 template void Variant::setValue<Time>(const Time &);
 template void Variant::setValue<std::string>(const std::string &);
+template void Variant::setValue<int64_t>(const int64_t&);
 template float Variant::value<float>() const;
 template Time Variant::value<Time>() const;
 template std::string Variant::value<std::string>() const;
+template int64_t Variant::value<int64_t>() const;
 
 } // namespace isx

@@ -211,13 +211,18 @@ convertJsonToProperties(const json & j)
     for (json::const_iterator it = j.begin(); it != j.end(); ++it) 
     {
         Variant v;
-        if (it.key() != DataSet::PROP_MOVIE_START_TIME)
-        {
-            v = Variant(it.value().get<float>());
-        }
-        else 
+        if (it.key() == DataSet::PROP_MOVIE_START_TIME)
         {
             v = Variant(convertJsonToTime(it.value()));
+        }
+        else if (it.key() == DataSet::PROP_BEHAV_NUM_FRAMES
+              || it.key() == DataSet::PROP_BEHAV_GOP_SIZE)
+        {
+            v = Variant(it.value().get<int64_t>());
+        }
+        else
+        {
+            v = Variant(it.value().get<float>());
         }
         properties[it.key()] = v;
     }

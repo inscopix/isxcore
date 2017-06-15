@@ -9,8 +9,11 @@
 #include "isxReportUtils.h"
 #include "isxGpio.h"
 
-#include <fstream>
 #include "json.hpp"
+
+#include <fstream>
+#include <ctype.h>
+#include <algorithm>
 
 namespace isx
 {
@@ -21,7 +24,9 @@ const std::string DataSet::PROP_DATA_MIN = "dmin";
 const std::string DataSet::PROP_DATA_MAX = "dmax";
 const std::string DataSet::PROP_VIS_MIN  = "vmin";
 const std::string DataSet::PROP_VIS_MAX  = "vmax";
-const std::string DataSet::PROP_MOVIE_START_TIME = "movieStartTime";
+const std::string DataSet::PROP_MOVIE_START_TIME    = "movieStartTime";
+const std::string DataSet::PROP_BEHAV_NUM_FRAMES    = "numFrames";
+const std::string DataSet::PROP_BEHAV_GOP_SIZE      = "gopSize";
 
 DataSet::DataSet()
     : m_valid(false)
@@ -121,7 +126,8 @@ DataSet::setPropertyValue(const std::string & inPropertyName, Variant inValue)
 DataSet::Type
 readDataSetType(const std::string & inFileName)
 {
-    const std::string extension = isx::getExtension(inFileName);
+    std::string extension = isx::getExtension(inFileName);
+    std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
     if ((extension == "hdf5") || (extension == "xml") || (extension == "tif"))
     {
         return DataSet::Type::MOVIE;
@@ -144,7 +150,7 @@ readDataSetType(const std::string & inFileName)
             ISX_THROW(ExceptionDataIO, "Unknown error while parsing data file header.");
         }
     }
-    else if ((extension == "mpg") || (extension == "mp4"))
+    else if (isBehavioralMovieFileExtension(inFileName))
     {
         return DataSet::Type::BEHAVIOR;
     }
@@ -477,10 +483,14 @@ DataSet::readMetaData()
     else if (m_type == Type::BEHAVIOR)
     {
         Variant v;
-        if(getPropertyValue(PROP_MOVIE_START_TIME, v))
+        bool hasAllMetaData =
+            getPropertyValue(PROP_MOVIE_START_TIME, v)
+        && getPropertyValue(PROP_BEHAV_GOP_SIZE, v)
+        && getPropertyValue(PROP_BEHAV_NUM_FRAMES, v);
+
+        if (hasAllMetaData)
         {
-            Time startTime = v.value<Time>();
-            const SpMovie_t movie = readBehavioralMovie(m_fileName, startTime);
+            const SpMovie_t movie = readBehavioralMovie(m_fileName, getProperties());
             m_timingInfo = movie->getTimingInfo();
             m_spacingInfo = movie->getSpacingInfo();
             m_dataType = movie->getDataType();

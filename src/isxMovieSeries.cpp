@@ -16,7 +16,7 @@ namespace isx
 MovieSeries::MovieSeries()
 {}
 
-MovieSeries::MovieSeries(const std::vector<std::string> & inFileNames)
+MovieSeries::MovieSeries(const std::vector<std::string> & inFileNames, const std::vector<DataSet::Properties> & inProperties)
     : m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
     ISX_ASSERT(inFileNames.size() > 0);
@@ -24,11 +24,29 @@ MovieSeries::MovieSeries(const std::vector<std::string> & inFileNames)
     {
         return;
     }
-    
-    for (const auto & fn: inFileNames)
+
+    if (isBehavioralMovieFileExtension(inFileNames.at(0)))
     {
-        m_movies.emplace_back(readMovie(fn));
+        ISX_ASSERT(inFileNames.size() == inProperties.size());
+        isize_t propIndex = 0;
+        for (const auto & fn: inFileNames)
+        {
+            if (!isBehavioralMovieFileExtension(fn))
+            {
+                ISX_THROW(ExceptionSeries, "Can't mix movie types");
+            }
+            m_movies.emplace_back(readBehavioralMovie(fn, inProperties.at(propIndex)));
+            ++propIndex;
+        }
     }
+    else
+    {
+        for (const auto & fn: inFileNames)
+        {
+            m_movies.emplace_back(readMovie(fn));
+        }
+    }
+
     std::sort(m_movies.begin(), m_movies.end(), [](SpMovie_t a, SpMovie_t b)
         {
             return a->getTimingInfo().getStart() < b->getTimingInfo().getStart();
