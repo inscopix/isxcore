@@ -60,7 +60,7 @@ public:
     void initializeFromTiff()
     {
         
-        m_movie = std::make_shared<NVistaTiffMovie>(m_path);
+        m_movie = std::make_shared<NVistaTiffMovie>(m_path, m_path);
 
         // no exception until here --> this is a valid file
         m_isValid = true;
@@ -150,7 +150,7 @@ public:
         }
         else if (extension == "tif")
         {
-            m_movie = std::make_shared<NVistaTiffMovie>(fileNames, ti, si, droppedFrames, props);
+            m_movie = std::make_shared<NVistaTiffMovie>(m_path, fileNames, ti, si, droppedFrames, props);
         }
         else
         {

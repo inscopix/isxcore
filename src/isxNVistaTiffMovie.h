@@ -32,12 +32,14 @@ public:
 
     /// Construct a new movie from one TIFF file.
     ///
-    /// \param inFileName name of movie file
+    /// \param inFileName name of top level movie file (XML or TIFF)
+    /// \param inTiffFileName the name of TIFF file
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
     /// \param inDroppedFrames the list of frame numbers that were dropped (from external source such as xml)
     /// \param inAdditionalProperties the list of additional information for the movie (from external source such as xml)
     NVistaTiffMovie(const std::string &inFileName,
+        const std::string & inTiffFileName,
         const TimingInfo & inTimingInfo = TimingInfo(),
         const SpacingInfo & inSpacingInfo = SpacingInfo(),
         const std::vector<isize_t> & inDroppedFrames = std::vector<isize_t>(),
@@ -45,12 +47,14 @@ public:
 
     /// Construct a new movie from vector of existing TIFF files
     ///
-    /// \param inFileNames names of movie files
+    /// \param inFileName name of the top level file (XML or TIFF)
+    /// \param inTiffFileNames names of TIFF files
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
     /// \param inDroppedFrames the list of frame numbers that were dropped (from external source such as xml)
     /// \param inAdditionalProperties the list of additional information for the movie (from external source such as xml)
-    NVistaTiffMovie(const std::vector<std::string> &inFileNames,
+    NVistaTiffMovie(const std::string & inFileName,
+        const std::vector<std::string> &inTiffFileNames,
         const TimingInfo & inTimingInfo = TimingInfo(),
         const SpacingInfo & inSpacingInfo = SpacingInfo(),
         const std::vector<isize_t> & inDroppedFrames = std::vector<isize_t>(),
@@ -111,20 +115,27 @@ private:
 
     /// The vector of cumulative frame indices.
     std::vector<isize_t> m_cumulativeFrames;
-    
-    std::vector<std::string> m_fileNames;
+
+    /// The top level file name (XML or TIFF)
+    std::string m_fileName;
+
+    /// The TIFF file names
+    std::vector<std::string> m_tiffFileNames;
 
     std::map<std::string, Variant> m_additionalProperties;
 
     std::shared_ptr<IoTaskTracker<VideoFrame>>   m_ioTaskTracker;
 
     /// Handles most of the initialization.
-    /// \param inFileNames names of movie files
+    /// \param inFileName name of top level file (XML or TIFF)
+    /// \param inTiffFileNames names of movie files
     /// \param inTimingInfo the timing info for the movie (from external source such as xml)
     /// \param inSpacingInfo the spacing info for the movie (from external source such as xml)
     /// \param inDroppedFrames the list of frame numbers that were dropped (from external source such as xml)
     /// \param inAdditionalProperties the list of additional information for the movie
-    void initialize(const std::vector<std::string> &inFileNames,
+    void initialize(
+        const std::string & inFileName,
+        const std::vector<std::string> &inTiffFileNames,
         const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo,
         const std::vector<isize_t> & inDroppedFrames,

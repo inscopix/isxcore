@@ -24,26 +24,27 @@ NVistaTiffMovie::NVistaTiffMovie()
 
 NVistaTiffMovie::NVistaTiffMovie(
     const std::string &inFileName,
+    const std::string &inTiffFileName,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo,
     const std::vector<isize_t> & inDroppedFrames,
     const std::map<std::string, Variant> & inAdditionalProperties)
     : m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
-    std::vector<std::string> fn{inFileName};
-    initialize(fn, inTimingInfo, inSpacingInfo, inDroppedFrames, inAdditionalProperties);
+    std::vector<std::string> fn{inTiffFileName};
+    initialize(inFileName, fn, inTimingInfo, inSpacingInfo, inDroppedFrames, inAdditionalProperties);
 }
 
 NVistaTiffMovie::NVistaTiffMovie(
-    const std::vector<std::string> &inFileNames,
+    const std::string & inFileName,
+    const std::vector<std::string> &inTiffFileNames,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo, 
     const std::vector<isize_t> & inDroppedFrames,
     const std::map<std::string, Variant> & inAdditionalProperties)
     : m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
-
-    initialize(inFileNames, inTimingInfo, inSpacingInfo, inDroppedFrames, inAdditionalProperties);
+    initialize(inFileName, inTiffFileNames, inTimingInfo, inSpacingInfo, inDroppedFrames, inAdditionalProperties);
 }
 
 NVistaTiffMovie::~NVistaTiffMovie()
@@ -135,38 +136,41 @@ NVistaTiffMovie::getDataType() const
 std::string
 NVistaTiffMovie::getFileName() const
 {
-    return m_fileNames[0];
+    return m_fileName;
 }
 
 void
 NVistaTiffMovie::serialize(std::ostream& strm) const
 {
-    for (isize_t m(0); m < m_fileNames.size(); ++m)
+    for (isize_t m(0); m < m_tiffFileNames.size(); ++m)
     {
         if(m > 0)
         {
             strm << "\n";
         }
-        strm << m_fileNames[m];
+        strm << m_tiffFileNames[m];
     }
 }
 
 void
 NVistaTiffMovie::initialize(
-    const std::vector<std::string> &inFileNames,
+    const std::string & inFileName,
+    const std::vector<std::string> &inTiffFileNames,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo,
     const std::vector<isize_t> & inDroppedFrames,
     const std::map<std::string, Variant> & inAdditionalProperties)
 {
-    ISX_ASSERT(inFileNames.size());
+    m_fileName = inFileName;
 
-    m_fileNames = inFileNames;
+    ISX_ASSERT(inTiffFileNames.size());
+    m_tiffFileNames = inTiffFileNames;
+
     isize_t numFramesAccum = 0;
 
-    for (isize_t f(0); f < inFileNames.size(); ++f)
+    for (isize_t f(0); f < inTiffFileNames.size(); ++f)
     {
-        std::unique_ptr<TiffMovie> p( new TiffMovie(inFileNames[f]) );
+        std::unique_ptr<TiffMovie> p( new TiffMovie(inTiffFileNames[f]) );
         m_movies.push_back(std::move(p));
 
         if (f > 1)
