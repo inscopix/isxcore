@@ -107,9 +107,14 @@ private:
     ///
     BehavMovieFile(const std::string & inFileName);
 
+    /// Scan all frames, count total number and max GOP size.
+    /// Used during import.
+    ///
     bool
     scanAllFrames(int64_t & outFrameCount, int64_t & outGopSize, AsyncCheckInCB_t inCheckInCB);
 
+    /// Initialize this instance from video stream in file.
+    ///
     bool
     initializeFromStream(const Time & inStartTime, int64_t inGopSize, int64_t inNumFrames);
 
@@ -130,7 +135,17 @@ private:
     /// Find next packet for given stream index
     void
     readPacketFromStream(int inStreamIndex, const std::string & inContextForError);
+    
+    /// Return black frame compatible with current video stream's dimensions and with
+    /// timing info set according to inFrameNumber.
+    SpVideoFrame_t
+    getBlackFrame(isize_t inFrameNumber);
 
+    /// Unused Debug method, left in for future development.
+    ///
+    void
+    scanAllPts();
+    
     /// True if the movie file is valid, false otherwise.
     bool m_valid = false;
 
@@ -161,6 +176,7 @@ private:
     int64_t                     m_lastPktPts = -1;
 
     isize_t                     m_gopSize = 0;
+    bool                        m_endOfFile = false;
 };
 
 } // namespace isx
