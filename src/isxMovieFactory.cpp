@@ -76,7 +76,7 @@ isBehavioralMovieFileExtension(const std::string & inFileName)
 {
     auto e = isx::getExtension(inFileName);
     std::transform(e.begin(), e.end(), e.begin(), ::tolower);
-    return ((e == "mpg") || (e == "mpeg") || (e == "mp4") || (e == "avi"));
+    return ((e == "mpg") || (e == "mpeg") || (e == "mp4") || (e == "avi") || (e == "wmv") );
 }
     
 } // namespace isx
