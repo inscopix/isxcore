@@ -94,10 +94,17 @@ TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
         for (const auto f : inputFilePaths)
         {
             const std::vector<std::string> outputFilePaths = convertNVokeGpio(f, dirPath);
-            eventsFilePaths.push_back(outputFilePaths.front());
-            if (outputFilePaths.size() > 1)
+            
+            for (auto & fn : outputFilePaths)
             {
-                analogFilePaths.push_back(outputFilePaths.back());
+                if (fn.find("events") != std::string::npos)
+                {
+                    eventsFilePaths.push_back(fn);
+                }
+                else
+                {
+                    analogFilePaths.push_back(fn);
+                }
             }
         }
         const std::vector<std::string> filePaths = {eventsFilePaths[0], analogFilePaths[0]};
@@ -117,7 +124,13 @@ TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
         for (const auto f : inputFilePaths)
         {
             const std::vector<std::string> outputFilePaths = convertNVokeGpio(f, dirPath);
-            eventsFilePaths.push_back(outputFilePaths.front());
+            for (auto & fn : outputFilePaths)
+            {
+                if (fn.find("events") != std::string::npos)
+                {
+                    eventsFilePaths.push_back(fn);
+                }
+            }
         }
 
         ISX_REQUIRE_EXCEPTION(isx::readGpioSeries(eventsFilePaths), isx::ExceptionSeries,

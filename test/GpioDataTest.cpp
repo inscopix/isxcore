@@ -90,7 +90,7 @@ void testParsing(
                 REQUIRE(header == expectedHeader);
 
                 /// Read first data value for channel
-                isx::GpioFile::DataPkt pkt;
+                isx::TimeStampedDataFile::DataPkt pkt;
 
                 file.read((char *) &pkt, sizeof(pkt));                
                 if (!file.good())
@@ -151,6 +151,7 @@ TEST_CASE("GpioDataTest", "[core]")
         analogHeader["timing info"] = convertTimingInfoToJson(ti);
         analogHeader["producer"] = isx::getProducerAsJson();
         analogHeader["fileVersion"] = 0;
+        analogHeader["dataType"] = (int)isx::TimeStampedDataFile::StoredData::GPIO;
 
         isx::json eventsHeader;
         std::map<std::string, int> eventsChannelOffsets{{"SYNC", 0}};
@@ -159,6 +160,7 @@ TEST_CASE("GpioDataTest", "[core]")
         eventsHeader["timing info"] = convertTimingInfoToJson(ti);
         eventsHeader["producer"] = isx::getProducerAsJson();
         eventsHeader["fileVersion"] = 0;
+        eventsHeader["dataType"] = (int)isx::TimeStampedDataFile::StoredData::GPIO;
 
         std::vector<isx::json> fileHeaders{analogHeader, eventsHeader};
 
@@ -215,6 +217,7 @@ TEST_CASE("GpioDataTest", "[core]")
         eventsHeader["timing info"] = convertTimingInfoToJson(ti);
         eventsHeader["producer"] = isx::getProducerAsJson();
         eventsHeader["fileVersion"] = 0;
+        eventsHeader["dataType"] = (int)isx::TimeStampedDataFile::StoredData::GPIO;
 
         std::vector<isx::json> fileHeaders{eventsHeader};
 

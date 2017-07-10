@@ -3,7 +3,7 @@
 #include "isxCore.h"
 #include "isxAsync.h"
 #include "isxTimingInfo.h"
-#include "isxGpioFile.h"
+#include "isxTimeStampedDataFile.h"
 #include <string>
 #include <vector>
 #include <fstream>
@@ -214,24 +214,15 @@ namespace isx
             const std::string & inChannel, 
             const std::string & inMode,
             const std::string & inTriggerFollow, 
-            const GpioFile::DataPkt & inData);
-
-        std::string getChannelHeader(
-            const std::string & inChannel, 
-            const std::string & inMode,
-            const std::string & inTriggerFollow);
-
-        /// Writes the json header for an output file
-        /// \param inChannelOffsets       A map containing channel names and their offsets in the file
-        std::string getFooter(const std::map<std::string, int> & inChannelOffsets);
+            const TimeStampedDataFile::DataPkt & inData);
 
         void addEventPkt(
             const std::string & inChannel, 
             const std::string & inMode,
             const std::string & inTriggerFollow, 
-            const GpioFile::DataPkt & inData);
+            const TimeStampedDataFile::DataPkt & inData);
 
-        void updatePktTimes(const GpioFile::DataPkt & inData);
+        void updatePktTimes(const TimeStampedDataFile::DataPkt & inData);
 
         void updateTimingInfo();
 
@@ -244,17 +235,27 @@ namespace isx
         /// The directory where output files will be written.
         std::string m_outputDir;
 
-        std::string m_eventsFileName;
-        std::string m_analogFileName;
-        std::ofstream * m_analogFile = nullptr;
+        std::vector<std::string> m_outputFileNames;
+        std::unique_ptr<TimeStampedDataFile> m_analogFile;
 
-        /// A map containing the the names of the channel and their corresponding modes
-        /// This is used to check for consistency in the packets
-        std::map<std::string, std::string> m_outputModes; 
+        struct ChannelInfo
+        {
+            ChannelInfo() {}
+            ChannelInfo(const std::string & inOutputMode, const std::string & inTriggerFollow, const TimeStampedDataFile::DataPkt & inData)
+            {
+                outputMode = inOutputMode;
+                triggerFollow = inTriggerFollow;
+                data.push_back(inData);
+            }
 
-        /// A map containing the channel name and a map of channel header (json string) and data packet vector
+            std::string outputMode;
+            std::string triggerFollow;
+            std::vector<TimeStampedDataFile::DataPkt> data;
+        };
+
+        /// A map containing the channel name and all the information for that channel
         /// This is used to buffer digital (event) data and write it to a digital output file at the end, organized by channel
-        std::map<std::string, std::pair<std::string, std::vector<GpioFile::DataPkt>>> m_eventData;
+        std::map<std::string, ChannelInfo> m_eventData;
 
         /// A map used to keep track of event counters per channel (channel, counter)
         std::map<uint8_t, uint8_t> m_signalEventCounters;
@@ -270,6 +271,7 @@ namespace isx
         TimingInfo  m_timingInfo;
         Time        m_startTime;
         Time        m_endTime;
+        bool        m_startTimeSet = false;
 
         static std::map<uint8_t, std::string> s_dataTypeMap;
         static std::map<uint8_t, std::string> s_gpioModeMap;
@@ -277,7 +279,7 @@ namespace isx
         static std::map<uint8_t, std::string> s_ledStateMap;
         static std::map<uint8_t, std::string> s_ledModeMap;
 
-        const static size_t s_outputFileVersion = 0;
+        
     };
 }
 #endif // ISX_GPIO_DATA_FILE_H

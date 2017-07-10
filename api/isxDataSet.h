@@ -32,8 +32,9 @@ public:
         MOVIE = 0,
         CELLSET,
         BEHAVIOR,
-        GPIO,
-        IMAGE
+        GPIO, 
+		IMAGE,
+        EVENTS
     };
 
     // Property names as used in the property map

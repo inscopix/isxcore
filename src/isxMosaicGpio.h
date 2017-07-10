@@ -8,7 +8,7 @@
 namespace isx
 {
 
-class GpioFile;
+class TimeStampedDataFile;
 template <typename T> class IoTaskTracker;
 
 /// Class used to read and handle GPIO data
@@ -70,7 +70,7 @@ public:
 
 private:
 
-    std::shared_ptr<GpioFile>      m_file;
+    std::shared_ptr<TimeStampedDataFile>              m_file;
     std::shared_ptr<IoTaskTracker<FTrace_t>>          m_analogIoTaskTracker;
     std::shared_ptr<IoTaskTracker<LogicalTrace>>      m_logicalIoTaskTracker;
 

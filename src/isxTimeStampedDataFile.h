@@ -1,5 +1,5 @@
-#ifndef ISX_GPIO_FILE_H
-#define ISX_GPIO_FILE_H
+#ifndef ISX_TIMESTAMPED_FILE_H
+#define ISX_TIMESTAMPED_FILE_H
 
 #include <string>
 #include <fstream>
@@ -14,10 +14,18 @@ namespace isx
     
 /// A class for a file containing gpio data
 ///
-class GpioFile
+class TimeStampedDataFile
 {
     
 public:
+
+    /// Type of data stored in time stamped files
+    ///
+    enum class StoredData
+    {
+        GPIO = 0,   ///<
+        EVENTS      ///<
+    };
 
     #pragma pack(push, 1)
     /// The data packet contained in the GPIO file
@@ -70,7 +78,7 @@ public:
     /// Empty constructor.
     ///
     /// This creates a valid c++ object but an invalid gpio file.
-    GpioFile();
+    TimeStampedDataFile();
 
     /// Read constructor.
     ///
@@ -78,19 +86,32 @@ public:
     /// header.
     ///
     /// \param  inFileName  The name of the gpio file.
-    ///
     /// \throw  isx::ExceptionFileIO    If reading the gpio file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the gpio file fails.
-    GpioFile(const std::string & inFileName);
+    TimeStampedDataFile(const std::string & inFileName); 
+    
+    /// Write constructor.
+    ///
+    /// This opens a gpio file for writing.
+    ///
+    /// \param  inFileName  The name of the gpio file.
+    /// \param dataType     The type of data to be stored in the file.
+    /// \throw  isx::ExceptionFileIO    If opening the gpio file fails.
+    TimeStampedDataFile(const std::string & inFileName, StoredData dataType);
 
     /// Destructor.
     ///
-    ~GpioFile();
+    ~TimeStampedDataFile();
     
     /// \return True if the gpio file is valid, false otherwise.
     ///
     bool 
     isValid() const; 
+
+    /// \return the type of data stored in this file
+    ///
+    StoredData
+    getStoredDataType() const;
 
     /// \return true if this file contains data for an analog channel, false otherwise
     bool 
@@ -126,12 +147,39 @@ public:
     const isx::TimingInfo & 
     getTimingInfo() const;
 
+    /// Set the timing information that will be written in the file footer
+    /// \param inTimingInfo the timing information to set for the file. 
+    void setTimingInfo(const isx::TimingInfo & inTimingInfo);
+
+    /// Write the channel header to the file
+    /// 
+    /// \param inChannel the channel name 
+    /// \param inMode the mode of operation for that channel
+    /// \param inTriggerFollow the trigger follow setting for the channel
+    /// \param inNumPackets the number of data packets following this channel header
+    void writeChannelHeader(
+        const std::string & inChannel,
+        const std::string & inMode,
+        const std::string & inTriggerFollow,
+        const isx::isize_t inNumPackets);
+
+    /// Writes a data packet to the file
+    /// \param inData the data packet to write
+    void writeDataPkt(const DataPkt & inData);
+
+    /// Write file footer and close the file
+    /// 
+    void closeFileForWriting();
+
 
 private:
 
     /// Reads the file footer and initializes this object with that information
     void 
     readFileFooter();
+
+    void 
+    writeFileFooter();
 
     /// Reads the channel header
     /// \param inChannelName the name of the requested channel (as returned by getChannelList())
@@ -160,6 +208,13 @@ private:
     /// The file stream
     std::fstream m_file;
 
+    bool m_openForWrite = false;
+    bool m_closedForWriting = false;
+
+    StoredData m_dataType;
+
+
+    const static size_t s_fileVersion = 0;
 };
 }
-#endif // ISX_GPIO_FILE_H
+#endif // ISX_TIMESTAMPED_FILE_H

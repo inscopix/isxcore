@@ -1,5 +1,5 @@
 #include "isxMosaicGpio.h"
-#include "isxGpioFile.h"
+#include "isxTimeStampedDataFile.h"
 #include "isxMutex.h"
 #include "isxConditionVariable.h"
 #include "isxIoTask.h"
@@ -9,13 +9,13 @@ namespace isx
 {
 
 MosaicGpio::MosaicGpio()
-    : m_file(new GpioFile())
+    : m_file(new TimeStampedDataFile())
 {
 
 }
 
 MosaicGpio::MosaicGpio(const std::string & inFileName)
-    : m_file(new GpioFile(inFileName))
+    : m_file(new TimeStampedDataFile(inFileName))
     , m_analogIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_logicalIoTaskTracker(new IoTaskTracker<LogicalTrace>())
 {

@@ -382,6 +382,8 @@ DataSet::getTypeString(Type inType)
         return std::string("Behavior");
     case Type::GPIO:
         return std::string("GPIO");
+    case Type::EVENTS:
+        return std::string("Events");
     default: 
         return std::string("");
     }
