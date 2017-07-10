@@ -5,6 +5,7 @@
 #include "isxCore.h"
 #include "isxTime.h"
 #include "isxIndexRange.h"
+#include "isxCoreFwd.h"
 
 #include <vector>
 
@@ -234,6 +235,33 @@ using TimingInfos_t = std::vector<TimingInfo>;
 /// \return                     A pair containing the segment index, then the sample index.
 std::pair<isize_t, isize_t>
 getSegmentIndexAndSampleIndexFromGlobalSampleIndex(const TimingInfo inGlobalTimingInfo, const TimingInfos_t & inTimingInfos, isize_t inGlobalSampleIndex);
+
+/// Convert global index ranges to local index ranges.
+///
+/// The backend (e.g. temporal crop, project movie) typically wants local ranges
+/// because these will always mean the same thing.
+/// It's often easier for the frontend to deal with global ranges, so this function
+/// is used for conversion from global to local.
+///
+/// \param  inGlobalTi          The timing info from which the global index lives in.
+/// \param  inLocalTis          The local timing info of each segment.
+/// \param  inGlobalRanges      The global index ranges.
+/// \return                     The local index ranges.
+std::vector<IndexRanges_t>
+convertGlobalRangesToLocalRanges(
+        const TimingInfo & inGlobalTi,
+        const TimingInfos_t & inLocalTis,
+        const IndexRanges_t & inGlobalRanges);
+
+/// Convert global frame ranges to local frame ranges.
+///
+/// \param  inMovies            The movies in a series.
+/// \param  inGlobalRanges      The global frame ranges.
+/// \return                     The local frame ranges.
+std::vector<IndexRanges_t>
+convertGlobalRangesToLocalRanges(
+        const std::vector<SpMovie_t> inMovies,
+        const IndexRanges_t & inGlobalRanges);
 
 } // namespace isx
 

@@ -42,8 +42,7 @@ public:
             }
             else
             {
-                ISX_THROW(isx::ExceptionFileIO,
-                    "Unsupported extension.\n");
+                ISX_THROW(ExceptionFileIO, "Unsupported file format: ", extension);
             }
         }
         else
@@ -154,8 +153,7 @@ public:
         }
         else
         {
-            ISX_THROW(isx::ExceptionFileIO,
-                    "Unsupported extension.\n");
+            ISX_THROW(ExceptionFileIO, "Unsupported file format: ", extension);
         }
 
         // no exception until here --> this is a valid file

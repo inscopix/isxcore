@@ -94,16 +94,17 @@ TEST_CASE("Project-flattenSeries", "[core]")
     isx::Project project(projectFileName, projectName);
 
     std::string movie1File, movie2File, movie3File,
-            movie1OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File;
+            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File, image1File;
     createSeriesTestData(movie1File, movie2File, movie3File,
-            movie1OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File);
+            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File, image1File);
+
     isx::HistoricalDetails hd;
     isx::DataSet::Properties prop;
     
     auto movie1Series = std::make_shared<isx::Series>("movie1", isx::DataSet::Type::MOVIE, movie1File, hd, prop);
     auto movie2Series = std::make_shared<isx::Series>("movie2", isx::DataSet::Type::MOVIE, movie2File, hd, prop);
     auto movie3Series = std::make_shared<isx::Series>("movie3", isx::DataSet::Type::MOVIE, movie3File, hd, prop);
-    auto movie1OverlapSeries = std::make_shared<isx::Series>("movie1Overlap", isx::DataSet::Type::MOVIE, movie1OverlapFile, hd, prop);
+    auto movie1OverlapSeries = std::make_shared<isx::Series>("movie1Overlap", isx::DataSet::Type::MOVIE, movie2OverlapFile, hd, prop);
     auto movie2Step2Series = std::make_shared<isx::Series>("movie2Step2", isx::DataSet::Type::MOVIE, movie2Step2File, hd, prop);
     auto movie2CroppedSeries = std::make_shared<isx::Series>("movie2Cropped", isx::DataSet::Type::MOVIE, movie2CroppedFile, hd, prop);
     auto movie2F32Series = std::make_shared<isx::Series>("movie2F32", isx::DataSet::Type::MOVIE, movie2F32File, hd, prop);

@@ -239,10 +239,9 @@ MosaicMovieFile::readHeader()
         // TODO sweet : extra check to see if data type is recognized
         m_dataType = DataType(isize_t(j["dataType"]));
         DataSet::Type type = DataSet::Type(size_t(j["type"]));
-        if (type != DataSet::Type::MOVIE)
+        if (!(type == DataSet::Type::MOVIE || type == DataSet::Type::IMAGE))
         {
-            ISX_THROW(isx::ExceptionDataIO,
-                    "Expected type to be Movie. Instead got ", size_t(type), ".");
+            ISX_THROW(ExceptionDataIO, "Expected type to be Movie or Image. Instead got ", size_t(type), ".");
         }
         m_timingInfos = TimingInfos_t{convertJsonToTimingInfo(j["timingInfo"])};
         m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
@@ -264,8 +263,16 @@ MosaicMovieFile::writeHeader()
     try
     {
         j["dataType"] = isize_t(m_dataType);
-        j["type"] = size_t(DataSet::Type::MOVIE);
-        j["timingInfo"] = convertTimingInfoToJson(getTimingInfo());
+        const TimingInfo & ti = getTimingInfo();
+        if (ti.getNumTimes() > 1)
+        {
+            j["type"] = size_t(DataSet::Type::MOVIE);
+        }
+        else
+        {
+            j["type"] = size_t(DataSet::Type::IMAGE);
+        }
+        j["timingInfo"] = convertTimingInfoToJson(ti);
         j["spacingInfo"] = convertSpacingInfoToJson(m_spacingInfo);
         j["producer"] = getProducerAsJson();
         j["fileVersion"] = s_version;

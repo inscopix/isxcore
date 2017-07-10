@@ -1,5 +1,6 @@
 #include "isxTimingInfo.h"
 #include "isxAssert.h"
+#include "isxMovieFactory.h"
 
 #include <cmath>
 #include <algorithm>
@@ -328,6 +329,108 @@ getSegmentIndexAndSampleIndexFromGlobalSampleIndex(const TimingInfo inGlobalTimi
     // the index beyond the end of the last individual segment
     // return an out-of-range index for the segment
     return std::make_pair(inTimingInfos.size(), 0); 
+}
+
+std::vector<IndexRanges_t>
+convertGlobalRangesToLocalRanges(
+        const TimingInfo & inGlobalTi,
+        const TimingInfos_t & inLocalTis,
+        const IndexRanges_t & inGlobalRanges)
+{
+    const size_t numMovies = inLocalTis.size();
+    std::vector<IndexRanges_t> outLocalRanges(numMovies);
+    for (const auto & r : inGlobalRanges)
+    {
+        const std::pair<isize_t, isize_t> firstPair = getSegmentIndexAndSampleIndexFromGlobalSampleIndex(inGlobalTi, inLocalTis, r.m_first);
+        const std::pair<isize_t, isize_t> lastPair = getSegmentIndexAndSampleIndexFromGlobalSampleIndex(inGlobalTi, inLocalTis, r.m_last);
+
+        // Unpack the pairs into more readable indices
+        isize_t firstSegment = firstPair.first;
+        isize_t firstSample = firstPair.second;
+        isize_t lastSegment = lastPair.first;
+        isize_t lastSample = lastPair.second;
+
+        // First index is after end of last segment, or the first sample
+        // comes after the end of the last segment, so we can just skip it.
+        if (firstSegment >= numMovies)
+        {
+            continue;
+        }
+
+        const isize_t firstSegmentNumTimes = inLocalTis[firstSegment].getNumTimes();
+        if (firstSegment == (numMovies - 1) && firstSample >= firstSegmentNumTimes)
+        {
+            continue;
+        }
+
+        // If the first sample indicates that it's in a gap following its
+        // segment, then we should actually start at the beginning of the
+        // next one.
+        const bool startInGap = firstSample >= firstSegmentNumTimes;
+        if (startInGap)
+        {
+            ++firstSegment;
+            firstSample = 0;
+        }
+
+        // If the last segment is past the end of all movies then roll it
+        // back to the end of the last one.
+        if (lastSegment >= numMovies)
+        {
+            lastSegment = numMovies - 1;
+            lastSample = inLocalTis[lastSegment].getNumTimes() - 1;
+        }
+
+        // The simple case is when the first/last indices are in the same segment.
+        if (firstSegment == lastSegment)
+        {
+            outLocalRanges[firstSegment].push_back(IndexRange(firstSample, lastSample));
+            continue;
+        }
+
+        // Otherwise, we must keep adding ranges until we hit the adjusted last segment/sample
+        for (isize_t s = firstSegment; s <= lastSegment; ++s)
+        {
+            // Starts here, but doesn't end here, so add the rest of this segment and continue.
+            if (s == firstSegment)
+            {
+                outLocalRanges[s].push_back(IndexRange(firstSample, inLocalTis[s].getNumTimes() - 1));
+            }
+            // Doesn't start here, but does end here so add from start of this segment and finish.
+            else if (s == lastSegment)
+            {
+                outLocalRanges[s].push_back(IndexRange(0, lastSample));
+                break;
+            }
+            // Doesn't start here and hasn't ended yet, so add everything and continue.
+            else
+            {
+                outLocalRanges[s].push_back(IndexRange(0, inLocalTis[s].getNumTimes() - 1));
+            }
+        }
+    }
+    return outLocalRanges;
+}
+
+std::vector<IndexRanges_t>
+convertGlobalRangesToLocalRanges(
+        const std::vector<SpMovie_t> inMovies,
+        const IndexRanges_t & inGlobalRanges)
+{
+    std::vector<std::string> movieFileNames;
+    // NOTE sweet : the TimingInfos from the series can be different
+    // than the individual TimingInfo objects because of constraints in
+    // the player.
+    TimingInfos_t localTis;
+    for (const auto & m : inMovies)
+    {
+        movieFileNames.push_back(m->getFileName());
+        localTis.push_back(m->getTimingInfo());
+    }
+    const SpMovie_t movieSeries = readMovieSeries(movieFileNames);
+    const TimingInfo & globalTi = movieSeries->getTimingInfo();
+
+    return convertGlobalRangesToLocalRanges(globalTi, localTis, inGlobalRanges);
 }
 
 } // namespace isx

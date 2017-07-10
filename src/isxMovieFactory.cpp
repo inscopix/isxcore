@@ -27,19 +27,19 @@ writeMosaicMovie(
 SpMovie_t
 readMovie(const std::string & inFileName)
 {
-    const std::string extension = getExtension(inFileName);
-    if (extension == "isxd")
+    std::string ext = getExtension(inFileName);
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+    if (ext == "isxd")
     {
         return readMosaicMovie(inFileName);
     }
-    else if ((extension == "hdf5") || (extension == "xml") || (extension == "tif"))
+    else if (isNVistaImagingFileExtension(inFileName))
     {
         return readInscopixMovie(inFileName);
     }
     else
     {
-        ISX_THROW(isx::ExceptionDataIO,
-                "Movie extension not recognized: ", extension);
+        ISX_THROW(ExceptionDataIO, "Movie extension not recognized: ", ext);
     }
 }
     
@@ -78,5 +78,13 @@ isBehavioralMovieFileExtension(const std::string & inFileName)
     std::transform(e.begin(), e.end(), e.begin(), ::tolower);
     return ((e == "mpg") || (e == "mpeg") || (e == "mp4") || (e == "avi") || (e == "wmv") );
 }
-    
+
+bool
+isNVistaImagingFileExtension(const std::string & inFileName)
+{
+    auto e = isx::getExtension(inFileName);
+    std::transform(e.begin(), e.end(), e.begin(), ::tolower);
+    return (e == "hdf5") || (e == "xml") || (e == "tif");
+}
+
 } // namespace isx
