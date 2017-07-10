@@ -1,6 +1,7 @@
 
 #include "isxBehavMovieFile.h"
 #include "isxPathUtils.h"
+#include "isxMovie.h"
 
 extern "C" {
 #include "libavcodec/avcodec.h"
@@ -82,6 +83,11 @@ BehavMovieFile::BehavMovieFile(const std::string & inFileName, const DataSet::Pr
     else
     {
         ISX_THROW(isx::ExceptionFileIO, "Could not find gop size property.");
+    }
+
+    if (gopSize > sMaxSupportedGopSize)
+    {
+        ISX_LOG_ERROR("Behavioral video import, GOP size over limit (", gopSize, " > ", sMaxSupportedGopSize, "): ", m_fileName);
     }
 
     if (inProperties.find(DataSet::PROP_BEHAV_NUM_FRAMES) != inProperties.end())
@@ -456,7 +462,10 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
         case AV_PIX_FMT_YUVA420P:
             break;
         default:
-            ISX_THROW(isx::ExceptionFileIO, "Invalid frame format: ", pFrame->format);
+        {
+            ISX_LOG_ERROR("Behavioral video playback, unsupported frame format: ", pFrame->format, ", ", m_fileName);
+            ISX_THROW(isx::ExceptionFileIO, errorMessageUserManual);
+        }
     }
 
     ISX_ASSERT(isize_t(pFrame->width) == m_spacingInfo.getNumPixels().getWidth());
@@ -717,11 +726,17 @@ BehavMovieFile::getBehavMovieProperties(
             ISX_THROW(isx::ExceptionFileIO, "initializeFromStream failed.");
         }
 
+        // try to read one frame to get some errors (eg invalid frame format) right here
+        if (m->readFrame(0) == nullptr)
+        {
+            ISX_THROW(isx::ExceptionFileIO, "readFrame(0) failed.");
+        }
+
         return true;
     }
     return false;
 }
-    
+
 // Note aschildan 6/21/2017: This is some debugging code that is currently not used.
 // I'll leave it here for future testing. I found it useful when working on the bug
 // MOS-920 "Microsoft LifeCam video has exception at end of file"
@@ -758,9 +773,6 @@ BehavMovieFile::scanAllPts()
 }
     
 } // namespace isx
-
-
-
 
 
 

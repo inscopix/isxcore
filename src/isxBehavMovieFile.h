@@ -175,7 +175,7 @@ private:
     isize_t                     m_lastVideoFrameNumber = 0;
     int64_t                     m_lastPktPts = -1;
 
-    isize_t                     m_gopSize = 0;
+    int64_t                     m_gopSize = 0;
     bool                        m_endOfFile = false;
 };
 
