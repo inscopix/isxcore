@@ -11,6 +11,7 @@
 namespace isx
 {
 
+class Group;
 /// An interface for an item in a project, which can be a group, series or data set.
 ///
 class ProjectItem
@@ -43,6 +44,10 @@ public:
     ///
     virtual void setName(const std::string & inName) = 0;
 
+    /// \param inName The name to test 
+    /// \return true if the name is in use in this item's tree
+    virtual bool isNameUsed(const std::string & inName) const = 0;
+
     /// Set the parent container of this item.
     /// \param inContainer The new container for this item.
     ///
@@ -65,6 +70,8 @@ public:
     /// \return             The serialized JSON string of the item.
     virtual std::string toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string()) const = 0;
 
+    
+
     /// Exact comparison.
     ///
     /// \param  inOther     The items with which to compare.
@@ -78,6 +85,19 @@ public:
     ///
     /// \throw  ExceptionDataIO If the string cannot be parsed.
     static std::shared_ptr<ProjectItem> fromJsonString(const std::string & inString);
+
+protected: 
+
+    /// \return a pointer to the root of the tree. 
+    /// If none is found, returns a nullptr
+    Group * getRoot();
+
+    /// Navigate up to the Project instance that this project item belongs to and check that the project item name
+    /// is unique in the project. If not, return a unique name, based on the requested name, with a number appended to the end
+    /// \param inRequestedName the desired name for the project item
+    /// \return the unique version of item's name
+    std::string getUniqueName(const std::string & inRequestedName);
+
 };
 } // namespace isx
 

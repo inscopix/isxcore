@@ -237,23 +237,23 @@ TEST_CASE("Project-createUniquePath", "[core][!hide]")
     SECTION("When path is not taken")
     {
         project.createSeriesInRoot("series_000");
-        const std::string path = project.createUniquePath("/series");
-        REQUIRE(path == "/series");
+        const std::string path = project.getRootGroup()->findUniqueName("series");
+        REQUIRE(path == "series");
     }
 
     SECTION("When path is taken once")
     {
         project.createSeriesInRoot("series");
-        const std::string path = project.createUniquePath("/series");
-        REQUIRE(path == "/series_000");
+        const std::string path = project.getRootGroup()->findUniqueName("series");
+        REQUIRE(path == "series_000");
     }
 
     SECTION("When path is taken twice")
     {
         project.createSeriesInRoot("series");
         project.createSeriesInRoot("series_000");
-        const std::string path = project.createUniquePath("/series");
-        REQUIRE(path == "/series_001");
+        const std::string path = project.getRootGroup()->findUniqueName("series");
+        REQUIRE(path == "series_001");
     }
 }
 
@@ -276,7 +276,7 @@ TEST_CASE("Project-createUniquePath_bench", "[core][!hide]")
         float duration = 0.f;
         {
             isx::ScopedStopWatch timer(&duration);
-            project.createUniquePath("series");
+            project.createSeriesInRoot("series");
         }
        ISX_LOG_INFO("Creating unique path after ", numGroups, " groups took ", duration, " ms.");
     }
@@ -381,13 +381,13 @@ TEST_CASE("Project-missingFiles", "[core][!hide]")
 
     // Create a series in the root group with two missing movies
     const isx::SpSeries_t missingSeries = project.createSeriesInRoot("missing_series");
-    missingSeries->addUnitarySeries(movieSeries[2]);
-    missingSeries->addUnitarySeries(movieSeries[3]);
+    missingSeries->insertUnitarySeries(movieSeries[2], false);
+    missingSeries->insertUnitarySeries(movieSeries[3], false);
 
     // Create a series in the root group with one missing movie and one present movie
     isx::SpSeries_t partialMissingSeries = project.createSeriesInRoot("partially_missing_series");
-    partialMissingSeries->addUnitarySeries(movieSeries[0]);
-    partialMissingSeries->addUnitarySeries(movieSeries[5]);
+    partialMissingSeries->insertUnitarySeries(movieSeries[0], false);
+    partialMissingSeries->insertUnitarySeries(movieSeries[5], false);
 
     // Import a missing cell set under a non-missing movie
     rootGroup->insertGroupMember(movieSeries[4], rootGroup->getNumGroupMembers());

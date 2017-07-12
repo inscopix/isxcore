@@ -8,6 +8,8 @@
 namespace isx
 {
 
+class Project;
+
 /// A group organizes items within a project.
 ///
 /// This acts similarly to a directory on a file system.
@@ -75,12 +77,13 @@ public:
     isize_t
     getMemberIndex() const;
 
-    /// \return a unique name that is different from all current Group members' names
-    /// \param inName basename to use for creating the unique name
-    ///
-    std::string
-    createUniqueGroupName(const std::string & inName) const;
-    
+    /// \return a unique name in the tree under this node composed of the requested name and 
+    /// and a three digit number
+    /// \param inRequestedName the requested name
+    std::string 
+    findUniqueName(const std::string & inRequestedName);
+
+   
     // Overrides: see isxProjectItem.h for docs.
     ProjectItem::Type getItemType() const override;
 
@@ -101,6 +104,8 @@ public:
     std::string toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string()) const override;
     
     bool operator ==(const ProjectItem & other) const override;
+
+    bool isNameUsed(const std::string & inName) const override;
     
 private:
     
@@ -109,6 +114,9 @@ private:
 
     bool
     isGroupMember(const std::string & inName) const;
+
+    void 
+    setUniqueName(const std::string & inName);
     
 
     /// True if this data set is valid.
@@ -118,7 +126,7 @@ private:
     bool m_modified;
 
     /// The container that holds this group.
-    Group * m_container;
+    Group * m_container = nullptr;
 
     /// The name of this group.
     std::string m_name;

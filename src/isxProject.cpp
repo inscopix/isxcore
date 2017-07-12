@@ -424,12 +424,6 @@ Project::setFileName(const std::string & inFileName, bool inFromTemporary)
 
 }
 
-std::string
-Project::createUniquePath(const std::string & inPath) const
-{
-    return m_root->createUniqueGroupName(inPath);
-}
-
 bool
 Project::isModified() const
 {
@@ -633,5 +627,6 @@ Project::getAllSeries(Series * inSeries) const
     ret.insert(ret.end(), descendants.begin(), descendants.end());
     return ret;
 }
+
 
 } // namespace isx
