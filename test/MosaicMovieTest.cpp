@@ -468,3 +468,88 @@ TEST_CASE("MosaicMovie-croppedFrames", "[core]")
 
     isx::CoreShutdown();
 }
+
+TEST_CASE("MosaicMovieCreateRGB888Sample", "[core-internal][!hide]")
+{
+    std::string fileName = g_resources["unitTestDataPath"] + "/movieRGB888.isxd";
+
+    isx::Time start;
+    isx::DurationInSeconds step(50, 1000);
+    isx::isize_t numFrames = 5;
+    isx::TimingInfo timingInfo(start, step, numFrames);
+
+    isx::SizeInPixels_t sizePixels(16, 10);//1200, 1024);
+    isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
+    isx::PointInMicrons_t topLeft(0, 0);
+    isx::SpacingInfo spacingInfo(sizePixels, pixelSize, topLeft);
+
+    isx::DataType dataType = isx::DataType::RGB888;
+
+    isx::CoreInitialize();
+
+    SECTION("Write sample file")
+    {
+        auto movie = std::make_shared<isx::MosaicMovie>(
+                fileName, timingInfo, spacingInfo, dataType);
+        
+        auto w  = sizePixels.getWidth();
+        auto hw = w / 2;
+        auto h  = sizePixels.getHeight();
+        auto hh = h / 2;
+
+        for (isx::isize_t f = 0; f < numFrames; ++f)
+        {
+            auto frame = std::make_shared<isx::VideoFrame>(
+                spacingInfo,
+                isx::getDataTypeSizeInBytes(dataType) * w,
+                1,
+                dataType,
+                timingInfo.convertIndexToStartTime(f),
+                f);
+
+            auto p = frame->getPixels();
+            for (isx::isize_t y = 0; y < hh; ++y)
+            {
+                // Red
+                for (isx::isize_t x = 0; x < hw; ++x)
+                {
+                    *p++ = 0xff;
+                    *p++ = 0x00;
+                    *p++ = 0x00;
+                }
+
+                // Green
+                for (isx::isize_t x = hw; x < w; ++x)
+                {
+                    *p++ = 0x00;
+                    *p++ = 0xff;
+                    *p++ = 0x00;
+                }
+            }
+            
+            for (isx::isize_t y = hh; y < h; ++y)
+            {
+                // Blue
+                for (isx::isize_t x = 0; x < hw; ++x)
+                {
+                    *p++ = 0x00;
+                    *p++ = 0x00;
+                    *p++ = 0xff;
+                }
+                
+                // Yellow-ish
+                for (isx::isize_t x = hw; x < w; ++x)
+                {
+                    *p++ = 0xff;
+                    *p++ = (x - hw) % 256;
+                    *p++ = 0x00;
+                }
+            }
+            movie->writeFrame(frame);
+        }
+        movie->closeForWriting();
+        REQUIRE(movie->isValid());
+    }
+
+    isx::CoreShutdown();
+}

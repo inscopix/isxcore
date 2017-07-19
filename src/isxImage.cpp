@@ -191,7 +191,16 @@ Image::getPixelValueAsF32(isize_t row, isize_t col)
             pixVal = (float)pixels[idx];
             break;
         }
-    }    
+        case DataType::RGB888:
+        {
+            // TODO: fix this bogus value that's being returned.
+            // If this is only called to show the value under the mouse cursor then we should
+            // probably expand this and return a string instead.
+            idx = row * m_rowBytes + getPixelSizeInBytes() * col;
+            auto pixels = reinterpret_cast<const uint8_t *>(getPixels());
+            pixVal = float(pixels[idx + 0]) * 1000000.f + float(pixels[idx + 1]) * 1000.f + float(pixels[idx + 2]);
+        }
+    }
 
     return pixVal;
 }
