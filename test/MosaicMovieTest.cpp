@@ -507,7 +507,7 @@ TEST_CASE("MosaicMovieCreateRGB888Sample", "[core-internal][!hide]")
                 timingInfo.convertIndexToStartTime(f),
                 f);
 
-            auto p = frame->getPixels();
+            auto p = reinterpret_cast<uint8_t *>(frame->getPixels());
             for (isx::isize_t y = 0; y < hh; ++y)
             {
                 // Red
