@@ -105,12 +105,12 @@ private:
     /// Note that this does not set the type of frame (valid, dropped, etc.)
     /// for performance reasons.
     SpVideoFrame_t
-    makeVideoFrameInternal(isize_t inIndex) const;
+    makeVideoFrameInternal(const isize_t inGlobalIndex, const isize_t inMovieIndex, const isize_t inLocalIndex) const;
 
     /// True if the movie file is valid, false otherwise.
     bool m_valid = false;
-    
-    TimingInfo                                  m_globalTimingInfo;
+
+    TimingInfo                                  m_gaplessTimingInfo; ///< only really useful for global number of times
     TimingInfos_t                               m_timingInfos;
     SpacingInfo                                 m_spacingInfo;
     std::vector<SpMovie_t>                      m_movies;

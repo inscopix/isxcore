@@ -78,12 +78,10 @@ public:
 
 private:
 
-    TimingInfo getGaplessTimingInfo();
-
     /// True if the GPIO series is valid, false otherwise.
     bool m_valid = false;
 
-    TimingInfo              m_timingInfo;       // Global timing info
+    TimingInfo              m_gaplessTimingInfo; ///< only really useful for global number of times
     std::vector<SpGpio_t>   m_gpios;
 
 }; // class GpioSeries

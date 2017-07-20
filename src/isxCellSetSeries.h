@@ -106,16 +106,11 @@ public:
 
 private:
 
-
-    TimingInfo getGaplessTimingInfo();
-
     /// True if the cell set is valid, false otherwise.
     bool m_valid = false;
-    
-    TimingInfo                          m_timingInfo;       // Global timing info
-    std::vector<SpCellSet_t>            m_cellSets;
-    
 
+    TimingInfo                          m_gaplessTimingInfo; ///< only really useful for global number of times
+    std::vector<SpCellSet_t>            m_cellSets;
 };
 
 }

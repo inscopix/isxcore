@@ -66,7 +66,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
 
         isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
 
-        isx::TimingInfo expectedTimingInfo(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 2405);
+        isx::TimingInfo expectedTimingInfo(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 12);
         REQUIRE(css->isValid());
         REQUIRE(css->getSpacingInfo() == spacingInfo);
         REQUIRE(css->getTimingInfo() == expectedTimingInfo);
@@ -89,7 +89,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
 
         isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
 
-        isx::TimingInfo expectedTimingInfo(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 2405);
+        isx::TimingInfo expectedTimingInfo(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 12);
         REQUIRE(css->isValid());
         REQUIRE(css->getSpacingInfo() == spacingInfo);
         REQUIRE(css->getTimingInfo() == expectedTimingInfo);

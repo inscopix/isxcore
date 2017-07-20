@@ -54,32 +54,19 @@ MovieSeries::MovieSeries(const std::vector<std::string> & inFileNames, const std
 
     // movies are sorted by start time now, check if they meet requirements
     std::string errorMessage;
+    m_timingInfos = {m_movies.front()->getTimingInfo()};
     for (isize_t i = 1; i < m_movies.size(); ++i)
     {
         if (!checkNewMemberOfSeries({m_movies[i - 1]}, m_movies[i], errorMessage))
         {
             ISX_THROW(ExceptionSeries, errorMessage);
         }
+        m_timingInfos.push_back(m_movies[i]->getTimingInfo());
     }
 
-    // individual movie files are compatible, initialize
     m_spacingInfo = m_movies[0]->getSpacingInfo();
-    const auto step  = m_movies[0]->getTimingInfo().getStep();
-    const auto start = Time(m_movies[0]->getTimingInfo().getStart().getSecsSinceEpoch().expandWithDenomOf(step));
-    const auto end = Time(m_movies.back()->getTimingInfo().getEnd().getSecsSinceEpoch());
-    const auto duration = end - start;
-    const auto numTimesRatio = duration / step;
-    const auto numTimes = isize_t(std::floor(numTimesRatio.toDouble()));
 
-    m_globalTimingInfo = TimingInfo(start, step, numTimes);
-
-    // each individual movie's TimingInfo
-    for (isize_t i = 0; i < m_movies.size(); ++i)
-    {
-        const auto startInGlobal = Time(m_movies[i]->getTimingInfo().getStart().getSecsSinceEpoch().expandWithDenomOf(step));
-        const auto numTimes = m_movies[i]->getTimingInfo().getNumTimes();
-        m_timingInfos.push_back(TimingInfo(startInGlobal, step, numTimes));
-    }
+    m_gaplessTimingInfo = makeGaplessTimingInfo(m_timingInfos);
 
     m_valid = true;
 }
@@ -99,76 +86,53 @@ const
     return m_valid;
 }
 
-   
 SpVideoFrame_t
 MovieSeries::getFrame(isize_t inFrameNumber)
 {
+    if (inFrameNumber >= m_gaplessTimingInfo.getNumTimes())
+    {
+        ISX_THROW(ExceptionDataIO, "The index of the frame (", inFrameNumber,
+                ") is out of range (0-", m_gaplessTimingInfo.getNumTimes(), ").");
+    }
+
     size_t movieIndex = 0;
     size_t frameIndex = 0;
-    std::tie(movieIndex, frameIndex) = getSegmentIndexAndSampleIndexFromGlobalSampleIndex(m_globalTimingInfo, m_timingInfos, inFrameNumber);
-    auto ret = makeVideoFrameInternal(inFrameNumber);
-    if (movieIndex == m_movies.size()) 
-    {
-        auto lastFrame = m_globalTimingInfo.convertTimeToIndex(m_globalTimingInfo.getEnd());
-        ISX_THROW(isx::ExceptionDataIO,
-                  "The index of the frame (", inFrameNumber, ") is out of range (0-", lastFrame, ").");
-    }
-    else if (frameIndex >= m_movies[movieIndex]->getTimingInfo().getNumTimes()) 
-    {
-        // in between individual movies
-        // --> return placeholder frame
-        ret->setFrameType(VideoFrame::Type::INGAP);
-    }
-    else
-    {
-        auto f = m_movies[movieIndex]->getFrame(frameIndex);
-        ret->moveFrameContent(f);
-    }
+    std::tie(movieIndex, frameIndex) = getSegmentAndLocalIndex(m_timingInfos, inFrameNumber);
+
+    auto ret = makeVideoFrameInternal(inFrameNumber, movieIndex, frameIndex);
+    auto f = m_movies[movieIndex]->getFrame(frameIndex);
+    ret->moveFrameContent(f);
     return ret;
 }
 
 void
 MovieSeries::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
+    if (inFrameNumber >= m_gaplessTimingInfo.getNumTimes())
+    {
+        ISX_THROW(ExceptionDataIO, "The index of the frame (", inFrameNumber,
+                ") is out of range (0-", m_gaplessTimingInfo.getNumTimes(), ").");
+    }
+
     size_t movieIndex = 0;
     size_t frameIndex = 0;
-    std::tie(movieIndex, frameIndex) = getSegmentIndexAndSampleIndexFromGlobalSampleIndex(m_globalTimingInfo, m_timingInfos, inFrameNumber);
-    auto ret = makeVideoFrameInternal(inFrameNumber);
-    if (movieIndex == m_movies.size()) 
-    {
-        auto lastFrame = m_globalTimingInfo.convertTimeToIndex(m_globalTimingInfo.getEnd());
-        ISX_THROW(isx::ExceptionDataIO,
-                  "The index of the frame (", inFrameNumber, ") is out of range (0-", lastFrame, ").");
-    }
-    else if (frameIndex >= m_movies[movieIndex]->getTimingInfo().getNumTimes()) 
-    {
-        // in between individual movies
-        // --> return placeholder frame
-        ret->setFrameType(VideoFrame::Type::INGAP);
-        
-        GetFrameCB_t getFrameCB = [ret, inFrameNumber]()
+    std::tie(movieIndex, frameIndex) = getSegmentAndLocalIndex(m_timingInfos, inFrameNumber);
+
+    auto ret = makeVideoFrameInternal(inFrameNumber, movieIndex, frameIndex);
+    m_movies[movieIndex]->getFrameAsync(frameIndex, [ret, inCallback](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
         {
-            return ret;
-        };
-        m_ioTaskTracker->schedule(getFrameCB, inCallback);
-    }
-    else
-    {
-        m_movies[movieIndex]->getFrameAsync(frameIndex, [ret, inCallback](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
+            AsyncTaskResult<SpVideoFrame_t> atr;
+            if (!inAsyncTaskResult.getException() && inAsyncTaskResult.get())
             {
-                AsyncTaskResult<SpVideoFrame_t> atr;
-                if (!inAsyncTaskResult.getException() && inAsyncTaskResult.get())
-                {
-                    atr.setValue(ret);
-                    ret->moveFrameContent(inAsyncTaskResult.get());
-                }
-                else
-                {
-                    atr.setException(inAsyncTaskResult.getException());
-                }
-                inCallback(atr);
-            });
-    }
+                atr.setValue(ret);
+                ret->moveFrameContent(inAsyncTaskResult.get());
+            }
+            else
+            {
+                atr.setException(inAsyncTaskResult.getException());
+            }
+            inCallback(atr);
+        });
 }
 
 void
@@ -182,7 +146,7 @@ MovieSeries::cancelPendingReads()
 }
     
 SpVideoFrame_t
-MovieSeries::makeVideoFrameInternal(isize_t inIndex) const
+MovieSeries::makeVideoFrameInternal(const isize_t inGlobalIndex, const isize_t inMovieIndex, const isize_t inLocalIndex) const
 {
     const SpacingInfo spacingInfo = getSpacingInfo();
     const DataType dataType = getDataType();
@@ -193,15 +157,15 @@ MovieSeries::makeVideoFrameInternal(isize_t inIndex) const
         rowSizeInBytes,
         1,
         dataType,
-        getTimingInfo().convertIndexToStartTime(inIndex),
-        inIndex);
+        m_timingInfos.at(inMovieIndex).convertIndexToStartTime(inLocalIndex),
+        inGlobalIndex);
     return outFrame;
 }
 
 const TimingInfo &
 MovieSeries::getTimingInfo() const
 {
-    return m_globalTimingInfo;
+    return m_gaplessTimingInfo;
 }
 
 const TimingInfos_t &
