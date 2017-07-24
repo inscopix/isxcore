@@ -36,7 +36,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
         auto movie = std::make_shared<isx::MosaicMovie>(
                 fileName, timingInfo, spacingInfo, dataType);
         movie->closeForWriting();
-        REQUIRE(movie->isValid());
+        REQUIRE(!movie->isValid());
         REQUIRE(movie->getDataType() == dataType);
     }
 
