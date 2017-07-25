@@ -62,16 +62,6 @@ TEST_CASE("Group-insertGroupMember", "[core]")
         REQUIRE(group.getGroupMember(0) == static_cast<isx::ProjectItem *>(series.get()));
     }
 
-    SECTION("Try to insert two series with the same name in a group")
-    {
-        group.insertGroupMember(series, 0);
-        auto series2 = std::make_shared<isx::Series>("series");
-        ISX_REQUIRE_EXCEPTION(
-                group.insertGroupMember(series2, 0),
-                isx::ExceptionDataIO,
-                "There is already an item with the name: series");
-    }
-
     SECTION("Insert two series with different names to the end of a group")
     {
         group.insertGroupMember(series, 0);

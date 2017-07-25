@@ -56,10 +56,10 @@ public:
     getChannelList() const override;
 
     SpFTrace_t
-    getAnalogData() override;
+    getAnalogData(const std::string & inChannelName) override;
 
     void
-    getAnalogDataAsync(GpioGetAnalogDataCB_t inCallback) override;
+    getAnalogDataAsync(const std::string & inChannelName, GpioGetAnalogDataCB_t inCallback) override;
 
     SpLogicalTrace_t
     getLogicalData(const std::string & inChannelName) override;

@@ -28,7 +28,7 @@ TEST_CASE("TimeStampDataFileTest", "[core]")
 
         // Write a file
         {
-            isx::TimeStampedDataFile file(fileName, isx::TimeStampedDataFile::StoredData::GPIO);
+            isx::TimeStampedDataFile file(fileName, isx::TimeStampedDataFile::StoredData::GPIO, true);
             file.setTimingInfo(ti);
             file.writeChannelHeader(channelName, mode, trigFollow, data.size());
 
@@ -54,7 +54,7 @@ TEST_CASE("TimeStampDataFileTest", "[core]")
         REQUIRE(channels.size() == 1);
         REQUIRE(channels.at(0) == channelName);
 
-        isx::SpFTrace_t trace = file.getAnalogData();
+        isx::SpFTrace_t trace = file.getAnalogData(channelName);
         REQUIRE(trace);
         isx::TimingInfo traceTi = trace->getTimingInfo();
         REQUIRE(traceTi == ti);
@@ -104,7 +104,7 @@ TEST_CASE("TimeStampDataFileTest", "[core]")
         REQUIRE(channels.size() == 1);
         REQUIRE(channels.at(0) == channelName);
 
-        isx::SpFTrace_t trace = file.getAnalogData();
+        isx::SpFTrace_t trace = file.getAnalogData("unexistent");
         REQUIRE(trace == nullptr);
         
         isx::SpLogicalTrace_t logicalTrace = file.getLogicalData(channelName);

@@ -68,10 +68,11 @@ TimeStampedDataFile::TimeStampedDataFile(const std::string & inFileName) :
     m_valid = true;
 }
 
-TimeStampedDataFile::TimeStampedDataFile(const std::string & inFileName, StoredData dataType) :
+TimeStampedDataFile::TimeStampedDataFile(const std::string & inFileName, StoredData dataType, bool inIsAnalog) :
+    m_analog(false),
     m_fileName(inFileName),
     m_openForWrite(true),
-    m_dataType(dataType)
+    m_dataType(dataType)    
 {
     m_file.open(m_fileName, std::ios::binary | std::ios_base::out);
     if (!m_file.good() || !m_file.is_open())
@@ -81,6 +82,12 @@ TimeStampedDataFile::TimeStampedDataFile(const std::string & inFileName, StoredD
     }
 
     m_valid = true;
+
+    if (m_dataType == StoredData::GPIO)
+    {
+        m_analog = inIsAnalog;
+    }
+
 }
 
 TimeStampedDataFile::~TimeStampedDataFile()
@@ -143,23 +150,35 @@ TimeStampedDataFile::getChannelList() const
 }
 
 SpFTrace_t 
-TimeStampedDataFile::getAnalogData()
+TimeStampedDataFile::getAnalogData(const std::string & inChannelName)
 {
     if(!m_analog || m_openForWrite)
     {
         return nullptr;
     }
 
-    readChannelHeader("GPIO4_AI");
+    auto search = m_channelOffsets.find(inChannelName);
+    if(search == m_channelOffsets.end() || m_openForWrite)
+    {
+        return nullptr;
+    }
 
-    // Calculate number of packets
-    std::ios::pos_type current = m_file.tellg();
-    isize_t dataBytes = isize_t(m_headerOffset - current);
-    isize_t recordedNumTimes = dataBytes / sizeof(DataPkt); 
-    ISX_ASSERT(dataBytes == recordedNumTimes * sizeof(DataPkt));
+    std::string headerStr = readChannelHeader(inChannelName);
+    json header = json::parse(headerStr);
+    isize_t numPkts = header.at("Number of Packets");
 
-    std::unique_ptr<DataPkt[]> data(new DataPkt[recordedNumTimes]); 
-    m_file.read(reinterpret_cast<char*>(data.get()), dataBytes);
+    if (numPkts == 0)
+    {
+        // Calculate number of packets
+        std::ios::pos_type current = m_file.tellg();
+        isize_t dataBytes = isize_t(m_headerOffset - current);
+        numPkts = dataBytes / sizeof(DataPkt); 
+        ISX_ASSERT(dataBytes == numPkts * sizeof(DataPkt));
+    }
+    
+
+    std::unique_ptr<DataPkt[]> data(new DataPkt[numPkts]); 
+    m_file.read(reinterpret_cast<char*>(data.get()), numPkts * sizeof(DataPkt));
 
     if (!m_file.good())
     {
@@ -170,11 +189,25 @@ TimeStampedDataFile::getAnalogData()
     std::vector<isize_t> droppedFrames;
     isize_t prevIndex = 0;
 
-    for(isize_t i(0); i < recordedNumTimes; ++i)
+    for(isize_t i(0); i < numPkts; ++i)
     {
         DataPkt & pkt = data[i];
         Time time = pkt.getTime();
         isize_t index = m_timingInfo.convertTimeToIndex(time);
+
+        // There are numerical errors in the conversion from time to index. 
+        // We know that samples in the data file are sorted by time, so we would never 
+        // allow for the index to be less than the prevIndex. If this happens, we get into a 
+        // nerver-ending loop. Remove this when we have a better conversion of time to index. 
+        if (index <= prevIndex && prevIndex != 0)
+        {
+            index = prevIndex + 1;
+            if (index >= m_timingInfo.getNumTimes())
+            {
+                break;
+            }
+        }
+
         trace->setValue(index, pkt.getValue());
 
         if((i == 0) && (index != 0))
@@ -271,11 +304,19 @@ TimeStampedDataFile::readFileFooter()
             m_channelOffsets = j["channel offsets"].get<std::map<std::string, int>>();
             m_dataType = (StoredData)(j["dataType"].get<int>());
 
-            auto search = m_channelOffsets.find("GPIO4_AI");
-            if (search != m_channelOffsets.end())
+            if (j["fileVersion"].get<int>() == 0)
             {
-                m_analog = true;
+                auto search = m_channelOffsets.find("GPIO4_AI");
+                if (search != m_channelOffsets.end())
+                {
+                    m_analog = true;
+                }
             }
+            else
+            {
+                m_analog = j["analog"].get<bool>();
+            }
+            
         }
         catch (const std::exception & error)
         {
@@ -368,6 +409,7 @@ TimeStampedDataFile::writeFileFooter()
         j["producer"] = getProducerAsJson();
         j["fileVersion"] = s_fileVersion;
         j["dataType"] = (int)m_dataType;
+        j["analog"] = m_analog;
     }
     catch (...)
     {

@@ -30,7 +30,7 @@ TEST_CASE("MosaicGpioTest", "[core]")
         REQUIRE(channels.size() == 1);
         REQUIRE(channels.at(0) == "GPIO4_AI");
 
-        isx::SpFTrace_t trace = gpio->getAnalogData();
+        isx::SpFTrace_t trace = gpio->getAnalogData("GPIO4_AI");
         REQUIRE(trace);
         float val = trace->getValue(0);
         REQUIRE(val == 2.6556396484375);
@@ -48,11 +48,14 @@ TEST_CASE("MosaicGpioTest", "[core]")
         {
             REQUIRE(!inAsyncTaskResult.getException()); 
             auto trace = inAsyncTaskResult.get();
+            REQUIRE(trace);
             REQUIRE(trace->getValue(0) == 2.6556396484375);           
             ++doneCount;
         };
 
-        gpio->getAnalogDataAsync(callBack);
+        std::string channel("GPIO4_AI");
+
+        gpio->getAnalogDataAsync(channel, callBack);
         
 
         for (int i = 0; i < 250; ++i)
@@ -81,7 +84,7 @@ TEST_CASE("MosaicGpioTest", "[core]")
         REQUIRE(channels.at(1) == "SYNC");
         REQUIRE(channels.at(2) == "TRIG");
 
-        isx::SpFTrace_t trace = gpio->getAnalogData();
+        isx::SpFTrace_t trace = gpio->getAnalogData("GPIO4_AI");
         REQUIRE(trace == nullptr);
         
         isx::SpLogicalTrace_t ledTrace = gpio->getLogicalData("EX_LED");

@@ -59,13 +59,13 @@ MosaicGpio::getChannelList() const
 }
 
 SpFTrace_t 
-MosaicGpio::getAnalogData()
+MosaicGpio::getAnalogData(const std::string & inChannelName)
 {
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("getAnalogGpio");
     AsyncTaskResult<SpFTrace_t> asyncTaskResult;
-    getAnalogDataAsync([&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
+    getAnalogDataAsync(inChannelName, [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
         {
             mutex.lock("getAnalogGpio async");
             asyncTaskResult = inAsyncTaskResult;
@@ -80,17 +80,17 @@ MosaicGpio::getAnalogData()
 }
 
 void 
-MosaicGpio::getAnalogDataAsync(GpioGetAnalogDataCB_t inCallback)
+MosaicGpio::getAnalogDataAsync(const std::string & inChannelName, GpioGetAnalogDataCB_t inCallback)
 {
     // Only get a weak pointer to this, so that we don't bother reading
     // if this has been deleted when the read gets executed.
     std::weak_ptr<MosaicGpio> weakThis = shared_from_this();
-    GetAnalogDataCB_t getAnalogCB = [weakThis, this]()
+    GetAnalogDataCB_t getAnalogCB = [weakThis, this, &inChannelName]()
         {
             auto sharedThis = weakThis.lock();
             if (sharedThis)
             {
-                return m_file->getAnalogData();
+                return m_file->getAnalogData(inChannelName);
             }
             return SpFTrace_t();
         };

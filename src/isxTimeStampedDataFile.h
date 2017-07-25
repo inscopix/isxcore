@@ -96,8 +96,9 @@ public:
     ///
     /// \param  inFileName  The name of the gpio file.
     /// \param dataType     The type of data to be stored in the file.
+    /// \param inIsAnalog   Indicates if the file contains analog data (valid for GPIO)
     /// \throw  isx::ExceptionFileIO    If opening the gpio file fails.
-    TimeStampedDataFile(const std::string & inFileName, StoredData dataType);
+    TimeStampedDataFile(const std::string & inFileName, StoredData dataType, bool inIsAnalog = false);
 
     /// Destructor.
     ///
@@ -135,7 +136,7 @@ public:
     /// \return the trace for the analog channel or nullptr if the file doesn't contain analog data
     /// 
     SpFTrace_t 
-    getAnalogData();
+    getAnalogData(const std::string & inChannelName);
 
     /// \return the logical trace for the requested channel or nullptr if the file doesn't contain data for that channel
     /// \param inChannelName the name of the requested channel (as returned by getChannelList())
@@ -214,7 +215,7 @@ private:
     StoredData m_dataType;
 
 
-    const static size_t s_fileVersion = 0;
+    const static size_t s_fileVersion = 1;
 };
 }
 #endif // ISX_TIMESTAMPED_FILE_H

@@ -371,7 +371,7 @@ NVokeGpioFile::writeAnalogPktToFile(
         std::string filename = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_analog.isxd";
         m_outputFileNames.push_back(filename);
 
-        m_analogFile.reset(new TimeStampedDataFile(filename, TimeStampedDataFile::StoredData::GPIO));
+        m_analogFile.reset(new TimeStampedDataFile(filename, TimeStampedDataFile::StoredData::GPIO, true));
         m_analogFile->writeChannelHeader(
             inChannel,
             inMode,

@@ -91,13 +91,13 @@ GpioSeries::getChannelList() const
 }
 
 SpFTrace_t
-GpioSeries::getAnalogData()
+GpioSeries::getAnalogData(const std::string & inChannelName)
 {
     SpFTrace_t trace = std::make_shared<FTrace_t>(m_gaplessTimingInfo);
     float * v = trace->getValues();
     for (const auto & g : m_gpios)
     {
-        SpFTrace_t partialTrace = g->getAnalogData();
+        SpFTrace_t partialTrace = g->getAnalogData(inChannelName);
         float * vPartial = partialTrace->getValues();
         const isize_t numSamples = partialTrace->getTimingInfo().getNumTimes();
         memcpy((char *)v, (char *)vPartial, sizeof(float) * numSamples);
@@ -107,7 +107,7 @@ GpioSeries::getAnalogData()
 }
 
 void
-GpioSeries::getAnalogDataAsync(GpioGetAnalogDataCB_t inCallback)
+GpioSeries::getAnalogDataAsync(const std::string & inChannelName, GpioGetAnalogDataCB_t inCallback)
 {
     std::weak_ptr<Gpio> weakThis = shared_from_this();
 
@@ -155,7 +155,7 @@ GpioSeries::getAnalogDataAsync(GpioGetAnalogDataCB_t inCallback)
                 }
             };
 
-        g->getAnalogDataAsync(finishedCB);
+        g->getAnalogDataAsync(inChannelName, finishedCB);
         offset += g->getTimingInfo().getNumTimes();
         ++counter;
     }
