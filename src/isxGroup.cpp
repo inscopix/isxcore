@@ -4,6 +4,7 @@
 #include "isxDataSet.h"
 #include "isxSeries.h"
 #include "isxPathUtils.h"
+#include "isxProject.h"
 
 #include "json.hpp"
 
@@ -51,6 +52,16 @@ Group::getName() const
 
 void
 Group::setName(const std::string & inName)
+{
+    std::string uniqueName = getUniqueName(inName);
+    if (m_name != uniqueName)
+    {
+        setUniqueName(uniqueName);
+    }   
+}
+
+void 
+Group::setUniqueName(const std::string & inName)
 {
     m_name = inName;
     m_modified = true;
@@ -102,11 +113,6 @@ Group::insertGroupMember(std::shared_ptr<ProjectItem> inItem, const isize_t inIn
         container = container->getContainer();
     }
 
-    if (isGroupMember(inItem.get()))
-    {
-        ISX_THROW(ExceptionDataIO, "There is already an item with the name: ", inItem->getName());
-    }
-
     // Throw if the item is still in another container
     if (inItem->getContainer())
     {
@@ -114,6 +120,13 @@ Group::insertGroupMember(std::shared_ptr<ProjectItem> inItem, const isize_t inIn
     }
 
     auto index = std::min(inIndex, m_items.size());
+
+    // Make sure the item will have a unique name in the project
+    std::string uniqueName = getUniqueName(inItem->getName());
+    if(uniqueName != inItem->getName())
+    {
+        inItem->setName(uniqueName);
+    }
 
     inItem->setContainer(this);
     m_items.insert(m_items.begin() + index, inItem);
@@ -178,6 +191,23 @@ ProjectItem *
 Group::getContainer() const
 {
     return m_container;
+}
+
+bool 
+Group::isNameUsed(const std::string & inName) const 
+{
+    if (m_name == inName)
+    {
+        return true;
+    }
+    for (const auto & i : m_items)
+    {
+        if (i->isNameUsed(inName))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool
@@ -291,18 +321,23 @@ Group::isGroupMember(const std::string & inName) const
             return s->getName() == inName;
         });
 }
-    
-std::string
-Group::createUniqueGroupName(const std::string & inName) const
-{
-    std::string ret = inName;
-    for (isize_t i = 0; isGroupMember(ret) && i < 1000; ++i)
-    {
-        ret = appendNumberToPath(inName, i, 3);
-    }
-    return ret;
-}
 
+std::string 
+Group::findUniqueName(const std::string & inRequestedName)
+{
+    std::string uniqueName = inRequestedName;
+
+    isx::isize_t i(1);
+
+    while (isNameUsed(uniqueName))
+    {
+        uniqueName = appendNumberToPath(inRequestedName, i, 3);
+        ++i;
+    }
+
+    return uniqueName;
+}
+    
 std::ostream &
 operator<<(::std::ostream & inStream, const Group & inGroup)
 {

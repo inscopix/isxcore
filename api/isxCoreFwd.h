@@ -30,6 +30,8 @@ namespace isx
     FWD_DECLARE_WITH_PTRS(DispatchQueueWorker);
     FWD_DECLARE_WITH_PTRS(AsyncTaskHandle);
     FWD_DECLARE_WITH_PTRS(Gpio);
+    FWD_DECLARE_WITH_PTRS(Events);
+    FWD_DECLARE_WITH_PTRS(WritableEvents);
 
 } // namespace isx
 

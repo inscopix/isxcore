@@ -36,9 +36,9 @@ TEST_CASE("Series-insertUnitarySeries", "[core]")
     isx::Series series("series");
 
     std::string movie1File, movie2File, movie3File,
-            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File;
+            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File, image1File;
     createSeriesTestData(movie1File, movie2File, movie3File,
-            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File);
+            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File, image1File);
 
     isx::HistoricalDetails hd;
     isx::HistoricalDetails hdPreprocessed("Preprocessing", "");
@@ -52,7 +52,8 @@ TEST_CASE("Series-insertUnitarySeries", "[core]")
     auto movie2F32 = std::make_shared<isx::DataSet>("movie2F32", isx::DataSet::Type::MOVIE, movie2F32File, hd);
     auto behavMovie = std::make_shared<isx::DataSet>("behavior", isx::DataSet::Type::BEHAVIOR, "behavior.mpg", hd);
     auto movie2Preprocessed = std::make_shared<isx::DataSet>("movie2Preprocessed", isx::DataSet::Type::MOVIE, movie2File, hdPreprocessed);
-    
+    auto image1 = std::make_shared<isx::DataSet>("image1", isx::DataSet::Type::IMAGE, image1File, hd);
+
     auto movie1Series = std::make_shared<isx::Series>(movie1);
     auto movie2Series = std::make_shared<isx::Series>(movie2);
     auto movie3Series = std::make_shared<isx::Series>(movie3);
@@ -62,6 +63,7 @@ TEST_CASE("Series-insertUnitarySeries", "[core]")
     auto movie2F32Series = std::make_shared<isx::Series>(movie2F32);
     auto behavMovieSeries = std::make_shared<isx::Series>(behavMovie);
     auto movie2PreprocessedSeries = std::make_shared<isx::Series>(movie2Preprocessed);
+    auto image1Series = std::make_shared<isx::Series>(image1);
 
     SECTION("Insert one data set")
     {
@@ -161,6 +163,15 @@ TEST_CASE("Series-insertUnitarySeries", "[core]")
                 isx::ExceptionSeries,
                 "The new data set has a different processing history than the rest of the series' components. Only unprocessed data sets can be moved into a series.");
     }
+
+    SECTION("Try to insert an image in an empty series")
+    {
+        ISX_REQUIRE_EXCEPTION(
+                series.insertUnitarySeries(image1Series),
+                isx::ExceptionSeries,
+                "You are attempting to add an image to a series. Image series are not yet supported.");
+    }
+
 }
 
 TEST_CASE("Series-removeDataSet", "[core]")
@@ -168,9 +179,9 @@ TEST_CASE("Series-removeDataSet", "[core]")
     isx::Series series("series");
 
     std::string movie1File, movie2File, movie3File,
-            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File;
+            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File, image1File;
     createSeriesTestData(movie1File, movie2File, movie3File,
-            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File);
+            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File, image1File);
 
     isx::HistoricalDetails hd;
 
@@ -241,9 +252,9 @@ TEST_CASE("Series-toFromJsonString", "[core]")
     isx::Series series("series");
 
     std::string movie1File, movie2File, movie3File,
-            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File;
+            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File, image1File;
     createSeriesTestData(movie1File, movie2File, movie3File,
-            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File);
+            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File, image1File);
 
     isx::HistoricalDetails hd;
     auto movie1 = std::make_shared<isx::DataSet>("movie1", isx::DataSet::Type::MOVIE, movie1File, hd);
@@ -300,7 +311,6 @@ makeBehavioralMovieSeries(
         const std::string & inFilePath,
         const isx::DataSet::Properties & inProperties)
 {
-    const isx::SpMovie_t movie = isx::readBehavioralMovie(inFilePath, inProperties);
     const isx::HistoricalDetails history;
     const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::BEHAVIOR, inFilePath, history);
     return std::make_shared<isx::Series>(dataSet);
@@ -318,6 +328,42 @@ makeCellSetSeries(
     cellSet->closeForWriting();
     const isx::HistoricalDetails history;
     const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::CELLSET, inFilePath, history);
+    return std::make_shared<isx::Series>(dataSet);
+}
+
+isx::SpSeries_t
+makeGpioSeries(
+        const std::string & inName,
+        const std::string & inFilePath)
+{
+    const isx::HistoricalDetails history;
+    const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::GPIO, inFilePath, history);
+    return std::make_shared<isx::Series>(dataSet);
+}
+
+isx::SpSeries_t
+makeImageSeries(
+        const std::string & inName,
+        const std::string & inFilePath)
+{
+    const isx::HistoricalDetails history;
+    const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::IMAGE, inFilePath, history);
+    return std::make_shared<isx::Series>(dataSet);
+}
+
+isx::SpSeries_t
+makeImageSeries(
+        const std::string & inName,
+        const std::string & inFilePath,
+        const isx::TimingInfo & inTimingInfo,
+        const isx::SpacingInfo & inSpacingInfo)
+{
+    ISX_ASSERT(inTimingInfo.getNumTimes() == 1);
+    std::remove(inFilePath.c_str());
+    const isx::SpWritableMovie_t movie = isx::writeMosaicMovie(inFilePath, inTimingInfo, inSpacingInfo, isx::DataType::U16);
+    movie->closeForWriting();
+    const isx::HistoricalDetails history;
+    const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::IMAGE, inFilePath, history);
     return std::make_shared<isx::Series>(dataSet);
 }
 
@@ -455,7 +501,25 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
-        // TODO sweet : add a test to ensure GPIO datasets cannot be added
+        SECTION("Child has one GPIO")
+        {
+            const isx::SpSeries_t childSeries = makeGpioSeries("child", g_resources["unitTestDataPath"] + "/test_gpio_analog_2.isxd");
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one valid image")
+        {
+            const isx::SpSeries_t childSeries = makeImageSeries("child", childFilePath1, isx::TimingInfo(ti1.getStart(), ti1.getStep(), 1), si1);
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one invalid snapshot image")
+        {
+            const isx::SpSeries_t childSeries = makeImageSeries("child", g_resources["unitTestDataPath"] + "/Snapshots/nVista_ratPFC2_tif/snapshot_20160705_094404.xml");
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
     }
 
     SECTION("Parent has two movies")
@@ -551,7 +615,18 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
-        // TODO sweet : add a test to ensure GPIO datasets cannot be added
+        SECTION("Child has one valid image")
+        {
+            const isx::SpSeries_t childSeries = makeImageSeries("child", childFilePath1, isx::TimingInfo(ti1.getStart(), ti1.getStep(), 1), si1);
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one invalid snapshot image")
+        {
+            const isx::SpSeries_t childSeries = makeImageSeries("child", g_resources["unitTestDataPath"] + "/Snapshots/nVista_ratPFC2_tif/snapshot_20160705_094404.xml");
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
     }
 
     SECTION("Parent has one cellset")
@@ -610,7 +685,19 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
-        // TODO sweet : add a test to ensure GPIO datasets cannot be added
+        SECTION("Child has one GPIO")
+        {
+            const isx::SpSeries_t childSeries = makeGpioSeries("child", g_resources["unitTestDataPath"] + "/test_gpio_analog_2.isxd");
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one valid image")
+        {
+            const isx::SpSeries_t childSeries = makeImageSeries("child", childFilePath1, isx::TimingInfo(ti1.getStart(), ti1.getStep(), 1), si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
     }
 
     SECTION("Parent has two cellsets")
@@ -674,12 +761,17 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
-        // TODO sweet : add a test to ensure GPIO datasets cannot be added
+        SECTION("Child has one valid image")
+        {
+            const isx::SpSeries_t childSeries = makeImageSeries("child", childFilePath1, isx::TimingInfo(ti1.getStart(), ti1.getStep(), 1), si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
     }
 
     SECTION("Parent has one behavioral movie")
     {
-        const isx::SpSeries_t parentSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", props1);
+        const isx::SpSeries_t parentSeries = makeBehavioralMovieSeries("parent", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", props1);
 
         SECTION("Child has one movie")
         {
@@ -701,9 +793,93 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
 
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
+
+        SECTION("Child has one GPIO")
+        {
+            const isx::SpSeries_t childSeries = makeGpioSeries("child", g_resources["unitTestDataPath"] + "/test_gpio_analog_2.isxd");
+
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one valid image")
+        {
+            const isx::SpSeries_t childSeries = makeImageSeries("child", childFilePath1, isx::TimingInfo(ti1.getStart(), ti1.getStep(), 1), si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
     }
 
-    // TODO sweet : add a test to ensure GPIO datasets cannot be parents
+    SECTION("Parent has one GPIO")
+    {
+        const isx::SpSeries_t parentSeries = makeGpioSeries("parent", g_resources["unitTestDataPath"] + "/test_gpio_analog_2.isxd");
+
+        SECTION("Child has one movie")
+        {
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, ti1, si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset")
+        {
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, ti1, si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one behavioral movie")
+        {
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", props1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one GPIO")
+        {
+            const isx::SpSeries_t childSeries = makeGpioSeries("child", g_resources["unitTestDataPath"] + "/test_gpio_events_2.isxd");
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one valid image")
+        {
+            const isx::SpSeries_t childSeries = makeImageSeries("child", childFilePath1, isx::TimingInfo(ti1.getStart(), ti1.getStep(), 1), si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+    }
+
+    SECTION("Parent has one image")
+    {
+        const isx::SpSeries_t parentSeries = makeImageSeries("parent", parentFilePath1, isx::TimingInfo(ti1.getStart(), ti1.getStep(), 1), si1);
+
+        SECTION("Child has one movie")
+        {
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, ti1, si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset")
+        {
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, ti1, si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one behavioral movie")
+        {
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", props1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one GPIO")
+        {
+            const isx::SpSeries_t childSeries = makeGpioSeries("child", g_resources["unitTestDataPath"] + "/test_gpio_events_2.isxd");
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one valid image")
+        {
+            const isx::SpSeries_t childSeries = makeImageSeries("child", childFilePath1, isx::TimingInfo(ti1.getStart(), ti1.getStep(), 1), si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+    }
 
     std::remove(parentFilePath1.c_str());
     std::remove(parentFilePath2.c_str());

@@ -163,20 +163,6 @@ public:
     ///
     void setFileName(const std::string & inFileName, bool inFromTemporary);
 
-    /// Create a unique path in this project given a requested one.
-    ///
-    /// Uniqueness is achieved by appending an underscore and a zero-padded
-    /// number of width 3 to the requested path.
-    ///
-    /// For Example, if a project already contains an item with the path
-    /// "/movie-pp", then the result of
-    ///     createUniquePath("/movie-pp")
-    /// will be "movie-pp_000".
-    ///
-    /// \param  inPath  The requested path in this project.
-    /// \return         A path that is unique in this project based on the given one.
-    std::string createUniquePath(const std::string & inPath) const;
-
     /// \return whether the file has unsaved changes.
     ///
     bool isModified() const;
@@ -204,6 +190,7 @@ public:
             const std::string & inDirectory,
             const std::vector<Series *> & inSeries,
             std::vector<Series *> & outLocated);
+
 
 private:
 

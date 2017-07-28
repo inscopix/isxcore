@@ -97,14 +97,18 @@ SpMovie_t readInscopixMovie(const std::string & inFileName);
 /// \throw  isx::ExceptionDataIO    If parsing the movie file failed.
 SpMovie_t readBehavioralMovie(const std::string & inFileName, const DataSet::Properties & inProperties);
 
-    
-/// Determine if a file is a behaviroal movie file by its extension.
+/// Determine if a file is a behavioral movie file by its extension.
 ///
 /// \param  inFileName      The filename to check.
 /// \return                 True if filename has an extension for a behavioral movie that is supported.
-///
 bool isBehavioralMovieFileExtension(const std::string & inFileName);
-    
+
+/// Determine if a file is an nVista imaging (movie/image) file by its extension.
+///
+/// \param  inFileName      The filename to check.
+/// \return                 True if filename has an extension for nVista imaging data that is supported.
+bool isNVistaImagingFileExtension(const std::string & inFileName);
+
 } // namespace isx
 
 #endif // ifndef ISX_MOVIE_FACTORY_H

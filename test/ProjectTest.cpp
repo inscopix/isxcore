@@ -94,16 +94,17 @@ TEST_CASE("Project-flattenSeries", "[core]")
     isx::Project project(projectFileName, projectName);
 
     std::string movie1File, movie2File, movie3File,
-            movie1OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File;
+            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File, image1File;
     createSeriesTestData(movie1File, movie2File, movie3File,
-            movie1OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File);
+            movie2OverlapFile, movie2Step2File, movie2CroppedFile, movie2F32File, image1File);
+
     isx::HistoricalDetails hd;
     isx::DataSet::Properties prop;
     
     auto movie1Series = std::make_shared<isx::Series>("movie1", isx::DataSet::Type::MOVIE, movie1File, hd, prop);
     auto movie2Series = std::make_shared<isx::Series>("movie2", isx::DataSet::Type::MOVIE, movie2File, hd, prop);
     auto movie3Series = std::make_shared<isx::Series>("movie3", isx::DataSet::Type::MOVIE, movie3File, hd, prop);
-    auto movie1OverlapSeries = std::make_shared<isx::Series>("movie1Overlap", isx::DataSet::Type::MOVIE, movie1OverlapFile, hd, prop);
+    auto movie1OverlapSeries = std::make_shared<isx::Series>("movie1Overlap", isx::DataSet::Type::MOVIE, movie2OverlapFile, hd, prop);
     auto movie2Step2Series = std::make_shared<isx::Series>("movie2Step2", isx::DataSet::Type::MOVIE, movie2Step2File, hd, prop);
     auto movie2CroppedSeries = std::make_shared<isx::Series>("movie2Cropped", isx::DataSet::Type::MOVIE, movie2CroppedFile, hd, prop);
     auto movie2F32Series = std::make_shared<isx::Series>("movie2F32", isx::DataSet::Type::MOVIE, movie2F32File, hd, prop);
@@ -236,23 +237,23 @@ TEST_CASE("Project-createUniquePath", "[core][!hide]")
     SECTION("When path is not taken")
     {
         project.createSeriesInRoot("series_000");
-        const std::string path = project.createUniquePath("/series");
-        REQUIRE(path == "/series");
+        const std::string path = project.getRootGroup()->findUniqueName("series");
+        REQUIRE(path == "series");
     }
 
     SECTION("When path is taken once")
     {
         project.createSeriesInRoot("series");
-        const std::string path = project.createUniquePath("/series");
-        REQUIRE(path == "/series_000");
+        const std::string path = project.getRootGroup()->findUniqueName("series");
+        REQUIRE(path == "series_000");
     }
 
     SECTION("When path is taken twice")
     {
         project.createSeriesInRoot("series");
         project.createSeriesInRoot("series_000");
-        const std::string path = project.createUniquePath("/series");
-        REQUIRE(path == "/series_001");
+        const std::string path = project.getRootGroup()->findUniqueName("series");
+        REQUIRE(path == "series_001");
     }
 }
 
@@ -275,7 +276,7 @@ TEST_CASE("Project-createUniquePath_bench", "[core][!hide]")
         float duration = 0.f;
         {
             isx::ScopedStopWatch timer(&duration);
-            project.createUniquePath("series");
+            project.createSeriesInRoot("series");
         }
        ISX_LOG_INFO("Creating unique path after ", numGroups, " groups took ", duration, " ms.");
     }
@@ -380,13 +381,13 @@ TEST_CASE("Project-missingFiles", "[core][!hide]")
 
     // Create a series in the root group with two missing movies
     const isx::SpSeries_t missingSeries = project.createSeriesInRoot("missing_series");
-    missingSeries->addUnitarySeries(movieSeries[2]);
-    missingSeries->addUnitarySeries(movieSeries[3]);
+    missingSeries->insertUnitarySeries(movieSeries[2], false);
+    missingSeries->insertUnitarySeries(movieSeries[3], false);
 
     // Create a series in the root group with one missing movie and one present movie
     isx::SpSeries_t partialMissingSeries = project.createSeriesInRoot("partially_missing_series");
-    partialMissingSeries->addUnitarySeries(movieSeries[0]);
-    partialMissingSeries->addUnitarySeries(movieSeries[5]);
+    partialMissingSeries->insertUnitarySeries(movieSeries[0], false);
+    partialMissingSeries->insertUnitarySeries(movieSeries[5], false);
 
     // Import a missing cell set under a non-missing movie
     rootGroup->insertGroupMember(movieSeries[4], rootGroup->getNumGroupMembers());

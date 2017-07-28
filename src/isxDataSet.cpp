@@ -128,9 +128,17 @@ readDataSetType(const std::string & inFileName)
 {
     std::string extension = isx::getExtension(inFileName);
     std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
-    if ((extension == "hdf5") || (extension == "xml") || (extension == "tif"))
+    if (isNVistaImagingFileExtension(inFileName))
     {
-        return DataSet::Type::MOVIE;
+        const isx::SpMovie_t movie = readMovie(inFileName);
+        if (movie->getTimingInfo().getNumTimes() > 1)
+        {
+            return DataSet::Type::MOVIE;
+        }
+        else
+        {
+            return DataSet::Type::IMAGE;
+        }
     }
     else if (extension == "isxd")
     {
@@ -374,6 +382,8 @@ DataSet::getTypeString(Type inType)
         return std::string("Behavior");
     case Type::GPIO:
         return std::string("GPIO");
+    case Type::EVENTS:
+        return std::string("Events");
     default: 
         return std::string("");
     }
@@ -458,7 +468,7 @@ DataSet::readMetaData()
         return;
     }
 
-    if (m_type == Type::MOVIE)
+    if (m_type == Type::MOVIE || m_type == Type::IMAGE)
     {
         const SpMovie_t movie = readMovie(m_fileName);
         m_timingInfo = movie->getTimingInfo();

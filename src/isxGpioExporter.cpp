@@ -79,30 +79,49 @@ runGpioExporter(
     isize_t numLinesWritten = 0;
 
     // the first column of analog and logical traces is a time stamp
-    strm << "Time (s), ";
+    strm << "Time (s)";
 
     if (refIsAnalog)
     {
-        // the only other column for the analog trace is its name
-        strm << channelNames.front() << "\n";
+        for (auto & name : channelNames)
+        {
+            strm << ", " << name;       
+        }
+        strm << "\n";
 
         for (auto & gpio : gpios)
         {
-            numLinesTotal = gpio->getTimingInfo().getNumTimes();
+            numLinesTotal += gpio->getTimingInfo().getNumTimes();
         }
 
         for (const auto & gpio : gpios)
         {
-            const SpFTrace_t trace = gpio->getAnalogData();
+            std::vector<SpFTrace_t> traces(numChannels);
+            isize_t n(0);
+            for (auto & name : channelNames)
+            {
+                traces[n++] = gpio->getAnalogData(name);
+            }
+
             const TimingInfo & ti = gpio->getTimingInfo();
             const isize_t numSamples = ti.getNumTimes();
+            
+            
             for (isize_t s = 0; s < numSamples; ++s)
             {
                 const Time time = ti.convertIndexToStartTime(s);
                 strm << std::setprecision(maxDecimalsForDouble)
-                     << (time - baseTime).toDouble() << ", "
-                     << std::setprecision(maxDecimalsForFloat)
-                     << trace->getValue(s) << "\n";
+                     << (time - baseTime).toDouble();
+
+                for (isize_t i(0); i < numChannels; ++i)
+                {
+                    const SpFTrace_t trace = traces.at(i);
+                    strm << ", "
+                         << std::setprecision(maxDecimalsForFloat)
+                         << trace->getValue(s);
+                }
+
+                strm << "\n";
 
                 ++numLinesWritten;
                 progress = float(numLinesWritten) / float(numLinesTotal);
@@ -111,7 +130,7 @@ runGpioExporter(
                 {
                     break;
                 }
-            }
+            }  
         }
     }
     else
@@ -120,7 +139,7 @@ runGpioExporter(
 
         // we write all time/value pairs of each channel sequentially, so
         // we also need a channel name column (which will be sorted)
-        strm << "Channel Name, Value\n";
+        strm << ", Channel Name, Value\n";
 
         // to calculate the number of lines, we need to read all the logical
         // traces, so we store them to avoid a repeated read

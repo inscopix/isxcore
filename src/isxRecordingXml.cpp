@@ -40,6 +40,7 @@ namespace isx
 
             // Attributes
             QString start, fps, frames, droppedFrames, width, height, downsample, top, left;
+            isize_t totalFrames = 0;
 
             while (!reader.atEnd())
             {
@@ -127,8 +128,21 @@ namespace isx
                         {
                             while (reader.readNextStartElement())
                             {
+                                QXmlStreamAttributes att = reader.attributes();
+                                if (att.hasAttribute("frames"))
+                                {
+                                    QStringRef sr = att.value("frames");
+                                    totalFrames += sr.toULong();
+                                }
                                 QString filename = reader.readElementText();
                                 m_hdf5FileNames.push_back(filename.toStdString());
+                            }
+
+                            if (totalFrames != 0)
+                            {
+                                /// Use totalFrames rather than the number reported under "frames" field, because of nVista bug
+                                /// where "frames" reports one extra frame than the actual number
+                                frames = QString::number(totalFrames);
                             }
                         }
                         else

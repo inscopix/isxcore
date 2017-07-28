@@ -10,6 +10,7 @@
 #include "isxSeriesUtils.h"
 #include "isxCellSetFactory.h"
 #include "isxGpio.h"
+#include "isxProject.h"
 
 #include "json.hpp"
 
@@ -147,37 +148,38 @@ Series::checkBeforeAddOrInsertUnitarySeries(const SpSeries_t & inUnitarySeries) 
 }
 
 void
-Series::addUnitarySeries(const SpSeries_t & inUnitarySeries)
+Series::insertUnitarySeries(const SpSeries_t & inUnitarySeries, bool inCheckNewMember)
 {
     checkBeforeAddOrInsertUnitarySeries(inUnitarySeries);
+    size_t index = 0;
 
-    inUnitarySeries->setContainer(this);
-    m_unitarySeries.push_back(inUnitarySeries);
-    m_modified = true;
-}
-
-void
-Series::insertUnitarySeries(const SpSeries_t & inUnitarySeries)
-{
-    checkBeforeAddOrInsertUnitarySeries(inUnitarySeries);
-
-    auto ds = inUnitarySeries->getDataSet(0);
-
-    std::string message;
-    if (!checkNewMember(ds, message))
+    if (inCheckNewMember)
     {
-        ISX_THROW(ExceptionSeries, message);
+        auto ds = inUnitarySeries->getDataSet(0);
+
+        std::string message;
+        if (!checkNewMember(ds, message))
+        {
+            ISX_THROW(ExceptionSeries, message);
+        }
+
+        const Time start = ds->getTimingInfo().getStart();
+        
+        for (const auto & mds : getDataSets())
+        {
+            if (start < mds->getTimingInfo().getStart())
+            {
+                break;
+            }
+            ++index;
+        }
     }
 
-    const Time start = ds->getTimingInfo().getStart();
-    size_t index = 0;
-    for (const auto & mds : getDataSets())
+    // Make sure the item will have a unique name in the project
+    std::string uniqueName = getUniqueName(inUnitarySeries->getName());
+    if(uniqueName != inUnitarySeries->getName())
     {
-        if (start < mds->getTimingInfo().getStart())
-        {
-            break;
-        }
-        ++index;
+        inUnitarySeries->setUniqueName(uniqueName);
     }
 
     inUnitarySeries->setContainer(this);
@@ -298,6 +300,14 @@ Series::addChild(SpSeries_t inSeries)
     if (inSeries)
     {
         ISX_ASSERT(inSeries->getParent() == nullptr);
+
+        // Make sure the item will have a unique name in the project
+        std::string uniqueName = getUniqueName(inSeries->getName());
+        if(uniqueName != inSeries->getName())
+        {
+            inSeries->setUniqueName(uniqueName);
+        }
+
         inSeries->setParent(this);
         m_children.push_back(inSeries);
         m_modified = true;
@@ -340,9 +350,17 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
                         return false;
                     }
                 }
+                else if (childType == DataSet::Type::IMAGE)
+                {
+                    if (!checkSeriesHasSameNumPixels(inSeries))
+                    {
+                        outErrorMessage = "A movie can only derive images with the same number of pixels.";
+                        return false;
+                    }
+                }
                 else
                 {
-                    outErrorMessage = "A movie can only derive movies and cellsets.";
+                    outErrorMessage = "A movie can only derive movies, images and cellsets.";
                     return false;
                 }
                 break;
@@ -366,6 +384,7 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
             }
             case DataSet::Type::BEHAVIOR:
             case DataSet::Type::GPIO:
+            case DataSet::Type::IMAGE:
             default:
             {
                 if (!isASuitableParent(outErrorMessage))
@@ -393,7 +412,7 @@ Series::isASuitableParent(std::string & outErrorMessage) const
         return false;
     }
     const DataSet::Type type = getType();
-    if (type == DataSet::Type::BEHAVIOR || type == DataSet::Type::GPIO)
+    if (!(type == DataSet::Type::MOVIE || type == DataSet::Type::CELLSET))
     {
         outErrorMessage = "Only movies and cellsets can derive other datasets.";
         return false;
@@ -495,6 +514,12 @@ Series::removeChild(isize_t inIndex)
 bool
 Series::checkNewMember(DataSet * inDataSet, std::string & outMessage)
 {
+    if (inDataSet->getType() == DataSet::Type::IMAGE)
+    {
+        outMessage = "You are attempting to add an image to a series. Image series are not yet supported.";
+        return false;
+    }
+
     auto dss = getDataSets();
     if (dss.empty())
     {
@@ -607,12 +632,46 @@ Series::getName() const
 void
 Series::setName(const std::string & inName)
 {
+    std::string uniqueName = getUniqueName(inName);
+    if (m_name != uniqueName)
+    {
+        setUniqueName(uniqueName);
+    }
+}
+
+void 
+Series::setUniqueName(const std::string & inName)
+{
     m_name = inName;
     if (m_dataSet != nullptr)
     {
         m_dataSet->setName(inName);
     }
     m_modified = true;
+}
+
+bool Series::isNameUsed(const std::string & inName) const 
+{
+    if (m_name == inName)
+    {
+        return true;
+    }
+    for (const auto & i: m_unitarySeries)
+    {
+        if (i->isNameUsed(inName))
+        {
+            return true;
+        }
+    }
+    for (const auto & i : m_children)
+    {
+        if (i->isNameUsed(inName))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool
@@ -725,7 +784,7 @@ Series::fromJsonString(const std::string & inString, const std::string & inAbsol
         {
             SpDataSet_t dataSet = DataSet::fromJsonString(jsonDataSet.dump(), inAbsolutePathToPrepend);
             auto tmpUnitarySeries = std::make_shared<Series>(dataSet);
-            ret->addUnitarySeries(tmpUnitarySeries);
+            ret->insertUnitarySeries(tmpUnitarySeries);
         }
     }
     if (jsonObj.find("children") != jsonObj.end())

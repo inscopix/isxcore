@@ -16,6 +16,13 @@ namespace isx
 using MovieGetFrameCB_t = std::function<void(AsyncTaskResult<SpVideoFrame_t>)>;
 using GetFrameCB_t = std::function<SpVideoFrame_t()>;
 
+// It's difficult to define a hard cut-off but
+// since we're using this in our recommended
+// ffpmeg command line to convert unsupported
+// movies it seems appropriate to use it here
+// as a hard limit also.
+static const int64_t sMaxSupportedGopSize = 10;    
+
 /// Interface for Movies
 ///
 class Movie : public Object

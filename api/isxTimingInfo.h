@@ -5,6 +5,7 @@
 #include "isxCore.h"
 #include "isxTime.h"
 #include "isxIndexRange.h"
+#include "isxCoreFwd.h"
 
 #include <vector>
 
@@ -218,22 +219,87 @@ private:
 /// type of container for multiple TimingInfo objects for MovieSeries, TraceSeries
 using TimingInfos_t = std::vector<TimingInfo>;
 
-/// Convert a global index to a pair of sample of segment indices.
-///
-/// This is used by the player to convert global frame indices to local pairs
-/// of indices to read the right frame from the right file.
-///
-/// If the global index is in between segments, this returns <n, T_n> where n is
-/// the segment before the index and T_n is the number of samples in that segment.
-/// If the global index comes after the end of the last segment, then this
-/// return <N, 0> where N is the number of segments.
-///
-/// \param  inGlobalTimingInfo  The timing info from which the global index lives in.
-/// \param  inTimingInfos       The local timing info of each segment.
-/// \param  inGlobalSampleIndex The global index to convert.
-/// \return                     A pair containing the segment index, then the sample index.
+// NOTE sweet : The following functions are utilities associated with many timing
+//              infos that effectively define the timing info of a series.
+
+/// \param  inTis           The timing infos to use for conversion.
+/// \param  inGlobalIndex   The global index to convert.
+/// \return                 The {segment, local} indices clamped to fit in their valid ranges.
 std::pair<isize_t, isize_t>
-getSegmentIndexAndSampleIndexFromGlobalSampleIndex(const TimingInfo inGlobalTimingInfo, const TimingInfos_t & inTimingInfos, isize_t inGlobalSampleIndex);
+getSegmentAndLocalIndex(const TimingInfos_t & inTis, const isize_t inGlobalIndex);
+
+/// \param  inTis   The timing infos to use for conversion.
+/// \param  inTime  The time to convert.
+/// \return         The {segment, local} indices clamped to fit in their valid ranges.
+std::pair<isize_t, isize_t>
+getSegmentAndLocalIndex(const TimingInfos_t & inTis, const Time & inTime);
+
+/// \param  inTis           The timing infos to use for conversion.
+/// \param  inGlobalIndex   The global index to convert.
+/// \return                 The segment index, clamped to be less than the number of segments.
+isize_t
+getSegmentIndex(const TimingInfos_t & inTis, const isize_t inGlobalIndex);
+
+/// \param  inTis   The timing infos to use for conversion.
+/// \param  inTime  The time to convert.
+/// \return         The segment index, clamped to be less than the number of segments.
+isize_t
+getSegmentIndex(const TimingInfos_t & inTis, const Time & inTime);
+
+/// \param  inTis           The timing infos to use for conversion.
+/// \param  inSegmentLocal  The {segment, local} indices.
+/// \return                 The global index associated with the segment/local index.
+isize_t
+getGlobalIndex(const TimingInfos_t & inTis, const std::pair<isize_t, isize_t> & inSegmentLocal);
+
+/// \param  inTis   The timing infos to use for conversion.
+/// \param  inTime  The time to convert.
+/// \return             The global index associated with the time.
+isize_t
+getGlobalIndex(const TimingInfos_t & inTis, const Time & inTime);
+
+/// \param  inTis   The timing infos to count frames over.
+/// \return         The total number of frames in the timing infos.
+isize_t
+getTotalNumTimes(const TimingInfos_t & inTis);
+
+/// \param  inTis   The timing infos to count duration over.
+/// \return         The total duration.
+DurationInSeconds
+getTotalDuration(const TimingInfos_t & inTis);
+
+/// \param  inTis           The timing infos to count duration over.
+/// \param  inSegmentIndex  The segment index.
+/// \param  inLocalIndex    The index within the segment.
+/// \return                 The duration from the start time to the time implied
+///                         by the given indices (not including gaps).
+DurationInSeconds
+getGaplessDurationSinceStart(const TimingInfos_t & inTis, const isize_t inSegmentIndex, const isize_t inLocalIndex);
+
+/// Convert global index ranges to local index ranges.
+///
+/// The backend (e.g. temporal crop, project movie) typically wants local ranges
+/// because these will always mean the same thing.
+/// It's often easier for the frontend to deal with global ranges, so this function
+/// is used for conversion from global to local.
+///
+/// \param  inLocalTis          The local timing info of each segment.
+/// \param  inGlobalRanges      The global index ranges.
+/// \return                     The local index ranges.
+std::vector<IndexRanges_t>
+convertGlobalRangesToLocalRanges(
+        const TimingInfos_t & inLocalTis,
+        const IndexRanges_t & inGlobalRanges);
+
+/// Convert global frame ranges to local frame ranges.
+///
+/// \param  inMovies            The movies in a series.
+/// \param  inGlobalRanges      The global frame ranges.
+/// \return                     The local frame ranges.
+std::vector<IndexRanges_t>
+convertGlobalRangesToLocalRanges(
+        const std::vector<SpMovie_t> inMovies,
+        const IndexRanges_t & inGlobalRanges);
 
 } // namespace isx
 

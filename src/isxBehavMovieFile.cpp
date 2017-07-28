@@ -1,6 +1,7 @@
 
 #include "isxBehavMovieFile.h"
 #include "isxPathUtils.h"
+#include "isxMovie.h"
 
 extern "C" {
 #include "libavcodec/avcodec.h"
@@ -15,6 +16,81 @@ extern "C" {
 #include <memory>
 #include <fstream>
 
+// Rough outline of what this code is doing (July 24th 2017)
+// Compressed video is usually stored in a "container" file. The container holds 
+// any number of compressed video streams, plus compressed audio streams plus
+// subtitles and other data streams.
+// FFMPEG retrieves the compressed data from the container file in "packets".
+// A packet contains either compressed video or compressed audio. 
+// Since we currently do not support audio playback we ignore any audio packets.
+// Frames in a video stream are usually compressed as either
+// I - "Intra-coded picture” - this is full frame encoded similar to JPG (lossy).
+// P - "Predicted picture” - this holds only the changes from the previous frame.
+// B - “Bi-directional predicted picture” - this holds difference from previous
+//     and following (future) frames. 
+// We do not support video streams that contain B frames.
+// A video packet usually contains data for one frame. It has a PTS 
+// (presentation time stamp) and a DTS (decoding time stamp).  Most times are
+// in units of “time base” which is retrieved from the stream at init time.
+// We currently ignore the DTS, as far as I know it is only needed for streams
+// with B frames, because only when there are B frames the PTS of subsequent
+// packets in the stream are not strictly increasing (but presumably the DTS
+// are).  
+// The distance (in number of frames) between two I frames in a video stream
+// is called the GOP size (Group Of Pictures).  Decoding (after seeking) has to 
+// start with an I frame or there is corruption due to insufficient frame data.
+// The larger the GOP size, the better compression can be achieved at the cost
+// of seek performance.  I found that a GOP size of about 10 results in decent
+// seek performance.  Anything larger will cause us to issue a warning to the
+// user when importing.  The conversion (to canonical format) with ffmpeg sets
+// the GOP size to 10 and removes all B frames.
+// In some of the sample videos I saw a GOP size of 300.
+// 
+// Code overview:
+// FFMPEG initialization (ctor & initializeFromStream) follows largely what is
+// done in other sample code or what the documentation says.  
+// AVFormatContext deals with the container file and reading packets from a 
+//     stream.
+// AVCodecContext deals with decoding packets into frames.
+// AVStream describes a videos stream (frame rate, time base, duration etc).
+// AVPacket contains compressed video data, needs to be explicitly released.
+//
+// Two constructors:
+// 1 - with filename only is used during import.
+// We scan (scanAllFrames) through the imported file, reading all packets with
+// FFMPEG but not doing any decoding (which would be much slower).  We look
+// for B frames, the GOP size, and count the total number of frames (video
+// packets). GOP size and number of frames is stored in the Dataset’s properties.
+// 2 - with filename and properties is used during visualization.
+//
+// Regular playback (from start, no seeking):
+// readFrame returns an isx::VideoFrame given a frame index.  The frame index
+// is passed to seekFrameAndReadPacket which during regular playback just reads
+// the next packet into m_pPacket and then sends it to the video codec for 
+// decoding (avcodec_send_packet).
+// Upon return from seekFrameAndReadPacket, readFrame tries to receive the 
+// decoded frame (avcodec_receive_frame). If the PTS matches, the frame data is
+// copied into the isx::VideoFrame.
+// According to the documentation (probably out-dated), video packets may
+// may contain data for multiple video frames, so there is a loop issuing
+// more avcodec_receive_frame calls until PTS match is found. I think this loop
+// is actually not necessary.
+// 
+// Seeking:
+// If seekFrameAndReadPacket determines that the requested frame index does
+// not match next packet’s PTS, we seek. Decoding needs to start with I frames, so
+// we always seek to at least beyond the requested PTS plus (or minus - depending
+// on seek direction) the number frames per GOP.  Seeking is done in three stages:
+// A - seek with FFMPEG avformat_seek_file,
+// B - then check if the PTS of the next packet is “early” enough. I found that
+//     sometimes avformat_seek_file would not seek far enough so I continue to
+//     decrease the “seekFrameNumber” until we get a packet PTS that is not 
+//     greater than what we requested.
+// C - start reading and decoding packets until we find the packet PTS that 
+//     matches the frame index that was requested (this is the outer while
+//     loop in readFrame).
+
+
 //#if ISX_OS_MACOS
 //#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 //#endif
@@ -27,10 +103,6 @@ extern "C" {
 #define ISX_BEHAV_READ_DEBUG_LOGGING 0
 #define ISX_BEHAV_READ_LOG_DEBUG(...)
 #endif
-
-
-
-#define USE_ALTERNATE_SEEK 0
 
 namespace
 {
@@ -82,6 +154,11 @@ BehavMovieFile::BehavMovieFile(const std::string & inFileName, const DataSet::Pr
     else
     {
         ISX_THROW(isx::ExceptionFileIO, "Could not find gop size property.");
+    }
+
+    if (gopSize > sMaxSupportedGopSize)
+    {
+        ISX_LOG_ERROR("Behavioral video import, GOP size over limit (", gopSize, " > ", sMaxSupportedGopSize, "): ", m_fileName);
     }
 
     if (inProperties.find(DataSet::PROP_BEHAV_NUM_FRAMES) != inProperties.end())
@@ -215,60 +292,6 @@ BehavMovieFile::readPacketFromStream(int inStreamIndex, const std::string & inCo
 int64_t
 BehavMovieFile::seekFrameAndReadPacket(isize_t inFrameNumber)
 {
-#if USE_ALTERNATE_SEEK
-    const int64_t requestedPts = timeBaseUnitsForFrames(inFrameNumber) + m_videoPtsStartOffset;
-    
-    if (inFrameNumber == 0)
-    {
-        av_seek_frame(m_formatCtx, m_videoStreamIndex, 0, AVSEEK_FLAG_BACKWARD);
-        avcodec_flush_buffers(m_videoCodecCtx);
-        auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
-        if (readRet < 0)
-        {
-            ISX_LOG_ERROR("Error in BehavMovieFile::seekFrame: ", readRet);
-        }
-    }
-    else
-    {
-        auto readRet = av_read_frame(m_formatCtx, m_pPacket.get());
-        if (readRet < 0)
-        {
-            ISX_LOG_ERROR("Error in BehavMovieFile::seekFrame: ", readRet);
-        }
-        // do we need to seek to a different GOP?
-        bool seekToGOP = requestedPts < m_pPacket->pts - timeBaseUnitsForFrames(2);
-        seekToGOP = seekToGOP || requestedPts >= (m_pPacket->pts + timeBaseUnitsForFrames(m_gopSize));
-        if (seekToGOP)
-        {
-            ISX_BEHAV_READ_LOG_DEBUG("BehavMovieFile::seekFrame: requestedPts: ", requestedPts, ", m_pPacket->pts: ", m_pPacket->pts);
-            av_packet_unref(m_pPacket.get());
-            
-            int64_t minSeekFrameNumber = std::max(int64_t(0), int64_t(inFrameNumber) - int64_t(m_gopSize));
-            int64_t seekPts = timeBaseUnitsForFrames(minSeekFrameNumber) + m_videoPtsStartOffset;
-            int64_t minPts = seekPts;
-            int64_t maxPts = requestedPts;
-            ISX_BEHAV_READ_LOG_DEBUG("BehavMovieFile::seekFrame: seeking to : ", seekPts);
-            //ISX_LOG_DEBUG("BehavMovieFile::seekFrame: seeking to : ", seekPts);
-            auto res = avformat_seek_file(m_formatCtx, m_videoStreamIndex, minPts, seekPts, maxPts, 0);
-            if (res < 0)
-            {
-                ISX_LOG_ERROR("Error in BehavMovieFile::seekFrame - avformat_seek_file: ", res);
-            }
-            readRet = av_read_frame(m_formatCtx, m_pPacket.get());
-            if (readRet < 0)
-            {
-                ISX_LOG_ERROR("Error in BehavMovieFile::seekFrame - av_read_frame: ", readRet);
-            }
-//            ISX_ASSERT(m_pPacket->pts <= seekPts);//requestedPts);
-            if (m_pPacket->pts > requestedPts)
-            {
-                ISX_LOG_DEBUG("m_pPacket->pts > requestedPts!");
-            }
-        }
-    }
-
-    return requestedPts;
-#else
     const int64_t requestedPts = timeBaseUnitsForFrames(inFrameNumber) + m_videoPtsStartOffset;
     const int64_t deltaFromCurrent = requestedPts - m_lastPktPts;
     const int64_t deltaFromExpected = deltaFromCurrent - timeBaseUnitsForFrames(1);
@@ -359,7 +382,6 @@ BehavMovieFile::seekFrameAndReadPacket(isize_t inFrameNumber)
     av_packet_unref(m_pPacket.get());
 
     return requestedPts;
-#endif
 }
     
 SpVideoFrame_t
@@ -381,15 +403,6 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
     {
         return getBlackFrame(inFrameNumber);
     }
-
-#if USE_ALTERNATE_SEEK
-    if (avcodec_send_packet(m_videoCodecCtx, m_pPacket.get()) != 0)
-    {
-        av_packet_unref(m_pPacket.get());
-        ISX_THROW(isx::ExceptionFileIO,
-                  "Failed to decode video packet: ", m_fileName);
-    }
-#endif
 
     auto pFrame = av_frame_alloc();
     auto recvResult = avcodec_receive_frame(m_videoCodecCtx, pFrame);
@@ -456,7 +469,10 @@ BehavMovieFile::readFrame(isize_t inFrameNumber)
         case AV_PIX_FMT_YUVA420P:
             break;
         default:
-            ISX_THROW(isx::ExceptionFileIO, "Invalid frame format: ", pFrame->format);
+        {
+            ISX_LOG_ERROR("Behavioral video playback, unsupported frame format: ", pFrame->format, ", ", m_fileName);
+            ISX_THROW(isx::ExceptionFileIO, errorMessageUserManual);
+        }
     }
 
     ISX_ASSERT(isize_t(pFrame->width) == m_spacingInfo.getNumPixels().getWidth());
@@ -717,11 +733,17 @@ BehavMovieFile::getBehavMovieProperties(
             ISX_THROW(isx::ExceptionFileIO, "initializeFromStream failed.");
         }
 
+        // try to read one frame to get some errors (eg invalid frame format) right here
+        if (m->readFrame(0) == nullptr)
+        {
+            ISX_THROW(isx::ExceptionFileIO, "readFrame(0) failed.");
+        }
+
         return true;
     }
     return false;
 }
-    
+
 // Note aschildan 6/21/2017: This is some debugging code that is currently not used.
 // I'll leave it here for future testing. I found it useful when working on the bug
 // MOS-920 "Microsoft LifeCam video has exception at end of file"
@@ -758,9 +780,6 @@ BehavMovieFile::scanAllPts()
 }
     
 } // namespace isx
-
-
-
 
 
 

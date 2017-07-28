@@ -1,16 +1,20 @@
 #include "isxNVokeGpioFile.h"
+#include "isxNVistaGpioFile.h"
 #include "isxTest.h"
 #include "isxPathUtils.h"
 #include "isxJsonUtils.h"
 #include "isxException.h"
 #include "isxDataSet.h"
+#include "isxGpio.h"
 
 #include "catch.hpp"
 
 #include <fstream>
 #include <algorithm>
 
-void testParsing(
+const isx::isize_t fileVersion = 1;
+
+void testNVokeParsing(
     const std::string & inFileName,
     const std::string & inOutputDir,
     const std::vector<std::string> & inExpectedSuffixes,
@@ -90,7 +94,7 @@ void testParsing(
                 REQUIRE(header == expectedHeader);
 
                 /// Read first data value for channel
-                isx::GpioFile::DataPkt pkt;
+                isx::TimeStampedDataFile::DataPkt pkt;
 
                 file.read((char *) &pkt, sizeof(pkt));                
                 if (!file.good())
@@ -126,11 +130,10 @@ void testParsing(
 TEST_CASE("GpioDataTest", "[core]")
 {
 
-    isx::CoreInitialize();
-    
+    isx::CoreInitialize();   
 
 
-    SECTION("Parse a GPIO file - ANALOG and SYNC") 
+    SECTION("Parse a nVoke GPIO file - ANALOG and SYNC") 
     {
         std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/recording_20161104_093749_gpio.raw");
         std::string outputDir = isx::getAbsolutePath(g_resources["unitTestDataPath"]);
@@ -146,19 +149,23 @@ TEST_CASE("GpioDataTest", "[core]")
 
         isx::json analogHeader;
         std::map<std::string, int> analogChannelOffsets{{"GPIO4_AI", 0}};
+        analogHeader["analog"] = true;
         analogHeader["type"] = size_t(isx::DataSet::Type::GPIO);
         analogHeader["channel offsets"] = analogChannelOffsets;
         analogHeader["timing info"] = convertTimingInfoToJson(ti);
         analogHeader["producer"] = isx::getProducerAsJson();
-        analogHeader["fileVersion"] = 0;
+        analogHeader["fileVersion"] = fileVersion;
+        analogHeader["dataType"] = (int)isx::TimeStampedDataFile::StoredData::GPIO;
 
         isx::json eventsHeader;
         std::map<std::string, int> eventsChannelOffsets{{"SYNC", 0}};
+        eventsHeader["analog"] = false;
         eventsHeader["type"] = size_t(isx::DataSet::Type::GPIO);
         eventsHeader["channel offsets"] = eventsChannelOffsets;
         eventsHeader["timing info"] = convertTimingInfoToJson(ti);
         eventsHeader["producer"] = isx::getProducerAsJson();
-        eventsHeader["fileVersion"] = 0;
+        eventsHeader["fileVersion"] = fileVersion;
+        eventsHeader["dataType"] = (int)isx::TimeStampedDataFile::StoredData::GPIO;
 
         std::vector<isx::json> fileHeaders{analogHeader, eventsHeader};
 
@@ -183,7 +190,7 @@ TEST_CASE("GpioDataTest", "[core]")
         // End of expected values ********************************************
         //////////////////////////////////////////////////////////////////////
 
-        testParsing(
+        testNVokeParsing(
             fileName,
             outputDir,
             expectedSuffixes,
@@ -194,7 +201,7 @@ TEST_CASE("GpioDataTest", "[core]")
             power);
     }
 
-    SECTION("Parse a GPIO file - EX_LED, SYNC and TRIG") 
+    SECTION("Parse a nVoke GPIO file - EX_LED, SYNC and TRIG") 
     {
         std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/recording_20170126_143728_gpio.raw");
         std::string outputDir = isx::getAbsolutePath(g_resources["unitTestDataPath"]);
@@ -210,11 +217,13 @@ TEST_CASE("GpioDataTest", "[core]")
 
         isx::json eventsHeader;
         std::map<std::string, int> channelOffsets{{"EX_LED", 0}, {"SYNC", 151}, {"TRIG", 3056}};
+        eventsHeader["analog"] = false;
         eventsHeader["type"] = size_t(isx::DataSet::Type::GPIO);
         eventsHeader["channel offsets"] = channelOffsets;
         eventsHeader["timing info"] = convertTimingInfoToJson(ti);
         eventsHeader["producer"] = isx::getProducerAsJson();
-        eventsHeader["fileVersion"] = 0;
+        eventsHeader["fileVersion"] = fileVersion;
+        eventsHeader["dataType"] = (int)isx::TimeStampedDataFile::StoredData::GPIO;
 
         std::vector<isx::json> fileHeaders{eventsHeader};
 
@@ -245,7 +254,7 @@ TEST_CASE("GpioDataTest", "[core]")
         // End of expected values ********************************************
         //////////////////////////////////////////////////////////////////////
         
-        testParsing(
+        testNVokeParsing(
             fileName,
             outputDir,
             expectedSuffixes,
@@ -256,6 +265,67 @@ TEST_CASE("GpioDataTest", "[core]")
             power);
 
         
+    }
+
+    SECTION("Parse a nVista GPIO file - SYNC, TRIG, IO1, IO2") 
+    {
+        std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/nVistaGpio/test_nvista_gpio.hdf5");
+        std::string outputDir = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/nVistaGpio");
+
+        isx::NVistaGpioFile raw(fileName, outputDir, nullptr);
+        try
+        {
+            raw.parse();
+        }
+        catch(const isx::ExceptionDataIO & error)
+        {
+            FAIL("There was a DataIO exception when parsing file: ", error.what());
+        }
+        catch(const isx::ExceptionFileIO & error)
+        {
+            FAIL("There was a FileIO exception when parsing file: ", error.what());
+        }
+
+        std::vector<std::string> filenames;
+        raw.getOutputFileNames(filenames);
+
+        REQUIRE(filenames.size() == 1);
+
+        /// Expected output as parsed with export_nvista_gpio.py
+        std::map<std::string, std::vector<float>> expected;
+        expected["IO1"] = { 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 
+                            1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
+                            1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f};
+
+        expected["IO2"] = { 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 
+                            1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
+                            1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f};
+
+        expected["sync"] = { 0.f, 0.f, 0.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
+                             1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
+                             1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 0.f, 0.f,};
+
+        expected["trigger"] = { 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 
+                                1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
+                                1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f};
+
+        /// Read the output of the parser
+        isx::SpGpio_t gpio = isx::readGpio(filenames.front());
+        REQUIRE(gpio->isAnalog());
+
+        std::vector<std::string> channels = gpio->getChannelList();
+        for (auto & c : channels)
+        {
+            isx::SpFTrace_t t = gpio->getAnalogData(c);
+            REQUIRE(t);
+            auto & exp = expected.at(c);
+
+            for (isx::isize_t i(0); i < exp.size(); ++i)
+            {
+                REQUIRE(exp.at(i) == t->getValue(i));
+            }
+        }
+
     }
 
     isx::CoreShutdown();

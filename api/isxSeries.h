@@ -99,23 +99,15 @@ public:
     getType()
     const;
 
-    /// Add a unitary Series (containing exactly one data set) to this series
-    /// without any checks.
-    /// This Series takes over ownership of the DataSet in the unitary Series.
-    ///
-    /// \param  inUnitarySeries   The Series to be inserted.
-    void
-    addUnitarySeries(const SpSeries_t & inUnitarySeries);
-
     /// Insert a unitary Series (containing exactly one data set) into this series.
     /// This Series takes over ownership of the DataSet in the unitary Series.
     ///
     /// \param  inUnitarySeries   The Series to be inserted.
-    ///
+    /// \param  inCheckNewMember  Whether to check compatibility of new member with the rest of the member series
     /// \throw  ExceptionDataIO If this item already has a child with the name of the data set.
     /// \throw  ExceptionSeries If this Series is unitary or if inUnitarySeries is not unitary.
     void
-    insertUnitarySeries(const SpSeries_t & inUnitarySeries);
+    insertUnitarySeries(const SpSeries_t & inUnitarySeries, bool inCheckNewMember = true);
 
     /// Remove a DataSet given a unitary Series.
     ///
@@ -311,6 +303,11 @@ public:
     operator ==(const ProjectItem & other)
     const
     override;
+
+    bool 
+    isNameUsed(const std::string & inName) 
+    const 
+    override;
     
 private:
     
@@ -329,6 +326,10 @@ private:
 
     void
     checkBeforeAddOrInsertUnitarySeries(const SpSeries_t & inUnitarySeries) const;
+
+    void 
+    setUniqueName(const std::string & inName);
+    
 
     /// True if this series is valid.
     bool                                m_valid;

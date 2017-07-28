@@ -8,7 +8,7 @@
 namespace isx
 {
 
-class GpioFile;
+class TimeStampedDataFile;
 template <typename T> class IoTaskTracker;
 
 /// Class used to read and handle GPIO data
@@ -48,10 +48,10 @@ public:
     getChannelList() const override;
 
     SpFTrace_t
-    getAnalogData() override;
+    getAnalogData(const std::string & inChannelName) override;
 
     void
-    getAnalogDataAsync(GpioGetAnalogDataCB_t inCallback) override;
+    getAnalogDataAsync(const std::string & inChannelName, GpioGetAnalogDataCB_t inCallback) override;
 
     SpLogicalTrace_t
     getLogicalData(const std::string & inChannelName) override;
@@ -70,7 +70,7 @@ public:
 
 private:
 
-    std::shared_ptr<GpioFile>      m_file;
+    std::shared_ptr<TimeStampedDataFile>              m_file;
     std::shared_ptr<IoTaskTracker<FTrace_t>>          m_analogIoTaskTracker;
     std::shared_ptr<IoTaskTracker<LogicalTrace>>      m_logicalIoTaskTracker;
 
