@@ -91,6 +91,15 @@ bool checkNewMemberOfSeries(
         const SpGpio_t & inNew,
         std::string & outMessage);
 
+/// \param  inExisting  The existing events in the series sorted by time.
+/// \param  inNew       The new events to add to the series.
+/// \param  outMessage  The reason why the new events cannot be added to the series.
+/// \return             True if the new events can be added to the series, false otherwise.
+bool checkNewMemberOfSeries(
+        const std::vector<SpEvents_t> & inExisting,
+        const SpEvents_t & inNew,
+        std::string & outMessage);
+
 /// \return The timing info for series without gaps from many consistent
 ///         timing infos.
 TimingInfo makeGaplessTimingInfo(const TimingInfos_t & inTis);

@@ -18,9 +18,6 @@ CellSetExporterParams::getOpName()
 AsyncTaskStatus 
 runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
 {
-    const int32_t timeDecimals = std::numeric_limits<double>::digits10 + 1;
-    const int32_t maxDecimalsForFloat = std::numeric_limits<float>::digits10 + 1;
-    
     bool cancelled = false;
     auto & srcs = inParams.m_srcs;
 
@@ -53,9 +50,8 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
                             isize_t(inParams.m_outputImageFilename.empty() == false);
     float progress = 0.f;
 
-
     /// Traces to CSV
-    if(inParams.m_outputTraceFilename.empty() == false)
+    if (inParams.m_outputTraceFilename.empty() == false)
     {
         std::ofstream strm(inParams.m_outputTraceFilename, std::ios::trunc);
 
@@ -63,93 +59,42 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
         {
             ISX_THROW(isx::ExceptionFileIO, "Error writing to output file.");
         }
-        
-        isx::DurationInSeconds baseTime{};
+
+        const SpCellSet_t & refSrc = srcs.front();
+        isx::Time baseTime;
         switch (inParams.m_writeTimeRelativeTo)
         {
             case WriteTimeRelativeTo::FIRST_DATA_ITEM:
             {
-                baseTime = srcs[0]->getTimingInfo().getStart().getSecsSinceEpoch();;
+                baseTime = refSrc->getTimingInfo().getStart();
                 break;
             }
             case WriteTimeRelativeTo::UNIX_EPOCH:
             {
-                baseTime = isx::DurationInSeconds{};
+                // baseTime is already the unix epoch
                 break;
             }
             default:
-                ISX_THROW(isx::ExceptionUserInput, "Invalid setting for writeTimeRelativeTo");
+                ISX_THROW(ExceptionUserInput, "Invalid setting for writeTimeRelativeTo");
         }
 
-        // calculate total number of lines to write (for progress reporting)
-        isize_t numLinesTotal = 0; 
-        isize_t numLinesWritten = 0;
-        for (auto & cs: srcs)
-        {
-            numLinesTotal += cs->getTimingInfo().getNumTimes();
-        }
+        std::vector<std::vector<SpFTrace_t>> traces(srcs.size());
+        std::vector<std::string> names;
+        std::vector<std::string> statuses;
 
-        // write column headers
-        strm << " , ";
-        for (isize_t i = 0; i < numCells - 1; ++i)
+        const isize_t numCells = refSrc->getNumCells();
+        for (isize_t c = 0; c < numCells; ++c)
         {
-            strm << srcs[0]->getCellName(i) << ", ";
-        }
-        strm << srcs[0]->getCellName(numCells - 1) << "\n";
-
-        // write cell statuses
-        strm << "Time(s)/Cell Status, ";
-        for (isize_t i = 0; i < numCells - 1; ++i)
-        {
-            strm << srcs[0]->getCellStatusString(i) << ", ";
-        }
-        strm << srcs[0]->getCellStatusString(numCells - 1) << "\n";
-        
-        // iterate over input cell sets
-        for (auto & cs: srcs)
-        {
-            // loop over samples
-            const isize_t numSamples = cs->getTimingInfo().getNumTimes();
-            for (isize_t sample = 0; sample < numSamples; ++sample)
+            names.push_back(refSrc->getCellName(c));
+            statuses.push_back(refSrc->getCellStatusString(c));
+            for (size_t s = 0; s < srcs.size(); ++s)
             {
-                // write time point
-                {
-                    auto tm = cs->getTimingInfo().convertIndexToStartTime(sample).getSecsSinceEpoch();
-                    auto timeToWrite = (tm - baseTime).toDouble();
-                    strm << std::setprecision(timeDecimals);
-                    strm << timeToWrite << ", ";
-                }
-                
-                strm << std::setprecision(maxDecimalsForFloat);
-
-                // loop over individual cells
-                for (isize_t cell = 0; cell < numCells - 1; ++cell)
-                {
-                    // write cell's data value
-                    auto tr = cs->getTrace(cell);
-                    strm << tr->getValue(sample) << ", ";
-                }
-                // write last cell's data value
-                auto tr = cs->getTrace(numCells - 1);
-                strm << tr->getValue(sample);
-
-                // write newline before next time point
-                strm << "\n";
-                ++numLinesWritten;
-                progress = float(numLinesWritten) / float(numLinesTotal) / float(numSections);
-                cancelled = inCheckInCB(progress);
-                if (cancelled)
-                {
-                    break;
-                }
-            }
-            if (cancelled)
-            {
-                break;
+                traces[s].push_back(srcs[s]->getTrace(c));
             }
         }
+
+        cancelled = writeTraces(strm, traces, names, statuses, baseTime, inCheckInCB);
     }
-
 
     /// Images to TIFF
     if(inParams.m_outputImageFilename.empty() == false)
