@@ -3,6 +3,7 @@
 #include "isxMovieFactory.h"
 #include "isxCellSetFactory.h"
 #include "isxPathUtils.h"
+#include "isxWritableEvents.h"
 
 #include "catch.hpp"
 #include "isxTest.h"
@@ -342,6 +343,20 @@ makeGpioSeries(
 }
 
 isx::SpSeries_t
+makeEventsSeries(
+        const std::string & inName,
+        const std::string & inFilePath,
+        const isx::TimingInfo & inTimingInfo)
+{
+    const isx::HistoricalDetails history;
+    const isx::SpWritableEvents_t events = isx::writeEvents(inFilePath);
+    events->setTimingInfo(inTimingInfo);
+    events->closeForWriting();
+    const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::EVENTS, inFilePath, history);
+    return std::make_shared<isx::Series>(dataSet);
+}
+
+isx::SpSeries_t
 makeImageSeries(
         const std::string & inName,
         const std::string & inFilePath)
@@ -520,6 +535,12 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
+        SECTION("Child has one events set")
+        {
+            const isx::SpSeries_t childSeries = makeEventsSeries("child", childFilePath1, ti1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
     }
 
     SECTION("Parent has two movies")
@@ -627,6 +648,12 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
+        SECTION("Child has one events set")
+        {
+            const isx::SpSeries_t childSeries = makeEventsSeries("child", childFilePath1, ti1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
     }
 
     SECTION("Parent has one cellset")
@@ -698,6 +725,12 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
+        SECTION("Child has one valid events set")
+        {
+            const isx::SpSeries_t childSeries = makeEventsSeries("child", childFilePath1, ti1);
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
     }
 
     SECTION("Parent has two cellsets")
@@ -767,6 +800,13 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
+        SECTION("Child has one valid events set with same time span as parent")
+        {
+            const isx::TimingInfo childTi(start1, step, numTimes1 + numTimes2 + 20);
+            const isx::SpSeries_t childSeries = makeEventsSeries("child", childFilePath1, childTi);
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
     }
 
     SECTION("Parent has one behavioral movie")
@@ -807,6 +847,12 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
+        SECTION("Child has one events set")
+        {
+            const isx::SpSeries_t childSeries = makeEventsSeries("child", childFilePath1, ti1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
     }
 
     SECTION("Parent has one GPIO")
@@ -840,6 +886,12 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
         SECTION("Child has one valid image")
         {
             const isx::SpSeries_t childSeries = makeImageSeries("child", childFilePath1, isx::TimingInfo(ti1.getStart(), ti1.getStep(), 1), si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one events set")
+        {
+            const isx::SpSeries_t childSeries = makeEventsSeries("child", childFilePath1, ti1);
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
@@ -879,12 +931,99 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
+        SECTION("Child has one events set")
+        {
+            const isx::SpSeries_t childSeries = makeEventsSeries("child", childFilePath1, ti1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+    }
+
+    SECTION("Parent has one Events set")
+    {
+        const isx::SpSeries_t parentSeries = makeEventsSeries("parent", parentFilePath1, ti1);
+
+        SECTION("Child has one movie")
+        {
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, ti1, si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset")
+        {
+            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, ti1, si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one behavioral movie")
+        {
+            const isx::SpSeries_t childSeries = makeBehavioralMovieSeries("child", g_resources["unitTestDataPath"] + "/trial9_OneSec.mpg", props1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one GPIO")
+        {
+            const isx::SpSeries_t childSeries = makeGpioSeries("child", g_resources["unitTestDataPath"] + "/test_gpio_events_2.isxd");
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one valid image")
+        {
+            const isx::SpSeries_t childSeries = makeImageSeries("child", childFilePath1, isx::TimingInfo(ti1.getStart(), ti1.getStep(), 1), si1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one events set")
+        {
+            const isx::SpSeries_t childSeries = makeEventsSeries("child", childFilePath1, ti1);
+            REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
     }
 
     std::remove(parentFilePath1.c_str());
     std::remove(parentFilePath2.c_str());
     std::remove(childFilePath1.c_str());
     std::remove(childFilePath2.c_str());
+}
+
+TEST_CASE("Series-Events", "[core]")
+{
+    isx::Series series("series");
+
+    const isx::DurationInSeconds step(50, 1000);
+
+    const std::string dirPath = g_resources["unitTestDataPath"] + "/series_events";
+    isx::makeDirectory(dirPath);
+
+    const std::string filePath1 = dirPath + "/events1.isxd";
+    const std::string filePath2 = dirPath + "/events2.isxd";
+
+    const isx::SpSeries_t events1 = makeEventsSeries("events1", filePath1,
+        isx::TimingInfo(isx::Time(2017, 4, 18, 15, 49, 0, isx::DurationInSeconds(0, 1000)), step, 20));
+
+    SECTION("Add two consistent event sets to the series")
+    {
+        series.insertUnitarySeries(events1);
+
+        const isx::SpSeries_t events2 = makeEventsSeries("events2", filePath2,
+                isx::TimingInfo(isx::Time(2017, 4, 18, 15, 51, 0, isx::DurationInSeconds(0, 1000)), step, 15));
+        series.insertUnitarySeries(events2);
+
+        REQUIRE(series.getUnitarySeries(0) == events1);
+        REQUIRE(series.getUnitarySeries(1) == events2);
+    }
+
+    SECTION("Try to insert an events set that temporally overlaps with an existing events set in the series")
+    {
+        series.insertUnitarySeries(events1);
+
+        const isx::SpSeries_t events2 = makeEventsSeries("events2", filePath2,
+                isx::TimingInfo(isx::Time(2017, 4, 18, 15, 49, 0, isx::DurationInSeconds(100, 1000)), step, 15));
+
+        ISX_REQUIRE_EXCEPTION(series.insertUnitarySeries(events2), isx::ExceptionSeries, "");
+    }
+
 }
 
 // Utility functions for below test case

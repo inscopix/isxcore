@@ -7,6 +7,7 @@
 #include "isxMovie.h"
 #include "isxGpio.h"
 #include "isxCellSet.h"
+#include "isxEvents.h"
 
 #include <cmath>
 
@@ -177,6 +178,30 @@ checkNewMemberOfSeries(
         if (e->getChannelList() != newChannels)
         {
             outMessage = "GPIO series member with mismatching channels.";
+            return false;
+        }
+
+        if (!checkSeriesTimingInfo(e->getTimingInfo(), newTi, outMessage))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool
+checkNewMemberOfSeries(
+        const std::vector<SpEvents_t> & inExisting,
+        const SpEvents_t & inNew,
+        std::string & outMessage)
+{
+    const std::vector<std::string> & newNames = inNew->getCellNamesList();
+    const TimingInfo & newTi = inNew->getTimingInfo();
+    for (const auto & e : inExisting)
+    {
+        if (e->getCellNamesList() != newNames)
+        {
+            outMessage = "Events series member with mismatching channels.";
             return false;
         }
 

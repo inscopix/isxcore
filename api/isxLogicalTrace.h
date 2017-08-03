@@ -86,10 +86,6 @@ private:
 
 }; // class
 
-    /// shared_ptr type 
-    ///
-    typedef std::shared_ptr<LogicalTrace> SpLogicalTrace_t;
-
 } // namespace
 
 #endif // ISX_LOGICAL_TRACE_H
