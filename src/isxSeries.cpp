@@ -10,6 +10,7 @@
 #include "isxSeriesUtils.h"
 #include "isxCellSetFactory.h"
 #include "isxGpio.h"
+#include "isxEvents.h"
 #include "isxProject.h"
 
 #include "json.hpp"
@@ -367,11 +368,11 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
             }
             case DataSet::Type::CELLSET:
             {
-                if (childType == DataSet::Type::CELLSET)
+                if (childType == DataSet::Type::CELLSET || childType == DataSet::Type::EVENTS)
                 {
                     if (!checkSeriesIsTemporallyContained(inSeries))
                     {
-                        outErrorMessage = "A cellset can only derive cellsets that are within its time span.";
+                        outErrorMessage = "A cellset can only derive cellsets and events that are within its time span.";
                         return false;
                     }
                 }
@@ -385,6 +386,7 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
             case DataSet::Type::BEHAVIOR:
             case DataSet::Type::GPIO:
             case DataSet::Type::IMAGE:
+            case DataSet::Type::EVENTS:
             default:
             {
                 if (!isASuitableParent(outErrorMessage))
@@ -597,6 +599,21 @@ Series::checkNewMember(DataSet * inDataSet, std::string & outMessage)
             }
             const SpGpio_t newGpio = readGpio(inDataSet->getFileName());
             if (!checkNewMemberOfSeries(existingGpios, newGpio, outMessage))
+            {
+                return false;
+            }
+            break;
+        }
+
+        case DataSet::Type::EVENTS:
+        {
+            std::vector<SpEvents_t> existingEvents;
+            for (const auto & ds : getDataSets())
+            {
+                existingEvents.push_back(readEvents(ds->getFileName()));
+            }
+            const SpEvents_t newEvents = readEvents(inDataSet->getFileName());
+            if (!checkNewMemberOfSeries(existingEvents, newEvents, outMessage))
             {
                 return false;
             }

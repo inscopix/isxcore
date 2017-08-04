@@ -113,11 +113,6 @@ Group::insertGroupMember(std::shared_ptr<ProjectItem> inItem, const isize_t inIn
         container = container->getContainer();
     }
 
-    if (isGroupMember(inItem.get()))
-    {
-        ISX_THROW(ExceptionDataIO, "There is already an item with the name: ", inItem->getName());
-    }
-
     // Throw if the item is still in another container
     if (inItem->getContainer())
     {

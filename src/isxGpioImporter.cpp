@@ -1,5 +1,7 @@
 #include "isxGpioImporter.h"
 #include "isxNVokeGpioFile.h"
+#include "isxNVistaGpioFile.h"
+#include "isxPathUtils.h"
 
 namespace isx
 {
@@ -12,13 +14,25 @@ GpioDataParams::getOpName()
 
 AsyncTaskStatus runGpioDataImporter(GpioDataParams inParams, std::shared_ptr<GpioDataOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
 {
+    std::string extension = isx::getExtension(inParams.fileName);
+    isx::AsyncTaskStatus result = isx::AsyncTaskStatus::COMPLETE;
 
-    NVokeGpioFile raw(inParams.fileName, inParams.outputDir);
-    raw.setCheckInCallback(inCheckInCB);
+    if (extension == "raw")
+    {
+        NVokeGpioFile raw(inParams.fileName, inParams.outputDir);
+        raw.setCheckInCallback(inCheckInCB);
 
-    isx::AsyncTaskStatus result = raw.parse();
+        result = raw.parse();
     
-    raw.getOutputFileNames(inOutputParams->filenames);
+        raw.getOutputFileNames(inOutputParams->filenames);
+    }
+    else if (extension == "hdf5")
+    {
+        NVistaGpioFile input(inParams.fileName, inParams.outputDir, inCheckInCB);
+        result = input.parse();
+        input.getOutputFileNames(inOutputParams->filenames);
+    }
+    
 
     if (result == isx::AsyncTaskStatus::CANCELLED)
     {

@@ -7,6 +7,7 @@
 #include "isxMovie.h"
 #include "isxGpio.h"
 #include "isxCellSet.h"
+#include "isxEvents.h"
 
 #include <cmath>
 
@@ -188,26 +189,36 @@ checkNewMemberOfSeries(
     return true;
 }
 
-TimingInfo
-makeGlobalTimingInfo(const TimingInfos_t & inTis)
+bool
+checkNewMemberOfSeries(
+        const std::vector<SpEvents_t> & inExisting,
+        const SpEvents_t & inNew,
+        std::string & outMessage)
 {
-    const Time start = inTis.front().getStart();
-    const DurationInSeconds step = inTis.front().getStep();
-    const Time end = inTis.back().getEnd();
-    const isize_t totalNumTimes = isize_t(DurationInSeconds(end - start).toDouble() / step.toDouble());
-    return TimingInfo(start, step, totalNumTimes);
+    const std::vector<std::string> & newNames = inNew->getCellNamesList();
+    const TimingInfo & newTi = inNew->getTimingInfo();
+    for (const auto & e : inExisting)
+    {
+        if (e->getCellNamesList() != newNames)
+        {
+            outMessage = "Events series member with mismatching channels.";
+            return false;
+        }
+
+        if (!checkSeriesTimingInfo(e->getTimingInfo(), newTi, outMessage))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 TimingInfo
 makeGaplessTimingInfo(const TimingInfos_t & inTis)
 {
-    isize_t totalNumTimes = 0;
-    for (const auto & ti : inTis)
-    {
-        totalNumTimes += ti.getNumTimes();
-    }
-    const TimingInfo first = inTis.front();
-    return TimingInfo(first.getStart(), first.getStep(), totalNumTimes);
+    ISX_ASSERT(!inTis.empty());
+    const TimingInfo & first = inTis.front();
+    return TimingInfo(first.getStart(), first.getStep(), getTotalNumTimes(inTis));
 }
 
 } // namespace isx

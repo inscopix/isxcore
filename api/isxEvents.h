@@ -98,7 +98,7 @@ writeEvents(const std::string & inFileName);
 /// \param  inFileNames The paths of the Events files.
 /// \return             The series of Events sets.
 SpEvents_t
-readEventSeries(const std::vector<std::string> & inFileNames);
+readEventsSeries(const std::vector<std::string> & inFileNames);
 
 } // namespace isx
 

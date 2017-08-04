@@ -302,38 +302,124 @@ TimingInfo::cropSortAndSetDroppedFrames(const std::vector<isize_t> & inDroppedFr
 }
 
 std::pair<isize_t, isize_t>
-getSegmentIndexAndSampleIndexFromGlobalSampleIndex(const TimingInfo inGlobalTimingInfo, const TimingInfos_t & inTimingInfos, isize_t inGlobalSampleIndex)
+getSegmentAndLocalIndex(const TimingInfos_t & inTis, const isize_t inGlobalIndex)
 {
-    isize_t fn = inGlobalSampleIndex;
-    for (isize_t i = 0; i < inTimingInfos.size(); ++i)
+    const isize_t segmentIndex = getSegmentIndex(inTis, inGlobalIndex);
+    ISX_ASSERT(segmentIndex < inTis.size());
+    isize_t localIndex = inGlobalIndex;
+    for (isize_t s = 0; s < segmentIndex; ++s)
     {
-        const isize_t bi = inGlobalTimingInfo.convertTimeToIndex(inTimingInfos[i].getStart());
-        const isize_t ei = bi + inTimingInfos[i].getNumTimes();
-        if (bi <= fn && fn < ei)
+        const isize_t numTimes = inTis.at(s).getNumTimes();
+        if (numTimes >= localIndex)
         {
-            return std::make_pair(i, fn - bi);
+            localIndex = 0;
+            break;
         }
-        else if (i < inTimingInfos.size() - 1)
+        ISX_ASSERT(localIndex >= numTimes);
+        localIndex -= numTimes;
+    }
+    return std::pair<isize_t, isize_t>(segmentIndex, localIndex);
+}
+
+std::pair<isize_t, isize_t>
+getSegmentAndLocalIndex(const TimingInfos_t & inTis, const Time & inTime)
+{
+    const isize_t segmentIndex = getSegmentIndex(inTis, inTime);
+    ISX_ASSERT(segmentIndex < inTis.size());
+    const isize_t localIndex = inTis.at(segmentIndex).convertTimeToIndex(inTime);
+    return std::pair<isize_t, isize_t>(segmentIndex, localIndex);
+}
+
+isize_t
+getSegmentIndex(const TimingInfos_t & inTis, const isize_t inGlobalIndex)
+{
+    isize_t segmentIndex = 0;
+    const isize_t numSegments = inTis.size();
+    ISX_ASSERT(numSegments > 0);
+    isize_t totalNumTimes = 0;
+    for (; segmentIndex < numSegments - 1; ++segmentIndex)
+    {
+        const isize_t numTimes = inTis.at(segmentIndex).getNumTimes();
+        totalNumTimes += numTimes;
+        if (inGlobalIndex < totalNumTimes)
         {
-            // not the last individual segment, segment [i+1] is valid
-            isize_t bn = inGlobalTimingInfo.convertTimeToIndex(inTimingInfos[i+1].getStart());
-            if (ei <= fn && fn < bn)
-            {
-                // return frame index out of range to indicate the
-                // requested index is inbetween individual segments
-                // so we can return a placeholder frame
-                return std::make_pair(i, inTimingInfos[i].getNumTimes());
-            }
+            break;
         }
     }
-    // the index beyond the end of the last individual segment
-    // return an out-of-range index for the segment
-    return std::make_pair(inTimingInfos.size(), 0); 
+    return segmentIndex;
+}
+
+isize_t
+getSegmentIndex(const TimingInfos_t & inTis, const Time & inTime)
+{
+    isize_t segmentIndex = 0;
+    const isize_t numSegments = inTis.size();
+    ISX_ASSERT(numSegments > 0);
+    for (; segmentIndex < numSegments - 1; ++segmentIndex)
+    {
+        if (inTime < inTis.at(segmentIndex).getEnd())
+        {
+            break;
+        }
+    }
+    return segmentIndex;
+}
+
+isize_t
+getGlobalIndex(const TimingInfos_t & inTis, const std::pair<isize_t, isize_t> & inSegmentLocal)
+{
+    isize_t globalIndex = inSegmentLocal.second;
+    for (isize_t s = 0; s < inSegmentLocal.first; ++s)
+    {
+        globalIndex += inTis.at(s).getNumTimes();
+    }
+    return globalIndex;
+}
+
+isize_t
+getGlobalIndex(const TimingInfos_t & inTis, const Time & inTime)
+{
+    return getGlobalIndex(inTis, getSegmentAndLocalIndex(inTis, inTime));
+}
+
+isize_t
+getTotalNumTimes(const TimingInfos_t & inTis)
+{
+    isize_t numTimes = 0;
+    for (const auto & ti : inTis)
+    {
+        numTimes += ti.getNumTimes();
+    }
+    return numTimes;
+}
+
+DurationInSeconds
+getTotalDuration(const TimingInfos_t & inTis)
+{
+    DurationInSeconds duration;
+    for (const auto & ti : inTis)
+    {
+        duration += ti.getDuration();
+    }
+    return duration;
+}
+
+DurationInSeconds
+getGaplessDurationSinceStart(const TimingInfos_t & inTis, const isize_t inSegmentIndex, const isize_t inLocalIndex)
+{
+    ISX_ASSERT(inSegmentIndex < inTis.size());
+    ISX_ASSERT(inLocalIndex <= inTis.at(inSegmentIndex).getNumTimes());
+    DurationInSeconds d;
+    for (isize_t s = 0; s < inSegmentIndex; ++s)
+    {
+        d += inTis.at(s).getDuration();
+    }
+    d += inTis.at(inSegmentIndex).getStep() * inLocalIndex;
+    return d;
 }
 
 std::vector<IndexRanges_t>
 convertGlobalRangesToLocalRanges(
-        const TimingInfo & inGlobalTi,
         const TimingInfos_t & inLocalTis,
         const IndexRanges_t & inGlobalRanges)
 {
@@ -341,8 +427,8 @@ convertGlobalRangesToLocalRanges(
     std::vector<IndexRanges_t> outLocalRanges(numMovies);
     for (const auto & r : inGlobalRanges)
     {
-        const std::pair<isize_t, isize_t> firstPair = getSegmentIndexAndSampleIndexFromGlobalSampleIndex(inGlobalTi, inLocalTis, r.m_first);
-        const std::pair<isize_t, isize_t> lastPair = getSegmentIndexAndSampleIndexFromGlobalSampleIndex(inGlobalTi, inLocalTis, r.m_last);
+        const std::pair<isize_t, isize_t> firstPair = getSegmentAndLocalIndex(inLocalTis, r.m_first);
+        const std::pair<isize_t, isize_t> lastPair = getSegmentAndLocalIndex(inLocalTis, r.m_last);
 
         // Unpack the pairs into more readable indices
         isize_t firstSegment = firstPair.first;
@@ -361,16 +447,6 @@ convertGlobalRangesToLocalRanges(
         if (firstSegment == (numMovies - 1) && firstSample >= firstSegmentNumTimes)
         {
             continue;
-        }
-
-        // If the first sample indicates that it's in a gap following its
-        // segment, then we should actually start at the beginning of the
-        // next one.
-        const bool startInGap = firstSample >= firstSegmentNumTimes;
-        if (startInGap)
-        {
-            ++firstSegment;
-            firstSample = 0;
         }
 
         // If the last segment is past the end of all movies then roll it
@@ -418,19 +494,13 @@ convertGlobalRangesToLocalRanges(
         const IndexRanges_t & inGlobalRanges)
 {
     std::vector<std::string> movieFileNames;
-    // NOTE sweet : the TimingInfos from the series can be different
-    // than the individual TimingInfo objects because of constraints in
-    // the player.
     TimingInfos_t localTis;
     for (const auto & m : inMovies)
     {
         movieFileNames.push_back(m->getFileName());
         localTis.push_back(m->getTimingInfo());
     }
-    const SpMovie_t movieSeries = readMovieSeries(movieFileNames);
-    const TimingInfo & globalTi = movieSeries->getTimingInfo();
-
-    return convertGlobalRangesToLocalRanges(globalTi, localTis, inGlobalRanges);
+    return convertGlobalRangesToLocalRanges(localTis, inGlobalRanges);
 }
 
 } // namespace isx

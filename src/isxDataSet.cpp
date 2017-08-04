@@ -8,6 +8,7 @@
 #include "isxNVistaHdf5Movie.h"
 #include "isxReportUtils.h"
 #include "isxGpio.h"
+#include "isxEvents.h"
 
 #include "json.hpp"
 
@@ -511,6 +512,13 @@ DataSet::readMetaData()
     {
         const SpGpio_t gpio = readGpio(m_fileName);
         m_timingInfo = gpio->getTimingInfo();
+        m_dataType = isx::DataType::F32;
+        m_hasMetaData = true;
+    }
+    else if (m_type == Type::EVENTS)
+    {
+        const SpEvents_t events = readEvents(m_fileName);
+        m_timingInfo = events->getTimingInfo();
         m_dataType = isx::DataType::F32;
         m_hasMetaData = true;
     }

@@ -56,10 +56,10 @@ public:
     getChannelList() const override;
 
     SpFTrace_t
-    getAnalogData() override;
+    getAnalogData(const std::string & inChannelName) override;
 
     void
-    getAnalogDataAsync(GpioGetAnalogDataCB_t inCallback) override;
+    getAnalogDataAsync(const std::string & inChannelName, GpioGetAnalogDataCB_t inCallback) override;
 
     SpLogicalTrace_t
     getLogicalData(const std::string & inChannelName) override;
@@ -78,12 +78,10 @@ public:
 
 private:
 
-    TimingInfo getGaplessTimingInfo();
-
     /// True if the GPIO series is valid, false otherwise.
     bool m_valid = false;
 
-    TimingInfo              m_timingInfo;       // Global timing info
+    TimingInfo              m_gaplessTimingInfo; ///< only really useful for global number of times
     std::vector<SpGpio_t>   m_gpios;
 
 }; // class GpioSeries

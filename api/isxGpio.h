@@ -58,16 +58,17 @@ public:
     getChannelList() const = 0;
 
     /// \return the trace for the analog channel or nullptr if the file doesn't contain analog data
-    ///
+    /// \param inChannelName the name of the requested channel
     virtual
     SpFTrace_t
-    getAnalogData() = 0;
+    getAnalogData(const std::string & inChannelName) = 0;
 
     /// Get an analog trace asynchronously
+    /// \param inChannelName
     /// \param inCallback
     virtual
     void
-    getAnalogDataAsync(GpioGetAnalogDataCB_t inCallback) = 0;
+    getAnalogDataAsync(const std::string & inChannelName, GpioGetAnalogDataCB_t inCallback) = 0;
 
     /// \return the logical trace for the requested channel or nullptr if the file doesn't contain data for that channel
     /// \param inChannelName the name of the requested channel (as returned by getChannelList())

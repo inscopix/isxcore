@@ -93,28 +93,6 @@ public:
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void writeFrame(const SpVideoFrame_t & inVideoFrame);
 
-    /// Initialize for reading.
-    ///
-    /// \param  inFileName  The name of the movie file.
-    ///
-    /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
-    /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
-    void initialize(const std::string & inFileName);
-
-    /// Initialize for writing.
-    ///
-    /// \param  inFileName      The name of the movie file.
-    /// \param  inTimingInfo    The timing information of the movie.
-    /// \param  inSpacingInfo   The spacing information of the movie.
-    /// \param  inDataType      The pixel value data type.
-    ///
-    /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
-    /// \throw  isx::ExceptionDataIO    If formatting the movie data fails.
-    void initialize(const std::string & inFileName,
-                    const TimingInfo & inTimingInfo,
-                    const SpacingInfo & inSpacingInfo,
-                    DataType inDataType);
-
     /// \return     The name of the file.
     ///
     std::string getFileName() const;
@@ -140,7 +118,6 @@ public:
     DataType getDataType() const;
 
 private:
-
     /// True if the movie file is valid, false otherwise.
     bool m_valid;
 
@@ -165,6 +142,28 @@ private:
     bool m_fileClosedForWriting = false;
 
     const static size_t s_version = 0;
+
+    /// Initialize for reading.
+    ///
+    /// \param  inFileName  The name of the movie file.
+    ///
+    /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
+    /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
+    void initialize(const std::string & inFileName);
+
+    /// Initialize for writing.
+    ///
+    /// \param  inFileName      The name of the movie file.
+    /// \param  inTimingInfo    The timing information of the movie.
+    /// \param  inSpacingInfo   The spacing information of the movie.
+    /// \param  inDataType      The pixel value data type.
+    ///
+    /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
+    /// \throw  isx::ExceptionDataIO    If formatting the movie data fails.
+    void initialize(const std::string & inFileName,
+                    const TimingInfo & inTimingInfo,
+                    const SpacingInfo & inSpacingInfo,
+                    DataType inDataType);
 
     /// Read the header to populate information about the movie.
     ///
@@ -197,7 +196,6 @@ private:
     /// Flush the stream
     ///
     void flush();
-    
 };
 
 }

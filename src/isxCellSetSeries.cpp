@@ -46,7 +46,7 @@ namespace isx
             }
         }
 
-        m_timingInfo = makeGlobalTimingInfo(getTimingInfosForSeries());
+        m_gaplessTimingInfo = makeGaplessTimingInfo(getTimingInfosForSeries());
 
         m_valid = true;
     }
@@ -86,7 +86,7 @@ namespace isx
     isx::TimingInfo 
     CellSetSeries::getTimingInfo() const 
     {
-        return m_timingInfo;
+        return m_gaplessTimingInfo;
     }
 
     isx::TimingInfos_t 
@@ -106,18 +106,10 @@ namespace isx
         return m_cellSets[0]->getSpacingInfo();
     }
 
-    TimingInfo 
-    CellSetSeries::getGaplessTimingInfo()
-    {
-        return makeGaplessTimingInfo(getTimingInfosForSeries());
-    }
-
     SpFTrace_t 
     CellSetSeries::getTrace(isize_t inIndex) 
     {
-        TimingInfo timingInfoGapless = getGaplessTimingInfo();
-
-        SpFTrace_t trace = std::make_shared<FTrace_t>(timingInfoGapless);
+        SpFTrace_t trace = std::make_shared<FTrace_t>(m_gaplessTimingInfo);
         float * v = trace->getValues();
 
         for (const auto &cs : m_cellSets)
@@ -134,13 +126,10 @@ namespace isx
     void 
     CellSetSeries::getTraceAsync(isize_t inIndex, CellSetGetTraceCB_t inCallback) 
     {
-        
-        TimingInfo timingInfoGapless = getGaplessTimingInfo();
-
         std::weak_ptr<CellSet> weakThis = shared_from_this();
 
         AsyncTaskResult<SpFTrace_t> asyncTaskResult;
-        asyncTaskResult.setValue(std::make_shared<FTrace_t>(timingInfoGapless));
+        asyncTaskResult.setValue(std::make_shared<FTrace_t>(m_gaplessTimingInfo));
 
         isize_t counter = 0;
         bool isLast = false;

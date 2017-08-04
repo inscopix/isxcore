@@ -33,17 +33,8 @@ runGpioExporter(
         return AsyncTaskStatus::COMPLETE;
     }
 
-    std::string errorMessage;
-    for (isize_t i = 1; i < gpios.size(); ++i)
-    {
-        if (!checkNewMemberOfSeries({gpios[i - 1]}, gpios[i], errorMessage))
-        {
-            ISX_THROW(ExceptionSeries, errorMessage);
-        }
-    }
-
+    const size_t numSegments = gpios.size();
     const SpGpio_t & refGpio = gpios.front();
-    const isize_t numChannels = refGpio->numberOfChannels();
     const std::vector<std::string> channelNames = refGpio->getChannelList();
     const bool refIsAnalog = refGpio->isAnalog();
 
@@ -64,98 +55,38 @@ runGpioExporter(
             ISX_THROW(ExceptionUserInput, "Invalid setting for writeTimeRelativeTo");
     }
 
-    const int32_t maxDecimalsForDouble = std::numeric_limits<double>::digits10 + 1;
-    const int32_t maxDecimalsForFloat = std::numeric_limits<float>::digits10 + 1;
-
     std::ofstream strm(inParams.m_fileName, std::ios::trunc);
     if (!strm.good())
     {
         ISX_THROW(ExceptionFileIO, "Error writing to output file.");
     }
 
-    // shared setup for progress reporting
-    float progress = 0.f;
-    isize_t numLinesTotal = 0;
-    isize_t numLinesWritten = 0;
-
-    // the first column of analog and logical traces is a time stamp
-    strm << "Time (s), ";
-
     if (refIsAnalog)
     {
-        // the only other column for the analog trace is its name
-        strm << channelNames.front() << "\n";
-
-        for (auto & gpio : gpios)
+        std::vector<std::vector<SpFTrace_t>> traces(numSegments);
+        for (size_t s = 0; s < numSegments; ++s)
         {
-            numLinesTotal = gpio->getTimingInfo().getNumTimes();
-        }
-
-        for (const auto & gpio : gpios)
-        {
-            const SpFTrace_t trace = gpio->getAnalogData();
-            const TimingInfo & ti = gpio->getTimingInfo();
-            const isize_t numSamples = ti.getNumTimes();
-            for (isize_t s = 0; s < numSamples; ++s)
+            for (const auto & name : channelNames)
             {
-                const Time time = ti.convertIndexToStartTime(s);
-                strm << std::setprecision(maxDecimalsForDouble)
-                     << (time - baseTime).toDouble() << ", "
-                     << std::setprecision(maxDecimalsForFloat)
-                     << trace->getValue(s) << "\n";
-
-                ++numLinesWritten;
-                progress = float(numLinesWritten) / float(numLinesTotal);
-                cancelled = inCheckInCB(progress);
-                if (cancelled)
-                {
-                    break;
-                }
+                traces[s].push_back(gpios[s]->getAnalogData(name));
             }
         }
+
+        cancelled = writeTraces(strm, traces, channelNames, {}, baseTime, inCheckInCB);
     }
     else
     {
-        strm << std::setprecision(maxDecimalsForDouble);
-
-        // we write all time/value pairs of each channel sequentially, so
-        // we also need a channel name column (which will be sorted)
-        strm << "Channel Name, Value\n";
-
-        // to calculate the number of lines, we need to read all the logical
-        // traces, so we store them to avoid a repeated read
+        const size_t numChannels = channelNames.size();
         std::vector<std::vector<SpLogicalTrace_t>> traces(numChannels);
-        for (isize_t c = 0; c < numChannels; ++c)
+        for (size_t c = 0; c < numChannels; ++c)
         {
-            for (const auto & gpio : gpios)
+            for (size_t s = 0; s < numSegments; ++s)
             {
-                traces[c].push_back(gpio->getLogicalData(channelNames.at(c)));
-                numLinesTotal += traces[c].back()->getValues().size();
+                traces[c].push_back(gpios[s]->getLogicalData(channelNames[c]));
             }
         }
 
-        for (isize_t c = 0; c < numChannels; ++c)
-        {
-            const std::string & channelName = channelNames.at(c);
-            for (size_t g = 0; g < gpios.size(); ++g)
-            {
-                const SpLogicalTrace_t & trace = traces.at(c).at(g);
-                for (const auto & tv : trace->getValues())
-                {
-                    strm << (tv.first - baseTime).toDouble() << ", "
-                         << channelName << ", "
-                         << tv.second << "\n";
-
-                    ++numLinesWritten;
-                    progress = float(numLinesWritten) / float(numLinesTotal);
-                    cancelled = inCheckInCB(progress);
-                    if (cancelled)
-                    {
-                        break;
-                    }
-                }
-            }
-        }
+        cancelled = writeLogicalTraces(strm, traces, channelNames, "Channel Name", baseTime, inCheckInCB);
     }
 
     if (cancelled)

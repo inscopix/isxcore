@@ -32,6 +32,7 @@ namespace isx
     FWD_DECLARE_WITH_PTRS(Gpio);
     FWD_DECLARE_WITH_PTRS(Events);
     FWD_DECLARE_WITH_PTRS(WritableEvents);
+    FWD_DECLARE_WITH_PTRS(LogicalTrace);
 
 } // namespace isx
 

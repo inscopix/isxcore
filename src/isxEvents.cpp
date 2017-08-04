@@ -1,6 +1,6 @@
 #include "isxEvents.h"
 #include "isxMosaicEvents.h"
-
+#include "isxEventsSeries.h"
 
 namespace isx
 {
@@ -20,9 +20,7 @@ writeEvents(const std::string & inFileName)
 SpEvents_t
 readEventsSeries(const std::vector<std::string> & inFileNames)
 {
-    /// TODO: implement when we have support for Event series
-    ISX_ASSERT(false);
-    return nullptr;
+    return std::make_shared<EventsSeries>(inFileNames);
 }
 
 } // namespace isx
