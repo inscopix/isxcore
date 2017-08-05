@@ -62,14 +62,14 @@ public:
         ///
         Time getTime() const;
 
-        uint64_t m_timeStampUSec;               ///< Time from Unix epoch in microsecs
+        uint64_t m_timeStampUSec = 0;           ///< Time from Unix epoch in microsecs
         union
         {
             uint64_t m_data;                    ///< Generic 64-bit structure to hold unformatted data
             struct
             {
-                uint32_t m_value;               ///< The recorded value, used for LED power, analog traces, and digital state (0,1)
-                uint32_t m_reserved;
+                uint32_t m_value = 0;           ///< The recorded value, used for LED power, analog traces, and digital state (0,1)
+                uint32_t m_reserved = 0;
             };
         };
     };    
