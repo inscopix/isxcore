@@ -62,7 +62,7 @@ public:
         ///
         Time getTime() const;
 
-        uint64_t m_timeStampUSec = 0;           ///< Time from Unix epoch in microsecs
+        uint64_t m_timeStampUSec;               ///< Time from Unix epoch in microsecs
         union
         {
             uint64_t m_data;                    ///< Generic 64-bit structure to hold unformatted data
