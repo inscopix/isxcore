@@ -61,6 +61,10 @@ public:
     ///
     virtual bool isModified() const = 0;
 
+    /// Sets the item flag indicating whether there are unsaved changes to true and triggers saving changes to 
+    /// to a temporary file.
+    virtual void setModified() = 0;
+
     /// Sets the item flag indicating whether there are unsaved changes to false.
     ///
     virtual void setUnmodified() = 0;
@@ -97,6 +101,10 @@ protected:
     /// \param inRequestedName the desired name for the project item
     /// \return the unique version of item's name
     std::string getUniqueName(const std::string & inRequestedName);
+
+    /// Navigate up to the Root instance and trigger saving the temporary project (if the root is part of a project)
+    ///
+    void saveTemporaryChanges();
 
 };
 } // namespace isx

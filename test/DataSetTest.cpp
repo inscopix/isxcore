@@ -29,7 +29,6 @@ TEST_CASE("DataSet-DataSet", "[core]")
         REQUIRE(dataSet.isValid());
         REQUIRE(dataSet.getType() == isx::DataSet::Type::MOVIE);
         REQUIRE(dataSet.getName() == "myMovie");
-        REQUIRE(dataSet.isModified() == false);
         REQUIRE(dataSet.getHistoricalDetails() == hd);
         REQUIRE(dataSet.getProperties() == isx::DataSet::Properties());
     }
@@ -39,8 +38,6 @@ TEST_CASE("DataSet-DataSet", "[core]")
         isx::DataSet::Properties properties;
         properties["test"] = isx::Variant(1.0f);
         isx::DataSet dataSet("myMovie", isx::DataSet::Type::MOVIE, "myMovie.isxd", hd, properties);
-
-        REQUIRE(dataSet.isModified() == false);
         isx::Variant value;
         REQUIRE(dataSet.getPropertyValue("test", value));
         REQUIRE(value.value<float>() == 1.0f);
@@ -54,7 +51,6 @@ TEST_CASE("DataSet-DataSet", "[core]")
         REQUIRE(dataSet.getType() == isx::DataSet::Type::CELLSET);
         REQUIRE(dataSet.getName() == "myCellSet");
         REQUIRE(dataSet.getHistoricalDetails() == hdd);
-        REQUIRE(dataSet.isModified() == false);
     }
 
 }
@@ -69,7 +65,6 @@ TEST_CASE("DataSet-setName", "[core]")
         dataSet.setName("myMovie");
 
         REQUIRE(dataSet.getName() == "myMovie");
-        REQUIRE(dataSet.isModified() == true);
     }
 }
 

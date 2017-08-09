@@ -50,4 +50,13 @@ std::string ProjectItem::getUniqueName(const std::string & inRequestedName)
     return root ? root->findUniqueName(inRequestedName) : inRequestedName;
 }
 
+void ProjectItem::saveTemporaryChanges()
+{
+    Group * root = getRoot();
+    if (root)
+    {
+        root->saveTemporaryProject();
+    }
+}
+
 }

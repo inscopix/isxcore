@@ -294,6 +294,10 @@ public:
     isModified()
     const
     override;
+
+    void 
+    setModified() 
+    override;
     
     void
     setUnmodified()
