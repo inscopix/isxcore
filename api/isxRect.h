@@ -13,6 +13,13 @@ namespace isx
 struct Rect
 {
     /// convenience constructor 
+    ///
+    Rect()
+        : m_topLeft(SpatialPoint<int64_t>(0,0))
+        , m_bottomRight(SpatialPoint<int64_t>(1,1))
+    {}
+
+    /// convenience constructor 
     /// \param inTopLeft                top left corner in pixels
     /// \param inBottomRight            bottom right corner in pixels
     Rect(const SpatialPoint<int64_t> & inTopLeft, const SpatialPoint<int64_t> & inBottomRight)
