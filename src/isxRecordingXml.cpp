@@ -5,6 +5,7 @@
 #include <QString>
 #include <QXmlStreamReader>
 #include <QDateTime>
+#include <QLocale>
 
 #include <cmath>
 #include <sstream>
@@ -226,7 +227,9 @@ namespace isx
 
             // Parse starting time
             QString format = "MMM dd, yyyy hh:mm:ss.zzz000 AP";
-            QDateTime dt = QDateTime::fromString(inStart, format);
+            QLocale locale(QLocale::English, QLocale::UnitedStates);        // Make sure month names are parsed in English
+            QDateTime dt = locale.toDateTime(inStart, format);
+
             if (!dt.isValid())
             {
                 return;
