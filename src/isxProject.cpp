@@ -44,6 +44,7 @@ Project::Project(const std::string & inFileName, const std::string & inName)
         ISX_THROW(ExceptionFileIO, "The file name already exists: ", inFileName);
     }
     m_root = std::make_shared<Group>("/");    
+    m_root->setSaveTempProjectCallback([this] () { saveTmp(); });
     setUnmodified();
     initDataDir();
     m_valid = true;
@@ -516,6 +517,7 @@ Project::read()
     {
         m_name = jsonObject["name"];
         m_root = Group::fromJsonString(jsonObject["rootGroup"].dump(), getProjectPath());
+        m_root->setSaveTempProjectCallback([this] () { saveTmp(); });
     }
     catch (const std::exception & error)
     {

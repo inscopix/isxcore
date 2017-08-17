@@ -64,7 +64,7 @@ void
 Group::setUniqueName(const std::string & inName)
 {
     m_name = inName;
-    m_modified = true;
+    setModified();
 }
 
 ProjectItem *
@@ -130,7 +130,7 @@ Group::insertGroupMember(std::shared_ptr<ProjectItem> inItem, const isize_t inIn
 
     inItem->setContainer(this);
     m_items.insert(m_items.begin() + index, inItem);
-    m_modified = true;
+    setModified();
 }
 
 SpProjectItem_t
@@ -148,7 +148,7 @@ Group::removeGroupMember(ProjectItem * inItem)
     auto item = *it;
     item->setContainer(nullptr);
     m_items.erase(it);
-    m_modified = true;
+    setModified();
     return item;
 }
     
@@ -225,6 +225,13 @@ Group::isModified() const
         }
     }
     return false;
+}
+
+void 
+Group::setModified()
+{
+    m_modified = true;
+    saveTemporaryChanges();
 }
 
 void
@@ -336,6 +343,22 @@ Group::findUniqueName(const std::string & inRequestedName)
     }
 
     return uniqueName;
+}
+
+
+void 
+Group::setSaveTempProjectCallback(SaveTempProjectCB_t inCallback)
+{
+    m_saveTempProjectCB = inCallback;
+}
+
+void 
+Group::saveTemporaryProject()
+{
+    if (m_saveTempProjectCB)
+    {
+        m_saveTempProjectCB();
+    }
 }
     
 std::ostream &

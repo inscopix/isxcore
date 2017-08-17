@@ -25,6 +25,10 @@ public:
     /// type of metadata properties
     using Metadata = std::vector<std::pair<std::string, std::string>>;
 
+    /// type of callback used to set the series containing this data set
+    /// as modified
+    using ModifiedCB_t = std::function<void()>;
+
     /// The type of data set.
     ///
     enum class Type
@@ -59,12 +63,14 @@ public:
     /// \param  inHistory   The historical details for the dataset
     /// \param  inProperties The property map for the dataset
     /// \param  inImported  True if the data set is imported, false otherwise.
+    /// \param  inCallback  Callback to call when this data set is modified.
     DataSet(const std::string & inName,
             Type inType,
             const std::string & inFileName,
             const HistoricalDetails & inHistory,
             const Properties & inProperties = Properties(),
-            const bool inImported = true);
+            const bool inImported = true, 
+            ModifiedCB_t inCallback = nullptr);
 
     /// \return     The type of this data set.
     ///
@@ -147,13 +153,9 @@ public:
     ///
     void setName(const std::string & inName);
 
-    /// /return Whether this DataSet has been modified.
-    ///
-    bool isModified() const;
-
-    /// Indicate that this DataSet has been modified.
-    ///
-    void setUnmodified();
+    /// Sets the containing series modified flag to true
+    //
+    void setModified();
 
     /// \return JSON representation of this DataSet
     std::string toJsonString(const bool inPretty = false, const std::string & inPathToOmit = std::string()) const;
@@ -194,13 +196,14 @@ public:
     /// \param inType the data set type to convert to string
     static std::string getTypeString(Type inType);
 
+    /// Set the Set Modified callback
+    /// \param inCallback the callback function
+    void setModifiedCallback(ModifiedCB_t inCallback);
+
 private:
 
     /// True if this data set is valid.
     bool m_valid;
-
-    /// True if this has unsaved changes.
-    bool m_modified;
 
     /// The name of this data set.
     std::string m_name;
@@ -235,6 +238,9 @@ private:
     /// True if this was imported, false otherwise.
     /// Imported data sets should not delete the files they own.
     bool m_imported = true;
+
+    /// Callback to set the modified flag of the containig series to true 
+    ModifiedCB_t m_modifiedCB = nullptr;
 
     /// Read the meta data from the data set file.
     ///

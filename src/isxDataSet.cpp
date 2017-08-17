@@ -31,7 +31,6 @@ const std::string DataSet::PROP_BEHAV_GOP_SIZE      = "gopSize";
 
 DataSet::DataSet()
     : m_valid(false)
-    , m_modified(false)
 {
 }
 
@@ -41,15 +40,16 @@ DataSet::DataSet(
         const std::string & inFileName,
         const HistoricalDetails & inHistory,
         const Properties & inProperties,
-        const bool inImported)
+        const bool inImported,
+        ModifiedCB_t inCallback)
     : m_valid(true)
-    , m_modified(false)
     , m_name(inName)
     , m_type(inType)
     , m_fileName(inFileName)
     , m_history(inHistory)
     , m_properties(inProperties)
     , m_imported(inImported)
+    , m_modifiedCB(inCallback)
 {
 }
 
@@ -69,7 +69,7 @@ void
 DataSet::setFileName(const std::string & inFileName)
 {
     m_fileName = inFileName;
-    m_modified = true;
+    setModified();
 }
 
 const DataSet::Properties &
@@ -118,9 +118,9 @@ void
 DataSet::setPropertyValue(const std::string & inPropertyName, Variant inValue)
 {
     if (m_properties[inPropertyName] != inValue)
-    {
-        m_modified = true;
+    {   
         m_properties[inPropertyName] = inValue;
+        setModified();
     }
 }
 
@@ -185,19 +185,16 @@ void
 DataSet::setName(const std::string & inName)
 {
     m_name = inName;
-    m_modified = true;
+    setModified();
 }
 
-bool
-DataSet::isModified() const
+void 
+DataSet::setModified()
 {
-    return m_modified;
-}
-
-void
-DataSet::setUnmodified()
-{
-    m_modified = false;
+    if (m_modifiedCB)
+    {
+        m_modifiedCB();
+    }
 }
 
 DataSet::Metadata 
@@ -328,7 +325,7 @@ DataSet::locateFile(const std::string & inDirectory)
             {
                 m_fileName = newFilePath;
                 located = true;
-                m_modified = true;
+                setModified();
             }
         }
         catch (const std::exception & e)
@@ -532,4 +529,11 @@ DataSet::getHistory() const
 
     return str;
 }
+
+void 
+DataSet::setModifiedCallback(ModifiedCB_t inCallback)
+{
+    m_modifiedCB = inCallback;
+}
+
 } // namespace isx
