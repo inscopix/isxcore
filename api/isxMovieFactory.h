@@ -5,6 +5,7 @@
 #include "isxWritableMovie.h"
 #include "isxCoreFwd.h"
 #include "isxDataSet.h"
+#include "isxVideoFrame.h"
 
 #include <string>
 #include <vector>
@@ -30,6 +31,25 @@ SpWritableMovie_t writeMosaicMovie(
         const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo,
         DataType inDataType);
+
+/// Read an existing image from a file.
+///
+/// The actual type of image to import frome movie file (e.g. MosaicMovie, NVistaHdf5Movie)
+/// is determined by the file extension.
+///
+/// - isxd: MosaicMovie
+/// - hdf5: NVistaHdf5Movie
+///
+/// If the extension is not recognized, this fails.
+///
+/// \param  inFileName      The name of the image file to read.
+/// \return                 The imported video frame.
+///
+/// \throw  isx::ExceptionFileIO    If reading the movie file fails.
+/// \throw  isx::ExceptionDataIO    If parsing the movie file fails or
+///                                 if the extension is not recognized.
+
+SpVideoFrame_t readImage(const std::string & inFileName);
 
 /// Read an existing movie from a file.
 ///
@@ -57,7 +77,7 @@ SpMovie_t readMovie(const std::string & inFileName);
 /// - isxd: MosaicMovie
 /// - hdf5: NVistaHdf5Movie
 ///
-/// If the extension is not recognizedfor ane of the filenames, this fails.
+/// If the extension is not recognized for any of the filenames, this fails.
 ///
 /// \param  inFileNames     A vector containing the names of the movie files to read.
 /// \param  inProperties    A vector containing the properties of each of the movie files.  Currently only used for behavioral movies.

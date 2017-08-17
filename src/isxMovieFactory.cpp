@@ -24,6 +24,17 @@ writeMosaicMovie(
     return movie;
 }
 
+SpVideoFrame_t
+readImage(const std::string & inFileName)
+{
+    auto m = isx::readMovie(inFileName);
+    auto frame = m->getFrame(0);
+
+    ISX_ASSERT(frame->getFrameType() == VideoFrame::Type::VALID);
+
+    return frame;
+}
+
 SpMovie_t
 readMovie(const std::string & inFileName)
 {
