@@ -136,6 +136,15 @@ public:
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void setCellName(isize_t inCellId, const std::string & inName);
 
+    /// Indicates whether a cell is active in the file or not
+    /// \return true if cell has a valid trace 
+    bool isCellActive(isize_t inCellId) const;
+
+    /// Set the cell activity flag
+    /// \param inCellId the cell of interest
+    /// \param inActive whether the cell is active or not
+    void setCellActive(isize_t inCellId, bool inActive);
+
     /// \return     True if this came from drawing ROIs, false otherwise.
     ///
     bool isRoiSet() const;
@@ -166,6 +175,9 @@ private:
     /// Cell validity flags
     CellStatuses_t m_cellStatuses;
 
+    /// Flag indicating whether a cell is active in this file
+    CellActivities_t m_cellActivity;
+
     /// The file stream
     std::fstream m_file;
 
@@ -174,7 +186,7 @@ private:
     
     bool m_fileClosedForWriting = false;
 
-    const static size_t s_version = 0;
+    const static size_t s_version = 1;
 
     /// True if this came from drawing ROIs, false otherwise.
     bool m_isRoiSet = false;

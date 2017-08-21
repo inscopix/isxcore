@@ -245,6 +245,39 @@ namespace isx
         }
     }
 
+    std::vector<bool> 
+    CellSetSeries::getCellActivity(isize_t inIndex) const
+    {
+        std::vector<bool> activity;
+        for(const auto &cs : m_cellSets)
+        {
+            std::vector<bool> segment_act = cs->getCellActivity(inIndex);
+            activity.push_back(segment_act.front());
+        }
+        return activity;
+    }
+
+    void 
+    CellSetSeries::setCellActive(isize_t inIndex, const std::vector<bool> & inActive)
+    {
+        if (inActive.size() != 1)
+        {
+            ISX_ASSERT(inActive.size() == m_cellSets.size());
+            for(isize_t i(0); i < m_cellSets.size(); ++i)
+            {
+                m_cellSets[i]->setCellActive(inIndex, {inActive.at(i)});
+            }
+        }
+        else
+        {
+            for(const auto &cs : m_cellSets)
+            {
+                cs->setCellActive(inIndex, inActive);
+            }
+        }
+        
+    }
+
     void
     CellSetSeries::cancelPendingReads()
     {

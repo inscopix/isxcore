@@ -228,6 +228,19 @@ CellSetSimple::setCellName(isize_t inIndex, const std::string & inName)
     m_file->setCellName(inIndex, inName);
 }
 
+std::vector<bool> 
+CellSetSimple::getCellActivity(isize_t inIndex) const
+{
+    return {m_file->isCellActive(inIndex)};
+}
+
+void 
+CellSetSimple::setCellActive(isize_t inIndex, const std::vector<bool> & inActive)
+{
+    ISX_ASSERT(inActive.size() == 1);
+    m_file->setCellActive(inIndex, inActive.front());
+}
+
 void
 CellSetSimple::cancelPendingReads()
 {

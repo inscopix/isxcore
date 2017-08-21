@@ -216,6 +216,7 @@ namespace isx
         {
             m_cellNames.push_back(inName);
             m_cellStatuses.push_back(CellSet::CellStatus::UNDECIDED);
+            m_cellActivity.push_back(true);
 
             ++m_numCells;
         }
@@ -226,6 +227,7 @@ namespace isx
  
             m_cellNames.at(inCellId) = inName;
             m_cellStatuses.at(inCellId) = CellSet::CellStatus::UNDECIDED;
+            m_cellActivity.at(inCellId) = true;
         }
         else
         {
@@ -295,6 +297,24 @@ namespace isx
         m_cellNames.at(inCellId) = inName;
     }
 
+    bool 
+    CellSetFile::isCellActive(isize_t inCellId) const
+    {
+        return m_cellActivity.at(inCellId);
+    }
+
+    void 
+    CellSetFile::setCellActive(isize_t inCellId, bool inActive)
+    {
+        if (m_fileClosedForWriting)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Writing data after file was closed for writing.", m_fileName);
+        }
+        m_cellActivity.at(inCellId) = inActive;
+    }
+
+
     bool
     CellSetFile::isRoiSet() const
     {
@@ -320,6 +340,15 @@ namespace isx
             m_cellNames = convertJsonToCellNames(j["CellNames"]);
             m_cellStatuses = convertJsonToCellStatuses(j["CellStatuses"]);
             m_isRoiSet = j["isRoiSet"];
+
+            if (j["fileVersion"].get<size_t>() > 0)
+            {
+                m_cellActivity = convertJsonToCellActivities(j["CellActivity"]);
+            }
+            else
+            {
+                m_cellActivity = std::vector<bool>(m_cellNames.size(), true);
+            }
         }
         catch (const std::exception & error)
         {
@@ -354,6 +383,7 @@ namespace isx
             j["producer"] = getProducerAsJson();
             j["fileVersion"] = s_version;
             j["isRoiSet"] = m_isRoiSet;
+            j["CellActivity"] = convertCellActivitiesToJson(m_cellActivity);
         }
         catch (const std::exception & error)
         {

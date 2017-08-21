@@ -330,6 +330,18 @@ convertJsonToCellStatuses(const json & inJson)
     }
     return cellStatuses;
 }
+
+json
+convertCellActivitiesToJson(const CellActivities_t & inCellActivities)
+{
+    return inCellActivities;
+}
+
+CellActivities_t
+convertJsonToCellActivities(const json & inJson)
+{
+    return inJson.get<CellActivities_t>();
+}
     
 json
 readJsonHeaderAtEnd(std::istream & inStream, std::ios::pos_type & outHeaderPosition)
