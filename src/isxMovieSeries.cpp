@@ -125,7 +125,17 @@ MovieSeries::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
             if (!inAsyncTaskResult.getException() && inAsyncTaskResult.get())
             {
                 atr.setValue(ret);
-                ret->moveFrameContent(inAsyncTaskResult.get());
+                try
+                {
+                    ret->moveFrameContent(inAsyncTaskResult.get());
+                }
+                catch (const ExceptionDataIO & error)
+                {
+                    ISX_LOG_ERROR("Exception thrown in worker thread, will be forwarded to main: ", error.what());
+                    std::exception_ptr eptr = std::current_exception();
+                    atr.setException(eptr);
+                }
+                
             }
             else
             {
