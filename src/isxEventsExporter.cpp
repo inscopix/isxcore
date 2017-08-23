@@ -70,7 +70,17 @@ runEventsExporter(
         }
     }
 
-    cancelled = writeLogicalTraces(strm, traces, cellNames, "Cell Name", baseTime, inCheckInCB);
+    try
+    {
+        cancelled = writeLogicalTraces(strm, traces, cellNames, "Cell Name", baseTime, inCheckInCB);
+    }
+    catch (...)
+    {
+        strm.close();
+        std::remove(inParams.m_fileName.c_str());
+        throw;
+    }
+    
 
     if (cancelled)
     {

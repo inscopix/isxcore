@@ -93,7 +93,16 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
             }
         }
 
-        cancelled = writeTraces(strm, traces, names, statuses, baseTime, inCheckInCB);
+        try
+        {
+            cancelled = writeTraces(strm, traces, names, statuses, baseTime, inCheckInCB);
+        }
+        catch (...)
+        {
+            strm.close();
+            std::remove(inParams.m_outputTraceFilename.c_str());
+            throw;
+        }
     }
 
     /// Images to TIFF
@@ -112,7 +121,22 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
             std::string fn = dirname + "/" + basename + "_" + cellname + "." + extension;
             
             SpImage_t cellIm = cs->getImage(cell); 
-            toTiff(fn, cellIm);    
+
+            try
+            {
+                toTiff(fn, cellIm);
+            }
+            catch (...)
+            {
+                for (isize_t c = 0; c <= cell; ++c)
+                {
+                    std::string cellname = cs->getCellName(c);
+                    std::string fn = dirname + "/" + basename + "_" + cellname + "." + extension;
+                    std::remove(fn.c_str());
+                }
+                throw;
+            }
+              
 
             cancelled = inCheckInCB(progress + float(cell)/float(numCells)/float(numSections));
             if (cancelled)

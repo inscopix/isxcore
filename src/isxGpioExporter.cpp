@@ -72,7 +72,17 @@ runGpioExporter(
             }
         }
 
-        cancelled = writeTraces(strm, traces, channelNames, {}, baseTime, inCheckInCB);
+        try
+        {
+            cancelled = writeTraces(strm, traces, channelNames, {}, baseTime, inCheckInCB);
+        }
+        catch (...)
+        {
+            strm.close();
+            std::remove(inParams.m_fileName.c_str());
+            throw;
+        }
+        
     }
     else
     {
@@ -86,7 +96,15 @@ runGpioExporter(
             }
         }
 
-        cancelled = writeLogicalTraces(strm, traces, channelNames, "Channel Name", baseTime, inCheckInCB);
+        try
+        {
+            cancelled = writeLogicalTraces(strm, traces, channelNames, "Channel Name", baseTime, inCheckInCB);
+        }
+        catch (...)
+        {
+            std::remove(inParams.m_fileName.c_str());
+            throw;
+        }
     }
 
     if (cancelled)
