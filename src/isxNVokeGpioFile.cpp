@@ -82,6 +82,24 @@ NVokeGpioFile::NVokeGpioFile(const std::string & inFileName, const std::string &
     m_fileSizeInBytes = m_file.tellg();
     m_file.seekg(0, m_file.beg);
 
+    // In order to fix MOS-1090, we can guess with high probability if this an
+    // nVista compressed raw file as the first 4 bytes should always be 0xfe 0xff 0xff 0xff.
+    // Old versions of nVoke GPIO raw do not have an identifying signature,
+    // but newer versions should always start with a sync packet (0x5d 0x55 0x55 0x55 ...)
+    // so probability of false detection of nVista raw should be low.
+    std::array<uint8_t, 4> buf;
+    m_file.read((char *)buf.data(), 4);
+    bool isNVistaRaw = buf[0] == 0xfe;
+    for (size_t i = 1; isNVistaRaw && i < buf.size(); ++i)
+    {
+        isNVistaRaw = buf[i] == 0xff;
+    }
+
+    if (isNVistaRaw)
+    {
+        ISX_THROW(ExceptionFileIO, "Tried to read an nVoke GPIO raw file, but this looks like an nVista raw recording file, which is not supported.");
+    }
+
     m_valid = true;
 }
 
