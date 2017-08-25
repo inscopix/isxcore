@@ -108,6 +108,11 @@ writeLogicalTraces(
     // we need a channel name column (which will be sorted)
     inStream << "Time (s), " << inNameHeader << ", Value\n";
 
+    if (!inStream.good())
+    {
+        ISX_THROW(ExceptionFileIO, "Error writing to output file.");
+    }
+
     // calculate the total number of lines for a progress update
     isize_t numLinesTotal = 0;
     for (size_t t = 0; t < numTraces; ++t)
@@ -131,6 +136,11 @@ writeLogicalTraces(
                 inStream << std::setprecision(maxDecimalsForDouble) << (tv.first - inBaseTime).toDouble()
                          << ", " << name << ", "
                          << std::setprecision(maxDecimalsForFloat) << tv.second << "\n";
+
+                if (!inStream.good())
+                {
+                    ISX_THROW(ExceptionFileIO, "Error writing to output file.");
+                }
 
                 ++numLinesWritten;
                 progress = float(numLinesWritten) / float(numLinesTotal);
@@ -189,6 +199,11 @@ bool writeTraces(
         inStream << "\n";
     }
 
+    if (!inStream.good())
+    {
+        ISX_THROW(ExceptionFileIO, "Error writing to output file.");
+    }
+
     isize_t numLinesTotal = 0;
     for (const auto & segment : inTraces)
     {
@@ -213,6 +228,11 @@ bool writeTraces(
             for (isize_t t = 0; t < numTraces; ++t)
             {
                 inStream << ", " << std::setprecision(maxDecimalsForFloat) << segment[t]->getValue(s);
+
+                if (!inStream.good())
+                {
+                    ISX_THROW(ExceptionFileIO, "Error writing to output file.");
+                }
             }
             inStream << "\n";
 

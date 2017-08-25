@@ -189,6 +189,21 @@ virtual
 void 
 setCellName(isize_t inIndex, const std::string & inName) = 0;
 
+/// Check whether a cell is active in different portions/segments of the cell set
+/// \param inIndex the cell of interest
+/// \return a vector contaning a boolean for each segment of a cell set
+virtual 
+std::vector<bool> 
+getCellActivity(isize_t inIndex) const = 0;
+
+/// Set the cell activity flags 
+/// \param inIndex the cell of interest
+/// \param inActive a vector with a flag for each segment of the cellset 
+/// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+virtual
+void 
+setCellActive(isize_t inIndex, const std::vector<bool> & inActive) = 0;
+
 /// Cancel all pending read requests (schedule with getTraceAsync/getImageAsync).
 ///
 virtual 

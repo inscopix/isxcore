@@ -58,6 +58,7 @@ namespace isx
     int CoreVersionMinor();
     int CoreVersionPatch();
     bool isBeta();
+    std::string CoreVersionString();
 
     /// \return     The version numbers in a vector.
     ///

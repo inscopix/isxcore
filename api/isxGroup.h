@@ -17,6 +17,9 @@ class Group : public ProjectItem
 {
 public:
 
+    /// Callback used to trigger saving of temporary file
+    using SaveTempProjectCB_t = std::function<void()>;
+
     /// Empty constructor.
     ///
     /// Creates a valid C++ object, but not a valid Group.
@@ -83,6 +86,13 @@ public:
     std::string 
     findUniqueName(const std::string & inRequestedName);
 
+    /// Set the callback used for saving a temporary project file
+    /// \param inCallback the input function
+    void setSaveTempProjectCallback(SaveTempProjectCB_t inCallback);
+
+    /// Save the temporary project
+    ///
+    void saveTemporaryProject();
    
     // Overrides: see isxProjectItem.h for docs.
     ProjectItem::Type getItemType() const override;
@@ -98,6 +108,8 @@ public:
     ProjectItem * getContainer() const override;
     
     bool isModified() const override;
+
+    void setModified() override;
     
     void setUnmodified() override;
 
@@ -106,6 +118,7 @@ public:
     bool operator ==(const ProjectItem & other) const override;
 
     bool isNameUsed(const std::string & inName) const override;
+
     
 private:
     
@@ -133,6 +146,9 @@ private:
 
     /// The items in this group.
     std::vector<SpProjectItem_t> m_items;
+
+    /// The callback used to save a temporary project file - should only be used on the root group of a project
+    SaveTempProjectCB_t m_saveTempProjectCB = nullptr;
 
 };
 

@@ -1,10 +1,10 @@
 #include "isxCore.h"
 #include "isxDispatchQueue.h"
 #include "isxIoQueue.h"
-#include "isxVersion.h"
 #include "isxException.h"
 #include "isxLogger.h"
 #include "isxReportUtils.h"
+#include <sstream>
 
 namespace isx
 {
@@ -127,21 +127,32 @@ namespace isx
 
     int CoreVersionMajor()
     {
-        return APP_VERSION_MAJOR;
+        return ISX_VERSION_MAJOR;
     }
     int CoreVersionMinor()
     {
-        return APP_VERSION_MINOR;
+        return ISX_VERSION_MINOR;
     }
 
     int CoreVersionPatch()
     {
-        return APP_VERSION_PATCH;
+        return ISX_VERSION_PATCH;
     }
 
     bool isBeta()
     {
-        return APP_IS_BETA;
+        return ISX_IS_BETA;
+    }
+
+    std::string CoreVersionString()
+    {
+        std::ostringstream ss;
+        ss << CoreVersionMajor() << "." << CoreVersionMinor() << "." << CoreVersionPatch();
+        if (isBeta())
+        {
+            ss << " beta";
+        }
+        return ss.str();
     }
 
     std::vector<int>

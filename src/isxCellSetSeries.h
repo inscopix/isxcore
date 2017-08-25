@@ -98,6 +98,12 @@ public:
     void 
     setCellName(isize_t inIndex, const std::string & inName) override;
 
+    std::vector<bool> 
+    getCellActivity(isize_t inIndex) const override;
+
+    void 
+    setCellActive(isize_t inIndex, const std::vector<bool> & inActive) override;
+
     void 
     cancelPendingReads() override;
 

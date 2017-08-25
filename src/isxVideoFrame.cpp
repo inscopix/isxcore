@@ -119,7 +119,7 @@ VideoFrame::moveFrameContent(SpVideoFrame_t inFrame)
       || inFrame->getNumChannels() != getNumChannels()
       || inFrame->getDataType() != getDataType())
     {
-        ISX_THROW(ExceptionDataIO, "Attemptimg o move incompatible frame.");
+        ISX_THROW(ExceptionDataIO, "Attemptimg to move incompatible frame.");
     }
 
     m_image = std::move(inFrame->getImage());

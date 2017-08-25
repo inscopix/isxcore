@@ -415,6 +415,7 @@ runMovieExporter(MovieExporterParams inParams, std::shared_ptr<MovieExporterOutp
     }
     catch (H5::Exception &e)
     {
+        std::remove(inParams.m_nwbFilename.c_str());
         ISX_THROW(ExceptionFileIO, e.getDetailMsg() + " " + inParams.m_nwbFilename);
     }
 

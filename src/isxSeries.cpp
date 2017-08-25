@@ -48,7 +48,7 @@ Series::Series(const std::string & inName,
     const bool inImported)
     : m_valid(true)
     , m_modified(false)
-    , m_dataSet(std::make_shared<DataSet>(inName, inType, inFileName, inHistory, inProperties, inImported))
+    , m_dataSet(std::make_shared<DataSet>(inName, inType, inFileName, inHistory, inProperties, inImported, [this](){ setModified();}))
     , m_container(nullptr)
     , m_name(inName)
     , m_identifier(new SeriesIdentifier(this))
@@ -63,6 +63,7 @@ Series::Series(const SpDataSet_t & inDataSet)
     , m_name(inDataSet->getName())
     , m_identifier(new SeriesIdentifier(this))
 {
+    m_dataSet->setModifiedCallback([this](){ setModified();});
 }
 
 Series::~Series() = default;
@@ -185,7 +186,7 @@ Series::insertUnitarySeries(const SpSeries_t & inUnitarySeries, bool inCheckNewM
 
     inUnitarySeries->setContainer(this);
     m_unitarySeries.insert(m_unitarySeries.begin() + index, inUnitarySeries);
-    m_modified = true;
+    setModified();
 }
 
 SpSeries_t
@@ -206,7 +207,7 @@ Series::removeDataSet(const DataSet * inDataSet)
     auto item = *it;
     item->setContainer(nullptr);
     m_unitarySeries.erase(it);
-    m_modified = true;
+    setModified();
     return item;
 }
 
@@ -228,7 +229,7 @@ Series::removeDataSet(const Series * inUnitarySeries)
     auto item = *it;
     item->setContainer(nullptr);
     m_unitarySeries.erase(it);
-    m_modified = true;
+    setModified();
     return item;
 }
 
@@ -311,7 +312,7 @@ Series::addChild(SpSeries_t inSeries)
 
         inSeries->setParent(this);
         m_children.push_back(inSeries);
-        m_modified = true;
+        setModified();
         return true;
     }
     return false;
@@ -509,7 +510,7 @@ Series::removeChild(isize_t inIndex)
 {
     SpSeries_t ret = m_children.at(inIndex);
     m_children.erase(m_children.begin() + inIndex);
-    m_modified = true;
+    setModified();
     return ret;
 }
 
@@ -664,7 +665,7 @@ Series::setUniqueName(const std::string & inName)
     {
         m_dataSet->setName(inName);
     }
-    m_modified = true;
+    setModified();
 }
 
 bool Series::isNameUsed(const std::string & inName) const 
@@ -694,7 +695,7 @@ bool Series::isNameUsed(const std::string & inName) const
 bool
 Series::isModified() const
 {
-    if (m_modified || (m_dataSet && m_dataSet->isModified()))
+    if (m_modified)
     {
         return true;
     }
@@ -716,14 +717,18 @@ Series::isModified() const
     return false;
 }
 
+void 
+Series::setModified()
+{
+    m_modified = true;
+    saveTemporaryChanges();
+}
+
 void
 Series::setUnmodified()
 {
     m_modified = false;
-    if (m_dataSet)
-    {
-        m_dataSet->setUnmodified();
-    }
+
     for (const auto & i : m_unitarySeries)
     {
         i->setUnmodified();

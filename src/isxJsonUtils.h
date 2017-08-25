@@ -17,6 +17,7 @@ using json = nlohmann::json;
 
 using CellNames_t = std::vector<std::string>;
 using CellStatuses_t = std::vector<CellSet::CellStatus>;
+using CellActivities_t = std::vector<bool>;
 
 json convertRatioToJson(const Ratio & inRatio);
 Ratio convertJsonToRatio(const json & j);
@@ -83,6 +84,10 @@ json
 convertCellStatusesToJson(const CellStatuses_t & inCellStatuses);
 CellStatuses_t
 convertJsonToCellStatuses(const json & inJson);
+json
+convertCellActivitiesToJson(const CellActivities_t & inCellActivities);
+CellActivities_t
+convertJsonToCellActivities(const json & inJson);
     
 /// Reads a JSON header from an input stream.
 ///

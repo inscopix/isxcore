@@ -328,5 +328,13 @@ TEST_CASE("GpioDataTest", "[core]")
 
     }
 
+    SECTION("Try to parse an nVista raw file")
+    {
+        const std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/nVistaRaw/recording_20170822_163550.raw");
+        const std::string outputDir = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/nVistaRaw");
+
+        ISX_REQUIRE_EXCEPTION(isx::NVokeGpioFile raw(fileName, outputDir), isx::ExceptionFileIO, "");
+    }
+
     isx::CoreShutdown();
 }

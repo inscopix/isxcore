@@ -56,7 +56,7 @@ namespace isx
 {
     void reportSessionStart()
     {
-        ISX_LOG_INFO_NO_PRINT("Initialized session");
+        ISX_LOG_INFO_NO_PRINT("Initialized session ", CoreVersionString());
     }
 
     void reportSessionEnd()
