@@ -471,7 +471,7 @@ TEST_CASE("MosaicMovie-croppedFrames", "[core]")
 
 TEST_CASE("MosaicMovieCreateRGB888Sample", "[core-internal][!hide]")
 {
-    std::string fileName = g_resources["unitTestDataPath"] + "/movieRGB888.isxd";
+    std::string fileName = g_resources["unitTestDataPath"] + "/Movie_2016-02-11-08-46-14_rgb_test.isxd";
 
     isx::Time start;
     isx::DurationInSeconds step(50, 1000);
@@ -549,6 +549,33 @@ TEST_CASE("MosaicMovieCreateRGB888Sample", "[core-internal][!hide]")
         }
         movie->closeForWriting();
         REQUIRE(movie->isValid());
+    }
+
+    SECTION("Read real file.")
+    {
+        fileName = g_resources["unitTestDataPath"] + "/Movie_2016-02-11-08-46-14_rgb_test.isxd";
+
+        isx::DurationInSeconds step(50, 1000);
+        numFrames = 15;
+        isx::TimingInfo timingInfo(start, step, numFrames);
+
+        isx::SizeInPixels_t sizePixels(1200, 1080);
+        isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
+        isx::PointInMicrons_t topLeft(0, 0);
+        isx::SpacingInfo spacingInfo(sizePixels, pixelSize, topLeft);
+
+        auto movie = std::make_shared<isx::MosaicMovie>(
+            fileName, timingInfo, spacingInfo, dataType);
+        REQUIRE(movie->isValid());
+        REQUIRE(movie->getTimingInfo() == timingInfo);
+        REQUIRE(movie->getSpacingInfo() == spacingInfo);
+
+        for (isx::isize_t f = 0; f < numFrames; ++f)
+        {
+            isx::SpVideoFrame_t frame = movie->getFrame(f);
+
+            REQUIRE(frame->getNumChannels() == 3);
+        }
     }
 
     isx::CoreShutdown();
