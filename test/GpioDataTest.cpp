@@ -144,7 +144,7 @@ TEST_CASE("GpioDataTest", "[core]")
         
         isx::Time start(isx::DurationInSeconds(1478277469, 1) + isx::DurationInSeconds(294107, 1000000));
         isx::DurationInSeconds step(1, 1000);
-        isx::isize_t numTimes = 3640;
+        isx::isize_t numTimes = 3641;
         isx::TimingInfo ti(start, step, numTimes);
 
         isx::json analogHeader;
@@ -212,7 +212,7 @@ TEST_CASE("GpioDataTest", "[core]")
         
         isx::Time start(isx::DurationInSeconds(1485470243, 1) + isx::DurationInSeconds(163233, 1000000));
         isx::DurationInSeconds step(1, 1000);
-        isx::isize_t numTimes = 9153;
+        isx::isize_t numTimes = 9154;
         isx::TimingInfo ti(start, step, numTimes);
 
         isx::json eventsHeader;

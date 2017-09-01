@@ -536,8 +536,8 @@ NVokeGpioFile::updatePktTimes(const TimeStampedDataFile::DataPkt & inData)
 
 void NVokeGpioFile::updateTimingInfo()
 {
-    DurationInSeconds step(1, 1000);
-    isize_t numTimes = (isize_t)((m_endTime.getSecsSinceEpoch().toDouble() - m_startTime.getSecsSinceEpoch().toDouble()) / (step.toDouble())) + 1;
+    DurationInSeconds step(1, 1000);    
+    isize_t numTimes = (isize_t)std::ceil((m_endTime.getSecsSinceEpoch().toDouble() - m_startTime.getSecsSinceEpoch().toDouble()) / (step.toDouble())) + 1;
     m_timingInfo = TimingInfo(m_startTime, step, numTimes);   
 }
 
