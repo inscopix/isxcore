@@ -22,7 +22,7 @@ TiffMovie::TiffMovie(const std::string & inFileName)
     TIFFGetField(m_tif, TIFFTAG_BITSPERSAMPLE, &bits);
     if (bits != sizeof(uint16_t) * 8)
     {
-        ISX_THROW(ExceptionDataIO, "Unsupported data format.");
+        ISX_THROW(ExceptionDataIO, "Unsupported number of bits (", bits, "). Only 16 bit images are supported.");
     }
 
     uint32_t width, height;

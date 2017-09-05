@@ -268,3 +268,26 @@ TEST_CASE("CellSetExportTest", "[core]")
     std::remove(fileName.c_str());
     std::remove(exportedTraceFileName.c_str());
 }
+
+TEST_CASE("CellSetExport-generatePythonTestData", "[!hide]")
+{
+    isx::CoreInitialize();
+
+    const std::string inputFile = g_resources["unitTestDataPath"] + "/eventDetectionCellSet.isxd";
+
+    const std::string version = "v2";
+
+    SECTION("Typical settings")
+    {
+        const std::string traceOutputFile = g_resources["unitTestDataPath"] + "/guilded/exp_mosaicCellSetExporter_TraceOutput-" + version + ".csv";
+        const std::string imageOutputFile = g_resources["unitTestDataPath"] + "/guilded/exp_mosaicCellSetExporter_ImageOutput-" + version + ".tiff";
+
+        const isx::SpCellSet_t inputCellSet = isx::readCellSet(inputFile);
+        const isx::CellSetExporterParams params({inputCellSet}, traceOutputFile, imageOutputFile, isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
+        isx::runCellSetExporter(params, nullptr, [](float){return false;});
+    }
+
+    isx::CoreShutdown();
+}
+
+
