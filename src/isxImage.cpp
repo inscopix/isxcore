@@ -159,16 +159,15 @@ Image::getPixelsAsF32() const
     return reinterpret_cast<const float *>(getPixels());
 }
 
-
-float 
-Image::getPixelValueAsF32(isize_t row, isize_t col)
+std::vector<float>
+Image::getPixelValuesAsF32(isize_t row, isize_t col)
 {
     if(row > m_spacingInfo.getNumRows() || col > m_spacingInfo.getNumColumns())
     {
         ISX_THROW(ExceptionUserInput, "Bad row and/or column indices requested");
     }
 
-    float pixVal = 0.0f;
+    std::vector<float> pixVals;
     isize_t idx = row * m_rowBytes / getPixelSizeInBytes() + col;
 
     switch(m_dataType)
@@ -176,24 +175,54 @@ Image::getPixelValueAsF32(isize_t row, isize_t col)
         case DataType::U8:
         {
             uint8_t * pixels = getPixelsAsU8();
-            pixVal = (float)pixels[idx];
+            pixVals = {float(pixels[idx])};
             break;
         }
         case DataType::F32:
         {
             float * pixels = getPixelsAsF32();
-            pixVal = pixels[idx];
+            pixVals = {pixels[idx]};
             break;
         }
         case DataType::U16:
         {
             uint16_t * pixels = getPixelsAsU16();
-            pixVal = (float)pixels[idx];
+            pixVals = {float(pixels[idx])};
             break;
         }
-    }    
+        case DataType::RGB888:
+        {
+            // TODO: fix this bogus value that's being returned.
+            // If this is only called to show the value under the mouse cursor then we should
+            // probably expand this and return a string instead.
+            idx = row * m_rowBytes + getPixelSizeInBytes() * col;
+            auto pixels = reinterpret_cast<const uint8_t *>(getPixels());
+            pixVals = {float(pixels[idx]), float(pixels[idx + 1]), float(pixels[idx + 2])};
+        }
+    }
 
-    return pixVal;
+    return pixVals;
 }
+
+//std::string
+//Image::getPixelValueAsString(isize_t row, isize_t col)
+//{
+//    const float value = getPixelValueAsF32(row, col);
+//
+//    std::stringstream ss;
+//    ss.setf(std::ios::fixed, std::ios::floatfield);
+//    ss.precision(2);
+//
+//    if (m_dataType == DataType::RGB888)
+//    {
+//        ss << value;
+//    }
+//    else
+//    {
+//        ss << value
+//    }
+//
+//    return pixVal;
+//}
 
 } // namespace isx
