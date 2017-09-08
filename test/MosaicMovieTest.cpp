@@ -468,3 +468,129 @@ TEST_CASE("MosaicMovie-croppedFrames", "[core]")
 
     isx::CoreShutdown();
 }
+
+TEST_CASE("MosaicMovie-RGB888", "[core-internal]")
+{
+    isx::CoreInitialize();
+
+    SECTION("Read real file.")
+    {
+        const std::string fileName = g_resources["unitTestDataPath"] + "/Movie_2016-02-11-08-46-14_rgb_test.isxd";
+
+        isx::Time start;
+        isx::DurationInSeconds step(50, 1000);
+        isx::isize_t numFrames = 15;
+        isx::TimingInfo timingInfo(start, step, numFrames);
+
+        isx::SizeInPixels_t sizePixels(1280, 800);
+        isx::SizeInMicrons_t pixelSize(isx::Ratio(4500, 1000), isx::Ratio(4500, 1000));
+        isx::PointInMicrons_t topLeft(isx::Ratio(100000, 1000), isx::Ratio(100000, 1000));
+        isx::SpacingInfo spacingInfo(sizePixels, pixelSize, topLeft);
+
+        isx::DataType dataType = isx::DataType::RGB888;
+
+        auto movie = std::make_shared<isx::MosaicMovie>(fileName);
+        REQUIRE(movie->isValid());
+        REQUIRE(movie->getTimingInfo() == timingInfo);
+        REQUIRE(movie->getSpacingInfo() == spacingInfo);
+        REQUIRE(movie->getDataType() == dataType);
+
+        for (isx::isize_t f = 0; f < numFrames; ++f)
+        {
+            isx::SpVideoFrame_t frame = movie->getFrame(f);
+
+            // The number of channels is currently 1 as we don't really use that dimension
+            // anywhere. That might need to change in the future.
+            // The only place the number of channels is important is in
+            // getDataTypeSizeInBytes where the factor of 3 is explicitly defined for RGB888.
+            REQUIRE(frame->getNumChannels() == 1);
+        }
+    }
+
+    isx::CoreShutdown();
+}
+
+TEST_CASE("MosaicMovieCreateRGB888Sample", "[core-internal][!hide]")
+{
+    isx::CoreInitialize();
+
+    SECTION("Write sample file")
+    {
+        std::string fileName = g_resources["unitTestDataPath"] + "/movieRGB888.isxd";
+
+        isx::Time start;
+        isx::DurationInSeconds step(50, 1000);
+        isx::isize_t numFrames = 5;
+        isx::TimingInfo timingInfo(start, step, numFrames);
+
+        isx::SizeInPixels_t sizePixels(16, 10);//1200, 1024);
+        isx::SizeInMicrons_t pixelSize(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE);
+        isx::PointInMicrons_t topLeft(0, 0);
+        isx::SpacingInfo spacingInfo(sizePixels, pixelSize, topLeft);
+
+        isx::DataType dataType = isx::DataType::RGB888;
+
+        auto movie = std::make_shared<isx::MosaicMovie>(
+                fileName, timingInfo, spacingInfo, dataType);
+
+        auto w  = sizePixels.getWidth();
+        auto hw = w / 2;
+        auto h  = sizePixels.getHeight();
+        auto hh = h / 2;
+
+        for (isx::isize_t f = 0; f < numFrames; ++f)
+        {
+            auto frame = std::make_shared<isx::VideoFrame>(
+                spacingInfo,
+                isx::getDataTypeSizeInBytes(dataType) * w,
+                1,
+                dataType,
+                timingInfo.convertIndexToStartTime(f),
+                f);
+
+            auto p = reinterpret_cast<uint8_t *>(frame->getPixels());
+            for (isx::isize_t y = 0; y < hh; ++y)
+            {
+                // Red
+                for (isx::isize_t x = 0; x < hw; ++x)
+                {
+                    *p++ = 0xff;
+                    *p++ = 0x00;
+                    *p++ = 0x00;
+                }
+
+                // Green
+                for (isx::isize_t x = hw; x < w; ++x)
+                {
+                    *p++ = 0x00;
+                    *p++ = 0xff;
+                    *p++ = 0x00;
+                }
+            }
+
+            for (isx::isize_t y = hh; y < h; ++y)
+            {
+                // Blue
+                for (isx::isize_t x = 0; x < hw; ++x)
+                {
+                    *p++ = 0x00;
+                    *p++ = 0x00;
+                    *p++ = 0xff;
+                }
+
+                // Yellow-ish
+                for (isx::isize_t x = hw; x < w; ++x)
+                {
+                    *p++ = 0xff;
+                    *p++ = (x - hw) % 256;
+                    *p++ = 0x00;
+                }
+            }
+            movie->writeFrame(frame);
+        }
+        movie->closeForWriting();
+        REQUIRE(movie->isValid());
+    }
+
+    isx::CoreShutdown();
+}
