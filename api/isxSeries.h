@@ -195,7 +195,13 @@ public:
     ///
     std::string
     getHistory() const;
-    
+
+	/// Get the history for this series by string parameters
+	/// \return vector of strings containing the parameters history
+	///
+	std::vector<std::string>
+	getHistoryByParameters() const;
+
     /// \return HistoricalDetails for this Series
     ///
     HistoricalDetails

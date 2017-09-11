@@ -2,6 +2,7 @@
 #define ISX_HISTORICAL_DETAILS_H
 
 #include <string>
+#include <vector>
 
 namespace isx
 {
@@ -34,6 +35,11 @@ public:
     /// of the parameters used for the operation
     const std::string & 
     getInputParameters() const;    
+
+	/// \return a vector of strings containing the details
+	/// of the parameters used for the operation or JSON strings
+	std::vector<std::string>
+	getInputParametersByStrings() const;
 
     /// Equality operator
     /// \return true if this item equals the other

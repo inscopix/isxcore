@@ -530,6 +530,12 @@ DataSet::getHistory() const
     return str;
 }
 
+std::vector<std::string>
+DataSet::getHistoryByParameters() const
+{
+	return m_history.getInputParametersByStrings();
+}
+
 void 
 DataSet::setModifiedCallback(ModifiedCB_t inCallback)
 {

@@ -48,6 +48,23 @@ HistoricalDetails::getInputParameters() const
     return m_inputParameters;
 }
 
+std::vector<std::string>
+HistoricalDetails::getInputParametersByStrings() const
+{
+	json j = json::parse(m_inputParameters);
+
+	std::vector<std::string> vec_str;
+	for (auto b = j.begin(); b != j.end(); b++)
+	{
+		std::string str_key = b.key();
+		std::string str_val = b.value().dump();
+		std::string str = str_key + ": <b>" + str_val + "</b>";
+		vec_str.push_back(str);
+	}
+
+	return vec_str;
+}
+
 bool 
 HistoricalDetails::operator ==(const HistoricalDetails & other) const
 {

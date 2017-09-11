@@ -170,6 +170,11 @@ public:
     std::string
     getHistory() const;
 
+	/// Get history for this DataSet splited by strings
+	/// \return vecotor strings containing history information
+	std::vector<std::string>
+	getHistoryByParameters() const;
+
     /// \return all metadata for this dataset in the form of key-value pairs
     ///  
     Metadata getMetadata();
