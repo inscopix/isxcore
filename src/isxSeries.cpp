@@ -289,20 +289,6 @@ Series::getHistory() const
     return str;
 }
 
-std::vector<std::string>
-Series::getHistoryByParameters() const
-{
-	if (isUnitary())
-	{
-		return m_dataSet->getHistoryByParameters();
-	}
-	else if (m_unitarySeries.size())
-	{
-		return m_unitarySeries.at(0)->getHistoryByParameters();
-	}
-	return std::vector<std::string>();
-}
-
 isize_t
 Series::getNumChildren() const
 {
