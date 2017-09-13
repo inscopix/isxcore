@@ -2,7 +2,6 @@
 #define ISX_HISTORICAL_DETAILS_H
 
 #include <string>
-#include <vector>
 
 namespace isx
 {
