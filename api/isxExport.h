@@ -26,6 +26,8 @@ enum class WriteTimeRelativeTo
 /// \param  inFileName  The filename for the output file.
 /// \param inImage      The image to export.
 void toTiff(const std::string & inFileName, const SpImage_t & inImage);
+void toTiff(const std::string & inFileName, const SpCellSet_t & inSet);
+void toTiff(const std::string & inFileName, const SpMovie_t & inMovie);
 
 /// Write logical traces with names to an output stream, which is used when
 /// exporting logical GPIO traces and events.
