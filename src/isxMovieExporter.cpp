@@ -379,6 +379,20 @@ namespace
         return cancelled;
     }
     
+    void WriteTiffMovie(SpMovie_t& movie)
+    {
+        auto fn = movie->getFileName() + ".tiff";
+        toTiff(fn, movie);
+    }
+
+    void WriteTiffMovies(MovieExporterParams& inParams)
+    {
+        for (auto m : inParams.m_srcs)
+        {
+            WriteTiffMovie(m);
+        }
+    }
+
 } // namespace
     
 AsyncTaskStatus 
@@ -401,6 +415,8 @@ runMovieExporter(MovieExporterParams inParams, std::shared_ptr<MovieExporterOutp
             ISX_THROW(isx::ExceptionUserInput, "One or more of the sources is invalid.");
         }
     }
+
+    WriteTiffMovies(inParams);
 
     H5::Exception::dontPrint();
     try
