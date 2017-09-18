@@ -13,6 +13,7 @@ struct MovieExporterParams
     /// convenience constructor to fill struct members in one shot
     /// \param inSrcs                   input movies
     /// \param inNwbFilename            filename for Nwb output file
+    /// \param inTiffFilename           filename for Tiff output file
     /// \param inIdentifier             unique identifer, required by NWB (eg. concatenated lab name, file
     ///                                 creation date/time and experimentalist, or a hash of
     ///                                 these and/or other values)
@@ -28,6 +29,7 @@ struct MovieExporterParams
     MovieExporterParams(
         const std::vector<SpMovie_t> & inSrcs,
         const std::string & inNwbFilename,
+        const std::string & inTiffFilename,
         const std::string & inIdentifier,
         const std::string & inSessionDescription,
         const std::string & inComments = std::string(),
@@ -39,6 +41,7 @@ struct MovieExporterParams
         const std::string & inSessionId = std::string())
     : m_srcs(inSrcs)
     , m_nwbFilename(inNwbFilename)
+    , m_tiffFilename(inTiffFilename)
     , m_identifier(inIdentifier)
     , m_sessionDescription(inSessionDescription)
     , m_comments(inComments)

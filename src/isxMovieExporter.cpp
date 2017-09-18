@@ -448,6 +448,11 @@ runMovieExporter(MovieExporterParams inParams, std::shared_ptr<MovieExporterOutp
             std::remove(inParams.m_nwbFilename.c_str());
         }
 
+        if (!inParams.m_tiffFilename.empty())
+        {
+            std::remove(inParams.m_tiffFilename.c_str());
+        }
+
         return AsyncTaskStatus::CANCELLED;
     }
 
