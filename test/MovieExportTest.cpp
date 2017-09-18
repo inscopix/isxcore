@@ -9,6 +9,7 @@
 #include "isxMovieExporter.h"
 
 #include "H5Cpp.h"
+#include "isxTiffMovie.h"
 
 #include <cstring>
 #include <fstream>
@@ -366,6 +367,9 @@ TEST_CASE("MovieExportTest", "[core]")
     std::string exportedNwbFileName = g_resources["unitTestDataPath"] + "/exportedMovie.nwb";
     std::remove(exportedNwbFileName.c_str());
 
+    std::string exportedTiffFileName = g_resources["unitTestDataPath"] + "/exportedMovie.tiff";
+    std::remove(exportedTiffFileName.c_str());
+
     std::vector<isx::isize_t> dropped = { 2 };
     std::array<isx::TimingInfo, 3> timingInfos =
     { {
@@ -404,6 +408,7 @@ TEST_CASE("MovieExportTest", "[core]")
         isx::MovieExporterParams params(
             movies,
             exportedNwbFileName,
+            exportedTiffFileName,
             "mostest made this",
             "This was exported as part of a Mosaic 2 unit test",
             "timeseries/comments",
@@ -417,27 +422,34 @@ TEST_CASE("MovieExportTest", "[core]")
         
         
         // verify exported data
-
-        H5::H5File h5File(exportedNwbFileName, H5F_ACC_RDONLY);
-        verifyTopLevelDataSets(h5File, params);
-        verifyTopLevelGroups(h5File);
-
-        auto an = h5File.openGroup(S_analysis);
-        REQUIRE(an.getNumAttrs() == 0);
-        
-        auto startTimeD = timingInfos[0].getStart().getSecsSinceEpoch().toDouble();
-
-        for (const auto fn: filenames)
         {
-            auto name = isx::getBaseName(fn);
-            auto g = an.openGroup(name);
-            REQUIRE(g.getNumAttrs() == 5);
-            auto m = isx::readMovie(fn);
-            verifyTimeSeriesAttributes(g, params, m);
-            verifyVideoFrames(g, params, m, startTimeD);
+            H5::H5File h5File(exportedNwbFileName, H5F_ACC_RDONLY);
+            verifyTopLevelDataSets(h5File, params);
+            verifyTopLevelGroups(h5File);
+
+            auto an = h5File.openGroup(S_analysis);
+            REQUIRE(an.getNumAttrs() == 0);
+
+            auto startTimeD = timingInfos[0].getStart().getSecsSinceEpoch().toDouble();
+
+            for (const auto fn : filenames)
+            {
+                auto name = isx::getBaseName(fn);
+                auto g = an.openGroup(name);
+                REQUIRE(g.getNumAttrs() == 5);
+                auto m = isx::readMovie(fn);
+                verifyTimeSeriesAttributes(g, params, m);
+                verifyVideoFrames(g, params, m, startTimeD);
+            }
+
+            h5File.close();
         }
 
-        h5File.close();
+        {
+            //isx::TiffMovie tiffMovie(exportedTiffFileName);
+
+        }
+
     }
 
     for (const auto & fn: filenames)
