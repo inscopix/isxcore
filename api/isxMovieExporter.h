@@ -68,7 +68,8 @@ struct MovieExporterParams
     static const char *     sNwbVersion;                    ///< NWB spec version string
 
     std::vector<SpMovie_t>  m_srcs;                         ///< input movies
-    std::string             m_nwbFilename;                  ///< name of output file
+    std::string             m_nwbFilename;                  ///< name of output nwb file
+    std::string             m_tiffFilename;                 ///< name of output tiff file
     std::string             m_identifier;                   ///< unique identifier
     std::string             m_sessionDescription;           ///< session description
     
