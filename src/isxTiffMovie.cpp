@@ -32,7 +32,7 @@ TiffMovie::TiffMovie(const std::string & inFileName)
             m_dataType = DataType::U8;
             //break; // import is not implemented yet, so it will jump to default/exception
         }
-        case sizeof(float_t) * 8:
+        case sizeof(float) * 8:
         {
             m_dataType = DataType::F32;
             //break;
