@@ -144,6 +144,12 @@ bool removeDirectory(const std::string & inPath);
 /// \return         The unique file path.
 std::string makeUniqueFilePath(const std::string & inPath, const isize_t inWidth = 3);
 
+/// What is the available disk space in bytes for the given path
+///
+/// \param  dirPath The requested file path.
+/// \return         The number of available bytes.
+isize_t availableNumberOfBytesOnVolume(const std::string & dirPath);
+
 } // namespace isx
 
 #endif // ISX_PATH_UTILS_H

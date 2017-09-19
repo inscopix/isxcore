@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QStringList>
 #include <QStandardPaths>
+#include <QStorageInfo>
 
 namespace isx
 {
@@ -142,6 +143,14 @@ makeUniqueFilePath(const std::string & inPath, const isize_t inWidth)
         }
     }
     return outPath;
+}
+
+isize_t
+availableNumberOfBytesOnVolume(const std::string & dirPath)
+{
+	QStorageInfo info = QStorageInfo(QString(dirPath.c_str()));
+	qint64 numBytes = info.bytesAvailable();
+	return isize_t(numBytes);
 }
 
 } // namespace isx
