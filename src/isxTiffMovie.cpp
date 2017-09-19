@@ -20,9 +20,32 @@ TiffMovie::TiffMovie(const std::string & inFileName)
 
     uint16_t bits;
     TIFFGetField(m_tif, TIFFTAG_BITSPERSAMPLE, &bits);
-    if (bits != sizeof(uint16_t) * 8)
+    switch (bits)
     {
-        ISX_THROW(ExceptionDataIO, "Unsupported number of bits (", bits, "). Only 16 bit images are supported.");
+        case sizeof(uint16_t) * 8:
+        {
+            m_dataType = DataType::U16;
+            break;
+        }
+        case sizeof(uint8_t) * 8:
+        {
+            m_dataType = DataType::U8;
+            //break; // import is not implemented yet, so it will jump to default/exception
+        }
+        case sizeof(float_t) * 8:
+        {
+            m_dataType = DataType::F32;
+            //break;
+        }
+        case sizeof(uint8_t) * 8 * 3:
+        {
+            m_dataType = DataType::RGB888;
+            //break;
+        }
+        default:
+        {
+            ISX_THROW(ExceptionDataIO, "Unsupported number of bits (", bits, "). Only 16 bit images are supported.");
+        }
     }
 
     uint32_t width, height;
@@ -51,11 +74,13 @@ TiffMovie::getFrame(isize_t inFrameNumber, const SpVideoFrame_t & vf)
 
     // Read the image
     tsize_t size = TIFFStripSize(m_tif); 
-    isize_t nbytes = m_frameWidth * m_frameHeight * sizeof(uint16_t);
+
+    isize_t nbytes = m_frameWidth * m_frameHeight * getDataTypeSizeInBytes(m_dataType);
     TIFFBuffer buf(nbytes);
     char * pBuf = (char *)buf.get();
 
-    for (tstrip_t strip = 0; strip < TIFFNumberOfStrips(m_tif); strip++)
+    auto numOfStrips = TIFFNumberOfStrips(m_tif);
+    for (tstrip_t strip = 0; strip < numOfStrips; strip++)
     {
         TIFFReadRawStrip(m_tif, strip, pBuf, size);
         pBuf += size;
@@ -81,6 +106,12 @@ isize_t
 TiffMovie::getFrameHeight() const
 {
     return m_frameHeight;
+}
+
+DataType
+TiffMovie::getDataType() const
+{
+    return m_dataType;
 }
 
 isize_t 
