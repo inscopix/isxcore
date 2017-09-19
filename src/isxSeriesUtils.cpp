@@ -48,33 +48,6 @@ checkSeriesTimingInfo(
         const TimingInfo & inNew,
         std::string & outMessage)
 {
-    // Note aschildan 6/15/2017:
-    // nvista movies can have a huge fluctuation between movies that are (requested) to be recorded with the same
-    // framerate.  Michele mentioned one typical case with a large difference where a user requested 20Hz and the
-    // recording was made at 20.11Hz. I'm using that as the upper limit to still allow creation of series. I also
-    // use a warning epsilon that is lower and we'll log differences larger than the warning epsilon.
-    // This will not be an issue when we change the player to work with the framerates of the individual segments
-    // of a series, and basically play them as if they were stand-alone data sets.
-
-    // 20Hz vs 20.11Hz is a difference of 0.00027349577325s in frame duration
-    const double epsilon = 0.00028; // 0.28ms
-
-    // For the warning epsilon allow up to 0.005ms of difference between frame durations of individual movies.
-    // This means over 200000 frames (~2.7 hours at 20Hz) the error can be up to 1s.
-    // It is needed for behavioral
-    const double warningEpsilon = 0.000005; // 0.005ms
-    const double newStep = inNew.getStep().toDouble();
-    const double refStep = inRef.getStep().toDouble();
-
-    if (std::abs(newStep - refStep) > epsilon)
-    {
-        outMessage = "Unable to add a data set with a different frame rate than the rest of the series.";
-        return false;
-    }
-    if (std::abs(newStep - refStep) > warningEpsilon)
-    {
-        ISX_LOG_WARNING("Creating series from data sets with large difference in framerates.");
-    }
     if (inNew.overlapsWith(inRef))
     {
         outMessage = "Unable to insert data that temporally overlaps with other parts of the series. Data sets in a series must all be non-overlapping.";
