@@ -379,17 +379,9 @@ namespace
         return cancelled;
     }
     
-    void WriteTiffMovie(std::string& fileName, SpMovie_t& movie)
-    {
-        toTiff(fileName, movie);
-    }
-
     void WriteTiffMovies(MovieExporterParams& inParams)
     {
-        for (auto m : inParams.m_srcs)
-        {
-            WriteTiffMovie(inParams.m_tiffFilename, m);
-        }
+        toTiff(inParams.m_tiffFilename, inParams.m_srcs);
     }
 
 } // namespace
@@ -418,7 +410,15 @@ runMovieExporter(MovieExporterParams inParams, std::shared_ptr<MovieExporterOutp
 
     if (inParams.m_tiffFilename.empty() == false)
     {
-        WriteTiffMovies(inParams);
+        try
+        {
+            WriteTiffMovies(inParams);
+        }
+        catch (...)
+        {
+            std::remove(inParams.m_tiffFilename.c_str());
+            throw;
+        }
     }
 
     if (inParams.m_nwbFilename.empty() == false)

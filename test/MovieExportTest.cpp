@@ -397,7 +397,7 @@ TEST_CASE("MovieExportTest", "[core]")
 
     isx::CoreInitialize();
 
-    SECTION("Export movie series")
+    SECTION("Export F32 movie series")
     {
         // write isxds
         const auto pixelsPerFrame = int32_t(sizePixels.getWidth() * sizePixels.getHeight());
@@ -458,7 +458,7 @@ TEST_CASE("MovieExportTest", "[core]")
         }
 
         {
-            //isx::TiffMovie tiffMovie(exportedTiffFileName);
+            //isx::TiffMovie tiffMovie(exportedTiffFileName); // import is not implemented yet
 
         }
 
@@ -470,7 +470,7 @@ TEST_CASE("MovieExportTest", "[core]")
     }
 }
 
-TEST_CASE("MovieExportTiffU16Test", "[core]")
+TEST_CASE("MovieExportU16Test", "[core]")
 {
     std::array<const char *, 3> names =
     { {
@@ -546,6 +546,10 @@ TEST_CASE("MovieExportTiffU16Test", "[core]")
 
 
         // verify exported data
+
+        // TODO: required HDF5 export/import test. Functions above are only for F32 format.
+        // Need to re-factor, add different formats support and avoid code dublication.
+
         {
             isx::TiffMovie tiffMovie(exportedTiffFileName);
             REQUIRE(tiffMovie.getFrameHeight() == sizePixels.getHeight());

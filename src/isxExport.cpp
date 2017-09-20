@@ -116,6 +116,42 @@ void toTiff(const std::string & inFileName, const SpCellSet_t & inSet)
 
 }
 
+void toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies)
+{
+#if ISX_OS_MACOS
+    const auto fd = creat(inFileName.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    TIFF *out = TIFFFdOpen(fd, inFileName.c_str(), "w");
+#else
+    TIFF *out = TIFFOpen(inFileName.c_str(), "w");
+#endif
+
+    if (!out)
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Unable to open file for writing.");
+    }
+
+    for (auto m : inMovies)
+    {
+        auto n = m->getTimingInfo().getNumTimes();
+
+        for (isize_t i = 0; i < n; ++i)
+        {
+            auto f = m->getFrame(i);
+            auto& img = f->getImage();
+            toTiffOut(out, &img);
+            TIFFWriteDirectory(out);
+        }
+    }
+
+
+#if ISX_OS_MACOS
+    TIFFCleanup(out);
+    close(fd);
+#else
+    TIFFClose(out);
+#endif
+}
+
 void toTiff(const std::string & inFileName, const SpMovie_t & inMovie)
 {
 #if ISX_OS_MACOS
