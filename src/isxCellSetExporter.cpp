@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <limits>
 
+
 namespace isx {
 
 std::string
@@ -114,9 +115,6 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
         std::string basename = getBaseName(inParams.m_outputImageFilename);
         std::string extension = getExtension(inParams.m_outputImageFilename);        
         
-		auto video_name = dirname + "/" + basename + "." + extension;
-		toTiff(video_name, cs);
-
         for (isize_t cell = 0; cell < numCells; ++cell)
         {
             std::string cellname = cs->getCellName(cell);
