@@ -115,14 +115,13 @@ TEST_CASE("Series-insertUnitarySeries", "[core]")
                 "Unable to insert data that temporally overlaps with other parts of the series. Data sets in a series must all be non-overlapping.");
     }
 
-    SECTION("Try to insert a movie that has a different frame rate than an existing movie in the series")
+    SECTION("Insert a movie that has a different frame rate than an existing movie in the series")
     {
         series.insertUnitarySeries(movie1Series);
+        series.insertUnitarySeries(movie2Step2Series);
 
-        ISX_REQUIRE_EXCEPTION(
-                series.insertUnitarySeries(movie2Step2Series),
-                isx::ExceptionSeries,
-                "Unable to add a data set with a different frame rate than the rest of the series.");
+        REQUIRE(series.getDataSet(0) == movie1.get());
+        REQUIRE(series.getDataSet(1) == movie2Step2.get());
     }
 
     SECTION("Try to insert a movie that has different spacing info than an existing movie in the series")

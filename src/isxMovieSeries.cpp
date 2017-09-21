@@ -99,8 +99,8 @@ MovieSeries::getFrame(isize_t inFrameNumber)
     size_t frameIndex = 0;
     std::tie(movieIndex, frameIndex) = getSegmentAndLocalIndex(m_timingInfos, inFrameNumber);
 
-    auto ret = makeVideoFrameInternal(inFrameNumber, movieIndex, frameIndex);
     auto f = m_movies[movieIndex]->getFrame(frameIndex);
+    auto ret = makeVideoFrameInternal(inFrameNumber, movieIndex, frameIndex, f->getRowBytes());
     ret->moveFrameContent(f);
     return ret;
 }
@@ -118,12 +118,14 @@ MovieSeries::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
     size_t frameIndex = 0;
     std::tie(movieIndex, frameIndex) = getSegmentAndLocalIndex(m_timingInfos, inFrameNumber);
 
-    auto ret = makeVideoFrameInternal(inFrameNumber, movieIndex, frameIndex);
-    m_movies[movieIndex]->getFrameAsync(frameIndex, [ret, inCallback](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
+    std::weak_ptr<MovieSeries> weakThis = shared_from_this();
+    m_movies[movieIndex]->getFrameAsync(frameIndex, [weakThis, inFrameNumber, movieIndex, frameIndex, inCallback](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
         {
             AsyncTaskResult<SpVideoFrame_t> atr;
-            if (!inAsyncTaskResult.getException() && inAsyncTaskResult.get())
+            std::shared_ptr<MovieSeries> sharedThis = weakThis.lock();
+            if (!inAsyncTaskResult.getException() && inAsyncTaskResult.get() && sharedThis != nullptr)
             {
+                auto ret = sharedThis->makeVideoFrameInternal(inFrameNumber, movieIndex, frameIndex, inAsyncTaskResult.get()->getRowBytes());
                 atr.setValue(ret);
                 try
                 {
@@ -135,7 +137,6 @@ MovieSeries::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
                     std::exception_ptr eptr = std::current_exception();
                     atr.setException(eptr);
                 }
-                
             }
             else
             {
@@ -154,17 +155,19 @@ MovieSeries::cancelPendingReads()
         m->cancelPendingReads();
     }
 }
-    
+
 SpVideoFrame_t
-MovieSeries::makeVideoFrameInternal(const isize_t inGlobalIndex, const isize_t inMovieIndex, const isize_t inLocalIndex) const
+MovieSeries::makeVideoFrameInternal(
+        const isize_t inGlobalIndex,
+        const isize_t inMovieIndex,
+        const isize_t inLocalIndex,
+        const isize_t inRowBytes) const
 {
     const SpacingInfo spacingInfo = getSpacingInfo();
     const DataType dataType = getDataType();
-    const isize_t pixelSizeInBytes = getDataTypeSizeInBytes(dataType);
-    const isize_t rowSizeInBytes = pixelSizeInBytes * spacingInfo.getNumColumns();
     SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
         spacingInfo,
-        rowSizeInBytes,
+        inRowBytes,
         1,
         dataType,
         m_timingInfos.at(inMovieIndex).convertIndexToStartTime(inLocalIndex),

@@ -38,7 +38,8 @@ public:
         BEHAVIOR,
         GPIO, 
 		IMAGE,
-        EVENTS
+        EVENTS,
+        METRICS
     };
 
     // Property names as used in the property map

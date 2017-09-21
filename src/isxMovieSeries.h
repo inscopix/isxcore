@@ -105,7 +105,11 @@ private:
     /// Note that this does not set the type of frame (valid, dropped, etc.)
     /// for performance reasons.
     SpVideoFrame_t
-    makeVideoFrameInternal(const isize_t inGlobalIndex, const isize_t inMovieIndex, const isize_t inLocalIndex) const;
+    makeVideoFrameInternal(
+            const isize_t inGlobalIndex,
+            const isize_t inMovieIndex,
+            const isize_t inLocalIndex,
+            const isize_t inRowBytes) const;
 
     /// True if the movie file is valid, false otherwise.
     bool m_valid = false;

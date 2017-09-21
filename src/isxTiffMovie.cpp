@@ -82,7 +82,10 @@ TiffMovie::getFrame(isize_t inFrameNumber, const SpVideoFrame_t & vf)
     auto numOfStrips = TIFFNumberOfStrips(m_tif);
     for (tstrip_t strip = 0; strip < numOfStrips; strip++)
     {
-        TIFFReadRawStrip(m_tif, strip, pBuf, size);
+        if (TIFFReadEncodedStrip(m_tif, strip, pBuf, size) == -1)
+        {
+            ISX_THROW(ExceptionFileIO, "Failed to read strip from TIFF file: ", m_fileName);
+        }
         pBuf += size;
     }
 
