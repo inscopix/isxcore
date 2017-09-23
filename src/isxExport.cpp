@@ -42,8 +42,7 @@ getTiffSampleFormat(DataType type)
 	}
 }
 
-//void toTiffOut(TIFF *out, const SpImage_t & inImage)
-void toTiffOut(TIFF *out, Image* inImage)
+void toTiffOut(TIFF *out, const Image * inImage)
 {
 	if (!inImage)
 	{
@@ -73,7 +72,7 @@ void toTiffOut(TIFF *out, Image* inImage)
 	// We set the strip size of the file to be size of one row of pixels
 	TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, 1);
 
-	char * pixels = inImage->getPixels();
+	const char * pixels = inImage->getPixels();
 	for (uint32_t row = 0; row < height; row++)
 	{
 		std::memcpy(buf.get(), &pixels[row*linebytes], linebytes);
@@ -85,38 +84,8 @@ void toTiffOut(TIFF *out, Image* inImage)
 	}
 }
 
-void toTiff(const std::string & inFileName, const SpCellSet_t & inSet)
-{
-	const isize_t numCells = inSet->getNumCells();
-
-#if ISX_OS_MACOS
-	const auto fd = creat(inFileName.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-	TIFF *out = TIFFFdOpen(fd, inFileName.c_str(), "w");
-#else
-	TIFF *out = TIFFOpen(inFileName.c_str(), "w");
-#endif
-
-	if (!out)
-	{
-		ISX_THROW(isx::ExceptionFileIO, "Unable to open file for writing.");
-	}
-
-	for (isize_t cell = 0; cell < numCells; ++cell)
-	{
-		toTiffOut(out, inSet->getImage(cell).get());
-		TIFFWriteDirectory(out);
-	}
-
-#if ISX_OS_MACOS
-	TIFFCleanup(out);
-	close(fd);
-#else
-	TIFFClose(out);
-#endif
-
-}
-
-void toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies)
+TIFF*
+openTIFF(const std::string & inFileName)
 {
 #if ISX_OS_MACOS
     const auto fd = creat(inFileName.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -129,6 +98,25 @@ void toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMov
     {
         ISX_THROW(isx::ExceptionFileIO, "Unable to open file for writing.");
     }
+
+    return out;
+}
+
+void
+closeTIFF(TIFF * out)
+{
+#if ISX_OS_MACOS
+    TIFFCleanup(out);
+    close(fd);
+#else
+    TIFFClose(out);
+#endif
+}
+
+void 
+toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies)
+{
+    auto out = openTIFF(inFileName);
 
     for (auto m : inMovies)
     {
@@ -143,69 +131,17 @@ void toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMov
         }
     }
 
-
-#if ISX_OS_MACOS
-    TIFFCleanup(out);
-    close(fd);
-#else
-    TIFFClose(out);
-#endif
+    closeTIFF(out);
 }
 
-void toTiff(const std::string & inFileName, const SpMovie_t & inMovie)
+void 
+toTiff(const std::string & inFileName, const SpImage_t & inImage)
 {
-#if ISX_OS_MACOS
-    const auto fd = creat(inFileName.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-    TIFF *out = TIFFFdOpen(fd, inFileName.c_str(), "w");
-#else
-    TIFF *out = TIFFOpen(inFileName.c_str(), "w");
-#endif
-
-    if (!out)
-    {
-        ISX_THROW(isx::ExceptionFileIO, "Unable to open file for writing.");
-    }
-
-    auto n = inMovie->getTimingInfo().getNumTimes();
-
-    for (isize_t i = 0; i < n; ++i)
-    {
-        auto f = inMovie->getFrame(i);
-        auto& img = f->getImage();
-        toTiffOut(out, &img);
-        TIFFWriteDirectory(out);
-    }
-
-#if ISX_OS_MACOS
-    TIFFCleanup(out);
-    close(fd);
-#else
-    TIFFClose(out);
-#endif
-}
-
-void toTiff(const std::string & inFileName, const SpImage_t & inImage)
-{
-#if ISX_OS_MACOS
-    const auto fd = creat(inFileName.c_str(), S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
-    TIFF *out = TIFFFdOpen(fd, inFileName.c_str(), "w");
-#else
-    TIFF *out = TIFFOpen(inFileName.c_str(), "w");
-#endif
-
-    if (!out)
-    {
-        ISX_THROW(isx::ExceptionFileIO, "Unable to open file for writing.");
-    }
+    auto out = openTIFF(inFileName);
 
 	toTiffOut(out, inImage.get());
 
-#if ISX_OS_MACOS
-    TIFFCleanup(out);
-    close(fd);
-#else
-    TIFFClose(out);
-#endif
+    closeTIFF(out);
 }
 
 bool

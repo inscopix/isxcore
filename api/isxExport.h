@@ -23,11 +23,13 @@ enum class WriteTimeRelativeTo
 /// \endcond doxygen chokes on enum class inside of namespace
 
 /// Export an image to TIFF
-/// \param  inFileName  The filename for the output file.
+/// \param inFileName  The filename for the output file.
 /// \param inImage      The image to export.
 void toTiff(const std::string & inFileName, const SpImage_t & inImage);
-void toTiff(const std::string & inFileName, const SpCellSet_t & inSet);
-void toTiff(const std::string & inFileName, const SpMovie_t & inMovie);
+
+/// Export a movie to TIFF
+/// \param inFileName  The filename for the output file.
+/// \param inMovies    The set of movies to export.
 void toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies);
 
 /// Write logical traces with names to an output stream, which is used when
