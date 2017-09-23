@@ -13,7 +13,6 @@ struct MovieExporterParams
     /// convenience constructor to fill struct members in one shot
     /// \param inSrcs                   input movies
     /// \param inNwbFilename            filename for Nwb output file
-    /// \param inTiffFilename           filename for Tiff output file
     /// \param inIdentifier             unique identifer, required by NWB (eg. concatenated lab name, file
     ///                                 creation date/time and experimentalist, or a hash of
     ///                                 these and/or other values)
