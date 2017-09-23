@@ -29,7 +29,6 @@ struct MovieExporterParams
     MovieExporterParams(
         const std::vector<SpMovie_t> & inSrcs,
         const std::string & inNwbFilename,
-        const std::string & inTiffFilename,
         const std::string & inIdentifier,
         const std::string & inSessionDescription,
         const std::string & inComments = std::string(),
@@ -41,7 +40,6 @@ struct MovieExporterParams
         const std::string & inSessionId = std::string())
     : m_srcs(inSrcs)
     , m_nwbFilename(inNwbFilename)
-    , m_tiffFilename(inTiffFilename)
     , m_identifier(inIdentifier)
     , m_sessionDescription(inSessionDescription)
     , m_comments(inComments)
@@ -72,7 +70,6 @@ struct MovieExporterParams
 
     std::vector<SpMovie_t>  m_srcs;                         ///< input movies
     std::string             m_nwbFilename;                  ///< name of output nwb file
-    std::string             m_tiffFilename;                 ///< name of output tiff file
     std::string             m_identifier;                   ///< unique identifier
     std::string             m_sessionDescription;           ///< session description
     

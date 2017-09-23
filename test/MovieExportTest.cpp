@@ -420,7 +420,6 @@ TEST_CASE("MovieExportTest", "[core]")
         isx::MovieExporterParams params(
             movies,
             exportedNwbFileName,
-            exportedTiffFileName,
             "mostest made this",
             "This was exported as part of a Mosaic 2 unit test",
             "timeseries/comments",
@@ -532,7 +531,6 @@ TEST_CASE("MovieExportU16Test", "[core]")
         isx::MovieExporterParams params(
             movies,
             exportedNwbFileName,
-            exportedTiffFileName,
             "mostest made this",
             "This was exported as part of a Mosaic 2 unit test",
             "timeseries/comments",

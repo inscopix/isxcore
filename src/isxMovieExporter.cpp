@@ -379,11 +379,6 @@ namespace
         return cancelled;
     }
     
-    void WriteTiffMovies(MovieExporterParams& inParams)
-    {
-        toTiff(inParams.m_tiffFilename, inParams.m_srcs);
-    }
-
 } // namespace
     
 AsyncTaskStatus 
@@ -404,20 +399,6 @@ runMovieExporter(MovieExporterParams inParams, std::shared_ptr<MovieExporterOutp
         if (cs == nullptr)
         {
             ISX_THROW(isx::ExceptionUserInput, "One or more of the sources is invalid.");
-        }
-    }
-
-
-    if (inParams.m_tiffFilename.empty() == false)
-    {
-        try
-        {
-            WriteTiffMovies(inParams);
-        }
-        catch (...)
-        {
-            std::remove(inParams.m_tiffFilename.c_str());
-            throw;
         }
     }
 
@@ -446,11 +427,6 @@ runMovieExporter(MovieExporterParams inParams, std::shared_ptr<MovieExporterOutp
         if (!inParams.m_nwbFilename.empty())
         {
             std::remove(inParams.m_nwbFilename.c_str());
-        }
-
-        if (!inParams.m_tiffFilename.empty())
-        {
-            std::remove(inParams.m_tiffFilename.c_str());
         }
 
         return AsyncTaskStatus::CANCELLED;
