@@ -1,21 +1,11 @@
-#include "isxMovieFactory.h"
-#include "isxMovie.h"
 #include "catch.hpp"
+
 #include "isxTest.h"
-#include "isxException.h"
-#include "isxProject.h"
-#include "isxPathUtils.h"
-
+#include "isxMovieFactory.h"
 #include "isxMovieTiffExporter.h"
-
 #include "isxTiffMovie.h"
 
-#include <cstring>
-#include <fstream>
-#include <memory>
 #include <array>
-#include <cmath>
-
 
 namespace
 {

@@ -1,18 +1,8 @@
 #include "isxMovieTiffExporter.h"
-#include "isxPathUtils.h"
 #include "isxExport.h"
 #include "isxException.h"
-#include "isxTime.h"
-#include "isxMovie.h"
 
-#include "H5Cpp.h"
-
-#include <fstream>
-#include <iomanip>
-#include <limits>
 #include <vector>
-#include <array>
-#include <cmath>
 
 namespace isx {
 

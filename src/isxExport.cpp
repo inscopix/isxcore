@@ -7,7 +7,6 @@
 #include "isxCellSet.h"
 #include "isxTime.h"
 #include "isxMovie.h"
-
 #include "isxPathUtils.h"
 
 #include <tiffio.h>
@@ -126,19 +125,17 @@ toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, 
     isize_t frame_index = 0; // frame index of current movie
     isize_t mv_counter = 1; // movie counter for each 2^16-1 frames
 
-    std::string fn = dirname + "/" + basename + "_" + convertNumberToPaddedString(mv_counter, width) + "." + extension;
-
-    TIFF* out = openTIFF(fn);
+    TIFF* out = openTIFF(inFileName); // for one movie - save to selected filess
     for (auto m : inMovies)
     {
         for (isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
         {
-            if (frame_index == inMaxFrameIndex)
+            if (frame_index == inMaxFrameIndex) // if number of frames larger inMaxFrameIndex - increase file name and dump to new one
             {
                 mv_counter++;
                 frame_index = 0;
 
-                fn = dirname + "/" + basename + "_" + convertNumberToPaddedString(mv_counter, width) + "." + extension;
+                std::string fn = dirname + "/" + basename + "_" + convertNumberToPaddedString(mv_counter, width) + "." + extension;
 
                 closeTIFF(out);
                 out = openTIFF(fn);

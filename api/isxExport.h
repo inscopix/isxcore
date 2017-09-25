@@ -31,7 +31,7 @@ void toTiff(const std::string & inFileName, const SpImage_t & inImage);
 /// \param inFileName       The filename for the output file.
 /// \param inMovies         The set of movies to export.
 /// \param inMaxFrameIndex  The frames number in one movie part.
-void toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, isize_t inMaxFrameIndex);
+void toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const isize_t& inMaxFrameIndex);
 
 /// Write logical traces with names to an output stream, which is used when
 /// exporting logical GPIO traces and events.
