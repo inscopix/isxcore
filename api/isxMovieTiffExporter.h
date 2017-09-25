@@ -13,6 +13,7 @@ struct MovieTiffExporterParams
     /// convenience constructor to fill struct members in one shot
     /// \param inSrcs                   input movies
     /// \param inTiffFilename           filename for Tiff output file
+    /// \param inNumFramesInMovie       frames number in one splitted part of movie.
     MovieTiffExporterParams(
         const std::vector<SpMovie_t> & inSrcs,
         const std::string & inTiffFilename,
