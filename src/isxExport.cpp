@@ -120,10 +120,10 @@ toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, 
     const std::string dirname = getDirName(inFileName);
     const std::string basename = getBaseName(inFileName);
     const std::string extension = getExtension(inFileName);
-    const size_t width = 3; // we can calculate exact number of frames and find width = size_t(std::floor(std::log10(m_numCells - 1)) + 1);
+    const size_t width = 2; // we can calculate exact number of frames and find width = size_t(std::floor(std::log10(m_numCells - 1)) + 1);
 
     isize_t frame_index = 0; // frame index of current movie
-    isize_t mv_counter = 1; // movie counter for each 2^16-1 frames
+    isize_t mv_counter = 0; // movie counter for each 2^16-1 frames
 
     TIFF* out = openTIFF(inFileName); // for one movie - save to selected filess
     for (auto m : inMovies)
@@ -141,8 +141,8 @@ toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, 
                 out = openTIFF(fn);
             }
 
-            //auto f = ;
-            auto& img = m->getFrame(i)->getImage();
+            auto f = m->getFrame(i);
+            auto& img = f->getImage();
             toTiffOut(out, &img);
             TIFFWriteDirectory(out);
             frame_index++;
