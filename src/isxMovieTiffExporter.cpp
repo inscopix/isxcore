@@ -48,7 +48,7 @@ runMovieTiffExporter(MovieTiffExporterParams inParams, std::shared_ptr<MovieTiff
     {
         try
         {
-            toTiff(inParams.m_tiffFilename, inParams.m_srcs);
+            toTiff(inParams.m_tiffFilename, inParams.m_srcs, inParams.m_numFramesInMovie);
         }
         catch (...)
         {

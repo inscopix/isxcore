@@ -15,9 +15,11 @@ struct MovieTiffExporterParams
     /// \param inTiffFilename           filename for Tiff output file
     MovieTiffExporterParams(
         const std::vector<SpMovie_t> & inSrcs,
-        const std::string & inTiffFilename)
+        const std::string & inTiffFilename,
+        const isize_t & inNumFramesInMovie = (1<<16)-1 )
     : m_srcs(inSrcs)
     , m_tiffFilename(inTiffFilename)
+    , m_numFramesInMovie(inNumFramesInMovie)
     {}
 
     /// default constructor
@@ -31,6 +33,7 @@ struct MovieTiffExporterParams
 
     std::vector<SpMovie_t>  m_srcs;                         ///< input movies
     std::string             m_tiffFilename;                 ///< name of output tiff file
+    isize_t                 m_numFramesInMovie;             ///< number of frames in one movie (default value is 2^16-1 = 65535)
 };
 
 /// Movie exporter output parameters 

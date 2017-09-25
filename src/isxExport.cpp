@@ -8,6 +8,8 @@
 #include "isxTime.h"
 #include "isxMovie.h"
 
+#include "isxPathUtils.h"
+
 #include <tiffio.h>
 #include <cstring>
 #include <fstream>
@@ -114,23 +116,41 @@ closeTIFF(TIFF * out)
 }
 
 void 
-toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies)
+toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const isize_t& inMaxFrameIndex)
 {
-    auto out = openTIFF(inFileName);
+    const std::string dirname = getDirName(inFileName);
+    const std::string basename = getBaseName(inFileName);
+    const std::string extension = getExtension(inFileName);
+    const size_t width = 3; // we can calculate exact number of frames and find width = size_t(std::floor(std::log10(m_numCells - 1)) + 1);
 
+    isize_t frame_index = 0; // frame index of current movie
+    isize_t mv_counter = 1; // movie counter for each 2^16-1 frames
+
+    std::string fn = dirname + "/" + basename + "_" + convertNumberToPaddedString(mv_counter, width) + "." + extension;
+
+    TIFF* out = openTIFF(fn);
     for (auto m : inMovies)
     {
-        auto n = m->getTimingInfo().getNumTimes();
-
-        for (isize_t i = 0; i < n; ++i)
+        for (isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
         {
-            auto f = m->getFrame(i);
-            auto& img = f->getImage();
+            if (frame_index == inMaxFrameIndex)
+            {
+                mv_counter++;
+                frame_index = 0;
+
+                fn = dirname + "/" + basename + "_" + convertNumberToPaddedString(mv_counter, width) + "." + extension;
+
+                closeTIFF(out);
+                out = openTIFF(fn);
+            }
+
+            //auto f = ;
+            auto& img = m->getFrame(i)->getImage();
             toTiffOut(out, &img);
             TIFFWriteDirectory(out);
+            frame_index++;
         }
     }
-
     closeTIFF(out);
 }
 
