@@ -1,6 +1,7 @@
 #include "isxCellSetExporter.h"
 #include "isxPathUtils.h"
 #include "isxExport.h"
+#include "isxExportTiff.h"
 
 #include <fstream>
 #include <iomanip>
