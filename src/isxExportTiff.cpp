@@ -143,22 +143,25 @@ toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, 
     {
         for (isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
         {
-            if (frame_index == inMaxFrameIndex) // if number of frames larger inMaxFrameIndex - increase file name and dump to new one
+            if (m->getTimingInfo().isIndexValid(i))
             {
-                mv_counter++;
-                frame_index = 0;
+                if (frame_index == inMaxFrameIndex) // if number of frames larger inMaxFrameIndex - increase file name and dump to new one
+                {
+                    mv_counter++;
+                    frame_index = 0;
 
-                std::string fn = dirname + "/" + basename + "_" + convertNumberToPaddedString(mv_counter, width) + "." + extension;
+                    std::string fn = dirname + "/" + basename + "_" + convertNumberToPaddedString(mv_counter, width) + "." + extension;
 
-                delete out;
-                out = new TiffExporter(fn);
+                    delete out;
+                    out = new TiffExporter(fn);
+                }
+
+                auto f = m->getFrame(i);
+                auto& img = f->getImage();
+                out->toTiffOut(&img);
+                out->nextTiffDir();
+                frame_index++;
             }
-
-            auto f = m->getFrame(i);
-            auto& img = f->getImage();
-            out->toTiffOut(&img);
-            out->nextTiffDir();
-            frame_index++;
         }
     }
     delete out;
