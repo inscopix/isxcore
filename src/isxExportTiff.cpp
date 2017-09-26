@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iomanip>
 #include <limits>
+#include <cmath>
 
 #include <tiffio.h>
 

@@ -267,7 +267,7 @@ TEST_CASE("MovieTiffExportSplittedTest", "[core]")
             const std::string dirname = isx::getDirName(exportedTiffFileName);
             const std::string basename = isx::getBaseName(exportedTiffFileName);
             const std::string extension = isx::getExtension(exportedTiffFileName);
-            std::string exportedSecondTiffFileName = dirname + "/" + basename + "_" + isx::convertNumberToPaddedString(1, 2) + "." + extension;
+            std::string exportedSecondTiffFileName = dirname + "/" + basename + "_" + isx::convertNumberToPaddedString(1, 1) + "." + extension;
 
             isx::TiffMovie tiffMovie(exportedSecondTiffFileName);
             REQUIRE(tiffMovie.getFrameHeight() == sizePixels.getHeight());
