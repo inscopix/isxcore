@@ -18,7 +18,7 @@ using GetFrameCB_t = std::function<SpVideoFrame_t()>;
 
 // It's difficult to define a hard cut-off but
 // since we're using this in our recommended
-// ffpmeg command line to convert unsupported
+// ffmpeg command line to convert unsupported
 // movies it seems appropriate to use it here
 // as a hard limit also.
 static const int64_t sMaxSupportedGopSize = 10;    
