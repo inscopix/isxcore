@@ -125,7 +125,14 @@ toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, 
     const std::string dirname = getDirName(inFileName);
     const std::string basename = getBaseName(inFileName);
     const std::string extension = getExtension(inFileName);
-    const size_t width = 2; // we can calculate exact number of frames and find width = size_t(std::floor(std::log10(m_numCells - 1)) + 1);
+
+    isize_t numFrames = 0;
+    for (auto m : inMovies)
+    {
+        numFrames += m->getTimingInfo().getNumTimes();
+    }
+
+    size_t width = (numFrames > 10) ? (size_t(std::floor(std::log10(numFrames - 1)) + 1)) : (1);
 
     isize_t frame_index = 0; // frame index of current movie
     isize_t mv_counter = 0; // movie counter for each 2^16-1 frames

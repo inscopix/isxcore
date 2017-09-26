@@ -275,6 +275,7 @@ TEST_CASE("MovieTiffExportSplittedTest", "[core]")
             REQUIRE(tiffMovie.getDataType() == isx::DataType::U16);
             REQUIRE(tiffMovie.getNumFrames() == 2);
 
+            std::remove(exportedSecondTiffFileName.c_str());
         }
     }
 
