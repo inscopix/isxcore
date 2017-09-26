@@ -146,12 +146,17 @@ public:
     float *
     getPixelsAsF32() const;
 
-    /// \return the value of the requested pixel as float
+    /// \return the values over all channels of the requested pixel as float
     /// \param row row index
     /// \param col column index
-    float 
-    getPixelValueAsF32(isize_t row, isize_t col);
+    std::vector<float>
+    getPixelValuesAsF32(isize_t row, isize_t col);
 
+    ///// \return the value of the requested pixel as a string
+    ///// \param row row index
+    ///// \param col column index
+    //std::string
+    //getPixelValueAsString(isize_t row, isize_t col);
 
 private:
 

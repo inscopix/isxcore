@@ -191,6 +191,10 @@ public:
             const std::vector<Series *> & inSeries,
             std::vector<Series *> & outLocated);
 
+    /// \return All Series in the project not including those that are members of
+    ///         a series (i.e. children only).
+    std::vector<Series *>
+    getAllSeries() const;
 
 private:
 
@@ -236,11 +240,6 @@ private:
     /// Initialize data directory
     ///
     void initDataDir();
-
-    /// \return All Series in the project not including those that are members of
-    ///         a series (i.e. children only).
-    std::vector<Series *>
-    getAllSeries() const;
 
     /// \param  inItem  The Group of which to get all contained Series recursively.
     /// \return         The recursively retrieved member Series.

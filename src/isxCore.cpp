@@ -24,6 +24,10 @@ namespace isx
             {
                 return sizeof(float);
             }
+            case DataType::RGB888:
+            {
+                return 3 * sizeof(uint8_t);
+            }
             default:
             {
                 return 0;
@@ -46,6 +50,10 @@ namespace isx
         case DataType::F32:
         {
             return std::string("float");
+        }
+        case DataType::RGB888:
+        {
+            return std::string("rgb888");
         }
         default:
         {
@@ -71,6 +79,11 @@ namespace isx
             case DataType::F32:
             {
                 inStream << "F32";
+                break;
+            }
+            case DataType::RGB888:
+            {
+                inStream << "RGB888";
                 break;
             }
             default:
