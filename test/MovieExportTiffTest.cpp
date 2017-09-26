@@ -184,7 +184,7 @@ TEST_CASE("MovieTiffExportU16Test", "[core]")
             REQUIRE(tiffMovie.getFrameHeight() == sizePixels.getHeight());
             REQUIRE(tiffMovie.getFrameWidth() == sizePixels.getWidth());
             REQUIRE(tiffMovie.getDataType() == isx::DataType::U16);
-            REQUIRE(tiffMovie.getNumFrames() == 12);
+            REQUIRE(tiffMovie.getNumFrames() == 11);
         }
 
     }
