@@ -169,23 +169,29 @@ availableNumberOfBytesOnVolume(const std::string & dirPath)
     }
 
     qint64 numBytes;
+    // A path to an as-yet non-existing file may be given.
+    // Even a sub-directory might be non-existing as-yet.
+    // Move up the path until it exists (-1 no longer returned)
     while (true)
     {
         QStorageInfo info = QStorageInfo(dp);
         numBytes = info.bytesAvailable();
-        if (numBytes > 0)
+        if (numBytes > 0) // found (exit loop)
         {
             break;
         }
+        // Move up the path
         QStringList list = dp.split(forwardSlash, QString::SkipEmptyParts);
+        // Nothing more to try (exit loop)
         if ((list.size() == 1 && !startsWithSlash) || list.size() == 0)
         {
             numBytes = -1;
             break;
         }
+        // Remove last part of path
         list.takeLast();
         dp = list.join(forwardSlash);
-        if (startsWithSlash)
+        if (startsWithSlash) // reinsert initial slash if required (join does not take care of that)
         {
             std::string dpStr = forwardSlash.toStdString() + dp.toStdString();
             dp = QString(dpStr.c_str());
