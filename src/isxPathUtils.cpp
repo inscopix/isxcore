@@ -1,5 +1,6 @@
 #include "isxPathUtils.h"
 
+#include <iostream>
 #include <sstream>
 #include <QFileInfo>
 #include <QDir>
@@ -145,12 +146,52 @@ makeUniqueFilePath(const std::string & inPath, const isize_t inWidth)
     return outPath;
 }
 
-isize_t
+// Assumes any relative path starts with "."
+
+long long
 availableNumberOfBytesOnVolume(const std::string & dirPath)
 {
-	QStorageInfo info = QStorageInfo(QString(dirPath.c_str()));
-	qint64 numBytes = info.bytesAvailable();
-	return isize_t(numBytes);
+    char forwardSlashChar = '/';
+    QString forwardSlash(forwardSlashChar);
+
+    QString dp(dirPath.c_str());
+    dp = QDir::cleanPath(dp); // get rid of back-slashes and trailing slashes
+
+    bool startsWithSlash;
+    char firstChar = dp.toStdString()[0];
+    if (firstChar == forwardSlashChar)
+    {
+        startsWithSlash = true;
+    }
+    else
+    {
+        startsWithSlash = false;
+    }
+
+    qint64 numBytes;
+    while (true)
+    {
+        QStorageInfo info = QStorageInfo(dp);
+        numBytes = info.bytesAvailable();
+        if (numBytes > 0)
+        {
+            break;
+        }
+        QStringList list = dp.split(forwardSlash, QString::SkipEmptyParts);
+        if ((list.size() == 1 && !startsWithSlash) || list.size() == 0)
+        {
+            numBytes = -1;
+            break;
+        }
+        list.takeLast();
+        dp = list.join(forwardSlash);
+        if (startsWithSlash)
+        {
+            std::string dpStr = forwardSlash.toStdString() + dp.toStdString();
+            dp = QString(dpStr.c_str());
+        }
+    }
+    return (long long) numBytes;
 }
 
 } // namespace isx
