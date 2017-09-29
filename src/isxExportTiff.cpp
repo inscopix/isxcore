@@ -118,6 +118,7 @@ void
 TiffExporter::nextTiffDir()
 {
     TIFFWriteDirectory(out);
+    TIFFFlush(out);
 }
 
 void 
