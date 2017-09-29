@@ -90,12 +90,12 @@ TiffExporter::toTiffOut(const Image * inImage)
 
 TiffExporter::TiffExporter(const std::string & inFileName)
 {
-#if ISX_OS_MACOS
-    fd = creat(inFileName.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-    out = TIFFFdOpen(fd, inFileName.c_str(), "w");
-#else
+//#if ISX_OS_MACOS
+//    fd = creat(inFileName.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+//    out = TIFFFdOpen(fd, inFileName.c_str(), "w");
+//#else
     out = TIFFOpen(inFileName.c_str(), "w");
-#endif
+//#endif
 
     if (!out)
     {
@@ -105,12 +105,12 @@ TiffExporter::TiffExporter(const std::string & inFileName)
 
 TiffExporter::~TiffExporter()
 {
-#if ISX_OS_MACOS
-    TIFFCleanup(out);
-    close(fd);
-#else
+//#if ISX_OS_MACOS
+//    TIFFCleanup(out);
+//    close(fd);
+//#else
     TIFFClose(out);
-#endif
+//#endif
 }
 
 
