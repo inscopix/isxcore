@@ -36,7 +36,7 @@ public:
     void nextTiffDir();
 private:
     TIFF * out;
-    int fd;
+    //int fd;
 };
 
 /// Export an image to TIFF
