@@ -341,18 +341,6 @@ namespace
         }
     }
 
-    void
-    createFrameData(uint16_t * outBuf, int32_t inNumFrames, int32_t inPixelsPerFrame, int32_t inBaseValueForFrame)
-    {
-        for (int32_t f = 0; f < inNumFrames; ++f)
-        {
-            for (int32_t p = 0; p < inPixelsPerFrame; ++p)
-            {
-                outBuf[f * inPixelsPerFrame + p] = uint16_t((inBaseValueForFrame + f) * inPixelsPerFrame + p);
-            }
-        }
-    }
-
 } // namespace
 
     
