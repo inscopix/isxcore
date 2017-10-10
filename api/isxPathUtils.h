@@ -150,6 +150,8 @@ std::string makeUniqueFilePath(const std::string & inPath, const isize_t inWidth
 /// \return         The number of available bytes.
 long long availableNumberOfBytesOnVolume(const std::string & dirPath);
 
+static isize_t ISX_SIZE_MOVIE_HEADER_BYTES = 1000000;
+
 } // namespace isx
 
 #endif // ISX_PATH_UTILS_H

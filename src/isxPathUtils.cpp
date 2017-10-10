@@ -146,56 +146,31 @@ makeUniqueFilePath(const std::string & inPath, const isize_t inWidth)
     return outPath;
 }
 
-// Assumes any relative path starts with "."
-
 long long
 availableNumberOfBytesOnVolume(const std::string & dirPath)
 {
-    char forwardSlashChar = '/';
-    QString forwardSlash(forwardSlashChar);
-
-    QString dp(dirPath.c_str());
-    dp = QDir::cleanPath(dp); // get rid of back-slashes and trailing slashes
-
-    bool startsWithSlash;
-    char firstChar = dp.toStdString()[0];
-    if (firstChar == forwardSlashChar)
-    {
-        startsWithSlash = true;
-    }
-    else
-    {
-        startsWithSlash = false;
-    }
-
-    qint64 numBytes;
     // A path to an as-yet non-existing file may be given.
-    // Even a sub-directory might be non-existing as-yet.
-    // Try sub-paths until an existing one is found (until -1 no longer returned)
+    // Even the directory potentially could be non-existing before a test runs.
+    // Move up the path until an existing subpath is found or until not possible to move up further
+
+    std::string dpStr = dirPath;
+    qint64 numBytes;
     while (true)
     {
-        QStorageInfo info = QStorageInfo(dp);
+        QStorageInfo info = QStorageInfo(QString(dpStr.c_str()));
         numBytes = info.bytesAvailable();
-        if (numBytes > 0) // found: exit loop
+        if (numBytes >= 0) // found
         {
             break;
         }
-        // Move up the path
-        QStringList list = dp.split(forwardSlash, QString::SkipEmptyParts);
-        // All sub-paths are non-existent: exit loop
-        if ((list.size() == 1 && !startsWithSlash) || list.size() == 0)
+        // Try parent directory in case the sub-directory has not yet been created
+        const std::string dpParentStr = getDirName(dpStr);
+        if (dpParentStr == dpStr) // getDirName(arg) returns arg if already at top level (cannot go further up)
         {
             numBytes = -1;
             break;
         }
-        // Remove last part of path
-        list.takeLast();
-        dp = list.join(forwardSlash);
-        if (startsWithSlash) // reinsert initial slash if required (join does not take care of that)
-        {
-            std::string dpStr = forwardSlash.toStdString() + dp.toStdString();
-            dp = QString(dpStr.c_str());
-        }
+        dpStr = dpParentStr;
     }
     return (long long) numBytes;
 }
