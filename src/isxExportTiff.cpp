@@ -128,12 +128,14 @@ TiffExporter::nextTiffDir()
 }
 
 void 
-toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const isize_t& inMaxFrameIndex)
+toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const isize_t& inMaxFrameIndex, AsyncCheckInCB_t & inCheckInCB)
 {
     const std::string dirname = getDirName(inFileName);
     const std::string basename = getBaseName(inFileName);
     const std::string extension = getExtension(inFileName);
 
+    auto cancelled = false;
+    isize_t writtenFrames = 0;
     isize_t numFrames = 0;
     for (auto m : inMovies)
     {
@@ -169,6 +171,16 @@ toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, 
                 out->nextTiffDir();
                 frame_index++;
             }
+
+            cancelled = inCheckInCB(float(++writtenFrames) / float(numFrames));
+            if (cancelled)
+            {
+                break;
+            }
+        }            
+        if (cancelled)
+        {
+            break;
         }
     }
     delete out;
