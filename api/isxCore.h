@@ -19,7 +19,6 @@ namespace isx
         F32,
         U8,
         RGB888,
-		IMPOSSIBLE_VALUE,
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
