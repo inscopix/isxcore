@@ -195,7 +195,7 @@ public:
     ///
     std::string
     getHistory() const;
-    
+
     /// \return HistoricalDetails for this Series
     ///
     HistoricalDetails

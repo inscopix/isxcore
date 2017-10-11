@@ -163,7 +163,7 @@ TEST_CASE("CellSetSeries", "[core-internal]")
             "Unable to insert data that temporally overlaps with other parts of the series. Data sets in a series must all be non-overlapping.");
     }
 
-    SECTION("Non-compatible set of cellsets - framerate")
+    SECTION("Compatible set of cellsets with different framerates")
     {
         std::array<isx::TimingInfo, 3> tis =
         { {
@@ -179,10 +179,13 @@ TEST_CASE("CellSetSeries", "[core-internal]")
             cs->closeForWriting();
         }
 
-        ISX_REQUIRE_EXCEPTION(
-            isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
-            isx::ExceptionSeries,
-            "Unable to add a data set with a different frame rate than the rest of the series.");
+        const isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
+        const isx::TimingInfo expectedTi(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 12);
+        REQUIRE(css->isValid());
+        REQUIRE(css->getSpacingInfo() == spacingInfo);
+        REQUIRE(css->getTimingInfo() == expectedTi);
+        REQUIRE(css->getFileName() == "**CellSetSeries");
+        REQUIRE(css->getNumCells() == 0);
     }
 
     SECTION("Get image")

@@ -163,7 +163,7 @@ CellSetSimple::getImageAsync(isize_t inIndex, CellSetGetImageCB_t inCallback)
 void
 CellSetSimple::writeImageAndTrace(
         isize_t inIndex,
-        SpImage_t & inImage,
+        const SpImage_t & inImage,
         SpFTrace_t & inTrace,
         const std::string & inName)
 {
