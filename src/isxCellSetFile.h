@@ -104,7 +104,7 @@ public:
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or writing fails.
     /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
-    void writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData, const std::string & inName = std::string());
+    void writeCellData(isize_t inCellId, const Image & inSegmentationImage, Trace<float> & inData, const std::string & inName = std::string());
     
     /// \return the status of the cell
     /// \param inCellId the cell of interest
