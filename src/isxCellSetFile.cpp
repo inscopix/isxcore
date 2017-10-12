@@ -187,7 +187,7 @@ namespace isx
     }
     
     void 
-    CellSetFile::writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData, const std::string & inName)
+    CellSetFile::writeCellData(isize_t inCellId, const Image & inSegmentationImage, Trace<float> & inData, const std::string & inName)
     {
         if (m_fileClosedForWriting)
         {

@@ -144,7 +144,7 @@ virtual
 void 
 writeImageAndTrace(
         isize_t inIndex,
-        SpImage_t & inImage,
+        const SpImage_t & inImage,
         SpFTrace_t & inTrace,
         const std::string & inName = std::string()) = 0;
 
