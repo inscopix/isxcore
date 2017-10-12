@@ -127,7 +127,7 @@ TiffExporter::nextTiffDir()
     TIFFFlush(out);
 }
 
-void 
+bool 
 toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const isize_t& inMaxFrameIndex, AsyncCheckInCB_t & inCheckInCB)
 {
     const std::string dirname = getDirName(inFileName);
@@ -184,6 +184,7 @@ toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, 
         }
     }
     delete out;
+    return cancelled;
 }
 
 void 
