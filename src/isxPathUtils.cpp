@@ -59,7 +59,7 @@ std::string
 getDefaultProjectPath()
 {
     QString dirName = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    dirName += "/MosaicProjects";
+    dirName += "/Inscopix_Projects";
     QDir dir(dirName);
     if (!dir.exists())
     {
