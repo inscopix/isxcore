@@ -146,9 +146,10 @@ std::string makeUniqueFilePath(const std::string & inPath, const isize_t inWidth
 
 /// What is the available disk space in bytes for the given path
 ///
-/// \param  dirPath The requested file path.
+/// \param  dirPath      The requested file path.
+/// \param  outRootDir   root dir
 /// \return         The number of available bytes.
-long long availableNumberOfBytesOnVolume(const std::string & dirPath);
+long long availableNumberOfBytesOnVolume(const std::string & dirPath, std::string & outRootDir);
 
 } // namespace isx
 
