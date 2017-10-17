@@ -46,6 +46,11 @@ namespace isx
         isize_t
         getFrameHeight() const;
 
+        /// return the data type of pixels
+        ///
+        DataType
+        getDataType() const;
+
     private:
 
         isize_t getNumDirectories();
@@ -56,6 +61,7 @@ namespace isx
         isize_t m_frameWidth;
         isize_t m_frameHeight;
         isize_t m_numFrames;
+        DataType m_dataType;
 
     };
 }

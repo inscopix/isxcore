@@ -78,7 +78,7 @@ public:
     void 
     writeImageAndTrace(
             isize_t inIndex,
-            SpImage_t & inImage,
+            const SpImage_t & inImage,
             SpFTrace_t & inTrace,
             const std::string & inName = std::string()) override; 
 
@@ -86,8 +86,14 @@ public:
     CellSet::CellStatus 
     getCellStatus(isize_t inIndex) override;
 
+    Color
+    getCellColor(isize_t inIndex) override;
+
     void 
     setCellStatus(isize_t inIndex, CellSet::CellStatus inStatus) override;
+
+    void
+    setCellColor(isize_t inIndex, const Color& inColor) override;
 
     std::string
     getCellStatusString(isize_t inIndex) override;

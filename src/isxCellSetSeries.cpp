@@ -197,7 +197,7 @@ namespace isx
     void 
     CellSetSeries::writeImageAndTrace(
             isize_t inIndex,
-            SpImage_t & inImage,
+            const SpImage_t & inImage,
             SpFTrace_t & inTrace,
             const std::string & inName) 
     {
@@ -215,6 +215,12 @@ namespace isx
         return m_cellSets[0]->getCellStatus(inIndex);
     }
 
+    Color
+    CellSetSeries::getCellColor(isize_t inIndex)
+    {
+        return m_cellSets[0]->getCellColor(inIndex);
+    }
+
     std::string
     CellSetSeries::getCellStatusString(isize_t inIndex)
     {
@@ -227,6 +233,15 @@ namespace isx
         for(const auto &cs : m_cellSets)
         {
             cs->setCellStatus(inIndex, inStatus);
+        }
+    }
+
+    void
+    CellSetSeries::setCellColor(isize_t inIndex, const Color& inColor)
+    {
+        for (const auto &cs : m_cellSets)
+        {
+            cs->setCellColor(inIndex, inColor);
         }
     }
 

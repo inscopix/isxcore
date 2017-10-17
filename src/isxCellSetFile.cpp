@@ -187,7 +187,7 @@ namespace isx
     }
     
     void 
-    CellSetFile::writeCellData(isize_t inCellId, Image & inSegmentationImage, Trace<float> & inData, const std::string & inName)
+    CellSetFile::writeCellData(isize_t inCellId, const Image & inSegmentationImage, Trace<float> & inData, const std::string & inName)
     {
         if (m_fileClosedForWriting)
         {
@@ -216,6 +216,7 @@ namespace isx
         {
             m_cellNames.push_back(inName);
             m_cellStatuses.push_back(CellSet::CellStatus::UNDECIDED);
+            m_cellColors.push_back(Color());
             m_cellActivity.push_back(true);
 
             ++m_numCells;
@@ -227,6 +228,7 @@ namespace isx
  
             m_cellNames.at(inCellId) = inName;
             m_cellStatuses.at(inCellId) = CellSet::CellStatus::UNDECIDED;
+            m_cellColors.at(inCellId) = Color();
             m_cellActivity.at(inCellId) = true;
         }
         else
@@ -250,6 +252,12 @@ namespace isx
     CellSetFile::getCellStatus(isize_t inCellId) 
     {
         return m_cellStatuses.at(inCellId);
+    }
+
+    Color
+    CellSetFile::getCellColor(isize_t inCellId)
+    {
+        return m_cellColors.at(inCellId);
     }
 
     std::string
@@ -278,6 +286,12 @@ namespace isx
         }
         m_cellStatuses.at(inCellId) = inStatus;
         writeHeader();
+    }
+
+    void
+    CellSetFile::setCellColor(isize_t inCellId, const Color& inColor)
+    {
+        m_cellColors.at(inCellId) = inColor;
     }
 
     std::string 
@@ -335,20 +349,33 @@ namespace isx
                 ISX_THROW(isx::ExceptionDataIO,
                         "Expected type to be CellSet. Instead got ", size_t(type), ".");
             }
-            m_timingInfo = convertJsonToTimingInfo(j["timingInfo"]);
-            m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
-            m_cellNames = convertJsonToCellNames(j["CellNames"]);
-            m_cellStatuses = convertJsonToCellStatuses(j["CellStatuses"]);
-            m_isRoiSet = j["isRoiSet"];
 
-            if (j["fileVersion"].get<size_t>() > 0)
+            auto version = j["fileVersion"].get<size_t>();
+            switch (version)
             {
+            case 2:
+                m_cellColors = convertJsonToCellColors(j["CellColors"]);
+            case 1:
                 m_cellActivity = convertJsonToCellActivities(j["CellActivity"]);
+            case 0:
+            default:
+                m_timingInfo = convertJsonToTimingInfo(j["timingInfo"]);
+                m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
+                m_cellNames = convertJsonToCellNames(j["CellNames"]);
+                m_cellStatuses = convertJsonToCellStatuses(j["CellStatuses"]);
+                m_isRoiSet = j["isRoiSet"];
+                break;
             }
-            else
+
+            if (m_cellActivity.empty())
             {
                 m_cellActivity = std::vector<bool>(m_cellNames.size(), true);
             }
+            if (m_cellColors.empty())
+            {
+                m_cellColors = CellColors_t(m_cellNames.size(), Color());
+            }
+
         }
         catch (const std::exception & error)
         {
@@ -361,7 +388,7 @@ namespace isx
 
         const isize_t bytesPerCell = segmentationImageSizeInBytes() + traceSizeInBytes();
         m_numCells = isize_t(m_headerOffset) / bytesPerCell;
-        if (m_numCells != m_cellNames.size() || m_numCells != m_cellStatuses.size())
+        if (m_numCells != m_cellNames.size() || m_numCells != m_cellStatuses.size()  || m_numCells != m_cellColors.size() )
         {
             ISX_THROW(isx::ExceptionDataIO, "Number of cells in header does not match number of cells in file.");
         }
@@ -380,6 +407,7 @@ namespace isx
             replaceEmptyNames();
             j["CellNames"] = convertCellNamesToJson(m_cellNames);
             j["CellStatuses"] = convertCellStatusesToJson(m_cellStatuses);
+            j["CellColors"] = convertCellColorsToJson(m_cellColors);
             j["producer"] = getProducerAsJson();
             j["fileVersion"] = s_version;
             j["isRoiSet"] = m_isRoiSet;

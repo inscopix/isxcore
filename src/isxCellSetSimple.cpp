@@ -163,7 +163,7 @@ CellSetSimple::getImageAsync(isize_t inIndex, CellSetGetImageCB_t inCallback)
 void
 CellSetSimple::writeImageAndTrace(
         isize_t inIndex,
-        SpImage_t & inImage,
+        const SpImage_t & inImage,
         SpFTrace_t & inTrace,
         const std::string & inName)
 {
@@ -204,6 +204,12 @@ CellSetSimple::getCellStatus(isize_t inIndex)
     return m_file->getCellStatus(inIndex);
 }
 
+Color
+CellSetSimple::getCellColor(isize_t inIndex)
+{
+    return m_file->getCellColor(inIndex);
+}
+
 std::string
 CellSetSimple::getCellStatusString(isize_t inIndex)
 {
@@ -214,6 +220,12 @@ void
 CellSetSimple::setCellStatus(isize_t inIndex, CellSet::CellStatus inStatus)
 {
     m_file->setCellStatus(inIndex, inStatus);
+}
+
+void
+CellSetSimple::setCellColor(isize_t inIndex, const Color& inColor)
+{
+    m_file->setCellColor(inIndex, inColor);
 }
 
 std::string 
