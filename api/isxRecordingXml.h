@@ -44,11 +44,14 @@ namespace isx {
 
         /// \return additional properties map
         const std::map<std::string, Variant> & getAdditionalProperties() const;
-        
+
+        /// \return the number of frames in each file that the XML wraps around
+        ///
+        const std::vector<isize_t> & getNumFrames() const;
+
         /// serialize to stream
         ///
         void serialize(std::ostream& strm) const override;
-        
 
     private:
         class Impl;

@@ -58,8 +58,8 @@ public:
 
     void initializeFromTiff()
     {
-        
-        m_movie = std::make_shared<NVistaTiffMovie>(m_path, m_path);
+        const std::vector<std::string> paths = {m_path};
+        m_movie = std::make_shared<NVistaTiffMovie>(m_path, paths);
 
         // no exception until here --> this is a valid file
         m_isValid = true;
@@ -77,7 +77,6 @@ public:
 
             files.push_back(std::make_shared<H5::H5File>(m_path.c_str(), H5F_ACC_RDONLY));
             fileHandles.push_back(std::make_shared<Hdf5FileHandle>(files[0], H5F_ACC_RDONLY));
-            
         }  // end of try block
 
         catch (const H5::FileIException& error)
@@ -96,7 +95,7 @@ public:
         {
             ISX_ASSERT(false, "Unhandled exception.");
         }
-        
+
         m_movie = std::make_shared<NVistaHdf5Movie>(m_path, fileHandles[0]);
 
         // no exception until here --> this is a valid file
@@ -149,7 +148,7 @@ public:
         }
         else if (extension == "tif")
         {
-            m_movie = std::make_shared<NVistaTiffMovie>(m_path, fileNames, ti, si, droppedFrames, props);
+            m_movie = std::make_shared<NVistaTiffMovie>(m_path, fileNames, ti, si, droppedFrames, props, xml.getNumFrames());
         }
         else
         {
