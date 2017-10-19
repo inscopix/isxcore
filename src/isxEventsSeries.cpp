@@ -86,9 +86,12 @@ EventsSeries::getLogicalData(const std::string & inCellName)
     for (const auto & e : m_events)
     {
         const SpLogicalTrace_t eTrace = e->getLogicalData(inCellName);
-        for (const auto & kv : eTrace->getValues())
+        if (eTrace != nullptr)
         {
-            trace->addValue(kv.first, kv.second);
+            for (const auto & kv : eTrace->getValues())
+            {
+                trace->addValue(kv.first, kv.second);
+            }
         }
     }
     return trace;
