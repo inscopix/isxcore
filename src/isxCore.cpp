@@ -139,6 +139,11 @@ namespace isx
         return ISX_VERSION_PATCH;
     }
 
+    int CoreVersionBuild()
+    {
+        return ISX_VERSION_BUILD;
+    }
+
     bool isBeta()
     {
         return ISX_IS_BETA;
@@ -147,7 +152,7 @@ namespace isx
     std::string CoreVersionString()
     {
         std::ostringstream ss;
-        ss << CoreVersionMajor() << "." << CoreVersionMinor() << "." << CoreVersionPatch();
+        ss << CoreVersionMajor() << "." << CoreVersionMinor() << "." << CoreVersionPatch() << "." << CoreVersionBuild();
         if (isBeta())
         {
             ss << " beta";
