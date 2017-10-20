@@ -153,7 +153,10 @@ void
 Series::insertUnitarySeries(const SpSeries_t & inUnitarySeries, bool inCheckNewMember)
 {
     checkBeforeAddOrInsertUnitarySeries(inUnitarySeries);
-    size_t index = 0;
+
+    // Insertion will be at the end by default to do something sensible when
+    // skipping the check of the new member.
+    size_t index = m_unitarySeries.size();
 
     if (inCheckNewMember)
     {
@@ -166,7 +169,8 @@ Series::insertUnitarySeries(const SpSeries_t & inUnitarySeries, bool inCheckNewM
         }
 
         const Time start = ds->getTimingInfo().getStart();
-        
+
+        index = 0;
         for (const auto & mds : getDataSets())
         {
             if (start < mds->getTimingInfo().getStart())
@@ -806,7 +810,9 @@ Series::fromJsonString(const std::string & inString, const std::string & inAbsol
         {
             SpDataSet_t dataSet = DataSet::fromJsonString(jsonDataSet.dump(), inAbsolutePathToPrepend);
             auto tmpUnitarySeries = std::make_shared<Series>(dataSet);
-            ret->insertUnitarySeries(tmpUnitarySeries);
+            // We skip the compatibility check for performance reasons and trust
+            // the serialized version is good.
+            ret->insertUnitarySeries(tmpUnitarySeries, false);
         }
     }
     if (jsonObj.find("children") != jsonObj.end())

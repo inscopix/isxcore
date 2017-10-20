@@ -111,6 +111,11 @@ public:
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     CellSet::CellStatus getCellStatus(isize_t inCellId);
 
+    /// \return the status of the cell
+    /// \param inCellId the cell of interest
+    /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
+    Color getCellColor(isize_t inCellId);
+
 
     /// \return the status of the cell
     /// \param inCellId the cell of interest
@@ -124,6 +129,11 @@ public:
     /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void setCellStatus(isize_t inCellId, CellSet::CellStatus inStatus);
+
+    /// Set a cell color
+    /// \param inCellId the cell of interest
+    /// \param inColor new color
+    void setCellColor(isize_t inCellId, const Color& inColor);
 
     /// Get the name for a cell in the set
     /// \param inCellId the cell of interest
@@ -175,6 +185,9 @@ private:
     /// Cell validity flags
     CellStatuses_t m_cellStatuses;
 
+    /// Cell validity flags
+    CellColors_t m_cellColors;
+
     /// Flag indicating whether a cell is active in this file
     CellActivities_t m_cellActivity;
 
@@ -186,7 +199,7 @@ private:
     
     bool m_fileClosedForWriting = false;
 
-    const static size_t s_version = 1;
+    const static size_t s_version = 2;
 
     /// True if this came from drawing ROIs, false otherwise.
     bool m_isRoiSet = false;

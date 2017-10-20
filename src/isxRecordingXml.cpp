@@ -127,13 +127,15 @@ namespace isx
                         }
                         else if (name == "decompressed")
                         {
+                            m_numFrames.clear();
                             while (reader.readNextStartElement())
                             {
                                 QXmlStreamAttributes att = reader.attributes();
                                 if (att.hasAttribute("frames"))
                                 {
                                     QStringRef sr = att.value("frames");
-                                    totalFrames += sr.toULong();
+                                    m_numFrames.push_back(sr.toULong());
+                                    totalFrames += m_numFrames.back();
                                 }
                                 QString filename = reader.readElementText();
                                 m_hdf5FileNames.push_back(filename.toStdString());
@@ -150,9 +152,8 @@ namespace isx
                         {
                             reader.skipCurrentElement();
                         }
-                    }                    
+                    }
                 }
-                
             }
 
             parseDroppedFrames(droppedFrames, m_droppedFrameNums);
@@ -203,6 +204,11 @@ namespace isx
             return m_additionalProperties;
         }
 
+        const std::vector<isize_t> & getNumFrames() const
+        {
+            return m_numFrames;
+        }
+
         void
         serialize(std::ostream& strm) const
         {
@@ -218,6 +224,9 @@ namespace isx
         SpacingInfo m_spacingInfo;
         std::vector<isize_t> m_droppedFrameNums;    
         std::map<std::string, Variant> m_additionalProperties; 
+        /// We store the number of frames in each decompressed file so that
+        /// we can directly specify the number of frames
+        std::vector<isize_t> m_numFrames;
 
         void initTimingInfo(const QString & inStart, const QString & inFps, const QString & inNumFrames, const QString & inDroppedFrames)
         {
@@ -351,6 +360,12 @@ namespace isx
     RecordingXml::getAdditionalProperties() const
     {
         return m_pImpl->getAdditionalProperties();
+    }
+
+    const std::vector<isize_t> &
+    RecordingXml::getNumFrames() const
+    {
+        return m_pImpl->getNumFrames();
     }
 
     void

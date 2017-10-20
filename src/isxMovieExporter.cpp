@@ -402,21 +402,24 @@ runMovieExporter(MovieExporterParams inParams, std::shared_ptr<MovieExporterOutp
         }
     }
 
-    H5::Exception::dontPrint();
-    try
+    if (inParams.m_nwbFilename.empty() == false)
     {
-        H5::H5File h5File(inParams.m_nwbFilename, H5F_ACC_TRUNC);
+        H5::Exception::dontPrint();
+        try
+        {
+            H5::H5File h5File(inParams.m_nwbFilename, H5F_ACC_TRUNC);
 
-        writeTopLevelGroups(h5File, inParams);
-        writeTopLevelDataSets(h5File, inParams);
-        cancelled = writeAnalysisImageSeries(h5File, inParams, inCheckInCB);
-        
-        h5File.close();
-    }
-    catch (H5::Exception &e)
-    {
-        std::remove(inParams.m_nwbFilename.c_str());
-        ISX_THROW(ExceptionFileIO, e.getDetailMsg() + " " + inParams.m_nwbFilename);
+            writeTopLevelGroups(h5File, inParams);
+            writeTopLevelDataSets(h5File, inParams);
+            cancelled = writeAnalysisImageSeries(h5File, inParams, inCheckInCB);
+            
+            h5File.close();
+        }
+        catch (H5::Exception &e)
+        {
+            std::remove(inParams.m_nwbFilename.c_str());
+            ISX_THROW(ExceptionFileIO, e.getDetailMsg() + " " + inParams.m_nwbFilename);
+        }
     }
 
     if (cancelled)

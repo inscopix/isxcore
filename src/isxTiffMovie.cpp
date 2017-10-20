@@ -8,9 +8,28 @@
 namespace isx
 {
 
-TiffMovie::TiffMovie(const std::string & inFileName)
-: m_fileName(inFileName)
+TiffMovie::TiffMovie(const std::string & inFileName, const isize_t inNumDirectories)
 {
+    initialize(inFileName);
+    m_numFrames = inNumDirectories;
+}
+
+TiffMovie::TiffMovie(const std::string & inFileName)
+{
+    initialize(inFileName);
+    m_numFrames = isize_t(TIFFNumberOfDirectories(m_tif));
+}
+
+TiffMovie::~TiffMovie()
+{
+    TIFFClose(m_tif);
+}
+
+void
+TiffMovie::initialize(const std::string & inFileName)
+{
+    m_fileName = inFileName;
+
     m_tif = TIFFOpen(inFileName.c_str(), "r");
 
     if(!m_tif)
@@ -20,9 +39,32 @@ TiffMovie::TiffMovie(const std::string & inFileName)
 
     uint16_t bits;
     TIFFGetField(m_tif, TIFFTAG_BITSPERSAMPLE, &bits);
-    if (bits != sizeof(uint16_t) * 8)
+    switch (bits)
     {
-        ISX_THROW(ExceptionDataIO, "Unsupported number of bits (", bits, "). Only 16 bit images are supported.");
+        case sizeof(uint16_t) * 8:
+        {
+            m_dataType = DataType::U16;
+            break;
+        }
+        case sizeof(uint8_t) * 8:
+        {
+            m_dataType = DataType::U8;
+            //break; // import is not implemented yet, so it will jump to default/exception
+        }
+        case sizeof(float) * 8:
+        {
+            m_dataType = DataType::F32;
+            //break;
+        }
+        case sizeof(uint8_t) * 8 * 3:
+        {
+            m_dataType = DataType::RGB888;
+            //break;
+        }
+        default:
+        {
+            ISX_THROW(ExceptionDataIO, "Unsupported number of bits (", bits, "). Only 16 bit images are supported.");
+        }
     }
 
     uint32_t width, height;
@@ -31,13 +73,6 @@ TiffMovie::TiffMovie(const std::string & inFileName)
 
     m_frameWidth = isize_t(width);
     m_frameHeight = isize_t(height);
-
-    m_numFrames = getNumDirectories();
-}
-
-TiffMovie::~TiffMovie()
-{
-    TIFFClose(m_tif);
 }
 
 void 
@@ -51,11 +86,13 @@ TiffMovie::getFrame(isize_t inFrameNumber, const SpVideoFrame_t & vf)
 
     // Read the image
     tsize_t size = TIFFStripSize(m_tif); 
-    isize_t nbytes = m_frameWidth * m_frameHeight * sizeof(uint16_t);
+
+    isize_t nbytes = m_frameWidth * m_frameHeight * getDataTypeSizeInBytes(m_dataType);
     TIFFBuffer buf(nbytes);
     char * pBuf = (char *)buf.get();
 
-    for (tstrip_t strip = 0; strip < TIFFNumberOfStrips(m_tif); strip++)
+    auto numOfStrips = TIFFNumberOfStrips(m_tif);
+    for (tstrip_t strip = 0; strip < numOfStrips; strip++)
     {
         if (TIFFReadEncodedStrip(m_tif, strip, pBuf, size) == -1)
         {
@@ -86,17 +123,10 @@ TiffMovie::getFrameHeight() const
     return m_frameHeight;
 }
 
-isize_t 
-TiffMovie::getNumDirectories()
+DataType
+TiffMovie::getDataType() const
 {
-    int dircount = 0;
-    do 
-    {
-        dircount++;
-    } while (TIFFReadDirectory(m_tif));
-
-    return isize_t(dircount);
+    return m_dataType;
 }
-
 
 }

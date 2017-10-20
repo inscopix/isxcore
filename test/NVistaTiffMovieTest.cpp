@@ -14,35 +14,36 @@
 TEST_CASE("NVistaTiffMovieTest", "[core-internal]") {
     std::string testFileName = g_resources["unitTestDataPath"] + "/recording_20161104_145443.tif";
     std::string testFileNameXML = g_resources["unitTestDataPath"] + "/recording_20161104_145443.xml";
+    const std::vector<std::string> testFileNames = {testFileName};
 
     isx::CoreInitialize();
 
     SECTION("create movie from one dataset") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileName);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileNames);
         REQUIRE(m->isValid());
         REQUIRE(m->getDataType() == isx::DataType::U16);
     }
 
     SECTION("getTimingInfo().getNumTimes()") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileName);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileNames);
         REQUIRE(m->isValid());
         REQUIRE(m->getTimingInfo().getNumTimes() == 39);
     }
 
     SECTION("getSpacingInfo().getNumColumns") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileName);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileNames);
         REQUIRE(m->isValid());
         REQUIRE(m->getSpacingInfo().getNumColumns() == 1440);
     }
 
     SECTION("getSpacingInfo().getNumRows") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileName);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileNames);
         REQUIRE(m->isValid());
         REQUIRE(m->getSpacingInfo().getNumRows() == 1080);
     }
 
     SECTION("getFrame for frame number") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileName);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileNames);
         REQUIRE(m->isValid());
         isx::SpVideoFrame_t nvf = m->getFrame(0);
         unsigned char * t = reinterpret_cast<unsigned char *>(nvf->getPixels());
@@ -51,13 +52,13 @@ TEST_CASE("NVistaTiffMovieTest", "[core-internal]") {
     }
 
     SECTION("getTimingInfo().getDuration()") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileName);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileNames);
         REQUIRE(m->isValid());
         REQUIRE(m->getTimingInfo().getDuration().toDouble() == 1.95);
     }
 
     SECTION("toString") {
-        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileName);
+        isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileNames);
         REQUIRE(m->toString() == testFileName);
     }
 
@@ -86,6 +87,7 @@ TEST_CASE("NVistaTiffMovieTest", "[core-internal]") {
 
 TEST_CASE("TiffMovieTestAsync", "[core]") {
     std::string testFileName = g_resources["unitTestDataPath"] + "/recording_20161104_145443.tif";
+    const std::vector<std::string> testFileNames = {testFileName};
 
     isx::CoreInitialize();
     
@@ -103,7 +105,7 @@ TEST_CASE("TiffMovieTestAsync", "[core]") {
     size_t numTestFrames = expected.size();
     size_t numTestBytesPerFrame = sizeof(f0_data);
     
-    isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileName);
+    isx::SpMovie_t m = std::make_shared<isx::NVistaTiffMovie>(testFileName, testFileNames);
     REQUIRE(m->isValid());
     isx::MovieGetFrameCB_t cb = [&](isx::AsyncTaskResult<isx::SpVideoFrame_t> inAsyncTaskResult){
         REQUIRE(!inAsyncTaskResult.getException());

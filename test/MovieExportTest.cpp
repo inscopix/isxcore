@@ -9,6 +9,7 @@
 #include "isxMovieExporter.h"
 
 #include "H5Cpp.h"
+#include "isxTiffMovie.h"
 
 #include <cstring>
 #include <fstream>
@@ -339,7 +340,7 @@ namespace
             }
         }
     }
-        
+
 } // namespace
 
     
@@ -381,7 +382,7 @@ TEST_CASE("MovieExportTest", "[core]")
 
     isx::CoreInitialize();
 
-    SECTION("Export movie series")
+    SECTION("Export F32 movie series")
     {
         // write isxds
         const auto pixelsPerFrame = int32_t(sizePixels.getWidth() * sizePixels.getHeight());
@@ -417,27 +418,29 @@ TEST_CASE("MovieExportTest", "[core]")
         
         
         // verify exported data
-
-        H5::H5File h5File(exportedNwbFileName, H5F_ACC_RDONLY);
-        verifyTopLevelDataSets(h5File, params);
-        verifyTopLevelGroups(h5File);
-
-        auto an = h5File.openGroup(S_analysis);
-        REQUIRE(an.getNumAttrs() == 0);
-        
-        auto startTimeD = timingInfos[0].getStart().getSecsSinceEpoch().toDouble();
-
-        for (const auto fn: filenames)
         {
-            auto name = isx::getBaseName(fn);
-            auto g = an.openGroup(name);
-            REQUIRE(g.getNumAttrs() == 5);
-            auto m = isx::readMovie(fn);
-            verifyTimeSeriesAttributes(g, params, m);
-            verifyVideoFrames(g, params, m, startTimeD);
+            H5::H5File h5File(exportedNwbFileName, H5F_ACC_RDONLY);
+            verifyTopLevelDataSets(h5File, params);
+            verifyTopLevelGroups(h5File);
+
+            auto an = h5File.openGroup(S_analysis);
+            REQUIRE(an.getNumAttrs() == 0);
+
+            auto startTimeD = timingInfos[0].getStart().getSecsSinceEpoch().toDouble();
+
+            for (const auto fn : filenames)
+            {
+                auto name = isx::getBaseName(fn);
+                auto g = an.openGroup(name);
+                REQUIRE(g.getNumAttrs() == 5);
+                auto m = isx::readMovie(fn);
+                verifyTimeSeriesAttributes(g, params, m);
+                verifyVideoFrames(g, params, m, startTimeD);
+            }
+
+            h5File.close();
         }
 
-        h5File.close();
     }
 
     for (const auto & fn: filenames)

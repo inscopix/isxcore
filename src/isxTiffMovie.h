@@ -17,10 +17,16 @@ namespace isx
     {
     public: 
 
-        /// Contructor
+        /// Constructor
         /// \param inFileName the filename for one TIFF movie file
         TiffMovie(const std::string & inFileName);
-        
+
+        /// Constructor that allows specification of number of directories
+        /// to avoid expensive IO to get this.
+        /// \param inFileName the filename for one TIFF movie file
+        /// \param inNumDirectories the number of directories in the TIFF movie file
+        TiffMovie(const std::string & inFileName, const isize_t inNumDirectories);
+
         /// Destructor
         ///
         ~TiffMovie();
@@ -46,9 +52,14 @@ namespace isx
         isize_t
         getFrameHeight() const;
 
+        /// return the data type of pixels
+        ///
+        DataType
+        getDataType() const;
+
     private:
 
-        isize_t getNumDirectories();
+        void initialize(const std::string & inFileName);
 
         std::string m_fileName;
         TIFF *      m_tif;
@@ -56,6 +67,7 @@ namespace isx
         isize_t m_frameWidth;
         isize_t m_frameHeight;
         isize_t m_numFrames;
+        DataType m_dataType;
 
     };
 }

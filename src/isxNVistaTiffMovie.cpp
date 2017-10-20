@@ -23,33 +23,96 @@ NVistaTiffMovie::NVistaTiffMovie()
 }
 
 NVistaTiffMovie::NVistaTiffMovie(
-    const std::string &inFileName,
-    const std::string &inTiffFileName,
-    const TimingInfo & inTimingInfo,
-    const SpacingInfo & inSpacingInfo,
-    const std::vector<isize_t> & inDroppedFrames,
-    const std::map<std::string, Variant> & inAdditionalProperties)
-    : m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
-{
-    std::vector<std::string> fn{inTiffFileName};
-    initialize(inFileName, fn, inTimingInfo, inSpacingInfo, inDroppedFrames, inAdditionalProperties);
-}
-
-NVistaTiffMovie::NVistaTiffMovie(
     const std::string & inFileName,
     const std::vector<std::string> &inTiffFileNames,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo, 
     const std::vector<isize_t> & inDroppedFrames,
-    const std::map<std::string, Variant> & inAdditionalProperties)
-    : m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
+    const std::map<std::string, Variant> & inAdditionalProperties,
+    const std::vector<isize_t> & inNumFrames)
+    : m_fileName(inFileName)
+    , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
-    initialize(inFileName, inTiffFileNames, inTimingInfo, inSpacingInfo, inDroppedFrames, inAdditionalProperties);
+    m_fileName = inFileName;
+
+    ISX_ASSERT(inTiffFileNames.size());
+    m_tiffFileNames = inTiffFileNames;
+
+    isize_t numFramesAccum = 0;
+
+    const bool useNumFrames = inNumFrames.size() == inTiffFileNames.size();
+    ISX_ASSERT(inNumFrames.empty() ? true : useNumFrames);
+
+    for (isize_t f(0); f < inTiffFileNames.size(); ++f)
+    {
+        std::unique_ptr<TiffMovie> p;
+        if (useNumFrames)
+        {
+            p.reset(new TiffMovie(inTiffFileNames[f], inNumFrames[f]));
+        }
+        else
+        {
+            p.reset(new TiffMovie(inTiffFileNames[f]));
+        }
+        m_movies.push_back(std::move(p));
+
+        if (f > 1)
+        {
+            if (m_movies[0]->getFrameWidth() != m_movies[f]->getFrameWidth()
+                || m_movies[0]->getFrameHeight() != m_movies[f]->getFrameHeight())
+            {
+                ISX_THROW(isx::ExceptionUserInput, "All input files must have the same dimensions.");
+            }
+        }
+
+        numFramesAccum += m_movies[f]->getNumFrames();
+        m_cumulativeFrames.push_back(numFramesAccum);
+    }
+
+    if (inTimingInfo.isValid())
+    {
+        m_timingInfos = TimingInfos_t{inTimingInfo};
+    }
+    else
+    {
+        /// TODO: Allow user to edit timing information or at least set a default for imported TIFF files (without accompanying XML)
+        /// Set default
+        Time start;
+        DurationInSeconds step(1, 20); 
+        isize_t numFrames = numFramesAccum + inDroppedFrames.size();
+        m_timingInfos = TimingInfos_t{TimingInfo(start, step, numFrames, inDroppedFrames)};
+    }
+
+    if (inSpacingInfo.isValid())
+    {
+        // TODO sweet : Even if the spacing info is valid, we don't trust
+        // the width/height because the acquisition software does not store
+        // the actual width/height after downsampling.
+        // Therefore, we try to get it from the HDF5 file and use the given
+        // width/height as a fallback only.
+        if (m_movies.size() > 0)
+        {
+            const SizeInPixels_t numPixels(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
+            m_spacingInfo = SpacingInfo(numPixels, inSpacingInfo.getPixelSize(), inSpacingInfo.getTopLeft());
+        }
+        else
+        {
+            m_spacingInfo = inSpacingInfo;
+        }
+    }
+    else
+    {
+        const SizeInPixels_t numPixels(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
+        m_spacingInfo = SpacingInfo(numPixels);
+    }
+
+    m_additionalProperties = inAdditionalProperties;
+
+    m_valid = true;
 }
 
 NVistaTiffMovie::~NVistaTiffMovie()
 {
-    
 }
 
 const std::map<std::string, Variant> & 
@@ -151,84 +214,6 @@ NVistaTiffMovie::serialize(std::ostream& strm) const
         strm << m_tiffFileNames[m];
     }
 }
-
-void
-NVistaTiffMovie::initialize(
-    const std::string & inFileName,
-    const std::vector<std::string> &inTiffFileNames,
-    const TimingInfo & inTimingInfo,
-    const SpacingInfo & inSpacingInfo,
-    const std::vector<isize_t> & inDroppedFrames,
-    const std::map<std::string, Variant> & inAdditionalProperties)
-{
-    m_fileName = inFileName;
-
-    ISX_ASSERT(inTiffFileNames.size());
-    m_tiffFileNames = inTiffFileNames;
-
-    isize_t numFramesAccum = 0;
-
-    for (isize_t f(0); f < inTiffFileNames.size(); ++f)
-    {
-        std::unique_ptr<TiffMovie> p( new TiffMovie(inTiffFileNames[f]) );
-        m_movies.push_back(std::move(p));
-
-        if (f > 1)
-        {
-            if (m_movies[0]->getFrameWidth() != m_movies[f]->getFrameWidth()
-                || m_movies[0]->getFrameHeight() != m_movies[f]->getFrameHeight())
-            {
-                ISX_THROW(isx::ExceptionUserInput, "All input files must have the same dimensions.");
-            }
-        }
-
-        numFramesAccum += m_movies[f]->getNumFrames();
-        m_cumulativeFrames.push_back(numFramesAccum);
-    }
-
-    if (inTimingInfo.isValid())
-    {
-        m_timingInfos = TimingInfos_t{inTimingInfo};
-    }
-    else
-    {
-        /// TODO: Allow user to edit timing information or at least set a default for imported TIFF files (without accompanying XML)
-        /// Set default
-        Time start;
-        DurationInSeconds step(1, 20); 
-        isize_t numFrames = numFramesAccum + inDroppedFrames.size();
-        m_timingInfos = TimingInfos_t{TimingInfo(start, step, numFrames, inDroppedFrames)};
-    }
-
-    if (inSpacingInfo.isValid())
-    {
-        // TODO sweet : Even if the spacing info is valid, we don't trust
-        // the width/height because the acquisition software does not store
-        // the actual width/height after downsampling.
-        // Therefore, we try to get it from the HDF5 file and use the given
-        // width/height as a fallback only.
-        if (m_movies.size() > 0)
-        {
-            const SizeInPixels_t numPixels(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
-            m_spacingInfo = SpacingInfo(numPixels, inSpacingInfo.getPixelSize(), inSpacingInfo.getTopLeft());
-        }
-        else
-        {
-            m_spacingInfo = inSpacingInfo;
-        }
-    }
-    else
-    {
-        const SizeInPixels_t numPixels(m_movies[0]->getFrameWidth(), m_movies[0]->getFrameHeight());
-        m_spacingInfo = SpacingInfo(numPixels);
-    }
-
-    m_additionalProperties = inAdditionalProperties;
-
-    m_valid = true;
-    
-}
-
 
 SpVideoFrame_t
 NVistaTiffMovie::getFrameInternal(isize_t inFrameNumber)

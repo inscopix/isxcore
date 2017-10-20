@@ -331,6 +331,35 @@ convertJsonToCellStatuses(const json & inJson)
     return cellStatuses;
 }
 
+
+json
+convertCellColorsToJson(const CellColors_t & inCellColors)
+{
+    std::vector<Rgba> uintCellColors(inCellColors.size());
+    isize_t i = 0;
+    for (auto & c : inCellColors)
+    {
+        uintCellColors[i] = c.m_rgba;
+        ++i;
+    }
+    return uintCellColors;
+}
+
+CellColors_t
+convertJsonToCellColors(const json & inJson)
+{
+    std::vector<Rgba> intCellColors = inJson.get<std::vector<Rgba>>();
+    CellColors_t cellColors(intCellColors.size());
+
+    isize_t i = 0;
+    for (auto & c : intCellColors)
+    {
+        cellColors[i] = Color(c);
+        ++i;
+    }
+    return cellColors;
+}
+
 json
 convertCellActivitiesToJson(const CellActivities_t & inCellActivities)
 {

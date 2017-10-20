@@ -7,6 +7,7 @@
 #include "isxImage.h"
 #include "isxTrace.h"
 #include "isxAsyncTaskResult.h"
+#include "isxColor.h"
 
 #include <string>
 #include <functional>
@@ -155,6 +156,12 @@ virtual
 CellStatus 
 getCellStatus(isize_t inIndex) = 0;
 
+/// \return             The current color of the cell
+/// \param  inIndex     The index of the cell.
+virtual
+Color
+getCellColor(isize_t inIndex) = 0;
+
 /// \return             The current status of the cell
 /// \param  inIndex     The index of the cell.
 /// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
@@ -173,6 +180,16 @@ getCellStatusString(isize_t inIndex) = 0;
 virtual
 void 
 setCellStatus(isize_t inIndex, CellStatus inStatus) = 0;
+
+/// Set color of a cell in the set.
+///
+/// This is used for colorized view.
+///
+/// \param inIndex the cell of interest
+/// \param inColor the new color for the cell
+virtual
+void
+setCellColor(isize_t inIndex, const Color& inColor) = 0;
 
 /// Get the name for a cell in the set
 /// \param inIndex the cell of interest

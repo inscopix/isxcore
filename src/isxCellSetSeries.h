@@ -86,8 +86,14 @@ public:
     CellSet::CellStatus 
     getCellStatus(isize_t inIndex) override;
 
+    Color
+    getCellColor(isize_t inIndex) override;
+
     void 
     setCellStatus(isize_t inIndex, CellSet::CellStatus inStatus) override;
+
+    void
+    setCellColor(isize_t inIndex, const Color& inColor) override;
 
     std::string
     getCellStatusString(isize_t inIndex) override;

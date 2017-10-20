@@ -18,9 +18,12 @@ public:
 
     /// Fully specified constructor.
     ///
-    /// \param  num     The numerator of the rational number.
-    /// \param  den     The denominator of the rational number.
-    Ratio(int64_t num = 0, int64_t den = 1);
+    /// \param  inNum       The numerator of the rational number.
+    /// \param  inDen       The denominator of the rational number.
+    /// \param  inSimplify  If true, simplify the rational number by finding the
+    ///                     greatest common divisor of the numerator and denominator.
+    ///                     Otherwise, store them as given.
+    Ratio(int64_t inNum = 0, int64_t inDen = 1, bool inSimplify = false);
 
     /// Return the numerator.
     ///
@@ -112,7 +115,7 @@ public:
     /// \param   other  The rational number with which to compare.
     /// \return         True, if this is greater than or equal to the other rational number.
     bool operator >=(const Ratio & other) const;
-    
+
     /// \return the largest ratio with other's denom that is not greater than
     ///         the this ratio in value
     /// \param other The rational number for which to return the above
@@ -123,7 +126,7 @@ public:
     /// \param other Ratio from which to use the denominator for expansion.
     ///
     Ratio expandWithDenomOf(const Ratio & other) const;
-    
+
     // Overrides
     void serialize(std::ostream & strm) const override;
 

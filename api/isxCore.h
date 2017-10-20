@@ -57,6 +57,7 @@ namespace isx
     int CoreVersionMajor();
     int CoreVersionMinor();
     int CoreVersionPatch();
+    int CoreVersionBuild();
     bool isBeta();
     std::string CoreVersionString();
 
