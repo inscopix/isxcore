@@ -37,7 +37,7 @@ class Time : public Object
 
 public:
 
-    /// Construct a time with seconds sinces the Unix epoch.
+    /// Construct a time with seconds since the Unix epoch.
     ///
     /// \param   secsSinceEpoch Duration in seconds since the Unix epoch.
     /// \param   utcOffset      Time zone offset from UTC in seconds [-50400, 50400].
