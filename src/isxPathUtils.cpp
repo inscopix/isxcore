@@ -1,10 +1,12 @@
 #include "isxPathUtils.h"
 
+#include <iostream>
 #include <sstream>
 #include <QFileInfo>
 #include <QDir>
 #include <QStringList>
 #include <QStandardPaths>
+#include <QStorageInfo>
 
 namespace isx
 {
@@ -142,6 +144,34 @@ makeUniqueFilePath(const std::string & inPath, const isize_t inWidth)
         }
     }
     return outPath;
+}
+
+long long
+availableNumberOfBytesOnVolume(const std::string & inDirPath, std::string & outRootDir)
+{
+    // A path to an as-yet non-existing file may be given.
+    // Even the directory potentially could be non-existing before a test runs.
+    // Move up the path until an existing subpath is found or until not possible to move up further
+
+    std::string dpStr = inDirPath;
+    qint64 numBytes = -1;
+    while (true)
+    {
+        if (numBytes < 0)
+        {
+            QStorageInfo info = QStorageInfo(QString(dpStr.c_str()));
+            numBytes = info.bytesAvailable();
+        }
+        // Try parent directory in case the sub-directory has not yet been created
+        const std::string dpParentStr = getDirName(dpStr);
+        if (dpParentStr == dpStr) // getDirName(arg) returns arg if already at top level (cannot go further up)
+        {
+            outRootDir = dpStr;
+            break;
+        }
+        dpStr = dpParentStr;
+    }
+    return (long long) numBytes;
 }
 
 } // namespace isx

@@ -8,9 +8,28 @@
 namespace isx
 {
 
-TiffMovie::TiffMovie(const std::string & inFileName)
-: m_fileName(inFileName)
+TiffMovie::TiffMovie(const std::string & inFileName, const isize_t inNumDirectories)
 {
+    initialize(inFileName);
+    m_numFrames = inNumDirectories;
+}
+
+TiffMovie::TiffMovie(const std::string & inFileName)
+{
+    initialize(inFileName);
+    m_numFrames = isize_t(TIFFNumberOfDirectories(m_tif));
+}
+
+TiffMovie::~TiffMovie()
+{
+    TIFFClose(m_tif);
+}
+
+void
+TiffMovie::initialize(const std::string & inFileName)
+{
+    m_fileName = inFileName;
+
     m_tif = TIFFOpen(inFileName.c_str(), "r");
 
     if(!m_tif)
@@ -54,13 +73,6 @@ TiffMovie::TiffMovie(const std::string & inFileName)
 
     m_frameWidth = isize_t(width);
     m_frameHeight = isize_t(height);
-
-    m_numFrames = getNumDirectories();
-}
-
-TiffMovie::~TiffMovie()
-{
-    TIFFClose(m_tif);
 }
 
 void 
@@ -116,18 +128,5 @@ TiffMovie::getDataType() const
 {
     return m_dataType;
 }
-
-isize_t 
-TiffMovie::getNumDirectories()
-{
-    int dircount = 0;
-    do 
-    {
-        dircount++;
-    } while (TIFFReadDirectory(m_tif));
-
-    return isize_t(dircount);
-}
-
 
 }

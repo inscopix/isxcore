@@ -39,11 +39,20 @@ int64_t getLeastCommonMultiple(int64_t x, int64_t y)
 namespace isx
 {
 
-Ratio::Ratio(int64_t num, int64_t den)
-: m_num(num)
-, m_den(den)
+Ratio::Ratio(int64_t inNum, int64_t inDen, bool inSimplify)
 {
-    ISX_ASSERT(den != 0);
+    ISX_ASSERT(inDen != 0);
+    if (inSimplify)
+    {
+        const int64_t gcd = getGreatestCommonDivisor(inNum, inDen);
+        m_num = inNum / gcd;
+        m_den = inDen / gcd;
+    }
+    else
+    {
+        m_num = inNum;
+        m_den = inDen;
+    }
 }
 
 int64_t
@@ -111,9 +120,15 @@ Ratio::operator -=(const Ratio & other)
 Ratio
 Ratio::operator *(const Ratio & other) const
 {
-    int64_t num = m_num * other.m_num;
-    int64_t den = m_den * other.m_den;
-    return Ratio(num, den);
+    // There's currently a preference for maintaining the denominator when
+    // multiplying by a scalar.
+    if (other.m_den == 1)
+    {
+        return Ratio(m_num * other.m_num, m_den);
+    }
+    const Ratio thisSim(m_num, m_den, true);
+    const Ratio otherSim(other.m_num, other.m_den, true);
+    return Ratio(thisSim.m_num * otherSim.m_num, thisSim.m_den * otherSim.m_den);
 }
 
 Ratio
@@ -123,24 +138,19 @@ Ratio::operator /(const Ratio & other) const
     {
         return Ratio(m_num, other.m_num);
     }
-
-    int64_t d1 = getGreatestCommonDivisor(m_num, other.m_num);
-    int64_t d2 = getGreatestCommonDivisor(m_den, other.m_den);
-    int64_t a = m_num / d1;
-    int64_t c = other.m_num / d1;
-    int64_t d = other.m_den / d2;
-    int64_t b = m_den / d2;
-
-    
-    int64_t num = a * d;
-    int64_t den = c * b;
-    return Ratio(num, den);
+    return (*this * other.getInverse());
 }
 
 bool
 Ratio::operator ==(const Ratio & other) const
 {
-    return (m_num * other.m_den) == (m_den * other.m_num);
+    if (m_den == other.m_den)
+    {
+        return m_num == other.m_num;
+    }
+    const Ratio thisSim(m_num, m_den, true);
+    const Ratio otherSim(other.m_num, other.m_den, true);
+    return (thisSim.m_num * otherSim.m_den) == (thisSim.m_den * otherSim.m_num);
 }
 
 bool
@@ -156,7 +166,9 @@ Ratio::operator <(const Ratio & other) const
     {
         return m_num < other.m_num;
     }
-    return (m_num * other.m_den) < (m_den * other.m_num);
+    const Ratio thisSim(m_num, m_den, true);
+    const Ratio otherSim(other.m_num, other.m_den, true);
+    return (thisSim.m_num * otherSim.m_den) < (thisSim.m_den * otherSim.m_num);
 }
 
 bool
