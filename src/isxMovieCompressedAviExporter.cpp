@@ -1,6 +1,5 @@
-#include "isxMovieTiffExporter.h"
+#include "isxMovieCompressedAviExporter.h"
 #include "isxExportTiff.h"
-#include "isxExportCompressedAVI.h"
 #include "isxException.h"
 
 #include <vector>
@@ -8,13 +7,13 @@
 namespace isx {
 
 std::string
-MovieTiffExporterParams::getOpName()
+MovieCompressedAviExporterParams::getOpName()
 {
-    return "Export Tiff Movie";
+    return "Export CompressedAvi Movie";
 }
 
 AsyncTaskStatus 
-runMovieTiffExporter(MovieTiffExporterParams inParams, std::shared_ptr<MovieTiffExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
+runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::shared_ptr<MovieCompressedAviExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
 {
     bool cancelled = false;
     auto & srcs = inParams.m_srcs;
@@ -35,25 +34,24 @@ runMovieTiffExporter(MovieTiffExporterParams inParams, std::shared_ptr<MovieTiff
     }
 
 
-    if (inParams.m_tiffFilename.empty() == false)
+    if (inParams.m_compressedAviFilename.empty() == false)
     {
         try
         {
-            cancelled = toTiff(inParams.m_tiffFilename, inParams.m_srcs, inParams.m_numFramesInMovie, inCheckInCB);
-            toCompressedAVI(inParams.m_tiffFilename, inParams.m_srcs, inParams.m_numFramesInMovie, inCheckInCB);
+            cancelled = toTiff(inParams.m_compressedAviFilename, inParams.m_srcs, inParams.m_numFramesInMovie, inCheckInCB);
         }
         catch (...)
         {
-            std::remove(inParams.m_tiffFilename.c_str());
+            std::remove(inParams.m_compressedAviFilename.c_str());
             throw;
         }
     }
 
     if (cancelled)
     {
-        if (!inParams.m_tiffFilename.empty())
+        if (!inParams.m_compressedAviFilename.empty())
         {
-            std::remove(inParams.m_tiffFilename.c_str());
+            std::remove(inParams.m_compressedAviFilename.c_str());
         }
 
         return AsyncTaskStatus::CANCELLED;
