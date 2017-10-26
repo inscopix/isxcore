@@ -154,6 +154,9 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
             }
         }
 
+        // export accepted cell map
+
+
     }
 
     if (cancelled)
