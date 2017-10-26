@@ -6,6 +6,20 @@
 #include "isxReportUtils.h"
 #include <sstream>
 
+extern "C"
+{
+#include "libavformat/avformat.h"
+}
+
+namespace
+{
+#ifdef NDEBUG
+    void dummyAvLogFunction(void *, int, const char *, va_list)
+    {
+    }
+#endif
+} // namespace
+
 namespace isx
 {
     isize_t getDataTypeSizeInBytes(DataType inDataType)
@@ -112,7 +126,14 @@ namespace isx
         Logger::initialize(inLogFileName);
         reportSessionStart();
         reportSystemInfo();
+
+        av_register_all();  // aschildan 10/10/2016: could/should be moved to coreInitialize
+
+#ifdef NDEBUG
+        av_log_set_callback(dummyAvLogFunction);
+#endif
     }
+
     bool CoreIsInitialized()
     {   
         return DispatchQueue::isInitialized()

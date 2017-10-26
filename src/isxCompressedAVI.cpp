@@ -1,9 +1,9 @@
 #include "isxImage.h"
-extern "C" {
-#include "libavformat/avformat.h"
-}
+
+#include "isxCompressedAVI.h"
 
 #include <iostream>
+#include <stdio.h>
 
 void compressedAVI_encode1(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile)
 {
@@ -76,7 +76,7 @@ int compressedAVI_encode2(AVCodecContext *avctx, AVPacket *pkt, int *got_packet,
     }
 }*/
 
-int compressedAVI_preLoop(bool & useSimpleEncoder, char * & filename, FILE * & fp, AVFrame * & frame, AVPacket * & pkt, AVCodecContext * & avcc, AVCodecID & codec_id, AVCodec * & codec, isx::Image *img)
+int compressedAVI_preLoop(bool & useSimpleEncoder, const char * & filename, FILE * & fp, AVFrame * & frame, AVPacket * & pkt, AVCodecContext * & avcc, AVCodecID & codec_id, AVCodec * & codec, isx::Image *img)
 {
     useSimpleEncoder = true;
     filename = "sample.avi";
@@ -126,6 +126,7 @@ int compressedAVI_preLoop(bool & useSimpleEncoder, char * & filename, FILE * & f
         avcc->max_b_frames = 1;
         avcc->pix_fmt = AV_PIX_FMT_YUV420P; // AV_PIX_FMT_YUV420P;AV_PIX_FMT_RGB8
         break;
+
     case AV_CODEC_ID_MJPEG:
         avcc->codec_id = codec_id;
         avcc->codec_type = AVMEDIA_TYPE_VIDEO;
@@ -135,6 +136,9 @@ int compressedAVI_preLoop(bool & useSimpleEncoder, char * & filename, FILE * & f
         avcc->height = 240;
         avcc->time_base.num = 1;
         avcc->time_base.den = 1;
+
+    default:
+        break;
     }
 
     int ret = avcodec_open2(avcc, codec, NULL);
@@ -150,8 +154,11 @@ int compressedAVI_preLoop(bool & useSimpleEncoder, char * & filename, FILE * & f
         return 3;
     }
 
-    //fp = fopen(filename, "wb");
+#if ISX_OS_WIN32
     fopen_s(&fp, filename, "wb");
+#else
+    fp = fopen(filename, "wb");
+#endif
     if (!fp) {
         return 5;
     }
@@ -220,7 +227,7 @@ int compressedAVI_withinLoop(int tInd, FILE *fp, AVPacket *pkt, AVFrame *frame, 
     return 0;
 }
 
-int compressedAVI_postLoop(bool useSimpleEncoder, FILE * fp, AVFrame * & frame, AVPacket * & pkt, AVCodecContext * & avcc, uint8_t endcode[])
+int compressedAVI_postLoop(bool useSimpleEncoder, FILE * fp, AVFrame * & frame, AVPacket * & pkt, AVCodecContext * & avcc, const std::array<uint8_t, 4> & endcode)
 {
     /* flush the encoder */
     if (useSimpleEncoder)
@@ -236,7 +243,7 @@ int compressedAVI_postLoop(bool useSimpleEncoder, FILE * fp, AVFrame * & frame, 
     }
 
     /* add sequence end code to have a real MPEG file */
-    fwrite(endcode, 1, sizeof(endcode), fp);
+    fwrite(endcode.data(), 1, sizeof(endcode.front()) * endcode.size(), fp);
     fclose(fp);
 
     avcodec_free_context(&avcc);
@@ -248,11 +255,11 @@ int compressedAVI_postLoop(bool useSimpleEncoder, FILE * fp, AVFrame * & frame, 
 int compressedAVI_outputSampleMovie()
 {
     bool useSimpleEncoder;
-    char *filename;
+    const char *filename;
     FILE *fp;
     AVFrame *frame;
     AVPacket *pkt;
-    uint8_t endcode[] = { 0, 0, 1, 0xb7 };
+    const std::array<uint8_t, 4> endcode = {{ 0, 0, 1, 0xb7 }};
 
     AVCodecID codec_id;
     AVCodec *codec;
@@ -290,7 +297,7 @@ void compressedAVI_listAllCodecs()
 
     std::cout << "Supported codecs: " << std::endl << std::endl;
     codec = NULL;
-    while (codec = av_codec_next(codec))
+    while ((codec = av_codec_next(codec)))
     {
         if (avcodec_find_encoder_by_name(codec->name) != 0)
         {
@@ -302,7 +309,7 @@ void compressedAVI_listAllCodecs()
 
     std::cout << "Unsupported codecs: " << std::endl << std::endl;
     codec = NULL;
-    while (codec = av_codec_next(codec))
+    while ((codec = av_codec_next(codec)))
     {
         if (avcodec_find_encoder_by_name(codec->name) == 0)
         {

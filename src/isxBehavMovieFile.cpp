@@ -106,13 +106,6 @@ extern "C" {
 
 namespace
 {
-#ifdef NDEBUG
-    void dummyAvLogFunction(void *, int, const char *, va_list)
-    {
-        
-    }
-#endif
-
     std::string
     isxAvErrorCodeToString(int inErrorCode)
     {
@@ -184,12 +177,6 @@ BehavMovieFile::BehavMovieFile(const std::string & inFileName, const DataSet::Pr
 BehavMovieFile::BehavMovieFile(const std::string & inFileName)
 {
     m_fileName = inFileName;
-
-    av_register_all();  // aschildan 10/10/2016: could/should be moved to coreInitialize
-
-#ifdef NDEBUG
-    av_log_set_callback(dummyAvLogFunction);
-#endif
 
     if (avformat_open_input(&m_formatCtx, m_fileName.c_str(), nullptr, nullptr) != 0)
     {
