@@ -138,7 +138,7 @@ getImageAsync(isize_t inIndex, CellSetGetImageCB_t inCallback) = 0;
 /// \param  inImage     The cell image data to write.
 /// \param  inTrace     The cell trace data to write.
 /// \param  inName      The cell name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the given index
-/// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or writing fails.
+/// \throw  isx::ExceptionFileIO    If trying to access nonexistent cell or writing fails.
 /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
 /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
 virtual
@@ -151,7 +151,7 @@ writeImageAndTrace(
 
 /// \return             The current status of the cell
 /// \param  inIndex     The index of the cell.
-/// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
+/// \throw  isx::ExceptionFileIO    If trying to access nonexistent cell or reading fails.
 virtual 
 CellStatus 
 getCellStatus(isize_t inIndex) = 0;
@@ -164,7 +164,7 @@ getCellColor(isize_t inIndex) = 0;
 
 /// \return             The current status of the cell
 /// \param  inIndex     The index of the cell.
-/// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
+/// \throw  isx::ExceptionFileIO    If trying to access nonexistent cell or reading fails.
 virtual
 std::string
 getCellStatusString(isize_t inIndex) = 0;
@@ -175,7 +175,7 @@ getCellStatusString(isize_t inIndex) = 0;
 ///
 /// \param inIndex the cell of interest
 /// \param inStatus the new status for the cell
-/// \throw  isx::ExceptionFileIO    If trying to access unexistent cell or reading fails.
+/// \throw  isx::ExceptionFileIO    If trying to access nonexistent cell or reading fails.
 /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
 virtual
 void 
@@ -208,7 +208,7 @@ setCellName(isize_t inIndex, const std::string & inName) = 0;
 
 /// Check whether a cell is active in different portions/segments of the cell set
 /// \param inIndex the cell of interest
-/// \return a vector contaning a boolean for each segment of a cell set
+/// \return a vector containing a boolean for each segment of a cell set
 virtual 
 std::vector<bool> 
 getCellActivity(isize_t inIndex) const = 0;

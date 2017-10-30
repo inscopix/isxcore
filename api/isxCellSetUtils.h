@@ -28,6 +28,9 @@ namespace isx
         SpImage_t inImage1,
         SpImage_t inImage2,
         SpImage_t outImage);
+
+    void initializeWithZeros(
+        SpImage_t inImage);
 }
 
 #endif // define ISX_CELL_SET_UTILS_H

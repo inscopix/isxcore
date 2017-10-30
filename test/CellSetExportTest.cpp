@@ -161,6 +161,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             } 
             
             cellSet->writeImageAndTrace(0, originalImage, originalTraces[2], "Lonely1");
+            cellSet->setCellStatus(0, (isx::CellSet::CellStatus)0);
             cellSet->closeForWriting();
         }
         
@@ -218,10 +219,57 @@ TEST_CASE("CellSetExportTest", "[core]")
             }
             
             TIFFClose(tif);
-        }        
+        }
 
-        std::remove(fn.c_str());    
-        
+        std::remove(fn.c_str());
+
+        // read output TIFF map and verify
+        fn = isx::getDirName(exportedImageFileName) + "/" +
+            isx::getBaseName(exportedImageFileName) + "_accepted-cells-map." + 
+            isx::getExtension(exportedImageFileName);
+
+        tif = TIFFOpen(fn.c_str(), "r");
+        if (!tif)
+        {
+            FAIL("Could not open the TIFF file.");
+        }
+        else
+        {
+            uint32_t width, height;
+            TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+            TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+
+            REQUIRE(width == uint32_t(numCols));
+            REQUIRE(height == uint32_t(numRows));
+
+            float * readRow = (float *)_TIFFmalloc(width * sizeof(float));
+            for (uint32_t r = 0; r < height; ++r)
+            {
+                if (TIFFReadScanline(tif, readRow, r, 0) < 0)
+                {
+                    FAIL("Failed to read TIFF image");
+                }
+                float expectedVal = 0.0f;
+                if (r % 2 == 0)
+                {
+                    expectedVal = 1.0f / 6.0f;
+                }
+
+                for (isx::isize_t c = 0; c < numCols; ++c)
+                {
+                    REQUIRE(readRow[c] == expectedVal);
+                }
+            }
+
+            if (readRow)
+            {
+                _TIFFfree(readRow);
+            }
+
+            TIFFClose(tif);
+        }
+
+        std::remove(fn.c_str());
     }
 
     SECTION("Test for overflow when getting sample times")

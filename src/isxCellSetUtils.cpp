@@ -11,6 +11,8 @@ namespace isx
         bool inNormalizeImages,
         SpImage_t outImage)
     {
+        initializeWithZeros(outImage);
+
         for (isize_t i(0); i < inCellSet->getNumCells(); ++i)
         {
             CellSet::CellStatus status = inCellSet->getCellStatus(i);
@@ -61,7 +63,7 @@ namespace isx
         float normalizationValue)
     {
         float * pixels = inImage->getPixelsAsF32();
-        float sum = 0.0;
+        double sum = 0.0;
 
         for (isize_t i(0); i < inImage->getSpacingInfo().getTotalNumPixels(); ++i)
         {
@@ -72,7 +74,8 @@ namespace isx
 
         for (isize_t i(0); i < inImage->getSpacingInfo().getTotalNumPixels(); ++i)
         {
-            pixels[i] /= sum;
+            pixels[i] /= (float)sum;
+            pixels[i] *= normalizationValue;
         }
     }
 
@@ -91,6 +94,14 @@ namespace isx
         {
             outPixels[i] = pixels1[i] + pixels2[i];
         }
+    }
+
+    void initializeWithZeros(
+        SpImage_t inImage)
+    {
+        float * pixels = inImage->getPixelsAsF32();
+        
+        std::memset(pixels, 0, sizeof(float) * inImage->getSpacingInfo().getTotalNumPixels());
     }
 }
 
