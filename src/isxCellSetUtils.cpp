@@ -2,6 +2,8 @@
 #include "isxCellSetUtils.h"
 #include "isxSpacingInfo.h"
 
+#include <cstring>
+
 namespace isx
 {
     void
