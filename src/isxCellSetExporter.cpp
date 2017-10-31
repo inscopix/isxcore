@@ -158,9 +158,8 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
         if (!cancelled)
         {
             // export accepted cell map
-            SpImage_t map = std::make_shared<isx::Image>(cs->getImage(0)->getSpacingInfo(), cs->getImage(0)->getRowBytes(), cs->getImage(0)->getNumChannels(), cs->getImage(0)->getDataType());
+            SpImage_t map = cellSetToCellMap(cs, true, true);
             std::string fn = dirname + "/" + basename + "_accepted-cells-map." + extension;
-            cellSetToCellMap(cs, true, true, map);
 
             toTiff(fn, map);
         }

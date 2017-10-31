@@ -161,7 +161,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             } 
             
             cellSet->writeImageAndTrace(0, originalImage, originalTraces[2], "Lonely1");
-            cellSet->setCellStatus(0, (isx::CellSet::CellStatus)0);
+            cellSet->setCellStatus(0, isx::CellSet::CellStatus::ACCEPTED);
             cellSet->closeForWriting();
         }
         
