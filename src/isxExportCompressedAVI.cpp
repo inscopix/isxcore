@@ -55,8 +55,6 @@ toCompressedAVIUtility(const std::string & inFileName, const std::vector<SpMovie
     const std::string basename = getBaseName(inFileName);
     const std::string extension = getExtension(inFileName);
 
-	const std::string inFileName2 = dirname + "/" + basename + ".avi";
-
     bool cancelled = false;
     isize_t writtenFrames = 0;
     isize_t numFrames = 0;
@@ -114,7 +112,7 @@ toCompressedAVIUtility(const std::string & inFileName, const std::vector<SpMovie
 				{
 					if (tInd == 0)
 					{
-						if (compressedAVI_preLoop(useSimpleEncoder, inFileName2, fp, frame, pkt, avcc, codec_id, codec, &img))
+						if (compressedAVI_preLoop(useSimpleEncoder, inFileName, fp, frame, pkt, avcc, codec_id, codec, &img))
 						{
 							return true;
 						}
