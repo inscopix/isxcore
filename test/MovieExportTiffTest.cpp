@@ -37,6 +37,7 @@ namespace
 
 } // namespace
 
+    
 TEST_CASE("MovieTiffExportF32Test", "[core]")
 {
     std::array<const char *, 3> names =

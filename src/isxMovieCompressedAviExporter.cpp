@@ -1,5 +1,6 @@
 #include "isxMovieCompressedAviExporter.h"
 #include "isxExportTiff.h"
+#include "isxExportCompressedAVI.h"
 #include "isxException.h"
 
 #include <vector>
@@ -38,7 +39,8 @@ runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::sh
     {
         try
         {
-            cancelled = toTiff(inParams.m_compressedAviFilename, inParams.m_srcs, inParams.m_numFramesInMovie, inCheckInCB);
+			inParams.m_compressedAviFilename = "C:\\Users\\dkoppel\\compressedMovies\\sample.avi"; // REMOVE THIS!
+            cancelled = toCompressedAVI(inParams.m_compressedAviFilename, inParams.m_srcs, inParams.m_numFramesInMovie, inCheckInCB);
         }
         catch (...)
         {

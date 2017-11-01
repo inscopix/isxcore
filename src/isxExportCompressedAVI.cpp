@@ -14,19 +14,32 @@
 #include <limits>
 #include <cmath>
 #include <array>
+#include <iterator>
+#include <algorithm>
+#include <iostream>
+#include <limits>
+#include <fstream>
 
 namespace isx
 {
 
 bool
-toCompressedAVI(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const isize_t& inMaxFrameIndex, AsyncCheckInCB_t & inCheckInCB)
+toCompressedAVIUtility(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const isize_t& inMaxFrameIndex, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
 {
-    bool useSimpleEncoder;
-    const char *filename;
+	bool firstPass = (minVal == -1 && maxVal == -1);
+	if (firstPass)
+	{
+		minVal = std::numeric_limits<float>::max();
+		maxVal = -std::numeric_limits<float>::max();
+	}
+	float minValLocal = -1;
+	float maxValLocal = -1;
+
     FILE *fp;
     AVFrame *frame;
     AVPacket *pkt;
     const std::array<uint8_t, 4> endcode = {{0, 0, 1, 0xb7}};
+	bool useSimpleEncoder = true;
 
     AVCodecID codec_id;
     AVCodec *codec;
@@ -42,7 +55,9 @@ toCompressedAVI(const std::string & inFileName, const std::vector<SpMovie_t> & i
     const std::string basename = getBaseName(inFileName);
     const std::string extension = getExtension(inFileName);
 
-    auto cancelled = false;
+	const std::string inFileName2 = dirname + "/" + basename + ".avi";
+
+    bool cancelled = false;
     isize_t writtenFrames = 0;
     isize_t numFrames = 0;
     for (auto m : inMovies)
@@ -65,23 +80,50 @@ toCompressedAVI(const std::string & inFileName, const std::vector<SpMovie_t> & i
                 {
                     mv_counter++;
                     frame_index = 0;
-
                     std::string fn = dirname + "/" + basename + "_" + convertNumberToPaddedString(mv_counter, width) + "." + extension;
-
-                    ////delete out;
-                    ////out = new CompressedAVIExporter(fn);
                 }
 
                 auto f = m->getFrame(i);
                 auto& img = f->getImage();
-                ////out->toTiffOut(&img);
-                ////out->nextTiffDir();
-
-                if (tInd == 0)
-                {
-                    compressedAVI_preLoop(useSimpleEncoder, filename, fp, frame, pkt, avcc, codec_id, codec, &img);
-                }
-                compressedAVI_withinLoop(tInd, fp, pkt, frame, avcc, useSimpleEncoder, &img);
+				int numPixels = int(img.getWidth() * img.getHeight());
+				
+				if (firstPass)
+				{
+					DataType dt = DataType::F32; // img.getDataType();
+					switch (dt)
+					{
+						case DataType::U16:
+							minValLocal = float(*(std::min_element<const uint16_t *>(img.getPixelsAsU16(), img.getPixelsAsU16() + numPixels)));
+							maxValLocal = float(*(std::max_element<const uint16_t *>(img.getPixelsAsU16(), img.getPixelsAsU16() + numPixels)));
+							break;
+						case DataType::F32:
+							minValLocal = *(std::min_element<const float *>(img.getPixelsAsF32(), img.getPixelsAsF32() + numPixels));
+							maxValLocal = *(std::max_element<const float *>(img.getPixelsAsF32(), img.getPixelsAsF32() + numPixels));
+							break;
+						case DataType::U8:
+							minValLocal = float(*(std::min_element<const uint8_t *>(img.getPixelsAsU8(), img.getPixelsAsU8() + numPixels)));
+							maxValLocal = float(*(std::max_element<const uint8_t *>(img.getPixelsAsU8(), img.getPixelsAsU8() + numPixels)));
+							break;
+						default:
+							break;
+					}
+					minVal = std::min(minVal, minValLocal);
+					maxVal = std::max(maxVal, maxValLocal);
+				}
+				else
+				{
+					if (tInd == 0)
+					{
+						if (compressedAVI_preLoop(useSimpleEncoder, inFileName2, fp, frame, pkt, avcc, codec_id, codec, &img))
+						{
+							return true;
+						}
+					}
+					if (compressedAVI_withinLoop(tInd, fp, pkt, frame, avcc, useSimpleEncoder, &img, minVal, maxVal))
+					{
+						return true;
+					}
+				}
                 tInd++;
 
                 frame_index++;
@@ -98,8 +140,30 @@ toCompressedAVI(const std::string & inFileName, const std::vector<SpMovie_t> & i
             break;
         }
     }
-    compressedAVI_postLoop(useSimpleEncoder, fp, frame, pkt, avcc, endcode);
+	if (!firstPass)
+	{
+		if (compressedAVI_postLoop(useSimpleEncoder, fp, frame, pkt, avcc, endcode))
+		{
+			return true;
+		}
+	}
     return cancelled;
+}
+
+bool
+toCompressedAVI(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const isize_t& inMaxFrameIndex, AsyncCheckInCB_t & inCheckInCB)
+{
+	bool cancelled;
+	float minVal = -1;
+	float maxVal = -1;
+
+	cancelled = toCompressedAVIUtility(inFileName, inMovies, inMaxFrameIndex, inCheckInCB, minVal, maxVal);
+	if (cancelled) return true;
+
+	cancelled = toCompressedAVIUtility(inFileName, inMovies, inMaxFrameIndex, inCheckInCB, minVal, maxVal);
+	if (cancelled) return true;
+	
+	return false;
 }
 
 } // namespace isx
