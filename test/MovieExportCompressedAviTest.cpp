@@ -58,8 +58,8 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core]")
         std::remove(fn.c_str());
     }
 
-    std::string exportedTiffFileName = g_resources["unitTestDataPath"] + "/exportedMovie.avi";
-    std::remove(exportedTiffFileName.c_str());
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.avi";
+    std::remove(exportedCompressedAviFileName.c_str());
 
     std::vector<isx::isize_t> dropped = { 2 };
     std::array<isx::TimingInfo, 3> timingInfos =
@@ -98,23 +98,24 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core]")
         }
         isx::MovieCompressedAviExporterParams params(
             movies,
-            exportedTiffFileName);
+			exportedCompressedAviFileName);
         isx::runMovieCompressedAviExporter(params, nullptr, [](float){return false;});
         
         
         // verify exported data
         {
-            //isx::TiffMovie tiffMovie(exportedTiffFileName); // TODO: import is not implemented yet
+			// TODO: CompressedAviMovie not implemented yet
+            //isx::CompressedAviMovie compressedAviMovie(exportedCompressedAviFileName); // TODO: import is not implemented yet
 
         }
-		//REQUIRE(true);
+
     }
 
     for (const auto & fn: filenames)
     {
         std::remove(fn.c_str());
     }
-	//isx::CoreShutdown();
+
 }
 
 TEST_CASE("MovieCompressedAviExportU16Test", "[core]")
@@ -137,8 +138,8 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core]")
         std::remove(fn.c_str());
     }
 
-    std::string exportedTiffFileName = g_resources["unitTestDataPath"] + "/exportedMovie.avi";
-    std::remove(exportedTiffFileName.c_str());
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.avi";
+    std::remove(exportedCompressedAviFileName.c_str());
 
     std::vector<isx::isize_t> dropped = { 2 };
     std::array<isx::TimingInfo, 3> timingInfos =
@@ -175,17 +176,18 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core]")
         }
         isx::MovieCompressedAviExporterParams params(
             movies,
-            exportedTiffFileName);
+			exportedCompressedAviFileName);
         isx::runMovieCompressedAviExporter(params, nullptr, [](float) {return false; });
 
 
         // verify exported data
         {
-            //isx::TiffMovie tiffMovie(exportedTiffFileName);
-            //REQUIRE(tiffMovie.getFrameHeight() == sizePixels.getHeight());
-            //REQUIRE(tiffMovie.getFrameWidth() == sizePixels.getWidth());
-            //REQUIRE(tiffMovie.getDataType() == isx::DataType::U16);
-            //REQUIRE(tiffMovie.getNumFrames() == 11);
+			// TODO: CompressedAviMovie not implemented yet
+            // isx::CompressedAviMovie compressedAviMovie(exportedCompressedAviFileName);
+            // REQUIRE(compressedAviMovie.getFrameHeight() == sizePixels.getHeight());
+            // REQUIRE(compressedAviMovie.getFrameWidth() == sizePixels.getWidth());
+            // REQUIRE(compressedAviMovie.getDataType() == isx::DataType::U16);
+            // REQUIRE(compressedAviMovie.getNumFrames() == 11);
         }
 
     }
@@ -215,8 +217,8 @@ TEST_CASE("MovieCompressedAviExportSplittedTest", "[core]")
         std::remove(fn.c_str());
     }
 
-    std::string exportedTiffFileName = g_resources["unitTestDataPath"] + "/exportedSplittedMovie.avi";
-    std::remove(exportedTiffFileName.c_str());
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedSplittedMovie.avi";
+    std::remove(exportedCompressedAviFileName.c_str());
 
     std::array<isx::TimingInfo, numInputMovies> timingInfos =
     { {
@@ -250,33 +252,35 @@ TEST_CASE("MovieCompressedAviExportSplittedTest", "[core]")
         }
         isx::MovieCompressedAviExporterParams params(
             movies,
-            exportedTiffFileName,
+			exportedCompressedAviFileName,
             3);
         isx::runMovieCompressedAviExporter(params, nullptr, [](float) {return false; });
 
 
         // verify exported data
         {
-            //isx::TiffMovie tiffMovie(exportedTiffFileName);
-            //REQUIRE(tiffMovie.getFrameHeight() == sizePixels.getHeight());
-			//REQUIRE(tiffMovie.getFrameWidth() == sizePixels.getWidth());
-			//REQUIRE(tiffMovie.getDataType() == isx::DataType::U16);
-			//REQUIRE(tiffMovie.getNumFrames() == 3);
+			// TODO: CompressedAviMovie not implemented yet
+            // isx::CompressedAviMovie compressedAviMovie(exportedCompressedAviFileName);
+            // REQUIRE(compressedAviMovie.getFrameHeight() == sizePixels.getHeight());
+			// REQUIRE(compressedAviMovie.getFrameWidth() == sizePixels.getWidth());
+			// REQUIRE(compressedAviMovie.getDataType() == isx::DataType::U16);
+			// REQUIRE(compressedAviMovie.getNumFrames() == 3);
         }
 
         {
-            const std::string dirname = isx::getDirName(exportedTiffFileName);
-            const std::string basename = isx::getBaseName(exportedTiffFileName);
-            const std::string extension = isx::getExtension(exportedTiffFileName);
-            std::string exportedSecondTiffFileName = dirname + "/" + basename + "_" + isx::convertNumberToPaddedString(1, 1) + "." + extension;
+            const std::string dirname = isx::getDirName(exportedCompressedAviFileName);
+            const std::string basename = isx::getBaseName(exportedCompressedAviFileName);
+            const std::string extension = isx::getExtension(exportedCompressedAviFileName);
+            std::string exportedSecondCompressedAviFileName = dirname + "/" + basename + "_" + isx::convertNumberToPaddedString(1, 1) + "." + extension;
 
-            //isx::TiffMovie tiffMovie(exportedSecondTiffFileName);
-			//REQUIRE(tiffMovie.getFrameHeight() == sizePixels.getHeight());
-			//REQUIRE(tiffMovie.getFrameWidth() == sizePixels.getWidth());
-			//REQUIRE(tiffMovie.getDataType() == isx::DataType::U16);
-			//REQUIRE(tiffMovie.getNumFrames() == 2);
+			// TODO: CompressedAviMovie not implemented yet
+            //isx::CompressedAviMovie compressedAviMovie(exportedSecondCompressedAviFileName);
+			//REQUIRE(compressedAviMovie.getFrameHeight() == sizePixels.getHeight());
+			//REQUIRE(compressedAviMovie.getFrameWidth() == sizePixels.getWidth());
+			//REQUIRE(compressedAviMovie.getDataType() == isx::DataType::U16);
+			//REQUIRE(compressedAviMovie.getNumFrames() == 2);
 
-            std::remove(exportedSecondTiffFileName.c_str());
+            std::remove(exportedSecondCompressedAviFileName.c_str());
         }
     }
 
