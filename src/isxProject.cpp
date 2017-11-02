@@ -21,12 +21,14 @@ Project::Project(const std::string & inFileName)
     , m_fileName(inFileName)
 {
     read();
-    
+
     std::string dataPath = getDataPath();
     QDir dir(QString::fromStdString(dataPath));
-    if(!dir.exists())
+    if (!dir.exists())
     {
-        ISX_THROW(ExceptionFileIO, "Unable to locate data path: ", dataPath);
+        ISX_THROW(ExceptionFileIO, "The project data folder ", dataPath, " cannot be located. ",
+                "Please locate it and move it in the same folder as the project file (",
+                isx::getDirName(inFileName), ").");
     }
 
     m_name = isx::getBaseName(inFileName);
