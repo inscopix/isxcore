@@ -39,7 +39,7 @@ runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::sh
     {
         try
         {
-			inParams.m_compressedAviFilename = "C:\\Users\\dkoppel\\compressedMovies\\sample.avi"; // REMOVE THIS!
+            //inParams.m_compressedAviFilename = "C:\\Users\\dkoppel\\compressedMovies\\sample.avi"; // REMOVE THIS!
             cancelled = toCompressedAVI(inParams.m_compressedAviFilename, inParams.m_srcs, inParams.m_numFramesInMovie, inCheckInCB);
         }
         catch (...)
