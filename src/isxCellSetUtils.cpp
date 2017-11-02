@@ -3,8 +3,10 @@
 #include "isxSpacingInfo.h"
 #include "isxCellSet.h"
 #include "isxImage.h"
+#include "isxLog.h"
 
 #include <cstring>
+#include <algorithm>
 
 namespace isx
 {
@@ -42,6 +44,84 @@ namespace isx
             {
                 addImages(outImage, im, outImage);
             }
+        }
+
+        return outImage;
+    }
+
+    template <typename T>
+    void
+    getImageMinMaxInternal(
+            const Image & inImage,
+            const isize_t inNumChannels,
+            const float inNormalizer,
+            float & outMin,
+            float & outMax)
+    {
+        auto min = std::numeric_limits<T>::max();
+        auto max = std::numeric_limits<T>::lowest();
+        auto pixels = reinterpret_cast<const T *>(inImage.getPixels());
+        const isize_t numPixels = inNumChannels * inImage.getSpacingInfo().getTotalNumPixels();
+        for (isize_t i(0); i < numPixels; ++i)
+        {
+            min = std::min<T>(min, pixels[i]);
+            max = std::max<T>(max, pixels[i]);
+        }
+        outMin = float(min) / inNormalizer;
+        outMax = float(max) / inNormalizer;
+    }
+
+    void
+    getImageMinMax(
+        const Image & inImage, 
+        float & outMin, 
+        float & outMax)
+    {
+        DataType dt = inImage.getDataType();
+        switch (dt)
+        {
+        case DataType::U16:
+            getImageMinMaxInternal<uint16_t>(inImage, 1, 1.0f, outMin, outMax);
+            break;
+
+        case DataType::F32:
+            getImageMinMaxInternal<float>(inImage, 1, 1.0f, outMin, outMax);
+            break;
+
+        case DataType::U8:
+            getImageMinMaxInternal<uint8_t>(inImage, 1, 255.f, outMin, outMax);
+            break;
+
+        case DataType::RGB888:
+            getImageMinMaxInternal<uint8_t>(inImage, 3, 255.f, outMin, outMax);
+            break;
+
+        default:
+            ISX_THROW(isx::ExceptionFileIO, "Unsupported datatype: ", dt);
+            break;
+        }
+    }
+
+    SpImage_t
+    convertImageF32toU8(
+        const isx::SpImage_t & inImage)
+    {
+        ISX_ASSERT(inImage->getDataType() == DataType::F32);
+
+        float max, min;
+        isx::SpImage_t outImage = std::make_shared<isx::Image>(inImage->getSpacingInfo(), inImage->getWidth() * inImage->getNumChannels() * getDataTypeSizeInBytes(DataType::U8), inImage->getNumChannels(), DataType::U8);
+
+        getImageMinMax(*inImage, min, max);
+
+        ISX_ASSERT(max != min);
+
+        float * inPixels = inImage->getPixelsAsF32();
+        uint8_t * outPixels = outImage->getPixelsAsU8();
+
+        for (isize_t i(0); i < inImage->getSpacingInfo().getTotalNumPixels(); ++i)
+        {
+            outPixels[i] = (uint8_t)((inPixels[i] / 65535.0) * 255);
+            ISX_LOG_DEBUG(outPixels[i]);
         }
 
         return outImage;
@@ -90,7 +170,8 @@ normalizeImageL1(
     }
 }
 
-void addImages(
+void 
+addImages(
     isx::SpImage_t inImage1,
     isx::SpImage_t inImage2,
     isx::SpImage_t outImage)
@@ -111,7 +192,8 @@ void addImages(
     }
 }
 
-void initializeWithZeros(
+void 
+initializeWithZeros(
     isx::SpImage_t inImage)
 {
     ISX_ASSERT(inImage->getDataType() == isx::DataType::F32);
@@ -120,4 +202,3 @@ void initializeWithZeros(
 
     std::memset(pixels, 0, sizeof(float) * inImage->getSpacingInfo().getTotalNumPixels());
 }
-

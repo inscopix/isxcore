@@ -19,6 +19,25 @@ namespace isx
         const SpCellSet_t & inCellSet,
         bool inAcceptedCellsOnly,
         bool inNormalizeImages);
+
+    /// Gets the min and max values from an image.
+    ///
+    /// \param inImage  The input image.
+    /// \param outMin   The min value.
+    /// \param outMax   The max value.
+    void
+    getImageMinMax(
+        const Image & inImage, 
+        float & outMin, 
+        float & outMax);
+
+    /// Converts and rescales an image with DataType::F32 to an image with DataType::U8.
+    ///
+    /// \param  inImage   The image to convert.
+    /// \return           The converted image.
+    SpImage_t
+    convertImageF32toU8(
+        const SpImage_t & inImage);
 }
 
 void
