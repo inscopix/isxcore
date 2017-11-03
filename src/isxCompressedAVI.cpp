@@ -54,9 +54,9 @@ int compressedAVI_encode2(AVCodecContext *avctx, AVPacket *pkt, int *got_packet,
     }
 }
 
-int compressedAVI_preLoop(bool useSimpleEncoder, const std::string & inFileName, FILE * & fp, AVFrame * & frame, AVPacket * & pkt, AVCodecContext * & avcc, AVCodecID & codec_id, AVCodec * & codec, isx::Image *img)
+int compressedAVI_preLoop(bool useSimpleEncoder, const std::string & inFileName, FILE * & fp, AVFrame * & frame, AVPacket * & pkt, AVCodecContext * & avcc, AVCodecID & codec_id, AVCodec * & codec, isx::Image *img, isx::isize_t inFrameRate)
 {
-    codec_id = AV_CODEC_ID_MPEG1VIDEO; //;AV_CODEC_ID_MJPEG
+    codec_id = AV_CODEC_ID_MPEG1VIDEO;
     codec = avcodec_find_encoder(codec_id);
     if (!codec)
     {
@@ -84,11 +84,9 @@ int compressedAVI_preLoop(bool useSimpleEncoder, const std::string & inFileName,
             }
             // frames per second
 
-            //avcc->time_base = (AVRational) { 1, 25 };
-            avcc->time_base = av_make_q(1, 25);
+            avcc->time_base = av_make_q(1, int(inFrameRate));
 
-            //avcc->framerate = (AVRational) { 25, 1 };
-            avcc->framerate = av_make_q(25, 1);
+            avcc->framerate = av_make_q(int(inFrameRate), 1);
 
             // emit one intra frame every ten frames
             // check frame pict_type before passing frame
@@ -98,18 +96,8 @@ int compressedAVI_preLoop(bool useSimpleEncoder, const std::string & inFileName,
             //
             avcc->gop_size = 10;
             avcc->max_b_frames = 1;
-            avcc->pix_fmt = AV_PIX_FMT_YUV420P; // AV_PIX_FMT_YUV420P;AV_PIX_FMT_RGB8
+            avcc->pix_fmt = AV_PIX_FMT_YUV420P;
             break;
-
-        case AV_CODEC_ID_MJPEG:
-            avcc->codec_id = codec_id;
-            avcc->codec_type = AVMEDIA_TYPE_VIDEO;
-            avcc->pix_fmt = AV_PIX_FMT_YUVJ422P;
-            avcc->bit_rate = 400000;
-            avcc->width = 320;
-            avcc->height = 240;
-            avcc->time_base.num = 1;
-            avcc->time_base.den = 1;
 
         default:
             break;

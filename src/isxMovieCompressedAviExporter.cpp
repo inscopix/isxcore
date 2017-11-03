@@ -10,7 +10,7 @@ namespace isx {
 std::string
 MovieCompressedAviExporterParams::getOpName()
 {
-    return "Export CompressedAvi Movie";
+    return "Export Avi Movie";
 }
 
 AsyncTaskStatus 

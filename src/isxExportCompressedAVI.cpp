@@ -58,10 +58,25 @@ toCompressedAVIUtility(const std::string & inFileName, const std::vector<SpMovie
     bool cancelled = false;
     isize_t writtenFrames = 0;
     isize_t numFrames = 0;
+    DurationInSeconds step, stepPrevious;
     for (auto m : inMovies)
     {
         numFrames += m->getTimingInfo().getNumTimes();
+        step = m->getTimingInfo().getStep();
+        //ISX_ASSERT(stepPrevious == DurationInSeconds() || step == stepPrevious);
+        stepPrevious = step;
     }
+
+    isize_t frameRate;
+    if (step == DurationInSeconds())
+    {
+        frameRate = 25;
+    }
+    else
+    {
+        frameRate = std::lround(step.getInverse().toDouble());
+    }
+    frameRate = 25; // eventually remove this: needed because otherwise does not work, do not know why :(  See avcc->time_base and avcc->framerate
 
     size_t width = (numFrames > 10) ? (size_t(std::floor(std::log10(numFrames - 1)) + 1)) : (1);
 
@@ -112,7 +127,7 @@ toCompressedAVIUtility(const std::string & inFileName, const std::vector<SpMovie
                 {
                     if (tInd == 0)
                     {
-                        if (compressedAVI_preLoop(useSimpleEncoder, inFileName, fp, frame, pkt, avcc, codec_id, codec, &img))
+                        if (compressedAVI_preLoop(useSimpleEncoder, inFileName, fp, frame, pkt, avcc, codec_id, codec, &img, frameRate))
                         {
                             return true;
                         }
