@@ -3,9 +3,10 @@
 #include "isxCompressedAVI.h"
 
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 
-int compressedAVI_encode1(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile)
+int compressedAVI_encode1(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, std::fstream & outfile)
 {
     /* send the frame to the encoder */
 
@@ -26,7 +27,7 @@ int compressedAVI_encode1(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt
             break;
         }
 
-        fwrite(pkt->data, 1, pkt->size, outfile);
+        outfile.write((char *) (pkt->data), 1 * pkt->size);
         av_packet_unref(pkt);
     }
     return 2;
@@ -54,7 +55,7 @@ int compressedAVI_encode2(AVCodecContext *avctx, AVPacket *pkt, int *got_packet,
     }
 }
 
-int compressedAVI_preLoop(bool useSimpleEncoder, const std::string & inFileName, FILE * & fp, AVFrame * & frame, AVPacket * & pkt, AVCodecContext * & avcc, AVCodecID & codec_id, AVCodec * & codec, isx::Image *img, isx::isize_t inFrameRate)
+int compressedAVI_preLoop(bool useSimpleEncoder, const std::string & inFileName, std::fstream & fp, AVFrame * & frame, AVPacket * & pkt, AVCodecContext * & avcc, AVCodecID & codec_id, AVCodec * & codec, isx::Image *img, isx::isize_t inFrameRate)
 {
     codec_id = AV_CODEC_ID_MPEG1VIDEO;
     codec = avcodec_find_encoder(codec_id);
@@ -116,11 +117,7 @@ int compressedAVI_preLoop(bool useSimpleEncoder, const std::string & inFileName,
         return 4;
     }
 
-#if ISX_OS_WIN32
-    fopen_s(&fp, inFileName.c_str(), "wb");
-#else
-    fp = fopen(inFileName.c_str(), "wb");
-#endif
+    fp.open(inFileName.c_str(), std::ios::out | std::ios::binary);
     if (!fp)
     {
         return 5;
@@ -142,7 +139,7 @@ int compressedAVI_preLoop(bool useSimpleEncoder, const std::string & inFileName,
     return 0;
 }
 
-int compressedAVI_withinLoop(int tInd, FILE *fp, AVPacket *pkt, AVFrame *frame, AVCodecContext *avcc, bool useSimpleEncoder, isx::Image *img, const float minVal, const float maxVal)
+int compressedAVI_withinLoop(int tInd, std::fstream & fp, AVPacket *pkt, AVFrame *frame, AVCodecContext *avcc, bool useSimpleEncoder, isx::Image *img, const float minVal, const float maxVal)
 {
     const bool rescaleDynamicRange = !(minVal == -1 && maxVal == -1);
 
@@ -189,7 +186,7 @@ int compressedAVI_withinLoop(int tInd, FILE *fp, AVPacket *pkt, AVFrame *frame, 
         }
         if (got_packet)
         {
-            fwrite(pkt->data, 1, pkt->size, fp);
+            fp.write((char *) (pkt->data), 1 * pkt->size);
         }
     }
     else
@@ -203,7 +200,7 @@ int compressedAVI_withinLoop(int tInd, FILE *fp, AVPacket *pkt, AVFrame *frame, 
     return 0;
 }
 
-int compressedAVI_postLoop(bool useSimpleEncoder, FILE * fp, AVFrame * & frame, AVPacket * & pkt, AVCodecContext * & avcc, const std::array<uint8_t, 4> & endcode)
+int compressedAVI_postLoop(bool useSimpleEncoder, std::fstream & fp, AVFrame * & frame, AVPacket * & pkt, AVCodecContext * & avcc, const std::array<uint8_t, 4> & endcode)
 {
     /* flush the encoder */
     if (useSimpleEncoder)
@@ -215,7 +212,7 @@ int compressedAVI_postLoop(bool useSimpleEncoder, FILE * fp, AVFrame * & frame, 
         }
         if (got_packet)
         {
-            fwrite(pkt->data, 1, pkt->size, fp);
+            fp.write((char *) (pkt->data), 1 * pkt->size);
         }
     }
     else
@@ -227,8 +224,8 @@ int compressedAVI_postLoop(bool useSimpleEncoder, FILE * fp, AVFrame * & frame, 
     }
 
     /* add sequence end code to have a real MPEG file */
-    fwrite(endcode.data(), 1, sizeof(endcode.front()) * endcode.size(), fp);
-    fclose(fp);
+    fp.write((char *) (endcode.data()), 1 * sizeof(endcode.front()) * endcode.size());
+    fp.close();
 
     avcodec_free_context(&avcc);
     av_frame_free(&frame);

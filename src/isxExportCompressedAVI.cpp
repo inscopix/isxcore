@@ -35,7 +35,8 @@ toCompressedAVIUtility(const std::string & inFileName, const std::vector<SpMovie
     float minValLocal = -1;
     float maxValLocal = -1;
 
-    FILE *fp;
+    std::fstream fp;
+
     AVFrame *frame;
     AVPacket *pkt;
     const std::array<uint8_t, 4> endcode = {{0, 0, 1, 0xb7}};
