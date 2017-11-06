@@ -104,24 +104,19 @@ namespace isx
 
     SpImage_t
     convertImageF32toU8(
-        const isx::SpImage_t & inImage)
+        const isx::SpImage_t & inImage,
+        bool wasNormalized)
     {
         ISX_ASSERT(inImage->getDataType() == DataType::F32);
 
-        float max, min;
         isx::SpImage_t outImage = std::make_shared<isx::Image>(inImage->getSpacingInfo(), inImage->getWidth() * inImage->getNumChannels() * getDataTypeSizeInBytes(DataType::U8), inImage->getNumChannels(), DataType::U8);
-
-        getImageMinMax(*inImage, min, max);
-
-        ISX_ASSERT(max != min);
 
         float * inPixels = inImage->getPixelsAsF32();
         uint8_t * outPixels = outImage->getPixelsAsU8();
 
         for (isize_t i(0); i < inImage->getSpacingInfo().getTotalNumPixels(); ++i)
         {
-            outPixels[i] = (uint8_t)((inPixels[i] / 65535.0) * 255);
-            ISX_LOG_DEBUG(outPixels[i]);
+            outPixels[i] = (uint8_t)(inPixels[i] * 255);
         }
 
         return outImage;

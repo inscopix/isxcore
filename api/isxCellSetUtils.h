@@ -33,11 +33,13 @@ namespace isx
 
     /// Converts and rescales an image with DataType::F32 to an image with DataType::U8.
     ///
-    /// \param  inImage   The image to convert.
-    /// \return           The converted image.
+    /// \param  inImage         The image to convert.
+    /// \param  wasNormalized   Whether the image was normalized.
+    /// \return                 The converted image.
     SpImage_t
     convertImageF32toU8(
-        const SpImage_t & inImage);
+        const SpImage_t & inImage,
+        bool wasNormalized);
 }
 
 void
