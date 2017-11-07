@@ -165,10 +165,10 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
             toTiff(fn, map);
 
             // export accepted cell map to png
-            SpImage_t PNGmap = convertImageF32toU8(map, true);
+            SpImage_t PNGmap = convertImageF32toU8(map);
             fn = dirname + "/" + basename + "_accepted-cells-map.png";
 
-            toPNG(fn, PNGmap);
+            toPng(fn, PNGmap);
         }
     }
 

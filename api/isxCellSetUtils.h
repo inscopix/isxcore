@@ -34,30 +34,10 @@ namespace isx
     /// Converts and rescales an image with DataType::F32 to an image with DataType::U8.
     ///
     /// \param  inImage         The image to convert.
-    /// \param  wasNormalized   Whether the image was normalized.
     /// \return                 The converted image.
     SpImage_t
     convertImageF32toU8(
-        const SpImage_t & inImage,
-        bool wasNormalized);
+        const SpImage_t & inImage);
 }
-
-void
-thresholdImage(
-    isx::SpImage_t inImage,
-    float thresholdValue);
-
-void
-normalizeImageL1(
-    isx::SpImage_t inImage,
-    float normalizationValue);
-
-void addImages(
-    isx::SpImage_t inImage1,
-    isx::SpImage_t inImage2,
-    isx::SpImage_t outImage);
-
-void initializeWithZeros(
-    isx::SpImage_t inImage);
 
 #endif // define ISX_CELL_SET_UTILS_H

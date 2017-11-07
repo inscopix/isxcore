@@ -10,7 +10,7 @@
 namespace isx 
 {
     void
-    toPNG(const std::string & inFileName, const SpImage_t & inImage)
+    toPng(const std::string & inFileName, const SpImage_t & inImage)
     {
         ISX_ASSERT(inImage->getDataType() == DataType::U8);
 

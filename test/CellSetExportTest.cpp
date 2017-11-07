@@ -269,7 +269,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             TIFFClose(tif);
         }
 
-        //std::remove(fn.c_str());
+        std::remove(fn.c_str());
     }
 
     SECTION("Test for overflow when getting sample times")
