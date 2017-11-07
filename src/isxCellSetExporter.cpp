@@ -159,7 +159,7 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
         if (!cancelled)
         {
             // export accepted cell map to tiff
-            SpImage_t map = cellSetToCellMap(cs, true, true);
+            SpImage_t map = cellSetToCellMap(cs, false, true);
             std::string fn = dirname + "/" + basename + "_accepted-cells-map." + extension;
 
             toTiff(fn, map);
