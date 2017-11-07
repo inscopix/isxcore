@@ -31,8 +31,9 @@ namespace isx
         float & outMin, 
         float & outMax);
 
-    /// Converts and rescales an image with DataType::F32 to an image with DataType::U8.
-    ///
+    /// Converts and rescales an image with DataType::F32 to an image with DataType::U8 
+    /// so that the image data is mapped so that the min image value
+    /// is mapped to 0 and the max image value is mapped to 255.
     /// \param  inImage         The image to convert.
     /// \return                 The converted image.
     SpImage_t

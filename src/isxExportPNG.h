@@ -5,7 +5,7 @@
 
 namespace isx
 {
-    /// Export an image to PNG
+    /// Export an image to PNG. 
     /// \param inFileName   The filename for the output file.
     /// \param inImage      The image to export.
     void toPng(const std::string & inFileName, const SpImage_t & inImage);
