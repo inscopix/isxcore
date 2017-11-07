@@ -2,6 +2,8 @@
 #include "isxPathUtils.h"
 #include "isxExport.h"
 #include "isxExportTiff.h"
+#include "isxExportPNG.h"
+#include "isxCellSetUtils.h"
 
 #include <fstream>
 #include <iomanip>
@@ -154,6 +156,20 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
             }
         }
 
+        if (!cancelled)
+        {
+            // export accepted cell map to tiff
+            SpImage_t map = cellSetToCellMap(cs, false, true);
+            std::string fn = dirname + "/" + basename + "_accepted-cells-map." + extension;
+
+            toTiff(fn, map);
+
+            // export accepted cell map to png
+            SpImage_t PNGmap = convertImageF32toU8(map);
+            fn = dirname + "/" + basename + "_accepted-cells-map.png";
+
+            toPng(fn, PNGmap);
+        }
     }
 
     if (cancelled)

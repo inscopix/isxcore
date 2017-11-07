@@ -10,7 +10,7 @@
 namespace isx
 {
 
-/// A class implementing storage for an image along with some attribbutes
+/// A class implementing storage for an image along with some attributes
 ///
 class Image
 {
