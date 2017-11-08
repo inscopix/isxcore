@@ -53,6 +53,12 @@ struct Rect
     SpatialPoint<int64_t> m_bottomRight;    ///< bottom right point of the rectangle
 };
 
+/// For easy printing.
+///
+/// \param  inStream    The output stream to which to print.
+/// \param  inRect      The rectangle to print.
+::std::ostream& operator<<(::std::ostream & inStream, const isx::Rect & inRect);
+
 } // namespace isx
 
 #endif // ISX_RECT_H
