@@ -72,7 +72,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
 
 bool
 compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
-{/*
+{
     float minValLocal = -1;
     float maxValLocal = -1;
 
@@ -164,8 +164,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
     {
         return true;
     }
-    return cancelled;*/
-	return true;
+    return cancelled;
 }
 
 bool
