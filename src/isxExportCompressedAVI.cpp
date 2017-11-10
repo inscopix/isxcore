@@ -2,6 +2,7 @@
 #include "isxPathUtils.h"
 #include "isxCompressedAVI.h"
 #include <fstream>
+#include <cfloat>
 
 namespace isx
 {
@@ -9,8 +10,8 @@ namespace isx
 bool
 compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
 {
-	minVal = 1000000;// std::numeric_limits<float>::max();// 0;// FLT_MAX;// 
-	maxVal = -1000000;//-std::numeric_limits<float>::max();//0;// -FLT_MAX;// 
+	minVal = FLT_MAX;// std::numeric_limits<float>::max();// 0;// FLT_MAX;// 
+	maxVal = -FLT_MAX;//-std::numeric_limits<float>::max();//0;// -FLT_MAX;// 
 
     bool cancelled = false;
     isize_t writtenFrames = 0;
@@ -28,7 +29,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
             {
                 auto f = m->getFrame(i);
                 auto& img = f->getImage();
-                //int numPixels = int(img.getWidth() * img.getHeight());
+                int numPixels = int(img.getWidth() * img.getHeight());
 
 				float minValLocal = -1;
 				float maxValLocal = -1;
