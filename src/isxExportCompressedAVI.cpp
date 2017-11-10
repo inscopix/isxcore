@@ -11,8 +11,8 @@ namespace isx
 bool
 compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
 {
-	minVal = FLT_MAX;// std::numeric_limits<float>::max();// 0;// FLT_MAX;// 
-	maxVal = -FLT_MAX;//-std::numeric_limits<float>::max();//0;// -FLT_MAX;// 
+	minVal = std::numeric_limits<float>::max();// 0;// FLT_MAX;// 
+	maxVal = -std::numeric_limits<float>::max();//0;// -FLT_MAX;// 
 
     bool cancelled = false;
     isize_t writtenFrames = 0;
