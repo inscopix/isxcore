@@ -9,7 +9,7 @@ namespace isx
 bool
 compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
 {
-	/*minVal = std::numeric_limits<float>::max();// 0;// FLT_MAX;// 
+	minVal = std::numeric_limits<float>::max();// 0;// FLT_MAX;// 
 	maxVal = -std::numeric_limits<float>::max();//0;// -FLT_MAX;// 
 
     bool cancelled = false;
@@ -65,8 +65,8 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
             break;
         }
     }
-    return cancelled;*/
-	return true;
+    return cancelled;
+	//return true;
 }
 
 bool
@@ -114,9 +114,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
     }
     ISX_ASSERT(stepFirst != DurationInSeconds());
     isize_t frameRate = 25; // placeholder: use std::lround(stepFirst.getInverse().toDouble()); // TODO: REMOVE THIS AFTER BRINGING IN MP4
-
     isize_t frame_index = 0; // frame index of current movie
-    //isize_t mv_counter = 0; // movie counter for each 2^16-1 frames
 
     for (auto m : inMovies)
     {
