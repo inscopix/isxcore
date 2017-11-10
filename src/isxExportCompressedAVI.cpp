@@ -28,7 +28,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
             {
                 auto f = m->getFrame(i);
                 auto& img = f->getImage();
-                int numPixels = int(img.getWidth() * img.getHeight());
+                //int numPixels = int(img.getWidth() * img.getHeight());
 
 				float minValLocal = -1;
 				float maxValLocal = -1;
