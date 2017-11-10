@@ -8,9 +8,9 @@ namespace isx
 
 bool
 compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
-{
-	minVal = 0;// FLT_MAX;// std::numeric_limits<float>::max();
-	maxVal = 0;// -FLT_MAX;// -std::numeric_limits<float>::max();
+{/*
+	minVal = std::numeric_limits<float>::max();// 0;// FLT_MAX;// 
+	maxVal = -std::numeric_limits<float>::max();//0;// -FLT_MAX;// 
 
     float minValLocal = -1;
     float maxValLocal = -1;
@@ -27,7 +27,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
     {
         for (isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
         {
-            /*if (m->getTimingInfo().isIndexValid(i))
+            if (m->getTimingInfo().isIndexValid(i))
             {
                 auto f = m->getFrame(i);
                 auto& img = f->getImage();
@@ -53,7 +53,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
                 }
                 minVal = std::min(minVal, minValLocal);
                 maxVal = std::max(maxVal, maxValLocal);
-            }*/
+            }
 
             cancelled = inCheckInCB(float(++writtenFrames) / float(numFrames));
             if (cancelled)
@@ -66,12 +66,13 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
             break;
         }
     }
-    return cancelled;
+    return cancelled;*/
+	return true;
 }
 
 bool
 compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
-{
+{/*
     float minValLocal = -1;
     float maxValLocal = -1;
 
@@ -163,7 +164,8 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
     {
         return true;
     }
-    return cancelled;
+    return cancelled;*/
+	return true;
 }
 
 bool
