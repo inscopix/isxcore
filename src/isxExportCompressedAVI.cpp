@@ -66,7 +66,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
         }
     }
     return cancelled;*/
-	return false;
+	return true;
 }
 
 bool
@@ -116,7 +116,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
     isize_t frameRate = 25; // placeholder: use std::lround(stepFirst.getInverse().toDouble()); // TODO: REMOVE THIS AFTER BRINGING IN MP4
 
     isize_t frame_index = 0; // frame index of current movie
-    isize_t mv_counter = 0; // movie counter for each 2^16-1 frames
+    //isize_t mv_counter = 0; // movie counter for each 2^16-1 frames
 
     for (auto m : inMovies)
     {
