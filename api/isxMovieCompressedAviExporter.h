@@ -13,14 +13,11 @@ struct MovieCompressedAviExporterParams
     /// convenience constructor to fill struct members in one shot
     /// \param inSrcs                   input movies
     /// \param inCompressedAviFilename           filename for CompressedAvi output file
-    /// \param inNumFramesInMovie       frames number in one splitted part of movie.
     MovieCompressedAviExporterParams(
         const std::vector<SpMovie_t> & inSrcs,
-        const std::string & inCompressedAviFilename,
-        const isize_t & inNumFramesInMovie = (1<<16)-1 )
+        const std::string & inCompressedAviFilename)
     : m_srcs(inSrcs)
     , m_compressedAviFilename(inCompressedAviFilename)
-    , m_numFramesInMovie(inNumFramesInMovie)
     {}
 
     /// default constructor
@@ -34,7 +31,7 @@ struct MovieCompressedAviExporterParams
 
     std::vector<SpMovie_t>  m_srcs;                         ///< input movies
     std::string             m_compressedAviFilename;                 ///< name of output compressedAvi file
-    isize_t                 m_numFramesInMovie;             ///< number of frames in one movie (default value is 2^16-1 = 65535)
+    //isize_t                 m_numFramesInMovie;             ///< number of frames in one movie (default value is 2^16-1 = 65535)
 };
 
 /// Movie exporter output parameters 

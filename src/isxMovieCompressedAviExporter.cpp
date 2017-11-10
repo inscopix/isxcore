@@ -39,7 +39,7 @@ runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::sh
     {
         try
         {
-            cancelled = toCompressedAVI(inParams.m_compressedAviFilename, inParams.m_srcs, inParams.m_numFramesInMovie, inCheckInCB);
+            cancelled = toCompressedAVI(inParams.m_compressedAviFilename, inParams.m_srcs, inCheckInCB);
         }
         catch (...)
         {

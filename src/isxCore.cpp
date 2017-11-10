@@ -127,7 +127,7 @@ namespace isx
         reportSessionStart();
         reportSystemInfo();
 
-        av_register_all();  // aschildan 10/10/2016: could/should be moved to coreInitialize
+        av_register_all();
 
 #ifdef NDEBUG
         av_log_set_callback(dummyAvLogFunction);

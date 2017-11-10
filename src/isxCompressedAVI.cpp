@@ -6,6 +6,9 @@
 #include <fstream>
 #include <stdio.h>
 
+namespace
+{
+
 int compressedAVI_encode1(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, std::fstream & outfile)
 {
     /* send the frame to the encoder */
@@ -53,6 +56,8 @@ int compressedAVI_encode2(AVCodecContext *avctx, AVPacket *pkt, int *got_packet,
         default:
             return 2;
     }
+}
+
 }
 
 int compressedAVI_preLoop(bool useSimpleEncoder, const std::string & inFileName, std::fstream & fp, AVFrame * & frame, AVPacket * & pkt, AVCodecContext * & avcc, AVCodecID & codec_id, AVCodec * & codec, isx::Image *img, isx::isize_t inFrameRate)
@@ -180,7 +185,7 @@ int compressedAVI_withinLoop(int tInd, std::fstream & fp, AVPacket *pkt, AVFrame
     if (useSimpleEncoder)
     {
         int got_packet;
-        if (compressedAVI_encode2(avcc, pkt, &got_packet, frame))
+        if (::compressedAVI_encode2(avcc, pkt, &got_packet, frame))
         {
             return 2;
         }
@@ -191,7 +196,7 @@ int compressedAVI_withinLoop(int tInd, std::fstream & fp, AVPacket *pkt, AVFrame
     }
     else
     {
-        if (compressedAVI_encode1(avcc, frame, pkt, fp))
+        if (::compressedAVI_encode1(avcc, frame, pkt, fp))
         {
             return 3;
         }
@@ -206,7 +211,7 @@ int compressedAVI_postLoop(bool useSimpleEncoder, std::fstream & fp, AVFrame * &
     if (useSimpleEncoder)
     {
         int got_packet;
-        if (compressedAVI_encode2(avcc, pkt, &got_packet, NULL))
+        if (::compressedAVI_encode2(avcc, pkt, &got_packet, NULL))
         {
             return 1;
         }
@@ -217,7 +222,7 @@ int compressedAVI_postLoop(bool useSimpleEncoder, std::fstream & fp, AVFrame * &
     }
     else
     {
-        if (compressedAVI_encode1(avcc, NULL, pkt, fp))
+        if (::compressedAVI_encode1(avcc, NULL, pkt, fp))
         {
             return 2;
         }

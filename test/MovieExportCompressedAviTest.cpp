@@ -90,7 +90,6 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core]")
             ++i;
         }
 
-        // export to nwb
         std::vector<isx::SpMovie_t> movies;
         for (const auto fn: filenames)
         {
@@ -168,7 +167,6 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core]")
             ++i;
         }
 
-        // export to nwb
         std::vector<isx::SpMovie_t> movies;
         for (const auto fn : filenames)
         {
@@ -244,7 +242,6 @@ TEST_CASE("MovieCompressedAviExportSplittedTest", "[core]")
             ++i;
         }
 
-        // export to nwb
         std::vector<isx::SpMovie_t> movies;
         for (const auto fn : filenames)
         {
@@ -252,8 +249,7 @@ TEST_CASE("MovieCompressedAviExportSplittedTest", "[core]")
         }
         isx::MovieCompressedAviExporterParams params(
             movies,
-			exportedCompressedAviFileName,
-            3);
+			exportedCompressedAviFileName);
         isx::runMovieCompressedAviExporter(params, nullptr, [](float) {return false; });
 
 
