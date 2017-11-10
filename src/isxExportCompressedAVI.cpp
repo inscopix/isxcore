@@ -11,8 +11,8 @@ namespace isx
 bool
 compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
 {
-	minVal = std::numeric_limits<float>::max();// 0;// FLT_MAX;// 
-	maxVal = -std::numeric_limits<float>::max();//0;// -FLT_MAX;// 
+	minVal = std::numeric_limits<float>::max(); 
+	maxVal = -std::numeric_limits<float>::max(); 
 
     bool cancelled = false;
     isize_t writtenFrames = 0;
@@ -39,15 +39,15 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
                 {
                 case DataType::U16:
 					minValLocal = float(*(std::min_element<const uint16_t *>(img.getPixelsAsU16(), img.getPixelsAsU16() + numPixels)));
-                    maxValLocal = 0;//float(*(std::max_element<const uint16_t *>(img.getPixelsAsU16(), img.getPixelsAsU16() + numPixels)));
+                    maxValLocal = float(*(std::max_element<const uint16_t *>(img.getPixelsAsU16(), img.getPixelsAsU16() + numPixels)));
                     break;
                 case DataType::F32:
-                    minValLocal = 0;//*(std::min_element<const float *>(img.getPixelsAsF32(), img.getPixelsAsF32() + numPixels));
-                    maxValLocal = 0;//*(std::max_element<const float *>(img.getPixelsAsF32(), img.getPixelsAsF32() + numPixels));
+                    minValLocal = *(std::min_element<const float *>(img.getPixelsAsF32(), img.getPixelsAsF32() + numPixels));
+                    maxValLocal = *(std::max_element<const float *>(img.getPixelsAsF32(), img.getPixelsAsF32() + numPixels));
                     break;
                 case DataType::U8:
-                    minValLocal = 0;//float(*(std::min_element<const uint8_t *>(img.getPixelsAsU8(), img.getPixelsAsU8() + numPixels)));
-                    maxValLocal = 0;//float(*(std::max_element<const uint8_t *>(img.getPixelsAsU8(), img.getPixelsAsU8() + numPixels)));
+                    minValLocal = float(*(std::min_element<const uint8_t *>(img.getPixelsAsU8(), img.getPixelsAsU8() + numPixels)));
+                    maxValLocal = float(*(std::max_element<const uint8_t *>(img.getPixelsAsU8(), img.getPixelsAsU8() + numPixels)));
                     break;
                 default:
                     break;
@@ -68,7 +68,6 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
         }
     }
     return cancelled;
-	//return true;
 }
 
 bool
