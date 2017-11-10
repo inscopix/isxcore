@@ -37,4 +37,11 @@ Rect::operator ==(const Rect & inOther) const
         && (m_bottomRight == inOther.m_bottomRight);
 }
 
+::std::ostream&
+operator<<(::std::ostream & inStream, const isx::Rect & inRect)
+{
+    inStream << "Rect(topLeft = (" << inRect.x() << ", " << inRect.y() << "), size = " << inRect.width() << "x" << inRect.height() << ")";
+    return inStream;
+}
+
 } // namespace
