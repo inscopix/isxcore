@@ -120,7 +120,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
     ISX_ASSERT(stepFirst != DurationInSeconds());
     isize_t frameRate = 25; // placeholder: use std::lround(stepFirst.getInverse().toDouble()); // TODO: REMOVE THIS AFTER BRINGING IN MP4
 
-    size_t width = (numFrames > 10) ? (size_t(std::floor(std::log10(numFrames - 1)) + 1)) : (1);
+    //size_t width = (numFrames > 10) ? (size_t(std::floor(std::log10(numFrames - 1)) + 1)) : (1);
 
     isize_t frame_index = 0; // frame index of current movie
     isize_t mv_counter = 0; // movie counter for each 2^16-1 frames
