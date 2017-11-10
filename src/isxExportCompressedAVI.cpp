@@ -8,12 +8,9 @@ namespace isx
 
 bool
 compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
-{/*
-	minVal = std::numeric_limits<float>::max();// 0;// FLT_MAX;// 
+{
+	/*minVal = std::numeric_limits<float>::max();// 0;// FLT_MAX;// 
 	maxVal = -std::numeric_limits<float>::max();//0;// -FLT_MAX;// 
-
-    float minValLocal = -1;
-    float maxValLocal = -1;
 
     bool cancelled = false;
     isize_t writtenFrames = 0;
@@ -33,6 +30,8 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
                 auto& img = f->getImage();
                 int numPixels = int(img.getWidth() * img.getHeight());
 
+				float minValLocal = -1;
+				float maxValLocal = -1;
                 DataType dt = img.getDataType();
                 switch (dt)
                 {
@@ -67,17 +66,13 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
         }
     }
     return cancelled;*/
-	return true;
+	return false;
 }
 
 bool
 compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
 {
-    float minValLocal = -1;
-    float maxValLocal = -1;
-
     std::fstream fp;
-
     AVFrame *frame;
     AVPacket *pkt;
     const std::array<uint8_t, 4> endcode = {{0, 0, 1, 0xb7}};
@@ -119,8 +114,6 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
     }
     ISX_ASSERT(stepFirst != DurationInSeconds());
     isize_t frameRate = 25; // placeholder: use std::lround(stepFirst.getInverse().toDouble()); // TODO: REMOVE THIS AFTER BRINGING IN MP4
-
-    //size_t width = (numFrames > 10) ? (size_t(std::floor(std::log10(numFrames - 1)) + 1)) : (1);
 
     isize_t frame_index = 0; // frame index of current movie
     isize_t mv_counter = 0; // movie counter for each 2^16-1 frames
