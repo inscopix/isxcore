@@ -9,8 +9,8 @@ namespace isx
 bool
 compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
 {
-    minVal = std::numeric_limits<float>::max();
-    maxVal = -std::numeric_limits<float>::max();
+	minVal = FLT_MAX;// std::numeric_limits<float>::max();
+	maxVal = -FLT_MAX;// -std::numeric_limits<float>::max();
 
     float minValLocal = -1;
     float maxValLocal = -1;
