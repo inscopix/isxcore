@@ -36,16 +36,16 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
                 switch (dt)
                 {
                 case DataType::U16:
-                    minValLocal = float(*(std::min_element<const uint16_t *>(img.getPixelsAsU16(), img.getPixelsAsU16() + numPixels)));
-                    maxValLocal = float(*(std::max_element<const uint16_t *>(img.getPixelsAsU16(), img.getPixelsAsU16() + numPixels)));
+					minValLocal = 0;// float(*(std::min_element<const uint16_t *>(img.getPixelsAsU16(), img.getPixelsAsU16() + numPixels)));
+                    maxValLocal = 0;//float(*(std::max_element<const uint16_t *>(img.getPixelsAsU16(), img.getPixelsAsU16() + numPixels)));
                     break;
                 case DataType::F32:
-                    minValLocal = *(std::min_element<const float *>(img.getPixelsAsF32(), img.getPixelsAsF32() + numPixels));
-                    maxValLocal = *(std::max_element<const float *>(img.getPixelsAsF32(), img.getPixelsAsF32() + numPixels));
+                    minValLocal = 0;//*(std::min_element<const float *>(img.getPixelsAsF32(), img.getPixelsAsF32() + numPixels));
+                    maxValLocal = 0;//*(std::max_element<const float *>(img.getPixelsAsF32(), img.getPixelsAsF32() + numPixels));
                     break;
                 case DataType::U8:
-                    minValLocal = float(*(std::min_element<const uint8_t *>(img.getPixelsAsU8(), img.getPixelsAsU8() + numPixels)));
-                    maxValLocal = float(*(std::max_element<const uint8_t *>(img.getPixelsAsU8(), img.getPixelsAsU8() + numPixels)));
+                    minValLocal = 0;//float(*(std::min_element<const uint8_t *>(img.getPixelsAsU8(), img.getPixelsAsU8() + numPixels)));
+                    maxValLocal = 0;//float(*(std::max_element<const uint8_t *>(img.getPixelsAsU8(), img.getPixelsAsU8() + numPixels)));
                     break;
                 default:
                     break;
