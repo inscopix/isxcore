@@ -3,6 +3,7 @@
 #include "isxCompressedAVI.h"
 #include <fstream>
 #include <cfloat>
+#include <algorithm>
 
 namespace isx
 {
@@ -29,7 +30,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
             {
                 auto f = m->getFrame(i);
                 auto& img = f->getImage();
-                //int numPixels = int(img.getWidth() * img.getHeight());
+                int numPixels = int(img.getWidth() * img.getHeight());
 
 				float minValLocal = -1;
 				float maxValLocal = -1;
@@ -37,7 +38,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
                 switch (dt)
                 {
                 case DataType::U16:
-					minValLocal = 0;// float(*(std::min_element<const uint16_t *>(img.getPixelsAsU16(), img.getPixelsAsU16() + numPixels)));
+					minValLocal = float(*(std::min_element<const uint16_t *>(img.getPixelsAsU16(), img.getPixelsAsU16() + numPixels)));
                     maxValLocal = 0;//float(*(std::max_element<const uint16_t *>(img.getPixelsAsU16(), img.getPixelsAsU16() + numPixels)));
                     break;
                 case DataType::F32:
