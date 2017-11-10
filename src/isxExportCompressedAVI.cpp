@@ -27,13 +27,13 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
     {
         for (isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
         {
-            if (m->getTimingInfo().isIndexValid(i))
+            /*if (m->getTimingInfo().isIndexValid(i))
             {
                 auto f = m->getFrame(i);
                 auto& img = f->getImage();
                 int numPixels = int(img.getWidth() * img.getHeight());
 
-                /*DataType dt = img.getDataType();
+                DataType dt = img.getDataType();
                 switch (dt)
                 {
                 case DataType::U16:
@@ -50,10 +50,10 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
                     break;
                 default:
                     break;
-                }*/
+                }
                 minVal = std::min(minVal, minValLocal);
                 maxVal = std::max(maxVal, maxValLocal);
-            }
+            }*/
 
             cancelled = inCheckInCB(float(++writtenFrames) / float(numFrames));
             if (cancelled)
