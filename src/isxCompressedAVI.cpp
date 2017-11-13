@@ -62,7 +62,7 @@ int compressedAVI_encode2(AVCodecContext *avctx, AVPacket *pkt, int *got_packet,
 
 int compressedAVI_preLoop(bool useSimpleEncoder, const std::string & inFileName, std::fstream & fp, AVFrame * & frame, AVPacket * & pkt, AVCodecContext * & avcc, AVCodecID & codec_id, AVCodec * & codec, isx::Image *img, isx::isize_t inFrameRate)
 {
-	codec_id = AV_CODEC_ID_MPEG1VIDEO; // TODO: make AV_CODEC_ID_MPEG4 work
+	codec_id = AV_CODEC_ID_MPEG4;// AV_CODEC_ID_MPEG1VIDEO; // TODO: make AV_CODEC_ID_MPEG4 work
     codec = avcodec_find_encoder(codec_id);
     if (!codec)
     {
@@ -108,7 +108,7 @@ int compressedAVI_preLoop(bool useSimpleEncoder, const std::string & inFileName,
 
 		case AV_CODEC_ID_MPEG4:
 
-			avcc->codec_id = AV_CODEC_ID_MPEG4;
+			/*avcc->codec_id = AV_CODEC_ID_MPEG4;
 			avcc->codec_type = AVMEDIA_TYPE_VIDEO;
 			avcc->pix_fmt = AV_PIX_FMT_YUV420P;
 			avcc->bit_rate = 400000;
@@ -117,7 +117,21 @@ int compressedAVI_preLoop(bool useSimpleEncoder, const std::string & inFileName,
 			avcc->time_base.num = 1;
 			avcc->time_base.den = 25;// int(inFrameRate);
 			avcc->framerate.num = 25;// int(inFrameRate);
-			avcc->framerate.den = 1;
+			avcc->framerate.den = 1;*/
+
+			avcc->mb_decision = 2;
+			avcc->last_predictor_count = 3;
+			avcc->pre_dia_size = 2;
+			avcc->dia_size = 2;
+			avcc->max_b_frames = 2;
+			//avcc->b_frame_strategy = 2;
+			avcc->trellis = 2;
+			avcc->compression_level = 2;
+			avcc->global_quality = 300;
+			//avcc->pre_me = 2;
+			avcc->mv0_threshold = 1;
+
+
 
 			if (img == NULL)
 			{
