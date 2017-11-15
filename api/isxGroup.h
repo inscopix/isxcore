@@ -86,6 +86,11 @@ public:
     std::string 
     findUniqueName(const std::string & inRequestedName);
 
+    /// \return The unique file path for each member of this group and specified directory in initial path.
+    /// \param inInitialPath The initial file path which will base.
+    std::string
+    makeUniqueFilePath(const std::string & inInitialPath);
+
     /// Set the callback used for saving a temporary project file
     /// \param inCallback the input function
     void setSaveTempProjectCallback(SaveTempProjectCB_t inCallback);
@@ -119,7 +124,8 @@ public:
 
     bool isNameUsed(const std::string & inName) const override;
 
-    
+    std::vector<std::string> getUsedFileNames() const override;
+
 private:
     
     bool

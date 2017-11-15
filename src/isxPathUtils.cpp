@@ -103,6 +103,24 @@ pathExists(const std::string & inPath)
     return pathInfo.exists();
 }
 
+std::vector<std::string>
+getAllDirFiles(const std::string & inPath)
+{
+    QString dirPath = QString::fromStdString(inPath);
+    QDir directory(dirPath);
+    QFileInfoList files = directory.entryInfoList(QStringList());
+
+    std::vector<std::string> dirFiles(files.size());
+    isx::isize_t i(0);
+    for(auto f: files) {
+        dirFiles[i] = f.absoluteFilePath().toStdString();
+        ++i;
+    }
+    return dirFiles;
+}
+
+// TODO MOS-983: we should check function usage and re-factor
+//   Most function calls have constant variables - this should be replaced with dynamic calcs
 std::string
 appendNumberToPath(
         const std::string & inPath,

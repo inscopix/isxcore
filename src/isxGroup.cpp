@@ -9,6 +9,7 @@
 #include "json.hpp"
 
 #include <algorithm>
+#include <set>
 
 namespace isx
 {
@@ -343,6 +344,47 @@ Group::findUniqueName(const std::string & inRequestedName)
     }
 
     return uniqueName;
+}
+
+std::vector<std::string>
+Group::getUsedFileNames() const
+{
+    std::vector<std::string> usedFileNames;
+
+    for (const auto & i : m_items)
+    {
+        const auto descendants = i->getUsedFileNames();
+        usedFileNames.insert(usedFileNames.end(), descendants.begin(), descendants.end());
+    }
+
+    return usedFileNames;
+}
+
+std::string
+Group::makeUniqueFilePath(const std::string & inInitialPath)
+{
+    std::string uniquePath = inInitialPath;
+
+    const std::string dir = getDirName(uniquePath);
+    const std::string base = dir + "/" + getBaseName(uniquePath);
+    const std::string extension = getExtension(uniquePath);
+
+    std::set<std::string> filesToBeVerified;
+
+    auto filesInSpecifiedDirectory = getAllDirFiles(dir);
+    filesToBeVerified.insert(filesInSpecifiedDirectory.begin(), filesInSpecifiedDirectory.end());
+
+    auto filesOfCurrentGroup = getUsedFileNames();
+    filesToBeVerified.insert(filesOfCurrentGroup.begin(), filesOfCurrentGroup.end());
+
+    isize_t i = 1;
+    while (filesToBeVerified.end() != filesToBeVerified.find(uniquePath))
+    {
+        uniquePath = appendNumberToPath(base, i, 3) + "." + extension;
+        ++i;
+    }
+
+    return uniquePath;
 }
 
 

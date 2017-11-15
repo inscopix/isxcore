@@ -312,7 +312,11 @@ public:
     isNameUsed(const std::string & inName) 
     const 
     override;
-    
+
+    std::vector<std::string> 
+    getUsedFileNames() const
+    override;
+
 private:
     
     bool
