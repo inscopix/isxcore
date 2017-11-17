@@ -54,7 +54,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
 }
 
 bool
-compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
+compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal)
 {
     std::fstream fs;
     AVFrame *frame;
@@ -94,7 +94,13 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
         count++;
     }
     ISX_ASSERT(stepFirst != DurationInSeconds());
-    isize_t frameRate = 25; // placeholder: use std::lround(stepFirst.getInverse().toDouble()); // TODO: REMOVE THIS AFTER BRINGING IN MP4
+
+    // For mpeg1: some framerates work, others don't. Use placeholder for now
+    // Examples of allowed framerates : 24, 25, 30, 50
+    // Examples of forbidden framerates : 10, 12, 15, 17, 20, 26, 35, 40, 100
+    isize_t frameRate = 25; // placeholder: use std::lround(stepFirst.getInverse().toDouble()); // preserve framerate
+
+    isize_t bitRate = 400000; // TODO: possibly connect to front end for user control
     isize_t frame_index = 0; // frame index of current movie
 
     for (auto m : inMovies)
@@ -108,12 +114,12 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
                 
                 if (tInd == 0)
                 {
-                    if (compressedAVI_preLoop(inFileName, fs, frame, pkt, avcc, &img, frameRate))
+                    if (compressedAVI_preLoop(inFileName, fs, frame, pkt, avcc, &img, frameRate, bitRate))
                     {
                         return true;
                     }
                 }
-                if (compressedAVI_withinLoop(tInd, fs, pkt, frame, avcc, useSimpleEncoder, &img, minVal, maxVal))
+                if (compressedAVI_withinLoop(tInd, fs, pkt, frame, avcc, useSimpleEncoder, &img, inMinVal, inMaxVal))
                 {
                     return true;
                 }                
