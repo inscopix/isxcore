@@ -259,6 +259,12 @@ Project::findSeriesFromIdentifier(const std::string & inId) const
     return s;
 }
 
+std::string
+Project::makeUniqueFilePath(const std::string & inPath)
+{
+    return m_root->makeUniqueFilePath(inPath);
+}
+
 Group *
 Project::getRootGroup() const
 {

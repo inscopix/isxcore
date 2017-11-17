@@ -113,6 +113,12 @@ std::string getAbsolutePath(const std::string & inPath);
 /// \return             True if the path exists on the file system.
 bool pathExists(const std::string & inPath);
 
+/// Returns all fileNames from specified directory.
+///
+/// \param  inPath      The path to check for existence.
+/// \return             Array of file path.
+std::vector<std::string> getAllDirFiles(const std::string & inPath);
+
 /// Append a separator and a zero padded non-negative number to a path.
 ///
 /// \param  inPath      The path to which to append.

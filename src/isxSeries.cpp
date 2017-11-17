@@ -696,6 +696,29 @@ bool Series::isNameUsed(const std::string & inName) const
     return false;
 }
 
+std::vector<std::string> 
+Series::getUsedFileNames() const
+{
+    std::vector<std::string> usedFileNames;
+
+    if (m_dataSet)
+    {
+        usedFileNames.push_back(m_dataSet->getFileName());
+    }
+    for (const auto & i : m_unitarySeries)
+    {
+        const auto descendants = i->getUsedFileNames();
+        usedFileNames.insert(usedFileNames.end(), descendants.begin(), descendants.end());
+    }
+    for (const auto & i : m_children)
+    {
+        const auto descendants = i->getUsedFileNames();
+        usedFileNames.insert(usedFileNames.end(), descendants.begin(), descendants.end());
+    }
+
+    return usedFileNames;
+}
+
 bool
 Series::isModified() const
 {
