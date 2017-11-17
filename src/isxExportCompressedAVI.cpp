@@ -10,10 +10,10 @@ namespace isx
 {
 
 bool
-compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
+compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & outMinVal, float & outMaxVal)
 {
-    minVal = std::numeric_limits<float>::max();
-    maxVal = -std::numeric_limits<float>::max();
+    outMinVal = std::numeric_limits<float>::max();
+    outMaxVal = -std::numeric_limits<float>::max();
 
     bool cancelled = false;
     isize_t writtenFrames = 0;
@@ -35,8 +35,8 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
                 float minValLocal, maxValLocal;
                 getImageMinMax(img, minValLocal, maxValLocal);
 
-                minVal = std::min(minVal, minValLocal);
-                maxVal = std::max(maxVal, maxValLocal);
+                outMinVal = std::min(outMinVal, minValLocal);
+                outMaxVal = std::max(outMaxVal, maxValLocal);
             }
 
             cancelled = inCheckInCB(float(++writtenFrames) / float(numFrames));
@@ -56,14 +56,11 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
 bool
 compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & minVal, float & maxVal)
 {
-    std::fstream fp;
+    std::fstream fs;
     AVFrame *frame;
     AVPacket *pkt;
     const std::array<uint8_t, 4> endcode = {{0, 0, 1, 0xb7}};
     bool useSimpleEncoder = true;
-
-    AVCodecID codec_id;
-    AVCodec *codec;
 
     // Initialize codec. 
     AVCodecContext *avcc;
@@ -111,12 +108,12 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
                 
                 if (tInd == 0)
                 {
-                    if (compressedAVI_preLoop(useSimpleEncoder, inFileName, fp, frame, pkt, avcc, codec_id, codec, &img, frameRate))
+                    if (compressedAVI_preLoop(inFileName, fs, frame, pkt, avcc, &img, frameRate))
                     {
                         return true;
                     }
                 }
-                if (compressedAVI_withinLoop(tInd, fp, pkt, frame, avcc, useSimpleEncoder, &img, minVal, maxVal))
+                if (compressedAVI_withinLoop(tInd, fs, pkt, frame, avcc, useSimpleEncoder, &img, minVal, maxVal))
                 {
                     return true;
                 }                
@@ -135,7 +132,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
             break;
         }
     }
-    if (compressedAVI_postLoop(useSimpleEncoder, fp, frame, pkt, avcc, endcode))
+    if (compressedAVI_postLoop(useSimpleEncoder, fs, frame, pkt, avcc, endcode))
     {
         return true;
     }
