@@ -13,7 +13,7 @@ namespace isx
     /// \param  inCellSet               The cell set to extract cell images from.
     /// \param  inAcceptedCellsOnly     Boolean value to specify whether to only use accepted cells or not.
     /// \param  inNormalizeImages       Boolean value to specify whether to threshold and normalize each cell image.
-    /// \param  inNormalizeThreshold    If nonzero, and inNormalizeImages == true, threshold the image a second time,
+    /// \param  inNormalizedThreshold   If inNormalizeImages == true, threshold the image after normalization,
     ///                                 zeroing out any values that are less than inNormalizeThreshold, which should
     ///                                 be between 0 and 1.
     /// \return                         The cell map.
@@ -22,7 +22,7 @@ namespace isx
         const SpCellSet_t & inCellSet,
         bool inAcceptedCellsOnly,
         bool inNormalizeImages,
-        float inNormalizeThreshold = 0.0f);
+        float inNormalizedThreshold = 0.0f);
 
     /// Gets the min and max values from an image.
     ///
@@ -42,6 +42,14 @@ namespace isx
     SpImage_t
     convertImageF32toU8(
         const SpImage_t & inImage);
+
+    /// Normalizes an image by dividing by the maximum value, then thresholds the normalized image.
+    ///
+    /// \param inImage              The input image to threshold. Input image is not modified
+    /// \param inNormalizedThreshold  The threshold value, between 0 and 1. All pixel values less than this value are set to zero.
+    ///
+    SpImage_t
+    normalizeAndThresholdImage(isx::SpImage_t inImage, float inNormalizedThreshold);
 }
 
 #endif // define ISX_CELL_SET_UTILS_H
