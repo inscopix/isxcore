@@ -292,6 +292,17 @@ namespace isx
     CellSetFile::setCellColor(isize_t inCellId, const Color& inColor)
     {
         m_cellColors.at(inCellId) = inColor;
+        if (m_openmode & std::ios_base::out)
+        {
+            if (m_fileClosedForWriting)
+            {
+                ISX_THROW(ExceptionFileIO, "Writing data after file was closed for writing.", m_fileName);
+            }
+            else
+            {
+                writeHeader();
+            }
+        }
     }
 
     std::string 
