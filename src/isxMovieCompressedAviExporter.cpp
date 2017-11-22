@@ -12,7 +12,7 @@ extern "C" {
 }
 
 #include <fstream>
-//#include <cfloat>
+#include <cfloat>
 //#include <algorithm>
 //#include <vector>
 //#include <iostream>
