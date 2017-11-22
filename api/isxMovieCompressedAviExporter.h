@@ -31,7 +31,6 @@ struct MovieCompressedAviExporterParams
 
     std::vector<SpMovie_t>  m_srcs;                         ///< input movies
     std::string             m_compressedAviFilename;                 ///< name of output compressedAvi file
-    //isize_t                 m_numFramesInMovie;             ///< number of frames in one movie (default value is 2^16-1 = 65535)
 };
 
 /// Movie exporter output parameters 
