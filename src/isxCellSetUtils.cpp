@@ -84,19 +84,26 @@ normalizeAndThresholdImage(isx::SpImage_t inImage, float inNormalizedThreshold)
         maxVal = std::max(maxVal, pixels[i]);
     }
 
-    if (maxVal <= 0.0)
-    {
-        maxVal = 1.0;
-    }
-
+    // threshold the image
     for (isx::isize_t i(0); i < numPixels; ++i)
     {
-        pixels[i] /= maxVal;
-
-        if (pixels[i] < inNormalizedThreshold)
+        if (pixels[i] < inNormalizedThreshold*maxVal)
         {            
             pixels[i] = 0.0;
         }        
+    }
+
+    // compute the image sum
+    float imgSum = 0.0f;
+    for (isx::isize_t i(0); i < numPixels; ++i)
+    {    
+        imgSum += pixels[i];
+    }    
+
+    // normalize by image sum
+    for (isx::isize_t i(0); i < numPixels; ++i)
+    {
+        pixels[i] /= imgSum;
     }
 
     return imgCopy;
