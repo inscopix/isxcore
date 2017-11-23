@@ -234,7 +234,7 @@ int compressedAVI_postLoop(const bool inUseSimpleEncoder, std::fstream & inFs, A
     return 0;
 }
 
-void compressedAVI_listAllCodecs(std::vector<std::string> & outSupported, std::vector<std::string> & outUnSupported)
+/*void compressedAVI_listAllCodecs(std::vector<std::string> & outSupported, std::vector<std::string> & outUnSupported)
 {
 
     AVCodec *codec;
@@ -260,7 +260,7 @@ void compressedAVI_listAllCodecs(std::vector<std::string> & outSupported, std::v
             outUnSupported.push_back(codec->name);
         }
     }
-}
+}*/
 
 bool
 compressedAVIFindMinMax(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & outMinVal, float & outMaxVal, float progressBarStart, float progressBarEnd)
