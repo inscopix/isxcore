@@ -1,78 +1,67 @@
 #include "isxMovieCompressedAviExporter.h"
-//#include "isxException.h"
-//#include "isxImage.h"
 #include "isxMovie.h"
 #include "isxPathUtils.h"
-//#include "isxCompressedAVI.h"
 #include "isxCellSetUtils.h"
+#include "isxException.h"
+
 #include <array>
+#include <fstream>
+#include <algorithm>
 
 extern "C" {
 #include "libavformat/avformat.h"
 }
 
-#include <fstream>
-//#include <cfloat>
-#include <algorithm>
-//#include <vector>
-//#include <iostream>
-//#include <stdio.h>
-
-
-
-
 namespace
 {
 
-	int compressedAVI_encode1(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, std::fstream & outfile)
+int compressedAVI_encode1(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, std::fstream & outfile)
+{
+	/* send the frame to the encoder */
+
+	int ret = avcodec_send_frame(enc_ctx, frame);
+	if (ret < 0) // Error sending a frame for encoding
 	{
-		/* send the frame to the encoder */
+		return 1;
+	}
 
-		int ret = avcodec_send_frame(enc_ctx, frame);
-		if (ret < 0) // Error sending a frame for encoding
+	while (true)
+	{
+		ret = avcodec_receive_packet(enc_ctx, pkt);
+		if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+			return 0;
+		}
+		if (ret < 0) // Error during encoding
 		{
-			return 1;
+			break;
 		}
 
-		while (true)
-		{
-			ret = avcodec_receive_packet(enc_ctx, pkt);
-			if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-				return 0;
-			}
-			if (ret < 0) // Error during encoding
-			{
-				break;
-			}
+		outfile.write((char *)(pkt->data), 1 * pkt->size);
+		av_packet_unref(pkt);
+	}
+	return 2;
+}
 
-			outfile.write((char *)(pkt->data), 1 * pkt->size);
-			av_packet_unref(pkt);
-		}
+int compressedAVI_encode2(AVCodecContext *avctx, AVPacket *pkt, int *got_packet, AVFrame *frame)
+{
+	*got_packet = 0;
+
+	if (avcodec_send_frame(avctx, frame) < 0)
+	{
+		return 1;
+	}
+
+	int ret = avcodec_receive_packet(avctx, pkt);
+	switch (ret)
+	{
+	case 0:
+		*got_packet = 1;
+		return 0;
+	case AVERROR(EAGAIN):
+		return 0;
+	default:
 		return 2;
 	}
-
-	int compressedAVI_encode2(AVCodecContext *avctx, AVPacket *pkt, int *got_packet, AVFrame *frame)
-	{
-		*got_packet = 0;
-
-		if (avcodec_send_frame(avctx, frame) < 0)
-		{
-			return 1;
-		}
-
-		int ret = avcodec_receive_packet(avctx, pkt);
-		switch (ret)
-		{
-		case 0:
-			*got_packet = 1;
-			return 0;
-		case AVERROR(EAGAIN):
-			return 0;
-		default:
-			return 2;
-		}
-	}
-
 }
 
 int compressedAVI_preLoop(const std::string & inFileName, std::fstream & outFs, AVFrame * & outFrame, AVPacket * & outPkt, AVCodecContext * & outAvcc, const isx::Image *inImg, const isx::isize_t inFrameRate, const isx::isize_t inBitRate)
@@ -273,38 +262,15 @@ void compressedAVI_listAllCodecs(std::vector<std::string> & outSupported, std::v
 	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-namespace isx
-{
-
 bool
-compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & outMinVal, float & outMaxVal, float progressBarStart, float progressBarEnd)
+compressedAVIFindMinMax(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & outMinVal, float & outMaxVal, float progressBarStart, float progressBarEnd)
 {
     outMinVal = std::numeric_limits<float>::max();
     outMaxVal = -std::numeric_limits<float>::max();
 
     bool cancelled = false;
-    isize_t writtenFrames = 0;
-    isize_t numFrames = 0;
+	isx::isize_t writtenFrames = 0;
+	isx::isize_t numFrames = 0;
     for (auto m : inMovies)
     {
         numFrames += m->getTimingInfo().getNumTimes();
@@ -312,7 +278,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
 
     for (auto m : inMovies)
     {
-        for (isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
+        for (isx::isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
         {
             if (m->getTimingInfo().isIndexValid(i))
             {
@@ -341,7 +307,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<SpMovi
 }
 
 bool
-compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, float progressBarStart, float progressBarEnd)
+compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, float progressBarStart, float progressBarEnd)
 {
     std::fstream fs;
     AVFrame *frame;
@@ -356,16 +322,16 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
 
     ////////
 
-    const std::string dirname = getDirName(inFileName);
-    const std::string basename = getBaseName(inFileName);
-    const std::string extension = getExtension(inFileName);
+    const std::string dirname = isx::getDirName(inFileName);
+    const std::string basename = isx::getBaseName(inFileName);
+    const std::string extension = isx::getExtension(inFileName);
 
     bool cancelled = false;
-    isize_t writtenFrames = 0;
-    isize_t numFrames = 0;
-    DurationInSeconds step, stepPrevious, stepFirst;
+	isx::isize_t writtenFrames = 0;
+	isx::isize_t numFrames = 0;
+	isx::DurationInSeconds step, stepPrevious, stepFirst;
     double eps = 1e-2;
-    isize_t count = 0;
+	isx::isize_t count = 0;
     for (auto m : inMovies)
     {
         numFrames += m->getTimingInfo().getNumTimes();
@@ -380,19 +346,19 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
         }
         count++;
     }
-    ISX_ASSERT(stepFirst != DurationInSeconds());
+	ISX_ASSERT(stepFirst != isx::DurationInSeconds());
 
     // For mpeg1: some framerates work, others don't. Use placeholder for now
     // Examples of allowed framerates : 24, 25, 30, 50
     // Examples of forbidden framerates : 10, 12, 15, 17, 20, 26, 35, 40, 100
-    isize_t frameRate = 25; // placeholder: use std::lround(stepFirst.getInverse().toDouble()); // preserve framerate
+	isx::isize_t frameRate = 25; // placeholder: use std::lround(stepFirst.getInverse().toDouble()); // preserve framerate
 
-    isize_t bitRate = 400000; // TODO: possibly connect to front end for user control
-    isize_t frame_index = 0; // frame index of current movie
+	isx::isize_t bitRate = 400000; // TODO: possibly connect to front end for user control
+	isx::isize_t frame_index = 0; // frame index of current movie
 
     for (auto m : inMovies)
     {
-        for (isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
+        for (isx::isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
         {
             if (m->getTimingInfo().isIndexValid(i))
             {
@@ -433,7 +399,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<SpMov
 }
 
 bool
-toCompressedAVI(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, AsyncCheckInCB_t & inCheckInCB)
+toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB)
 {
     bool cancelled;
     float minVal = -1;
@@ -448,7 +414,7 @@ toCompressedAVI(const std::string & inFileName, const std::vector<SpMovie_t> & i
     return false;
 }
 
-} // namespace isx
+} // namespace
 
 namespace isx {
 
