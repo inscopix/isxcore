@@ -4,6 +4,7 @@
 #include "isxLog.h"
 
 #include <vector>
+#include <cstring>
 
 TEST_CASE("VideoFrameTest", "[core]") {
     //std::string testFile = g_resources["unitTestDataPath"] + "/recording_20160426_145041.hdf5";
@@ -44,10 +45,10 @@ TEST_CASE("VideoFrameTest", "[core]") {
         // write, should have enough buffer space to not cause
         // access violation :)
         uint16_t * p = v.getPixelsAsU16();
-        memcpy(p, &buf[0], buf.size());
+        std::memcpy(p, &buf[0], buf.size());
 
         // read, check if data is the same as what was written
-        REQUIRE(0 == memcmp(p, &buf[0], buf.size()));
+        REQUIRE(0 == std::memcmp(p, &buf[0], buf.size()));
     }
 
     SECTION("constructor with spacing information")

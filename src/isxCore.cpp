@@ -6,6 +6,9 @@
 #include "isxReportUtils.h"
 #include <sstream>
 
+#include <QSysInfo>
+#include <QString>
+
 namespace isx
 {
     isize_t getDataTypeSizeInBytes(DataType inDataType)
@@ -164,5 +167,11 @@ namespace isx
     CoreVersionVector()
     {
         return { CoreVersionMajor() , CoreVersionMinor(), CoreVersionPatch() };
+    }
+
+    std::string
+    getHostName()
+    {
+        return QSysInfo::machineHostName().toStdString();
     }
 }

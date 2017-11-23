@@ -5,7 +5,6 @@
 
 #include <QObject>
 #include <QThreadPool>
-#include <QApplication>
 
 #include <chrono>
 #include <thread>

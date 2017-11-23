@@ -2,6 +2,8 @@
 #include "catch.hpp"
 #include "isxTest.h"
 
+#include <cstring>
+
 void
 writeDefaultCells(
         const std::string & inFileName,
@@ -40,7 +42,7 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
             1,
             isx::DataType::F32);
     float * originalPixels = originalImage.getPixelsAsF32();
-    memset(originalPixels, 0, sizeof(float) * originalImage.getSpacingInfo().getTotalNumPixels());
+    std::memset(originalPixels, 0, sizeof(float) * originalImage.getSpacingInfo().getTotalNumPixels());
     originalPixels[0] = 1.0f;
     originalPixels[1] = 2.5f;
 
