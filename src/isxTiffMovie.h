@@ -3,6 +3,8 @@
 
 #include <isxCoreFwd.h>
 #include <isxCore.h>
+#include <isxSpacingInfo.h>
+#include <isxTime.h>
 #include <string>
 
 /// Forward-declare TIFF formats
@@ -36,6 +38,14 @@ namespace isx
         /// \param vf output
         /// \throw  isx::ExceptionDataIO    If inFrameNumber is out of range.
         void getFrame(isize_t inFrameNumber, const SpVideoFrame_t & vf);
+
+        /// Get a movie frame
+        /// \param inFrameNumber global frame index
+        /// \param inSpacingInfo Spacing Info  
+        /// \param inTimeStamp time stamp  
+        /// \return shared pointer to VideoFrame
+        /// \throw  isx::ExceptionDataIO    If inFrameNumber is out of range.
+        SpVideoFrame_t getVideoFrame(isize_t inFrameNumber, const SpacingInfo & inSpacingInfo, Time inTimeStamp);
 
         /// \return the total number of frames in the movie
         ///

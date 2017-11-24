@@ -41,6 +41,11 @@ TiffMovie::initialize(const std::string & inFileName)
     TIFFGetField(m_tif, TIFFTAG_BITSPERSAMPLE, &bits);
     switch (bits)
     {
+        case sizeof(float) * 8:
+        {
+            m_dataType = DataType::F32;
+            break;
+        }
         case sizeof(uint16_t) * 8:
         {
             m_dataType = DataType::U16;
@@ -49,21 +54,16 @@ TiffMovie::initialize(const std::string & inFileName)
         case sizeof(uint8_t) * 8:
         {
             m_dataType = DataType::U8;
-            //break; // import is not implemented yet, so it will jump to default/exception
-        }
-        case sizeof(float) * 8:
-        {
-            m_dataType = DataType::F32;
-            //break;
+            break;
         }
         case sizeof(uint8_t) * 8 * 3:
         {
             m_dataType = DataType::RGB888;
-            //break;
+            break;
         }
         default:
         {
-            ISX_THROW(ExceptionDataIO, "Unsupported number of bits (", bits, "). Only 16 bit images are supported.");
+            ISX_THROW(ExceptionDataIO, "Unsupported number of bits (", bits, "). Only 8 (U8), 16 (U16), 32 (F32) and 24 (RGB888) bit images are supported.");
         }
     }
 
@@ -73,6 +73,21 @@ TiffMovie::initialize(const std::string & inFileName)
 
     m_frameWidth = isize_t(width);
     m_frameHeight = isize_t(height);
+}
+
+SpVideoFrame_t 
+TiffMovie::getVideoFrame(isize_t inFrameNumber, const SpacingInfo & inSpacingInfo, Time inTimeStamp)
+{
+    const isx::SpVideoFrame_t vf = std::make_shared<isx::VideoFrame>(
+        inSpacingInfo,
+        isx::getDataTypeSizeInBytes(m_dataType) * inSpacingInfo.getNumColumns(),
+        1, // numChannels
+        m_dataType,
+        inTimeStamp,
+        inFrameNumber);
+
+    getFrame(inFrameNumber, vf);
+    return vf;
 }
 
 void 
