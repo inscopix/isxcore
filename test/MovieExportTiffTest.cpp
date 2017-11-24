@@ -100,8 +100,7 @@ TEST_CASE("MovieTiffExportF32Test", "[core]")
             movies,
             exportedTiffFileName);
         isx::runMovieTiffExporter(params, nullptr, [](float){return false;});
-        
-        
+
         // verify exported data
         {
             //isx::TiffMovie tiffMovie(exportedTiffFileName); // TODO: import is not implemented yet
@@ -109,6 +108,8 @@ TEST_CASE("MovieTiffExportF32Test", "[core]")
         }
 
     }
+
+    isx::CoreShutdown();
 
     for (const auto & fn: filenames)
     {
@@ -145,7 +146,7 @@ TEST_CASE("MovieTiffExportU16Test", "[core]")
         { isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 3 },
         { isx::Time(2222, 4, 1, 3, 1, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 4 },
         { isx::Time(2222, 4, 1, 3, 2, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 5, dropped }
-        } };
+    } };
 
     isx::SizeInPixels_t sizePixels(4, 3);
     isx::SpacingInfo spacingInfo(sizePixels);
@@ -189,6 +190,8 @@ TEST_CASE("MovieTiffExportU16Test", "[core]")
 
     }
 
+    isx::CoreShutdown();
+
     for (const auto & fn : filenames)
     {
         std::remove(fn.c_str());
@@ -201,7 +204,7 @@ TEST_CASE("MovieTiffExportSplittedTest", "[core]")
     std::array<const char *, numInputMovies> names =
     { {
             "seriesMovieSplitted0.isxd"
-        } };
+    } };
     std::vector<std::string> filenames;
 
     for (auto n : names)
@@ -220,7 +223,7 @@ TEST_CASE("MovieTiffExportSplittedTest", "[core]")
     std::array<isx::TimingInfo, numInputMovies> timingInfos =
     { {
         { isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 5 }
-        } };
+    } };
 
     isx::SizeInPixels_t sizePixels(4, 3);
     isx::SpacingInfo spacingInfo(sizePixels);
@@ -279,8 +282,55 @@ TEST_CASE("MovieTiffExportSplittedTest", "[core]")
         }
     }
 
+    isx::CoreShutdown();
+
     for (const auto & fn : filenames)
     {
         std::remove(fn.c_str());
     }
+}
+
+// Hidden because it write large files and thus takes quite a bit of time and space.
+TEST_CASE("MovieTiffExportBigTiff", "[core][!hide]")
+{
+    const std::string dataDir = g_resources["unitTestDataPath"] + "/export_tiff";
+    isx::makeDirectory(dataDir);
+
+    const std::string inputFileName = dataDir + "/input.isxd";
+
+    const std::string outputFileName = dataDir + "/output.tif";
+    std::remove(outputFileName.c_str());
+
+    // We want to generate a movie big enough to exceed the 4GB file size limit
+    // of non-BigTIFF files.
+    const isx::TimingInfo timingInfo(isx::Time(), isx::DurationInSeconds(50, 1000), 2049);
+    const isx::isize_t numFrames = timingInfo.getNumTimes();
+    const isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(1024, 1024));
+    const isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
+
+    isx::CoreInitialize();
+
+    SECTION("Write a big dummy movie")
+    {
+        const isx::SpMovie_t inputMovie = writeTestU16MovieGeneric(inputFileName, timingInfo, spacingInfo);
+
+        const isx::MovieTiffExporterParams params({inputMovie}, {outputFileName});
+        isx::runMovieTiffExporter(params, nullptr, [](float) {return false; });
+
+        const isx::SpMovie_t outputMovie = isx::readMovie(outputFileName);
+        REQUIRE(outputMovie->getTimingInfo() == timingInfo);
+        REQUIRE(outputMovie->getSpacingInfo() == spacingInfo);
+        REQUIRE(outputMovie->getDataType() == isx::DataType::U16);
+
+        for (isx::isize_t f = 0; f < numFrames; ++f)
+        {
+            const isx::SpVideoFrame_t inputFrame = inputMovie->getFrame(f);
+            const isx::SpVideoFrame_t outputFrame = outputMovie->getFrame(f);
+            requireEqualImages(inputFrame->getImage(), outputFrame->getImage());
+        }
+    }
+
+    isx::CoreShutdown();
+
+    isx::removeDirectory(dataDir);
 }
