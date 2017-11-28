@@ -146,7 +146,7 @@ public:
 
             m_movie = std::make_shared<NVistaHdf5Movie>(m_path, fileHandles, ti, si, droppedFrames, props);
         }
-        else if (extension == "tif")
+        else if ((extension == "tif") || (extension == "tiff"))
         {
             m_movie = std::make_shared<NVistaTiffMovie>(m_path, fileNames, ti, si, droppedFrames, props, xml.getNumFrames());
         }

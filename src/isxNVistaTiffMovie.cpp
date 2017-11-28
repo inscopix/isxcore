@@ -63,6 +63,15 @@ NVistaTiffMovie::NVistaTiffMovie(
             {
                 ISX_THROW(isx::ExceptionUserInput, "All input files must have the same dimensions.");
             }
+            if (m_movies[0]->getDataType() != m_movies[f]->getDataType())
+            {
+                ISX_THROW(isx::ExceptionUserInput, "All input files must have the same data type.");
+            }
+        }
+
+        if (!m_movies.empty())
+        {
+            m_dataType = m_movies[0]->getDataType();
         }
 
         numFramesAccum += m_movies[f]->getNumFrames();
@@ -193,7 +202,7 @@ NVistaTiffMovie::getSpacingInfo() const
 DataType
 NVistaTiffMovie::getDataType() const
 {
-    return DataType::U16;
+    return m_dataType;
 }
 
 std::string
@@ -222,9 +231,9 @@ NVistaTiffMovie::getFrameInternal(isize_t inFrameNumber)
     SpacingInfo si = getSpacingInfo();
     auto outFrame = std::make_shared<VideoFrame>(
         si,
-        sizeof(uint16_t) * si.getNumColumns(),
+        isx::getDataTypeSizeInBytes(m_dataType) * si.getNumColumns(),
         1, // numChannels
-        getDataType(),
+        m_dataType,
         getTimingInfo().convertIndexToStartTime(inFrameNumber),
         inFrameNumber);
     

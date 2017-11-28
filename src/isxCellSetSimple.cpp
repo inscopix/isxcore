@@ -266,5 +266,53 @@ CellSetSimple::isRoiSet() const
     return m_file->isRoiSet();
 }
 
+isize_t
+CellSetSimple::getSizeGlobalCS()
+{
+    return m_file->getSizeGlobalCS();
+}
+
+void
+CellSetSimple::setSizeGlobalCS(const isize_t inSizeGlobalCS)
+{
+    m_file->setSizeGlobalCS(inSizeGlobalCS);
+}
+
+std::vector<int16_t>
+CellSetSimple::getMatches()
+{
+    return m_file->getMatches();
+}
+
+void
+CellSetSimple::setMatches(const std::vector<int16_t> & inMatches)
+{
+    m_file->setMatches(inMatches);
+}
+
+std::vector<double>
+CellSetSimple::getPairScores()
+{
+    return m_file->getPairScores();
+}
+
+void
+CellSetSimple::setPairScores(const std::vector<double> & inPairScores)
+{
+    m_file->setPairScores(inPairScores);
+}
+
+std::vector<double>
+CellSetSimple::getCentroidDistances()
+{
+    return m_file->getCentroidDistances();
+}
+
+void
+CellSetSimple::setCentroidDistances(const std::vector<double> & inCentroidDistances)
+{
+    m_file->setCentroidDistances(inCentroidDistances);
+}
+
 }
 

@@ -536,7 +536,7 @@ TEST_CASE("TimingInfo-droppedAndCroppedBench", "[core][!hide]")
             if (localDurationInMs > maxDurationInMs)
             {
                 maxDurationInMs = localDurationInMs;
-                maxIndex = t;
+                maxIndex = float(t);
             }
         }
         globalTimer.stop();

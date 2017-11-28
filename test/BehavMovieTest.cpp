@@ -10,6 +10,7 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <cstring>
 
 TEST_CASE("BehavMovie", "[core]") 
 {
@@ -42,7 +43,7 @@ TEST_CASE("BehavMovie", "[core]")
             REQUIRE(!inAsyncTaskResult.getException());
             size_t index = inAsyncTaskResult.get()->getFrameIndex();
             unsigned char * t = reinterpret_cast<unsigned char *>(inAsyncTaskResult.get()->getPixels());
-            if (memcmp(t, expected[index], numTestBytesPerFrame))
+            if (std::memcmp(t, expected[index], numTestBytesPerFrame))
             {
                 isDataCorrect = false;
             }

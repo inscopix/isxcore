@@ -895,6 +895,31 @@ Series::isUnitary() const
     return false;
 }
 
+bool
+Series::isFullyImported() const
+{
+    if (m_dataSet)
+    {
+        return m_dataSet->isImported();
+    }
+    for (const auto & i : m_unitarySeries)
+    {
+        if (!i->isFullyImported())
+        {
+            return false;
+        }
+    }
+    for (const auto & i : m_children)
+    {
+        if (!i->isFullyImported())
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void
 Series::setContainer(ProjectItem * inContainer)
 {
