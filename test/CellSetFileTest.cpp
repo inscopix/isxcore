@@ -23,7 +23,7 @@ writeDefaultCells(
 
 TEST_CASE("CellSetFileTest", "[core-internal]")
 {
-	std::string fileName = g_resources["unitTestDataPath"] + "/cellset.isxd";
+    std::string fileName = g_resources["unitTestDataPath"] + "/cellset.isxd";
     
     isx::Time start;
     isx::DurationInSeconds step(50, 1000);
@@ -231,6 +231,68 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
             {
                 REQUIRE(pixels[i] == originalPixels[i]);
             }
+        }
+    }
+
+    SECTION("Write 10 cells then read it back in: new longitudinal members tested")
+    {
+        {
+            isx::CellSetFile file(fileName, timingInfo, spacingInfo);
+
+            isx::isize_t sizeGlobalCS = 30; // equals the number of cells in the global cell set
+            std::vector<int16_t> csMatches;
+            std::vector<double> csPairScores;
+            std::vector<double> csCentroidDistances;
+
+            for (size_t i = 0; i < 10; ++i)
+            {
+                file.writeCellData(i, originalImage, originalTrace);
+                csMatches.push_back(int16_t(2*i));
+                double value = (cos(double(i)) + 1) / 2;
+                csPairScores.push_back(value);
+                csCentroidDistances.push_back(1 - value);
+            }
+
+            file.setSizeGlobalCS(sizeGlobalCS);
+            file.setMatches(csMatches);
+            file.setPairScores(csPairScores);
+            file.setCentroidDistances(csCentroidDistances);
+
+            file.closeForWriting();
+        }
+
+        isx::CellSetFile file(fileName);
+
+        REQUIRE(file.isValid());
+        REQUIRE(file.getTimingInfo() == timingInfo);
+        REQUIRE(file.getSpacingInfo() == spacingInfo);
+        REQUIRE(file.numberOfCells() == 10);
+        REQUIRE(file.getSizeGlobalCS() == 30);
+
+        for (size_t i = 0; i < 10; ++i)
+        {
+            REQUIRE(file.getCellStatus(i) == isx::CellSet::CellStatus::UNDECIDED);
+            REQUIRE(file.getCellName(i) == "C" + std::to_string(i));
+
+            isx::SpFTrace_t trace = file.readTrace(i);
+            float * values = trace->getValues();
+
+            isx::SpImage_t image = file.readSegmentationImage(i);
+            float * pixels = image->getPixelsAsF32();
+
+            for (isx::isize_t i = 0; i < trace->getTimingInfo().getNumTimes(); ++i)
+            {
+                REQUIRE(values[i] == originalValues[i]);
+            }
+
+            for (isx::isize_t i = 0; i < spacingInfo.getTotalNumPixels(); ++i)
+            {
+                REQUIRE(pixels[i] == originalPixels[i]);
+            }
+            REQUIRE(file.getMatches()[i] == int16_t(2 * i));
+            double value = (cos(double(i)) + 1) / 2;
+            REQUIRE(std::abs(file.getPairScores()[i] - value) < 1e-6);
+            REQUIRE(std::abs(file.getCentroidDistances()[i] - (1 - value)) < 1e-6);
         }
     }
 

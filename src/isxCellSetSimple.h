@@ -135,6 +135,30 @@ public:
     bool
     isRoiSet() const override;
 
+    isize_t
+    getSizeGlobalCS() override;
+
+    void
+    setSizeGlobalCS(const isize_t inSizeGlobalCS) override;
+
+    std::vector<int16_t>
+    getMatches() override;
+
+    void
+    setMatches(const std::vector<int16_t> & inMatches) override;
+
+    std::vector<double>
+    getPairScores() override;
+
+    void
+    setPairScores(const std::vector<double> & inPairScores) override;
+
+    std::vector<double>
+    getCentroidDistances() override;
+
+    void
+    setCentroidDistances(const std::vector<double> & inCentroidDistances) override;
+
 private:
 
     /// True if the cell set is valid, false otherwise.
