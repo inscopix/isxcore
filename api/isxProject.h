@@ -135,6 +135,13 @@ public:
     Series *
     findSeriesFromIdentifier(const std::string & inId) const;
 
+    /// Make a unique file path comparing to existing item's file names and files in directory specified in inPath.
+    ///
+    /// \param  inPath  The initial file path.
+    /// \return         The unique file path.
+    std::string
+    makeUniqueFilePath(const std::string & inPath);
+
     /// \return The root group.
     ///
     Group * getRootGroup() const;

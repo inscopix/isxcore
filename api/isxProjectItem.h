@@ -48,6 +48,9 @@ public:
     /// \return true if the name is in use in this item's tree
     virtual bool isNameUsed(const std::string & inName) const = 0;
 
+    /// \return array of files used by items in current group
+    virtual std::vector<std::string> getUsedFileNames() const = 0;
+
     /// Set the parent container of this item.
     /// \param inContainer The new container for this item.
     ///

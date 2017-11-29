@@ -104,9 +104,10 @@ TiffExporter::toTiffOut(const Image * inImage)
     }
 }
 
-TiffExporter::TiffExporter(const std::string & inFileName)
+TiffExporter::TiffExporter(const std::string & inFileName, const bool inBigTiff)
 {
-    out = TIFFOpen(inFileName.c_str(), "w");
+    const char * mode = inBigTiff ? "w8" : "w";
+    out = TIFFOpen(inFileName.c_str(), mode);
 
     if (!out)
     {
@@ -128,7 +129,7 @@ TiffExporter::nextTiffDir()
 }
 
 bool 
-toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const isize_t& inMaxFrameIndex, AsyncCheckInCB_t & inCheckInCB)
+toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const isize_t inMaxFrameIndex, AsyncCheckInCB_t & inCheckInCB)
 {
     const std::string dirname = getDirName(inFileName);
     const std::string basename = getBaseName(inFileName);
@@ -144,32 +145,32 @@ toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, 
 
     size_t width = (numFrames > 10) ? (size_t(std::floor(std::log10(numFrames - 1)) + 1)) : (1);
 
-    isize_t frame_index = 0; // frame index of current movie
-    isize_t mv_counter = 0; // movie counter for each 2^16-1 frames
+    isize_t frameIndex = 0; // frame index of current movie
+    isize_t mvCounter = 0; // movie counter for each 2^16-1 frames
 
-    TiffExporter* out = new TiffExporter(inFileName); // for one movie - save to selected filess
+    TiffExporter * out = new TiffExporter(inFileName, true); // for one movie - save to selected filess
     for (auto m : inMovies)
     {
         for (isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
         {
             if (m->getTimingInfo().isIndexValid(i))
             {
-                if (frame_index == inMaxFrameIndex) // if number of frames larger inMaxFrameIndex - increase file name and dump to new one
+                if (frameIndex == inMaxFrameIndex) // if number of frames larger inMaxFrameIndex - increase file name and dump to new one
                 {
-                    mv_counter++;
-                    frame_index = 0;
+                    mvCounter++;
+                    frameIndex = 0;
 
-                    std::string fn = dirname + "/" + basename + "_" + convertNumberToPaddedString(mv_counter, width) + "." + extension;
+                    const std::string fn = dirname + "/" + basename + "_" + convertNumberToPaddedString(mvCounter, width) + "." + extension;
 
                     delete out;
-                    out = new TiffExporter(fn);
+                    out = new TiffExporter(fn, true);
                 }
 
                 auto f = m->getFrame(i);
                 auto& img = f->getImage();
                 out->toTiffOut(&img);
                 out->nextTiffDir();
-                frame_index++;
+                frameIndex++;
             }
 
             cancelled = inCheckInCB(float(++writtenFrames) / float(numFrames));

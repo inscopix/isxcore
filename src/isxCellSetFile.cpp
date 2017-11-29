@@ -292,6 +292,17 @@ namespace isx
     CellSetFile::setCellColor(isize_t inCellId, const Color& inColor)
     {
         m_cellColors.at(inCellId) = inColor;
+        if (m_openmode & std::ios_base::out)
+        {
+            if (m_fileClosedForWriting)
+            {
+                ISX_THROW(ExceptionFileIO, "Writing data after file was closed for writing.", m_fileName);
+            }
+            else
+            {
+                writeHeader();
+            }
+        }
     }
 
     std::string 
@@ -335,6 +346,54 @@ namespace isx
         return m_isRoiSet;
     }
 
+    isize_t
+    CellSetFile::getSizeGlobalCS()
+    {
+        return m_sizeGlobalCS;
+    }
+
+    void
+    CellSetFile::setSizeGlobalCS(const isize_t inSizeGlobalCS)
+    {
+        m_sizeGlobalCS = inSizeGlobalCS;
+    }
+
+    std::vector<int16_t>
+    CellSetFile::getMatches()
+    {
+        return m_matches;
+    }
+
+    void
+    CellSetFile::setMatches(const std::vector<int16_t> & inMatches)
+    {
+        m_matches = inMatches;
+    }
+
+    std::vector<double>
+    CellSetFile::getPairScores()
+    {
+        return m_pairScores;
+    }
+
+    void
+    CellSetFile::setPairScores(const std::vector<double> & inPairScores)
+    {
+        m_pairScores = inPairScores;
+    }
+
+    std::vector<double>
+    CellSetFile::getCentroidDistances()
+    {
+        return m_centroidDistances;
+    }
+
+    void
+    CellSetFile::setCentroidDistances(const std::vector<double> & inCentroidDistances)
+    {
+        m_centroidDistances = inCentroidDistances;
+    }
+
     void 
     CellSetFile::readHeader()
     {
@@ -353,6 +412,11 @@ namespace isx
             auto version = j["fileVersion"].get<size_t>();
             switch (version)
             {
+            case 3:
+                m_sizeGlobalCS = j["SizeGlobalCS"];
+                m_matches = j["Matches"].get<std::vector<int16_t>>();
+                m_pairScores = j["PairScores"].get<std::vector<double>>();
+                m_centroidDistances = j["CentroidDistances"].get<std::vector<double>>();
             case 2:
                 m_cellColors = convertJsonToCellColors(j["CellColors"]);
             case 1:
@@ -412,6 +476,10 @@ namespace isx
             j["fileVersion"] = s_version;
             j["isRoiSet"] = m_isRoiSet;
             j["CellActivity"] = convertCellActivitiesToJson(m_cellActivity);
+            j["SizeGlobalCS"] = m_sizeGlobalCS;
+            j["Matches"] = m_matches;
+            j["PairScores"] = m_pairScores;
+            j["CentroidDistances"] = m_centroidDistances;
         }
         catch (const std::exception & error)
         {

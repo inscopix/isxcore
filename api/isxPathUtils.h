@@ -74,14 +74,6 @@ std::string getExtension(const std::string & inPath);
 /// \return         The tokens of a path delimited by '/'.
 std::vector<std::string> getPathTokens(const std::string & inPath);
 
-/// Get the default project path where we'll write mosaic data.
-///
-/// The directory will be created if it doesn't exist.
-///
-/// \return     A writable directory name for Mosaic data.
-std::string getDefaultProjectPath();
-
-
 /// \return whether a path is relative or not
 /// \param inPath the path of interest
 bool isRelative(const std::string &inPath);
@@ -112,6 +104,12 @@ std::string getAbsolutePath(const std::string & inPath);
 /// \param  inPath      The path to check for existence.
 /// \return             True if the path exists on the file system.
 bool pathExists(const std::string & inPath);
+
+/// Returns all fileNames from specified directory.
+///
+/// \param  inPath      The path to check for existence.
+/// \return             Array of file path.
+std::vector<std::string> getAllDirFiles(const std::string & inPath);
 
 /// Append a separator and a zero padded non-negative number to a path.
 ///

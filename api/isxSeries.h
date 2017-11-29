@@ -230,6 +230,12 @@ public:
     bool
     isUnitary()
     const;
+
+    /// \return     True if this is fully imported (all dataSets is improted), false otherwise.
+    ///
+    bool
+    isFullyImported()
+    const;
     
     /// \return weak reference to this Series
     ///
@@ -312,7 +318,11 @@ public:
     isNameUsed(const std::string & inName) 
     const 
     override;
-    
+
+    std::vector<std::string> 
+    getUsedFileNames() const
+    override;
+
 private:
     
     bool

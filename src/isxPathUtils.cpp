@@ -5,7 +5,6 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QStringList>
-#include <QStandardPaths>
 #include <QStorageInfo>
 
 namespace isx
@@ -57,20 +56,7 @@ getPathTokens(const std::string & inPath)
     return outPathTokens;
 }
 
-std::string
-getDefaultProjectPath()
-{
-    QString dirName = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    dirName += "/Inscopix_Projects";
-    QDir dir(dirName);
-    if (!dir.exists())
-    {
-        dir.mkpath(dirName);
-    }
-    return dirName.toStdString();
-}
-
-bool 
+bool
 isRelative(const std::string &inPath)
 {
     std::string dirName = isx::getDirName(inPath);
@@ -103,6 +89,24 @@ pathExists(const std::string & inPath)
     return pathInfo.exists();
 }
 
+std::vector<std::string>
+getAllDirFiles(const std::string & inPath)
+{
+    QString dirPath = QString::fromStdString(inPath);
+    QDir directory(dirPath);
+    QFileInfoList files = directory.entryInfoList(QStringList());
+
+    std::vector<std::string> dirFiles(files.size());
+    isx::isize_t i(0);
+    for(auto f: files) {
+        dirFiles[i] = f.absoluteFilePath().toStdString();
+        ++i;
+    }
+    return dirFiles;
+}
+
+// TODO MOS-983: we should check function usage and re-factor
+//   Most function calls have constant variables - this should be replaced with dynamic calcs
 std::string
 appendNumberToPath(
         const std::string & inPath,
@@ -116,7 +120,7 @@ bool
 makeDirectory(const std::string & inPath)
 {
     QDir dir(QString::fromStdString(getDirName(inPath)));
-    return dir.mkdir(QString::fromStdString(getBaseName(inPath)));
+    return dir.mkdir(QString::fromStdString(getFileName(inPath)));
 }
 
 bool

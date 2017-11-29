@@ -114,6 +114,9 @@ private:
 
     std::shared_ptr<IoTaskTracker<VideoFrame>>   m_ioTaskTracker;
 
+    /// The TIFF data type
+    DataType  m_dataType;
+
     /// Reads a frame directly from the associated file.
     ///
     /// The read occurs on whatever thread calls this function.

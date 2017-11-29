@@ -10,6 +10,7 @@
 #include <chrono>
 #include <atomic>
 #include <numeric>
+#include <cstring>
 
 TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
     std::string testFileName = g_resources["unitTestDataPath"] + "/recording_20160426_145041.hdf5";
@@ -73,7 +74,7 @@ TEST_CASE("NVistaHdf5MovieTest", "[core-internal]") {
         isx::TimingInfo movTimingInfo = mov->getTimingInfo();
         std::vector<isx::isize_t> dropped = movTimingInfo.getDroppedFrames();
 
-        REQUIRE(dropped.size());
+        REQUIRE(dropped.size() > 0);
         isx::SpVideoFrame_t vf = mov->getFrame(dropped[0]);
 
         REQUIRE(vf);
@@ -116,7 +117,7 @@ TEST_CASE("Hdf5MovieTestAsync", "[core]") {
         REQUIRE(!inAsyncTaskResult.getException());
         size_t index = inAsyncTaskResult.get()->getFrameIndex();
         unsigned char * t = reinterpret_cast<unsigned char *>(inAsyncTaskResult.get()->getPixels());
-        if (memcmp(t, expected[index], numTestBytesPerFrame))
+        if (std::memcmp(t, expected[index], numTestBytesPerFrame))
         {
             isDataCorrect = false;
         }
