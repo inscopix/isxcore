@@ -40,24 +40,8 @@ initializeWithZeros(
 
     float * pixels = inImage->getPixelsAsF32();
 
-    // std::memset(pixels, 0, sizeof(float) * inImage->getSpacingInfo().getTotalNumPixels());
-    for (isx::isize_t i(0); i < inImage->getSpacingInfo().getTotalNumPixels(); ++i)
-    {
-        pixels[i] = 0.0f;
-    } 
+    std::memset(pixels, 0, sizeof(float) * inImage->getSpacingInfo().getTotalNumPixels());    
  }
-
-float
-pixSum(isx::SpImage_t imCopy)
-{
-    float * _pixels = imCopy->getPixelsAsF32();
-    float _pixSum = 0.0f;
-    for (isx::isize_t _i(0); _i < imCopy->getSpacingInfo().getTotalNumPixels(); ++_i)
-    {
-        _pixSum += _pixels[_i];
-    }
-    return _pixSum;    
-}
 
 }
 
@@ -80,7 +64,7 @@ normalizeAndThresholdImage(isx::SpImage_t inImage, float inNormalizedThreshold)
     // identify image max
     float maxVal = 0.0f;
     for (isx::isize_t i(0); i < numPixels; ++i)
-    {    
+    {
         maxVal = std::max(maxVal, pixels[i]);
     }
 
@@ -88,7 +72,7 @@ normalizeAndThresholdImage(isx::SpImage_t inImage, float inNormalizedThreshold)
     for (isx::isize_t i(0); i < numPixels; ++i)
     {
         if (pixels[i] < inNormalizedThreshold*maxVal)
-        {            
+        {
             pixels[i] = 0.0;
         }        
     }
@@ -96,7 +80,7 @@ normalizeAndThresholdImage(isx::SpImage_t inImage, float inNormalizedThreshold)
     // compute the image sum
     float imgSum = 0.0f;
     for (isx::isize_t i(0); i < numPixels; ++i)
-    {    
+    {
         imgSum += pixels[i];
     }    
 
