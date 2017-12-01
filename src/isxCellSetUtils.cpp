@@ -41,7 +41,7 @@ initializeWithZeros(
     float * pixels = inImage->getPixelsAsF32();
 
     std::memset(pixels, 0, sizeof(float) * inImage->getSpacingInfo().getTotalNumPixels());    
- }
+}
 
 }
 
@@ -100,7 +100,6 @@ cellSetToCellMap(
     bool inNormalizeImages,
     float inNormalizedThreshold)
 {
-    //SpImage_t outImage = std::make_shared<isx::Image>(inCellSet->getImage(0)->getSpacingInfo(), inCellSet->getImage(0)->getRowBytes(), inCellSet->getImage(0)->getNumChannels(), inCellSet->getImage(0)->getDataType());
     SpImage_t outImage(inCellSet->getImage(0));
     initializeWithZeros(outImage);
 

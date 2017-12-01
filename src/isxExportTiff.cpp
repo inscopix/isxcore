@@ -15,8 +15,6 @@
 #include <limits>
 #include <cmath>
 
-//#include <tiffio.h>
-
 // TODO: Ask Sylvana why specific macros was used for MacOS
 
 //#if ISX_OS_MACOS
