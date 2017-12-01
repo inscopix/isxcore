@@ -38,8 +38,8 @@ struct CellSetExporterParams
     getOpName();
 
     std::vector<SpCellSet_t> m_srcs;                    ///< input cellsets
-    std::string              m_outputTraceFilename;      ///< name of output file for traces
-    std::string              m_outputImageFilename;      ///< base filename for output images
+    std::string              m_outputTraceFilename;     ///< name of output file for traces
+    std::string              m_outputImageFilename;     ///< base filename for output images
     WriteTimeRelativeTo      m_writeTimeRelativeTo;     ///< how to write time stamps in file
 };
 
