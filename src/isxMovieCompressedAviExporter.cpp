@@ -12,6 +12,20 @@ extern "C" {
 #include "libavformat/avformat.h"
 }
 
+typedef struct VideoOutput
+{
+	AVStream *avs;
+	AVCodecContext *avcc;
+	int64_t pts;
+	AVFrame *avf;
+	AVFrame *avf0;
+} VideoOutput;
+
+int outputMp4Movie();
+bool preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut, const isx::Image *inImg);
+bool withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, const float inMinVal, const float inMaxVal);
+bool postLoop(AVFormatContext *avFmtCnxt, VideoOutput & vOut);
+
 namespace
 {
 
@@ -66,6 +80,7 @@ int compressedAVI_encode2(AVCodecContext *avctx, AVPacket *pkt, int *got_packet,
 
 int compressedAVI_preLoop(const std::string & inFileName, std::fstream & outFs, AVFrame * & outFrame, AVPacket * & outPkt, AVCodecContext * & outAvcc, const isx::Image *inImg, const isx::isize_t inFrameRate, const isx::isize_t inBitRate)
 {
+    if (outputMp4Movie()) exit(99);
     AVCodecID codec_id = AV_CODEC_ID_MPEG1VIDEO;
     AVCodec *outCodec = avcodec_find_encoder(codec_id);
     if (!outCodec)
@@ -234,34 +249,6 @@ int compressedAVI_postLoop(const bool inUseSimpleEncoder, std::fstream & inFs, A
     return 0;
 }
 
-/*void compressedAVI_listAllCodecs(std::vector<std::string> & outSupported, std::vector<std::string> & outUnSupported)
-{
-
-    AVCodec *codec;
-
-    std::cout << std::endl;
-
-    outSupported.clear();
-    codec = NULL;
-    while ((codec = av_codec_next(codec)))
-    {
-        if (avcodec_find_encoder_by_name(codec->name) != 0)
-        {
-            outSupported.push_back(codec->name);
-        }
-    }
-
-    outUnSupported.clear();
-    codec = NULL;
-    while ((codec = av_codec_next(codec)))
-    {
-        if (avcodec_find_encoder_by_name(codec->name) == 0)
-        {
-            outUnSupported.push_back(codec->name);
-        }
-    }
-}*/
-
 bool
 compressedAVIFindMinMax(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & outMinVal, float & outMaxVal, float progressBarStart, float progressBarEnd)
 {
@@ -310,13 +297,13 @@ bool
 compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, float progressBarStart, float progressBarEnd)
 {
     std::fstream fs;
-    AVFrame *frame;
-    AVPacket *pkt;
+    //AVFrame *frame;
+    //AVPacket *pkt;
     const std::array<uint8_t, 4> endcode = {{0, 0, 1, 0xb7}};
     bool useSimpleEncoder = true;
 
     // Initialize codec. 
-    AVCodecContext *avcc;
+    //AVCodecContext *avcc;
 
     int tInd = 0;
 
@@ -354,7 +341,10 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
     isx::isize_t frameRate = 25; // placeholder: use std::lround(stepFirst.getInverse().toDouble()); // preserve framerate
 
     isx::isize_t bitRate = 400000; // TODO: possibly connect to front end for user control
-    isx::isize_t frame_index = 0; // frame index of current movie
+
+	const char *filename = "dan99.mp4"; // FIX THIS!!!
+	VideoOutput vOut;
+	AVFormatContext *avFmtCnxt;
 
     for (auto m : inMovies)
     {
@@ -367,17 +357,18 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
                 
                 if (tInd == 0)
                 {
-                    if (compressedAVI_preLoop(inFileName, fs, frame, pkt, avcc, &img, frameRate, bitRate))
+                    //if (compressedAVI_preLoop(inFileName, fs, frame, pkt, avcc, &img, frameRate, bitRate))
+					if (preLoop(filename, avFmtCnxt, vOut, &img))
                     {
                         return true;
                     }
                 }
-                if (compressedAVI_withinLoop(tInd, fs, pkt, frame, avcc, useSimpleEncoder, &img, inMinVal, inMaxVal))
+                //if (compressedAVI_withinLoop(tInd, fs, pkt, frame, avcc, useSimpleEncoder, &img, inMinVal, inMaxVal))
+				if (withinLoop(avFmtCnxt, &vOut, &img, inMinVal, inMaxVal))
                 {
                     return true;
                 }                
                 tInd++;
-                frame_index++;
             }
 
             cancelled = inCheckInCB(progressBarStart + (progressBarEnd - progressBarStart)*float(++writtenFrames) / float(numFrames));
@@ -391,7 +382,9 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
             break;
         }
     }
-    if (compressedAVI_postLoop(useSimpleEncoder, fs, frame, pkt, avcc, endcode))
+
+    //if (compressedAVI_postLoop(useSimpleEncoder, fs, frame, pkt, avcc, endcode))
+	if (postLoop(avFmtCnxt, vOut))
     {
         return true;
     }
