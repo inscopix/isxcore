@@ -8,9 +8,13 @@
 #include <fstream>
 #include <algorithm>
 
-extern "C" {
-#include "libavformat/avformat.h"
+extern "C"
+{
+    #include "libavformat/avformat.h"
 }
+
+namespace
+{
 
 typedef struct VideoOutput
 {
@@ -21,232 +25,288 @@ typedef struct VideoOutput
 	AVFrame *avf0;
 } VideoOutput;
 
-int outputMp4Movie();
-bool preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut, const isx::Image *inImg);
-bool withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, const float inMinVal, const float inMaxVal);
-bool postLoop(AVFormatContext *avFmtCnxt, VideoOutput & vOut);
-
-namespace
+AVFrame *
+allocateAVFrame(enum AVPixelFormat pixelFormat, int width, int height)
 {
+	AVFrame *avf;
+	int ret;
+	avf = av_frame_alloc();
+	if (!avf)
+		return NULL;
+	avf->format = pixelFormat;
+	avf->width = width;
+	avf->height = height;
 
-int compressedAVI_encode1(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, std::fstream & outfile)
-{
-    /* send the frame to the encoder */
-
-    int ret = avcodec_send_frame(enc_ctx, frame);
-    if (ret < 0) // Error sending a frame for encoding
-    {
-        return 1;
-    }
-
-    while (true)
-    {
-        ret = avcodec_receive_packet(enc_ctx, pkt);
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-            return 0;
-        }
-        if (ret < 0) // Error during encoding
-        {
-            break;
-        }
-
-        outfile.write((char *)(pkt->data), 1 * pkt->size);
-        av_packet_unref(pkt);
-    }
-    return 2;
+	ret = av_frame_get_buffer(avf, 32);
+	if (ret < 0)
+	{
+		// log: "Could not allocate frame data."
+		exit(1);
+	}
+	return avf;
 }
 
-int compressedAVI_encode2(AVCodecContext *avctx, AVPacket *pkt, int *got_packet, AVFrame *frame)
+void
+populatePixels(AVFrame *avf, int tIndex, int width, int height, isx::Image *inImg, const float inMinVal, const float inMaxVal)
 {
-    *got_packet = 0;
+	const bool rescaleDynamicRange = !(inMinVal == -1 && inMaxVal == -1);
 
-    if (avcodec_send_frame(avctx, frame) < 0)
-    {
-        return 1;
-    }
-
-    int ret = avcodec_receive_packet(avctx, pkt);
-    switch (ret)
-    {
-    case 0:
-        *got_packet = 1;
-        return 0;
-    case AVERROR(EAGAIN):
-        return 0;
-    default:
-        return 2;
-    }
+	// Y
+	for (int y = 0; y < height; y++)
+	{
+		for (int x = 0; x < width; x++)
+		{
+			//avf->data[0][y * avf->linesize[0] + x] = 128 + 64 * (2 * (((x + tIndex) / 10) % 2) - 1)*(2 * (((y - tIndex) / 10) % 2) - 1);
+			if (rescaleDynamicRange)
+			{
+				std::vector<float> val = inImg->getPixelValuesAsF32(isx::isize_t(y), isx::isize_t(x));
+				avf->data[0][y * avf->linesize[0] + x] = uint8_t(255 * ((val[0] - inMinVal) / (inMaxVal - inMinVal)));
+			}
+			else
+			{
+				std::vector<float> val = inImg->getPixelValuesAsF32(isx::isize_t(y), isx::isize_t(x));
+				avf->data[0][y * avf->linesize[0] + x] = uint8_t(255 * val[0]);
+			}
+		}
+	}
+	// Cb and Cr
+	for (int y = 0; y < height / 2; y++)
+	{
+		for (int x = 0; x < width / 2; x++)
+		{
+			avf->data[1][y * avf->linesize[1] + x] = 128;
+			avf->data[2][y * avf->linesize[2] + x] = 128;
+		}
+	}
 }
 
-int compressedAVI_preLoop(const std::string & inFileName, std::fstream & outFs, AVFrame * & outFrame, AVPacket * & outPkt, AVCodecContext * & outAvcc, const isx::Image *inImg, const isx::isize_t inFrameRate, const isx::isize_t inBitRate)
+int
+withinLoopUtility(AVFormatContext *avFmtCnxt, VideoOutput *vOut, bool validFrame = false, isx::Image *inImg = NULL, const float inMinVal = 1, const float inMaxVal = -1)
 {
-    if (outputMp4Movie()) exit(99);
-    AVCodecID codec_id = AV_CODEC_ID_MPEG1VIDEO;
-    AVCodec *outCodec = avcodec_find_encoder(codec_id);
-    if (!outCodec)
-    {
-        return 1;
-    }
+	int ret;
+	AVFrame *avf;
+	int got_packet = 0;
+	AVPacket pkt = { 0 };
+	AVCodecContext *avcc = vOut->avcc;
 
-    // Initialize codec. 
-    outAvcc = avcodec_alloc_context3(outCodec);
+	////
 
-    outAvcc->codec_id = codec_id;
-    // put sample parameters
-    outAvcc->bit_rate = inBitRate;
-    // resolution must be a multiple of two
-    if (inImg == NULL)
-    {
-        return 2;
-    }
-    else
-    {
-        outAvcc->width = int(inImg->getWidth());
-        outAvcc->height = int(inImg->getHeight());
-    }
-    // frames per second
+	avf = NULL;
 
-    outAvcc->time_base = av_make_q(1, int(inFrameRate));
+	if (validFrame)
+	{
+		if (av_frame_make_writable(vOut->avf) < 0)
+		{
+			exit(1);
+		}
+		if (vOut->avcc->pix_fmt != AV_PIX_FMT_YUV420P)
+		{
+			exit(1);
+		}
+		populatePixels(vOut->avf, int(vOut->pts), vOut->avcc->width, vOut->avcc->height, inImg, inMinVal, inMaxVal);
+		vOut->avf->pts = vOut->pts++;
+		avf = vOut->avf;
+	}
 
-    outAvcc->framerate = av_make_q(int(inFrameRate), 1);
+	////
 
-    // emit one intra frame every ten frames
-    // check frame pict_type before passing frame
-    // to encoder, if frame->pict_type is AV_PICTURE_TYPE_I
-    // then gop_size is ignored and the output of encoder
-    // will always be I frame irrespective to gop_size
-    //
-    outAvcc->gop_size = 10;
-    outAvcc->max_b_frames = 1;
-    outAvcc->pix_fmt = AV_PIX_FMT_YUV420P;
-
-    int ret = avcodec_open2(outAvcc, outCodec, NULL);
-    // Open the codec. 
-    if (ret < 0)
-    {
-        return 3;
-    }
-
-    outPkt = av_packet_alloc();
-    if (!outPkt)
-    {
-        return 4;
-    }
-
-    outFs.open(inFileName.c_str(), std::ios::out | std::ios::binary);
-    if (!outFs)
-    {
-        return 5;
-    }
-
-    outFrame = av_frame_alloc();
-    if (!outFrame)
-    {
-        return 6;
-    }
-    outFrame->format = outAvcc->pix_fmt;
-    outFrame->width = outAvcc->width;
-    outFrame->height = outAvcc->height;
-
-    if (av_frame_get_buffer(outFrame, 32) < 0)
-    {
-        return 7;
-    }
-    return 0;
+	av_init_packet(&pkt);
+	ret = avcodec_encode_video2(avcc, &pkt, avf, &got_packet);
+	if (ret < 0)
+	{
+		// log: "Error encoding video frame: " << ret
+		exit(1);
+	}
+	if (got_packet)
+	{
+		av_packet_rescale_ts(&pkt, avcc->time_base, vOut->avs->time_base);
+		pkt.stream_index = vOut->avs->index;
+		ret = av_interleaved_write_frame(avFmtCnxt, &pkt);
+	}
+	else
+	{
+		ret = 0;
+	}
+	if (ret < 0)
+	{
+		// log: "Error while writing video frame: " << ret;
+		exit(1);
+	}
+	return (avf || got_packet) ? 0 : 1;
 }
 
-int compressedAVI_withinLoop(const int inTInd, std::fstream & inFs, AVPacket *inPkt, AVFrame *inFrame, AVCodecContext *inAvcc, const bool inUseSimpleEncoder, isx::Image *inImg, const float inMinVal, const float inMaxVal)
+bool
+preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut, const isx::Image *inImg, isx::isize_t frameRate, isx::isize_t bitRate)
 {
-    const bool rescaleDynamicRange = !(inMinVal == -1 && inMaxVal == -1);
+	vOut = { 0 };
+	int ret;
+	AVDictionary *opt = NULL;
+	avformat_alloc_output_context2(&avFmtCnxt, NULL, NULL, filename);
+	if (!avFmtCnxt)
+	{
+		// log (non-err): "Could not deduce output format from file extension: using MPEG."
+		avformat_alloc_output_context2(&avFmtCnxt, NULL, "mpeg", filename);
+	}
+	if (!avFmtCnxt)
+	{
+		return true;
+	}
+	AVOutputFormat *avOutFmt = avFmtCnxt->oformat;
+	if (avOutFmt->video_codec == AV_CODEC_ID_NONE)
+	{
+		return true;
+	}
 
-    fflush(stdout);
-    /* make sure the frame data is writable */
+	////
 
-    if (av_frame_make_writable(inFrame) < 0)
-    {
-        return 1;
-    }
+	AVCodec *codec = avcodec_find_encoder(avOutFmt->video_codec);
+	if (!(codec))
+	{
+		// log: "Could not find encoder for " << avcodec_get_name(avOutFmt->video_codec)
+		exit(1);
+	}
+	vOut.avs = avformat_new_stream(avFmtCnxt, NULL);
+	if (!vOut.avs)
+	{
+		// log: "Could not allocate stream"
+		exit(1);
+	}
+	vOut.avs->id = avFmtCnxt->nb_streams - 1;
+	AVCodecContext *avcc = avcodec_alloc_context3(codec);
+	if (avcc == NULL)
+	{
+		// log: "Could not alloc an encoding context"
+		exit(1);
+	}
 
-    /* Y */
-    for (int y = 0; y < inAvcc->height; y++) {
-        for (int x = 0; x < inAvcc->width; x++) {
-            if (rescaleDynamicRange)
-            {
-                std::vector<float> val = inImg->getPixelValuesAsF32(isx::isize_t(y), isx::isize_t(x));
-                inFrame->data[0][y * inFrame->linesize[0] + x] = uint8_t(255 * ((val[0] - inMinVal) / (inMaxVal - inMinVal)));
-            }
-            else
-            {
-                std::vector<float> val = inImg->getPixelValuesAsF32(isx::isize_t(y), isx::isize_t(x));
-                inFrame->data[0][y * inFrame->linesize[0] + x] = uint8_t(255 * val[0]);
-            }
-        }
-    }
+	if (codec->type != AVMEDIA_TYPE_VIDEO)
+	{
+		exit(1);
+	}
 
-    /* Cb and Cr */
-    for (int y = 0; y < inAvcc->height / 2; y++) {
-        for (int x = 0; x < inAvcc->width / 2; x++) {
-            inFrame->data[1][y * inFrame->linesize[1] + x] = 128; // no color
-            inFrame->data[2][y * inFrame->linesize[2] + x] = 128; // no color
-        }
-    }
-    inFrame->pts = inTInd;
+	avcc->codec_id = avOutFmt->video_codec;
+	avcc->bit_rate = bitRate;
+	avcc->time_base.num = 1;
+	avcc->time_base.den = int(frameRate);
 
-    /* encode the image */
-    if (inUseSimpleEncoder)
-    {
-        int got_packet;
-        if (::compressedAVI_encode2(inAvcc, inPkt, &got_packet, inFrame))
-        {
-            return 2;
-        }
-        if (got_packet)
-        {
-            inFs.write((char *)(inPkt->data), 1 * inPkt->size);
-        }
-    }
-    else
-    {
-        if (::compressedAVI_encode1(inAvcc, inFrame, inPkt, inFs))
-        {
-            return 3;
-        }
-    }
+	if (inImg)
+	{
+		avcc->width = int(inImg->getWidth());
+		avcc->height = int(inImg->getHeight());
+		avcc->width -= (avcc->width % 2);
+		avcc->height -= (avcc->height % 2);
+	}
+	else
+	{
+		// PLACEHOLDER: FIX THIS!!!
+	}
 
-    return 0;
+	avcc->gop_size = 12; // max intra frame period: FIX THIS!!!
+	avcc->pix_fmt = AV_PIX_FMT_YUV420P;
+	if (avcc->codec_id == AV_CODEC_ID_MPEG2VIDEO)
+	{
+		avcc->max_b_frames = 2;
+	}
+	if (avcc->codec_id == AV_CODEC_ID_MPEG1VIDEO)
+	{
+		avcc->mb_decision = 2;
+	}
+
+	if (avFmtCnxt->oformat->flags & AVFMT_GLOBALHEADER)
+	{
+		avcc->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+	}
+
+	vOut.avcc = avcc;
+	vOut.avs->time_base = vOut.avcc->time_base;
+
+	////
+
+	AVDictionary *opt2 = NULL;
+	av_dict_copy(&opt2, opt, 0);
+	ret = avcodec_open2(vOut.avcc, codec, &opt2);
+	av_dict_free(&opt2);
+	if (ret < 0)
+	{
+		// log: "Could not open video codec: " << ret;
+		exit(1);
+	}
+
+	vOut.avf = allocateAVFrame(vOut.avcc->pix_fmt, vOut.avcc->width, vOut.avcc->height);
+	if (vOut.avf == NULL)
+	{
+		// log: "Could not allocate video frame"
+		exit(1);
+	}
+
+	vOut.avf0 = NULL;
+	if (vOut.avcc->pix_fmt != AV_PIX_FMT_YUV420P)
+	{
+		vOut.avf0 = allocateAVFrame(AV_PIX_FMT_YUV420P, vOut.avcc->width, vOut.avcc->height);
+		if (vOut.avf0 == NULL)
+		{
+			// log: "Could not allocate temporary picture"
+			exit(1);
+		}
+	}
+
+	ret = avcodec_parameters_from_context(vOut.avs->codecpar, vOut.avcc);
+	if (ret < 0)
+	{
+		// log: "Could not copy the stream parameters"
+		exit(1);
+	}
+
+	////
+
+	av_dump_format(avFmtCnxt, 0, filename, 1);
+	if (!(avOutFmt->flags & AVFMT_NOFILE))
+	{
+		ret = avio_open(&avFmtCnxt->pb, filename, AVIO_FLAG_WRITE);
+		if (ret < 0)
+		{
+			// log: "Could not open: " << filename << ret
+			return true;
+		}
+	}
+	ret = avformat_write_header(avFmtCnxt, &opt);
+	if (ret < 0)
+	{
+		// log: "Error occurred when opening output file: " << ret
+		return true;
+	}
+	return false;
 }
 
-int compressedAVI_postLoop(const bool inUseSimpleEncoder, std::fstream & inFs, AVFrame * & inFrame, AVPacket * & inPkt, AVCodecContext * & inAvcc, const std::array<uint8_t, 4> & inEndcode)
+bool
+withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, const float inMinVal, const float inMaxVal)
 {
-    /* flush the encoder */
-    if (inUseSimpleEncoder)
-    {
-        int got_packet;
-        if (::compressedAVI_encode2(inAvcc, inPkt, &got_packet, NULL))
-        {
-            return 1;
-        }
-        if (got_packet)
-        {
-            inFs.write((char *)(inPkt->data), 1 * inPkt->size);
-        }
-    }
-    else
-    {
-        if (::compressedAVI_encode1(inAvcc, NULL, inPkt, inFs))
-        {
-            return 2;
-        }
-    }
+	withinLoopUtility(avFmtCnxt, vOut, true, inImg, inMinVal, inMaxVal);
+	return false;
+}
 
-    /* add sequence end code to have a real MPEG file */
-    inFs.write((char *)(inEndcode.data()), 1 * sizeof(inEndcode.front()) * inEndcode.size());
-    inFs.close();
+bool
+postLoop(AVFormatContext *avFmtCnxt, VideoOutput & vOut)
+{
+	int done = 0;
+	while (!done)
+	{
+		done = withinLoopUtility(avFmtCnxt, &vOut);
+	}
 
-    avcodec_free_context(&inAvcc);
-    av_frame_free(&inFrame);
-    av_packet_free(&inPkt);
-    return 0;
+	AVOutputFormat *avOutFmt = avFmtCnxt->oformat;
+
+	av_write_trailer(avFmtCnxt);
+	avcodec_free_context(&(vOut.avcc));
+	av_frame_free(&(vOut.avf));
+	av_frame_free(&(vOut.avf0));
+
+	if (!(avOutFmt->flags & AVFMT_NOFILE))
+	{
+		avio_closep(&(avFmtCnxt->pb));
+	}
+	avformat_free_context(avFmtCnxt);
+	return false;
 }
 
 bool
@@ -296,23 +356,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<isx::S
 bool
 compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, float progressBarStart, float progressBarEnd)
 {
-    std::fstream fs;
-    //AVFrame *frame;
-    //AVPacket *pkt;
-    const std::array<uint8_t, 4> endcode = {{0, 0, 1, 0xb7}};
-    bool useSimpleEncoder = true;
-
-    // Initialize codec. 
-    //AVCodecContext *avcc;
-
     int tInd = 0;
-
-    ////////
-
-    const std::string dirname = isx::getDirName(inFileName);
-    const std::string basename = isx::getBaseName(inFileName);
-    const std::string extension = isx::getExtension(inFileName);
-
     bool cancelled = false;
     isx::isize_t writtenFrames = 0;
     isx::isize_t numFrames = 0;
@@ -335,14 +379,9 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
     }
     ISX_ASSERT(stepFirst != isx::DurationInSeconds());
 
-    // For mpeg1: some framerates work, others don't. Use placeholder for now
-    // Examples of allowed framerates : 24, 25, 30, 50
-    // Examples of forbidden framerates : 10, 12, 15, 17, 20, 26, 35, 40, 100
-    isx::isize_t frameRate = 25; // placeholder: use std::lround(stepFirst.getInverse().toDouble()); // preserve framerate
-
+    isx::isize_t frameRate = 25; // placeholder: use std::lround(stepFirst.getInverse().toDouble()); // FIX THIS!!!
     isx::isize_t bitRate = 400000; // TODO: possibly connect to front end for user control
 
-	const char *filename = "dan99.mp4"; // FIX THIS!!!
 	VideoOutput vOut;
 	AVFormatContext *avFmtCnxt;
 
@@ -357,13 +396,11 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
                 
                 if (tInd == 0)
                 {
-                    //if (compressedAVI_preLoop(inFileName, fs, frame, pkt, avcc, &img, frameRate, bitRate))
-					if (preLoop(filename, avFmtCnxt, vOut, &img))
+					if (preLoop(inFileName.c_str(), avFmtCnxt, vOut, &img, frameRate, bitRate))
                     {
                         return true;
                     }
                 }
-                //if (compressedAVI_withinLoop(tInd, fs, pkt, frame, avcc, useSimpleEncoder, &img, inMinVal, inMaxVal))
 				if (withinLoop(avFmtCnxt, &vOut, &img, inMinVal, inMaxVal))
                 {
                     return true;
@@ -376,14 +413,13 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
             {
                 break;
             }
-        }            
+        }
         if (cancelled)
         {
             break;
         }
     }
 
-    //if (compressedAVI_postLoop(useSimpleEncoder, fs, frame, pkt, avcc, endcode))
 	if (postLoop(avFmtCnxt, vOut))
     {
         return true;

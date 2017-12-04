@@ -15,7 +15,7 @@ typedef struct VideoOutput
 	AVFrame *avf0;
 } VideoOutput;
 
-namespace
+/*namespace
 {
 
 AVFrame *allocateAVFrame(enum AVPixelFormat pixelFormat, int width, int height)
@@ -125,9 +125,9 @@ int withinLoopUtility(AVFormatContext *avFmtCnxt, VideoOutput *vOut, bool validF
 	return (avf || got_packet) ? 0 : 1;
 }
 
-}
+}*/
 
-bool preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut, const isx::Image *inImg)
+/*bool preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut, const isx::Image *inImg)
 {
 	vOut = {0};
 	int ret;
@@ -297,9 +297,9 @@ bool postLoop(AVFormatContext *avFmtCnxt, VideoOutput & vOut)
 	}
 	avformat_free_context(avFmtCnxt);
 	return false;
-}
+}*/
 
-int outputMp4Movie()
+/*int outputMp4Movie()
 {
 	const char *filename = "dan99.mp4";
 	VideoOutput vOut;
@@ -329,4 +329,5 @@ int outputMp4Movie()
 	}
 
 	return 0;
-}
+}*/
+void foo() {}
