@@ -7,6 +7,7 @@
 #include <array>
 #include <fstream>
 #include <algorithm>
+#include <cmath>
 
 extern "C"
 {
@@ -110,6 +111,25 @@ withinLoopUtility(AVFormatContext *avFmtCnxt, VideoOutput *vOut, bool validFrame
 
     ////
 
+#if 1
+    if (avcodec_send_frame(avcc, avf) < 0)
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Failed to send frame for encoding.");
+    }
+
+    av_init_packet(&pkt);
+    if (avcodec_receive_packet(avcc, &pkt) < 0)
+    {
+        // This fails in postLoop and I don't know why.
+        //ISX_THROW(isx::ExceptionFileIO, "Failed to receive encoded packet.");
+        ISX_LOG_ERROR("Failed to receive encoded packet.");
+        return 1;
+    }
+    got_packet = 1;
+    av_packet_rescale_ts(&pkt, avcc->time_base, vOut->avs->time_base);
+    pkt.stream_index = vOut->avs->index;
+    ret = av_interleaved_write_frame(avFmtCnxt, &pkt);
+#else
     av_init_packet(&pkt);
     ret = avcodec_encode_video2(avcc, &pkt, avf, &got_packet);
     if (ret < 0)
@@ -127,6 +147,8 @@ withinLoopUtility(AVFormatContext *avFmtCnxt, VideoOutput *vOut, bool validFrame
     {
         ret = 0;
     }
+#endif
+
     if (ret < 0)
     {
         ISX_LOG_ERROR("Output write error: ", ret);
