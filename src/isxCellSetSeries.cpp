@@ -314,4 +314,69 @@ namespace isx
         }
         return m_cellSets.size() > 0;
     }
+
+
+    isize_t
+    CellSetSeries::getSizeGlobalCS()
+    {
+        ISX_ASSERT(false);
+        // placeholder
+        isize_t retVal = 0;
+        return retVal;
+    }
+
+    void
+    CellSetSeries::setSizeGlobalCS(const isize_t inSizeGlobalCS)
+    {
+        ISX_ASSERT(false);
+        // placeholder
+    }
+
+    std::vector<int16_t>
+    CellSetSeries::getMatches()
+    {
+        ISX_ASSERT(false);
+        // placeholder
+        std::vector<int16_t> retVal;
+        return retVal;
+    }
+
+    void
+    CellSetSeries::setMatches(const std::vector<int16_t> & inMatches)
+    {
+        ISX_ASSERT(false);
+        // placeholder
+    }
+
+    std::vector<double>
+    CellSetSeries::getPairScores()
+    {
+        ISX_ASSERT(false);
+        // placeholder
+        std::vector<double> retVal;
+        return retVal;
+    }
+
+    void
+    CellSetSeries::setPairScores(const std::vector<double> & inPairScores)
+    {
+        ISX_ASSERT(false);
+        // placeholder
+    }
+
+    std::vector<double>
+    CellSetSeries::getCentroidDistances()
+    {
+        ISX_ASSERT(false);
+        // placeholder
+        std::vector<double> retVal;
+        return retVal;
+    }
+
+    void
+    CellSetSeries::setCentroidDistances(const std::vector<double> & inCentroidDistances)
+    {
+        ISX_ASSERT(false);
+        // placeholder
+    }
 }

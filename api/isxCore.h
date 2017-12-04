@@ -65,6 +65,10 @@ namespace isx
     ///
     std::vector<int> CoreVersionVector();
 
+    /// \return     The host name of the machine this is running on.
+    ///
+    std::string getHostName();
+
 } // namespace isx
 
 #endif // def ISX_CORE_H

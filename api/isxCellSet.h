@@ -233,6 +233,54 @@ virtual
 bool
 isRoiSet() const = 0;
 
+/// get size of global cell set
+/// \return  size of global cell set
+virtual
+isize_t
+getSizeGlobalCS() = 0;
+
+/// set size of global cell set
+/// \param inSizeGlobalCS size of global cell set
+virtual
+void
+setSizeGlobalCS(const isize_t inSizeGlobalCS) = 0;
+
+/// get the cell set matches
+/// \return  cell set matches
+virtual
+std::vector<int16_t>
+getMatches() = 0;
+
+/// set the cell set matches
+/// \param inMatches cell set matches
+virtual
+void
+setMatches(const std::vector<int16_t> & inMatches) = 0;
+
+/// get cell set pair scores
+/// \return  cell set pair scores
+virtual
+std::vector<double>
+getPairScores() = 0;
+
+/// set cell set pair scores
+/// \param inPairScores cell set pair scores
+virtual
+void
+setPairScores(const std::vector<double> & inPairScores) = 0;
+
+/// get the cell set centroid distances
+/// \return  cell set centroid distances
+virtual
+std::vector<double>
+getCentroidDistances() = 0;
+
+/// set the cell set centroid distances
+/// \param inCentroidDistances cell set centroid distances
+virtual
+void
+setCentroidDistances(const std::vector<double> & inCentroidDistances) = 0;
+
 };
 
 }

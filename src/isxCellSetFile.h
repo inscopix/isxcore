@@ -159,6 +159,38 @@ public:
     ///
     bool isRoiSet() const;
 
+    /// get size of global cell set
+    /// \return  size of global cell set
+    isize_t getSizeGlobalCS();
+
+    /// set size of global cell set
+    /// \param inSizeGlobalCS size of global cell set
+    void setSizeGlobalCS(const isize_t inSizeGlobalCS);
+
+    /// get the cell set matches
+    /// \return  cell set matches
+    std::vector<int16_t> getMatches();
+
+    /// set the cell set matches
+    /// \param inCsMatches cell set matches
+    void setMatches(const std::vector<int16_t> & inCsMatches);
+
+    /// get cell set pair scores
+    /// \return  cell set pair scores
+    std::vector<double> getPairScores();
+
+    /// set cell set pair scores
+    /// \param inPairScores cell set pair scores
+    void setPairScores(const std::vector<double> & inPairScores);
+
+    /// get the cell set centroid distances
+    /// \return  cell set centroid distances
+    std::vector<double> getCentroidDistances();
+
+    /// set the cell set centroid distances
+    /// \param inCentroidDistances cell set centroid distances
+    void setCentroidDistances(const std::vector<double> & inCentroidDistances);
+
 private:
 
     /// True if the cell set file is valid, false otherwise.
@@ -199,10 +231,22 @@ private:
     
     bool m_fileClosedForWriting = false;
 
-    const static size_t s_version = 2;
+    const static size_t s_version = 3;
 
     /// True if this came from drawing ROIs, false otherwise.
     bool m_isRoiSet = false;
+
+    /// Size of global cell set
+    isize_t m_sizeGlobalCS = 0;
+
+    /// Matches of this cell set to global cs
+    std::vector<int16_t> m_matches;
+
+    /// Scores of the matches (see above)
+    std::vector<double> m_pairScores;
+
+    /// Centroid distances of the matches (see above)
+    std::vector<double> m_centroidDistances;
 
     /// Read the header to populate information about the cell set.
     ///

@@ -15,8 +15,6 @@
 #include <limits>
 #include <cmath>
 
-#include <tiffio.h>
-
 // TODO: Ask Sylvana why specific macros was used for MacOS
 
 //#if ISX_OS_MACOS
@@ -104,9 +102,10 @@ TiffExporter::toTiffOut(const Image * inImage)
     }
 }
 
-TiffExporter::TiffExporter(const std::string & inFileName)
+TiffExporter::TiffExporter(const std::string & inFileName, const bool inBigTiff)
 {
-    out = TIFFOpen(inFileName.c_str(), "w");
+    const char * mode = inBigTiff ? "w8" : "w";
+    out = TIFFOpen(inFileName.c_str(), mode);
 
     if (!out)
     {
@@ -127,71 +126,5 @@ TiffExporter::nextTiffDir()
     TIFFFlush(out);
 }
 
-bool 
-toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const isize_t& inMaxFrameIndex, AsyncCheckInCB_t & inCheckInCB)
-{
-    const std::string dirname = getDirName(inFileName);
-    const std::string basename = getBaseName(inFileName);
-    const std::string extension = getExtension(inFileName);
-
-    auto cancelled = false;
-    isize_t writtenFrames = 0;
-    isize_t numFrames = 0;
-    for (auto m : inMovies)
-    {
-        numFrames += m->getTimingInfo().getNumTimes();
-    }
-
-    size_t width = (numFrames > 10) ? (size_t(std::floor(std::log10(numFrames - 1)) + 1)) : (1);
-
-    isize_t frame_index = 0; // frame index of current movie
-    isize_t mv_counter = 0; // movie counter for each 2^16-1 frames
-
-    TiffExporter* out = new TiffExporter(inFileName); // for one movie - save to selected filess
-    for (auto m : inMovies)
-    {
-        for (isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
-        {
-            if (m->getTimingInfo().isIndexValid(i))
-            {
-                if (frame_index == inMaxFrameIndex) // if number of frames larger inMaxFrameIndex - increase file name and dump to new one
-                {
-                    mv_counter++;
-                    frame_index = 0;
-
-                    std::string fn = dirname + "/" + basename + "_" + convertNumberToPaddedString(mv_counter, width) + "." + extension;
-
-                    delete out;
-                    out = new TiffExporter(fn);
-                }
-
-                auto f = m->getFrame(i);
-                auto& img = f->getImage();
-                out->toTiffOut(&img);
-                out->nextTiffDir();
-                frame_index++;
-            }
-
-            cancelled = inCheckInCB(float(++writtenFrames) / float(numFrames));
-            if (cancelled)
-            {
-                break;
-            }
-        }            
-        if (cancelled)
-        {
-            break;
-        }
-    }
-    delete out;
-    return cancelled;
-}
-
-void 
-toTiff(const std::string & inFileName, const SpImage_t & inImage)
-{
-    TiffExporter out(inFileName);
-    out.toTiffOut(inImage.get());
-}
 
 } // namespace isx

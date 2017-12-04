@@ -95,7 +95,7 @@ isNVistaImagingFileExtension(const std::string & inFileName)
 {
     auto e = isx::getExtension(inFileName);
     std::transform(e.begin(), e.end(), e.begin(), ::tolower);
-    return (e == "hdf5") || (e == "xml") || (e == "tif");
+    return (e == "hdf5") || (e == "xml") || (e == "tif") || (e == "tiff");
 }
 
 } // namespace isx

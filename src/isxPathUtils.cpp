@@ -5,7 +5,6 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QStringList>
-#include <QStandardPaths>
 #include <QStorageInfo>
 
 namespace isx
@@ -57,20 +56,7 @@ getPathTokens(const std::string & inPath)
     return outPathTokens;
 }
 
-std::string
-getDefaultProjectPath()
-{
-    QString dirName = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    dirName += "/Inscopix_Projects";
-    QDir dir(dirName);
-    if (!dir.exists())
-    {
-        dir.mkpath(dirName);
-    }
-    return dirName.toStdString();
-}
-
-bool 
+bool
 isRelative(const std::string &inPath)
 {
     std::string dirName = isx::getDirName(inPath);
@@ -134,7 +120,7 @@ bool
 makeDirectory(const std::string & inPath)
 {
     QDir dir(QString::fromStdString(getDirName(inPath)));
-    return dir.mkdir(QString::fromStdString(getBaseName(inPath)));
+    return dir.mkdir(QString::fromStdString(getFileName(inPath)));
 }
 
 bool

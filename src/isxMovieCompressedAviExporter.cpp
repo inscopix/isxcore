@@ -40,7 +40,7 @@ allocateAVFrame(enum AVPixelFormat pixelFormat, int width, int height)
     ret = av_frame_get_buffer(avf, 32);
     if (ret < 0)
     {
-        // log: "Could not allocate frame data."
+        ISX_LOG_ERROR("Cannot allocate frame.");
         exit(1);
     }
     return avf;
@@ -114,7 +114,7 @@ withinLoopUtility(AVFormatContext *avFmtCnxt, VideoOutput *vOut, bool validFrame
     ret = avcodec_encode_video2(avcc, &pkt, avf, &got_packet);
     if (ret < 0)
     {
-        // log: "Error encoding video frame: " << ret
+        ISX_LOG_ERROR("Video-frame encoding problem: ", ret);
         exit(1);
     }
     if (got_packet)
@@ -129,7 +129,7 @@ withinLoopUtility(AVFormatContext *avFmtCnxt, VideoOutput *vOut, bool validFrame
     }
     if (ret < 0)
     {
-        // log: "Error while writing video frame: " << ret;
+        ISX_LOG_ERROR("Output write error: ", ret);
         exit(1);
     }
     return (avf || got_packet) ? 0 : 1;
@@ -144,7 +144,7 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
     avformat_alloc_output_context2(&avFmtCnxt, NULL, NULL, filename);
     if (!avFmtCnxt)
     {
-        // log (non-err): "Could not deduce output format from file extension: using MPEG."
+        ISX_LOG_INFO("Cannot infer codec from file extension, using default.");
         avformat_alloc_output_context2(&avFmtCnxt, NULL, "mpeg", filename);
     }
     if (!avFmtCnxt)
@@ -162,20 +162,20 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
     AVCodec *codec = avcodec_find_encoder(avOutFmt->video_codec);
     if (!(codec))
     {
-        // log: "Could not find encoder for " << avcodec_get_name(avOutFmt->video_codec)
+        ISX_LOG_ERROR("No encoder available for ", avcodec_get_name(avOutFmt->video_codec));
         exit(1);
     }
     vOut.avs = avformat_new_stream(avFmtCnxt, NULL);
     if (!vOut.avs)
     {
-        // log: "Could not allocate stream"
+        ISX_LOG_ERROR("Cannot allocate video output");
         exit(1);
     }
     vOut.avs->id = avFmtCnxt->nb_streams - 1;
     AVCodecContext *avcc = avcodec_alloc_context3(codec);
     if (avcc == NULL)
     {
-        // log: "Could not alloc an encoding context"
+        ISX_LOG_ERROR("Cannot allocate context.");
         exit(1);
     }
 
@@ -198,10 +198,11 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
     }
     else
     {
-        // PLACEHOLDER: FIX THIS!!!
+        ISX_LOG_ERROR("No image provided.");
+        return true;
     }
 
-    avcc->gop_size = 12; // max intra frame period: FIX THIS!!!
+    avcc->gop_size = 10;
     avcc->pix_fmt = AV_PIX_FMT_YUV420P;
     if (avcc->codec_id == AV_CODEC_ID_MPEG2VIDEO)
     {
@@ -228,14 +229,14 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
     av_dict_free(&opt2);
     if (ret < 0)
     {
-        // log: "Could not open video codec: " << ret;
+        ISX_LOG_ERROR("Codec cannot be opened: ", ret);
         exit(1);
     }
 
     vOut.avf = allocateAVFrame(vOut.avcc->pix_fmt, vOut.avcc->width, vOut.avcc->height);
     if (vOut.avf == NULL)
     {
-        // log: "Could not allocate video frame"
+        ISX_LOG_ERROR("Frame cannot be allocated.");
         exit(1);
     }
 
@@ -245,7 +246,7 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
         vOut.avf0 = allocateAVFrame(AV_PIX_FMT_YUV420P, vOut.avcc->width, vOut.avcc->height);
         if (vOut.avf0 == NULL)
         {
-            // log: "Could not allocate temporary picture"
+            ISX_LOG_ERROR("Cannot allocate buffer.");
             exit(1);
         }
     }
@@ -253,7 +254,7 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
     ret = avcodec_parameters_from_context(vOut.avs->codecpar, vOut.avcc);
     if (ret < 0)
     {
-        // log: "Could not copy the stream parameters"
+        ISX_LOG_ERROR("Parameters cannot be copied.");
         exit(1);
     }
 
@@ -265,14 +266,14 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
         ret = avio_open(&avFmtCnxt->pb, filename, AVIO_FLAG_WRITE);
         if (ret < 0)
         {
-            // log: "Could not open: " << filename << ret
+            ISX_LOG_ERROR("Cannot open file ", filename, ": ", ret);
             return true;
         }
     }
     ret = avformat_write_header(avFmtCnxt, &opt);
     if (ret < 0)
     {
-        // log: "Error occurred when opening output file: " << ret
+        ISX_LOG_ERROR("Output error: ", ret);
         return true;
     }
     return false;
@@ -379,7 +380,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
     }
     ISX_ASSERT(stepFirst != isx::DurationInSeconds());
 
-    isx::isize_t frameRate = 25; // placeholder: use std::lround(stepFirst.getInverse().toDouble()); // FIX THIS!!!
+    isx::isize_t frameRate = std::lround(stepFirst.getInverse().toDouble());
     isx::isize_t bitRate = 400000; // TODO: possibly connect to front end for user control
 
     VideoOutput vOut;

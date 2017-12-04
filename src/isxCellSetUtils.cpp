@@ -11,48 +11,6 @@
 namespace {
 
 void
-thresholdImage(
-    isx::SpImage_t inImage,
-    float thresholdValue)
-{
-    ISX_ASSERT(inImage->getDataType() == isx::DataType::F32);
-
-    float * pixels = inImage->getPixelsAsF32();
-
-    for (isx::isize_t i(0); i < inImage->getSpacingInfo().getTotalNumPixels(); ++i)
-    {
-        if (pixels[i] < thresholdValue)
-        {
-            pixels[i] = thresholdValue;
-        }
-    }
-}
-
-void
-normalizeImageL1(
-    isx::SpImage_t inImage,
-    float normalizationValue)
-{
-    ISX_ASSERT(inImage->getDataType() == isx::DataType::F32);
-
-    float * pixels = inImage->getPixelsAsF32();
-    double sum = 0.0;
-
-    for (isx::isize_t i(0); i < inImage->getSpacingInfo().getTotalNumPixels(); ++i)
-    {
-        sum += pixels[i];
-    }
-
-    ISX_ASSERT(sum != 0.0);
-    normalizationValue /= (float)sum;
-
-    for (isx::isize_t i(0); i < inImage->getSpacingInfo().getTotalNumPixels(); ++i)
-    {
-        pixels[i] *= normalizationValue;
-    }
-}
-
-void
 addImages(
     isx::SpImage_t inImage1,
     isx::SpImage_t inImage2,
@@ -82,20 +40,67 @@ initializeWithZeros(
 
     float * pixels = inImage->getPixelsAsF32();
 
-    std::memset(pixels, 0, sizeof(float) * inImage->getSpacingInfo().getTotalNumPixels());
+    std::memset(pixels, 0, sizeof(float) * inImage->getSpacingInfo().getTotalNumPixels());    
 }
 
 }
+
 
 namespace isx {
+
+isx::SpImage_t
+normalizeAndThresholdImage(isx::SpImage_t inImage, float inNormalizedThreshold)
+{
+    ISX_ASSERT(inImage->getDataType() == isx::DataType::F32);
+    ISX_ASSERT(inNormalizedThreshold >= 0.0);
+    ISX_ASSERT(inNormalizedThreshold <= 1.0);
+
+    // copy image so the origin is not modified
+    isx::SpImage_t imgCopy(inImage);
+
+    float * pixels = imgCopy->getPixelsAsF32();
+    isx::isize_t numPixels = imgCopy->getSpacingInfo().getTotalNumPixels();
+
+    // identify image max
+    float maxVal = 0.0f;
+    for (isx::isize_t i(0); i < numPixels; ++i)
+    {
+        maxVal = std::max(maxVal, pixels[i]);
+    }
+
+    // threshold the image
+    for (isx::isize_t i(0); i < numPixels; ++i)
+    {
+        if (pixels[i] < inNormalizedThreshold*maxVal)
+        {
+            pixels[i] = 0.0;
+        }        
+    }
+
+    // compute the image sum
+    float imgSum = 0.0f;
+    for (isx::isize_t i(0); i < numPixels; ++i)
+    {
+        imgSum += pixels[i];
+    }    
+
+    // normalize by image sum
+    for (isx::isize_t i(0); i < numPixels; ++i)
+    {
+        pixels[i] /= imgSum;
+    }
+
+    return imgCopy;
+}
 
 SpImage_t
 cellSetToCellMap(
     const SpCellSet_t & inCellSet,
     bool inAcceptedCellsOnly,
-    bool inNormalizeImages)
+    bool inNormalizeImages,
+    float inNormalizedThreshold)
 {
-    SpImage_t outImage = std::make_shared<isx::Image>(inCellSet->getImage(0)->getSpacingInfo(), inCellSet->getImage(0)->getRowBytes(), inCellSet->getImage(0)->getNumChannels(), inCellSet->getImage(0)->getDataType());
+    SpImage_t outImage(inCellSet->getImage(0));
     initializeWithZeros(outImage);
 
     for (isize_t i(0); i < inCellSet->getNumCells(); ++i)
@@ -109,15 +114,12 @@ cellSetToCellMap(
         }
 
         SpImage_t im = inCellSet->getImage(i);
+        ISX_ASSERT(im->getNumChannels() == 1);
 
         if (inNormalizeImages)
-        {
-            ISX_ASSERT(im->getNumChannels() == 1);
-
-            thresholdImage(im, 0.0);
-            normalizeImageL1(im, 1.0);
-
-            addImages(outImage, im, outImage);
+        {            
+            SpImage_t threshImg = normalizeAndThresholdImage(im, inNormalizedThreshold);
+            addImages(outImage, threshImg, outImage);
         }
         else
         {

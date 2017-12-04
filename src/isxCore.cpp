@@ -5,6 +5,7 @@
 #include "isxLogger.h"
 #include "isxReportUtils.h"
 #include <sstream>
+#include <QString>
 
 extern "C"
 {
@@ -185,5 +186,11 @@ namespace isx
     CoreVersionVector()
     {
         return { CoreVersionMajor() , CoreVersionMinor(), CoreVersionPatch() };
+    }
+
+    std::string
+    getHostName()
+    {
+        return QSysInfo::machineHostName().toStdString();
     }
 }

@@ -1,5 +1,5 @@
 #include "isxMovieTiffExporter.h"
-#include "isxExportTiff.h"
+#include "isxExport.h"
 #include "isxException.h"
 
 #include <vector>
