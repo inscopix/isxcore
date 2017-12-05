@@ -22,7 +22,9 @@ TimeStampedDataFile::DataPkt::DataPkt(
         val = -val;
     }
     uint32_t * newVal = (uint32_t *)&val;
-    m_value = *newVal;    
+    m_value = *newVal;  
+
+    m_reserved = 0;
 }
 
 bool 

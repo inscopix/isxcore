@@ -29,7 +29,7 @@ public:
 
     #pragma pack(push, 1)
     /// The data packet contained in the GPIO file
-    /// Note: The value and state of the GPIO are both enconded in a 32-bit variable (m_value). 
+    /// Note: The value and state of the GPIO are both encoded in a 32-bit variable (m_value). 
     /// The value cannot be negative. Additionally, the state is stored in the data packet 
     /// using the MSB (sign bit) that would correspond to the 32-bit floating point value. 
     /// m_value = [state bit, 31-bit float value]
@@ -41,8 +41,8 @@ public:
         ///
         DataPkt();
 
-        /// Alternative contructor
-        /// \param inTimeStampUSec  The timestamp in usecs from unix epoch
+        /// Alternative constructor
+        /// \param inTimeStampUSec  The timestamp in microseconds from unix epoch
         /// \param inState          The state on/off
         /// \param inValue          Power level of LED lights. This value cannot be negative.
         DataPkt(
@@ -62,7 +62,7 @@ public:
         ///
         Time getTime() const;
 
-        uint64_t m_timeStampUSec;               ///< Time from Unix epoch in microsecs
+        uint64_t m_timeStampUSec = 0;               ///< Time from Unix epoch in microseconds
         union
         {
             uint64_t m_data = 0;                ///< Generic 64-bit structure to hold unformatted data
