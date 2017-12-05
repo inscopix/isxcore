@@ -37,6 +37,15 @@ TiffMovie::initialize(const std::string & inFileName)
         ISX_THROW(ExceptionFileIO, "Failed to open TIFF file: ", m_fileName);
     }
 
+    // nVista seems to write TIFF files with 0 samples per pixel (or at least did at some stage).
+    // This check is mainly to catch multi-channel files exported by ImageJ (e.g. RGB 8-bit).
+    uint16_t channels = 0;
+    TIFFGetField(m_tif, TIFFTAG_SAMPLESPERPIXEL, &channels);
+    if (channels > 1)
+    {
+        ISX_THROW(ExceptionDataIO, "Unsupported number of channels (", channels, "). Only single channel TIFF images are supported.");
+    }
+
     uint16_t bits;
     TIFFGetField(m_tif, TIFFTAG_BITSPERSAMPLE, &bits);
     switch (bits)
@@ -51,19 +60,9 @@ TiffMovie::initialize(const std::string & inFileName)
             m_dataType = DataType::U16;
             break;
         }
-        case sizeof(uint8_t) * 8:
-        {
-            m_dataType = DataType::U8;
-            break;
-        }
-        case sizeof(uint8_t) * 8 * 3:
-        {
-            m_dataType = DataType::RGB888;
-            break;
-        }
         default:
         {
-            ISX_THROW(ExceptionDataIO, "Unsupported number of bits (", bits, "). Only 8 (U8), 16 (U16), 32 (F32) and 24 (RGB888) bit images are supported.");
+            ISX_THROW(ExceptionDataIO, "Unsupported number of bits (", bits, "). Only 16 (U16) and 32 (F32) bit images are supported.");
         }
     }
 
