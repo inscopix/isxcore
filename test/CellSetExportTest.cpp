@@ -312,6 +312,38 @@ TEST_CASE("CellSetExportTest", "[core]")
         REQUIRE(actual == expected);
     }
 
+    SECTION("Test to reproduce error seen in python")
+    {
+        int inNumInputFiles = 1;
+
+        std::string test_file = g_resources["unitTestDataPath"] + "/eventDetectionCellSet.isxd";
+        std::string output_trace = g_resources["unitTestDataPath"] + "/output/trace_output.csv";
+        std::string output_image = g_resources["unitTestDataPath"] + "/output/image_output.tiff";
+
+        const char * inInputFileNames[] = { test_file.c_str() };
+        const char * inTraceFilename = output_trace.c_str();
+        const char * inImagesFilename = output_image.c_str();
+
+        int inWriteTimeRelativeTo = 0;
+
+        std::vector<isx::SpCellSet_t> inputCellSets;
+        for (int64_t i = 0; i < int64_t(inNumInputFiles); ++i)
+        {
+            inputCellSets.push_back(isx::readCellSet(inInputFileNames[i]));
+        }
+
+        isx::CellSetExporterParams params(
+            inputCellSets,
+            std::string(inTraceFilename),
+            std::string(inImagesFilename),
+            isx::WriteTimeRelativeTo(inWriteTimeRelativeTo));
+
+        auto outputParams = std::make_shared<isx::CellSetExporterOutputParams>();
+        auto res = isx::runCellSetExporter(params, outputParams, [](float) {return false; });
+
+        REQUIRE(int(res) == 2);
+    }
+
     isx::CoreShutdown();
     std::remove(fileName.c_str());
     std::remove(exportedTraceFileName.c_str());
