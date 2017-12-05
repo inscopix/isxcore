@@ -41,8 +41,7 @@ allocateAVFrame(enum AVPixelFormat pixelFormat, int width, int height)
     ret = av_frame_get_buffer(avf, 32);
     if (ret < 0)
     {
-        ISX_LOG_ERROR("Cannot allocate frame.");
-        exit(1);
+        ISX_THROW(isx::ExceptionFileIO, "Cannot allocate frame.");
     }
     return avf;
 }
@@ -105,8 +104,7 @@ convertFrameToPacket(AVCodecContext *avcc, AVFrame *avf, AVFormatContext *avFmtC
 
     if (ret < 0)
     {
-        ISX_LOG_ERROR("Output write error: ", ret);
-        exit(1);
+        ISX_THROW(isx::ExceptionFileIO, "Output write error: ", ret);
     }
     return (avf || got_packet) ? 0 : 1;
 }
@@ -138,26 +136,23 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
     AVCodec *codec = avcodec_find_encoder(avOutFmt->video_codec);
     if (!(codec))
     {
-        ISX_LOG_ERROR("No encoder available for ", avcodec_get_name(avOutFmt->video_codec));
-        exit(1);
+        ISX_THROW(isx::ExceptionFileIO, "No encoder available for ", avcodec_get_name(avOutFmt->video_codec));
     }
     vOut.avs = avformat_new_stream(avFmtCnxt, NULL);
     if (!vOut.avs)
     {
-        ISX_LOG_ERROR("Cannot allocate video output");
-        exit(1);
+        ISX_THROW(isx::ExceptionFileIO, "Cannot allocate video output");
     }
     vOut.avs->id = avFmtCnxt->nb_streams - 1;
     AVCodecContext *avcc = avcodec_alloc_context3(codec);
     if (avcc == NULL)
     {
-        ISX_LOG_ERROR("Cannot allocate context.");
-        exit(1);
+        ISX_THROW(isx::ExceptionFileIO, "Cannot allocate context.");
     }
 
     if (codec->type != AVMEDIA_TYPE_VIDEO)
     {
-        exit(1);
+        ISX_THROW(isx::ExceptionFileIO, "Codec does not support AV media.");
     }
 
     avcc->codec_id = avOutFmt->video_codec;
@@ -205,15 +200,13 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
     av_dict_free(&opt2);
     if (ret < 0)
     {
-        ISX_LOG_ERROR("Codec cannot be opened: ", ret);
-        exit(1);
+        ISX_THROW(isx::ExceptionFileIO, "Codec cannot be opened: ", ret);
     }
 
     vOut.avf = allocateAVFrame(vOut.avcc->pix_fmt, vOut.avcc->width, vOut.avcc->height);
     if (vOut.avf == NULL)
     {
-        ISX_LOG_ERROR("Frame cannot be allocated.");
-        exit(1);
+        ISX_THROW(isx::ExceptionFileIO, "Frame cannot be allocated.");
     }
 
     vOut.avf0 = NULL;
@@ -222,16 +215,14 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
         vOut.avf0 = allocateAVFrame(AV_PIX_FMT_YUV420P, vOut.avcc->width, vOut.avcc->height);
         if (vOut.avf0 == NULL)
         {
-            ISX_LOG_ERROR("Cannot allocate buffer.");
-            exit(1);
+            ISX_THROW(isx::ExceptionFileIO, "Cannot allocate buffer.");
         }
     }
 
     ret = avcodec_parameters_from_context(vOut.avs->codecpar, vOut.avcc);
     if (ret < 0)
     {
-        ISX_LOG_ERROR("Parameters cannot be copied.");
-        exit(1);
+        ISX_THROW(isx::ExceptionFileIO, "Parameters cannot be copied.");
     }
 
     ////
@@ -263,11 +254,11 @@ withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, con
 
     if (av_frame_make_writable(vOut->avf) < 0)
     {
-        exit(1);
+        ISX_THROW(isx::ExceptionFileIO, "Frame not writable.");
     }
     if (vOut->avcc->pix_fmt != AV_PIX_FMT_YUV420P)
     {
-        exit(1);
+        ISX_THROW(isx::ExceptionFileIO, "Unexpected pixel format.");
     }
     populatePixels(vOut->avf, int(vOut->pts), vOut->avcc->width, vOut->avcc->height, inImg, inMinVal, inMaxVal);
     vOut->avf->pts = vOut->pts++;
