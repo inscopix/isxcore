@@ -82,36 +82,11 @@ populatePixels(AVFrame *avf, int tIndex, int width, int height, isx::Image *inIm
 }
 
 int
-withinLoopUtility(AVFormatContext *avFmtCnxt, VideoOutput *vOut, bool validFrame = false, isx::Image *inImg = NULL, const float inMinVal = 1, const float inMaxVal = -1)
+convertFrameToPacket(AVCodecContext *avcc, AVFrame *avf, AVFormatContext *avFmtCnxt, VideoOutput *vOut)
 {
-    int ret;
-    AVFrame *avf;
-    int got_packet = 0;
     AVPacket pkt = { 0 };
-    AVCodecContext *avcc = vOut->avcc;
+    int got_packet = 0;
 
-    ////
-
-    avf = NULL;
-
-    if (validFrame)
-    {
-        if (av_frame_make_writable(vOut->avf) < 0)
-        {
-            exit(1);
-        }
-        if (vOut->avcc->pix_fmt != AV_PIX_FMT_YUV420P)
-        {
-            exit(1);
-        }
-        populatePixels(vOut->avf, int(vOut->pts), vOut->avcc->width, vOut->avcc->height, inImg, inMinVal, inMaxVal);
-        vOut->avf->pts = vOut->pts++;
-        avf = vOut->avf;
-    }
-
-    ////
-
-#if 1
     if (avcodec_send_frame(avcc, avf) < 0)
     {
         ISX_THROW(isx::ExceptionFileIO, "Failed to send frame for encoding.");
@@ -120,34 +95,13 @@ withinLoopUtility(AVFormatContext *avFmtCnxt, VideoOutput *vOut, bool validFrame
     av_init_packet(&pkt);
     if (avcodec_receive_packet(avcc, &pkt) < 0)
     {
-        // This fails in postLoop and I don't know why.
-        //ISX_THROW(isx::ExceptionFileIO, "Failed to receive encoded packet.");
-        ISX_LOG_ERROR("Failed to receive encoded packet.");
+        ISX_LOG_INFO("No more encoded packets.");
         return 1;
     }
     got_packet = 1;
     av_packet_rescale_ts(&pkt, avcc->time_base, vOut->avs->time_base);
     pkt.stream_index = vOut->avs->index;
-    ret = av_interleaved_write_frame(avFmtCnxt, &pkt);
-#else
-    av_init_packet(&pkt);
-    ret = avcodec_encode_video2(avcc, &pkt, avf, &got_packet);
-    if (ret < 0)
-    {
-        ISX_LOG_ERROR("Video-frame encoding problem: ", ret);
-        exit(1);
-    }
-    if (got_packet)
-    {
-        av_packet_rescale_ts(&pkt, avcc->time_base, vOut->avs->time_base);
-        pkt.stream_index = vOut->avs->index;
-        ret = av_interleaved_write_frame(avFmtCnxt, &pkt);
-    }
-    else
-    {
-        ret = 0;
-    }
-#endif
+    int ret = av_interleaved_write_frame(avFmtCnxt, &pkt);
 
     if (ret < 0)
     {
@@ -304,7 +258,22 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
 bool
 withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, const float inMinVal, const float inMaxVal)
 {
-    withinLoopUtility(avFmtCnxt, vOut, true, inImg, inMinVal, inMaxVal);
+    AVFrame *avf = NULL;
+    AVCodecContext *avcc = vOut->avcc;
+
+    if (av_frame_make_writable(vOut->avf) < 0)
+    {
+        exit(1);
+    }
+    if (vOut->avcc->pix_fmt != AV_PIX_FMT_YUV420P)
+    {
+        exit(1);
+    }
+    populatePixels(vOut->avf, int(vOut->pts), vOut->avcc->width, vOut->avcc->height, inImg, inMinVal, inMaxVal);
+    vOut->avf->pts = vOut->pts++;
+    avf = vOut->avf;
+
+    convertFrameToPacket(avcc, avf, avFmtCnxt, vOut);
     return false;
 }
 
@@ -314,7 +283,7 @@ postLoop(AVFormatContext *avFmtCnxt, VideoOutput & vOut)
     int done = 0;
     while (!done)
     {
-        done = withinLoopUtility(avFmtCnxt, &vOut);
+        done = convertFrameToPacket(vOut.avcc, NULL, avFmtCnxt, &vOut);
     }
 
     AVOutputFormat *avOutFmt = avFmtCnxt->oformat;
