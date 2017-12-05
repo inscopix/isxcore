@@ -138,11 +138,6 @@ Series::checkBeforeAddOrInsertUnitarySeries(const SpSeries_t & inUnitarySeries) 
         ISX_THROW(ExceptionSeries, "Only unitary Series can be inserted!");
     }
 
-    if (hasUnitarySeries(inUnitarySeries.get()))
-    {
-        ISX_THROW(ExceptionDataIO, "There is already a data set with the name: ", inUnitarySeries->getName());
-    }
-
     if (inUnitarySeries->getContainer() != nullptr)
     {
         ISX_THROW(ExceptionDataIO, "Series is already in another container!");
@@ -183,7 +178,7 @@ Series::insertUnitarySeries(const SpSeries_t & inUnitarySeries, bool inCheckNewM
 
     // Make sure the item will have a unique name in the project
     std::string uniqueName = getUniqueName(inUnitarySeries->getName());
-    if(uniqueName != inUnitarySeries->getName())
+    if (uniqueName != inUnitarySeries->getName())
     {
         inUnitarySeries->setUniqueName(uniqueName);
     }
