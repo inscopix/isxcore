@@ -1,3 +1,5 @@
+// Reference for understanding this code: https://www.ffmpeg.org/doxygen/trunk/muxing_8c-example.html
+
 #include "isxMovieCompressedAviExporter.h"
 #include "isxMovie.h"
 #include "isxPathUtils.h"
@@ -56,7 +58,6 @@ populatePixels(AVFrame *avf, int tIndex, int width, int height, isx::Image *inIm
     {
         for (int x = 0; x < width; x++)
         {
-            //avf->data[0][y * avf->linesize[0] + x] = 128 + 64 * (2 * (((x + tIndex) / 10) % 2) - 1)*(2 * (((y - tIndex) / 10) % 2) - 1);
             if (rescaleDynamicRange)
             {
                 std::vector<float> val = inImg->getPixelValuesAsF32(isx::isize_t(y), isx::isize_t(x));
@@ -110,7 +111,7 @@ convertFrameToPacket(AVCodecContext *avcc, AVFrame *avf, AVFormatContext *avFmtC
 }
 
 bool
-preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut, const isx::Image *inImg, isx::isize_t frameRate, isx::isize_t bitRate)
+preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut, const isx::Image *inImg, isx::DurationInSeconds framePeriod, isx::isize_t bitRate)
 {
     vOut = { 0 };
     int ret;
@@ -157,8 +158,10 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
 
     avcc->codec_id = avOutFmt->video_codec;
     avcc->bit_rate = bitRate;
-    avcc->time_base.num = 1;
-    avcc->time_base.den = int(frameRate);
+    avcc->time_base.num = int(framePeriod.getNum());
+    avcc->time_base.den = int(framePeriod.getDen());
+    avcc->framerate.num = int(framePeriod.getDen());
+    avcc->framerate.den = int(framePeriod.getNum());
 
     if (inImg)
     {
@@ -361,8 +364,6 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
         count++;
     }
     ISX_ASSERT(stepFirst != isx::DurationInSeconds());
-
-    isx::isize_t frameRate = std::lround(stepFirst.getInverse().toDouble());
     isx::isize_t bitRate = 400000; // TODO: possibly connect to front end for user control
 
     VideoOutput vOut;
@@ -379,7 +380,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
                 
                 if (tInd == 0)
                 {
-                    if (preLoop(inFileName.c_str(), avFmtCnxt, vOut, &img, frameRate, bitRate))
+                    if (preLoop(inFileName.c_str(), avFmtCnxt, vOut, &img, stepFirst, bitRate))
                     {
                         return true;
                     }
@@ -433,7 +434,7 @@ namespace isx {
 std::string
 MovieCompressedAviExporterParams::getOpName()
 {
-    return "Export MPEG1 Movie";
+    return "Export MP4 Movie";
 }
 
 AsyncTaskStatus 
