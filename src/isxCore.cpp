@@ -5,9 +5,21 @@
 #include "isxLogger.h"
 #include "isxReportUtils.h"
 #include <sstream>
-
-#include <QSysInfo>
 #include <QString>
+
+extern "C"
+{
+#include "libavformat/avformat.h"
+}
+
+namespace
+{
+#ifdef NDEBUG
+    void dummyAvLogFunction(void *, int, const char *, va_list)
+    {
+    }
+#endif
+} // namespace
 
 namespace isx
 {
@@ -115,7 +127,14 @@ namespace isx
         Logger::initialize(inLogFileName);
         reportSessionStart();
         reportSystemInfo();
+
+        av_register_all();
+
+#ifdef NDEBUG
+        av_log_set_callback(dummyAvLogFunction);
+#endif
     }
+
     bool CoreIsInitialized()
     {   
         return DispatchQueue::isInitialized()

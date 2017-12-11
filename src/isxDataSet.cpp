@@ -15,6 +15,7 @@
 #include <fstream>
 #include <ctype.h>
 #include <algorithm>
+#include <iomanip>
 
 namespace isx
 {
@@ -207,7 +208,8 @@ DataSet::getMetadata()
 
     Metadata metadata; 
     std::stringstream ss;
-    
+    ss << std::fixed << std::setprecision(3);
+
     // File Name
     metadata.push_back(std::pair<std::string, std::string>("File Name", m_fileName));
 
@@ -215,7 +217,7 @@ DataSet::getMetadata()
     ss << m_timingInfo.getStart();
     metadata.push_back(std::pair<std::string, std::string>("Start time", ss.str()));
     ss.str("");
-    
+
     ss << m_timingInfo.getEnd();
     metadata.push_back(std::pair<std::string, std::string>("End time", ss.str()));
     ss.str("");
@@ -224,8 +226,8 @@ DataSet::getMetadata()
     metadata.push_back(std::pair<std::string, std::string>("Duration In Seconds", ss.str()));
     ss.str("");
 
-    ss << m_timingInfo.getStep().toDouble();
-    metadata.push_back(std::pair<std::string, std::string>("Step In Seconds", ss.str()));
+    ss << m_timingInfo.getStep().getInverse().toDouble();
+    metadata.push_back(std::pair<std::string, std::string>("Sample Rate In Hertz", ss.str()));
     ss.str("");
 
     ss << m_timingInfo.getNumTimes();
@@ -240,7 +242,7 @@ DataSet::getMetadata()
     for ( auto & df : droppedFrames)
     {
         ss << df << " ";
-    }    
+    }
     metadata.push_back(std::pair<std::string, std::string>("Dropped Frames", ss.str()));
     ss.str("");
 
@@ -261,17 +263,8 @@ DataSet::getMetadata()
     ss.str("");
 
     // Spacing Info
-    SizeInMicrons_t size = m_spacingInfo.getPixelSize();
-    ss << "(" << size.getX().toDouble() << ", " << size.getY().toDouble() << ")";
-    metadata.push_back(std::pair<std::string, std::string>("Pixel Size In Microns", ss.str()));
-    ss.str("");
-
-    ss << m_spacingInfo.getNumRows();
-    metadata.push_back(std::pair<std::string, std::string>("Number Of Rows", ss.str()));
-    ss.str("");
-
-    ss << m_spacingInfo.getNumColumns();
-    metadata.push_back(std::pair<std::string, std::string>("Number Of Columns", ss.str()));
+    ss << m_spacingInfo.getNumPixels();
+    metadata.push_back(std::pair<std::string, std::string>("Number Of Pixels", ss.str()));
     ss.str("");
 
     // Additional properties
