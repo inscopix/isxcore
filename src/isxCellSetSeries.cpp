@@ -245,6 +245,15 @@ namespace isx
         }
     }
 
+    void
+    CellSetSeries::setCellColors(const IdColorPairs &inColors)
+    {
+        for (const auto &cs : m_cellSets)
+        {
+            cs->setCellColors(inColors);
+        }
+    }
+
     std::string 
     CellSetSeries::getCellName(isize_t inIndex) 
     {

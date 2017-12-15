@@ -228,6 +228,12 @@ CellSetSimple::setCellColor(isize_t inIndex, const Color& inColor)
     m_file->setCellColor(inIndex, inColor);
 }
 
+void
+CellSetSimple::setCellColors(const IdColorPairs &inColors)
+{
+    m_file->setCellColors(inColors);
+}
+
 std::string 
 CellSetSimple::getCellName(isize_t inIndex)
 {

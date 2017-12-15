@@ -191,6 +191,15 @@ virtual
 void
 setCellColor(isize_t inIndex, const Color& inColor) = 0;
 
+/// Set colors of a cells in the set.
+///
+/// This is used for colorized view.
+///
+/// \param inColors IdColorPairs
+virtual
+void
+setCellColors(const IdColorPairs &inColors) = 0;
+
 /// Get the name for a cell in the set
 /// \param inIndex the cell of interest
 /// \return a string with the name

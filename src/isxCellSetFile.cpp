@@ -305,6 +305,27 @@ namespace isx
         }
     }
 
+    void
+    CellSetFile::setCellColors(const IdColorPairs& inColor)
+    {
+        for (auto & c : inColor)
+        {
+            m_cellColors.at(c.first) = c.second;
+        }
+        
+        if (m_openmode & std::ios_base::out)
+        {
+            if (m_fileClosedForWriting)
+            {
+                ISX_THROW(ExceptionFileIO, "Writing data after file was closed for writing.", m_fileName);
+            }
+            else
+            {
+                writeHeader();
+            }
+        }
+    }
+
     std::string 
     CellSetFile::getCellName(isize_t inCellId) 
     {
