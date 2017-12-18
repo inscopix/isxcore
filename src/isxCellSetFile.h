@@ -135,6 +135,10 @@ public:
     /// \param inColor new color
     void setCellColor(isize_t inCellId, const Color& inColor);
 
+    /// Set a cell colors
+    /// \param inColors new colors
+    void setCellColors(const IdColorPairs& inColor);
+
     /// Get the name for a cell in the set
     /// \param inCellId the cell of interest
     /// \return a string with the name 

@@ -52,6 +52,8 @@ namespace isx
         return (lhs.m_rgba != rhs.m_rgba);
     }
 
+    typedef std::pair<unsigned int, Color> IdColorPair;
+    typedef std::vector<IdColorPair> IdColorPairs;
 }
 
 #endif // ISX_COLOR_H

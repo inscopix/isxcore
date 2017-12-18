@@ -117,6 +117,9 @@ public:
     void
     setCellColor(isize_t inIndex, const Color& inColor) override;
 
+    void
+    setCellColors(const IdColorPairs &inColors) override;
+
     std::string 
     getCellName(isize_t inIndex) override;
 
