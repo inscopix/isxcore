@@ -104,13 +104,13 @@ Time::getUtcOffset() const
 {
     return m_utcOffset;
 }
-    
+
 bool
 Time::operator ==(const Time & other) const
 {
     return m_secsSinceEpoch == other.m_secsSinceEpoch;
 }
-    
+
 bool
 Time::operator !=(const Time & other) const
 {
@@ -134,13 +134,13 @@ Time::operator >(const Time & other) const
 {
     return m_secsSinceEpoch > other.m_secsSinceEpoch;
 }
-    
+
 bool
 Time::operator >=(const Time & other) const
 {
     return m_secsSinceEpoch >= other.m_secsSinceEpoch;
 }
-    
+
 void
 Time::serialize(std::ostream& strm) const
 {
@@ -162,11 +162,12 @@ Time::getAsIso8601String() const
 {
     double msDouble = m_secsSinceEpoch.toDouble() * 1000.0;
     int64_t msInt = int64_t(floor(msDouble + 0.5));
-    
+
     auto qdt = QDateTime::fromMSecsSinceEpoch(msInt);
     qdt.setTimeSpec(Qt::OffsetFromUTC);
     qdt.setUtcOffset(m_utcOffset);
     auto qs = qdt.toString(Qt::ISODateWithMs);
+
     return qs.toStdString();
 }
 
