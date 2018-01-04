@@ -5,7 +5,7 @@
 namespace isx
 {
 
-SpacingInfo::SpacingInfo() 
+SpacingInfo::SpacingInfo()
 {
 }
 
@@ -158,27 +158,27 @@ SpacingInfo::serialize(std::ostream& strm) const
 }
 
 
-void 
+void
 SpacingInfo::setValid(bool inValid)
 {
     m_isValid = inValid;
 }
 
 
-bool 
+bool
 SpacingInfo::isValid() const
 {
     return m_isValid;
 }
 
-SpacingInfo 
+SpacingInfo
 SpacingInfo::getDefault()
 {
     SpacingInfo defaultSpacingInfo(SizeInPixels_t(1440, 1080), SizeInMicrons_t(DEFAULT_PIXEL_SIZE, DEFAULT_PIXEL_SIZE), PointInMicrons_t(0, 0));
     return defaultSpacingInfo;
 }
 
-SpacingInfo 
+SpacingInfo
 SpacingInfo::getDefault(const SizeInPixels_t & numPixels)
 {
     SpacingInfo defaultSpacingInfo(numPixels, SizeInMicrons_t(DEFAULT_PIXEL_SIZE, DEFAULT_PIXEL_SIZE), PointInMicrons_t(0, 0));
