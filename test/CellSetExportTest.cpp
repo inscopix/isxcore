@@ -19,7 +19,7 @@ TEST_CASE("CellSetExportTest", "[core]")
 {
     std::string fileName = g_resources["unitTestDataPath"] + "/cellset.isxd";
     std::remove(fileName.c_str());
-    
+
     std::string exportedTraceFileName = g_resources["unitTestDataPath"] + "/exportedTrace.csv";
     std::remove(exportedTraceFileName.c_str());
 
@@ -45,7 +45,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             isx::DataType::F32);
     float * originalPixels = originalImage->getPixelsAsF32();
     std::memset(originalPixels, 0, sizeof(float) * spacingInfo.getTotalNumPixels());
-    
+
     constexpr isx::isize_t numCells = 5;
     std::vector<isx::SpFTrace_t> originalTraces(numCells);
     std::vector<float *> originalValues(numCells);
@@ -54,9 +54,9 @@ TEST_CASE("CellSetExportTest", "[core]")
     {
         originalTraces[cell] = std::make_shared<isx::Trace<float>>(timingInfo);
         originalValues[cell] = originalTraces[cell]->getValues();
-        
+
         val = float(cell) * 42.f;
-        
+
         for (isx::isize_t i(0); i < timingInfo.getNumTimes(); ++i)
         {
             originalValues[cell][i] = val;
@@ -72,7 +72,7 @@ TEST_CASE("CellSetExportTest", "[core]")
         {
             isx::SpCellSet_t cellSet = isx::writeCellSet(
                 fileName, timingInfo, spacingInfo);
-            
+
             cellSet->writeImageAndTrace(0, originalImage, originalTraces[0], "Kunal");
             cellSet->writeImageAndTrace(1, originalImage, originalTraces[1], "Mark");
             cellSet->writeImageAndTrace(2, originalImage, originalTraces[2], "Abbas");
@@ -80,7 +80,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             cellSet->writeImageAndTrace(4, originalImage, originalTraces[4]);
             cellSet->closeForWriting();
         }
-        
+
         // export and then verify
         isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
         isx::CellSetExporterParams params(
@@ -89,7 +89,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             std::string(),
             isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
         isx::runCellSetExporter(params, nullptr, [](float){return false;});
-        
+
         const std::string expected =
             " , Kunal, Mark, Abbas, C3, C4\n"
             "Time(s)/Cell Status, undecided, undecided, undecided, undecided, undecided\n"
@@ -98,25 +98,25 @@ TEST_CASE("CellSetExportTest", "[core]")
             "0.1, 0.02, 42.02, 84.02, 126.02, 168.02\n"
             "0.15, 0.03, 42.02999, 84.03001, 126.03, 168.03\n"
             "0.2, 0.04, 42.03999, 84.04001, 126.04, 168.04\n";
-        
+
         std::ifstream strm(exportedTraceFileName);
         std::unique_ptr<char[]> buf(new char[expected.length() + 1]);   // account for null termination
         strm.get(buf.get(), expected.length() + 1, '$');                // get reads count - 1 chars
         std::string actual(buf.get());
         REQUIRE(actual == expected);
     }
-    
+
     SECTION("Export CellSet with single cell to CSV")
     {
         // write sample data
         {
             isx::SpCellSet_t cellSet = isx::writeCellSet(
                 fileName, timingInfo, spacingInfo);
-            
+
             cellSet->writeImageAndTrace(0, originalImage, originalTraces[2], "Lonely1");
             cellSet->closeForWriting();
         }
-        
+
         // export and then verify
         isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
         isx::CellSetExporterParams params(
@@ -125,7 +125,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             std::string(),
             isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
         isx::runCellSetExporter(params, nullptr, [](float){return false;});
-        
+
         const std::string expected =
             " , Lonely1\n"
             "Time(s)/Cell Status, undecided\n"
@@ -158,14 +158,14 @@ TEST_CASE("CellSetExportTest", "[core]")
                 {
                     pixelsF32[numCols * i + j] = 1.0f;
                 }
-            } 
-            
+            }
+
             cellSet->writeImageAndTrace(0, originalImage, originalTraces[2], "Lonely1");
             cellSet->setCellStatus(0, isx::CellSet::CellStatus::ACCEPTED);
             cellSet->closeForWriting();
         }
-        
-        // export 
+
+        // export
         isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
         isx::CellSetExporterParams params(
             std::vector<isx::SpCellSet_t>{cellSet},
@@ -177,7 +177,7 @@ TEST_CASE("CellSetExportTest", "[core]")
         // read output TIFF and verify
         std::string cellname = cellSet->getCellName(0);
         std::string fn = isx::getDirName(exportedImageFileName) + "/" +
-                isx::getBaseName(exportedImageFileName) + "_" + cellname + 
+                isx::getBaseName(exportedImageFileName) + "_" + cellname +
                 "." + isx::getExtension(exportedImageFileName);
 
         TIFF * tif = TIFFOpen(fn.c_str(), "r");
@@ -217,7 +217,7 @@ TEST_CASE("CellSetExportTest", "[core]")
             {
                 _TIFFfree(readRow);
             }
-            
+
             TIFFClose(tif);
         }
 
@@ -225,7 +225,7 @@ TEST_CASE("CellSetExportTest", "[core]")
 
         // read output TIFF map and verify
         fn = isx::getDirName(exportedImageFileName) + "/" +
-            isx::getBaseName(exportedImageFileName) + "_accepted-cells-map." + 
+            isx::getBaseName(exportedImageFileName) + "_accepted-cells-map." +
             isx::getExtension(exportedImageFileName);
 
         tif = TIFFOpen(fn.c_str(), "r");
@@ -341,7 +341,7 @@ TEST_CASE("CellSetExportTest", "[core]")
         auto outputParams = std::make_shared<isx::CellSetExporterOutputParams>();
         auto res = isx::runCellSetExporter(params, outputParams, [](float) {return false; });
 
-        REQUIRE(int(res) == 2);
+        REQUIRE(res == isx::AsyncTaskStatus::COMPLETE);
     }
 
     isx::CoreShutdown();
