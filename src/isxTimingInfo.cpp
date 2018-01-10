@@ -126,7 +126,7 @@ TimingInfo::convertIndexToStartTime(isize_t inIndex) const
     Time ret = m_start + (m_step * index);
     return ret;
 }
-   
+
 Time
 TimingInfo::getLastStartTime() const
 {
@@ -162,26 +162,25 @@ TimingInfo::serialize(std::ostream& strm) const
 }
 
 
-void 
+void
 TimingInfo::setValid(bool inValid)
 {
     m_isValid = inValid;
 }
 
-
-bool 
+bool
 TimingInfo::isValid() const
 {
     return m_isValid;
 }
 
-const std::vector<isize_t> & 
+const std::vector<isize_t> &
 TimingInfo::getDroppedFrames() const
 {
     return m_droppedFrames;
 }
 
-void 
+void
 TimingInfo::setDroppedFrames(const std::vector<isize_t> & inDroppedFrames)
 {
     m_droppedFrames = inDroppedFrames;
@@ -193,11 +192,11 @@ TimingInfo::getDroppedCount() const
     return m_droppedFrames.size();
 }
 
-bool 
+bool
 TimingInfo::isDropped(isize_t inIndex) const
 {
     auto & df = m_droppedFrames;
-    return std::binary_search(df.begin(), df.end(), inIndex);    
+    return std::binary_search(df.begin(), df.end(), inIndex);
 }
 
 const IndexRanges_t &
@@ -243,7 +242,7 @@ TimingInfo::getNumValidTimes() const
     return m_numTimes - getDroppedCount() - getCroppedCount();
 }
 
-isize_t 
+isize_t
 TimingInfo::timeIdxToRecordedIdx(isize_t inIndex) const
 {
     // Note that this internally asserts that the input index is not dropped.
@@ -279,7 +278,7 @@ TimingInfo::timeIdxToRecordedIdx(isize_t inIndex) const
 }
 
 
-TimingInfo 
+TimingInfo
 TimingInfo::getDefault(isize_t inFrames, const std::vector<isize_t> & inDroppedFrames)
 {
     Time start;                       // Default to Unix epoch

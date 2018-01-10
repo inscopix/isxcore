@@ -9,7 +9,7 @@
 namespace isx
 {
 /// A class representing a VideoFrame in-memory
-/// This basically uses an Image and adds a timestap and a frameIndex
+/// This basically uses an Image and adds a timestamp and a frameIndex
 ///
 class VideoFrame
 {

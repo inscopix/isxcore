@@ -37,7 +37,7 @@ class Time : public Object
 
 public:
 
-    /// Construct a time with seconds sinces the Unix epoch.
+    /// Construct a time with seconds since the Unix epoch.
     ///
     /// \param   secsSinceEpoch Duration in seconds since the Unix epoch.
     /// \param   utcOffset      Time zone offset from UTC in seconds [-50400, 50400].
@@ -122,12 +122,12 @@ public:
     /// \return     True if this is later than or equal to another time, false other.
     ///
     bool operator >=(const Time & other) const;
-    
+
     /// \return     The current time.
     ///
     static Time now();
 
-    /// This method works on the Ratio contained in Time objects. 
+    /// This method works on the Ratio contained in Time objects.
     /// \return     A time with its Ratio set to the largest ratio with inRatio's denom
     ///             that is not greater than the other ratio in value
     Time
@@ -144,10 +144,10 @@ public:
 private:
 
     /// The rational number of seconds since the Unix epoch.
-    DurationInSeconds m_secsSinceEpoch;
+    DurationInSeconds m_secsSinceEpoch = 0;
 
     /// The time zone offset from UTC in seconds
-    int32_t m_utcOffset;
+    int32_t m_utcOffset = 0;
 
     /// Minimum UTC offset in seconds.
     static const int32_t s_minUtcOffset;

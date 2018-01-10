@@ -34,7 +34,7 @@ SpWritableMovie_t writeMosaicMovie(
 
 /// Read an existing image from a file.
 ///
-/// The actual type of image to import frome movie file (e.g. MosaicMovie, NVistaHdf5Movie)
+/// The actual type of image to import from a movie file (e.g. MosaicMovie, NVistaHdf5Movie)
 /// is determined by the file extension.
 ///
 /// - isxd: MosaicMovie
@@ -48,7 +48,6 @@ SpWritableMovie_t writeMosaicMovie(
 /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
 /// \throw  isx::ExceptionDataIO    If parsing the movie file fails or
 ///                                 if the extension is not recognized.
-
 SpVideoFrame_t readImage(const std::string & inFileName);
 
 /// Read an existing movie from a file.

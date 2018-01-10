@@ -132,7 +132,7 @@ MosaicMovie::getFrame(isize_t inFrameNumber)
     );
     cv.wait(mutex);
     mutex.unlock();
-    
+
     return asyncTaskResult.get();   // throws if asyncTaskResult contains an exception
 }
 

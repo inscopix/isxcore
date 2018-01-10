@@ -16,8 +16,8 @@ CellSetExporterParams::getOpName()
 {
     return "Export Cell Set";
 }
-    
-AsyncTaskStatus 
+
+AsyncTaskStatus
 runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
 {
     bool cancelled = false;
@@ -48,7 +48,7 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
     }
 
     // For progress report
-    isize_t numSections = isize_t(inParams.m_outputTraceFilename.empty() == false) + 
+    isize_t numSections = isize_t(inParams.m_outputTraceFilename.empty() == false) +
                             isize_t(inParams.m_outputImageFilename.empty() == false);
     float progress = 0.f;
 
@@ -115,14 +115,14 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
         auto & cs =  srcs[0];
         std::string dirname = getDirName(inParams.m_outputImageFilename);
         std::string basename = getBaseName(inParams.m_outputImageFilename);
-        std::string extension = getExtension(inParams.m_outputImageFilename);        
-        
+        std::string extension = getExtension(inParams.m_outputImageFilename);
+
         for (isize_t cell = 0; cell < numCells; ++cell)
         {
             std::string cellname = cs->getCellName(cell);
             std::string fn = dirname + "/" + basename + "_" + cellname + "." + extension;
-            
-            SpImage_t cellIm = cs->getImage(cell); 
+
+            SpImage_t cellIm = cs->getImage(cell);
 
             try
             {
@@ -138,12 +138,12 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
                 }
                 throw;
             }
-              
+
 
             cancelled = inCheckInCB(progress + float(cell)/float(numCells)/float(numSections));
             if (cancelled)
             {
-                // Remove previously created files - Do this here and not in finishedCB because 
+                // Remove previously created files - Do this here and not in finishedCB because
                 // only here we know exactly which files we wrote out
                 for (isize_t c = 0; c <= cell; ++c)
                 {

@@ -53,7 +53,7 @@ readMovie(const std::string & inFileName)
         ISX_THROW(ExceptionDataIO, "Movie extension not recognized: ", ext);
     }
 }
-    
+
 SpMovie_t
 readMovieSeries(const std::vector<std::string> & inFileNames, const std::vector<DataSet::Properties> & inProperties)
 {

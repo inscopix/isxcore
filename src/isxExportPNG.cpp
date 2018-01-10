@@ -7,7 +7,7 @@
 #include <QImage>
 #include <QImageWriter>
 
-namespace isx 
+namespace isx
 {
     void
     toPng(const std::string & inFileName, const SpImage_t & inImage)
