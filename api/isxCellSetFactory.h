@@ -40,7 +40,7 @@ SpCellSet_t writeCellSet(
 SpCellSet_t readCellSet(const std::string & inFileName, bool enableWrite = false);
 
 /// Read an existing series of cell sets from a vector of files.
-/// If the extension is not recognizedfor ane of the filenames, this fails.
+/// If the extension is not recognized for any of the filenames, this fails.
 ///
 /// \param  inFileNames     A vector containing the names of the cell set files to read.
 /// \param  enableWrite     Set to true to open in read-write mode

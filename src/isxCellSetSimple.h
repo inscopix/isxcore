@@ -13,14 +13,14 @@
 namespace isx
 {
 template <typename T> class IoTaskTracker;
-    
+
 /// Forward declare needed because CellSetFile is in src.
 class CellSetFile;
 /// A class for a containing cells extracted from a movie
 ///
 /// Currently all reads/writes happen on calling threads and
 /// not on the IO thread.
-class CellSetSimple 
+class CellSetSimple
     : public CellSet
     , public std::enable_shared_from_this<CellSetSimple>
 {
@@ -62,47 +62,47 @@ public:
     ~CellSetSimple();
 
     // Overrides
-    bool 
+    bool
     isValid() const override;
 
     void
     closeForWriting() override;
 
-    std::string 
+    std::string
     getFileName() const override;
 
-    const isize_t 
+    const isize_t
     getNumCells() override;
 
-    isx::TimingInfo 
+    isx::TimingInfo
     getTimingInfo() const override;
 
-    isx::TimingInfos_t 
+    isx::TimingInfos_t
     getTimingInfosForSeries() const override;
 
-    isx::SpacingInfo 
+    isx::SpacingInfo
     getSpacingInfo() const override;
 
-    SpFTrace_t 
+    SpFTrace_t
     getTrace(isize_t inIndex) override;
 
-    void 
+    void
     getTraceAsync(isize_t inIndex, CellSetGetTraceCB_t inCallback) override;
 
-    SpImage_t 
+    SpImage_t
     getImage(isize_t inIndex) override;
 
-    void 
-    getImageAsync(isize_t inIndex, CellSetGetImageCB_t inCallback) override;  
+    void
+    getImageAsync(isize_t inIndex, CellSetGetImageCB_t inCallback) override;
 
-    void 
+    void
     writeImageAndTrace(
             isize_t inIndex,
             const SpImage_t & inImage,
             SpFTrace_t & inTrace,
-            const std::string & inName = std::string()) override; 
+            const std::string & inName = std::string()) override;
 
-    CellSet::CellStatus 
+    CellSet::CellStatus
     getCellStatus(isize_t inIndex) override;
 
     Color
@@ -111,7 +111,7 @@ public:
     std::string
     getCellStatusString(isize_t inIndex) override;
 
-    void 
+    void
     setCellStatus(isize_t inIndex, CellSet::CellStatus inStatus) override;
 
     void
@@ -120,19 +120,19 @@ public:
     void
     setCellColors(const IdColorPairs &inColors) override;
 
-    std::string 
+    std::string
     getCellName(isize_t inIndex) override;
 
-    void 
+    void
     setCellName(isize_t inIndex, const std::string & inName) override;
 
-    std::vector<bool> 
+    std::vector<bool>
     getCellActivity(isize_t inIndex) const override;
 
-    void 
+    void
     setCellActive(isize_t inIndex, const std::vector<bool> & inActive) override;
 
-    void 
+    void
     cancelPendingReads() override;
 
     bool
