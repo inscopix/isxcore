@@ -200,4 +200,15 @@ TEST_CASE("RatioTest", "[core]")
         REQUIRE(f.getNum() == 9);
     }
 
+    SECTION("from float")
+    {
+        double num = 3.141516;
+        isx::Ratio expected(3142, int64_t(1E3));
+        REQUIRE(expected == isx::Ratio::fromDouble(num));
+
+        num = 5.2155;
+        expected = isx::Ratio(5216, int64_t(1E3));
+        REQUIRE(expected == isx::Ratio::fromDouble(num));
+    }
+
 }

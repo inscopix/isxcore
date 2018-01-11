@@ -44,6 +44,12 @@ public:
     /// \return         The floating point evaluation of this.
     double toDouble() const;
 
+    /// Return a Ratio representing the floating point value as close as possible
+    ///
+    /// \param inValue the value to be converted to a ratio
+    /// \param inPrecision the number of digits after the decimal point to take into account
+    static Ratio fromDouble(double inValue, size_t inPrecision = 3);
+
     /// Return the result of adding another rational number to this.
     ///
     /// \param   other  The other rational number to add to this.

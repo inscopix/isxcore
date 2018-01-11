@@ -254,22 +254,14 @@ namespace isx
             start = Time(year, mon, day, hour, mins, secs, secsOffset);
 
             // Convert step
-            QString integer, fraction;
-            integer = inFps.section(".", 0, 0);
-            
-            isize_t den = 1;
-            isize_t fnum = 0;
-            if (inFps.contains("."))
+            bool ok;
+            double fps = inFps.toDouble(&ok);
+            if (!ok)
             {
-                fraction = inFps.section(".", -1, -1);            
-                int numDigits = fraction.size();
-                den = (isize_t) std::pow(10, numDigits);
-                fnum = fraction.toULongLong();
+                ISX_THROW(isx::ExceptionDataIO, "Unable to convert frame rate to floating point value.");
             }
-
-            isize_t inum = integer.toULongLong() * den;            
-            isize_t num = inum + fnum;
-            step = DurationInSeconds(den, num);     // The den and num correspond to sampling frequency, that's why they are inverted for the step
+            Ratio ratioFps = isx::Ratio::fromDouble(fps);
+            step = ratioFps.getInverse();
 
             // Convert number of frames
             numTimes = inNumFrames.toULongLong();

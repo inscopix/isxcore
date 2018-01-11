@@ -78,16 +78,16 @@ NVistaTiffMovie::NVistaTiffMovie(
         m_cumulativeFrames.push_back(numFramesAccum);
     }
 
-    if (inTimingInfo.isValid())
+    if (inTimingInfo.getNumTimes() != 0)
     {
+        // Timing info comes from XML
         m_timingInfos = TimingInfos_t{inTimingInfo};
     }
     else
     {
-        /// TODO: Allow user to edit timing information or at least set a default for imported TIFF files (without accompanying XML)
-        /// Set default
-        Time start;
-        DurationInSeconds step(1, 20); 
+        /// Timing info comes from TIFF - (set by user)
+        Time start = inTimingInfo.getStart();
+        DurationInSeconds step = inTimingInfo.getStep(); 
         isize_t numFrames = numFramesAccum + inDroppedFrames.size();
         m_timingInfos = TimingInfos_t{TimingInfo(start, step, numFrames, inDroppedFrames)};
     }

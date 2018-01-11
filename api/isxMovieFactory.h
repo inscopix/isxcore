@@ -61,12 +61,13 @@ SpVideoFrame_t readImage(const std::string & inFileName);
 /// If the extension is not recognized, this fails.
 ///
 /// \param  inFileName      The name of the movie file to read.
+/// \param  inProperties    The properties for start time and frame rate (used only for TIF with no XML)
 /// \return                 The imported movie.
 ///
 /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
 /// \throw  isx::ExceptionDataIO    If parsing the movie file fails or
 ///                                 if the extension is not recognized.
-SpMovie_t readMovie(const std::string & inFileName);
+SpMovie_t readMovie(const std::string & inFileName, const DataSet::Properties & inProperties = {});
 
 /// Read an existing series of movies from a vector of files.
 ///
@@ -79,7 +80,7 @@ SpMovie_t readMovie(const std::string & inFileName);
 /// If the extension is not recognized for any of the filenames, this fails.
 ///
 /// \param  inFileNames     A vector containing the names of the movie files to read.
-/// \param  inProperties    A vector containing the properties of each of the movie files.  Currently only used for behavioral movies.
+/// \param  inProperties    A vector containing the properties of each of the movie files.  Currently only used for behavioral movies and tif with no xml.
 /// \return                 The imported movie.
 ///
 /// \throw  isx::ExceptionFileIO    If reading of any of the movie files fails.
@@ -98,11 +99,12 @@ SpMovie_t readMosaicMovie(const std::string & inFileName);
 /// Read an existing nVista HDF5 movie from a file.
 ///
 /// \param  inFileName      The name of the nVista movie file to read.
+/// \param  inProperties    The properties for start time and frame rate (used only for TIF with no XML)
 /// \return                 The imported movie.
 ///
 /// \throw  isx::ExceptionFileIO    If the movie file cannot be read.
 /// \throw  isx::ExceptionDataIO    If parsing the movie file failed.
-SpMovie_t readInscopixMovie(const std::string & inFileName);
+SpMovie_t readInscopixMovie(const std::string & inFileName, const DataSet::Properties & inProperties = {});
 
 /// Read an behavioral movie from a file.
 ///
@@ -127,6 +129,12 @@ bool isBehavioralMovieFileExtension(const std::string & inFileName);
 /// \param  inFileName      The filename to check.
 /// \return                 True if filename has an extension for nVista imaging data that is supported.
 bool isNVistaImagingFileExtension(const std::string & inFileName);
+
+/// Determine if a file is an nVista imaging TIF file by its extension.
+///
+/// \param  inFileName      The filename to check.
+/// \return                 True if filename has a TIF extension.
+bool isTiffFileExtension(const std::string & inFileName);
 
 } // namespace isx
 

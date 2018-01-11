@@ -42,7 +42,7 @@ public:
     ///                    allows us to avoid expensive IO to get this from the TIFF files
     NVistaTiffMovie(const std::string & inFileName,
         const std::vector<std::string> & inTiffFileNames,
-        const TimingInfo & inTimingInfo = TimingInfo(),
+        const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo = SpacingInfo(),
         const std::vector<isize_t> & inDroppedFrames = std::vector<isize_t>(),
         const std::map<std::string, Variant> & inAdditionalProperties = std::map<std::string, Variant>(),

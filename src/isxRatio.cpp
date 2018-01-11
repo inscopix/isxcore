@@ -2,6 +2,7 @@
 #include "isxAssert.h"
 #include <iostream>
 #include <cmath>
+#include <iomanip> 
 
 namespace
 {
@@ -77,6 +78,16 @@ double
 Ratio::toDouble() const
 {
     return double(m_num) / double(m_den);
+}
+
+/*static*/
+Ratio 
+Ratio::fromDouble(double inValue, size_t inPrecision)
+{
+    int64_t num, den;
+    den = int64_t(std::pow(10, inPrecision));
+    num = int64_t(std::round(inValue * den));
+    return Ratio(num, den);
 }
 
 Ratio

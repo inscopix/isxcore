@@ -25,9 +25,11 @@ MovieSeries::MovieSeries(const std::vector<std::string> & inFileNames, const std
         return;
     }
 
+    
+
     if (isBehavioralMovieFileExtension(inFileNames.at(0)))
-    {
-        ISX_ASSERT(inFileNames.size() == inProperties.size());
+    {   
+        ISX_ASSERT(inFileNames.size() == inProperties.size());     
         isize_t propIndex = 0;
         for (const auto & fn: inFileNames)
         {
@@ -41,9 +43,21 @@ MovieSeries::MovieSeries(const std::vector<std::string> & inFileNames, const std
     }
     else
     {
-        for (const auto & fn: inFileNames)
+        if (!inProperties.empty())
         {
-            m_movies.emplace_back(readMovie(fn));
+            ISX_ASSERT(inFileNames.size() == inProperties.size());
+        }
+
+        for (isize_t i(0); i < inFileNames.size(); ++i)
+        {
+            if (!inProperties.empty())
+            {
+                m_movies.emplace_back(readMovie(inFileNames.at(i), inProperties.at(i)));
+            }
+            else
+            {
+                m_movies.emplace_back(readMovie(inFileNames.at(i)));
+            }
         }
     }
 
