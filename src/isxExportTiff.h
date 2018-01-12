@@ -29,8 +29,9 @@ public:
 
     /// writes image to current Tiff directory
     /// 
-    /// \param inImage   pointer to Image
-    void toTiffOut(const Image * inImage);
+    /// \param inImage       pointer to Image
+    /// \param inZeroImage   boolean flag to write black (zero) TIFF using inImage parameters (e.g. width, height, number of channels etc.)
+    void toTiffOut(const Image * inImage, const bool inZeroImage = false);
 
     /// switch to next TIFF Directory/Frame
     /// 

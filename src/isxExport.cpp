@@ -188,7 +188,7 @@ bool writeTraces(
 }
 
 bool 
-toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const isize_t inMaxFrameIndex, AsyncCheckInCB_t & inCheckInCB)
+toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const bool inWriteInvalidFrames, const isize_t inMaxFrameIndex, AsyncCheckInCB_t & inCheckInCB)
 {
     const std::string dirname = getDirName(inFileName);
     const std::string basename = getBaseName(inFileName);
@@ -212,9 +212,10 @@ toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, 
     {
         for (isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
         {
-            if (m->getTimingInfo().isIndexValid(i))
+            if (inWriteInvalidFrames || m->getTimingInfo().isIndexValid(i))
             {
-                if (frameIndex == inMaxFrameIndex) // if number of frames larger inMaxFrameIndex - increase file name and dump to new one
+                // if number of frames larger inMaxFrameIndex - increase file name and dump to new one
+                if (frameIndex == inMaxFrameIndex) 
                 {
                     mvCounter++;
                     frameIndex = 0;
@@ -227,7 +228,7 @@ toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, 
 
                 auto f = m->getFrame(i);
                 auto& img = f->getImage();
-                out->toTiffOut(&img);
+                out->toTiffOut(&img, (inWriteInvalidFrames && !m->getTimingInfo().isIndexValid(i)));
                 out->nextTiffDir();
                 frameIndex++;
             }

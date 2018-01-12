@@ -38,7 +38,7 @@ runMovieTiffExporter(MovieTiffExporterParams inParams, std::shared_ptr<MovieTiff
     {
         try
         {
-            cancelled = toTiff(inParams.m_tiffFilename, inParams.m_srcs, inParams.m_numFramesInMovie, inCheckInCB);
+            cancelled = toTiff(inParams.m_tiffFilename, inParams.m_srcs, inParams.m_writeInvalidFrames, inParams.m_numFramesInMovie, inCheckInCB);
         }
         catch (...)
         {

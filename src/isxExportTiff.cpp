@@ -60,7 +60,7 @@ getTiffSampleFormat(DataType type)
 }
 
 void 
-TiffExporter::toTiffOut(const Image * inImage)
+TiffExporter::toTiffOut(const Image * inImage, const bool inZeroImage)
 {
     if (!inImage)
     {
@@ -93,7 +93,15 @@ TiffExporter::toTiffOut(const Image * inImage)
     const char * pixels = inImage->getPixels();
     for (uint32_t row = 0; row < height; row++)
     {
-        std::memcpy(buf.get(), &pixels[row*linebytes], linebytes);
+        if (!inZeroImage)
+        {
+            std::memcpy(buf.get(), &pixels[row*linebytes], linebytes);
+        }
+        else
+        {
+            std::memset(buf.get(), 0, linebytes);
+        }
+
         if (TIFFWriteScanline(out, buf.get(), row, 0) < 0)
         {
             ISX_THROW(isx::ExceptionFileIO, "Error writing to output file.");

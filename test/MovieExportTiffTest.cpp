@@ -91,7 +91,8 @@ TEST_CASE("MovieTiffExportF32Test", "[core]")
         }
         isx::MovieTiffExporterParams params(
             movies,
-            exportedTiffFileName);
+            exportedTiffFileName,
+            false);
         isx::runMovieTiffExporter(params, nullptr, [](float){return false;});
 
         // verify exported data
@@ -170,7 +171,8 @@ TEST_CASE("MovieTiffExportU16Test", "[core]")
         }
         isx::MovieTiffExporterParams params(
             movies,
-            exportedTiffFileName);
+            exportedTiffFileName,
+            false);
         isx::runMovieTiffExporter(params, nullptr, [](float) {return false; });
 
 
@@ -253,7 +255,8 @@ TEST_CASE("MovieTiffExportU16ComplexTest", "[core]")
         }
         isx::MovieTiffExporterParams params(
             movies,
-            exportedTiffFileName);
+            exportedTiffFileName,
+            false);
         isx::runMovieTiffExporter(params, nullptr, [](float) {return false; });
 
 
@@ -356,7 +359,8 @@ TEST_CASE("MovieTiffExportF32ComplexTest", "[core]")
         }
         isx::MovieTiffExporterParams params(
             movies,
-            exportedTiffFileName);
+            exportedTiffFileName,
+            false);
         isx::runMovieTiffExporter(params, nullptr, [](float) {return false; });
 
 
@@ -456,6 +460,7 @@ TEST_CASE("MovieTiffExportSplittedTest", "[core]")
         isx::MovieTiffExporterParams params(
             movies,
             exportedTiffFileName,
+            false,
             3);
         isx::runMovieTiffExporter(params, nullptr, [](float) {return false; });
 
@@ -493,6 +498,111 @@ TEST_CASE("MovieTiffExportSplittedTest", "[core]")
     }
 }
 
+TEST_CASE("MovieTiffExportWithDroppedTest", "[core]")
+{
+    std::array<const char *, 1> names =
+    { {
+            "seriesMovie0.isxd"
+        } };
+    std::vector<std::string> filenames;
+
+    for (auto n : names)
+    {
+        filenames.push_back(g_resources["unitTestDataPath"] + "/" + n);
+    }
+
+    for (const auto & fn : filenames)
+    {
+        std::remove(fn.c_str());
+    }
+
+    std::string exportedTiffFileName = g_resources["unitTestDataPath"] + "/exportedMovie.tiff";
+    std::remove(exportedTiffFileName.c_str());
+
+    std::vector<isx::isize_t> dropped = { 1 };
+    std::array<isx::TimingInfo, 1> timingInfos =
+    { {
+        { isx::Time(2222, 4, 1, 3, 2, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 2, dropped }
+        } };
+
+    isx::SizeInPixels_t sizePixels(4, 3);
+    isx::SpacingInfo spacingInfo(sizePixels);
+
+    isx::CoreInitialize();
+
+    SECTION("Export movie series")
+    {
+        // write isxds
+        const auto pixelsPerFrame = int32_t(sizePixels.getWidth() * sizePixels.getHeight());
+        std::vector<float> buf(pixelsPerFrame * 5);   // longest movie segment has 5 frames
+
+        int32_t i = 0;
+        for (const auto fn : filenames)
+        {
+            createFrameData(buf.data(), int32_t(timingInfos[i].getNumTimes()), pixelsPerFrame, i * 5);
+            writeTestF32MovieGeneric(fn, timingInfos[i], spacingInfo, buf.data());
+            ++i;
+        }
+
+        // export to nwb
+        std::vector<isx::SpMovie_t> movies;
+        for (const auto fn : filenames)
+        {
+            movies.push_back(isx::readMovie(fn));
+        }
+        isx::MovieTiffExporterParams params(
+            movies,
+            exportedTiffFileName,
+            true);
+        isx::runMovieTiffExporter(params, nullptr, [](float) {return false; });
+
+
+        // verify exported data
+        {
+            isx::TiffMovie tiffMovie(exportedTiffFileName);
+            REQUIRE(tiffMovie.getFrameHeight() == sizePixels.getHeight());
+            REQUIRE(tiffMovie.getFrameWidth() == sizePixels.getWidth());
+            REQUIRE(tiffMovie.getDataType() == isx::DataType::F32);
+            REQUIRE(tiffMovie.getNumFrames() == 2);
+
+            isx::isize_t frameIndex = 0;
+            isx::isize_t movieIndex = 0;
+
+            for (isx::isize_t globalFrameIndex = 0; globalFrameIndex < tiffMovie.getNumFrames(); globalFrameIndex++)
+            {
+                auto originImage = movies[movieIndex]->getFrame(frameIndex);
+                auto importedImage = tiffMovie.getVideoFrame(globalFrameIndex, spacingInfo, timingInfos[movieIndex].convertIndexToStartTime(frameIndex));
+
+                if (originImage->getFrameType() == isx::VideoFrame::Type::VALID)
+                {
+                    requireEqualImages(originImage->getImage(), importedImage->getImage());
+                }
+                else
+                {
+                    requireZeroImage(originImage->getImage());
+                }
+
+                ++frameIndex;
+                if (frameIndex == movies[movieIndex]->getTimingInfo().getNumTimes())
+                {
+                    frameIndex = 0;
+                    ++movieIndex;
+                }
+
+            }
+
+        }
+
+    }
+
+    isx::CoreShutdown();
+
+    for (const auto & fn : filenames)
+    {
+        std::remove(fn.c_str());
+    }
+}
+
 // Hidden because it write large files and thus takes quite a bit of time and space.
 TEST_CASE("MovieTiffExportBigTiff", "[core][!hide]")
 {
@@ -517,7 +627,7 @@ TEST_CASE("MovieTiffExportBigTiff", "[core][!hide]")
     {
         const isx::SpMovie_t inputMovie = writeTestU16MovieGeneric(inputFileName, timingInfo, spacingInfo);
 
-        const isx::MovieTiffExporterParams params({inputMovie}, {outputFileName});
+        const isx::MovieTiffExporterParams params({inputMovie}, {outputFileName}, false);
         isx::runMovieTiffExporter(params, nullptr, [](float) {return false; });
 
         const isx::SpMovie_t outputMovie = isx::readMovie(outputFileName);

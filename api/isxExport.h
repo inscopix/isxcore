@@ -75,11 +75,13 @@ void toTiff(
 ///
 /// \param inFileName       The filename for the output file.
 /// \param inMovies         The set of movies to export.
+/// \param inWriteInvalidFrames Flag to replace dropped frames with zero-frames.
 /// \param inMaxFrameIndex  The frames number in one movie part.
 /// \param inCheckInCB      check-in callback function that is periodically invoked with progress and to tell algo whether to cancel / abort.
 bool toTiff(
         const std::string & inFileName,
         const std::vector<SpMovie_t> & inMovies,
+        const bool inWriteInvalidFrames,
         const isize_t inMaxFrameIndex,
         AsyncCheckInCB_t & inCheckInCB);
 
