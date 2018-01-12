@@ -13,6 +13,8 @@ struct MovieTiffExporterParams
     /// convenience constructor to fill struct members in one shot
     /// \param inSrcs                   input movies
     /// \param inTiffFilename           filename for Tiff output file
+    /// \param inWriteInvalidFrames     true if dropped/cropped frames should be written as zeros frames,
+    ///                                 false if they should be skipped
     /// \param inNumFramesInMovie       frames number in one splitted part of movie.
     MovieTiffExporterParams(
         const std::vector<SpMovie_t> & inSrcs,
