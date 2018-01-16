@@ -22,7 +22,7 @@ public:
     /// Constructor for Recording from file
     /// \param inPath to file on disk
     ///
-    Impl(const std::string & inPath)
+    Impl(const std::string & inPath, const DataSet::Properties & inProperties)
     : m_path(inPath)
     {
         if (exists())
@@ -38,7 +38,8 @@ public:
             }
             else if ((extension == "tif") || (extension == "tiff"))
             {
-                initializeFromTiff();
+                DataSet::Properties props(inProperties);
+                initializeFromTiff(props);
             }
             else
             {
@@ -56,10 +57,18 @@ public:
     ///
     ~Impl(){}
 
-    void initializeFromTiff()
+    void initializeFromTiff(DataSet::Properties & inProperties)
     {
         const std::vector<std::string> paths = {m_path};
-        m_movie = std::make_shared<NVistaTiffMovie>(m_path, paths);
+        ISX_ASSERT(inProperties.find(DataSet::PROP_MOVIE_START_TIME) != inProperties.end());
+        ISX_ASSERT(inProperties.find(DataSet::PROP_MOVIE_FRAME_RATE) != inProperties.end());
+
+        isx::Time start = inProperties[DataSet::PROP_MOVIE_START_TIME].value<isx::Time>();
+        float fr        = inProperties[DataSet::PROP_MOVIE_FRAME_RATE].value<float>();
+        DurationInSeconds rationalFr(Ratio::fromDouble(double(fr)));
+        DurationInSeconds step = rationalFr.getInverse();
+        TimingInfo ti(start, step, 0);
+        m_movie = std::make_shared<NVistaTiffMovie>(m_path, paths, ti);
 
         // no exception until here --> this is a valid file
         m_isValid = true;
@@ -205,9 +214,9 @@ Recording::Recording()
     m_pImpl.reset(new Impl());
 }
 
-Recording::Recording(const std::string & inPath)
+Recording::Recording(const std::string & inPath, const DataSet::Properties & inProperties)
 {
-    m_pImpl.reset(new Impl(inPath));
+    m_pImpl.reset(new Impl(inPath, inProperties));
 }
 
 Recording::~Recording()

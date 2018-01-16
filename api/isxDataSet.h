@@ -50,6 +50,7 @@ public:
     static const std::string PROP_MOVIE_START_TIME;      ///< Movie start time - used for behavioral movies
     static const std::string PROP_BEHAV_GOP_SIZE;        ///< Behavioral movie GOP size
     static const std::string PROP_BEHAV_NUM_FRAMES;      ///< Behavioral movie num frames
+    static const std::string PROP_MOVIE_FRAME_RATE;      ///< Movie frame rate - used only for TIF files with no XML
 
     /// Empty constructor.
     ///
@@ -256,11 +257,12 @@ private:
 /// If the file format is not recognized, then this function fails.
 ///
 /// \param  inFileName      The name of the movie file.
+/// \param  inProperties    The properties for for the movie file.
 /// \return                 The data set type.
 ///
 /// \throw  ExceptionFileIO     If the read fails.
 /// \throw  ExceptionDataIO     If the file format is not recognized.
-DataSet::Type readDataSetType(const std::string & inFileName);
+DataSet::Type readDataSetType(const std::string & inFileName, const DataSet::Properties & inProperties);
 
 using SpDataSetProperties_t = std::shared_ptr<DataSet::Properties>;
 

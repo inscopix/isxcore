@@ -340,9 +340,9 @@ NVistaHdf5Movie::readTimingInfo(std::vector<SpH5File_t> inHdf5Files, const std::
     if (bInitializedFromFile)
     {
         totalNumFrames += inDroppedFrames.size();               /// Account for lost frames
-        totalDurationInSecs *= 1000.0 / double(totalNumFrames);
+        totalDurationInSecs /= double(totalNumFrames);
 
-        isx::DurationInSeconds step = isx::DurationInSeconds(isize_t(std::round(totalDurationInSecs)), 1000);
+        isx::DurationInSeconds step = isx::Ratio::fromDouble(totalDurationInSecs);
         isx::Time start = isx::Time(startTime);
         m_timingInfos = TimingInfos_t{isx::TimingInfo(start, step, totalNumFrames, inDroppedFrames)};
     }

@@ -565,9 +565,9 @@ Series::checkNewMember(DataSet * inDataSet, std::string & outMessage)
             std::vector<SpMovie_t> existingMovies;
             for (const auto & ds : getDataSets())
             {
-                existingMovies.push_back(readMovie(ds->getFileName()));
+                existingMovies.push_back(readMovie(ds->getFileName(), ds->getProperties()));
             }
-            const SpMovie_t newMovie = readMovie(inDataSet->getFileName());
+            const SpMovie_t newMovie = readMovie(inDataSet->getFileName(), inDataSet->getProperties());
             if (!checkNewMemberOfSeries(existingMovies, newMovie, outMessage))
             {
                 return false;

@@ -27,7 +27,10 @@ writeMosaicMovie(
 SpVideoFrame_t
 readImage(const std::string & inFileName)
 {
-    auto m = isx::readMovie(inFileName);
+    DataSet::Properties props;
+    props[DataSet::PROP_MOVIE_START_TIME] = Variant(Time());
+    props[DataSet::PROP_MOVIE_FRAME_RATE] = Variant(0.f);
+    auto m = isx::readMovie(inFileName, props);
     auto frame = m->getFrame(0);
 
     ISX_ASSERT(frame->getFrameType() == VideoFrame::Type::VALID);
@@ -36,7 +39,7 @@ readImage(const std::string & inFileName)
 }
 
 SpMovie_t
-readMovie(const std::string & inFileName)
+readMovie(const std::string & inFileName, const DataSet::Properties & inProperties)
 {
     std::string ext = getExtension(inFileName);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
@@ -46,7 +49,7 @@ readMovie(const std::string & inFileName)
     }
     else if (isNVistaImagingFileExtension(inFileName))
     {
-        return readInscopixMovie(inFileName);
+        return readInscopixMovie(inFileName, inProperties);
     }
     else
     {
@@ -68,9 +71,9 @@ readMosaicMovie(const std::string & inFileName)
 }
 
 SpMovie_t
-readInscopixMovie(const std::string & inFileName)
+readInscopixMovie(const std::string & inFileName, const DataSet::Properties & inProperties)
 {
-    SpRecording_t recording = std::make_shared<Recording>(inFileName);
+    SpRecording_t recording = std::make_shared<Recording>(inFileName, inProperties);
     SpMovie_t movie = recording->getMovie();
     return movie;
 }
@@ -96,6 +99,14 @@ isNVistaImagingFileExtension(const std::string & inFileName)
     auto e = isx::getExtension(inFileName);
     std::transform(e.begin(), e.end(), e.begin(), ::tolower);
     return (e == "hdf5") || (e == "xml") || (e == "tif") || (e == "tiff");
+}
+
+bool 
+isTiffFileExtension(const std::string & inFileName)
+{
+    auto e = isx::getExtension(inFileName);
+    std::transform(e.begin(), e.end(), e.begin(), ::tolower);
+    return (e == "tif") || (e == "tiff");
 }
 
 } // namespace isx

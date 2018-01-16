@@ -1,6 +1,7 @@
 #ifndef ISX_RECORDING_H
 #define ISX_RECORDING_H
 
+#include "isxDataSet.h"
 #include "isxCoreFwd.h"
 #include "isxObject.h"
 #include "isxMovie.h"
@@ -28,9 +29,10 @@ public:
     /// Construct recording from a given file.
     ///
     /// \param inPath Path to recording file (can be an XML, HDF5 or TIFF file).
+    /// \param  inProperties    The properties for start time and frame rate (used only for TIF with no XML)
     /// \throw isx::ExceptionFileIO     If the file cannot be read.
     /// \throw isx::ExceptionDataIO     If the dataset cannot be read.
-    Recording(const std::string & inPath);
+    Recording(const std::string & inPath, const DataSet::Properties & inProperties = {});
 
     /// \return whether this is a valid recording object.
     ///

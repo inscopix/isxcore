@@ -89,7 +89,7 @@ TEST_CASE("readDataSetType", "[core]")
         auto m(isx::writeMosaicMovie(fileName, timingInfo, spacingInfo, isx::DataType::U16));
         m->closeForWriting();
 
-        isx::DataSet::Type type = isx::readDataSetType(fileName);
+        isx::DataSet::Type type = isx::readDataSetType(fileName, {});
 
         REQUIRE(type == isx::DataSet::Type::MOVIE);
     }

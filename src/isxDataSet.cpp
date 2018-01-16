@@ -29,6 +29,7 @@ const std::string DataSet::PROP_VIS_MAX  = "vmax";
 const std::string DataSet::PROP_MOVIE_START_TIME    = "movieStartTime";
 const std::string DataSet::PROP_BEHAV_NUM_FRAMES    = "numFrames";
 const std::string DataSet::PROP_BEHAV_GOP_SIZE      = "gopSize";
+const std::string DataSet::PROP_MOVIE_FRAME_RATE    = "movieFrameRate";
 
 DataSet::DataSet()
     : m_valid(false)
@@ -91,6 +92,7 @@ DataSet::setProperties(const SpDataSetProperties_t & inDataSetProperties)
     if (inDataSetProperties)
     {
         m_properties = *inDataSetProperties;
+        setModified();
     }
 }
 
@@ -122,17 +124,24 @@ DataSet::setPropertyValue(const std::string & inPropertyName, Variant inValue)
     {   
         m_properties[inPropertyName] = inValue;
         setModified();
+
+        if (inPropertyName == PROP_MOVIE_START_TIME ||
+            inPropertyName == PROP_MOVIE_FRAME_RATE)
+        {
+            // Force update of timing info next time the metadata is requested
+            m_hasMetaData = false;
+        }
     }
 }
 
 DataSet::Type
-readDataSetType(const std::string & inFileName)
+readDataSetType(const std::string & inFileName, const DataSet::Properties & inProperties)
 {
     std::string extension = isx::getExtension(inFileName);
     std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
     if (isNVistaImagingFileExtension(inFileName))
     {
-        const isx::SpMovie_t movie = readMovie(inFileName);
+        const isx::SpMovie_t movie = readMovie(inFileName, inProperties);
         if (movie->getTimingInfo().getNumTimes() > 1)
         {
             return DataSet::Type::MOVIE;
@@ -314,7 +323,12 @@ DataSet::locateFile(const std::string & inDirectory)
     {
         try
         {
-            if (m_type == readDataSetType(newFilePath))
+            // Properties are set here because if the file is TIF, these are needed and do not impact the result of 
+            // readDataSetType (which depends on the number of frames)
+            isx::DataSet::Properties props; 
+            props[PROP_MOVIE_START_TIME] = isx::Variant(isx::Time());
+            props[PROP_MOVIE_FRAME_RATE] = isx::Variant(20.f);
+            if (m_type == readDataSetType(newFilePath, props))
             {
                 m_fileName = newFilePath;
                 located = true;
@@ -461,7 +475,7 @@ DataSet::readMetaData()
 
     if (m_type == Type::MOVIE || m_type == Type::IMAGE)
     {
-        const SpMovie_t movie = readMovie(m_fileName);
+        const SpMovie_t movie = readMovie(m_fileName, getProperties());
         m_timingInfo = movie->getTimingInfo();
         m_spacingInfo = movie->getSpacingInfo();
         m_dataType = movie->getDataType();
