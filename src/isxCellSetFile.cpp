@@ -97,7 +97,7 @@ namespace isx
         }
         catch(...)
         {
-            ISX_LOG_ERROR("Unkown exception closing file ", m_fileName);
+            ISX_LOG_ERROR("Unknown exception closing file ", m_fileName);
         }
     }
 

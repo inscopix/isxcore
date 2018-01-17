@@ -94,7 +94,7 @@ public:
     /// \return     The address of the first byte of image data.
     char *
     getPixels();
-    
+
     /// const version of above
     ///
     const
@@ -122,7 +122,7 @@ public:
     ///                                 not uint16_t.
     uint16_t *
     getPixelsAsU16();
-    
+
     /// const version of above
     ///
     const

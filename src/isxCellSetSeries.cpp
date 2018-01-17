@@ -56,7 +56,7 @@ namespace isx
 
     }
 
-    bool 
+    bool
     CellSetSeries::isValid() const
     {
         return m_valid;
@@ -72,25 +72,25 @@ namespace isx
     }
 
     std::string
-    CellSetSeries::getFileName() const 
-    {   
-        return "**CellSetSeries";        
+    CellSetSeries::getFileName() const
+    {
+        return "**CellSetSeries";
     }
 
-    const isize_t 
-    CellSetSeries::getNumCells() 
+    const isize_t
+    CellSetSeries::getNumCells()
     {
         return m_cellSets[0]->getNumCells();
     }
 
-    isx::TimingInfo 
-    CellSetSeries::getTimingInfo() const 
+    isx::TimingInfo
+    CellSetSeries::getTimingInfo() const
     {
         return m_gaplessTimingInfo;
     }
 
-    isx::TimingInfos_t 
-    CellSetSeries::getTimingInfosForSeries() const 
+    isx::TimingInfos_t
+    CellSetSeries::getTimingInfosForSeries() const
     {
         TimingInfos_t tis;
         for(const auto &cs : m_cellSets)
@@ -100,14 +100,14 @@ namespace isx
         return tis;
     }
 
-    isx::SpacingInfo 
-    CellSetSeries::getSpacingInfo() const 
+    isx::SpacingInfo
+    CellSetSeries::getSpacingInfo() const
     {
         return m_cellSets[0]->getSpacingInfo();
     }
 
-    SpFTrace_t 
-    CellSetSeries::getTrace(isize_t inIndex) 
+    SpFTrace_t
+    CellSetSeries::getTrace(isize_t inIndex)
     {
         SpFTrace_t trace = std::make_shared<FTrace_t>(m_gaplessTimingInfo);
         float * v = trace->getValues();
@@ -120,11 +120,11 @@ namespace isx
             memcpy((char *)v, (char *)vPartial, sizeof(float)*numSamples);
             v += numSamples;
         }
-        return trace;  
+        return trace;
     }
 
-    void 
-    CellSetSeries::getTraceAsync(isize_t inIndex, CellSetGetTraceCB_t inCallback) 
+    void
+    CellSetSeries::getTraceAsync(isize_t inIndex, CellSetGetTraceCB_t inCallback)
     {
         std::weak_ptr<CellSet> weakThis = shared_from_this();
 
@@ -176,40 +176,40 @@ namespace isx
             cs->getTraceAsync(inIndex, finishedCB);
             isize_t numSamples = cs->getTimingInfo().getNumTimes();
             offset += numSamples;
+
             ++counter;
-            
-        }     
+        }
 
     }
 
-    SpImage_t 
-    CellSetSeries::getImage(isize_t inIndex) 
+    SpImage_t
+    CellSetSeries::getImage(isize_t inIndex)
     {
         return m_cellSets[0]->getImage(inIndex);
     }
 
-    void 
-    CellSetSeries::getImageAsync(isize_t inIndex, CellSetGetImageCB_t inCallback) 
+    void
+    CellSetSeries::getImageAsync(isize_t inIndex, CellSetGetImageCB_t inCallback)
     {
         return m_cellSets[0]->getImageAsync(inIndex, inCallback);
-    }  
+    }
 
-    void 
+    void
     CellSetSeries::writeImageAndTrace(
             isize_t inIndex,
             const SpImage_t & inImage,
             SpFTrace_t & inTrace,
-            const std::string & inName) 
+            const std::string & inName)
     {
-        // Don't do anything. Note: salpert 11/8/16 we need to decide 
+        // Don't do anything. Note: salpert 11/8/16 we need to decide
         // what operations to allow on a cell set series (read/write)
         // and take appropriate actions to limit the API (maybe separate CellSet
         // into CellSet and WritableCellSet like we did for movies?)
         // This class will probably require some re-factoring
         ISX_ASSERT(false);
-    } 
+    }
 
-    CellSet::CellStatus 
+    CellSet::CellStatus
     CellSetSeries::getCellStatus(isize_t inIndex)
     {
         return m_cellSets[0]->getCellStatus(inIndex);
@@ -227,7 +227,7 @@ namespace isx
         return m_cellSets[0]->getCellStatusString(inIndex);
     }
 
-    void 
+    void
     CellSetSeries::setCellStatus(isize_t inIndex, CellSet::CellStatus inStatus)
     {
         for(const auto &cs : m_cellSets)
@@ -254,14 +254,14 @@ namespace isx
         }
     }
 
-    std::string 
-    CellSetSeries::getCellName(isize_t inIndex) 
+    std::string
+    CellSetSeries::getCellName(isize_t inIndex)
     {
         return m_cellSets[0]->getCellName(inIndex);
     }
 
-    void 
-    CellSetSeries::setCellName(isize_t inIndex, const std::string & inName) 
+    void
+    CellSetSeries::setCellName(isize_t inIndex, const std::string & inName)
     {
         for(const auto &cs : m_cellSets)
         {
@@ -269,7 +269,7 @@ namespace isx
         }
     }
 
-    std::vector<bool> 
+    std::vector<bool>
     CellSetSeries::getCellActivity(isize_t inIndex) const
     {
         std::vector<bool> activity;
@@ -281,7 +281,7 @@ namespace isx
         return activity;
     }
 
-    void 
+    void
     CellSetSeries::setCellActive(isize_t inIndex, const std::vector<bool> & inActive)
     {
         if (inActive.size() != 1)
@@ -299,7 +299,7 @@ namespace isx
                 cs->setCellActive(inIndex, inActive);
             }
         }
-        
+
     }
 
     void
