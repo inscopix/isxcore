@@ -28,7 +28,7 @@ using GetImageCB_t = std::function<SpImage_t()>;
 /// The type of callback for getting a cell image asynchronously
 using CellSetGetImageCB_t = std::function<void(AsyncTaskResult<SpImage_t>)>;
 
-/// The cell statuses 
+/// The cell statuses
 ///
 enum class CellStatus {
     ACCEPTED = 0,                   ///< Cell has been reviewed and accepted
@@ -52,20 +52,20 @@ closeForWriting() = 0;
 
 /// \return     The name of the file storing this cell set.
 ///
-virtual 
-std::string 
+virtual
+std::string
 getFileName() const = 0;
 
 /// \return     The number of cells contained in this cell set.
 ///
-virtual 
-const isize_t 
+virtual
+const isize_t
 getNumCells() = 0;
 
 /// \return     The timing information read from this cell set.
 ///
-virtual 
-isx::TimingInfo 
+virtual
+isx::TimingInfo
 getTimingInfo() const = 0;
 
 /// \return     The TimingInfos of a CellSetSeries.
@@ -73,13 +73,13 @@ getTimingInfo() const = 0;
 ///             matching getTimingInfo.
 ///
 virtual
-isx::TimingInfos_t 
+isx::TimingInfos_t
 getTimingInfosForSeries() const = 0;
 
 /// \return     The spacing information read from this cell set.
 ///
-virtual 
-isx::SpacingInfo 
+virtual
+isx::SpacingInfo
 getSpacingInfo() const = 0;
 
 /// Get the trace of a cell synchronously.
@@ -90,8 +90,8 @@ getSpacingInfo() const = 0;
 /// \param  inIndex     The index of the cell
 /// \return             A shared pointer to the trace data of the indexed cell.
 /// \throw  isx::ExceptionFileIO    If cell does not exist or reading fails.
-virtual 
-SpFTrace_t 
+virtual
+SpFTrace_t
 getTrace(isize_t inIndex) = 0;
 
 /// Get the trace of cell asynchronously.
@@ -100,8 +100,8 @@ getTrace(isize_t inIndex) = 0;
 ///
 /// \param  inIndex     The index of the cell
 /// \param  inCallback  The call back that operates on the trace.
-virtual 
-void 
+virtual
+void
 getTraceAsync(isize_t inIndex, CellSetGetTraceCB_t inCallback) = 0;
 
 /// Get the image of a cell synchronously.
@@ -112,8 +112,8 @@ getTraceAsync(isize_t inIndex, CellSetGetTraceCB_t inCallback) = 0;
 /// \param  inIndex     The index of the cell
 /// \return             A shared pointer to the image data of the indexed cell.
 /// \throw  isx::ExceptionFileIO    If cell does not exist or reading fails.
-virtual 
-SpImage_t 
+virtual
+SpImage_t
 getImage(isize_t inIndex) = 0;
 
 /// Get the image of cell asynchronously.
@@ -122,8 +122,8 @@ getImage(isize_t inIndex) = 0;
 ///
 /// \param  inIndex     The index of the cell
 /// \param  inCallback  The call back that operates on the image.
-virtual 
-void 
+virtual
+void
 getImageAsync(isize_t inIndex, CellSetGetImageCB_t inCallback) = 0;
 
 /// Write the image and trace data for a cell.
@@ -142,7 +142,7 @@ getImageAsync(isize_t inIndex, CellSetGetImageCB_t inCallback) = 0;
 /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
 /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
 virtual
-void 
+void
 writeImageAndTrace(
         isize_t inIndex,
         const SpImage_t & inImage,
@@ -152,8 +152,8 @@ writeImageAndTrace(
 /// \return             The current status of the cell
 /// \param  inIndex     The index of the cell.
 /// \throw  isx::ExceptionFileIO    If trying to access nonexistent cell or reading fails.
-virtual 
-CellStatus 
+virtual
+CellStatus
 getCellStatus(isize_t inIndex) = 0;
 
 /// \return             The current color of the cell
@@ -178,7 +178,7 @@ getCellStatusString(isize_t inIndex) = 0;
 /// \throw  isx::ExceptionFileIO    If trying to access nonexistent cell or reading fails.
 /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
 virtual
-void 
+void
 setCellStatus(isize_t inIndex, CellStatus inStatus) = 0;
 
 /// Set color of a cell in the set.
@@ -203,37 +203,37 @@ setCellColors(const IdColorPairs &inColors) = 0;
 /// Get the name for a cell in the set
 /// \param inIndex the cell of interest
 /// \return a string with the name
-virtual 
-std::string 
+virtual
+std::string
 getCellName(isize_t inIndex) = 0;
 
-/// Set the cell name 
+/// Set the cell name
 /// \param inIndex the cell of interest
 /// \param inName the assigned name (it will be truncated to 15 characters, if longer than that)
 /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
 virtual
-void 
+void
 setCellName(isize_t inIndex, const std::string & inName) = 0;
 
 /// Check whether a cell is active in different portions/segments of the cell set
 /// \param inIndex the cell of interest
 /// \return a vector containing a boolean for each segment of a cell set
-virtual 
-std::vector<bool> 
+virtual
+std::vector<bool>
 getCellActivity(isize_t inIndex) const = 0;
 
-/// Set the cell activity flags 
+/// Set the cell activity flags
 /// \param inIndex the cell of interest
-/// \param inActive a vector with a flag for each segment of the cellset 
+/// \param inActive a vector with a flag for each segment of the cellset
 /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
 virtual
-void 
+void
 setCellActive(isize_t inIndex, const std::vector<bool> & inActive) = 0;
 
 /// Cancel all pending read requests (schedule with getTraceAsync/getImageAsync).
 ///
-virtual 
-void 
+virtual
+void
 cancelPendingReads() = 0;
 
 /// \return     True if this came from drawing ROIs, false otherwise.
