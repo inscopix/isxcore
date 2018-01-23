@@ -19,6 +19,7 @@ using CellNames_t = std::vector<std::string>;
 using CellStatuses_t = std::vector<CellSet::CellStatus>;
 using CellColors_t = std::vector<Color>;
 using CellActivities_t = std::vector<bool>;
+using CellMetrics_t = std::vector<SpImageMetrics_t>;
 
 json convertRatioToJson(const Ratio & inRatio);
 Ratio convertJsonToRatio(const json & j);
@@ -34,6 +35,9 @@ TimingInfo convertJsonToTimingInfo(const json & j);
 
 json convertSizeInPixelsToJson(const SizeInPixels_t & inSizeInPixels);
 SizeInPixels_t convertJsonToSizeInPixels(const json & j);
+
+json convertPointInPixelsToJson(const PointInPixels_t & inPointInPixels);
+PointInPixels_t convertJsonToPointInPixels(const json & j);
 
 SizeInMicrons_t convertJsonToSizeInMicrons(const json & j);
 json convertSizeInMicronsToJson(const SizeInMicrons_t & inSizeInMicrons);
@@ -79,20 +83,40 @@ writeJson(
 
 json
 convertCellNamesToJson(const CellNames_t & inCellNames);
+
 CellNames_t
 convertJsonToCellNames(const json & inJson);
+
 json
 convertCellStatusesToJson(const CellStatuses_t & inCellStatuses);
+
 CellStatuses_t
 convertJsonToCellStatuses(const json & inJson);
+
 json
 convertCellColorsToJson(const CellColors_t & inCellColors);
+
 CellColors_t
 convertJsonToCellColors(const json & inJson);
+
 json
 convertCellActivitiesToJson(const CellActivities_t & inCellActivities);
+
 CellActivities_t
 convertJsonToCellActivities(const json & inJson);
+
+
+json
+convertImageMetricsToJson(const ImageMetrics & inMetrics);
+
+void
+convertJsonToImageMetrics(const json & inJ, ImageMetrics & outMetrics);
+
+json
+convertCellMetricsToJson(const CellMetrics_t & inMetrics);
+
+CellMetrics_t
+convertJsonToCellMetrics(const json & inJson);
     
 /// Reads a JSON header from an input stream.
 ///

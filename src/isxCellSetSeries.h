@@ -143,6 +143,12 @@ public:
     void
     setCentroidDistances(const std::vector<double> & inCentroidDistances) override;
 
+    SpImageMetrics_t 
+    getImageMetrics(isize_t inIndex) const override;
+
+    void
+    setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics) override;
+
 private:
 
     /// True if the cell set is valid, false otherwise.

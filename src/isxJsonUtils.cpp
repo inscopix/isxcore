@@ -121,6 +121,22 @@ convertJsonToSizeInPixels(const json & j)
     return SizeInPixels_t(x, y);
 }
 
+json 
+convertPointInPixelsToJson(const PointInPixels_t & inPointInPixels)
+{
+    json j;
+    j["x"] = inPointInPixels.getX();
+    j["y"] = inPointInPixels.getY();
+    return j;
+}
+
+PointInPixels_t convertJsonToPointInPixels(const json & j)
+{
+    int64_t x = j.at("x");
+    int64_t y = j.at("y");
+    return PointInPixels_t(x, y);
+}
+
 SizeInMicrons_t
 convertJsonToSizeInMicrons(const json & j)
 {
@@ -370,6 +386,71 @@ CellActivities_t
 convertJsonToCellActivities(const json & inJson)
 {
     return inJson.get<CellActivities_t>();
+}
+
+json
+convertImageMetricsToJson(const ImageMetrics & inMetrics) 
+{
+    json outJ = json{
+        inMetrics.m_numComponents, 
+        convertPointInPixelsToJson(inMetrics.m_overallCenterInPixels), 
+        convertPointInPixelsToJson(inMetrics.m_largestComponentCenterInPixels),
+        inMetrics.m_overallAreaInPixels, 
+        inMetrics.m_largestComponentAreaInPixels,
+        inMetrics.m_overallMaxContourWidthInPixels, 
+        inMetrics.m_largestComponentMaxContourWidthInPixels};
+
+    return outJ;
+}
+
+void
+convertJsonToImageMetrics(const json & inJ, ImageMetrics & outMetrics) 
+{
+    outMetrics.m_numComponents                     = inJ.at(0).get<isize_t>();
+    outMetrics.m_overallCenterInPixels             = convertJsonToPointInPixels(inJ.at(1));
+    outMetrics.m_largestComponentCenterInPixels    = convertJsonToPointInPixels(inJ.at(2));
+    outMetrics.m_overallAreaInPixels               = inJ.at(3).get<float>();
+    outMetrics.m_largestComponentAreaInPixels      = inJ.at(4).get<float>();
+    outMetrics.m_overallMaxContourWidthInPixels    = inJ.at(5).get<float>();
+    outMetrics.m_largestComponentMaxContourWidthInPixels = inJ.at(6).get<float>();
+}
+
+json
+convertCellMetricsToJson(const CellMetrics_t & inMetrics)
+{
+    json j;
+    for (auto & cm : inMetrics)
+    {
+        if (cm)
+        {
+            json jcm = convertImageMetricsToJson(*cm);
+            j.push_back(jcm);
+        }
+        else
+        {
+            j.push_back(json::object());
+        }
+        
+    }
+    return j;
+}
+
+CellMetrics_t
+convertJsonToCellMetrics(const json & inJson)
+{
+    CellMetrics_t outMetrics;
+
+    for (auto & j : inJson)
+    {
+        SpImageMetrics_t im = std::make_shared<ImageMetrics>();
+        if (!j.empty())
+        {
+            convertJsonToImageMetrics(j, *im);
+        }        
+        outMetrics.push_back(im);
+    }
+
+    return outMetrics;
 }
     
 json

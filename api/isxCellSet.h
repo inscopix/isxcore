@@ -14,6 +14,28 @@
 
 namespace isx
 {
+
+/// A structure for aggregating metrics useful for quantifying cell images. Cell images are broken down into their
+/// connected components, and this struct contains information about the largest connected component, which is usually
+/// assumed to be the actual cell, and overall statistics across connected components.
+struct ImageMetrics
+{
+    ImageMetrics() {}
+
+    isx::isize_t m_numComponents = 0;                       ///< The number of connected components found in the cell image
+
+    PointInPixels_t m_overallCenterInPixels = PointInPixels_t(0, 0);            ///< The centroid across all contour centroids
+    PointInPixels_t m_largestComponentCenterInPixels = PointInPixels_t(0, 0);   ///< The centroid of the largest connected component
+
+    float m_overallAreaInPixels = 0.f;                      ///< The sum total of the area of all connected components
+    float m_largestComponentAreaInPixels = 0.f;             ///< The area of the largest connected component
+
+    float m_overallMaxContourWidthInPixels = 0.f;           ///< The maximum point-to-point width between all contour points
+    float m_largestComponentMaxContourWidthInPixels = 0.f;  ///< The maximum point-to-point width of the largest connected component    
+};
+
+using SpImageMetrics_t = std::shared_ptr<ImageMetrics>;
+
 /// Interface for cell sets
 ///
 class CellSet
@@ -289,6 +311,19 @@ getCentroidDistances() = 0;
 virtual
 void
 setCentroidDistances(const std::vector<double> & inCentroidDistances) = 0;
+
+/// Get all the quality assessment metrics for a given cell image
+/// \param inIndex the cell index
+virtual 
+SpImageMetrics_t 
+getImageMetrics(isize_t inIndex) const = 0;
+
+/// Set the quality assessment metrics for a cell image
+/// \param inIndex the cell index
+/// \param inMetrics the metrics structure
+virtual 
+void
+setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics) = 0;
 
 };
 

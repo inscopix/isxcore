@@ -388,4 +388,21 @@ namespace isx
         ISX_ASSERT(false);
         // placeholder
     }
+
+    SpImageMetrics_t 
+    CellSetSeries::getImageMetrics(isize_t inIndex) const 
+    {
+        // note: all images in a series are the same, so returning the metrics from the 
+        // first cell set should suffice. 
+        return m_cellSets.front()->getImageMetrics(inIndex);
+    }
+
+    void
+    CellSetSeries::setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics)
+    {
+        for (const auto & cs : m_cellSets)
+        {
+            cs->setImageMetrics(inIndex, inMetrics);
+        }
+    }
 }
