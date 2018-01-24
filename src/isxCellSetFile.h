@@ -195,6 +195,12 @@ public:
     /// \param inCentroidDistances cell set centroid distances
     void setCentroidDistances(const std::vector<double> & inCentroidDistances);
 
+    SpImageMetrics_t 
+    getImageMetrics(isize_t inIndex) const;
+
+    void
+    setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics);
+
 private:
 
     /// True if the cell set file is valid, false otherwise.
@@ -235,7 +241,7 @@ private:
 
     bool m_fileClosedForWriting = false;
 
-    const static size_t s_version = 3;
+    const static size_t s_version = 4;
 
     /// True if this came from drawing ROIs, false otherwise.
     bool m_isRoiSet = false;
@@ -251,6 +257,8 @@ private:
 
     /// Centroid distances of the matches (see above)
     std::vector<double> m_centroidDistances;
+
+    CellMetrics_t m_cellImageMetrics;
 
     /// Read the header to populate information about the cell set.
     ///

@@ -218,6 +218,7 @@ namespace isx
             m_cellStatuses.push_back(CellSet::CellStatus::UNDECIDED);
             m_cellColors.push_back(Color());
             m_cellActivity.push_back(true);
+            m_cellImageMetrics.push_back(SpImageMetrics_t());
 
             ++m_numCells;
         }
@@ -230,6 +231,7 @@ namespace isx
             m_cellStatuses.at(inCellId) = CellSet::CellStatus::UNDECIDED;
             m_cellColors.at(inCellId) = Color();
             m_cellActivity.at(inCellId) = true;
+            m_cellImageMetrics.at(inCellId) = SpImageMetrics_t();
         }
         else
         {
@@ -433,6 +435,8 @@ namespace isx
             auto version = j["fileVersion"].get<size_t>();
             switch (version)
             {
+            case 4: 
+                m_cellImageMetrics = convertJsonToCellMetrics(j["cellMetrics"]);
             case 3:
                 m_sizeGlobalCS = j["SizeGlobalCS"];
                 m_matches = j["Matches"].get<std::vector<int16_t>>();
@@ -501,6 +505,7 @@ namespace isx
             j["Matches"] = m_matches;
             j["PairScores"] = m_pairScores;
             j["CentroidDistances"] = m_centroidDistances;
+            j["cellMetrics"] = convertCellMetricsToJson(m_cellImageMetrics);
         }
         catch (const std::exception & error)
         {
@@ -590,5 +595,22 @@ namespace isx
                 m_cellNames[i] = "C" + convertNumberToPaddedString(i, width);
             }
         }
+    }
+
+    SpImageMetrics_t 
+    CellSetFile::getImageMetrics(isize_t inIndex) const
+    {
+        return m_cellImageMetrics.at(inIndex);
+    }
+
+    void
+    CellSetFile::setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics)
+    {
+        if (m_fileClosedForWriting)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Writing data after file was closed for writing.", m_fileName);
+        }
+        m_cellImageMetrics.at(inIndex) = inMetrics;
     }
 }
