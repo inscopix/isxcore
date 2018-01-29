@@ -437,10 +437,49 @@ MovieCompressedAviExporterParams::getOpName()
     return "Export MP4 Movie";
 }
 
+MovieExporterParams::Type
+MovieCompressedAviExporterParams::getType()
+{
+    return MovieExporterParams::Type::MP4;
+}
+
+void
+MovieCompressedAviExporterParams::setOutputFileName(const std::string & inFileName)
+{
+    m_filename = inFileName;
+}
+
+void
+MovieCompressedAviExporterParams::setSources(const std::vector<SpMovie_t> & inSources)
+{
+    m_srcs = inSources;
+}
+
+void
+MovieCompressedAviExporterParams::setAdditionalInfo(
+        const std::string & inIdentifierBase,
+        const std::string & inSessionDescription,
+        const std::string & inComments,
+        const std::string & inDescription,
+        const std::string & inExperimentDescription,
+        const std::string & inExperimenter,
+        const std::string & inInstitution,
+        const std::string & inLab,
+        const std::string & inSessionId)
+{
+    // Do nothing - MP4 cannot contains these details
+}
+
+void
+MovieCompressedAviExporterParams::setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
+{
+    // Do nothing - currently MP4 cannot contains these details
+}
+
 AsyncTaskStatus 
 runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::shared_ptr<MovieCompressedAviExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
 {
-    if (inParams.m_compressedAviFilename.empty())
+    if (inParams.m_filename.empty())
     {
         ISX_THROW(isx::ExceptionUserInput, "No output video file specified.");
     }
@@ -465,19 +504,19 @@ runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::sh
 
     try
     {
-        cancelled = toCompressedAVI(inParams.m_compressedAviFilename, inParams.m_srcs, inCheckInCB);
+        cancelled = toCompressedAVI(inParams.m_filename, inParams.m_srcs, inCheckInCB);
     }
     catch (...)
     {
-        std::remove(inParams.m_compressedAviFilename.c_str());
+        std::remove(inParams.m_filename.c_str());
         throw;
     }
 
     if (cancelled)
     {
-        if (!inParams.m_compressedAviFilename.empty())
+        if (!inParams.m_filename.empty())
         {
-            std::remove(inParams.m_compressedAviFilename.c_str());
+            std::remove(inParams.m_filename.c_str());
         }
 
         return AsyncTaskStatus::CANCELLED;

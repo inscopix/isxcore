@@ -5,11 +5,9 @@
 #include "isxException.h"
 #include "isxProject.h"
 #include "isxPathUtils.h"
-
-#include "isxMovieExporter.h"
+#include "isxMovieNWBExporter.h"
 
 #include "H5Cpp.h"
-#include "isxTiffMovie.h"
 
 #include <cstring>
 #include <fstream>
@@ -141,7 +139,7 @@ namespace
     }
     
     void
-    verifyTopLevelDataSets(H5::H5File & inFile, isx::MovieExporterParams & inParams)
+    verifyTopLevelDataSets(H5::H5File & inFile, isx::MovieNWBExporterParams & inParams)
     {
         verifyDataSet(inFile, S_nwb_version, NWB_SPEC_VERSION);
         verifyDataSet(inFile, S_file_create_date, "");
@@ -209,7 +207,7 @@ namespace
     }
 
     void
-    verifyTimeSeriesAttributes(H5::Group & inGroup, isx::MovieExporterParams & inParams, isx::SpMovie_t inMovie)
+    verifyTimeSeriesAttributes(H5::Group & inGroup, isx::MovieNWBExporterParams & inParams, isx::SpMovie_t inMovie)
     {
         auto attr = inGroup.openAttribute(S_ancestry);
         auto dt = attr.getDataType();
@@ -249,7 +247,7 @@ namespace
     }
 
     void
-    verifyVideoFrames(H5::Group & inGroup, isx::MovieExporterParams & inParams, isx::SpMovie_t inMovie, double inStartTimeD)
+    verifyVideoFrames(H5::Group & inGroup, isx::MovieNWBExporterParams & inParams, isx::SpMovie_t inMovie, double inStartTimeD)
     {
         auto width  = hsize_t(inMovie->getSpacingInfo().getNumColumns());
         auto height = hsize_t(inMovie->getSpacingInfo().getNumRows());
@@ -402,7 +400,7 @@ TEST_CASE("MovieExportTest", "[core]")
         {
             movies.push_back(isx::readMovie(fn));
         }
-        isx::MovieExporterParams params(
+        isx::MovieNWBExporterParams params(
             movies,
             exportedNwbFileName,
             "mostest made this",
@@ -414,7 +412,7 @@ TEST_CASE("MovieExportTest", "[core]")
             "general/institution",
             "general/lab",
             "general/session_id");
-        isx::runMovieExporter(params, nullptr, [](float){return false;});
+        isx::runMovieNWBExporter(params);
         
         
         // verify exported data

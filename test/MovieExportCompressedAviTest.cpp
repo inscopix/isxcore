@@ -98,7 +98,7 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core]")
         isx::MovieCompressedAviExporterParams params(
             movies,
 			exportedCompressedAviFileName);
-        isx::runMovieCompressedAviExporter(params, nullptr, [](float){return false;});
+        isx::runMovieCompressedAviExporter(params);
         
         
         // verify exported data
@@ -175,7 +175,7 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core]")
         isx::MovieCompressedAviExporterParams params(
             movies,
 			exportedCompressedAviFileName);
-        isx::runMovieCompressedAviExporter(params, nullptr, [](float) {return false; });
+        isx::runMovieCompressedAviExporter(params);
 
 
         // verify exported data

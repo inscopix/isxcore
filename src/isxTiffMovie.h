@@ -72,7 +72,7 @@ namespace isx
         void initialize(const std::string & inFileName);
 
         std::string m_fileName;
-        TIFF *      m_tif;
+        tiff *      m_tif;
 
         isize_t m_frameWidth;
         isize_t m_frameHeight;

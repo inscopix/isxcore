@@ -91,9 +91,8 @@ TEST_CASE("MovieTiffExportF32Test", "[core]")
         }
         isx::MovieTiffExporterParams params(
             movies,
-            exportedTiffFileName,
-            false);
-        isx::runMovieTiffExporter(params, nullptr, [](float){return false;});
+            exportedTiffFileName);
+        isx::runMovieTiffExporter(params);
 
         // verify exported data
         {
@@ -171,9 +170,8 @@ TEST_CASE("MovieTiffExportU16Test", "[core]")
         }
         isx::MovieTiffExporterParams params(
             movies,
-            exportedTiffFileName,
-            false);
-        isx::runMovieTiffExporter(params, nullptr, [](float) {return false; });
+            exportedTiffFileName);
+        isx::runMovieTiffExporter(params);
 
 
         // verify exported data
@@ -255,9 +253,8 @@ TEST_CASE("MovieTiffExportU16ComplexTest", "[core]")
         }
         isx::MovieTiffExporterParams params(
             movies,
-            exportedTiffFileName,
-            false);
-        isx::runMovieTiffExporter(params, nullptr, [](float) {return false; });
+            exportedTiffFileName);
+        isx::runMovieTiffExporter(params);
 
 
         // verify exported data
@@ -359,9 +356,8 @@ TEST_CASE("MovieTiffExportF32ComplexTest", "[core]")
         }
         isx::MovieTiffExporterParams params(
             movies,
-            exportedTiffFileName,
-            false);
-        isx::runMovieTiffExporter(params, nullptr, [](float) {return false; });
+            exportedTiffFileName);
+        isx::runMovieTiffExporter(params);
 
 
         // verify exported data
@@ -462,7 +458,7 @@ TEST_CASE("MovieTiffExportSplittedTest", "[core]")
             exportedTiffFileName,
             false,
             3);
-        isx::runMovieTiffExporter(params, nullptr, [](float) {return false; });
+        isx::runMovieTiffExporter(params);
 
 
         // verify exported data
@@ -627,8 +623,8 @@ TEST_CASE("MovieTiffExportBigTiff", "[core][!hide]")
     {
         const isx::SpMovie_t inputMovie = writeTestU16MovieGeneric(inputFileName, timingInfo, spacingInfo);
 
-        const isx::MovieTiffExporterParams params({inputMovie}, {outputFileName}, false);
-        isx::runMovieTiffExporter(params, nullptr, [](float) {return false; });
+        const isx::MovieTiffExporterParams params({ inputMovie }, { outputFileName });
+        isx::runMovieTiffExporter(params);
 
         const isx::SpMovie_t outputMovie = isx::readMovie(outputFileName);
         REQUIRE(outputMovie->getTimingInfo() == timingInfo);
