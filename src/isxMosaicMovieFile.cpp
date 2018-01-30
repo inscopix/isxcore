@@ -94,7 +94,7 @@ MosaicMovieFile::initialize(
 }
 
 void
-MosaicMovieFile::closeForWriting()
+MosaicMovieFile::closeForWriting(const TimingInfo & inTimingInfo)
 {
     if (isValid())
     {
@@ -102,6 +102,11 @@ MosaicMovieFile::closeForWriting()
         {
             if (!m_fileClosedForWriting)
             {
+                if (inTimingInfo.isValid())
+                {
+                    setTimingInfo(inTimingInfo);
+                }
+
                 writeHeader();
                 m_fileClosedForWriting = true;
             }
@@ -118,6 +123,12 @@ MosaicMovieFile::closeForWriting()
             ISX_LOG_ERROR("Unkown exception closing file ", m_fileName);
         }
     }
+}
+
+void 
+MosaicMovieFile::setTimingInfo(const TimingInfo & inTimingInfo)
+{
+    m_timingInfos = {inTimingInfo};
 }
     
 bool

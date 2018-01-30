@@ -199,9 +199,9 @@ MosaicMovie::writeFrame(const SpVideoFrame_t & inVideoFrame)
 }
 
 void
-MosaicMovie::closeForWriting()
+MosaicMovie::closeForWriting(const TimingInfo & inTimingInfo)
 {
-    m_file->closeForWriting();
+    m_file->closeForWriting(inTimingInfo);
 }
 
 SpVideoFrame_t
