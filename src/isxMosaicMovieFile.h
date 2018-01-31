@@ -70,8 +70,10 @@ public:
     /// metadata at the end of the file.  Any attempts to write frames after
     /// this is called will result in an exception.
     ///
+    /// \param inTimingInfo  a new timing information object to be set in the file
+    /// before finishing writing it
     void
-    closeForWriting();
+    closeForWriting(const TimingInfo & inTimingInfo = TimingInfo());
 
     /// Read a frame in the file by index.
     ///
@@ -196,6 +198,12 @@ private:
     /// Flush the stream
     ///
     void flush();
+
+    /// Set a new timing info
+    /// Notice that is only called from closeForWriting() as it is 
+    /// intended to be used during data acquisition, when the client has 
+    /// finished writing frame data. 
+    void setTimingInfo(const TimingInfo & inTimingInfo);
 };
 
 }

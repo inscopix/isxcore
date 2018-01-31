@@ -12,6 +12,45 @@ MovieTiffExporterParams::getOpName()
     return "Export Tiff Movie";
 }
 
+MovieExporterParams::Type
+MovieTiffExporterParams::getType()
+{
+    return MovieExporterParams::Type::TIFF;
+}
+
+void
+MovieTiffExporterParams::setOutputFileName(const std::string & inFileName)
+{
+    m_filename = inFileName;
+}
+
+void
+MovieTiffExporterParams::setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
+{
+    m_writeInvalidFrames = inWriteDroppedAndCropped;
+}
+
+void
+MovieTiffExporterParams::setSources(const std::vector<SpMovie_t> & inSources)
+{
+    m_srcs = inSources;
+}
+
+void
+MovieTiffExporterParams::setAdditionalInfo(
+        const std::string & inIdentifierBase,
+        const std::string & inSessionDescription,
+        const std::string & inComments,
+        const std::string & inDescription,
+        const std::string & inExperimentDescription,
+        const std::string & inExperimenter,
+        const std::string & inInstitution,
+        const std::string & inLab,
+        const std::string & inSessionId)
+{
+    // Do nothing - TIFF cannot contains these details
+}
+
 AsyncTaskStatus 
 runMovieTiffExporter(MovieTiffExporterParams inParams, std::shared_ptr<MovieTiffExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
 {
@@ -34,24 +73,24 @@ runMovieTiffExporter(MovieTiffExporterParams inParams, std::shared_ptr<MovieTiff
     }
 
 
-    if (inParams.m_tiffFilename.empty() == false)
+    if (inParams.m_filename.empty() == false)
     {
         try
         {
-            cancelled = toTiff(inParams.m_tiffFilename, inParams.m_srcs, inParams.m_writeInvalidFrames, inParams.m_numFramesInMovie, inCheckInCB);
+            cancelled = toTiff(inParams.m_filename, inParams.m_srcs, inParams.m_writeInvalidFrames, inParams.m_numFramesInMovie, inCheckInCB);
         }
         catch (...)
         {
-            std::remove(inParams.m_tiffFilename.c_str());
+            std::remove(inParams.m_filename.c_str());
             throw;
         }
     }
 
     if (cancelled)
     {
-        if (!inParams.m_tiffFilename.empty())
+        if (!inParams.m_filename.empty())
         {
-            std::remove(inParams.m_tiffFilename.c_str());
+            std::remove(inParams.m_filename.c_str());
         }
 
         return AsyncTaskStatus::CANCELLED;

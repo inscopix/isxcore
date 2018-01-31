@@ -31,9 +31,11 @@ public:
     /// metadata at the end of the file.  Any attempts to write frames after
     /// this is called will result in an exception.
     ///
+    /// \param inTimingInfo  a new timing information object to be set in the file
+    /// before finishing writing it
     virtual
     void
-    closeForWriting() = 0;
+    closeForWriting(const TimingInfo & inTimingInfo = TimingInfo()) = 0;
 
     /// Creates a new frame indexed within this movie.
     ///
