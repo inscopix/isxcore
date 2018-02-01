@@ -195,6 +195,9 @@ public:
     /// \param inCentroidDistances cell set centroid distances
     void setCentroidDistances(const std::vector<double> & inCentroidDistances);
 
+    bool 
+    hasMetrics() const;
+
     SpImageMetrics_t 
     getImageMetrics(isize_t inIndex) const;
 

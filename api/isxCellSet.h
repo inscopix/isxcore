@@ -312,6 +312,13 @@ virtual
 void
 setCentroidDistances(const std::vector<double> & inCentroidDistances) = 0;
 
+
+/// \return true if the cell set contains image metrics
+/// 
+virtual 
+bool 
+hasMetrics() const = 0;
+
 /// Get all the quality assessment metrics for a given cell image
 /// \param inIndex the cell index
 virtual 

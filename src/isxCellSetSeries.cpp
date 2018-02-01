@@ -389,6 +389,12 @@ namespace isx
         // placeholder
     }
 
+    bool 
+    CellSetSeries::hasMetrics() const 
+    {
+        return m_cellSets.front()->hasMetrics();
+    }
+
     SpImageMetrics_t 
     CellSetSeries::getImageMetrics(isize_t inIndex) const 
     {

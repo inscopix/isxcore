@@ -442,9 +442,10 @@ convertJsonToCellMetrics(const json & inJson)
 
     for (auto & j : inJson)
     {
-        SpImageMetrics_t im = std::make_shared<ImageMetrics>();
+        SpImageMetrics_t im;
         if (!j.empty())
         {
+            im = std::make_shared<ImageMetrics>();
             convertJsonToImageMetrics(j, *im);
         }        
         outMetrics.push_back(im);
