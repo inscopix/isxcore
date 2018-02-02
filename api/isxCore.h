@@ -5,6 +5,8 @@
 #include <vector>
 
 #include <ostream>
+#include <fstream>
+#include <sstream>
 
 namespace isx
 {
@@ -68,6 +70,25 @@ namespace isx
     /// \return     The host name of the machine this is running on.
     ///
     std::string getHostName();
+
+    /// \param  inString    The string to split.
+    /// \param  inDelim     The delimiter to split with.
+    /// \return             The components of string split by the given delimiter.
+    std::vector<std::string> splitString(const std::string & inString, const char inDelim);
+
+    /// Trim a string by removing leading and trailing spaces.
+    ///
+    /// \param  inString    The string to trim.
+    /// \return             The trimmed string.
+    std::string trimString(const std::string & inString);
+
+    /// Read a line from a file in a cross-platform way w.r.t. line endings.
+    ///
+    /// \param  inStream    The input file stream to read a line from.
+    /// \param  outLine     The line without characters indicating its end ('\\n' and '\\r').
+    /// \return             The modified input stream, which can be used as a bool-like
+    ///                     value to check if the stream is still good.
+    std::ifstream & getLine(std::ifstream & inStream, std::string & outLine);
 
 } // namespace isx
 
