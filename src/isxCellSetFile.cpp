@@ -10,10 +10,10 @@ namespace isx
 {
     CellSetFile::CellSetFile()
     {
-        
+
     }
 
-    CellSetFile::CellSetFile(const std::string & inFileName, bool enableWrite) : 
+    CellSetFile::CellSetFile(const std::string & inFileName, bool enableWrite) :
         m_fileName(inFileName)
     {
         m_openmode = std::ios::binary | std::ios_base::in;
@@ -34,10 +34,10 @@ namespace isx
         m_valid = true;
     }
 
-    CellSetFile::CellSetFile(const std::string & inFileName, 
+    CellSetFile::CellSetFile(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
                 const SpacingInfo & inSpacingInfo,
-                const bool inIsRoiSet) 
+                const bool inIsRoiSet)
                 : m_fileName(inFileName)
                 , m_timingInfo(inTimingInfo)
                 , m_spacingInfo(inSpacingInfo)
@@ -62,21 +62,21 @@ namespace isx
             {
                 closeForWriting();
             }
-            
+
             if(m_file.is_open() && m_file.good())
             {
                 m_file.close();
                 if (!m_file.good())
                 {
                     ISX_LOG_ERROR("Error closing the stream for file", m_fileName,
-                    " eof: ", m_file.eof(), 
-                    " bad: ", m_file.bad(), 
+                    " eof: ", m_file.eof(),
+                    " bad: ", m_file.bad(),
                     " fail: ", m_file.fail());
                 }
             }
         }
     }
-    
+
     void
     CellSetFile::closeForWriting()
     {
@@ -97,79 +97,79 @@ namespace isx
         }
         catch(...)
         {
-            ISX_LOG_ERROR("Unkown exception closing file ", m_fileName);
+            ISX_LOG_ERROR("Unknown exception closing file ", m_fileName);
         }
     }
 
-    bool 
-    CellSetFile::isValid() const 
+    bool
+    CellSetFile::isValid() const
     {
         return m_valid;
     }
 
-    std::string 
-    CellSetFile::getFileName() const 
+    std::string
+    CellSetFile::getFileName() const
     {
         return m_fileName;
     }
 
-    const isize_t 
-    CellSetFile::numberOfCells() 
+    const isize_t
+    CellSetFile::numberOfCells()
     {
         return m_numCells;
     }
 
-    const isx::TimingInfo & 
-    CellSetFile::getTimingInfo() const 
+    const isx::TimingInfo &
+    CellSetFile::getTimingInfo() const
     {
         return m_timingInfo;
     }
 
-    const isx::SpacingInfo & 
+    const isx::SpacingInfo &
     CellSetFile::getSpacingInfo() const
     {
         return m_spacingInfo;
     }
 
-    SpFTrace_t 
-    CellSetFile::readTrace(isize_t inCellId)      
+    SpFTrace_t
+    CellSetFile::readTrace(isize_t inCellId)
     {
-        seekToCell(inCellId);      
-        
+        seekToCell(inCellId);
+
         // Calculate bytes till beginning of cell data
         isize_t offsetInBytes = segmentationImageSizeInBytes();
-        
+
         m_file.seekg(offsetInBytes, std::ios_base::cur);
         if (!m_file.good())
         {
             ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell trace for read.");
         }
-        
+
         // Prepare data vector
-        SpFTrace_t trace = std::make_shared<FTrace_t>(m_timingInfo);        
-        m_file.read(reinterpret_cast<char*>(trace->getValues()), traceSizeInBytes());        
+        SpFTrace_t trace = std::make_shared<FTrace_t>(m_timingInfo);
+        m_file.read(reinterpret_cast<char*>(trace->getValues()), traceSizeInBytes());
         if (!m_file.good())
         {
             ISX_THROW(isx::ExceptionFileIO, "Error reading cell trace.");
         }
         return trace;
-        
+
     }
-    
-    SpImage_t 
-    CellSetFile::readSegmentationImage(isize_t inCellId) 
+
+    SpImage_t
+    CellSetFile::readSegmentationImage(isize_t inCellId)
     {
-        
-        seekToCell(inCellId);    
-        
+
+        seekToCell(inCellId);
+
         // "Calculate" bytes till beginning of the segmentation image
         isize_t offsetInBytes = 0;
-        
+
         m_file.seekg(offsetInBytes, std::ios_base::cur);
         if (!m_file.good())
         {
             ISX_THROW(isx::ExceptionFileIO, "Error seeking to cell segmentation image.");
-        }        
+        }
 
         SpImage_t image = std::make_shared<Image>(
                 m_spacingInfo,
@@ -177,7 +177,7 @@ namespace isx
                 1,
                 DataType::F32);
         m_file.read(image->getPixels(), image->getImageSizeInBytes());
-        
+
         if (!m_file.good())
         {
             ISX_THROW(isx::ExceptionFileIO, "Error reading cell segmentation image.");
@@ -185,8 +185,8 @@ namespace isx
 
         return image;
     }
-    
-    void 
+
+    void
     CellSetFile::writeCellData(isize_t inCellId, const Image & inSegmentationImage, Trace<float> & inData, const std::string & inName)
     {
         if (m_fileClosedForWriting)
@@ -207,7 +207,7 @@ namespace isx
         isize_t inImageSizeInBytes = inSegmentationImage.getImageSizeInBytes();
         isize_t fImageSizeInBytes = segmentationImageSizeInBytes();
         ISX_ASSERT(inImageSizeInBytes == fImageSizeInBytes);
-        
+
         isize_t inSamples = inData.getTimingInfo().getNumTimes();
         isize_t fSamples = m_timingInfo.getNumTimes();
         ISX_ASSERT(inSamples == fSamples);
@@ -229,7 +229,7 @@ namespace isx
         {
             // Overwrite existing cell
             seekToCell(inCellId);
- 
+
             m_cellNames.at(inCellId) = inName;
             m_cellStatuses.at(inCellId) = CellSet::CellStatus::UNDECIDED;
             m_cellColors.at(inCellId) = Color();
@@ -256,8 +256,8 @@ namespace isx
         flush();
     }
 
-    CellSet::CellStatus 
-    CellSetFile::getCellStatus(isize_t inCellId) 
+    CellSet::CellStatus
+    CellSetFile::getCellStatus(isize_t inCellId)
     {
         return m_cellStatuses.at(inCellId);
     }
@@ -284,7 +284,7 @@ namespace isx
         return "";
     }
 
-    void 
+    void
     CellSetFile::setCellStatus(isize_t inCellId, CellSet::CellStatus inStatus)
     {
         if (m_fileClosedForWriting)
@@ -320,7 +320,7 @@ namespace isx
         {
             m_cellColors.at(c.first) = c.second;
         }
-        
+
         if (m_openmode & std::ios_base::out)
         {
             if (m_fileClosedForWriting)
@@ -334,13 +334,13 @@ namespace isx
         }
     }
 
-    std::string 
-    CellSetFile::getCellName(isize_t inCellId) 
+    std::string
+    CellSetFile::getCellName(isize_t inCellId)
     {
         return m_cellNames.at(inCellId);
     }
 
-    void 
+    void
     CellSetFile::setCellName(isize_t inCellId, const std::string & inName)
     {
         if (m_fileClosedForWriting)
@@ -351,13 +351,13 @@ namespace isx
         m_cellNames.at(inCellId) = inName;
     }
 
-    bool 
+    bool
     CellSetFile::isCellActive(isize_t inCellId) const
     {
         return m_cellActivity.at(inCellId);
     }
 
-    void 
+    void
     CellSetFile::setCellActive(isize_t inCellId, bool inActive)
     {
         if (m_fileClosedForWriting)
@@ -423,7 +423,7 @@ namespace isx
         m_centroidDistances = inCentroidDistances;
     }
 
-    void 
+    void
     CellSetFile::readHeader()
     {
         json j = readJsonHeaderAtEnd(m_file, m_headerOffset);
@@ -489,7 +489,7 @@ namespace isx
         }
     }
 
-    void 
+    void
     CellSetFile::writeHeader()
     {
         json j;
@@ -530,14 +530,14 @@ namespace isx
             isize_t cellSize = segmentationImageSizeInBytes() + traceSizeInBytes();
             m_file.seekp(cellSize, std::ios_base::cur);
         }
-        
+
         m_headerOffset = m_file.tellp();
         writeJsonHeaderAtEnd(j, m_file);
 
         flush();
     }
-    
-    void 
+
+    void
     CellSetFile::seekToCell(isize_t inCellId)
     {
         isize_t pos = 0;
@@ -545,14 +545,14 @@ namespace isx
         {
             ISX_THROW(isx::ExceptionFileIO,
                 "Unable to seek to cell ID ", inCellId, " in file: ", m_fileName);
-        }        
-        
+        }
+
         isize_t cellSize = segmentationImageSizeInBytes() + traceSizeInBytes();
-        
+
         pos += cellSize * inCellId;
 
         m_file.seekg(pos, std::ios_base::beg);
-        
+
         if (!m_file.good() || pos >= isize_t(m_headerOffset))
         {
             ISX_THROW(isx::ExceptionFileIO, "Error reading cell id.");
@@ -569,8 +569,8 @@ namespace isx
     {
         return m_spacingInfo.getTotalNumPixels() * sizeof(float);
     }
-    
-    isize_t 
+
+    isize_t
     CellSetFile::traceSizeInBytes()
     {
         return m_timingInfo.getNumTimes() * sizeof(float);

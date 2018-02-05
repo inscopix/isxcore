@@ -67,7 +67,7 @@ CellSetSimple::getTimingInfo() const
     return m_file->getTimingInfo();
 }
 
-isx::TimingInfos_t 
+isx::TimingInfos_t
 CellSetSimple::getTimingInfosForSeries() const
 {
     TimingInfos_t tis = TimingInfos_t{m_file->getTimingInfo()};
@@ -198,7 +198,7 @@ CellSetSimple::writeImageAndTrace(
     }
 }
 
-CellSet::CellStatus 
+CellSet::CellStatus
 CellSetSimple::getCellStatus(isize_t inIndex)
 {
     return m_file->getCellStatus(inIndex);
@@ -234,7 +234,7 @@ CellSetSimple::setCellColors(const IdColorPairs &inColors)
     m_file->setCellColors(inColors);
 }
 
-std::string 
+std::string
 CellSetSimple::getCellName(isize_t inIndex)
 {
     return m_file->getCellName(inIndex);
@@ -246,13 +246,13 @@ CellSetSimple::setCellName(isize_t inIndex, const std::string & inName)
     m_file->setCellName(inIndex, inName);
 }
 
-std::vector<bool> 
+std::vector<bool>
 CellSetSimple::getCellActivity(isize_t inIndex) const
 {
     return {m_file->isCellActive(inIndex)};
 }
 
-void 
+void
 CellSetSimple::setCellActive(isize_t inIndex, const std::vector<bool> & inActive)
 {
     ISX_ASSERT(inActive.size() == 1);

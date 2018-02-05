@@ -20,7 +20,7 @@ public:
     Trace() :
         m_timingInfo(TimingInfo())
     {
-       
+
     }
 
     /// Fully specified constructor.
@@ -50,7 +50,7 @@ public:
 
     /// \return a raw pointer to the first sample in memory
     ///
-    T * 
+    T *
     getValues()
     {
         if (m_values)
@@ -68,7 +68,7 @@ public:
     {
         return m_values[index];
     }
-    
+
     /// Write access to a range value by index.
     ///
     /// \param   index      The index.

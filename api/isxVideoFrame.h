@@ -15,7 +15,7 @@ class VideoFrame
 {
 public:
     /// Enumerator that indicates what kind of video frame this is
-    /// 
+    ///
     enum class Type
     {
         VALID,      ///< A valid frame
@@ -86,12 +86,12 @@ public:
 
     /// \return the type of video frame this is
     ///
-    VideoFrame::Type 
+    VideoFrame::Type
     getFrameType() const;
 
     /// Sets the type of video frame
     /// \param inType the type to be set
-    void 
+    void
     setFrameType(VideoFrame::Type inType);
 
     /// \return the number of bytes between the first pixels of two neighboring rows
