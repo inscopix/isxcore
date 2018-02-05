@@ -320,6 +320,12 @@ CellSetSimple::setCentroidDistances(const std::vector<double> & inCentroidDistan
     m_file->setCentroidDistances(inCentroidDistances);
 }
 
+bool 
+CellSetSimple::hasMetrics() const 
+{
+    return m_file->hasMetrics();
+}
+
 SpImageMetrics_t 
 CellSetSimple::getImageMetrics(isize_t inIndex) const 
 {

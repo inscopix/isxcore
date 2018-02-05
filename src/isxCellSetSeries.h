@@ -143,6 +143,9 @@ public:
     void
     setCentroidDistances(const std::vector<double> & inCentroidDistances) override;
 
+    bool 
+    hasMetrics() const override;
+
     SpImageMetrics_t 
     getImageMetrics(isize_t inIndex) const override;
 

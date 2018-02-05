@@ -4,7 +4,6 @@
 #include "isxException.h"
 #include "isxLogger.h"
 #include "isxReportUtils.h"
-#include <sstream>
 #include <QString>
 
 extern "C"
@@ -192,5 +191,36 @@ namespace isx
     getHostName()
     {
         return QSysInfo::machineHostName().toStdString();
+    }
+
+    std::vector<std::string>
+    splitString(const std::string & inString, const char inDelim)
+    {
+        std::stringstream ss(inString);
+        std::vector<std::string> tokens;
+        while (ss.good())
+        {
+            std::string token;
+            std::getline(ss, token, inDelim);
+            tokens.push_back(token);
+        }
+        return tokens;
+    }
+
+    std::string
+    trimString(const std::string & inString)
+    {
+        const auto firstNonSpace = inString.find_first_not_of(' ');
+        const auto lastNonSpace = inString.find_last_not_of(' ');
+        return inString.substr(firstNonSpace, (lastNonSpace - firstNonSpace) + 1);
+    }
+
+    std::ifstream &
+    getLine(std::ifstream & inStream, std::string & outLine)
+    {
+        std::getline(inStream, outLine);
+        outLine.erase(std::remove(outLine.begin(), outLine.end(), '\r'), outLine.end());
+        outLine.erase(std::remove(outLine.begin(), outLine.end(), '\n'), outLine.end());
+        return inStream;
     }
 }

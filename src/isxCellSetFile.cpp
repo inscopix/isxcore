@@ -218,7 +218,10 @@ namespace isx
             m_cellStatuses.push_back(CellSet::CellStatus::UNDECIDED);
             m_cellColors.push_back(Color());
             m_cellActivity.push_back(true);
-            m_cellImageMetrics.push_back(SpImageMetrics_t());
+            if (hasMetrics())
+            {
+                m_cellImageMetrics.push_back(SpImageMetrics_t());
+            }
 
             ++m_numCells;
         }
@@ -231,7 +234,10 @@ namespace isx
             m_cellStatuses.at(inCellId) = CellSet::CellStatus::UNDECIDED;
             m_cellColors.at(inCellId) = Color();
             m_cellActivity.at(inCellId) = true;
-            m_cellImageMetrics.at(inCellId) = SpImageMetrics_t();
+            if (hasMetrics())
+            {
+                m_cellImageMetrics.at(inCellId) = SpImageMetrics_t();
+            }
         }
         else
         {
@@ -597,10 +603,20 @@ namespace isx
         }
     }
 
+    bool 
+    CellSetFile::hasMetrics() const
+    {
+        return !m_cellImageMetrics.empty();
+    }
+
     SpImageMetrics_t 
     CellSetFile::getImageMetrics(isize_t inIndex) const
     {
-        return m_cellImageMetrics.at(inIndex);
+        if (m_cellImageMetrics.size() > inIndex)
+        {
+            return m_cellImageMetrics.at(inIndex);
+        }
+        return SpImageMetrics_t();
     }
 
     void
@@ -610,6 +626,11 @@ namespace isx
         {
             ISX_THROW(isx::ExceptionFileIO,
                       "Writing data after file was closed for writing.", m_fileName);
+        }
+
+        if (!hasMetrics())
+        {
+            m_cellImageMetrics = CellMetrics_t(m_cellNames.size(), SpImageMetrics_t());
         }
         m_cellImageMetrics.at(inIndex) = inMetrics;
     }
