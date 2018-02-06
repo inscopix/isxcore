@@ -24,8 +24,6 @@ using json = nlohmann::json;
 
 const std::string DataSet::PROP_DATA_MIN = "dmin";
 const std::string DataSet::PROP_DATA_MAX = "dmax";
-const std::string DataSet::PROP_VIS_MIN  = "vmin";
-const std::string DataSet::PROP_VIS_MAX  = "vmax";
 const std::string DataSet::PROP_MOVIE_START_TIME    = "movieStartTime";
 const std::string DataSet::PROP_BEHAV_NUM_FRAMES    = "numFrames";
 const std::string DataSet::PROP_BEHAV_GOP_SIZE      = "gopSize";

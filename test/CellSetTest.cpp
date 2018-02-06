@@ -338,10 +338,7 @@ TEST_CASE("CellSetSynth", "[data][!hide]")
                 hd,
                 {
                   {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
-                  {isx::DataSet::PROP_DATA_MAX, isx::Variant(1.f)},
-                  {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
-                  {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
-                });
+                  {isx::DataSet::PROP_DATA_MAX, isx::Variant(1.f)}                });
         isx::DataSet::Properties prop;
         auto ds = std::make_shared<isx::Series>(
             "cellset-full-frame",

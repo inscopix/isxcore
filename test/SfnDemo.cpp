@@ -60,9 +60,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
             const isx::DataSet::Properties prop =
             {
                 {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
-                {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
-                {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
-                {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
+                {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)}
             };
             
             auto s = project.createSeriesInRoot(series.first);
@@ -121,9 +119,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
                 const isx::DataSet::Properties prop =
                 {
                     {isx::DataSet::PROP_DATA_MIN, isx::Variant(dffMin)},
-                    {isx::DataSet::PROP_DATA_MAX, isx::Variant(dffMax)},
-                    {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
-                    {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
+                    {isx::DataSet::PROP_DATA_MAX, isx::Variant(dffMax)}
                 };
                 const isx::DataSet::Properties propCs;
                 auto m = std::make_shared<isx::Series>(
@@ -229,9 +225,7 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
                 const isx::DataSet::Properties prop =
                 {
                     {isx::DataSet::PROP_DATA_MIN, isx::Variant(0.f)},
-                    {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)},
-                    {isx::DataSet::PROP_VIS_MIN, isx::Variant(0.f)},
-                    {isx::DataSet::PROP_VIS_MAX, isx::Variant(1.f)}
+                    {isx::DataSet::PROP_DATA_MAX, isx::Variant(4095.f)}
                 };
                 auto us = std::make_shared<isx::Series>(
                         name,
