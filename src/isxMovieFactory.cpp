@@ -27,10 +27,7 @@ writeMosaicMovie(
 SpVideoFrame_t
 readImage(const std::string & inFileName)
 {
-    DataSet::Properties props;
-    props[DataSet::PROP_MOVIE_START_TIME] = Variant(Time());
-    props[DataSet::PROP_MOVIE_FRAME_RATE] = Variant(0.f);
-    auto m = isx::readMovie(inFileName, props);
+    auto m = isx::readMovie(inFileName);
     auto frame = m->getFrame(0);
 
     ISX_ASSERT(frame->getFrameType() == VideoFrame::Type::VALID);

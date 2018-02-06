@@ -8,6 +8,8 @@
 namespace isx
 {
 
+const DurationInSeconds TimingInfo::s_defaultStep(50, 1000);
+
 TimingInfo::TimingInfo()
 {
 }
@@ -282,8 +284,7 @@ TimingInfo
 TimingInfo::getDefault(isize_t inFrames, const std::vector<isize_t> & inDroppedFrames)
 {
     Time start;                       // Default to Unix epoch
-    DurationInSeconds step(50, 1000); // Default to 20Hz
-    return TimingInfo(start, step, inFrames, inDroppedFrames);
+    return TimingInfo(start, s_defaultStep, inFrames, inDroppedFrames);
 }
 
 void

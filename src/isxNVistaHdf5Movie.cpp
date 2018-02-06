@@ -321,6 +321,14 @@ NVistaHdf5Movie::readTimingInfo(std::vector<SpH5File_t> inHdf5Files, const std::
                 ISX_ASSERT(false, "Unhandled exception.");
             }
 
+            // Based on MOS-1319, it seems like the length of the timeStamp DataSet
+            // can be 0, which means we should give up on trying to get the timing
+            // info like this.
+            if (numFrames == 0)
+            {
+                return false;
+            }
+
             // get start time
             if (f == 0)
             {
@@ -340,9 +348,13 @@ NVistaHdf5Movie::readTimingInfo(std::vector<SpH5File_t> inHdf5Files, const std::
     if (bInitializedFromFile)
     {
         totalNumFrames += inDroppedFrames.size();               /// Account for lost frames
-        totalDurationInSecs /= double(totalNumFrames);
 
-        isx::DurationInSeconds step = isx::Ratio::fromDouble(totalDurationInSecs);
+        isx::DurationInSeconds step = isx::TimingInfo::s_defaultStep;
+        if (totalDurationInSecs > 0)
+        {
+            step = isx::Ratio::fromDouble(totalDurationInSecs / double(totalNumFrames));
+        }
+
         isx::Time start = isx::Time(startTime);
         m_timingInfos = TimingInfos_t{isx::TimingInfo(start, step, totalNumFrames, inDroppedFrames)};
     }

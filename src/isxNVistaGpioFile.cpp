@@ -231,9 +231,10 @@ namespace isx
                 break;
             }
         }
-        
-        if (!name.empty())
-        {   
+
+        bool hasTimeStamps = !name.empty();
+        if (hasTimeStamps)
+        {
             std::vector<hsize_t> timestampsDims;
             std::vector<hsize_t> timestampsMaxDims;           
 
@@ -243,9 +244,15 @@ namespace isx
                 isx::internal::getHdf5SpaceDims(timeStampsDataSet.getSpace(), timestampsDims, timestampsMaxDims);
 
                 hsize_t numSamples = timestampsDims[0];
-                m_timestamps.resize(numSamples);
-
-                timeStampsDataSet.read(m_timestamps.data(), timeStampsDataSet.getDataType());                
+                if (numSamples > 0)
+                {
+                    m_timestamps.resize(numSamples);
+                    timeStampsDataSet.read(m_timestamps.data(), timeStampsDataSet.getDataType());
+                }
+                else
+                {
+                    hasTimeStamps = false;
+                }
             }
             catch (const H5::FileIException& error)
             {
@@ -264,7 +271,8 @@ namespace isx
                 ISX_ASSERT(false, "Unhandled exception.");
             }
         }
-        else
+
+        if (!hasTimeStamps)
         {
             ISX_THROW(isx::ExceptionDataIO,
                 "The file does not contain any GPIO data. Timestamps could not be read.\n");

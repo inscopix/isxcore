@@ -60,13 +60,19 @@ public:
     void initializeFromTiff(DataSet::Properties & inProperties)
     {
         const std::vector<std::string> paths = {m_path};
-        ISX_ASSERT(inProperties.find(DataSet::PROP_MOVIE_START_TIME) != inProperties.end());
-        ISX_ASSERT(inProperties.find(DataSet::PROP_MOVIE_FRAME_RATE) != inProperties.end());
+        isx::Time start;
+        if (inProperties.find(DataSet::PROP_MOVIE_START_TIME) != inProperties.end())
+        {
+            start = inProperties[DataSet::PROP_MOVIE_START_TIME].value<isx::Time>();
+        }
 
-        isx::Time start = inProperties[DataSet::PROP_MOVIE_START_TIME].value<isx::Time>();
-        float fr        = inProperties[DataSet::PROP_MOVIE_FRAME_RATE].value<float>();
-        DurationInSeconds rationalFr(Ratio::fromDouble(double(fr)));
-        DurationInSeconds step = rationalFr.getInverse();
+        DurationInSeconds step = TimingInfo::s_defaultStep;
+        if (inProperties.find(DataSet::PROP_MOVIE_FRAME_RATE) != inProperties.end())
+        {
+            const double fr = double(inProperties[DataSet::PROP_MOVIE_FRAME_RATE].value<float>());
+            step = Ratio::fromDouble(fr).getInverse();
+        }
+
         TimingInfo ti(start, step, 0);
         m_movie = std::make_shared<NVistaTiffMovie>(m_path, paths, ti);
 

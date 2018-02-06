@@ -22,6 +22,9 @@ class TimingInfo : public Object
 {
 public:
 
+    /// The default step time (e.g. to be used if it's unknown).
+    const static DurationInSeconds s_defaultStep;
+
     /// Default constructor.
     ///
     TimingInfo();
