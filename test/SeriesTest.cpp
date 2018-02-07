@@ -197,17 +197,6 @@ TEST_CASE("Series-removeDataSet", "[core]")
     series.insertUnitarySeries(movie2Series);
     series.insertUnitarySeries(movie3Series);
 
-
-#if ISX_OS_WIN32
-    const char * vectorOutOfRangeMessage = "invalid vector<T> subscript";
-#elif ISX_OS_LINUX
-    const char * vectorOutOfRangeMessage = "vector::_M_range_check";
-#elif ISX_OS_MACOS
-    const char * vectorOutOfRangeMessage = "vector";
-#else
-#error initialize vectorOutOfRangeMessage
-#endif
-
     SECTION("Remove a data set at the end")
     {
         series.removeDataSet(movie3.get());
@@ -219,7 +208,7 @@ TEST_CASE("Series-removeDataSet", "[core]")
         ISX_REQUIRE_EXCEPTION(
                 series.getDataSet(2),
                 std::out_of_range,
-                vectorOutOfRangeMessage);
+                "");
     }
 
     SECTION("Remove a data set in the middle")
@@ -233,7 +222,7 @@ TEST_CASE("Series-removeDataSet", "[core]")
         ISX_REQUIRE_EXCEPTION(
                 series.getDataSet(2),
                 std::out_of_range,
-                vectorOutOfRangeMessage);
+                "");
     }
 
     SECTION("Try to remove a data set that does not exist")
