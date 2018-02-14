@@ -26,6 +26,17 @@ struct CsvTraceImporterParams
     /// \return Operation name displayed to the user.
     static std::string getOpName();
 
+    /// contruct a CsvTraceImporterParams object from a json-formatted string
+    /// (usually created with the toString() method)
+    /// \param inStr the string to convert
+    static 
+    CsvTraceImporterParams 
+    fromString(const std::string & inStr);
+
+    /// \return a JSON-formatted string with input parameters
+    ///
+    std::string toString() const;
+
     /// \param  outMessage  The reason why the columns are invalid.
     /// \return             True if the columns are valid, false otherwise.
     bool checkColsToImport(std::string & outMessage) const;
@@ -37,7 +48,7 @@ struct CsvTraceImporterParams
     size_t m_titleRow = 0;              ///< The index of the title row that includes channel names.
     size_t m_timeCol = 0;               ///< The index of the time column.
     Time m_startTime;                   ///< The start time of the first sample.
-    DurationInSeconds m_timeUnit;       ///< The duration of a unit of time in the time column.
+    DurationInSeconds m_timeUnit = DurationInSeconds(1, 1);       ///< The duration of a unit of time in the time column.
 
 }; // struct CsvTraceImporterParams
 

@@ -1,6 +1,7 @@
 #include "isxCsvTraceImporter.h"
 #include "isxTimeStampedDataFile.h"
 #include "isxCore.h"
+#include "isxJsonUtils.h"
 
 #include <fstream>
 #include <cmath>
@@ -19,6 +20,33 @@ std::string
 CsvTraceImporterParams::getOpName()
 {
     return "Import CSV Trace";
+}
+
+CsvTraceImporterParams 
+CsvTraceImporterParams::fromString(const std::string & inStr)
+{
+    CsvTraceImporterParams params;
+    json j = json::parse(inStr);
+    params.m_startRow = j["startRow"];
+    params.m_colsToImport = j["colsToImport"].get<std::set<size_t>>();
+    params.m_titleRow = j["titleRow"];
+    params.m_timeCol = j["timeCol"];
+    params.m_startTime = convertJsonToTime(j["startTime"]);
+    params.m_timeUnit = convertJsonToRatio(j["timeUnit"]);
+
+    return params;
+}
+
+std::string CsvTraceImporterParams::toString() const
+{
+    json j; 
+    j["startRow"] = m_startRow;
+    j["colsToImport"] = m_colsToImport;
+    j["titleRow"] = m_titleRow;
+    j["timeCol"] = m_timeCol;
+    j["startTime"] = convertTimeToJson(m_startTime);
+    j["timeUnit"] = convertRatioToJson(m_timeUnit);
+    return j.dump(4);    
 }
 
 bool
