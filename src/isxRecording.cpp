@@ -9,6 +9,8 @@
 
 #include <iostream>
 #include <fstream>
+#include <QFileInfo>
+#include <QDir>
 
 namespace isx {
 
@@ -122,10 +124,11 @@ public:
         isx::RecordingXml xml(m_path);
 
         std::vector<std::string> fileNames = xml.getFileNames();
-        std::string dir = m_path.substr(0, m_path.find_last_of("/") + 1);
+        const QFileInfo fi(QString::fromStdString(m_path));
+        const std::string dir = fi.dir().absolutePath().toStdString();
         for (unsigned int i(0); i < fileNames.size(); ++i)
         {
-            fileNames[i] = dir + fileNames[i];
+            fileNames[i] = dir + "/" + fileNames[i];
         }
 
         TimingInfo ti = xml.getTimingInfo();
