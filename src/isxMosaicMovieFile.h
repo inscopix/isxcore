@@ -143,7 +143,11 @@ private:
 
     bool m_fileClosedForWriting = false;
 
-    const static size_t s_version = 0;
+    /// The version of this file format.
+    const static size_t s_version = 1;
+
+    /// The version of this file.
+    size_t m_version = s_version;
 
     /// Initialize for reading.
     ///
@@ -204,6 +208,10 @@ private:
     /// intended to be used during data acquisition, when the client has 
     /// finished writing frame data. 
     void setTimingInfo(const TimingInfo & inTimingInfo);
+
+    /// \return True if the frame byte data includes a timestamp.
+    ///
+    bool hasFrameTimeStamps() const;
 };
 
 }

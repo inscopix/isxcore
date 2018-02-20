@@ -192,7 +192,6 @@ MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
     if (frameDataType == m_dataType)
     {
         m_file.write(inVideoFrame->getPixels(), getFrameSizeInBytes());
-        m_headerOffset = m_file.tellp();
     }
     else
     {
@@ -200,6 +199,15 @@ MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
                 "Frame pixel type (", int(frameDataType),
                 ") does not match movie data type (", int(m_dataType), ").");
     }
+
+    // Write the timestamp after the frame data to do slightly less seeking
+    // when reading the frame data alone.
+    ISX_ASSERT(hasFrameTimeStamps());
+    const DurationInSeconds secondsSinceStart = inVideoFrame->getTimeStamp() - getTimingInfo().getStart();
+    const uint64_t timeStamp = uint64_t(secondsSinceStart.toDouble() * 1E6);
+    m_file.write(reinterpret_cast<const char*>(&timeStamp), sizeof(timeStamp));
+
+    m_headerOffset = m_file.tellp();
 
     if (!m_file.good())
     {
@@ -256,6 +264,13 @@ MosaicMovieFile::readHeader()
         }
         m_timingInfos = TimingInfos_t{convertJsonToTimingInfo(j["timingInfo"])};
         m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
+        // Some old test files don't have the fileVersion key.
+        // I think that's also true for alpha versions of nVista file format
+        // (because it's using an old version of the movie writer).
+        if (j.find("fileVersion") != j.end())
+        {
+            m_version = size_t(j["fileVersion"]);
+        }
     }
     catch (const std::exception & error)
     {
@@ -350,7 +365,12 @@ MosaicMovieFile::seekForReadFrame(isize_t inFrameNumber)
             numFrames-1, ").");
     }
 
-    const isize_t frameSizeInBytes = getFrameSizeInBytes();
+    size_t frameSizeInBytes = getFrameSizeInBytes();
+    if (hasFrameTimeStamps())
+    {
+        frameSizeInBytes += sizeof(uint64_t);
+    }
+
     const std::ios::pos_type offsetInBytes = inFrameNumber * frameSizeInBytes;
     m_file.seekg(offsetInBytes);
     if (!m_file.good())
@@ -364,7 +384,8 @@ MosaicMovieFile::seekForReadFrame(isize_t inFrameNumber)
     }
 }
 
-void MosaicMovieFile::flush()
+void
+MosaicMovieFile::flush()
 {
     m_file.flush();
 
@@ -372,6 +393,12 @@ void MosaicMovieFile::flush()
     {
         ISX_THROW(isx::ExceptionFileIO, "Error flushing the file stream.");
     }
+}
+
+bool
+MosaicMovieFile::hasFrameTimeStamps() const
+{
+    return m_version > 0;
 }
 
 } // namespace isx
