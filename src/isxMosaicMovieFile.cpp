@@ -26,10 +26,11 @@ MosaicMovieFile::MosaicMovieFile(
     const std::string & inFileName,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo,
-    DataType inDataType)
+    DataType inDataType,
+    const bool inWriteFrameTimeStamps)
     : m_valid(false)
 {
-    initialize(inFileName, inTimingInfo, inSpacingInfo, inDataType);
+    initialize(inFileName, inTimingInfo, inSpacingInfo, inDataType, inWriteFrameTimeStamps);
 }
 
 MosaicMovieFile::~MosaicMovieFile()
@@ -77,12 +78,14 @@ MosaicMovieFile::initialize(
         const std::string & inFileName,
         const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo,
-        DataType inDataType)
+        DataType inDataType,
+        const bool inWriteFrameTimeStamps)
 {
     m_fileName = inFileName;
     m_timingInfos = TimingInfos_t{inTimingInfo};
     m_spacingInfo = inSpacingInfo;
     m_dataType = inDataType;
+    m_hasFrameTimeStamps = inWriteFrameTimeStamps;
     m_file.open(m_fileName, std::ios::binary | std::ios::trunc | std::ios::in | std::ios::out);
     if (!m_file.good() || !m_file.is_open())
     {
@@ -142,24 +145,17 @@ SpVideoFrame_t
 MosaicMovieFile::readFrame(isize_t inFrameNumber)
 {
     const TimingInfo & ti = getTimingInfo();
-    // TODO sweet : check to see if frame number exceeds number of frames
-    // instead of returning the last frame.
-    SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
-        m_spacingInfo,
-        getRowSizeInBytes(),
-        1,
-        m_dataType,
-        ti.convertIndexToStartTime(inFrameNumber),
-        inFrameNumber);
 
     if (ti.isCropped(inFrameNumber))
     {
+        SpVideoFrame_t outFrame = makeVideoFrame(inFrameNumber);
         std::memset(outFrame->getPixels(), 0, outFrame->getImageSizeInBytes());
         outFrame->setFrameType(VideoFrame::Type::CROPPED);
         return outFrame;
     }
     else if (ti.isDropped(inFrameNumber))
     {
+        SpVideoFrame_t outFrame = makeVideoFrame(inFrameNumber);
         std::memset(outFrame->getPixels(), 0, outFrame->getImageSizeInBytes());
         outFrame->setFrameType(VideoFrame::Type::DROPPED);
         return outFrame;
@@ -168,6 +164,19 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
     // The frame was not dropped, shift frame numbers and proceed to read
     isize_t newFrameNumber = ti.timeIdxToRecordedIdx(inFrameNumber);
     seekForReadFrame(newFrameNumber);
+
+    SpVideoFrame_t outFrame;
+    if (hasFrameTimeStamps())
+    {
+        uint64_t microsecondsSinceStart = 0;
+        m_file.read(reinterpret_cast<char *>(&microsecondsSinceStart), sizeof(microsecondsSinceStart));
+        const Time timeStamp(DurationInSeconds(microsecondsSinceStart, isize_t(1E6)));
+        outFrame = makeVideoFrame(inFrameNumber, timeStamp);
+    }
+    else
+    {
+        outFrame = makeVideoFrame(inFrameNumber);
+    }
 
     m_file.read(outFrame->getPixels(), getFrameSizeInBytes());
 
@@ -202,10 +211,12 @@ MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
 
     // Write the timestamp after the frame data to do slightly less seeking
     // when reading the frame data alone.
-    ISX_ASSERT(hasFrameTimeStamps());
-    const DurationInSeconds secondsSinceStart = inVideoFrame->getTimeStamp() - getTimingInfo().getStart();
-    const uint64_t timeStamp = uint64_t(secondsSinceStart.toDouble() * 1E6);
-    m_file.write(reinterpret_cast<const char*>(&timeStamp), sizeof(timeStamp));
+    if (m_hasFrameTimeStamps)
+    {
+        const DurationInSeconds secondsSinceStart = inVideoFrame->getTimeStamp() - getTimingInfo().getStart();
+        const uint64_t timeStamp = uint64_t(secondsSinceStart.toDouble() * 1E6);
+        m_file.write(reinterpret_cast<const char*>(&timeStamp), sizeof(timeStamp));
+    }
 
     m_headerOffset = m_file.tellp();
 
@@ -248,6 +259,29 @@ MosaicMovieFile::getDataType() const
     return m_dataType;
 }
 
+SpVideoFrame_t
+MosaicMovieFile::makeVideoFrame(const isize_t inIndex) const
+{
+    return makeVideoFrame(inIndex, getTimingInfo().convertIndexToStartTime(inIndex));
+}
+
+SpVideoFrame_t
+MosaicMovieFile::makeVideoFrame(const isize_t inIndex, const Time & inTimeStamp) const
+{
+    const SpacingInfo & spacingInfo = getSpacingInfo();
+    const DataType dataType = getDataType();
+    const isize_t pixelSizeInBytes = getDataTypeSizeInBytes(dataType);
+    const isize_t rowSizeInBytes = pixelSizeInBytes * spacingInfo.getNumColumns();
+    SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
+            spacingInfo,
+            rowSizeInBytes,
+            1,
+            dataType,
+            inTimeStamp,
+            inIndex);
+    return outFrame;
+}
+
 void
 MosaicMovieFile::readHeader()
 {
@@ -267,10 +301,12 @@ MosaicMovieFile::readHeader()
         // Some old test files don't have the fileVersion key.
         // I think that's also true for alpha versions of nVista file format
         // (because it's using an old version of the movie writer).
+        size_t version = 0;
         if (j.find("fileVersion") != j.end())
         {
-            m_version = size_t(j["fileVersion"]);
+            version = size_t(j["fileVersion"]);
         }
+        m_hasFrameTimeStamps = version > 0 && bool(j["hasFrameTimeStamps"]);
     }
     catch (const std::exception & error)
     {
@@ -302,6 +338,7 @@ MosaicMovieFile::writeHeader()
         j["spacingInfo"] = convertSpacingInfoToJson(m_spacingInfo);
         j["producer"] = getProducerAsJson();
         j["fileVersion"] = s_version;
+        j["hasFrameTimeStamps"] = m_hasFrameTimeStamps;
     }
     catch (const std::exception & error)
     {
@@ -398,7 +435,7 @@ MosaicMovieFile::flush()
 bool
 MosaicMovieFile::hasFrameTimeStamps() const
 {
-    return m_version > 0;
+    return m_hasFrameTimeStamps;
 }
 
 } // namespace isx

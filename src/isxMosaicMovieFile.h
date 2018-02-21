@@ -56,7 +56,8 @@ public:
     MosaicMovieFile(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
                 const SpacingInfo & inSpacingInfo,
-                DataType inDataType);
+                DataType inDataType,
+                const bool inWriteFrameTimeStamps = false);
 
     /// Default destructor
     ///
@@ -119,6 +120,10 @@ public:
     ///
     DataType getDataType() const;
 
+    /// \param  inIndex     The index of the frame to generate.
+    /// \return             The frame associated with the given index.
+    SpVideoFrame_t makeVideoFrame(const isize_t inIndex) const;
+
 private:
     /// True if the movie file is valid, false otherwise.
     bool m_valid;
@@ -146,8 +151,8 @@ private:
     /// The version of this file format.
     const static size_t s_version = 1;
 
-    /// The version of this file.
-    size_t m_version = s_version;
+    /// True if there are frame specific time stamps in this file.
+    bool m_hasFrameTimeStamps = false;
 
     /// Initialize for reading.
     ///
@@ -169,7 +174,8 @@ private:
     void initialize(const std::string & inFileName,
                     const TimingInfo & inTimingInfo,
                     const SpacingInfo & inSpacingInfo,
-                    DataType inDataType);
+                    DataType inDataType,
+                    const bool inWriteFrameTimeStamps);
 
     /// Read the header to populate information about the movie.
     ///
@@ -212,6 +218,11 @@ private:
     /// \return True if the frame byte data includes a timestamp.
     ///
     bool hasFrameTimeStamps() const;
+
+    /// \param  inIndex     The index of the frame to generate.
+    /// \param  inTimeStamp The time at which captured of this frame started.
+    /// \return             The frame associated with the given index and timestamp.
+    SpVideoFrame_t makeVideoFrame(const isize_t inIndex, const Time & inTimeStamp) const;
 };
 
 }

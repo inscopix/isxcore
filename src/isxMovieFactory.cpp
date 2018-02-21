@@ -17,10 +17,11 @@ writeMosaicMovie(
         const std::string & inFileName,
         const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo,
-        DataType inDataType)
+        DataType inDataType,
+        const bool inWriteFrameTimeStamps)
 {
     SpWritableMovie_t movie = std::make_shared<MosaicMovie>(
-            inFileName, inTimingInfo, inSpacingInfo, inDataType);
+            inFileName, inTimingInfo, inSpacingInfo, inDataType, inWriteFrameTimeStamps);
     return movie;
 }
 

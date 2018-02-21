@@ -52,7 +52,8 @@ public:
     MosaicMovie(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
                 const SpacingInfo & inSpacingInfo,
-                DataType inDataType);
+                DataType inDataType,
+                const bool inWriteFrameTimeStamps = false);
 
     // Overrides - see base classes for documentation
     bool isValid() const override;

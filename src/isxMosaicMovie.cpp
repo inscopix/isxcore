@@ -65,7 +65,8 @@ MosaicMovie::MosaicMovie(
     const std::string & inFileName,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo,
-    const DataType inDataType)
+    const DataType inDataType,
+    const bool inWriteFrameTimeStamps)
     : m_valid(false)
     , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
@@ -104,7 +105,7 @@ MosaicMovie::MosaicMovie(
     //mutex.unlock();
     //m_file = file;
 
-    m_file = std::make_shared<MosaicMovieFile>(inFileName, inTimingInfo, inSpacingInfo, inDataType);
+    m_file = std::make_shared<MosaicMovieFile>(inFileName, inTimingInfo, inSpacingInfo, inDataType, inWriteFrameTimeStamps);
     m_valid = true;
 }
 
@@ -207,18 +208,7 @@ MosaicMovie::closeForWriting(const TimingInfo & inTimingInfo)
 SpVideoFrame_t
 MosaicMovie::makeVideoFrame(isize_t inIndex)
 {
-    const SpacingInfo spacingInfo = getSpacingInfo();
-    const DataType dataType = getDataType();
-    const isize_t pixelSizeInBytes = getDataTypeSizeInBytes(dataType);
-    const isize_t rowSizeInBytes = pixelSizeInBytes * spacingInfo.getNumColumns();
-    SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
-            spacingInfo,
-            rowSizeInBytes,
-            1,
-            dataType,
-            getTimingInfo().convertIndexToStartTime(inIndex),
-            inIndex);
-    return outFrame;
+    return m_file->makeVideoFrame(inIndex);
 }
 
 const isx::TimingInfo &
