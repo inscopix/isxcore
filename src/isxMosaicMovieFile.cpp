@@ -170,7 +170,7 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
     {
         uint64_t usecsSinceStart = 0;
         m_file.read(reinterpret_cast<char *>(&usecsSinceStart), sizeof(usecsSinceStart));
-        const Time timeStamp(DurationInSeconds::fromMicroseconds(usecsSinceStart));
+        const Time timeStamp = getTimingInfo().getStart() + DurationInSeconds::fromMicroseconds(usecsSinceStart);
         outFrame = makeVideoFrame(inFrameNumber, timeStamp);
     }
     else

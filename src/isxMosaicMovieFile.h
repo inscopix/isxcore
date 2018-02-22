@@ -124,6 +124,11 @@ public:
     /// \return             The frame associated with the given index.
     SpVideoFrame_t makeVideoFrame(const isize_t inIndex) const;
 
+    /// \param  inIndex     The index of the frame to generate.
+    /// \param  inTimeStamp The time at which captured of this frame started.
+    /// \return             The frame associated with the given index and timestamp.
+    SpVideoFrame_t makeVideoFrame(const isize_t inIndex, const Time & inTimeStamp) const;
+
 private:
     /// True if the movie file is valid, false otherwise.
     bool m_valid;
@@ -214,11 +219,6 @@ private:
     /// intended to be used during data acquisition, when the client has 
     /// finished writing frame data. 
     void setTimingInfo(const TimingInfo & inTimingInfo);
-
-    /// \param  inIndex     The index of the frame to generate.
-    /// \param  inTimeStamp The time at which captured of this frame started.
-    /// \return             The frame associated with the given index and timestamp.
-    SpVideoFrame_t makeVideoFrame(const isize_t inIndex, const Time & inTimeStamp) const;
 };
 
 }

@@ -71,6 +71,8 @@ public:
 
     SpVideoFrame_t makeVideoFrame(isize_t inIndex) override;
 
+    SpVideoFrame_t makeVideoFrame(isize_t inIndex, const Time & inTimeStamp) override;
+
     const isx::TimingInfo & getTimingInfo() const override;
 
     const isx::TimingInfos_t &

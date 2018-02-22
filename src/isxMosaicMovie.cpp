@@ -211,6 +211,12 @@ MosaicMovie::makeVideoFrame(isize_t inIndex)
     return m_file->makeVideoFrame(inIndex);
 }
 
+SpVideoFrame_t
+MosaicMovie::makeVideoFrame(isize_t inIndex, const Time & inTimeStamp)
+{
+    return m_file->makeVideoFrame(inIndex, inTimeStamp);
+}
+
 const isx::TimingInfo &
 MosaicMovie::getTimingInfo() const
 {

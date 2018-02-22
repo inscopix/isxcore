@@ -47,6 +47,16 @@ public:
     SpVideoFrame_t
     makeVideoFrame(isize_t inIndex) = 0;
 
+    /// Creates a new frame indexed within this movie.
+    ///
+    /// This does not set the frame type (valid, dropped, etc.) for performance reasons.
+    ///
+    /// \param  inIndex     The index of the frame in the given movie.
+    /// \param  inTimeStamp The time stamp to associated with this frame.
+    /// \return             The created frame.
+    virtual
+    SpVideoFrame_t
+    makeVideoFrame(isize_t inIndex, const Time & inTimeStamp) = 0;
 };
 
 } // namespace isx
