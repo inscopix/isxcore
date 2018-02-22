@@ -166,11 +166,11 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
     seekForReadFrame(newFrameNumber);
 
     SpVideoFrame_t outFrame;
-    if (hasFrameTimeStamps())
+    if (m_hasFrameTimeStamps)
     {
-        uint64_t microsecondsSinceStart = 0;
-        m_file.read(reinterpret_cast<char *>(&microsecondsSinceStart), sizeof(microsecondsSinceStart));
-        const Time timeStamp(DurationInSeconds(microsecondsSinceStart, isize_t(1E6)));
+        uint64_t usecsSinceStart = 0;
+        m_file.read(reinterpret_cast<char *>(&usecsSinceStart), sizeof(usecsSinceStart));
+        const Time timeStamp(DurationInSeconds::fromMicroseconds(usecsSinceStart));
         outFrame = makeVideoFrame(inFrameNumber, timeStamp);
     }
     else
@@ -194,7 +194,7 @@ MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
     if (m_fileClosedForWriting)
     {
         ISX_THROW(isx::ExceptionFileIO,
-                  "Writing frame after file was closed for writing.", m_fileName);
+                "Writing frame after file was closed for writing.", m_fileName);
     }
 
     const DataType frameDataType = inVideoFrame->getDataType();
@@ -214,7 +214,7 @@ MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
     if (m_hasFrameTimeStamps)
     {
         const DurationInSeconds secondsSinceStart = inVideoFrame->getTimeStamp() - getTimingInfo().getStart();
-        const uint64_t timeStamp = uint64_t(secondsSinceStart.toDouble() * 1E6);
+        const uint64_t timeStamp = secondsSinceStart.toMicroseconds();
         m_file.write(reinterpret_cast<const char*>(&timeStamp), sizeof(timeStamp));
     }
 
@@ -403,7 +403,7 @@ MosaicMovieFile::seekForReadFrame(isize_t inFrameNumber)
     }
 
     size_t frameSizeInBytes = getFrameSizeInBytes();
-    if (hasFrameTimeStamps())
+    if (m_hasFrameTimeStamps)
     {
         frameSizeInBytes += sizeof(uint64_t);
     }
@@ -430,12 +430,6 @@ MosaicMovieFile::flush()
     {
         ISX_THROW(isx::ExceptionFileIO, "Error flushing the file stream.");
     }
-}
-
-bool
-MosaicMovieFile::hasFrameTimeStamps() const
-{
-    return m_hasFrameTimeStamps;
 }
 
 } // namespace isx

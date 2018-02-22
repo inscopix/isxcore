@@ -28,6 +28,13 @@ public:
     /// \param  ratio   The duration in seconds.
     DurationInSeconds(const isx::Ratio & ratio);
 
+    /// \param  inMicroseconds  The number of microseconds of the duration.
+    ///
+    static DurationInSeconds fromMicroseconds(const uint64_t inMicroseconds);
+
+    /// \return The closest integer number of microseconds this represents.
+    ///
+    uint64_t toMicroseconds() const;
 };
 
 /// An absolute date/time stamp.

@@ -215,10 +215,6 @@ private:
     /// finished writing frame data. 
     void setTimingInfo(const TimingInfo & inTimingInfo);
 
-    /// \return True if the frame byte data includes a timestamp.
-    ///
-    bool hasFrameTimeStamps() const;
-
     /// \param  inIndex     The index of the frame to generate.
     /// \param  inTimeStamp The time at which captured of this frame started.
     /// \return             The frame associated with the given index and timestamp.
