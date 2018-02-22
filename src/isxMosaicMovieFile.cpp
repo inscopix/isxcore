@@ -214,6 +214,7 @@ MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
     if (frameDataType == m_dataType)
     {
         m_file.write(inVideoFrame->getPixels(), getFrameSizeInBytes());
+        m_headerOffset = m_file.tellp();
     }
     else
     {
@@ -221,8 +222,6 @@ MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
                 "Frame pixel type (", int(frameDataType),
                 ") does not match movie data type (", int(m_dataType), ").");
     }
-
-    m_headerOffset = m_file.tellp();
 
     if (!m_file.good())
     {
