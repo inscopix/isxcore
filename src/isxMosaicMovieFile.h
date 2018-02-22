@@ -79,11 +79,13 @@ public:
     /// Read a frame in the file by index.
     ///
     /// \param  inFrameNumber   The index of the frame.
+    /// \param  inUseFrameTimeStamp If true, use the time stamp written with the frame if available.
+    ///                             Otherwise, infer the time stamp from the timing info.
     /// \return                 The frame read from the file.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If inFrameNumber is out of range.
-    SpVideoFrame_t readFrame(isize_t inFrameNumber);
+    SpVideoFrame_t readFrame(isize_t inFrameNumber, const bool inUseFrameTimeStamp = false);
 
     /// Write a frame to the file.
     ///

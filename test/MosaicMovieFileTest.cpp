@@ -1,6 +1,7 @@
 #include "isxMosaicMovieFile.h"
 #include "catch.hpp"
 #include "isxTest.h"
+#include "isxPathUtils.h"
 
 #include <stdio.h>
 #include <algorithm>
@@ -353,4 +354,66 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal]")
                 "Writing frame after file was closed for writing." + fileName);
         }
     }
+}
+
+TEST_CASE("MosaicMovieFileU16-withTimeStamps", "[core-internal]")
+{
+    const std::string outputDirPath = g_resources["unitTestDataPath"] + "/MosaicMovieFile";
+    isx::makeDirectory(outputDirPath);
+
+    const std::string filePath = outputDirPath + "/movie.isxd";
+
+    const isx::Time start;
+    const isx::DurationInSeconds step(50, 1000);
+    const isx::isize_t numFrames = 5;
+    const isx::TimingInfo timingInfo(start, step, numFrames);
+
+    const std::vector<isx::Time> timeStamps =
+    {
+        start + isx::DurationInSeconds(1, 1000),
+        start + isx::DurationInSeconds(49, 1000),
+        start + isx::DurationInSeconds(102, 1000),
+        start + isx::DurationInSeconds(148, 1000),
+        start + isx::DurationInSeconds(207, 1000),
+    };
+    REQUIRE(timeStamps.size() == numFrames);
+
+    const isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(4, 3));
+    const isx::isize_t totalNumPixels = spacingInfo.getTotalNumPixels();
+
+    const isx::DataType dataType = isx::DataType::U16;
+
+    SECTION("Read time stamps after writing them")
+    {
+        {
+            isx::MosaicMovieFile movie(filePath, timingInfo, spacingInfo, dataType, true);
+            for (isx::isize_t f = 0; f < numFrames; ++f)
+            {
+                isx::SpVideoFrame_t frame = movie.makeVideoFrame(f, timeStamps.at(f));
+                REQUIRE(frame->getTimeStamp() == timeStamps.at(f));
+                uint16_t * pixels = frame->getPixelsAsU16();
+                for (isx::isize_t p = 0; p < totalNumPixels; ++p)
+                {
+                    pixels[p] = p;
+                }
+                movie.writeFrame(frame);
+            }
+            movie.closeForWriting();
+        }
+
+        isx::MosaicMovieFile movie(filePath);
+        for (isx::isize_t f = 0; f < numFrames; ++f)
+        {
+            isx::SpVideoFrame_t frame = movie.readFrame(f, true);
+            uint16_t * pixels = frame->getPixelsAsU16();
+            for (isx::isize_t p = 0; p < totalNumPixels; ++p)
+            {
+                REQUIRE(pixels[p] == p);
+            }
+            REQUIRE(frame->getTimeStamp() == timeStamps.at(f));
+        }
+    }
+
+    isx::removeDirectory(outputDirPath);
+    isx::CoreShutdown();
 }

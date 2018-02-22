@@ -140,9 +140,8 @@ MosaicMovieFile::isValid() const
     return m_valid;
 }
 
-
 SpVideoFrame_t
-MosaicMovieFile::readFrame(isize_t inFrameNumber)
+MosaicMovieFile::readFrame(isize_t inFrameNumber, const bool inUseFrameTimeStamp)
 {
     const TimingInfo & ti = getTimingInfo();
 
@@ -170,8 +169,15 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
     {
         uint64_t usecsSinceStart = 0;
         m_file.read(reinterpret_cast<char *>(&usecsSinceStart), sizeof(usecsSinceStart));
-        const Time timeStamp = getTimingInfo().getStart() + DurationInSeconds::fromMicroseconds(usecsSinceStart);
-        outFrame = makeVideoFrame(inFrameNumber, timeStamp);
+        if (inUseFrameTimeStamp)
+        {
+            const Time timeStamp = getTimingInfo().getStart() + DurationInSeconds::fromMicroseconds(usecsSinceStart);
+            outFrame = makeVideoFrame(inFrameNumber, timeStamp);
+        }
+        else
+        {
+            outFrame = makeVideoFrame(inFrameNumber);
+        }
     }
     else
     {
@@ -197,6 +203,13 @@ MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
                 "Writing frame after file was closed for writing.", m_fileName);
     }
 
+    if (m_hasFrameTimeStamps)
+    {
+        const DurationInSeconds secondsSinceStart = inVideoFrame->getTimeStamp() - getTimingInfo().getStart();
+        const uint64_t timeStamp = secondsSinceStart.toMicroseconds();
+        m_file.write(reinterpret_cast<const char*>(&timeStamp), sizeof(timeStamp));
+    }
+
     const DataType frameDataType = inVideoFrame->getDataType();
     if (frameDataType == m_dataType)
     {
@@ -207,15 +220,6 @@ MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
         ISX_THROW(isx::ExceptionDataIO,
                 "Frame pixel type (", int(frameDataType),
                 ") does not match movie data type (", int(m_dataType), ").");
-    }
-
-    // Write the timestamp after the frame data to do slightly less seeking
-    // when reading the frame data alone.
-    if (m_hasFrameTimeStamps)
-    {
-        const DurationInSeconds secondsSinceStart = inVideoFrame->getTimeStamp() - getTimingInfo().getStart();
-        const uint64_t timeStamp = secondsSinceStart.toMicroseconds();
-        m_file.write(reinterpret_cast<const char*>(&timeStamp), sizeof(timeStamp));
     }
 
     m_headerOffset = m_file.tellp();
