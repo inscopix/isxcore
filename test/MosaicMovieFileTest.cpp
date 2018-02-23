@@ -394,7 +394,7 @@ TEST_CASE("MosaicMovieFileU16-withTimeStamps", "[core-internal]")
                 uint16_t * pixels = frame->getPixelsAsU16();
                 for (isx::isize_t p = 0; p < totalNumPixels; ++p)
                 {
-                    pixels[p] = p;
+                    pixels[p] = uint16_t(p);
                 }
                 movie.writeFrame(frame);
             }
@@ -408,7 +408,7 @@ TEST_CASE("MosaicMovieFileU16-withTimeStamps", "[core-internal]")
             uint16_t * pixels = frame->getPixelsAsU16();
             for (isx::isize_t p = 0; p < totalNumPixels; ++p)
             {
-                REQUIRE(pixels[p] == p);
+                REQUIRE(pixels[p] == uint16_t(p));
             }
             REQUIRE(frame->getTimeStamp() == timeStamps.at(f));
         }
