@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "json.hpp"
+
 extern "C"
 {
     #include "libavformat/avformat.h"
@@ -435,6 +437,15 @@ std::string
 MovieCompressedAviExporterParams::getOpName()
 {
     return "Export MP4 Movie";
+}
+
+std::string
+MovieCompressedAviExporterParams::toString() const
+{
+    using json = nlohmann::json;
+    json j;
+    j["filename"] = m_filename;
+    return j.dump(4);
 }
 
 MovieExporterParams::Type

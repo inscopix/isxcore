@@ -23,6 +23,11 @@ namespace isx
         std::string
         getOpName();
 
+        /// \return     A string representation of these parameters.
+        ///
+        std::string
+        toString() const;
+
         std::string fileName;                           ///< The filename of the behavioral movie to import
     };
 

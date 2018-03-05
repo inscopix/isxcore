@@ -4,12 +4,25 @@
 
 #include <vector>
 
+#include "json.hpp"
+
 namespace isx {
 
 std::string
 MovieTiffExporterParams::getOpName()
 {
     return "Export Tiff Movie";
+}
+
+std::string
+MovieTiffExporterParams::toString() const
+{
+    using json = nlohmann::json;
+    json j;
+    j["filename"] = m_filename;
+    j["writeInvalidFrames"] = m_writeInvalidFrames;
+    j["numFramesInMovie"] = m_numFramesInMovie;
+    return j.dump(4);
 }
 
 MovieExporterParams::Type

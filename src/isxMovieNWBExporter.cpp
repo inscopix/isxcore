@@ -15,12 +15,32 @@
 #include <array>
 #include <cmath>
 
+#include "json.hpp"
+
 namespace isx {
 
 std::string
 MovieNWBExporterParams::getOpName()
 {
     return "Export Movie";
+}
+
+std::string
+MovieNWBExporterParams::toString() const
+{
+    using json = nlohmann::json;
+    json j;
+    j["identifier"] = m_identifier;
+    j["sessionDescription"] = m_sessionDescription;
+    j["comments"] = m_comments;
+    j["description"] = m_description;
+    j["experimentDescription"] = m_experimentDescription;
+    j["experimenter"] = m_experimenter;
+    j["institution"] = m_institution;
+    j["lab"] = m_lab;
+    j["sessionId"] = m_sessionId;
+    j["filename"] = m_filename;
+    return j.dump(4);
 }
 
 MovieExporterParams::Type

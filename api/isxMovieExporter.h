@@ -32,6 +32,12 @@ struct MovieExporterParams
     std::string
     getOpName() = 0;    
 
+    /// \return     A string representation of these parameters.
+    ///
+    virtual
+    std::string
+    toString() const = 0;
+
     /// \param inFileName the name of the output file for the export operation
     virtual 
     void
@@ -84,6 +90,13 @@ struct MovieExporterParamsWrapper
     std::string getOpName()
     {
         return m_params->getOpName();
+    }
+
+    /// \return The string representation of these parameters.
+    inline
+    std::string toString() const
+    {
+        return m_params->toString();
     }
 
     /// \param inFileName the name of the output file for the export operation

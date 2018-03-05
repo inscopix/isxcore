@@ -31,10 +31,12 @@ struct MovieTiffExporterParams : MovieExporterParams
     /// default constructor
     /// 
     MovieTiffExporterParams(){}
-    
 
     std::string
     getOpName() override;
+
+    std::string
+    toString() const override;
 
     MovieExporterParams::Type
     getType() override;

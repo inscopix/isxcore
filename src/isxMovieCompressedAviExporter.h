@@ -24,9 +24,12 @@ struct MovieCompressedAviExporterParams : MovieExporterParams
     /// default constructor
     /// 
     MovieCompressedAviExporterParams(){}
-    
+
     std::string
     getOpName() override;
+
+    std::string
+    toString() const override;
 
     MovieExporterParams::Type
     getType() override;

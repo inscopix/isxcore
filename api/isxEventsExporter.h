@@ -37,6 +37,11 @@ struct EventsExporterParams
     std::string
     getOpName();
 
+    /// \return     A string representation of these parameters.
+    ///
+    std::string
+    toString() const;
+
     std::vector<SpEvents_t> m_srcs;                 ///< input event sets
     std::string             m_fileName;             ///< name of output file
     WriteTimeRelativeTo     m_writeTimeRelativeTo;  ///< how to write time stamps in file

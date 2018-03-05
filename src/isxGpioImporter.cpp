@@ -3,6 +3,8 @@
 #include "isxNVistaGpioFile.h"
 #include "isxPathUtils.h"
 
+#include "json.hpp"
+
 namespace isx
 {
 
@@ -10,6 +12,16 @@ std::string
 GpioDataParams::getOpName()
 {
     return "GPIO Import";
+}
+
+std::string
+GpioDataParams::toString() const
+{
+    using json = nlohmann::json;
+    json j;
+    j["outputDir"] = outputDir;
+    j["fileName"] = fileName;
+    return j.dump(4);
 }
 
 AsyncTaskStatus runGpioDataImporter(GpioDataParams inParams, std::shared_ptr<GpioDataOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)

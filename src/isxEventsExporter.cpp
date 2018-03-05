@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <limits>
 
+#include "json.hpp"
+
 namespace isx
 {
 
@@ -15,6 +17,16 @@ std::string
 EventsExporterParams::getOpName()
 {
     return "Export Events";
+}
+
+std::string
+EventsExporterParams::toString() const
+{
+    using json = nlohmann::json;
+    json j;
+    j["fileName"] = m_fileName;
+    j["writeTimeRelativeTo"] = int(m_writeTimeRelativeTo);
+    return j.dump(4);
 }
 
 AsyncTaskStatus
