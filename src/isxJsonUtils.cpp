@@ -453,6 +453,78 @@ convertJsonToCellMetrics(const json & inJson)
 
     return outMetrics;
 }
+
+
+json
+convertTraceMetricsToJson(const TraceMetrics & inMetrics)
+{
+    json outJ = json{
+        inMetrics.m_snr,        
+        inMetrics.m_mad, 
+        inMetrics.m_eventRate,
+        inMetrics.m_eventAmpMedian, 
+        inMetrics.m_eventAmpSD,
+        inMetrics.m_riseMedian, 
+        inMetrics.m_riseSD,
+        inMetrics.m_decayMedian, 
+        inMetrics.m_decaySD};
+
+    return outJ;
+}
+
+void
+convertJsonToTraceMetrics(const json & inJ, TraceMetrics & outMetrics)
+{
+    outMetrics.m_snr            = inJ.at(0).get<float>();
+    outMetrics.m_mad            = inJ.at(1).get<float>();
+    outMetrics.m_eventRate      = inJ.at(2).get<float>();
+    outMetrics.m_eventAmpMedian = inJ.at(3).get<float>();
+    outMetrics.m_eventAmpSD     = inJ.at(4).get<float>();
+    outMetrics.m_riseMedian     = inJ.at(5).get<float>();
+    outMetrics.m_riseSD         = inJ.at(6).get<float>();
+    outMetrics.m_decayMedian    = inJ.at(7).get<float>();
+    outMetrics.m_decaySD        = inJ.at(8).get<float>();
+}
+
+json
+convertEventMetricsToJson(const EventMetrics_t & inMetrics)
+{
+    json j;
+    for (auto & em : inMetrics)
+    {
+        if (em)
+        {
+            json jem = convertTraceMetricsToJson(*em);
+            j.push_back(jem);
+        }
+        else
+        {
+            j.push_back(json::object());
+        }
+        
+    }
+    return j;
+}
+
+EventMetrics_t
+convertJsonToEventMetrics(const json & inJson)
+{
+    EventMetrics_t outMetrics;
+
+    for (auto & j : inJson)
+    {
+        SpTraceMetrics_t tm;
+        if (!j.empty())
+        {
+            tm = std::make_shared<TraceMetrics>();
+            convertJsonToTraceMetrics(j, *tm);
+        }        
+        outMetrics.push_back(tm);
+    }
+
+    return outMetrics;
+}
+
     
 json
 readJsonHeaderAtEnd(std::istream & inStream, std::ios::pos_type & outHeaderPosition)

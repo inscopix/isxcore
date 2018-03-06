@@ -23,15 +23,15 @@ class Events
     {
         TraceMetrics() {}
 
-        float m_snr; ///< The signal-to-noise ratio of the trace, the median amplitude divided by the median absolute deviation
-        float m_mad; ///< The median absolute deviation of the trace
-        float m_eventRate; ///< The event rate of the trace in Hz
-        float m_eventAmpMedian; ///< The median event amplitude of the trace
-        float m_eventAmpSD; ///< The standard deviation from the median of the event amplitudes
-        float m_riseMedian; ///< The median event rise time for events in seconds
-        float m_riseSD; ///< The SD from the median of event rise times in seconds
-        float m_decayMedian; ///< The median event decay time in seconds
-        float m_decaySD; ///< The SD from the median of decay time in seconds
+        float m_snr         = 0.f; ///< The signal-to-noise ratio of the trace, the median amplitude divided by the median absolute deviation
+        float m_mad         = 0.f; ///< The median absolute deviation of the trace
+        float m_eventRate   = 0.f; ///< The event rate of the trace in Hz
+        float m_eventAmpMedian = 0.f; ///< The median event amplitude of the trace
+        float m_eventAmpSD  = 0.f; ///< The standard deviation from the median of the event amplitudes
+        float m_riseMedian  = 0.f; ///< The median event rise time for events in seconds
+        float m_riseSD      = 0.f; ///< The SD from the median of event rise times in seconds
+        float m_decayMedian = 0.f; ///< The median event decay time in seconds
+        float m_decaySD     = 0.f; ///< The SD from the median of decay time in seconds
     };
 
     using SpTraceMetrics_t = std::shared_ptr<TraceMetrics>;
@@ -98,6 +98,25 @@ public:
     virtual
     void
     cancelPendingReads() = 0;
+
+    /// \return true if the event set contains trace metrics
+    /// 
+    virtual 
+    bool 
+    hasMetrics() const = 0;
+
+    /// Get all the quality assessment metrics for a given cell trace 
+    /// \param inIndex the cell index
+    virtual 
+    SpTraceMetrics_t 
+    getTraceMetrics(isize_t inIndex) const = 0;
+
+    /// Set the quality assessment metrics for a cell trace
+    /// \param inIndex the cell index
+    /// \param inMetrics the metrics structure
+    virtual 
+    void
+    setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics) = 0;
 
 }; // class Events
 
