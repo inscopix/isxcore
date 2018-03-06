@@ -15,7 +15,7 @@ TEST_CASE("GpioExport", "[core]")
 
     isx::CoreInitialize();
 
-    SECTION("Export one analog GPIO trace")
+    SECTION("Export one analog GPIO trace - V1")
     {
         const std::string inputFileName = g_resources["unitTestDataPath"] + "/test_gpio_analog_2.isxd";
         const isx::SpGpio_t gpio = isx::readGpio(inputFileName);
@@ -30,10 +30,10 @@ TEST_CASE("GpioExport", "[core]")
 
             expLines =
             {
-                "Time (s), GPIO4_AI",
-                "0, 2.65564",
-                "0.001, 2.532349",
-                "0.002, 2.403412",
+                "Time (s), Channel Name, Value",
+                "0, GPIO4_AI, 2.65564",
+                "0.001, GPIO4_AI, 2.532349",
+                "0.002, GPIO4_AI, 2.403412",
             };
         }
 
@@ -43,10 +43,10 @@ TEST_CASE("GpioExport", "[core]")
 
             expLines =
             {
-                "Time (s), GPIO4_AI",
-                "1478277469.294107, 2.65564",
-                "1478277469.295107, 2.532349",
-                "1478277469.296107, 2.403412",
+                "Time (s), Channel Name, Value",
+                "1478277469.294107, GPIO4_AI, 2.65564",
+                "1478277469.295107, GPIO4_AI, 2.532349",
+                "1478277469.296107, GPIO4_AI, 2.403412",
             };
         }
 
@@ -61,7 +61,7 @@ TEST_CASE("GpioExport", "[core]")
         }
     }
 
-    SECTION("Export one logical GPIO trace set")
+    SECTION("Export one logical GPIO trace set - V1")
     {
         const std::string inputFileName = g_resources["unitTestDataPath"] + "/test_gpio_events_2.isxd";
         const isx::SpGpio_t gpio = isx::readGpio(inputFileName);
@@ -93,6 +93,63 @@ TEST_CASE("GpioExport", "[core]")
         }
     }
 
+    SECTION("Export one analog and one logical GPIO trace from isxd V2")
+    {
+        const std::string nVokeDir = "/nVokeGpio";
+        const std::string inputFileName = g_resources["unitTestDataPath"] + nVokeDir + "/test_nvoke_gpio_V2.isxd";
+        const isx::SpGpio_t gpio = isx::readGpio(inputFileName);
+
+        isx::GpioExporterParams params({gpio}, outputFileName, isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
+
+        std::map<size_t, std::string> expLines; 
+
+        SECTION("using first time")
+        {
+            params.m_writeTimeRelativeTo = isx::WriteTimeRelativeTo::FIRST_DATA_ITEM;
+
+            expLines =
+            {
+                {0, "Time (s), Channel Name, Value"},
+                {1, "0, GPIO4_AI, 2.65564" },
+                {2, "0.001, GPIO4_AI, 2.532349" },
+                {3, "0.002, GPIO4_AI, 2.403412"},                
+                {3783, "3.56642, SYNC, 0"},
+                {3784, "3.591411, SYNC, 1"},
+                {3785, "3.616402, SYNC, 0"}            
+            }; 
+        }
+
+        SECTION("using unix time")
+        {
+            params.m_writeTimeRelativeTo = isx::WriteTimeRelativeTo::UNIX_EPOCH;
+
+            expLines =
+            {
+                {0, "Time (s), Channel Name, Value"},
+                {1, "1478277469.294107, GPIO4_AI, 2.65564" },
+                {2, "1478277469.295107, GPIO4_AI, 2.532349" },
+                {3, "1478277469.296107, GPIO4_AI, 2.403412"},                
+                {3783, "1478277472.860527, SYNC, 0"},
+                {3784, "1478277472.885518, SYNC, 1"},
+                {3785, "1478277472.910509, SYNC, 0"}            
+            };
+        }
+
+        isx::runGpioExporter(params);
+
+        std::ifstream outputFile(outputFileName);
+        size_t lineIndex = 0;
+        std::string line;
+        while (getline(outputFile, line))
+        {
+            if (expLines.count(lineIndex) > 0)
+            {
+                REQUIRE(line == expLines.at(lineIndex));
+            }
+            ++lineIndex;
+        }
+    }
+
     SECTION("Export two logical GPIO trace sets")
     {
         const std::string inputDir = g_resources["unitTestDataPath"] + "/nVokeGpio";
@@ -108,7 +165,7 @@ TEST_CASE("GpioExport", "[core]")
         {
             auto outputParams = std::make_shared<isx::GpioDataOutputParams>();
             runGpioDataImporter(isx::GpioDataParams(inputDir, f + ".raw"), outputParams, [](float){return false;});
-            gpios.push_back(isx::readGpio(f + "_events.isxd"));
+            gpios.push_back(isx::readGpio(f + "_gpio.isxd"));
             gpioFiles.insert(gpioFiles.end(), outputParams->filenames.begin(), outputParams->filenames.end());
         }
 
@@ -118,12 +175,12 @@ TEST_CASE("GpioExport", "[core]")
         const std::map<size_t, std::string> expLines =
         {
             {0, "Time (s), Channel Name, Value"},
-            {1, "0.009131999999999999, EX_LED, 0.5"},
-            {2, "459.58963, EX_LED, 0.5"},
-            {3, "0.114279, SYNC, 1"},
-            {34229, "2259.368452, SYNC, 1"},
-            {34230, "0, TRIG, 1"},
-            {34231, "459.562282, TRIG, 1"},
+            {1, "0, TRIG, 1" },
+            {2, "459.562282, TRIG, 1" },
+            {3, "0.009131999999999999, EX_LED, 0.5"},
+            {4, "459.58963, EX_LED, 0.5"},
+            {5, "0.114279, SYNC, 1"},
+            {34231, "2259.368452, SYNC, 1"}            
         };
 
         size_t lineIndex = 0;

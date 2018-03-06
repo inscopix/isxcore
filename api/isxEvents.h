@@ -83,7 +83,7 @@ public:
 
     /// \return     The timing information read from the Events set.
     virtual
-    const isx::TimingInfo &
+    isx::TimingInfo 
     getTimingInfo() const = 0;
 
     /// \return     The TimingInfos of a GpioSeries.

@@ -137,27 +137,33 @@ checkNewMemberOfSeries(
         const SpGpio_t & inNew,
         std::string & outMessage)
 {
-    const bool newIsAnalog = inNew->isAnalog();
     const std::vector<std::string> & newChannels = inNew->getChannelList();
-    const TimingInfo & newTi = inNew->getTimingInfo();
+    
     for (const auto & e : inExisting)
     {
-        if (e->isAnalog() != newIsAnalog)
-        {
-            outMessage = "GPIO series member with mismatching analog/digital data.";
-            return false;
-        }
-
         if (e->getChannelList() != newChannels)
         {
             outMessage = "GPIO series member with mismatching channels.";
             return false;
         }
 
-        if (!checkSeriesTimingInfo(e->getTimingInfo(), newTi, outMessage))
+        for (auto & n : newChannels)
         {
-            return false;
+            const bool newIsAnalog = inNew->isAnalog(n);
+            const TimingInfo & newTi = inNew->getTimingInfo(n);
+
+            if (e->isAnalog(n) != newIsAnalog)
+            {
+                outMessage = "GPIO series member with mismatching data types.";
+                return false;
+            }        
+
+            if (!checkSeriesTimingInfo(e->getTimingInfo(n), newTi, outMessage))
+            {
+                return false;
+            }
         }
+        
     }
     return true;
 }

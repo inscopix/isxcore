@@ -2,13 +2,13 @@
 #define ISX_MOSAIC_EVENTS_H
 
 #include "isxWritableEvents.h"
-
+#include "isxFileTypes.h"
 #include <memory>
 
 namespace isx
 {
 
-class TimeStampedDataFile;
+class EventBasedFile;
 template <typename T> class IoTaskTracker;
 
 /// Class used to read and handle GPIO data
@@ -52,7 +52,7 @@ public:
     void
     getLogicalDataAsync(const std::string & inCellName, EventsGetLogicalDataCB_t inCallback) override;
 
-    const isx::TimingInfo &
+    isx::TimingInfo
     getTimingInfo() const override;
 
     isx::TimingInfos_t
@@ -65,21 +65,17 @@ public:
     setTimingInfo(const isx::TimingInfo & inTimingInfo) override;
 
     void 
-    writeCellHeader(
-        const std::string & inCellName,
-        const isx::isize_t inNumPackets) override;
-
-    void 
     writeDataPkt(
+        const uint64_t inSignalIdx,
         const uint64_t inTimeStampUSec,
         const float inValue) override;
 
     void 
-    closeForWriting() override;
+    closeForWriting(const std::vector<std::string> & inNewChannelNames = {}) override;
 
 private:
-
-    std::shared_ptr<TimeStampedDataFile>              m_file;
+    FileType                                     m_type;
+    std::shared_ptr<EventBasedFile>              m_file;
     std::shared_ptr<IoTaskTracker<LogicalTrace>>      m_logicalIoTaskTracker;
 
 }; // class MosaicEvents

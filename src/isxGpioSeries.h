@@ -44,7 +44,7 @@ public:
     isValid() const override;
 
     bool
-    isAnalog() const override;
+    isAnalog(const std::string & inChannelName) const override;
 
     std::string
     getFileName() const override;
@@ -54,6 +54,9 @@ public:
 
     const std::vector<std::string>
     getChannelList() const override;
+
+    void 
+    getAllTraces(std::vector<SpFTrace_t> & outContinuousTraces, std::vector<SpLogicalTrace_t> & outLogicalTraces) override;
 
     SpFTrace_t
     getAnalogData(const std::string & inChannelName) override;
@@ -67,9 +70,15 @@ public:
     void
     getLogicalDataAsync(const std::string & inChannelName, GpioGetLogicalDataCB_t inCallback) override;
 
-    const isx::TimingInfo &
-    getTimingInfo() const override;
+    isx::TimingInfo 
+    getTimingInfo(const std::string & inChannelName) const override;
 
+    isx::TimingInfos_t
+    getTimingInfosForSeries(const std::string & inChannelName) const override;
+
+    isx::TimingInfo 
+    getTimingInfo() const override;
+    
     isx::TimingInfos_t
     getTimingInfosForSeries() const override;
 
@@ -81,7 +90,8 @@ private:
     /// True if the GPIO series is valid, false otherwise.
     bool m_valid = false;
 
-    TimingInfo              m_gaplessTimingInfo; ///< only really useful for global number of times
+    std::map<std::string, TimingInfo>          m_gaplessTimingInfo; ///< only really useful for global number of times
+    TimingInfo                                 m_generalGaplessTimingInfo;
     std::vector<SpGpio_t>   m_gpios;
 
 }; // class GpioSeries
