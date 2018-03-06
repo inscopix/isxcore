@@ -2,13 +2,14 @@
 #define ISX_MOSAIC_GPIO_H
 
 #include "isxGpio.h"
+#include "isxFileTypes.h"
 
 #include <memory>
 
 namespace isx
 {
 
-class TimeStampedDataFile;
+class EventBasedFile;
 template <typename T> class IoTaskTracker;
 
 /// Class used to read and handle GPIO data
@@ -36,7 +37,7 @@ public:
     isValid() const override;
 
     bool
-    isAnalog() const override;
+    isAnalog(const std::string & inChannelName) const override;
 
     std::string
     getFileName() const override;
@@ -46,6 +47,9 @@ public:
 
     const std::vector<std::string>
     getChannelList() const override;
+
+    void 
+    getAllTraces(std::vector<SpFTrace_t> & outContinuousTraces, std::vector<SpLogicalTrace_t> & outLogicalTraces) override;
 
     SpFTrace_t
     getAnalogData(const std::string & inChannelName) override;
@@ -59,9 +63,15 @@ public:
     void
     getLogicalDataAsync(const std::string & inChannelName, GpioGetLogicalDataCB_t inCallback) override;
 
-    const isx::TimingInfo &
-    getTimingInfo() const override;
+    isx::TimingInfo 
+    getTimingInfo(const std::string & inChannelName) const override;
 
+    isx::TimingInfos_t
+    getTimingInfosForSeries(const std::string & inChannelName) const override;
+
+    isx::TimingInfo 
+    getTimingInfo() const override;
+    
     isx::TimingInfos_t
     getTimingInfosForSeries() const override;
 
@@ -69,8 +79,8 @@ public:
     cancelPendingReads() override;
 
 private:
-
-    std::shared_ptr<TimeStampedDataFile>              m_file;
+    FileType                                          m_type;
+    std::shared_ptr<EventBasedFile>                   m_file;
     std::shared_ptr<IoTaskTracker<FTrace_t>>          m_analogIoTaskTracker;
     std::shared_ptr<IoTaskTracker<LogicalTrace>>      m_logicalIoTaskTracker;
 

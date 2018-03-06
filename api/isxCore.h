@@ -90,6 +90,20 @@ namespace isx
     ///                     value to check if the stream is still good.
     std::ifstream & getLine(std::ifstream & inStream, std::string & outLine);
 
+    /// Use this function to copy C++ strings to C strings instead of
+    /// the complicated and confusion str(n)cpy(_s).
+    ///
+    /// This will truncate the string if it's too long to fit in the
+    /// C string destination (noting that the C string will always
+    /// be null terminated).
+    ///
+    /// \param  inSource    The C++ string to copy.
+    /// \param  inDest      The C string to which to write.
+    /// \param  inDestCapacity  The size of the C string destination.
+    void copyCppStringToCString(const std::string & inSource, char * inDest, size_t inDestCapacity);
+
+    void closeFileStreamWithChecks(std::fstream & inFile, const std::string & inFileName);
+
 } // namespace isx
 
 #endif // def ISX_CORE_H

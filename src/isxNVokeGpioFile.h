@@ -3,7 +3,7 @@
 #include "isxCore.h"
 #include "isxAsync.h"
 #include "isxTimingInfo.h"
-#include "isxTimeStampedDataFile.h"
+#include "isxEventBasedFileV2.h"
 #include <string>
 #include <vector>
 #include <fstream>
@@ -165,8 +165,7 @@ namespace isx
         AsyncTaskStatus parse();
 
         /// Get a list of all the output files this object produces when parsing the original one
-        /// \param outFileNames  a vector containing the filenames of the output files
-        void getOutputFileNames(std::vector<std::string> & outFileNames);
+        const std::string & getOutputFileName() const;
 
     private:
         /// \return whether the input data packet is a sync packet or not. 
@@ -195,36 +194,12 @@ namespace isx
         /// \param inPkt the data packet
         void parseAnalogFollowPkt(const std::vector<uint8_t> & inPkt);
 
-        /// Closes the analog file and writes its footer
-        void closeAnalogFile();
-
-        /// Writes and closes all event data (digital packets)
-        void closeEventsFile();
-
-        /// Close and delete output file streams
-        /// 
-        void closeFiles();
+        /// Closes the output file and writes its footer
+        void closeFile();
 
         /// Writes the data to an output file
-        /// \param inChannel        The signal type that will be used a suffix for the output file
-        /// \param inMode           LED mode or GPIO mode used during acquisition (see s_gpioModeMap and s_ledModeMap)
-        /// \param inTriggerFollow  The channel used during trigger or follow mode
         /// \param inData           The data packet to write out        
-        void writeAnalogPktToFile(
-            const std::string & inChannel, 
-            const std::string & inMode,
-            const std::string & inTriggerFollow, 
-            const TimeStampedDataFile::DataPkt & inData);
-
-        void addEventPkt(
-            const std::string & inChannel, 
-            const std::string & inMode,
-            const std::string & inTriggerFollow, 
-            const TimeStampedDataFile::DataPkt & inData);
-
-        void updatePktTimes(const TimeStampedDataFile::DataPkt & inData);
-
-        void updateTimingInfo();
+        void writePktToFile(const EventBasedFileV2::DataPkt & inData);
 
         /// True if the movie file is valid, false otherwise.
         bool m_valid = false;
@@ -235,27 +210,9 @@ namespace isx
         /// The directory where output files will be written.
         std::string m_outputDir;
 
-        std::vector<std::string> m_outputFileNames;
-        std::unique_ptr<TimeStampedDataFile> m_analogFile;
+        std::string m_outputFileName;
+        std::unique_ptr<EventBasedFileV2> m_outputFile;     
 
-        struct ChannelInfo
-        {
-            ChannelInfo() {}
-            ChannelInfo(const std::string & inOutputMode, const std::string & inTriggerFollow, const TimeStampedDataFile::DataPkt & inData)
-            {
-                outputMode = inOutputMode;
-                triggerFollow = inTriggerFollow;
-                data.push_back(inData);
-            }
-
-            std::string outputMode;
-            std::string triggerFollow;
-            std::vector<TimeStampedDataFile::DataPkt> data;
-        };
-
-        /// A map containing the channel name and all the information for that channel
-        /// This is used to buffer digital (event) data and write it to a digital output file at the end, organized by channel
-        std::map<std::string, ChannelInfo> m_eventData;
 
         /// A map used to keep track of event counters per channel (channel, counter)
         std::map<uint8_t, uint8_t> m_signalEventCounters;
@@ -268,10 +225,12 @@ namespace isx
         /// Check in callback for reporting progress
         AsyncCheckInCB_t m_checkInCB;
 
-        TimingInfo  m_timingInfo;
-        Time        m_startTime;
-        Time        m_endTime;
+        uint64_t        m_startTime;        // Number of micro secs since unix epoch
+        uint64_t        m_endTime;
         bool        m_startTimeSet = false;
+
+        std::map<uint8_t, uint64_t> m_eventSignalIds;        // <DataType, signalID>
+        std::map<uint8_t, uint64_t> m_analogSignalIds;        // <DataType, signalID>
 
         static std::map<uint8_t, std::string> s_dataTypeMap;
         static std::map<uint8_t, std::string> s_gpioModeMap;

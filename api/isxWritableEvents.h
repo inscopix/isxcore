@@ -18,29 +18,23 @@ public:
     void 
     setTimingInfo(const isx::TimingInfo & inTimingInfo) = 0;
 
-    /// Write a cell header preceding the data for that cell
-    /// \param inCellName the name of the cell
-    /// \param inNumPackets the number of data packets that will follow this header
-    virtual 
-    void 
-    writeCellHeader(
-        const std::string & inCellName,
-        const isx::isize_t inNumPackets) = 0;
 
     /// Write data for one event
-    /// \param inTimeStampUSec event time in microsecs since unix epoch
+    /// \param inSignalIdx     signal index that uniquely identifies the signal and corresponds to the index in the channel names list
+    /// \param inTimeStampUSec event time in microsecs since start time of the recording
     /// \param inValue  event value
     virtual 
     void 
     writeDataPkt(
+        const uint64_t inSignalIdx,
         const uint64_t inTimeStampUSec,
         const float inValue) = 0;
 
     /// Close file for writing
-    /// 
+    /// \param inNewChannelNames the channel names list, corresponding to the signal indeces used in the data packets
     virtual 
     void 
-    closeForWriting() = 0; 
+    closeForWriting(const std::vector<std::string> & inNewChannelNames) = 0; 
 
 };
 

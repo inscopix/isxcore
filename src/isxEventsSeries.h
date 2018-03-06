@@ -58,7 +58,7 @@ public:
     void
     getLogicalDataAsync(const std::string & inCellName, EventsGetLogicalDataCB_t inCallback) override;
 
-    const isx::TimingInfo &
+    isx::TimingInfo 
     getTimingInfo() const override;
 
     isx::TimingInfos_t

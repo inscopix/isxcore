@@ -223,4 +223,34 @@ namespace isx
         outLine.erase(std::remove(outLine.begin(), outLine.end(), '\n'), outLine.end());
         return inStream;
     }
+
+    void copyCppStringToCString(const std::string & inSource, char * inDest, size_t inDestCapacity)
+    {
+        if (!inSource.empty())
+        {
+            size_t numChars = std::min(inDestCapacity, inSource.size() + 1);
+            std::string str = inSource;
+            if (numChars != inSource.size() + 1)
+            {
+                /// string is truncated, make sure we have a null character
+                str = inSource.substr(0, numChars-1);
+            }
+            snprintf(inDest, inDestCapacity, "%s", str.c_str());
+        }
+    }
+
+    void closeFileStreamWithChecks(std::fstream & inFile, const std::string & inFileName)
+    {
+        if(inFile.is_open() && inFile.good())
+        {
+            inFile.close();
+            if (!inFile.good())
+            {
+                ISX_LOG_ERROR("Error closing the stream for file", inFileName,
+                " eof: ", inFile.eof(), 
+                " bad: ", inFile.bad(), 
+                " fail: ", inFile.fail());
+            }
+        }
+    }
 }
