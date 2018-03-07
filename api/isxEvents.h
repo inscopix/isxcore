@@ -13,28 +13,28 @@
 namespace isx
 {
 
+/// This struct aggregates temporal statistics of traces. These stats are useful for determining whether a cell is good
+/// or complete trash.
+struct TraceMetrics
+{
+    TraceMetrics() {}
+
+    float m_snr         = 0.f; ///< The signal-to-noise ratio of the trace, the median amplitude divided by the median absolute deviation
+    float m_mad         = 0.f; ///< The median absolute deviation of the trace
+    float m_eventRate   = 0.f; ///< The event rate of the trace in Hz
+    float m_eventAmpMedian = 0.f; ///< The median event amplitude of the trace
+    float m_eventAmpSD  = 0.f; ///< The standard deviation from the median of the event amplitudes
+    float m_riseMedian  = 0.f; ///< The median event rise time for events in seconds
+    float m_riseSD      = 0.f; ///< The SD from the median of event rise times in seconds
+    float m_decayMedian = 0.f; ///< The median event decay time in seconds
+    float m_decaySD     = 0.f; ///< The SD from the median of decay time in seconds
+};
+
+using SpTraceMetrics_t = std::shared_ptr<TraceMetrics>;
+
 /// Interface for Events data.
 class Events
 {
-
-    /// This struct aggregates temporal statistics of traces. These stats are useful for determining whether a cell is good
-    /// or complete trash.
-    struct TraceMetrics
-    {
-        TraceMetrics() {}
-
-        float m_snr         = 0.f; ///< The signal-to-noise ratio of the trace, the median amplitude divided by the median absolute deviation
-        float m_mad         = 0.f; ///< The median absolute deviation of the trace
-        float m_eventRate   = 0.f; ///< The event rate of the trace in Hz
-        float m_eventAmpMedian = 0.f; ///< The median event amplitude of the trace
-        float m_eventAmpSD  = 0.f; ///< The standard deviation from the median of the event amplitudes
-        float m_riseMedian  = 0.f; ///< The median event rise time for events in seconds
-        float m_riseSD      = 0.f; ///< The SD from the median of event rise times in seconds
-        float m_decayMedian = 0.f; ///< The median event decay time in seconds
-        float m_decaySD     = 0.f; ///< The SD from the median of decay time in seconds
-    };
-
-    using SpTraceMetrics_t = std::shared_ptr<TraceMetrics>;
 
 public:
 

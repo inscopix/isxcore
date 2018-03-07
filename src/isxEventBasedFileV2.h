@@ -7,6 +7,8 @@
 #include "isxDataSet.h"
 #include "isxEventBasedFile.h"
 #include "isxFileTypes.h"
+#include "isxEvents.h"
+#include "isxJsonUtils.h"
 
 namespace isx
 {

@@ -6,6 +6,7 @@
 #include "isxGroup.h"
 #include "isxDataSet.h"
 #include "isxCellSet.h"
+#include "isxEvents.h"
 
 #include "json.hpp"
 

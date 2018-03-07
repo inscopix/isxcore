@@ -1,5 +1,4 @@
 #include "isxEventBasedFileV2.h"
-#include "isxJsonUtils.h"
 #include <string>
 #include "isxLogicalTrace.h"
 
@@ -409,7 +408,7 @@ EventBasedFileV2::getTraceMetrics(isize_t inIndex) const
 void
 EventBasedFileV2::setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics)
 {
-    if (m_fileClosedForWriting)
+    if (m_closedForWriting)
     {
         ISX_THROW(isx::ExceptionFileIO,
                   "Writing data after file was closed for writing.", m_fileName);
