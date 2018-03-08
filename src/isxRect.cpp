@@ -31,6 +31,13 @@ Rect::y() const
 }
 
 bool
+Rect::isValid() const
+{
+    return !((m_topLeft == SpatialPoint<int64_t>(-1, -1))
+        && (m_bottomRight == SpatialPoint<int64_t>(-1, -1)));
+}
+
+bool
 Rect::operator ==(const Rect & inOther) const
 {
     return (m_topLeft == inOther.m_topLeft)
