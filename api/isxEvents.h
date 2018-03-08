@@ -17,7 +17,39 @@ namespace isx
 /// or complete trash.
 struct TraceMetrics
 {
+    /// Default contructor
+    ///
     TraceMetrics() {}
+
+    /// Convenience constructor to fill all members at once
+    /// \param inSnr
+    /// \param inMad
+    /// \param inEventRate
+    /// \param inEventAmpMedian
+    /// \param inEventAmpSd
+    /// \param inRiseMedian
+    /// \param inRiseSd
+    /// \param inDecayMedian
+    /// \param inDecaySd
+    TraceMetrics(
+        float inSnr,
+        float inMad,
+        float inEventRate,
+        float inEventAmpMedian,
+        float inEventAmpSd, 
+        float inRiseMedian,
+        float inRiseSd,
+        float inDecayMedian,
+        float inDecaySd) :
+        m_snr(inSnr),
+        m_mad(inMad),
+        m_eventRate(inEventRate),
+        m_eventAmpMedian(inEventAmpMedian),
+        m_eventAmpSD(inEventAmpSd),
+        m_riseMedian(inRiseMedian),
+        m_riseSD(inRiseSd),
+        m_decayMedian(inDecayMedian),
+        m_decaySD(inDecaySd) {}
 
     float m_snr         = 0.f; ///< The signal-to-noise ratio of the trace, the median amplitude divided by the median absolute deviation
     float m_mad         = 0.f; ///< The median absolute deviation of the trace
