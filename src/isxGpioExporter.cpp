@@ -36,7 +36,6 @@ runGpioExporter(
     const size_t numSegments = gpios.size();
     const SpGpio_t & refGpio = gpios.front();
     const std::vector<std::string> channelNames = refGpio->getChannelList();
-    const bool refIsAnalog = refGpio->isAnalog();
 
     Time baseTime;
     switch (inParams.m_writeTimeRelativeTo)
@@ -60,52 +59,33 @@ runGpioExporter(
     {
         ISX_THROW(ExceptionFileIO, "Error writing to output file.");
     }
+    
+    
+    const size_t numChannels = channelNames.size();
+    std::vector<std::vector<SpLogicalTrace_t>> traces(numChannels);  
 
-    if (refIsAnalog)
+    for (size_t s = 0; s < numSegments; ++s)
     {
-        std::vector<std::vector<SpFTrace_t>> traces(numSegments);
-        for (size_t s = 0; s < numSegments; ++s)
-        {
-            for (const auto & name : channelNames)
-            {
-                traces[s].push_back(gpios[s]->getAnalogData(name));
-            }
-        }
+        std::vector<SpLogicalTrace_t> logicalTraces;
+        std::vector<SpFTrace_t> continuousTraces;
+        gpios[s]->getAllTraces(continuousTraces, logicalTraces);
 
-        try
-        {
-            cancelled = writeTraces(strm, traces, channelNames, {}, baseTime, inCheckInCB);
-        }
-        catch (...)
-        {
-            strm.close();
-            std::remove(inParams.m_fileName.c_str());
-            throw;
-        }
-        
-    }
-    else
-    {
-        const size_t numChannels = channelNames.size();
-        std::vector<std::vector<SpLogicalTrace_t>> traces(numChannels);
         for (size_t c = 0; c < numChannels; ++c)
         {
-            for (size_t s = 0; s < numSegments; ++s)
-            {
-                traces[c].push_back(gpios[s]->getLogicalData(channelNames[c]));
-            }
-        }
-
-        try
-        {
-            cancelled = writeLogicalTraces(strm, traces, channelNames, "Channel Name", baseTime, inCheckInCB);
-        }
-        catch (...)
-        {
-            std::remove(inParams.m_fileName.c_str());
-            throw;
+            traces[c].push_back(logicalTraces[c]);
         }
     }
+
+    try
+    {
+        cancelled = writeLogicalTraces(strm, traces, channelNames, "Channel Name", baseTime, inCheckInCB);
+    }
+    catch (...)
+    {
+        std::remove(inParams.m_fileName.c_str());
+        throw;
+    }
+    
 
     if (cancelled)
     {

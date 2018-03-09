@@ -1,5 +1,6 @@
 #include "isxMosaicEvents.h"
-#include "isxTimeStampedDataFile.h"
+#include "isxEventBasedFileV1.h"
+#include "isxEventBasedFileV2.h"
 #include "isxMutex.h"
 #include "isxConditionVariable.h"
 #include "isxIoTask.h"
@@ -9,7 +10,7 @@ namespace isx
 {
 
 MosaicEvents::MosaicEvents()
-    : m_file(new TimeStampedDataFile())
+    : m_file(new EventBasedFileV2())
 {
 
 }
@@ -19,11 +20,26 @@ MosaicEvents::MosaicEvents(const std::string & inFileName, bool inOpenForWrite)
 {
     if (inOpenForWrite)
     {
-        m_file.reset(new TimeStampedDataFile(inFileName, isx::TimeStampedDataFile::StoredData::EVENTS));
+        m_type = FileType::V2;
+        m_file.reset(new EventBasedFileV2(inFileName, isx::DataSet::Type::EVENTS, true));
     }
     else
     {
-        m_file.reset(new TimeStampedDataFile(inFileName));
+        m_type = isx::getFileType(inFileName);
+
+        switch (m_type)
+        {
+            case FileType::V2:
+            m_file.reset(new EventBasedFileV2(inFileName));
+            break;
+
+            case FileType::V1:
+            m_file.reset(new EventBasedFileV1(inFileName));
+            break;
+
+            default:
+                ISX_THROW(isx::ExceptionUserInput, "Invalid file name. The file is not a valid events file.");
+        }        
     }
     
 }
@@ -48,7 +64,7 @@ MosaicEvents::getFileName() const
 isize_t
 MosaicEvents::numberOfCells() 
 {
-    return m_file->numberOfChannels();
+    return m_file->getChannelList().size();
 }
 
 const std::vector<std::string>
@@ -96,7 +112,7 @@ MosaicEvents::getLogicalDataAsync(const std::string & inCellName, EventsGetLogic
     m_logicalIoTaskTracker->schedule(getLogicalCB, inCallback);
 }
 
-const isx::TimingInfo &
+isx::TimingInfo 
 MosaicEvents::getTimingInfo() const 
 {
     return m_file->getTimingInfo();
@@ -105,7 +121,7 @@ MosaicEvents::getTimingInfo() const
 isx::TimingInfos_t
 MosaicEvents::getTimingInfosForSeries() const 
 {
-    return TimingInfos_t{m_file->getTimingInfo()};
+    return TimingInfos_t{getTimingInfo()};
 }
 
 void
@@ -117,30 +133,41 @@ MosaicEvents::cancelPendingReads()
 void 
 MosaicEvents::setTimingInfo(const isx::TimingInfo & inTimingInfo) 
 {
-    m_file->setTimingInfo(inTimingInfo);
-}
-
-void 
-MosaicEvents::writeCellHeader(
-    const std::string & inCellName,
-    const isx::isize_t inNumPackets) 
-{
-    m_file->writeChannelHeader(inCellName, "", "", inNumPackets);
+    if (m_type == FileType::V2)
+    {
+        auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
+        Time start = inTimingInfo.getStart();
+        Time end = inTimingInfo.getEnd();
+        std::vector<DurationInSeconds> steps(numberOfCells(), DurationInSeconds(0, 1));
+        f->setTimingInfo(start, end, steps);
+               
+    }
+    else if (m_type == FileType::V1)
+    {
+        auto f = std::static_pointer_cast<isx::EventBasedFileV1>(m_file);
+        f->setTimingInfo(inTimingInfo);
+    }    
 }
 
 void 
 MosaicEvents::writeDataPkt(
+    const uint64_t inSignalIdx,
     const uint64_t inTimeStampUSec,
     const float inValue) 
 {
-    TimeStampedDataFile::DataPkt pkt(inTimeStampUSec, true, inValue);
-    m_file->writeDataPkt(pkt);
+    EventBasedFileV2::DataPkt pkt(inTimeStampUSec, inValue, inSignalIdx);
+    ISX_ASSERT(m_type == FileType::V2);
+    auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
+    f->writeDataPkt(pkt);  
 }
 
 void 
-MosaicEvents::closeForWriting() 
+MosaicEvents::closeForWriting(const std::vector<std::string> & inNewChannelNames) 
 {
-    m_file->closeFileForWriting();
+    ISX_ASSERT(m_type == FileType::V2);
+    auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
+    f->setChannelList(inNewChannelNames);
+    f->closeFileForWriting();
 }
 
 } /// namespace isx

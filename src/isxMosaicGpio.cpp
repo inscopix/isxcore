@@ -1,5 +1,6 @@
 #include "isxMosaicGpio.h"
-#include "isxTimeStampedDataFile.h"
+#include "isxEventBasedFileV1.h"
+#include "isxEventBasedFileV2.h"
 #include "isxMutex.h"
 #include "isxConditionVariable.h"
 #include "isxIoTask.h"
@@ -9,17 +10,27 @@ namespace isx
 {
 
 MosaicGpio::MosaicGpio()
-    : m_file(new TimeStampedDataFile())
+    : m_file(new EventBasedFileV2())
 {
 
 }
 
 MosaicGpio::MosaicGpio(const std::string & inFileName)
-    : m_file(new TimeStampedDataFile(inFileName))
-    , m_analogIoTaskTracker(new IoTaskTracker<FTrace_t>())
+    : m_analogIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_logicalIoTaskTracker(new IoTaskTracker<LogicalTrace>())
 {
+    m_type = isx::getFileType(inFileName);
 
+    switch (m_type)
+    {
+        case FileType::V2:
+        m_file.reset(new EventBasedFileV2(inFileName));
+        break;
+
+        case FileType::V1:
+        m_file.reset(new EventBasedFileV1(inFileName));        
+        break;
+    }
 }
 
 MosaicGpio::~MosaicGpio()
@@ -35,9 +46,20 @@ MosaicGpio::isValid() const
 
 
 bool 
-MosaicGpio::isAnalog() const
+MosaicGpio::isAnalog(const std::string & inChannelName) const
 {
-    return m_file->isAnalog();
+    bool analog = false;
+    if (m_type == FileType::V2)
+    {
+        auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
+        analog = f->getSignalType(inChannelName) == SignalType::DENSE;
+    }
+    else if (m_type == FileType::V1)
+    {
+        auto f = std::static_pointer_cast<isx::EventBasedFileV1>(m_file);
+        analog = f->isAnalog();
+    }
+    return analog;
 }
 
 std::string
@@ -49,7 +71,7 @@ MosaicGpio::getFileName() const
 isize_t 
 MosaicGpio::numberOfChannels()
 {
-    return m_file->numberOfChannels();
+    return getChannelList().size();
 }
 
 const std::vector<std::string> 
@@ -57,6 +79,40 @@ MosaicGpio::getChannelList() const
 {
     return m_file->getChannelList();
 }
+
+void 
+MosaicGpio::getAllTraces(std::vector<SpFTrace_t> & outContinuousTraces, std::vector<SpLogicalTrace_t> & outLogicalTraces) 
+{
+    if (m_type == FileType::V2)
+    {
+        auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
+        f->readAllTraces(outContinuousTraces, outLogicalTraces);
+    }
+    else 
+    {
+        auto channels = getChannelList();
+        auto f = std::static_pointer_cast<isx::EventBasedFileV1>(m_file);
+        bool analog = f->isAnalog();
+
+        if (analog)
+        {
+            for (auto & c : channels)
+            {
+                outContinuousTraces.emplace_back(f->getAnalogData(c));
+                outLogicalTraces.emplace_back(f->getLogicalData(c));
+            }
+        }
+        else
+        {
+            for (auto & c : channels)
+            {
+                outLogicalTraces.emplace_back(f->getLogicalData(c));
+            }
+        }
+    }
+    
+}    
+
 
 SpFTrace_t 
 MosaicGpio::getAnalogData(const std::string & inChannelName)
@@ -82,6 +138,7 @@ MosaicGpio::getAnalogData(const std::string & inChannelName)
 void 
 MosaicGpio::getAnalogDataAsync(const std::string & inChannelName, GpioGetAnalogDataCB_t inCallback)
 {
+
     // Only get a weak pointer to this, so that we don't bother reading
     // if this has been deleted when the read gets executed.
     std::weak_ptr<MosaicGpio> weakThis = shared_from_this();
@@ -94,8 +151,7 @@ MosaicGpio::getAnalogDataAsync(const std::string & inChannelName, GpioGetAnalogD
             }
             return SpFTrace_t();
         };
-    m_analogIoTaskTracker->schedule(getAnalogCB, inCallback);
-
+    m_analogIoTaskTracker->schedule(getAnalogCB, inCallback); 
 }
 
 SpLogicalTrace_t 
@@ -137,16 +193,38 @@ MosaicGpio::getLogicalDataAsync(const std::string & inChannelName, GpioGetLogica
     m_logicalIoTaskTracker->schedule(getLogicalCB, inCallback);
 }
 
-const isx::TimingInfo & 
-MosaicGpio::getTimingInfo() const
+isx::TimingInfo 
+MosaicGpio::getTimingInfo(const std::string & inChannelName) const
 {
-    return m_file->getTimingInfo();
+    if (m_type == FileType::V2)
+    {
+        auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
+        return f->getTimingInfo(inChannelName);
+    }
+    else 
+    {
+        auto f = std::static_pointer_cast<isx::EventBasedFileV1>(m_file);
+        return f->getTimingInfo();
+    }
+
 }
 
 isx::TimingInfos_t
-MosaicGpio::getTimingInfosForSeries() const
+MosaicGpio::getTimingInfosForSeries(const std::string & inChannelName) const
 {
-    return TimingInfos_t{m_file->getTimingInfo()};
+    return TimingInfos_t{getTimingInfo(inChannelName)};
+}
+
+isx::TimingInfo 
+MosaicGpio::getTimingInfo() const 
+{
+    return m_file->getTimingInfo();
+}
+    
+isx::TimingInfos_t
+MosaicGpio::getTimingInfosForSeries() const 
+{
+    return TimingInfos_t{getTimingInfo()};
 }
 
 void

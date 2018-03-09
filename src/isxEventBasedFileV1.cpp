@@ -1,16 +1,16 @@
-#include "isxTimeStampedDataFile.h"
+#include "isxEventBasedFileV1.h"
 #include "isxJsonUtils.h"
 #include <limits>
 
 namespace isx
 {
 
-TimeStampedDataFile::DataPkt::DataPkt()
+EventBasedFileV1::DataPkt::DataPkt()
 {
 
 }
 
-TimeStampedDataFile::DataPkt::DataPkt(
+EventBasedFileV1::DataPkt::DataPkt(
     const uint64_t inTimeStampUSec,
     const bool inState,
     const float inValue) :
@@ -28,21 +28,21 @@ TimeStampedDataFile::DataPkt::DataPkt(
 }
 
 bool
-TimeStampedDataFile::DataPkt::getState()
+EventBasedFileV1::DataPkt::getState()
 {
     uint32_t state = m_value & 0x80000000;
     return (state != 0);
 }
 
 float
-TimeStampedDataFile::DataPkt::getValue()
+EventBasedFileV1::DataPkt::getValue()
 {
     float * fval = reinterpret_cast<float *>(&m_value);
     return std::abs(*fval);
 }
 
 Time
-TimeStampedDataFile::DataPkt::getTime() const
+EventBasedFileV1::DataPkt::getTime() const
 {
     DurationInSeconds secsFromUnixEpoch(isize_t(m_timeStampUSec / 1000000), 1);
     DurationInSeconds usecs(m_timeStampUSec % 1000000, 1000000);
@@ -51,12 +51,12 @@ TimeStampedDataFile::DataPkt::getTime() const
 }
 
 
-TimeStampedDataFile::TimeStampedDataFile()
+EventBasedFileV1::EventBasedFileV1()
 {
 
 }
 
-TimeStampedDataFile::TimeStampedDataFile(const std::string & inFileName) :
+EventBasedFileV1::EventBasedFileV1(const std::string & inFileName) :
     m_fileName(inFileName),
     m_openForWrite(false)
 {
@@ -70,7 +70,7 @@ TimeStampedDataFile::TimeStampedDataFile(const std::string & inFileName) :
     m_valid = true;
 }
 
-TimeStampedDataFile::TimeStampedDataFile(const std::string & inFileName, StoredData dataType, bool inIsAnalog) :
+EventBasedFileV1::EventBasedFileV1(const std::string & inFileName, StoredData dataType, bool inIsAnalog) :
     m_analog(false),
     m_fileName(inFileName),
     m_openForWrite(true),
@@ -92,54 +92,38 @@ TimeStampedDataFile::TimeStampedDataFile(const std::string & inFileName, StoredD
 
 }
 
-TimeStampedDataFile::~TimeStampedDataFile()
+EventBasedFileV1::~EventBasedFileV1()
 {
     closeFileForWriting();
-    if(m_file.is_open() && m_file.good())
-    {
-        m_file.close();
-        if (!m_file.good())
-        {
-            ISX_LOG_ERROR("Error closing the stream for file", m_fileName,
-            " eof: ", m_file.eof(),
-            " bad: ", m_file.bad(),
-            " fail: ", m_file.fail());
-        }
-    }
+    isx::closeFileStreamWithChecks(m_file, m_fileName);
 }
 
 bool
-TimeStampedDataFile::isValid() const
+EventBasedFileV1::isValid() const
 {
     return m_valid;
 }
 
-TimeStampedDataFile::StoredData
-TimeStampedDataFile::getStoredDataType() const
+EventBasedFileV1::StoredData
+EventBasedFileV1::getStoredDataType() const
 {
     return m_dataType;
 }
 
 bool
-TimeStampedDataFile::isAnalog() const
+EventBasedFileV1::isAnalog() const
 {
     return m_analog;
 }
 
 const std::string &
-TimeStampedDataFile::getFileName() const
+EventBasedFileV1::getFileName() const
 {
     return m_fileName;
 }
 
-const isize_t
-TimeStampedDataFile::numberOfChannels()
-{
-    return m_channelOffsets.size();
-}
-
-const std::vector<std::string>
-TimeStampedDataFile::getChannelList() const
+const std::vector<std::string> 
+EventBasedFileV1::getChannelList() const
 {
     std::vector<std::string> keys;
 
@@ -152,7 +136,7 @@ TimeStampedDataFile::getChannelList() const
 }
 
 SpFTrace_t
-TimeStampedDataFile::getAnalogData(const std::string & inChannelName)
+EventBasedFileV1::getAnalogData(const std::string & inChannelName)
 {
     if(!m_analog || m_openForWrite)
     {
@@ -244,7 +228,7 @@ TimeStampedDataFile::getAnalogData(const std::string & inChannelName)
 }
 
 SpLogicalTrace_t
-TimeStampedDataFile::getLogicalData(const std::string & inChannelName)
+EventBasedFileV1::getLogicalData(const std::string & inChannelName)
 {
     auto search = m_channelOffsets.find(inChannelName);
     if(search == m_channelOffsets.end() || m_openForWrite)
@@ -255,6 +239,15 @@ TimeStampedDataFile::getLogicalData(const std::string & inChannelName)
     std::string headerStr = readChannelHeader(inChannelName);
     json header = json::parse(headerStr);
     isize_t numPkts = header.at("Number of Packets");
+
+    if (m_analog && numPkts == 0)
+    {
+        // Calculate number of packets
+        std::ios::pos_type current = m_file.tellg();
+        isize_t dataBytes = isize_t(m_headerOffset - current);
+        numPkts = dataBytes / sizeof(DataPkt);
+        ISX_ASSERT(dataBytes == numPkts * sizeof(DataPkt));
+    }
 
     std::unique_ptr<DataPkt[]> data(new DataPkt[numPkts]);
     m_file.read(reinterpret_cast<char*>(data.get()), numPkts*sizeof(DataPkt));
@@ -269,27 +262,35 @@ TimeStampedDataFile::getLogicalData(const std::string & inChannelName)
     {
         DataPkt & pkt = data[i];
         float val = pkt.getValue();
-        if(val == 0.0f)
+        if (m_analog)
         {
-            logicalTrace->addValue(pkt.getTime(), pkt.getState());
+            logicalTrace->addValue(pkt.getTime(), val);
         }
         else
         {
-            logicalTrace->addValue(pkt.getTime(), val * pkt.getState());
+            if (val == 0.0f)
+            {
+                logicalTrace->addValue(pkt.getTime(), pkt.getState());
+            }
+            else
+            {
+                logicalTrace->addValue(pkt.getTime(), val * pkt.getState());
+            }
         }
+        
     }
 
     return logicalTrace;
 }
 
-const isx::TimingInfo &
-TimeStampedDataFile::getTimingInfo() const
+const isx::TimingInfo 
+EventBasedFileV1::getTimingInfo() const
 {
     return m_timingInfo;
 }
 
 void
-TimeStampedDataFile::readFileFooter()
+EventBasedFileV1::readFileFooter()
 {
     if (!m_openForWrite)
     {
@@ -332,7 +333,7 @@ TimeStampedDataFile::readFileFooter()
 }
 
 std::string
-TimeStampedDataFile::readChannelHeader(const std::string & inChannelName)
+EventBasedFileV1::readChannelHeader(const std::string & inChannelName)
 {
     if (!m_openForWrite)
     {
@@ -350,13 +351,13 @@ TimeStampedDataFile::readChannelHeader(const std::string & inChannelName)
 
 
 void
-TimeStampedDataFile::setTimingInfo(const isx::TimingInfo & inTimingInfo)
+EventBasedFileV1::setTimingInfo(const isx::TimingInfo & inTimingInfo)
 {
     m_timingInfo = inTimingInfo;
 }
 
 void
-TimeStampedDataFile::writeChannelHeader(
+EventBasedFileV1::writeChannelHeader(
     const std::string & inChannel,
     const std::string & inMode,
     const std::string & inTriggerFollow,
@@ -376,7 +377,7 @@ TimeStampedDataFile::writeChannelHeader(
 }
 
 void
-TimeStampedDataFile::writeDataPkt(const DataPkt & inData)
+EventBasedFileV1::writeDataPkt(const DataPkt & inData)
 {
     m_file.write((char *)&inData, sizeof(inData));
 
@@ -390,7 +391,7 @@ TimeStampedDataFile::writeDataPkt(const DataPkt & inData)
 }
 
 void
-TimeStampedDataFile::closeFileForWriting()
+EventBasedFileV1::closeFileForWriting()
 {
     if (m_openForWrite && !m_closedForWriting)
     {
@@ -400,7 +401,7 @@ TimeStampedDataFile::closeFileForWriting()
 }
 
 void
-TimeStampedDataFile::writeFileFooter()
+EventBasedFileV1::writeFileFooter()
 {
     json j;
     try
