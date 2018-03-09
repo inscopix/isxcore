@@ -103,7 +103,7 @@ TEST_CASE("importCsvTraces-Bonsai", "[core][importCsvTraces]")
     };
 
     const isx::TimingInfo expTi(
-            params.m_startTime + isx::DurationInSeconds(125707789, 1000000),
+            params.m_startTime,
             isx::DurationInSeconds(40004, 1000000),
             numTimes
     );
@@ -117,9 +117,10 @@ TEST_CASE("importCsvTraces-Bonsai", "[core][importCsvTraces]")
             REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
             const isx::SpGpio_t traces = isx::readGpio(params.m_outputFile);
-            REQUIRE(!traces->isAnalog());
+            REQUIRE(traces->getChannelList() == expChannelList);
+            REQUIRE(traces->isAnalog("X"));
+            REQUIRE(traces->isAnalog("Y"));
             REQUIRE(traces->numberOfChannels() == 2);
-            REQUIRE(traces->getTimingInfo() == expTi);
 
             requireEqualChannels(traces->getChannelList(), expChannelList);
             requireEqualValues(traces->getLogicalData("X"), numTimes, expX);
@@ -133,9 +134,10 @@ TEST_CASE("importCsvTraces-Bonsai", "[core][importCsvTraces]")
             REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
             const isx::SpGpio_t traces = isx::readGpio(params.m_outputFile);
-            REQUIRE(!traces->isAnalog());
+            REQUIRE(traces->getChannelList() == expChannelList);
+            REQUIRE(traces->isAnalog("X"));
+            REQUIRE(traces->isAnalog("Y"));
             REQUIRE(traces->numberOfChannels() == 2);
-            REQUIRE(traces->getTimingInfo() == expTi);
 
             requireEqualChannels(traces->getChannelList(), expChannelList);
             requireEqualValues(traces->getLogicalData("X"), numTimes, expX);
@@ -153,9 +155,9 @@ TEST_CASE("importCsvTraces-Bonsai", "[core][importCsvTraces]")
             REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
             const isx::SpGpio_t traces = isx::readGpio(params.m_outputFile);
-            REQUIRE(!traces->isAnalog());
+            REQUIRE(traces->getChannelList() == expChannelList);
+            REQUIRE(traces->isAnalog("X"));
             REQUIRE(traces->numberOfChannels() == 1);
-            REQUIRE(traces->getTimingInfo() == expTi);
 
             requireEqualChannels(traces->getChannelList(), expChannelList);
             requireEqualValues(traces->getLogicalData("X"), numTimes, expX);
@@ -168,9 +170,9 @@ TEST_CASE("importCsvTraces-Bonsai", "[core][importCsvTraces]")
             REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
             const isx::SpGpio_t traces = isx::readGpio(params.m_outputFile);
-            REQUIRE(!traces->isAnalog());
+            REQUIRE(traces->getChannelList() == expChannelList);
+            REQUIRE(traces->isAnalog("X"));
             REQUIRE(traces->numberOfChannels() == 1);
-            REQUIRE(traces->getTimingInfo() == expTi);
 
             requireEqualChannels(traces->getChannelList(), expChannelList);
             requireEqualValues(traces->getLogicalData("X"), numTimes, expX);
@@ -254,11 +256,15 @@ TEST_CASE("importCsvTrace-Anymaze", "[core][importCsvTraces]")
             REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
             isx::SpGpio_t traces = isx::readGpio(params.m_outputFile);
-            REQUIRE(!traces->isAnalog());
-            REQUIRE(traces->numberOfChannels() == 5);
-            REQUIRE(traces->getTimingInfo() == expTi);
-
             requireEqualChannels(traces->getChannelList(), expChannelList);
+            REQUIRE(traces->isAnalog("Centre posn X"));
+            REQUIRE(traces->isAnalog("Centre posn Y"));
+            REQUIRE(traces->isAnalog("Speed"));
+            REQUIRE(!traces->isAnalog("In OFA"));
+            REQUIRE(!traces->isAnalog("In center"));
+            REQUIRE(traces->numberOfChannels() == 5);
+
+            
             requireEqualValues(traces->getLogicalData("Centre posn X"), numTimes, expX);
             requireEqualValues(traces->getLogicalData("Centre posn Y"), numTimes, expY);
             requireEqualValues(traces->getLogicalData("Speed"), numTimes, expSpeed);
@@ -273,11 +279,15 @@ TEST_CASE("importCsvTrace-Anymaze", "[core][importCsvTraces]")
             REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
             isx::SpGpio_t traces = isx::readGpio(params.m_outputFile);
-            REQUIRE(!traces->isAnalog());
-            REQUIRE(traces->numberOfChannels() == 5);
-            REQUIRE(traces->getTimingInfo() == expTi);
-
             requireEqualChannels(traces->getChannelList(), expChannelList);
+            REQUIRE(traces->isAnalog("Centre posn X"));
+            REQUIRE(traces->isAnalog("Centre posn Y"));
+            REQUIRE(traces->isAnalog("Speed"));
+            REQUIRE(!traces->isAnalog("In OFA"));
+            REQUIRE(!traces->isAnalog("In center"));
+            REQUIRE(traces->numberOfChannels() == 5);
+
+            
             requireEqualValues(traces->getLogicalData("Centre posn X"), numTimes, expX);
             requireEqualValues(traces->getLogicalData("Centre posn Y"), numTimes, expY);
             requireEqualValues(traces->getLogicalData("Speed"), numTimes, expSpeed);
@@ -301,11 +311,13 @@ TEST_CASE("importCsvTrace-Anymaze", "[core][importCsvTraces]")
             REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
             isx::SpGpio_t traces = isx::readGpio(params.m_outputFile);
-            REQUIRE(!traces->isAnalog());
-            REQUIRE(traces->numberOfChannels() == 3);
-            REQUIRE(traces->getTimingInfo() == expTi);
-
             requireEqualChannels(traces->getChannelList(), expChannelList);
+            REQUIRE(traces->isAnalog("Centre posn X"));
+            REQUIRE(traces->isAnalog("Speed"));
+            REQUIRE(!traces->isAnalog("In OFA"));
+
+            REQUIRE(traces->numberOfChannels() == 3);
+            
             requireEqualValues(traces->getLogicalData("Centre posn X"), numTimes, expX);
             requireEqualValues(traces->getLogicalData("Speed"), numTimes, expSpeed);
             requireEqualValues(traces->getLogicalData("In OFA"), numTimes, expOfa);
@@ -318,11 +330,12 @@ TEST_CASE("importCsvTrace-Anymaze", "[core][importCsvTraces]")
             REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
             isx::SpGpio_t traces = isx::readGpio(params.m_outputFile);
-            REQUIRE(!traces->isAnalog());
-            REQUIRE(traces->numberOfChannels() == 3);
-            REQUIRE(traces->getTimingInfo() == expTi);
-
             requireEqualChannels(traces->getChannelList(), expChannelList);
+            REQUIRE(traces->isAnalog("Centre posn X"));
+            REQUIRE(traces->isAnalog("Speed"));
+            REQUIRE(!traces->isAnalog("In OFA"));
+            REQUIRE(traces->numberOfChannels() == 3);
+
             requireEqualValues(traces->getLogicalData("Centre posn X"), numTimes, expX);
             requireEqualValues(traces->getLogicalData("Speed"), numTimes, expSpeed);
             requireEqualValues(traces->getLogicalData("In OFA"), numTimes, expOfa);
@@ -342,7 +355,7 @@ TEST_CASE("importCsvTrace-Ethovision", "[core][importCsvTraces]")
     isx::CoreInitialize();
 
     const std::string dataName = "Raw data-P38-Trial    10-track";
-    const size_t numTimes = 15001;
+    const size_t numTimes = 15001;      
 
     isx::CsvTraceImporterParams params;
     params.m_inputFile = inputDataDir + "/" + dataName + ".csv";
@@ -367,10 +380,8 @@ TEST_CASE("importCsvTrace-Ethovision", "[core][importCsvTraces]")
 
     const std::map<isx::Time, float> expYNose =
     {
-        {params.m_startTime, std::numeric_limits<float>::quiet_NaN()},
-        // TODO : Switch when we support negative values.
-        //{params.m_startTime + isx::DurationInSeconds(28, 100), -5.70016f},
-        {params.m_startTime + isx::DurationInSeconds(28, 100), std::numeric_limits<float>::quiet_NaN()},
+        {params.m_startTime, -6.4062f},
+        {params.m_startTime + isx::DurationInSeconds(28, 100), -5.70016f},        
         {params.m_startTime + isx::DurationInSeconds(600, 1), 14.8922f},
     };
 
@@ -420,11 +431,9 @@ TEST_CASE("importCsvTrace-Ethovision", "[core][importCsvTraces]")
             REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
             const isx::SpGpio_t traces = isx::readGpio(params.m_outputFile);
-            REQUIRE(!traces->isAnalog());
+            requireEqualChannels(traces->getChannelList(), expChannelList);            
             REQUIRE(traces->numberOfChannels() == 20);
-            REQUIRE(traces->getTimingInfo() == expTi);
-
-            requireEqualChannels(traces->getChannelList(), expChannelList);
+            
             requireEqualValues(traces->getLogicalData("Recording time"), numTimes, expRecTime);
             requireEqualValues(traces->getLogicalData("X center"), numTimes, expXCenter);
             requireEqualValues(traces->getLogicalData("Y nose"), numTimes, expYNose);
@@ -438,9 +447,7 @@ TEST_CASE("importCsvTrace-Ethovision", "[core][importCsvTraces]")
             REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
             const isx::SpGpio_t traces = isx::readGpio(params.m_outputFile);
-            REQUIRE(!traces->isAnalog());
             REQUIRE(traces->numberOfChannels() == 20);
-            REQUIRE(traces->getTimingInfo() == expTi);
 
             requireEqualChannels(traces->getChannelList(), expChannelList);
             requireEqualValues(traces->getLogicalData("Recording time"), numTimes, expRecTime);
@@ -477,11 +484,13 @@ TEST_CASE("importCsvTrace-Ethovision", "[core][importCsvTraces]")
             REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
             const isx::SpGpio_t traces = isx::readGpio(params.m_outputFile);
-            REQUIRE(!traces->isAnalog());
-            REQUIRE(traces->numberOfChannels() == 3);
-            REQUIRE(traces->getTimingInfo() == expTi);
-
             requireEqualChannels(traces->getChannelList(), expChannelList);
+            REQUIRE(traces->isAnalog("X center"));
+            REQUIRE(traces->isAnalog("Y nose"));
+            REQUIRE(!traces->isAnalog("In zone(gel pad / Center-point)"));
+            REQUIRE(traces->numberOfChannels() == 3);
+
+            
             requireEqualValues(traces->getLogicalData("X center"), numTimes, expXCenter);
             requireEqualValues(traces->getLogicalData("Y nose"), numTimes, expYNose);
             requireEqualValues(traces->getLogicalData("In zone(gel pad / Center-point)"), numTimes, expGelPad);
@@ -494,11 +503,12 @@ TEST_CASE("importCsvTrace-Ethovision", "[core][importCsvTraces]")
             REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
             const isx::SpGpio_t traces = isx::readGpio(params.m_outputFile);
-            REQUIRE(!traces->isAnalog());
-            REQUIRE(traces->numberOfChannels() == 3);
-            REQUIRE(traces->getTimingInfo() == expTi);
-
             requireEqualChannels(traces->getChannelList(), expChannelList);
+            REQUIRE(traces->isAnalog("X center"));
+            REQUIRE(traces->isAnalog("Y nose"));
+            REQUIRE(!traces->isAnalog("In zone(gel pad / Center-point)"));
+            REQUIRE(traces->numberOfChannels() == 3);
+            
             requireEqualValues(traces->getLogicalData("X center"), numTimes, expXCenter);
             requireEqualValues(traces->getLogicalData("Y nose"), numTimes, expYNose);
             requireEqualValues(traces->getLogicalData("In zone(gel pad / Center-point)"), numTimes, expGelPad);

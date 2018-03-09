@@ -24,8 +24,7 @@ convertNVokeGpio(const std::string & inFilePath, const std::string & inOutDirPat
 TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
 {
     const std::string dirPath = g_resources["unitTestDataPath"] + "/nVokeGpio";
-    std::vector<std::string> eventsFilePaths;
-    std::vector<std::string> analogFilePaths;
+    std::vector<std::string> filePaths;
 
     isx::CoreInitialize();
 
@@ -35,7 +34,7 @@ TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
         REQUIRE(!gpio->isValid());
     }
 
-    SECTION("Two compatiable logical GPIO sets")
+    SECTION("Two compatible logical GPIO sets")
     {
         const std::array<const char *, 2> names =
         { {
@@ -47,10 +46,10 @@ TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
         {
             const std::string inputFilePath = dirPath + "/" + n;
             const std::vector<std::string> outputFilePaths = convertNVokeGpio(inputFilePath, dirPath);
-            eventsFilePaths.push_back(outputFilePaths.front());
+            filePaths.push_back(outputFilePaths.front());
         }
 
-        const isx::SpGpio_t gpios = isx::readGpioSeries(eventsFilePaths);
+        const isx::SpGpio_t gpios = isx::readGpioSeries(filePaths);
 
         const isx::SpLogicalTrace_t exLedTrace = gpios->getLogicalData("EX_LED");
         const std::map<isx::Time, float> & exLedValues = exLedTrace->getValues();
@@ -83,36 +82,6 @@ TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
         }
     }
 
-    SECTION("Logical and analog GPIO sets")
-    {
-        const std::array<std::string, 2> inputFilePaths =
-        { {
-            dirPath + "/recording_20160919_095413_gpio.raw",
-            g_resources["unitTestDataPath"] + "/recording_20161104_093749_gpio.raw"
-        } };
-
-        for (const auto f : inputFilePaths)
-        {
-            const std::vector<std::string> outputFilePaths = convertNVokeGpio(f, dirPath);
-            
-            for (auto & fn : outputFilePaths)
-            {
-                if (fn.find("events") != std::string::npos)
-                {
-                    eventsFilePaths.push_back(fn);
-                }
-                else
-                {
-                    analogFilePaths.push_back(fn);
-                }
-            }
-        }
-        const std::vector<std::string> filePaths = {eventsFilePaths[0], analogFilePaths[0]};
-
-        ISX_REQUIRE_EXCEPTION(isx::readGpioSeries(filePaths), isx::ExceptionSeries,
-                "GPIO series member with mismatching analog/digital data.");
-    }
-
     SECTION("Two logical GPIO sets with a different number channels")
     {
         const std::array<std::string, 2> inputFilePaths =
@@ -124,16 +93,10 @@ TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
         for (const auto f : inputFilePaths)
         {
             const std::vector<std::string> outputFilePaths = convertNVokeGpio(f, dirPath);
-            for (auto & fn : outputFilePaths)
-            {
-                if (fn.find("events") != std::string::npos)
-                {
-                    eventsFilePaths.push_back(fn);
-                }
-            }
+            filePaths.push_back(outputFilePaths.front());
         }
-
-        ISX_REQUIRE_EXCEPTION(isx::readGpioSeries(eventsFilePaths), isx::ExceptionSeries,
+        
+        ISX_REQUIRE_EXCEPTION(isx::readGpioSeries(filePaths), isx::ExceptionSeries,
                 "GPIO series member with mismatching channels.");
     }
 
@@ -149,21 +112,18 @@ TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
         {
             const std::string inputFilePath = dirPath + "/" + n;
             const std::vector<std::string> outputFilePaths = convertNVokeGpio(inputFilePath, dirPath);
-            eventsFilePaths.push_back(outputFilePaths.front());
+            filePaths.push_back(outputFilePaths.front());
         }
 
-        ISX_REQUIRE_EXCEPTION(isx::readGpioSeries(eventsFilePaths), isx::ExceptionSeries,
+        ISX_REQUIRE_EXCEPTION(isx::readGpioSeries(filePaths), isx::ExceptionSeries,
                 "Unable to insert data that temporally overlaps with other parts of the series. Data sets in a series must all be non-overlapping.");
     }
 
-    for (const auto & f : eventsFilePaths)
+    for (const auto & f : filePaths)
     {
         std::remove(f.c_str());
     }
-    for (const auto & f : analogFilePaths)
-    {
-        std::remove(f.c_str());
-    }
+
 
     isx::CoreShutdown();
 }

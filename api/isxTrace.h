@@ -2,6 +2,7 @@
 #define ISX_TRACE_H
 
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include "isxTimingInfo.h"
 #include "isxAssert.h"
@@ -26,12 +27,15 @@ public:
     /// Fully specified constructor.
     ///
     /// \param   inTimingInfo       the timing information for the trace.
-    Trace(const TimingInfo & inTimingInfo)
+    /// \param   inName             the name of the trace
+    Trace(const TimingInfo & inTimingInfo, const std::string & inName = "")
         : m_timingInfo(inTimingInfo)
+        , m_name(inName)
     {
         isize_t numTimes = m_timingInfo.getNumTimes();
         ISX_ASSERT(numTimes > 0);
-        m_values.reset(new T[numTimes]);
+        m_values.reset(new T[numTimes]);  
+        std::memset(m_values.get(), 0, sizeof(T)*numTimes) ;     
     }
 
     /// Destructor.
@@ -85,13 +89,20 @@ public:
         m_timingInfo.setDroppedFrames(inDroppedFrames);
     }
 
-
+    /// Get the name of the trace
+    ///
+    const std::string & 
+    getName() const
+    {
+        return m_name;
+    }
 
 private:
 
     /// The temporal domain of the function.
     TimingInfo m_timingInfo;
     std::unique_ptr<T[]> m_values = 0;
+    std::string          m_name;
 
 
 }; // class

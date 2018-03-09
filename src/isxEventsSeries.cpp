@@ -150,7 +150,7 @@ EventsSeries::getLogicalDataAsync(const std::string & inCellName, EventsGetLogic
     }
 }
 
-const isx::TimingInfo &
+isx::TimingInfo
 EventsSeries::getTimingInfo() const
 {
     return m_gaplessTimingInfo;

@@ -2,7 +2,7 @@
 #include "isxHdf5Utils.h"
 #include "isxPathUtils.h"
 #include "isxException.h"
-
+#include "isxEventBasedFileV2.h"
 #include <numeric>
 #include <cmath>
 #include <algorithm>
@@ -150,16 +150,16 @@ namespace isx
     NVistaGpioFile::writeLogicalFile()
     {
         // Get filename for output
-        std::string outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + ".isxd";
-        TimeStampedDataFile file(outputFileName, TimeStampedDataFile::StoredData::GPIO, true);
+        m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + ".isxd";
+        EventBasedFileV2 file(m_outputFileName, DataSet::Type::GPIO, true);
 
-        // Set timing info
+        // Timing info
         isize_t numSamples = m_signals.front().size();
         Time start(DurationInSeconds(isize_t(m_timestamps.front() * 1E6), isize_t(1E6)));
 
         DurationInSeconds step = isx::DurationInSeconds(isize_t(1E3), isize_t(1E6));
         TimingInfo ti(start, step, numSamples);
-        file.setTimingInfo(ti);
+        
 
         float progress = 0.5f;
         bool cancelled = false;
@@ -168,11 +168,7 @@ namespace isx
         std::vector<std::string> channelNames{"IO1", "IO2", "sync", "trigger"};
 
         for (isize_t i(0); i < m_signals.size(); ++i)
-        {
-            file.writeChannelHeader(channelNames[i], "", "", m_signals[i].size());
-
-            double ts = m_timestamps[0];
-
+        {           
             for (isize_t j(0); (j < m_signals[i].size() && !cancelled); ++j)
             {
                 progress = 0.5f + 0.5f * (float(i) + float(j)/float(m_signals[i].size()))/ float(m_signals.size());
@@ -182,36 +178,40 @@ namespace isx
                    cancelled = m_checkInCB(progress);
                 }
 
-                uint64_t timestamp = uint64_t(ts * 1E6 + 1000.0 * j);
+                uint64_t timestamp = uint64_t(1000 * j);
                 bool state = m_signals[i].at(j);
                 float val = 0.f;
                 if (state)
                 {
                     val = 1.f;
                 }
-                TimeStampedDataFile::DataPkt pkt(timestamp, state, val);
+                EventBasedFileV2::DataPkt pkt(timestamp, val, i);
                 file.writeDataPkt(pkt);
 
             }
         }
 
-        // Close file
+        // Set timing info
+        std::vector<DurationInSeconds> steps(channelNames.size(), step);
+        file.setTimingInfo(start, ti.getEnd(), steps);
+
+        file.setChannelList(channelNames);
+        // Close file and update channel names
         file.closeFileForWriting();
 
         if (cancelled)
         {
-            std::remove(outputFileName.c_str());
+            std::remove(m_outputFileName.c_str());
             return isx::AsyncTaskStatus::CANCELLED;
         }
-
-        m_outputFileNames.push_back(outputFileName);
+        
         return isx::AsyncTaskStatus::COMPLETE;
     }
 
-    void 
-    NVistaGpioFile::getOutputFileNames(std::vector<std::string> & outFileNames)
+    const std::string & 
+    NVistaGpioFile::getOutputFileName() const
     {
-        outFileNames = m_outputFileNames;
+        return m_outputFileName;
     }
 
     void 

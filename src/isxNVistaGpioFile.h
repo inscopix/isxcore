@@ -4,7 +4,6 @@
 #include "isxCoreFwd.h"
 #include "isxAsync.h"
 #include "isxTimingInfo.h"
-#include "isxTimeStampedDataFile.h"
 #include <string>
 #include <vector>
 #include <fstream>
@@ -50,9 +49,9 @@ namespace isx
         /// \return whether the process completed or it was cancelled
         AsyncTaskStatus parse();
 
-        /// Get a list of all the output files this object produces when parsing the original one
-        /// \param outFileNames  a vector containing the filenames of the output files
-        void getOutputFileNames(std::vector<std::string> & outFileNames);
+        /// Get the ouput file name
+        /// 
+        const std::string & getOutputFileName() const;
 
     private:
 
@@ -78,7 +77,7 @@ namespace isx
 
         std::vector<std::vector<bool>> m_signals;
 
-        std::vector<std::string> m_outputFileNames;
+        std::string m_outputFileName;
 
         /// Check in callback for reporting progress
         AsyncCheckInCB_t m_checkInCB;

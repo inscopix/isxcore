@@ -339,7 +339,7 @@ makeEventsSeries(
     const isx::HistoricalDetails history;
     const isx::SpWritableEvents_t events = isx::writeEvents(inFilePath);
     events->setTimingInfo(inTimingInfo);
-    events->closeForWriting();
+    events->closeForWriting({});
     const auto dataSet = std::make_shared<isx::DataSet>(inName, isx::DataSet::Type::EVENTS, inFilePath, history);
     return std::make_shared<isx::Series>(dataSet);
 }

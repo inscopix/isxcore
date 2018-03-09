@@ -23,12 +23,12 @@ TEST_CASE("MosaicGpioTest", "[core]")
         std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_analog_2.isxd");
         std::shared_ptr<isx::MosaicGpio> gpio = std::make_shared<isx::MosaicGpio>(fileName); 
         REQUIRE(gpio->isValid());
-        REQUIRE(gpio->isAnalog());
-        REQUIRE(gpio->getFileName() == fileName);
-        REQUIRE(gpio->numberOfChannels() == 1);
         const std::vector<std::string> channels = gpio->getChannelList();
         REQUIRE(channels.size() == 1);
         REQUIRE(channels.at(0) == "GPIO4_AI");
+        REQUIRE(gpio->isAnalog("GPIO4_AI"));
+        REQUIRE(gpio->getFileName() == fileName);
+        REQUIRE(gpio->numberOfChannels() == 1);        
 
         isx::SpFTrace_t trace = gpio->getAnalogData("GPIO4_AI");
         REQUIRE(trace);
@@ -75,14 +75,18 @@ TEST_CASE("MosaicGpioTest", "[core]")
         std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio_events_2.isxd");
         std::shared_ptr<isx::MosaicGpio> gpio = std::make_shared<isx::MosaicGpio>(fileName);  
         REQUIRE(gpio->isValid());
-        REQUIRE(!gpio->isAnalog());
-        REQUIRE(gpio->getFileName() == fileName);
-        REQUIRE(gpio->numberOfChannels() == 3);
         const std::vector<std::string> channels = gpio->getChannelList();
         REQUIRE(channels.size() == 3);
         REQUIRE(channels.at(0) == "EX_LED");
         REQUIRE(channels.at(1) == "SYNC");
         REQUIRE(channels.at(2) == "TRIG");
+
+        REQUIRE(!gpio->isAnalog("EX_LED"));
+        REQUIRE(!gpio->isAnalog("SYNC"));
+        REQUIRE(!gpio->isAnalog("TRIG"));
+        REQUIRE(gpio->getFileName() == fileName);
+        REQUIRE(gpio->numberOfChannels() == 3);
+        
 
         isx::SpFTrace_t trace = gpio->getAnalogData("GPIO4_AI");
         REQUIRE(trace == nullptr);

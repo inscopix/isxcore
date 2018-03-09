@@ -1,20 +1,20 @@
-#ifndef ISX_TIMESTAMPED_FILE_H
-#define ISX_TIMESTAMPED_FILE_H
+#ifndef ISX_EVENT_BASED_FILE_V1_H
+#define ISX_EVENT_BASED_FILE_V1_H
 
-#include <string>
 #include <fstream>
-#include "isxCoreFwd.h"
-#include "isxTimingInfo.h"
-#include "isxTrace.h"
+
+
 #include "isxLogicalTrace.h"
+#include "isxEventBasedFile.h"
 
 
 namespace isx
 {   
     
-/// A class for a file containing gpio data
-///
-class TimeStampedDataFile
+/// A class for a file containing gpio/event data
+/// Note salpert 2/6/2018: This is a legacy class and is kept here for backwards compatibility. Use 
+/// EventBasedFileV2 for any new use of this file type. 
+class EventBasedFileV1 : public EventBasedFile
 {
     
 public:
@@ -78,7 +78,7 @@ public:
     /// Empty constructor.
     ///
     /// This creates a valid c++ object but an invalid gpio file.
-    TimeStampedDataFile();
+    EventBasedFileV1();
 
     /// Read constructor.
     ///
@@ -88,7 +88,7 @@ public:
     /// \param  inFileName  The name of the gpio file.
     /// \throw  isx::ExceptionFileIO    If reading the gpio file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the gpio file fails.
-    TimeStampedDataFile(const std::string & inFileName); 
+    EventBasedFileV1(const std::string & inFileName); 
     
     /// Write constructor.
     ///
@@ -98,55 +98,41 @@ public:
     /// \param dataType     The type of data to be stored in the file.
     /// \param inIsAnalog   Indicates if the file contains analog data (valid for GPIO)
     /// \throw  isx::ExceptionFileIO    If opening the gpio file fails.
-    TimeStampedDataFile(const std::string & inFileName, StoredData dataType, bool inIsAnalog = false);
+    EventBasedFileV1(const std::string & inFileName, StoredData dataType, bool inIsAnalog = false);
 
     /// Destructor.
     ///
-    ~TimeStampedDataFile();
+    ~EventBasedFileV1();
     
     /// \return True if the gpio file is valid, false otherwise.
     ///
     bool 
-    isValid() const; 
-
-    /// \return the type of data stored in this file
-    ///
-    StoredData
-    getStoredDataType() const;
-
-    /// \return true if this file contains data for an analog channel, false otherwise
-    bool 
-    isAnalog() const;
+    isValid() const override; 
 
     /// \return     The name of the file.
     ///
     const std::string & 
-    getFileName() const;
+    getFileName() const override;
     
-    /// \return the number of channels contained in the file
-    ///
-    const isize_t 
-    numberOfChannels();
-
     /// \return a list of the channels contained in this file
     /// 
     const std::vector<std::string> 
-    getChannelList() const;
+    getChannelList() const override;
 
     /// \return the trace for the analog channel or nullptr if the file doesn't contain analog data
     /// 
     SpFTrace_t 
-    getAnalogData(const std::string & inChannelName);
+    getAnalogData(const std::string & inChannelName) override;
 
     /// \return the logical trace for the requested channel or nullptr if the file doesn't contain data for that channel
     /// \param inChannelName the name of the requested channel (as returned by getChannelList())
     SpLogicalTrace_t 
-    getLogicalData(const std::string & inChannelName);
+    getLogicalData(const std::string & inChannelName) override;
 
     /// \return     The timing information read from the GPIO.
     ///
-    const isx::TimingInfo & 
-    getTimingInfo() const;
+    const isx::TimingInfo  
+    getTimingInfo() const override;
 
     /// Set the timing information that will be written in the file footer
     /// \param inTimingInfo the timing information to set for the file. 
@@ -163,6 +149,15 @@ public:
         const std::string & inMode,
         const std::string & inTriggerFollow,
         const isx::isize_t inNumPackets);
+
+    /// \return the type of data stored in this file
+    ///
+    StoredData
+    getStoredDataType() const;
+
+    /// \return true if this file contains data for an analog channel, false otherwise
+    bool 
+    isAnalog() const;
 
     /// Writes a data packet to the file
     /// \param inData the data packet to write
@@ -218,4 +213,4 @@ private:
     const static size_t s_fileVersion = 1;
 };
 }
-#endif // ISX_TIMESTAMPED_FILE_H
+#endif // ISX_EVENT_BASED_FILE_V1_H
