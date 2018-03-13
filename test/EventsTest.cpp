@@ -21,13 +21,10 @@ void writeEventsTestFile(const std::string & inFileName)
 
     f->setTimingInfo(ti);
 
-    isx::isize_t cell = 0;
-    for (auto & name : cellNames)
+    for (isx::isize_t cell = 0; cell < cellNames.size(); ++cell)
     {
         auto & v = values.at(cell);
         auto & t = timeIndices.at(cell);
-
-        f->writeCellHeader(name, v.size());
 
         isx::isize_t j = 0;
         for (auto & e : v)
@@ -35,14 +32,13 @@ void writeEventsTestFile(const std::string & inFileName)
             isx::Time time = ti.convertIndexToStartTime(t.at(j));
             uint64_t time_us = uint64_t(time.getSecsSinceEpoch().toDouble() * 1E6);
 
-            f->writeDataPkt(time_us, e);
+            f->writeDataPkt(cell, time_us, e);
 
             j++;
         }
-        cell++;
     }
 
-    f->closeForWriting();
+    f->closeForWriting(cellNames);
 
 }
 
@@ -71,7 +67,8 @@ TEST_CASE("EventsDataTest", "[core]")
         REQUIRE(f->getFileName() == fileName);
         REQUIRE(f->numberOfCells() == cellNames.size());
         REQUIRE(f->getCellNamesList() == cellNames);
-        REQUIRE(f->getTimingInfo() == ti);
+        REQUIRE(f->getTimingInfo().getStart() == ti.getStart());
+        REQUIRE(f->getTimingInfo().getEnd() == ti.getEnd());
 
         isx::isize_t i = 0;
         for (auto & n : cellNames)

@@ -43,17 +43,7 @@ MosaicMovieFile::~MosaicMovieFile()
             closeForWriting();
         }
 
-        if (m_file.is_open() && m_file.good())
-        {
-            m_file.close();
-            if (!m_file.good())
-            {
-                ISX_LOG_ERROR("Error closing the stream for file", m_fileName,
-                " eof: ", m_file.eof(), 
-                " bad: ", m_file.bad(), 
-                " fail: ", m_file.fail());
-            }
-        }
+        isx::closeFileStreamWithChecks(m_file, m_fileName);
     }
 }
 
