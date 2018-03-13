@@ -387,15 +387,13 @@ namespace
             }
             
             writeH5Attribute(is, S_neurodata_type, S_TimeSeries);
-            
-            // for data source use filename plus project directory name
-            // (but don't go further towards root, as it may include the user's name)
-            std::string dataSource = m->getFileName();
-            auto pos1 = dataSource.rfind('/');
-            auto pos2 = dataSource.rfind('/', pos1 - 1);
-            auto pos3 = dataSource.rfind('/', pos2 - 1);
-            auto pos = std::min(pos1, std::min(pos2, pos3));
-            dataSource = dataSource.substr(pos);
+
+            // The data source used to include a couple of directories above
+            // because it was assumed that would include the project directory.
+            // Now we call this outside the application, a project directory
+            // may not exist, so we can't make that assumption.
+            // Instead we just get the file name.
+            const std::string dataSource = isx::getFileName(m->getFileName());
 
             writeH5Attribute(is, S_source, dataSource.c_str());
             int32_t numSamples = int32_t(m->getTimingInfo().getNumValidTimes());
