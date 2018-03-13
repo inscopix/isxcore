@@ -18,10 +18,10 @@ writeMosaicMovie(
         const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo,
         DataType inDataType,
-        const bool inWriteFrameTimeStamps)
+        const bool inHasFrameHeaderFooter)
 {
     SpWritableMovie_t movie = std::make_shared<MosaicMovie>(
-            inFileName, inTimingInfo, inSpacingInfo, inDataType, inWriteFrameTimeStamps);
+            inFileName, inTimingInfo, inSpacingInfo, inDataType, inHasFrameHeaderFooter);
     return movie;
 }
 

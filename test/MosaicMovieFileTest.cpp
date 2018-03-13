@@ -356,7 +356,7 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal]")
     }
 }
 
-TEST_CASE("MosaicMovieFileU16-withTimeStamps", "[core-internal]")
+TEST_CASE("MosaicMovieFileU16-withFrameHeaderFooter", "[core-internal]")
 {
     const std::string outputDirPath = g_resources["unitTestDataPath"] + "/MosaicMovieFile";
     isx::makeDirectory(outputDirPath);

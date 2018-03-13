@@ -53,7 +53,7 @@ public:
                 const TimingInfo & inTimingInfo,
                 const SpacingInfo & inSpacingInfo,
                 DataType inDataType,
-                const bool inWriteFrameTimeStamps = false);
+                const bool inHasFrameHeaderFooter = false);
 
     // Overrides - see base classes for documentation
     bool isValid() const override;

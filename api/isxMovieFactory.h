@@ -22,8 +22,8 @@ namespace isx
 /// \param  inTimingInfo    The timing information of the movie.
 /// \param  inSpacingInfo   The spacing information of the movie.
 /// \param  inDataType      The pixel data type of the movie.
-/// \param  inWriteFrameTimeStamps  True if frame specific time stamps should be written,
-///                                 false otherwise.
+/// \param  inHasFrameHeaderFooter  True if written frame data contains fixed size
+///                                 header/footer lines. False otherwise.
 /// \return                 The mosaic movie created.
 ///
 /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
@@ -33,7 +33,7 @@ SpWritableMovie_t writeMosaicMovie(
         const TimingInfo & inTimingInfo,
         const SpacingInfo & inSpacingInfo,
         DataType inDataType,
-        const bool inWriteFrameTimeStamps = false);
+        const bool inHasFrameHeaderFooter = false);
 
 /// Read an existing image from a file.
 ///

@@ -158,8 +158,11 @@ private:
     /// The version of this file format.
     const static size_t s_version = 1;
 
-    /// True if there are frame specific time stamps in this file.
-    bool m_hasFrameTimeStamps = false;
+    /// True if the frame bytes contain fixed size header and footer lines.
+    bool m_hasFrameHeaderFooter = false;
+
+    /// The fixed size of the frame header/footer bytes.
+    constexpr static size_t m_frameHeaderSize = 1280 * 2 * sizeof(uint16_t);
 
     /// Initialize for reading.
     ///
