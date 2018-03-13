@@ -19,9 +19,21 @@ GpioDataParams::toString() const
 {
     using json = nlohmann::json;
     json j;
-    j["outputDir"] = outputDir;
-    j["fileName"] = fileName;
     return j.dump(4);
+}
+
+std::vector<std::string>
+GpioDataParams::getInputFilePaths() const
+{
+    return {fileName};
+}
+
+std::vector<std::string>
+GpioDataParams::getOutputFilePaths() const
+{
+    // We do not know the output file paths, but at least know what directory
+    // they will be in.
+    return {outputDir};
 }
 
 AsyncTaskStatus runGpioDataImporter(GpioDataParams inParams, std::shared_ptr<GpioDataOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)

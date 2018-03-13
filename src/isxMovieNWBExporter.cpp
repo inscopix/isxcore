@@ -39,7 +39,6 @@ MovieNWBExporterParams::toString() const
     j["institution"] = m_institution;
     j["lab"] = m_lab;
     j["sessionId"] = m_sessionId;
-    j["filename"] = m_filename;
     return j.dump(4);
 }
 
@@ -88,6 +87,23 @@ void
 MovieNWBExporterParams::setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
 {
     // Do nothing - currently NWB cannot contains these details
+}
+
+std::vector<std::string>
+MovieNWBExporterParams::getInputFilePaths() const
+{
+    std::vector<std::string> inputFilePaths;
+    for (const auto & s : m_srcs)
+    {
+        inputFilePaths.push_back(s->getFileName());
+    }
+    return inputFilePaths;
+}
+
+std::vector<std::string>
+MovieNWBExporterParams::getOutputFilePaths() const
+{
+    return {m_filename};
 }
 
 const char *

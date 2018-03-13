@@ -53,6 +53,14 @@ struct MovieExporterParams
     void 
     setSources(const std::vector<SpMovie_t> & inSources) = 0;
 
+    /// \return The input file paths.
+    ///
+    virtual std::vector<std::string> getInputFilePaths() const = 0;
+
+    /// \return The output file paths.
+    ///
+    virtual std::vector<std::string> getOutputFilePaths() const = 0;
+
     /// Set additional information to be saved in the output file
     /// \param inIdentifierBase         identifer base used for creating a unique ID (eg. concatenated lab name, experimentalist, or a hash of
     ///                                 these and/or other values). Creation date/time and library version will be appended.
@@ -157,6 +165,20 @@ struct MovieExporterParamsWrapper
             inInstitution,
             inLab, 
             inSessionId);
+    }
+
+    /// \return The input file paths.
+    ///
+    std::vector<std::string> getInputFilePaths() const
+    {
+        return m_params->getInputFilePaths();
+    }
+
+    /// \return The output file paths.
+    ///
+    std::vector<std::string> getOutputFilePaths() const
+    {
+        return m_params->getOutputFilePaths();
     }
 };
 

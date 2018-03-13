@@ -1,6 +1,7 @@
 #include "isxMovieTiffExporter.h"
 #include "isxExport.h"
 #include "isxException.h"
+#include "isxMovie.h"
 
 #include <vector>
 
@@ -62,6 +63,23 @@ MovieTiffExporterParams::setAdditionalInfo(
         const std::string & inSessionId)
 {
     // Do nothing - TIFF cannot contains these details
+}
+
+std::vector<std::string>
+MovieTiffExporterParams::getInputFilePaths() const
+{
+    std::vector<std::string> inputFilePaths;
+    for (const auto & s : m_srcs)
+    {
+        inputFilePaths.push_back(s->getFileName());
+    }
+    return inputFilePaths;
+}
+
+std::vector<std::string>
+MovieTiffExporterParams::getOutputFilePaths() const
+{
+    return {m_filename};
 }
 
 AsyncTaskStatus 

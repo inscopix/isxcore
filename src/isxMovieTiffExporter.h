@@ -41,6 +41,10 @@ struct MovieTiffExporterParams : MovieExporterParams
     MovieExporterParams::Type
     getType() override;
 
+    std::vector<std::string> getInputFilePaths() const override;
+
+    std::vector<std::string> getOutputFilePaths() const override;
+
     void
     setOutputFileName(const std::string & inFileName) override;
 

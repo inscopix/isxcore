@@ -444,7 +444,6 @@ MovieCompressedAviExporterParams::toString() const
 {
     using json = nlohmann::json;
     json j;
-    j["filename"] = m_filename;
     return j.dump(4);
 }
 
@@ -485,6 +484,23 @@ void
 MovieCompressedAviExporterParams::setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
 {
     // Do nothing - currently MP4 cannot contains these details
+}
+
+std::vector<std::string>
+MovieCompressedAviExporterParams::getInputFilePaths() const
+{
+    std::vector<std::string> inputFilePaths;
+    for (const auto & s : m_srcs)
+    {
+        inputFilePaths.push_back(s->getFileName());
+    }
+    return inputFilePaths;
+}
+
+std::vector<std::string>
+MovieCompressedAviExporterParams::getOutputFilePaths() const
+{
+    return {m_filename};
 }
 
 AsyncTaskStatus 

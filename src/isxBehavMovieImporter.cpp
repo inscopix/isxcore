@@ -18,7 +18,6 @@ BehavMovieImportParams::toString() const
 {
     using json = nlohmann::json;
     json j;
-    j["fileName"] = fileName;
     return j.dump(4);
 }
 
@@ -34,5 +33,17 @@ AsyncTaskStatus runBehavMovieImporter(
 
     return AsyncTaskStatus::CANCELLED;
 }
-    
+
+std::vector<std::string>
+BehavMovieImportParams::getInputFilePaths() const
+{
+    return {fileName};
+}
+
+std::vector<std::string>
+BehavMovieImportParams::getOutputFilePaths() const
+{
+    return {};
+}
+
 } // namespace isx
