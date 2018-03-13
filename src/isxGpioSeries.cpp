@@ -29,12 +29,6 @@ GpioSeries::GpioSeries(const std::vector<std::string> & inFileNames)
         m_gpios.emplace_back(readGpio(fn));
     }
 
-    std::sort(m_gpios.begin(), m_gpios.end(), [](SpGpio_t a, SpGpio_t b)
-    {
-        return a->getTimingInfo().getStart() < b->getTimingInfo().getStart();
-    });
-
-    // gpios are sorted by start time now, check if they meet requirements
     std::string errorMessage;
     for (isize_t i = 1; i < m_gpios.size(); ++i)
     {
@@ -44,8 +38,21 @@ GpioSeries::GpioSeries(const std::vector<std::string> & inFileNames)
         }
     }
 
-    m_gaplessTimingInfo = makeGaplessTimingInfo(getTimingInfosForSeries());
+    // Use the first channel as reference for sorting by time
+    auto channelList = m_gpios.front()->getChannelList();
+    std::string firstChannel = channelList.front();
+    std::sort(m_gpios.begin(), m_gpios.end(), [&firstChannel](SpGpio_t a, SpGpio_t b)
+    {
+        return a->getTimingInfo(firstChannel).getStart() < b->getTimingInfo(firstChannel).getStart();
+    });
 
+
+    for (auto & n : channelList)
+    {
+        m_gaplessTimingInfo[n] = makeGaplessTimingInfo(getTimingInfosForSeries(n));        
+    }    
+    
+    m_generalGaplessTimingInfo = makeGaplessTimingInfo(getTimingInfosForSeries());
     m_valid = true;
 }
 
@@ -60,11 +67,11 @@ GpioSeries::isValid() const
 }
 
 bool
-GpioSeries::isAnalog() const
+GpioSeries::isAnalog(const std::string & inChannelName) const
 {
     for (const auto & g : m_gpios)
     {
-        if (!g->isAnalog())
+        if (!g->isAnalog(inChannelName))
         {
             return false;
         }
@@ -90,10 +97,69 @@ GpioSeries::getChannelList() const
     return m_gpios[0]->getChannelList();
 }
 
+void 
+GpioSeries::getAllTraces(std::vector<SpFTrace_t> & outContinuousTraces, std::vector<SpLogicalTrace_t> & outLogicalTraces)
+{
+    auto channels = getChannelList();
+
+    outContinuousTraces.resize(channels.size());
+    outLogicalTraces.resize(channels.size());
+    std::vector<float *> globalContVals(channels.size(), nullptr);
+
+    for (size_t i(0); i < channels.size(); ++i)
+    {
+        outContinuousTraces[i] = nullptr;
+        outLogicalTraces[i] = nullptr;
+        auto & n = channels[i];
+        
+        outLogicalTraces[i] = std::make_shared<LogicalTrace>(m_gaplessTimingInfo[n], channels[i]);
+        
+        if (isAnalog(n))
+        {
+            outContinuousTraces[i] = std::make_shared<FTrace_t>(m_gaplessTimingInfo[n], channels[i]);
+            globalContVals[i] = outContinuousTraces[i]->getValues();
+        }
+    }     
+
+    for (const auto & g : m_gpios)
+    {
+        std::vector<SpFTrace_t> partialContinuousTraces;
+        std::vector<SpLogicalTrace_t> partialLogicalTraces;
+        g->getAllTraces(partialContinuousTraces, partialLogicalTraces);
+
+        // Copy continuous data
+        isize_t partialIdx = 0;
+        for (auto & v : globalContVals)
+        {
+            if (v != nullptr)
+            {
+                float * partialContVals = partialContinuousTraces[partialIdx]->getValues();
+                const isize_t numSamples = partialContinuousTraces[partialIdx]->getTimingInfo().getNumTimes();
+                memcpy((char *)v, (char *)partialContVals, sizeof(float) * numSamples);
+                v += numSamples;
+            }
+            ++partialIdx;
+        }
+
+        // Copy logical data
+        for (isize_t i(0); i < partialLogicalTraces.size(); ++i)
+        {
+            if (outLogicalTraces[i] && partialLogicalTraces[i])
+            {
+                auto partialVals = partialLogicalTraces[i]->getValues();
+                for ( auto p : partialVals)
+                {
+                    outLogicalTraces[i]->addValue(p.first, p.second);
+                }
+            }
+        }
+    }
+}
+
 SpFTrace_t
 GpioSeries::getAnalogData(const std::string & inChannelName)
 {
-    SpFTrace_t trace = std::make_shared<FTrace_t>(m_gaplessTimingInfo);
+    SpFTrace_t trace = std::make_shared<FTrace_t>(m_gaplessTimingInfo[inChannelName]);
     float * v = trace->getValues();
     for (const auto & g : m_gpios)
     {
@@ -112,7 +178,7 @@ GpioSeries::getAnalogDataAsync(const std::string & inChannelName, GpioGetAnalogD
     std::weak_ptr<Gpio> weakThis = shared_from_this();
 
     AsyncTaskResult<SpFTrace_t> asyncTaskResult;
-    asyncTaskResult.setValue(std::make_shared<FTrace_t>(m_gaplessTimingInfo));
+    asyncTaskResult.setValue(std::make_shared<FTrace_t>(m_gaplessTimingInfo[inChannelName]));
 
     isize_t counter = 0;
     bool isLast = false;
@@ -123,7 +189,7 @@ GpioSeries::getAnalogDataAsync(const std::string & inChannelName, GpioGetAnalogD
         isLast = (counter == (m_gpios.size() - 1));
 
         GpioGetAnalogDataCB_t finishedCB =
-            [weakThis, &asyncTaskResult, offset, isLast, inCallback] (AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
+            [weakThis, &asyncTaskResult, offset, isLast, inCallback, inChannelName] (AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
             {
                 auto sharedThis = weakThis.lock();
                 if (!sharedThis)
@@ -156,7 +222,7 @@ GpioSeries::getAnalogDataAsync(const std::string & inChannelName, GpioGetAnalogD
             };
 
         g->getAnalogDataAsync(inChannelName, finishedCB);
-        offset += g->getTimingInfo().getNumTimes();
+        offset += g->getTimingInfo(inChannelName).getNumTimes();
         ++counter;
     }
 }
@@ -164,7 +230,7 @@ GpioSeries::getAnalogDataAsync(const std::string & inChannelName, GpioGetAnalogD
 SpLogicalTrace_t
 GpioSeries::getLogicalData(const std::string & inChannelName)
 {
-    SpLogicalTrace_t trace = std::make_shared<LogicalTrace>(m_gaplessTimingInfo, inChannelName);
+    SpLogicalTrace_t trace = std::make_shared<LogicalTrace>(m_gaplessTimingInfo[inChannelName], inChannelName);
     for (const auto & g : m_gpios)
     {
         const SpLogicalTrace_t gTrace = g->getLogicalData(inChannelName);
@@ -182,7 +248,7 @@ GpioSeries::getLogicalDataAsync(const std::string & inChannelName, GpioGetLogica
     std::weak_ptr<Gpio> weakThis = shared_from_this();
 
     AsyncTaskResult<SpLogicalTrace_t> asyncTaskResult;
-    asyncTaskResult.setValue(std::make_shared<LogicalTrace>(m_gaplessTimingInfo, inChannelName));
+    asyncTaskResult.setValue(std::make_shared<LogicalTrace>(m_gaplessTimingInfo[inChannelName], inChannelName));
 
     isize_t counter = 0;
     bool isLast = false;
@@ -229,14 +295,31 @@ GpioSeries::getLogicalDataAsync(const std::string & inChannelName, GpioGetLogica
     }
 }
 
-const isx::TimingInfo &
-GpioSeries::getTimingInfo() const
+isx::TimingInfo 
+GpioSeries::getTimingInfo(const std::string & inChannelName) const
 {
-    return m_gaplessTimingInfo;
+    return m_gaplessTimingInfo.at(inChannelName);
 }
 
 isx::TimingInfos_t
-GpioSeries::getTimingInfosForSeries() const
+GpioSeries::getTimingInfosForSeries(const std::string & inChannelName) const
+{
+    TimingInfos_t tis;
+    for (const auto & g : m_gpios)
+    {
+        tis.emplace_back(g->getTimingInfo(inChannelName));
+    }
+    return tis;
+}
+
+isx::TimingInfo 
+GpioSeries::getTimingInfo() const 
+{
+    return m_generalGaplessTimingInfo;
+}
+    
+isx::TimingInfos_t
+GpioSeries::getTimingInfosForSeries() const 
 {
     TimingInfos_t tis;
     for (const auto & g : m_gpios)

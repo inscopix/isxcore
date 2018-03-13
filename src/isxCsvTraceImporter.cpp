@@ -1,5 +1,5 @@
 #include "isxCsvTraceImporter.h"
-#include "isxTimeStampedDataFile.h"
+#include "isxEventBasedFileV2.h"
 #include "isxCore.h"
 #include "isxJsonUtils.h"
 
@@ -195,17 +195,14 @@ runCsvTraceImporter(
             try
             {
                 value = std::stod(valueStr);
-                // TODO : Remove this when TimeStampedDataFile can stored negative values.
-                // But keep the check for positive time stamps.
-                if (value < 0.0)
+
+                if (value < 0.0 && (col == inParams.m_timeCol))
                 {
-                    if (col == inParams.m_timeCol)
-                    {
-                        ISX_THROW(ExceptionDataIO, "All timestamps must be non-negative. ",
-                                  "Found a negative timestamp on row ", row, " in column ",
-                                  col, " (", valueStr, "). ");
-                    }
-                    value = std::numeric_limits<double>::quiet_NaN();
+                    
+                    ISX_THROW(ExceptionDataIO, "All timestamps must be non-negative. ",
+                              "Found a negative timestamp on row ", row, " in column ",
+                              col, " (", valueStr, "). ");
+                    
                 }
             }
             catch (const std::exception &)
@@ -221,42 +218,60 @@ runCsvTraceImporter(
         }
     }
 
-    // Convert timestamps to microsecond precision
+    // Convert timestamps to microsecond precision 
     std::vector<uint64_t> timeStampsUSecs;
+    
     for (const auto timeValue : colValues.at(inParams.m_timeCol))
     {
         const DurationInSeconds offset = DurationInSeconds(Ratio::fromDouble(double(timeValue), 6)) * inParams.m_timeUnit;
-        const Time timeStamp = inParams.m_startTime + offset;
-        timeStampsUSecs.push_back(uint64_t(std::round(timeStamp.getSecsSinceEpoch().toDouble() * 1e6)));
+        timeStampsUSecs.push_back(uint64_t(std::round(offset.toDouble() * 1e6)));
     }
     const size_t numValues = timeStampsUSecs.size();
 
-    TimeStampedDataFile outputFile(inParams.m_outputFile, TimeStampedDataFile::StoredData::GPIO, false);
+    EventBasedFileV2 outputFile(inParams.m_outputFile, DataSet::Type::GPIO, true);
+    std::vector<std::string> signalNames(inParams.m_colsToImport.size() - 1);
+    std::vector<SignalType> types(inParams.m_colsToImport.size() - 1);
+    uint64_t colInd = 0;
     for (const auto c : inParams.m_colsToImport)
     {
         if (c != inParams.m_timeCol)
-        {
-            outputFile.writeChannelHeader(colNames.at(c), "", "", numValues);
+        {   
+            SignalType t = SignalType::SPARSE;         
             for (size_t r = 0; r < numValues; ++r)
             {
-                // TODO : We only want to store the value, but DataPkt does not
-                // return 0.f as the value when it's stored as 0.f unless the
-                // state is false.
-                // We are likely going to update the TimeStampedDataFile and
-                // DataPkt, so this may change then.
                 const float value = float(colValues.at(c).at(r));
-                TimeStampedDataFile::DataPkt pkt(timeStampsUSecs.at(r), value != 0.f, value);
+                if ((t == SignalType::SPARSE) && (value != 0.f) && (value != 1.f))
+                {
+                    t = SignalType::DENSE;
+                }
+                isx::EventBasedFileV2::DataPkt pkt(timeStampsUSecs.at(r), value, colInd);
                 outputFile.writeDataPkt(pkt);
             }
+            types[colInd] = t;
+            signalNames[colInd] = colNames.at(c);
+            colInd++;
         }
     }
 
     // TODO : Verify this is the right thing to store for timing info.
-    const Time firstTime(DurationInSeconds(timeStampsUSecs.front(), int64_t(1e6)));
+    const DurationInSeconds firstOffset(timeStampsUSecs.front(), isize_t(1e6));
     const double stepDurationUSecs = double(timeStampsUSecs.back() - timeStampsUSecs.front()) / double(numValues - 1);
     const DurationInSeconds stepDuration(Ratio::fromDouble(stepDurationUSecs / 1e6, 6));
-    outputFile.setTimingInfo(TimingInfo(firstTime, stepDuration, numValues));
+    std::vector<DurationInSeconds> steps(signalNames.size(), stepDuration);
 
+    // Set a step of 0 for sparse signals
+    size_t i = 0;
+    for (auto & t : types)
+    {
+        if (t == SignalType::SPARSE)
+        {
+            steps[i] = DurationInSeconds(0, 1);
+        }
+        ++i;
+    }
+
+    outputFile.setChannelList(signalNames);
+    outputFile.setTimingInfo(inParams.m_startTime, inParams.m_startTime + firstOffset + stepDuration * numValues, steps);
     outputFile.closeFileForWriting();
 
     if (cancelled)

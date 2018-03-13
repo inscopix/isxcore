@@ -34,10 +34,11 @@ public:
     bool
     isValid() const = 0;
 
-    /// \return true if this file contains data for an analog channel, false otherwise
+    /// \return true if the selected channel contains analog data, false otherwise
+    /// \param inChannelName the name of the requested channel
     virtual
     bool
-    isAnalog() const = 0;
+    isAnalog(const std::string & inChannelName) const = 0;
 
     /// \return     The name of the file.
     ///
@@ -56,6 +57,15 @@ public:
     virtual
     const std::vector<std::string>
     getChannelList() const = 0;
+
+    /// Get all the traces in the file
+    /// Note that continous traces can also be read as logical traces, so any trace acquired as 
+    /// dense data (continous sampling) will be returned in both formats. 
+    /// \param outContinuousTraces the vector of traces. Sparse traces will correspond to null objects in this vector
+    /// \param outLogicalTraces the vector of logical traces.
+    virtual
+    void 
+    getAllTraces(std::vector<SpFTrace_t> & outContinuousTraces, std::vector<SpLogicalTrace_t> & outLogicalTraces) = 0;
 
     /// \return the trace for the analog channel or nullptr if the file doesn't contain analog data
     /// \param inChannelName the name of the requested channel
@@ -84,16 +94,30 @@ public:
     getLogicalDataAsync(const std::string & inChannelName, GpioGetLogicalDataCB_t inCallback) = 0;
 
     /// \return     The timing information read from the GPIO set.
+    /// \param inChannelName the name of the requested channel (as returned by getChannelList())
     /// IMPORTANT: When interested in the timing info including dropped samples, make sure
     /// to get the timing info of the trace instead of this one. Only when the trace is read from
     /// the file, the list of dropped samples is constructed.
     virtual
-    const isx::TimingInfo &
-    getTimingInfo() const = 0;
+    isx::TimingInfo 
+    getTimingInfo(const std::string & inChannelName) const = 0;
 
     /// \return     The TimingInfos of a GpioSeries.
+    /// \param inChannelName the name of the requested channel (as returned by getChannelList())
     ///             For a regular GPIO set this will contain one TimingInfo object
     ///             matching getTimingInfo.
+    virtual
+    isx::TimingInfos_t
+    getTimingInfosForSeries(const std::string & inChannelName) const = 0;
+
+    /// \return     The general timing information read from the GPIO set.
+    /// 
+    virtual
+    isx::TimingInfo 
+    getTimingInfo() const = 0;
+
+    /// \return     The general TimingInfos of a GpioSeries.
+    /// 
     virtual
     isx::TimingInfos_t
     getTimingInfosForSeries() const = 0;

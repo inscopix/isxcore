@@ -105,17 +105,7 @@ NVokeGpioFile::NVokeGpioFile(const std::string & inFileName, const std::string &
 
 NVokeGpioFile::~NVokeGpioFile()
 {
-    if(m_file.is_open() && m_file.good())
-    {
-        m_file.close();
-        if (!m_file.good())
-        {
-            ISX_LOG_ERROR("Error closing the stream for file", m_fileName,
-            " eof: ", m_file.eof(), 
-            " bad: ", m_file.bad(), 
-            " fail: ", m_file.fail());
-        }
-    }
+    isx::closeFileStreamWithChecks(m_file, m_fileName);
 }
 
 bool 
@@ -129,8 +119,6 @@ NVokeGpioFile::getFileName()
 {
     return m_fileName;
 }
-
-
 
 void 
 NVokeGpioFile::setCheckInCallback(AsyncCheckInCB_t inCheckInCB)
@@ -275,7 +263,7 @@ NVokeGpioFile::parse()
         }
     }
 
-    closeFiles();
+    closeFile();
 
     if (cancelled)
     {
@@ -287,53 +275,32 @@ NVokeGpioFile::parse()
 }
 
 void 
-NVokeGpioFile::closeAnalogFile()
+NVokeGpioFile::closeFile()
 {
-    if(m_analogFile)
-    {
-        m_analogFile->setTimingInfo(m_timingInfo);
-        m_analogFile->closeFileForWriting();
-    }
-}
+    DurationInSeconds step(1, 1000);    
+    isize_t numTimes = isize_t(double(m_endTime - m_startTime) * 1E-6 / (step.toDouble())) + 1;
+    Time startTime(DurationInSeconds(isize_t(m_startTime), isize_t(1E6)));
+    TimingInfo timingInfo(startTime, step, numTimes); 
+    Time endTime = timingInfo.getEnd();    
 
-void 
-NVokeGpioFile::closeEventsFile()
-{
-    if(!m_eventData.empty())
+    if(m_outputFile)
     {
-        std::string filename = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_events.isxd";
-        
-        std::unique_ptr<TimeStampedDataFile> eventsFile(new TimeStampedDataFile(filename, TimeStampedDataFile::StoredData::GPIO));
+        std::vector<std::string> names(m_analogSignalIds.size() + m_eventSignalIds.size());
+        std::vector<DurationInSeconds> steps(names.size(), DurationInSeconds(0, 1));
 
-        for (auto & channel : m_eventData)
+        for (auto & id : m_analogSignalIds)
         {
-            auto & info = channel.second;
-            eventsFile->writeChannelHeader(
-                channel.first,
-                info.outputMode,
-                info.triggerFollow,
-                info.data.size());
-
-            for (auto & pkt : info.data)
-            {
-                eventsFile->writeDataPkt(pkt);
-            }            
+            names[id.second] = s_dataTypeMap.at(id.first);
+            steps[id.second] = step;
         }
-
-        
-        eventsFile->setTimingInfo(m_timingInfo);
-        eventsFile->closeFileForWriting(); 
-
-        m_outputFileNames.push_back(filename);
-    }
-}
-
-void 
-NVokeGpioFile::closeFiles()
-{
-    updateTimingInfo();
-    closeAnalogFile();
-    closeEventsFile();
+        for (auto & id : m_eventSignalIds)
+        {
+            names[id.second] = s_dataTypeMap.at(id.first);
+        }
+        m_outputFile->setChannelList(names);
+        m_outputFile->setTimingInfo(startTime, endTime, steps);
+        m_outputFile->closeFileForWriting();
+    }    
 }
 
 void 
@@ -368,62 +335,28 @@ NVokeGpioFile::checkEventCounter(uint8_t * data)
 }
 
 
-void 
-NVokeGpioFile::getOutputFileNames(std::vector<std::string> & outFileNames)
+const std::string &
+NVokeGpioFile::getOutputFileName() const
 {
-    outFileNames = m_outputFileNames; 
+    return m_outputFileName; 
 }
 
 
 void 
-NVokeGpioFile::writeAnalogPktToFile(
-    const std::string & inChannel, 
-    const std::string & inMode,
-    const std::string & inTriggerFollow, 
-    const TimeStampedDataFile::DataPkt & inData)
+NVokeGpioFile::writePktToFile(const EventBasedFileV2::DataPkt & inData)
 {    
-    // If we haven't started writing the file, open it in write mode and create the json header
-    if(!m_analogFile)
+    // If we haven't started writing the file, open it in write mode 
+    if(!m_outputFile)
     {
         // Get destination file name
-        std::string filename = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_analog.isxd";
-        m_outputFileNames.push_back(filename);
+        m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_gpio.isxd";
 
-        m_analogFile.reset(new TimeStampedDataFile(filename, TimeStampedDataFile::StoredData::GPIO, true));
-        m_analogFile->writeChannelHeader(
-            inChannel,
-            inMode,
-            inTriggerFollow,
-            0);
+        m_outputFile.reset(new EventBasedFileV2(m_outputFileName, DataSet::Type::GPIO, true));        
     }
-
     // Write binary data
-    m_analogFile->writeDataPkt(inData);
-    
+    m_outputFile->writeDataPkt(inData);    
 }
 
-void 
-NVokeGpioFile::addEventPkt(
-            const std::string & inChannel, 
-            const std::string & inMode,
-            const std::string & inTriggerFollow, 
-            const TimeStampedDataFile::DataPkt & inData)
-{
-    auto search = m_eventData.find(inChannel);
-
-    if(search == m_eventData.end())
-    {       
-        ChannelInfo info(inMode, inTriggerFollow, inData);
-        m_eventData[inChannel] = info;
-    }
-    else
-    {
-        auto & info = m_eventData[inChannel];
-        info.data.push_back(inData);
-        // Check that the acquisition mode is not changed in the middle of the recording
-        ISX_ASSERT(info.outputMode == inMode);
-    }
-}
 
 void 
 NVokeGpioFile::parseGpioPkt(const std::vector<uint8_t> & inPkt)
@@ -431,16 +364,18 @@ NVokeGpioFile::parseGpioPkt(const std::vector<uint8_t> & inPkt)
     ISX_ASSERT(inPkt.size() >= GPIO_PKT_LENGTH);
     GpioPkt * pkt = (GpioPkt *) inPkt.data();
 
-    std::string dataType = s_dataTypeMap.at(pkt->header.dataType);
-    bool state = (pkt->stateMode & GPIO_STATE_MASK) > 0 ? true : false;
-    std::string mode = s_gpioModeMap.at((pkt->stateMode & GPIO_MODE_MASK));
-    std::string triggerFollow; 
+    if (m_eventSignalIds.find(pkt->header.dataType) == m_eventSignalIds.end())
+    {
+        uint64_t next = m_eventSignalIds.size() + m_analogSignalIds.size();
+        m_eventSignalIds[pkt->header.dataType] = next;
+    }
+
+    float state = (pkt->stateMode & GPIO_STATE_MASK) > 0 ? 1.f : 0.f;
 
     uint64_t usecs = getUsecs(pkt->timeSecs, pkt->timeUSecs);    
 
-    TimeStampedDataFile::DataPkt data(usecs, state, 0.0f);
-    updatePktTimes(data);
-    addEventPkt(dataType, mode, triggerFollow, data);
+    EventBasedFileV2::DataPkt data(usecs, state, m_eventSignalIds.at(pkt->header.dataType));
+    writePktToFile(data);
 }
 
 void 
@@ -449,21 +384,21 @@ NVokeGpioFile::parseLedPkt(const std::vector<uint8_t> & inPkt)
     ISX_ASSERT(inPkt.size() >= LED_PKT_LENGTH);
     LedPkt * pkt = (LedPkt *) inPkt.data();
 
-    std::string dataType = s_dataTypeMap.at(pkt->header.dataType);
+    if (m_eventSignalIds.find(pkt->header.dataType) == m_eventSignalIds.end())
+    {   
+        uint64_t next = m_eventSignalIds.size() + m_analogSignalIds.size();
+        m_eventSignalIds[pkt->header.dataType] = next;
+    }
     uint16_t power1 = (uint16_t)pkt->ledPower & 0x00FF;;
     uint16_t power2 = uint16_t(pkt->powerState & LED_POWER_0_MASK);
     uint16_t power = (power1 << 1) + (power2 >> 4); 
     double   dPower = (double)power / 10.0; // In units of mW/mm^2, in the range of [0, 51.1]
 
-    std::string triggerFollow = s_ledGpioFollowMap.at((pkt->followMode & LED_GPIO_FOLLOW_MASK) >> 4);
-    bool state = (pkt->powerState & LED_STATE_MASK) > 0 ? true : false;
-    std::string mode = s_ledModeMap.at((pkt->followMode & LED_MODE_MASK));
     
     uint64_t usecs = getUsecs(pkt->timeSecs, pkt->timeUSecs);
 
-    TimeStampedDataFile::DataPkt data(usecs, state, float(dPower));
-    updatePktTimes(data);
-    addEventPkt(dataType, mode, triggerFollow, data);
+    EventBasedFileV2::DataPkt data(usecs, float(dPower), m_eventSignalIds.at(pkt->header.dataType));
+    writePktToFile(data);
 }
 
 void 
@@ -472,7 +407,11 @@ NVokeGpioFile::parseAnalogFollowPkt(const std::vector<uint8_t> & inPkt)
     ISX_ASSERT(inPkt.size() >= ANALOG_FOLLOW_PKT_LENGTH);
     AnalogFollowPkt * pkt = (AnalogFollowPkt *) inPkt.data();
 
-    std::string dataType = s_dataTypeMap.at(pkt->header.dataType);
+    if (m_analogSignalIds.find(pkt->header.dataType) == m_analogSignalIds.end())
+    {
+        uint64_t next = m_eventSignalIds.size() + m_analogSignalIds.size();
+        m_analogSignalIds[pkt->header.dataType] = next;
+    }
     uint8_t maxPower = (pkt->ogMaxPower[0] & AF_POWER_LAST) | (pkt->ogMaxPower[1] & AF_POWER_FIRST);
     
     uint64_t usecs = getUsecs(pkt->timeSecs, pkt->timeUSecs);
@@ -485,9 +424,10 @@ NVokeGpioFile::parseAnalogFollowPkt(const std::vector<uint8_t> & inPkt)
         double dSample = double(sample) / 655360.0 * double(maxPower);   // In units of mW/mm^2
 
         uint64_t usecsForPkt = usecs + (uint64_t)(1000*i);
-        TimeStampedDataFile::DataPkt data(usecsForPkt, false, float(dSample));
-        updatePktTimes(data);
-        writeAnalogPktToFile(dataType, std::string(), std::string(), data);
+        m_endTime = m_startTime + usecsForPkt;
+
+        EventBasedFileV2::DataPkt data(usecsForPkt, float(dSample), m_analogSignalIds.at(pkt->header.dataType));
+        writePktToFile(data);
     }
 }
 
@@ -517,29 +457,23 @@ NVokeGpioFile::getUsecs(uint8_t * inSecs, uint8_t * inUSecs)
         outUsecs += (bytedata << (2-i)*8);
     }
 
-    return outUsecs;
-}
-
-void 
-NVokeGpioFile::updatePktTimes(const TimeStampedDataFile::DataPkt & inData)
-{
+    // Adjust values to be offsets from start times
     if(!m_startTimeSet)
     {
-        m_startTime = inData.getTime();
+        m_startTime = outUsecs;
         m_startTimeSet = true;
+        outUsecs = 0;
     }
     else
     {
-        m_endTime = inData.getTime();
+        m_endTime = outUsecs;
+        outUsecs -= m_startTime;
     }
+
+    return outUsecs;
 }
 
-void NVokeGpioFile::updateTimingInfo()
-{
-    DurationInSeconds step(1, 1000);    
-    isize_t numTimes = (isize_t)std::ceil((m_endTime.getSecsSinceEpoch().toDouble() - m_startTime.getSecsSinceEpoch().toDouble()) / (step.toDouble())) + 1;
-    m_timingInfo = TimingInfo(m_startTime, step, numTimes);   
-}
+
 
 
 }

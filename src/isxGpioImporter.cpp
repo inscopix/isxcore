@@ -48,13 +48,13 @@ AsyncTaskStatus runGpioDataImporter(GpioDataParams inParams, std::shared_ptr<Gpi
 
         result = raw.parse();
     
-        raw.getOutputFileNames(inOutputParams->filenames);
+        inOutputParams->filenames = {raw.getOutputFileName()};
     }
     else if (extension == "hdf5")
     {
         NVistaGpioFile input(inParams.fileName, inParams.outputDir, inCheckInCB);
         result = input.parse();
-        input.getOutputFileNames(inOutputParams->filenames);
+        inOutputParams->filenames = {input.getOutputFileName()};
     }
     
 

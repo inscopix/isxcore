@@ -1,9 +1,9 @@
 #include "isxTest.h"
-#include "isxTimeStampedDataFile.h"
+#include "isxEventBasedFileV1.h"
 #include "isxPathUtils.h"
 #include "catch.hpp"
 
-TEST_CASE("TimeStampDataFileTest", "[core]")
+TEST_CASE("EventBasedFileV1Test", "[core]")
 {
     isx::CoreInitialize();
 
@@ -12,7 +12,7 @@ TEST_CASE("TimeStampDataFileTest", "[core]")
 
     SECTION("Invalid file object") 
     {
-        isx::TimeStampedDataFile file; 
+        isx::EventBasedFileV1 file; 
         REQUIRE(!file.isValid());
     }
 
@@ -28,7 +28,7 @@ TEST_CASE("TimeStampDataFileTest", "[core]")
 
         // Write a file
         {
-            isx::TimeStampedDataFile file(fileName, isx::TimeStampedDataFile::StoredData::GPIO, true);
+            isx::EventBasedFileV1 file(fileName, isx::EventBasedFileV1::StoredData::GPIO, true);
             file.setTimingInfo(ti);
             file.writeChannelHeader(channelName, mode, trigFollow, data.size());
 
@@ -37,7 +37,7 @@ TEST_CASE("TimeStampDataFileTest", "[core]")
             {
                 isx::Time t = ti.convertIndexToStartTime(i++);
                 uint64_t t_us = uint64_t(t.getSecsSinceEpoch().toDouble() * 1E6);
-                isx::TimeStampedDataFile::DataPkt pkt(t_us, true, s);
+                isx::EventBasedFileV1::DataPkt pkt(t_us, true, s);
                 file.writeDataPkt(pkt);
             }
 
@@ -45,11 +45,10 @@ TEST_CASE("TimeStampDataFileTest", "[core]")
         }
 
         // Test reading it
-        isx::TimeStampedDataFile file(fileName); 
+        isx::EventBasedFileV1 file(fileName); 
         REQUIRE(file.isValid());
         REQUIRE(file.isAnalog());
         REQUIRE(file.getFileName() == fileName);
-        REQUIRE(file.numberOfChannels() == 1);
         const std::vector<std::string> channels = file.getChannelList();
         REQUIRE(channels.size() == 1);
         REQUIRE(channels.at(0) == channelName);
@@ -79,7 +78,7 @@ TEST_CASE("TimeStampDataFileTest", "[core]")
 
         // Write a file
         {
-            isx::TimeStampedDataFile file(fileName, isx::TimeStampedDataFile::StoredData::GPIO);
+            isx::EventBasedFileV1 file(fileName, isx::EventBasedFileV1::StoredData::GPIO);
             file.setTimingInfo(ti);
             file.writeChannelHeader(channelName, mode, trigFollow, data.size());
 
@@ -88,18 +87,17 @@ TEST_CASE("TimeStampDataFileTest", "[core]")
             {
                 isx::Time t = ti.convertIndexToStartTime(timeIndices[i]);
                 uint64_t t_us = uint64_t(t.getSecsSinceEpoch().toDouble() * 1E6);
-                isx::TimeStampedDataFile::DataPkt pkt(t_us, state[i++], s);
+                isx::EventBasedFileV1::DataPkt pkt(t_us, state[i++], s);
                 file.writeDataPkt(pkt);
             }
 
             file.closeFileForWriting();
         }
 
-        isx::TimeStampedDataFile file(fileName); 
+        isx::EventBasedFileV1 file(fileName); 
         REQUIRE(file.isValid());
         REQUIRE(!file.isAnalog());
         REQUIRE(file.getFileName() == fileName);
-        REQUIRE(file.numberOfChannels() == 1);
         const std::vector<std::string> channels = file.getChannelList();
         REQUIRE(channels.size() == 1);
         REQUIRE(channels.at(0) == channelName);
