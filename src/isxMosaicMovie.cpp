@@ -206,15 +206,9 @@ MosaicMovie::closeForWriting(const TimingInfo & inTimingInfo)
 }
 
 SpVideoFrame_t
-MosaicMovie::makeVideoFrame(isize_t inIndex)
+MosaicMovie::makeVideoFrame(isize_t inIndex, const bool inWithHeaderFooter)
 {
-    return m_file->makeVideoFrame(inIndex);
-}
-
-SpVideoFrame_t
-MosaicMovie::makeVideoFrame(isize_t inIndex, const Time & inTimeStamp)
-{
-    return m_file->makeVideoFrame(inIndex, inTimeStamp);
+    return m_file->makeVideoFrame(inIndex, inWithHeaderFooter);
 }
 
 const isx::TimingInfo &

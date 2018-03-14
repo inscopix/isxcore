@@ -69,9 +69,7 @@ public:
     void
     closeForWriting(const TimingInfo & inTimingInfo = TimingInfo()) override;
 
-    SpVideoFrame_t makeVideoFrame(isize_t inIndex) override;
-
-    SpVideoFrame_t makeVideoFrame(isize_t inIndex, const Time & inTimeStamp) override;
+    SpVideoFrame_t makeVideoFrame(isize_t inIndex, const bool inWithHeaderFooter = false) override;
 
     const isx::TimingInfo & getTimingInfo() const override;
 

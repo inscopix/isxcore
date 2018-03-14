@@ -128,50 +128,29 @@ MosaicMovieFile::isValid() const
 }
 
 SpVideoFrame_t
-MosaicMovieFile::readFrame(isize_t inFrameNumber, const bool inUseFrameTimeStamp)
+MosaicMovieFile::readFrame(isize_t inFrameNumber, const bool inWithHeaderFooter)
 {
     const TimingInfo & ti = getTimingInfo();
 
+    SpVideoFrame_t outFrame = makeVideoFrame(inFrameNumber, inWithHeaderFooter);
+
     if (ti.isCropped(inFrameNumber))
     {
-        SpVideoFrame_t outFrame = makeVideoFrame(inFrameNumber);
         std::memset(outFrame->getPixels(), 0, outFrame->getImageSizeInBytes());
         outFrame->setFrameType(VideoFrame::Type::CROPPED);
         return outFrame;
     }
     else if (ti.isDropped(inFrameNumber))
     {
-        SpVideoFrame_t outFrame = makeVideoFrame(inFrameNumber);
         std::memset(outFrame->getPixels(), 0, outFrame->getImageSizeInBytes());
         outFrame->setFrameType(VideoFrame::Type::DROPPED);
         return outFrame;
     }
 
     // The frame was not dropped, shift frame numbers and proceed to read
-    isize_t newFrameNumber = ti.timeIdxToRecordedIdx(inFrameNumber);
-    seekForReadFrame(newFrameNumber);
+    seekForReadFrame(ti.timeIdxToRecordedIdx(inFrameNumber), !inWithHeaderFooter);
 
-    SpVideoFrame_t outFrame;
-    if (m_hasFrameHeaderFooter)
-    {
-        uint64_t usecsSinceStart = 0;
-        m_file.read(reinterpret_cast<char *>(&usecsSinceStart), sizeof(usecsSinceStart));
-        if (inUseFrameTimeStamp)
-        {
-            const Time timeStamp = getTimingInfo().getStart() + DurationInSeconds::fromMicroseconds(usecsSinceStart);
-            outFrame = makeVideoFrame(inFrameNumber, timeStamp);
-        }
-        else
-        {
-            outFrame = makeVideoFrame(inFrameNumber);
-        }
-    }
-    else
-    {
-        outFrame = makeVideoFrame(inFrameNumber);
-    }
-
-    m_file.read(outFrame->getPixels(), getFrameSizeInBytes());
+    m_file.read(outFrame->getPixels(), outFrame->getImageSizeInBytes());
 
     if (!m_file.good())
     {
@@ -190,16 +169,10 @@ MosaicMovieFile::writeFrame(const SpVideoFrame_t & inVideoFrame)
                 "Writing frame after file was closed for writing.", m_fileName);
     }
 
-    size_t frameSizeInBytes = getFrameSizeInBytes();
-    if (m_hasFrameHeaderFooter)
-    {
-        frameSizeInBytes += 2 * m_frameHeaderSize;
-    }
-
     const DataType frameDataType = inVideoFrame->getDataType();
     if (frameDataType == m_dataType)
     {
-        m_file.write(inVideoFrame->getPixels(), getFrameSizeInBytes());
+        m_file.write(inVideoFrame->getPixels(), inVideoFrame->getImageSizeInBytes());
         m_headerOffset = m_file.tellp();
     }
     else
@@ -249,26 +222,20 @@ MosaicMovieFile::getDataType() const
 }
 
 SpVideoFrame_t
-MosaicMovieFile::makeVideoFrame(const isize_t inIndex) const
+MosaicMovieFile::makeVideoFrame(const isize_t inIndex, const bool inWithHeaderFooter) const
 {
-    return makeVideoFrame(inIndex, getTimingInfo().convertIndexToStartTime(inIndex));
-}
-
-SpVideoFrame_t
-MosaicMovieFile::makeVideoFrame(const isize_t inIndex, const Time & inTimeStamp) const
-{
-    const SpacingInfo & spacingInfo = getSpacingInfo();
-    const DataType dataType = getDataType();
-    const isize_t pixelSizeInBytes = getDataTypeSizeInBytes(dataType);
-    const isize_t rowSizeInBytes = pixelSizeInBytes * spacingInfo.getNumColumns();
-    SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
-            spacingInfo,
-            rowSizeInBytes,
+    SpacingInfo si = getSpacingInfo();
+    if (inWithHeaderFooter)
+    {
+        si = SpacingInfo(si.getNumPixels() + SizeInPixels_t(0, s_numHeaderFooterRows), si.getPixelSize(), si.getTopLeft());
+    }
+    return std::make_shared<VideoFrame>(
+            si,
+            getRowSizeInBytes(),
             1,
-            dataType,
-            inTimeStamp,
+            getDataType(),
+            getTimingInfo().convertIndexToStartTime(inIndex),
             inIndex);
-    return outFrame;
 }
 
 void
@@ -375,7 +342,7 @@ MosaicMovieFile::getFrameSizeInBytes() const
 }
 
 void
-MosaicMovieFile::seekForReadFrame(isize_t inFrameNumber)
+MosaicMovieFile::seekForReadFrame(isize_t inFrameNumber, const bool inSkipHeader)
 {
     if (!m_file.good())
     {
@@ -394,10 +361,16 @@ MosaicMovieFile::seekForReadFrame(isize_t inFrameNumber)
     size_t frameSizeInBytes = getFrameSizeInBytes();
     if (m_hasFrameHeaderFooter)
     {
-        frameSizeInBytes += sizeof(uint64_t);
+        frameSizeInBytes += s_numHeaderFooterRows * getRowSizeInBytes();
     }
 
-    const std::ios::pos_type offsetInBytes = inFrameNumber * frameSizeInBytes;
+    std::ios::pos_type offsetInBytes = inFrameNumber * frameSizeInBytes;
+
+    if (inSkipHeader && m_hasFrameHeaderFooter)
+    {
+        offsetInBytes += s_numHeaderRows * getRowSizeInBytes();
+    }
+
     m_file.seekg(offsetInBytes);
     if (!m_file.good())
     {

@@ -78,14 +78,16 @@ public:
 
     /// Read a frame in the file by index.
     ///
-    /// \param  inFrameNumber   The index of the frame.
-    /// \param  inUseFrameTimeStamp If true, use the time stamp written with the frame if available.
-    ///                             Otherwise, infer the time stamp from the timing info.
-    /// \return                 The frame read from the file.
+    /// \param  inFrameNumber       The index of the frame.
+    /// \param  inWithHeaderFooter  If true, create a frame a with header/footer rows.
+    /// \return                     The frame read from the file.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If inFrameNumber is out of range.
-    SpVideoFrame_t readFrame(isize_t inFrameNumber, const bool inUseFrameTimeStamp = false);
+    SpVideoFrame_t readFrame(isize_t inFrameNumber, const bool inWithHeaderFooter = false);
+
+    /// \param  inFrameNumber   The index of the frame.
+    /// \return                 The frame with the header and footer if it exists.
 
     /// Write a frame to the file.
     ///
@@ -122,14 +124,10 @@ public:
     ///
     DataType getDataType() const;
 
-    /// \param  inIndex     The index of the frame to generate.
-    /// \return             The frame associated with the given index.
-    SpVideoFrame_t makeVideoFrame(const isize_t inIndex) const;
-
-    /// \param  inIndex     The index of the frame to generate.
-    /// \param  inTimeStamp The time at which captured of this frame started.
-    /// \return             The frame associated with the given index and timestamp.
-    SpVideoFrame_t makeVideoFrame(const isize_t inIndex, const Time & inTimeStamp) const;
+    /// \param  inIndex             The index of the frame to generate.
+    /// \param  inWithHeaderFooter  If true, create a frame a with header/footer rows.
+    /// \return                     The frame associated with the given index.
+    SpVideoFrame_t makeVideoFrame(const isize_t inIndex, const bool inWithHeaderFooter = false) const;
 
 private:
     /// True if the movie file is valid, false otherwise.
@@ -161,8 +159,14 @@ private:
     /// True if the frame bytes contain fixed size header and footer lines.
     bool m_hasFrameHeaderFooter = false;
 
-    /// The fixed size of the frame header/footer bytes.
-    constexpr static size_t m_frameHeaderSize = 1280 * 2 * sizeof(uint16_t);
+    /// The number of rows in the header.
+    const static size_t s_numHeaderRows = 2;
+
+    /// The number of rows in the footer.
+    const static size_t s_numFooterRows = s_numHeaderRows;
+
+    /// The number of rows in the header and footer.
+    const static size_t s_numHeaderFooterRows = s_numHeaderRows + s_numFooterRows;
 
     /// Initialize for reading.
     ///
@@ -213,7 +217,9 @@ private:
     /// Seek to the location of a frame for reading.
     ///
     /// \param  inFrameNumber   The number of the frame to which to seek.
-    void seekForReadFrame(isize_t inFrameNumber);
+    /// \param  inSkipHeader    If true, skips the frame header if it exists,
+    ///                         otherwise include the header.
+    void seekForReadFrame(isize_t inFrameNumber, const bool inSkipHeader);
 
     /// Flush the stream
     ///
