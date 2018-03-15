@@ -477,6 +477,6 @@ TEST_CASE("MosaicMovieFileU16-forTheHub", "[core-internal]")
         REQUIRE(movie.getExtraProperties() == extraPropertiesStr);
     }
 
-    //isx::removeDirectory(outputDirPath);
+    isx::removeDirectory(outputDirPath);
     isx::CoreShutdown();
 }
