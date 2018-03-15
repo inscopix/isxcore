@@ -94,7 +94,6 @@ public:
     virtual
     DataType
     getDataType() const = 0;
-
 };
 
 } // namespace isx

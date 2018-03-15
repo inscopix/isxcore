@@ -129,6 +129,16 @@ public:
     /// \return                     The frame associated with the given index.
     SpVideoFrame_t makeVideoFrame(const isize_t inIndex, const bool inWithHeaderFooter = false) const;
 
+    /// \param  inProperties    The extra properties formatted as a JSON string.
+    ///
+    void
+    setExtraProperties(const std::string & inProperties);
+
+    /// \return The extra properties of formatted as a JSON string.
+    ///
+    std::string
+    getExtraProperties() const;
+
 private:
     /// True if the movie file is valid, false otherwise.
     bool m_valid;
@@ -167,6 +177,9 @@ private:
 
     /// The number of rows in the header and footer.
     const static size_t s_numHeaderFooterRows = s_numHeaderRows + s_numFooterRows;
+
+    /// The extra properties to write in the JSON footer.
+    json m_extraProperties;
 
     /// Initialize for reading.
     ///

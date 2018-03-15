@@ -47,6 +47,12 @@ public:
     virtual
     SpVideoFrame_t
     makeVideoFrame(isize_t inIndex, const bool inWithHeaderFooter = false) = 0;
+
+    /// \param  inProperties    The extra properties formatted as a JSON string.
+    ///
+    virtual
+    void
+    setExtraProperties(const std::string & inProperties) = 0;
 };
 
 } // namespace isx

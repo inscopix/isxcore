@@ -247,4 +247,10 @@ MosaicMovie::serialize(std::ostream & strm) const
     strm << getFileName();
 }
 
+void
+MosaicMovie::setExtraProperties(const std::string & inProperties)
+{
+    m_file->setExtraProperties(inProperties);
+}
+
 } // namespace isx

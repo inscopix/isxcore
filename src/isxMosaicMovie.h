@@ -84,6 +84,7 @@ public:
 
     void serialize(std::ostream & strm) const override;
 
+    void setExtraProperties(const std::string & inProperties) override;
 
 private:
 

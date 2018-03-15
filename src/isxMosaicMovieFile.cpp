@@ -239,6 +239,25 @@ MosaicMovieFile::makeVideoFrame(const isize_t inIndex, const bool inWithHeaderFo
 }
 
 void
+MosaicMovieFile::setExtraProperties(const std::string & inProperties)
+{
+    try
+    {
+        m_extraProperties = json::parse(inProperties);
+    }
+    catch (const std::exception & error)
+    {
+        ISX_THROW(isx::ExceptionDataIO, "Error parsing extra properties: ", error.what());
+    }
+}
+
+std::string
+MosaicMovieFile::getExtraProperties() const
+{
+    return m_extraProperties.dump();
+}
+
+void
 MosaicMovieFile::readHeader()
 {
     json j = readJsonHeaderAtEnd(m_file, m_headerOffset);
@@ -263,6 +282,10 @@ MosaicMovieFile::readHeader()
             version = size_t(j["fileVersion"]);
         }
         m_hasFrameHeaderFooter = version > 0 && bool(j["hasFrameHeaderFooter"]);
+        if (j.find("extraProperties") != j.end())
+        {
+            m_extraProperties = j["extraProperties"];
+        }
     }
     catch (const std::exception & error)
     {
@@ -295,6 +318,7 @@ MosaicMovieFile::writeHeader()
         j["producer"] = getProducerAsJson();
         j["fileVersion"] = s_version;
         j["hasFrameHeaderFooter"] = m_hasFrameHeaderFooter;
+        j["extraProperties"] = m_extraProperties;
     }
     catch (const std::exception & error)
     {

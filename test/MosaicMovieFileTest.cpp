@@ -362,7 +362,7 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal]")
     }
 }
 
-TEST_CASE("MosaicMovieFileU16-withFrameHeaderFooter", "[core-internal]")
+TEST_CASE("MosaicMovieFileU16-forTheHub", "[core-internal]")
 {
     const std::string outputDirPath = g_resources["unitTestDataPath"] + "/MosaicMovieFile";
     isx::makeDirectory(outputDirPath);
@@ -381,7 +381,7 @@ TEST_CASE("MosaicMovieFileU16-withFrameHeaderFooter", "[core-internal]")
     const size_t frameSizeInBytes = totalNumPixels * sizeof(uint16_t);
     const isx::DataType dataType = isx::DataType::U16;
 
-    SECTION("Read frame, header and footer after writing")
+    SECTION("Read frame, frame header/footer and properties after writing")
     {
         // The header, frame, and footer values are all some function of
         // the frame and pixel index.
@@ -402,21 +402,33 @@ TEST_CASE("MosaicMovieFileU16-withFrameHeaderFooter", "[core-internal]")
             headers.at(f) = std::vector<uint16_t>(numHeaderValues);
             for (size_t p = 0; p < numHeaderValues; ++p)
             {
-                headers.at(f).at(p) = hashFrameAndPixelIndex(f, p, maxHeaderFooterValue);
+                headers.at(f).at(p) = uint16_t(hashFrameAndPixelIndex(f, p, maxHeaderFooterValue));
             }
 
             frames.at(f) = std::vector<uint16_t>(totalNumPixels);
             for (isx::isize_t p = 0; p < totalNumPixels; ++p)
             {
-                frames.at(f).at(p) = hashFrameAndPixelIndex(f, p, maxImageValue);
+                frames.at(f).at(p) = uint16_t(hashFrameAndPixelIndex(f, p, maxImageValue));
             }
 
             footers.at(f) = std::vector<uint16_t>(numFooterValues);
             for (isx::isize_t p = 0; p < numFooterValues; ++p)
             {
-                footers.at(f).at(p) = hashFrameAndPixelIndex(f, p, maxHeaderFooterValue);
+                footers.at(f).at(p) = uint16_t(hashFrameAndPixelIndex(f, p, maxHeaderFooterValue));
             }
         }
+
+        using json = nlohmann::json;
+        json extraProperties;
+        extraProperties["probe"]["name"] = "ISX3821092";
+        extraProperties["probe"]["type"] = "straight";
+        extraProperties["probe"]["length"] = 8;
+        extraProperties["probe"]["diameter"] = 0.6;
+        extraProperties["microscope"]["EX-LED power"] = 9000;
+        extraProperties["microscope"]["Spatial downsample"] = 2;
+        extraProperties["microscope"]["FOV"]["width"] = 1280;
+        extraProperties["microscope"]["FOV"]["height"] = 800;
+        const std::string extraPropertiesStr = extraProperties.dump();
 
         // Actually write the frames with headers and footers to the file
         {
@@ -433,6 +445,7 @@ TEST_CASE("MosaicMovieFileU16-withFrameHeaderFooter", "[core-internal]")
 
                 movie.writeFrame(frame);
             }
+            movie.setExtraProperties(extraProperties.dump());
             movie.closeForWriting();
         }
 
@@ -459,8 +472,11 @@ TEST_CASE("MosaicMovieFileU16-withFrameHeaderFooter", "[core-internal]")
                 REQUIRE(std::memcmp(pixels + numHeaderValues + totalNumPixels, footers.at(f).data(), footerSizeInBytes) == 0);
             }
         }
+
+        // Finally check the extra properties
+        REQUIRE(movie.getExtraProperties() == extraPropertiesStr);
     }
 
-    isx::removeDirectory(outputDirPath);
+    //isx::removeDirectory(outputDirPath);
     isx::CoreShutdown();
 }
