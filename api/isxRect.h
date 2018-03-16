@@ -15,8 +15,8 @@ struct Rect
     /// convenience constructor 
     ///
     Rect()
-        : m_topLeft(SpatialPoint<int64_t>(0,0))
-        , m_bottomRight(SpatialPoint<int64_t>(1,1))
+        : m_topLeft(SpatialPoint<int64_t>(-1, -1))
+        , m_bottomRight(SpatialPoint<int64_t>(-1, -1))
     {}
 
     /// convenience constructor 
@@ -42,6 +42,11 @@ struct Rect
     /// \return the location of the top left corner in the y axis for the cropping rectangle in pixels
     ///
     int64_t y() const;
+
+    /// \return True if this is valid, false otherwise.
+    ///         We use (-1, -1, -1, -1) to indicate an invalid rectangle.
+    bool
+    isValid() const;
 
     /// Exact comparison with another rectangle.
     ///
