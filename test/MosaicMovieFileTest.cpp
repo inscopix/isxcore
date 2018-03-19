@@ -478,5 +478,4 @@ TEST_CASE("MosaicMovieFileU16-forTheHub", "[core-internal]")
     }
 
     isx::removeDirectory(outputDirPath);
-    isx::CoreShutdown();
 }

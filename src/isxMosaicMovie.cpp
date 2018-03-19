@@ -253,4 +253,10 @@ MosaicMovie::setExtraProperties(const std::string & inProperties)
     m_file->setExtraProperties(inProperties);
 }
 
+std::string
+MosaicMovie::getExtraProperties() const
+{
+    return m_file->getExtraProperties();
+}
+
 } // namespace isx

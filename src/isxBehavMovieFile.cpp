@@ -532,7 +532,13 @@ BehavMovieFile::getDataType() const
 {
     return m_dataType;
 }
-    
+
+std::string
+BehavMovieFile::getExtraProperties() const
+{
+    return "";
+}
+
 bool
 BehavMovieFile::scanAllFrames(int64_t & outFrameCount, int64_t & outGopSize, AsyncCheckInCB_t inCheckInCB)
 {

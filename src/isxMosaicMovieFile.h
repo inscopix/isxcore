@@ -79,7 +79,8 @@ public:
     /// Read a frame in the file by index.
     ///
     /// \param  inFrameNumber       The index of the frame.
-    /// \param  inWithHeaderFooter  If true, create a frame a with header/footer rows.
+    /// \param  inWithHeaderFooter  If true and the frame has header/footer rows, read the frame with them,
+    ///                             otherwise, do not.
     /// \return                     The frame read from the file.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.

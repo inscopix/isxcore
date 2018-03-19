@@ -225,4 +225,10 @@ MovieSeries::serialize(std::ostream & strm) const
     strm << getFileName();
 }
 
+std::string
+MovieSeries::getExtraProperties() const
+{
+    return m_movies.at(0)->getExtraProperties();
+}
+
 } // namespace isx

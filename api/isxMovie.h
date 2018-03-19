@@ -94,6 +94,12 @@ public:
     virtual
     DataType
     getDataType() const = 0;
+
+    /// \return     The extra properties of this movie which might include things
+    ///             from nVista 3. The string is in JSON format.
+    virtual
+    std::string
+    getExtraProperties() const = 0;
 };
 
 } // namespace isx
