@@ -67,6 +67,15 @@ public:
     void
     cancelPendingReads() override;
 
+    bool 
+    hasMetrics() const override;
+
+    SpTraceMetrics_t 
+    getTraceMetrics(isize_t inIndex) const override;
+
+    void
+    setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics) override;
+
 private:
 
     /// True if the events series is valid, false otherwise.

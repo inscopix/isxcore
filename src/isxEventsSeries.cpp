@@ -176,4 +176,25 @@ EventsSeries::cancelPendingReads()
     }
 }
 
+bool 
+EventsSeries::hasMetrics() const 
+{
+    return m_events.front()->hasMetrics();
+}
+
+SpTraceMetrics_t 
+EventsSeries::getTraceMetrics(isize_t inIndex) const 
+{
+    return m_events.front()->getTraceMetrics(inIndex);
+}
+
+void
+EventsSeries::setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics) 
+{
+    for (const auto & e : m_events)
+    {
+        e->setTraceMetrics(inIndex, inMetrics);
+    }
+}
+
 } // namespace isx

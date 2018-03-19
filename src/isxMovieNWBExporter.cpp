@@ -15,12 +15,31 @@
 #include <array>
 #include <cmath>
 
+#include "json.hpp"
+
 namespace isx {
 
 std::string
 MovieNWBExporterParams::getOpName()
 {
     return "Export Movie";
+}
+
+std::string
+MovieNWBExporterParams::toString() const
+{
+    using json = nlohmann::json;
+    json j;
+    j["identifier"] = m_identifier;
+    j["sessionDescription"] = m_sessionDescription;
+    j["comments"] = m_comments;
+    j["description"] = m_description;
+    j["experimentDescription"] = m_experimentDescription;
+    j["experimenter"] = m_experimenter;
+    j["institution"] = m_institution;
+    j["lab"] = m_lab;
+    j["sessionId"] = m_sessionId;
+    return j.dump(4);
 }
 
 MovieExporterParams::Type
@@ -68,6 +87,23 @@ void
 MovieNWBExporterParams::setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
 {
     // Do nothing - currently NWB cannot contains these details
+}
+
+std::vector<std::string>
+MovieNWBExporterParams::getInputFilePaths() const
+{
+    std::vector<std::string> inputFilePaths;
+    for (const auto & s : m_srcs)
+    {
+        inputFilePaths.push_back(s->getFileName());
+    }
+    return inputFilePaths;
+}
+
+std::vector<std::string>
+MovieNWBExporterParams::getOutputFilePaths() const
+{
+    return {m_filename};
 }
 
 const char *

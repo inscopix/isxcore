@@ -4,6 +4,22 @@
 #include "isxLogicalTrace.h"
 #include "catch.hpp"
 
+namespace 
+{
+    void compareMetrics(isx::SpTraceMetrics_t a, isx::SpTraceMetrics_t b)
+    {
+        REQUIRE(a->m_snr == b->m_snr);
+        REQUIRE(a->m_mad == b->m_mad);
+        REQUIRE(a->m_eventRate == b->m_eventRate);
+        REQUIRE(a->m_eventAmpMedian == b->m_eventAmpMedian);
+        REQUIRE(a->m_eventAmpSD == b->m_eventAmpSD);
+        REQUIRE(a->m_riseMedian == b->m_riseMedian);
+        REQUIRE(a->m_riseSD == b->m_riseSD);
+        REQUIRE(a->m_decayMedian == b->m_decayMedian);
+        REQUIRE(a->m_decaySD == b->m_decaySD);
+    }
+}
+
 TEST_CASE("EventBasedFileV2Test", "[core]")
 {
     isx::CoreInitialize();
@@ -72,6 +88,9 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
         std::vector<isx::isize_t> timeIndices{3, 4, 6, 7, 10, 11, 13, 15, 18, 19};
         std::vector<float> data{1.f, 0.f, 3.f, 0.f, 5.f, 0.f, 7.f, 0.f, 9.f, 0.f};
         std::vector<std::string> channelNames = {"test0", "test1"};
+        isx::EventMetrics_t metrics = {
+            std::make_shared<isx::TraceMetrics>(1.f, 2.f, 3.f, 4.f, 5.f, 6.f, 7.f, 8.f, 9.f),
+            std::make_shared<isx::TraceMetrics>(9.f, 8.f, 7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f)};
 
         // Write a file
         {
@@ -90,11 +109,12 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
                 file.writeDataPkt(pkt);
                 i++;
             }
+            file.setTraceMetrics(0, metrics[0]);
+            file.setTraceMetrics(1, metrics[1]);
             file.setChannelList(channelNames);
             file.setTimingInfo(ti.getStart(), ti.getEnd(), std::vector<isx::DurationInSeconds>(2, isx::DurationInSeconds(0, 1)));     
             file.closeFileForWriting();
         }
-
 
         // Read file and verify the data is right
         isx::EventBasedFileV2 file(fileName); 
@@ -106,25 +126,35 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
         REQUIRE(it != channels.end());
         it = std::find(channels.begin(), channels.end(), channelNames[1]);
         REQUIRE(it != channels.end());
-        
-        for (isx::isize_t i(0); i < channelNames.size(); ++i)
+
+        SECTION("Verify data correctness")
         {
-            isx::SpLogicalTrace_t logicalTrace = file.getLogicalData(channelNames[i]);
-            REQUIRE(logicalTrace != nullptr);
-
-            const std::map<isx::Time, float> vals = logicalTrace->getValues();
-            REQUIRE(vals.size() == data.size()/2);
-
-            isx::isize_t j(i);
-
-            for (auto & pair : vals)
+            for (isx::isize_t i(0); i < channelNames.size(); ++i)
             {
-                REQUIRE(pair.second == data.at(j));
-                j += 2;
+                isx::SpLogicalTrace_t logicalTrace = file.getLogicalData(channelNames[i]);
+                REQUIRE(logicalTrace != nullptr);
+
+                const std::map<isx::Time, float> vals = logicalTrace->getValues();
+                REQUIRE(vals.size() == data.size()/2);
+
+                isx::isize_t j(i);
+
+                for (auto & pair : vals)
+                {
+                    REQUIRE(pair.second == data.at(j));
+                    j += 2;
+                }
             }
         }
-        
-    }
+
+        SECTION("Verify metrics")
+        {
+            auto m0 = file.getTraceMetrics(0);
+            auto m1 = file.getTraceMetrics(1);
+            compareMetrics(metrics[0], m0);
+            compareMetrics(metrics[1], m1);            
+        }        
+    }    
 
     std::remove(fileName.c_str());
     isx::CoreShutdown();

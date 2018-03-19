@@ -39,14 +39,26 @@ CsvTraceImporterParams::fromString(const std::string & inStr)
 
 std::string CsvTraceImporterParams::toString() const
 {
-    json j; 
+    json j;
     j["startRow"] = m_startRow;
     j["colsToImport"] = m_colsToImport;
     j["titleRow"] = m_titleRow;
     j["timeCol"] = m_timeCol;
     j["startTime"] = convertTimeToJson(m_startTime);
     j["timeUnit"] = convertRatioToJson(m_timeUnit);
-    return j.dump(4);    
+    return j.dump(4);
+}
+
+std::vector<std::string>
+CsvTraceImporterParams::getInputFilePaths() const
+{
+    return {m_inputFile};
+}
+
+std::vector<std::string>
+CsvTraceImporterParams::getOutputFilePaths() const
+{
+    return {m_outputFile};
 }
 
 bool

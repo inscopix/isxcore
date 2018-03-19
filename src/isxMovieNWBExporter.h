@@ -56,14 +56,19 @@ struct MovieNWBExporterParams : MovieExporterParams
     /// default constructor
     /// 
     MovieNWBExporterParams(){}
-    
 
     std::string
     getOpName() override;
 
+    std::string
+    toString() const override;
 
     MovieExporterParams::Type
     getType() override;
+
+    std::vector<std::string> getInputFilePaths() const override;
+
+    std::vector<std::string> getOutputFilePaths() const override;
 
     void
     setOutputFileName(const std::string & inFileName) override;

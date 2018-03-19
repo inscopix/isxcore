@@ -6,6 +6,7 @@
 #include "isxGroup.h"
 #include "isxDataSet.h"
 #include "isxCellSet.h"
+#include "isxEvents.h"
 
 #include "json.hpp"
 
@@ -20,6 +21,7 @@ using CellStatuses_t = std::vector<CellSet::CellStatus>;
 using CellColors_t = std::vector<Color>;
 using CellActivities_t = std::vector<bool>;
 using CellMetrics_t = std::vector<SpImageMetrics_t>;
+using EventMetrics_t = std::vector<SpTraceMetrics_t>;
 
 json convertRatioToJson(const Ratio & inRatio);
 Ratio convertJsonToRatio(const json & j);
@@ -105,7 +107,7 @@ convertCellActivitiesToJson(const CellActivities_t & inCellActivities);
 CellActivities_t
 convertJsonToCellActivities(const json & inJson);
 
-
+/////*** Cell Metrics ***///////
 json
 convertImageMetricsToJson(const ImageMetrics & inMetrics);
 
@@ -117,6 +119,21 @@ convertCellMetricsToJson(const CellMetrics_t & inMetrics);
 
 CellMetrics_t
 convertJsonToCellMetrics(const json & inJson);
+
+
+/////*** Trace Metrics ***///////
+json
+convertTraceMetricsToJson(const TraceMetrics & inMetrics);
+
+void
+convertJsonToTraceMetrics(const json & inJ, TraceMetrics & outMetrics);
+
+json
+convertEventMetricsToJson(const EventMetrics_t & inMetrics);
+
+EventMetrics_t
+convertJsonToEventMetrics(const json & inJson);
+
     
 /// Reads a JSON header from an input stream.
 ///

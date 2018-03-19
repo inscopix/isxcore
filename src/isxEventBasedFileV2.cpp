@@ -1,5 +1,4 @@
 #include "isxEventBasedFileV2.h"
-#include "isxJsonUtils.h"
 #include <string>
 #include "isxLogicalTrace.h"
 
@@ -272,6 +271,10 @@ void EventBasedFileV2::writeDataPkt(const DataPkt & inData)
             m_startOffsets.push_back(inData.offsetMicroSecs);
             m_numSamples.push_back(1);
             m_steps.push_back(DurationInSeconds(0, 1));
+            if (hasMetrics())
+            {
+                 m_traceMetrics.push_back(SpTraceMetrics_t());
+            }
         }
         else
         {
@@ -328,6 +331,7 @@ EventBasedFileV2::readFileFooter()
             m_channelList = j["channel list"].get<std::vector<std::string>>();
             m_startOffsets = j["startOffsets"].get<std::vector<uint64_t>>();
             m_numSamples = j["numSamples"].get<std::vector<uint64_t>>();
+            m_traceMetrics = convertJsonToEventMetrics(j["metrics"]);
             m_valid = true;
         }
         catch (const std::exception & error)
@@ -362,6 +366,7 @@ EventBasedFileV2::writeFileFooter()
         j["signalSteps"] = jsteps;
         j["startOffsets"] = m_startOffsets;
         j["numSamples"] = m_numSamples;
+        j["metrics"] = convertEventMetricsToJson(m_traceMetrics);
 
     }
     catch (...)
@@ -384,7 +389,37 @@ EventBasedFileV2::setTimingInfo(const Time & inStartTime, const Time & inEndTime
     m_steps = inSteps;
 }
 
+bool 
+EventBasedFileV2::hasMetrics() const
+{
+    return !m_traceMetrics.empty();
+}
 
+SpTraceMetrics_t 
+EventBasedFileV2::getTraceMetrics(isize_t inIndex) const
+{
+    if (m_traceMetrics.size() > inIndex)
+    {
+        return m_traceMetrics.at(inIndex);
+    }
+    return SpTraceMetrics_t();
+}
+
+void
+EventBasedFileV2::setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics)
+{
+    if (m_closedForWriting)
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+                  "Writing data after file was closed for writing.", m_fileName);
+    }
+
+    if (!hasMetrics())
+    {
+        m_traceMetrics = EventMetrics_t(m_channelList.size(), SpTraceMetrics_t());
+    }
+    m_traceMetrics.at(inIndex) = inMetrics;
+}
 
 
 

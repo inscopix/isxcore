@@ -73,6 +73,15 @@ public:
     void 
     closeForWriting(const std::vector<std::string> & inNewChannelNames = {}) override;
 
+    bool 
+    hasMetrics() const override;
+
+    SpTraceMetrics_t 
+    getTraceMetrics(isize_t inIndex) const override;
+
+    void
+    setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics) override;
+
 private:
     FileType                                     m_type;
     std::shared_ptr<EventBasedFile>              m_file;
