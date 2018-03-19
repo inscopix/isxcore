@@ -419,10 +419,4 @@ NVistaHdf5Movie::getMovieIndex(isize_t inFrameNumber)
     return idx;
 }
 
-std::string
-NVistaHdf5Movie::getExtraProperties() const
-{
-    return "";
-}
-
 } // namespace isx

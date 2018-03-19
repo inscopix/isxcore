@@ -87,9 +87,6 @@ public:
     void
     serialize(std::ostream& strm) const override;
 
-    std::string
-    getExtraProperties() const override;
-
 private:
 
     /// True if the movie file is valid, false otherwise.

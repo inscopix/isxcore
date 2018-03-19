@@ -107,7 +107,7 @@ public:
     ///             from nVista 3. The string is in JSON format.
     virtual
     std::string
-    getExtraProperties() const = 0;
+    getExtraProperties() const;
 };
 
 } // namespace isx

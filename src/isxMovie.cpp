@@ -9,4 +9,10 @@ Movie::getFrameWithHeaderFooter(const size_t inFrameNumber)
     return getFrame(inFrameNumber);
 }
 
+std::string
+Movie::getExtraProperties() const
+{
+    return "";
+}
+
 } // namespace isx

@@ -269,10 +269,4 @@ NVistaTiffMovie::getMovieIndex(isize_t inFrameNumber)
     return idx;
 }
 
-std::string
-NVistaTiffMovie::getExtraProperties() const
-{
-    return "";
-}
-
 } // namespace isx

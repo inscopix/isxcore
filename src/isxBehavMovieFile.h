@@ -100,9 +100,6 @@ public:
     DataType
     getDataType() const;
 
-    std::string
-    getExtraProperties() const;
-
 private:
     /// Read constructor, used to create instance and get # frames and gopsize from it.
     ///

@@ -112,10 +112,4 @@ BehavMovie::serialize(std::ostream & strm) const
     strm << getFileName();
 }
 
-std::string
-BehavMovie::getExtraProperties() const
-{
-    return m_file->getExtraProperties();
-}
-
 } // namespace isx
