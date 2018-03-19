@@ -259,4 +259,39 @@ MosaicMovie::getExtraProperties() const
     return m_file->getExtraProperties();
 }
 
+SpVideoFrame_t
+MosaicMovie::getFrameWithHeaderFooter(const size_t inFrameNumber)
+{
+    std::weak_ptr<MosaicMovie> weakThis = shared_from_this();
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("getFrameWithHeaderFooter");
+    AsyncTaskResult<SpVideoFrame_t> asyncTaskResult;
+
+    GetFrameCB_t getFrameCB = [weakThis, this, inFrameNumber]()
+    {
+        auto sharedThis = weakThis.lock();
+        if (sharedThis)
+        {
+            return m_file->readFrame(inFrameNumber, true);
+        }
+        return SpVideoFrame_t();
+    };
+
+    MovieGetFrameCB_t asyncCB = [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
+    {
+        mutex.lock("getFrame async");
+        asyncTaskResult = inAsyncTaskResult;
+        mutex.unlock();
+        cv.notifyOne();
+    };
+
+    m_ioTaskTracker->schedule(getFrameCB, asyncCB);
+
+    cv.wait(mutex);
+    mutex.unlock();
+
+    return asyncTaskResult.get();
+}
+
 } // namespace isx

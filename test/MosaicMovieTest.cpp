@@ -709,18 +709,16 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
                 REQUIRE(std::memcmp(pixels, frames.at(f).data(), frameSizeInBytes) == 0);
             }
 
-            // For now, do not check that we can get the frame with header and footer
-            // because this is not exposed publicly yet, as it would require quite a few
-            // changes.
-            //{
-            //    const isx::SpVideoFrame_t frame = movie->getFrame(f, true);
-            //    REQUIRE(frame->getImage().getSpacingInfo() == paddedSpacingInfo);
-            //    const uint16_t * pixels = frame->getPixelsAsU16();
+            // Then check we can get frame with header and footer.
+            {
+                const isx::SpVideoFrame_t frame = movie->getFrameWithHeaderFooter(f);
+                REQUIRE(frame->getImage().getSpacingInfo() == paddedSpacingInfo);
+                const uint16_t * pixels = frame->getPixelsAsU16();
 
-            //    REQUIRE(std::memcmp(pixels, headers.at(f).data(), headerSizeInBytes) == 0);
-            //    REQUIRE(std::memcmp(pixels + numHeaderValues, frames.at(f).data(), frameSizeInBytes) == 0);
-            //    REQUIRE(std::memcmp(pixels + numHeaderValues + totalNumPixels, footers.at(f).data(), footerSizeInBytes) == 0);
-            //}
+                REQUIRE(std::memcmp(pixels, headers.at(f).data(), headerSizeInBytes) == 0);
+                REQUIRE(std::memcmp(pixels + numHeaderValues, frames.at(f).data(), frameSizeInBytes) == 0);
+                REQUIRE(std::memcmp(pixels + numHeaderValues + totalNumPixels, footers.at(f).data(), footerSizeInBytes) == 0);
+            }
         }
 
         // Finally check the extra properties

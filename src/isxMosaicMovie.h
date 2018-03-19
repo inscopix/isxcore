@@ -88,6 +88,9 @@ public:
 
     std::string getExtraProperties() const override;
 
+    SpVideoFrame_t
+    getFrameWithHeaderFooter(const size_t inFrameNumber) override;
+
 private:
 
     /// True if the movie file is valid, false otherwise.
