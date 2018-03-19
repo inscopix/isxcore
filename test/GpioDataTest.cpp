@@ -130,6 +130,7 @@ TEST_CASE("GpioDataTest", "[core]")
         header["signalSteps"] = jsteps;
         header["startOffsets"] = usecsFromStart;
         header["numSamples"] = std::vector<uint64_t>({numTimes, numTimesSync});
+        header["metrics"] = isx::convertEventMetricsToJson(isx::EventMetrics_t());
 
 
         
@@ -173,7 +174,7 @@ TEST_CASE("GpioDataTest", "[core]")
         header["signalSteps"] = jsteps;
         header["startOffsets"] = usecsFromStart;
         header["numSamples"] = std::vector<uint64_t>({4, 2, 174});
-
+        header["metrics"] = isx::convertEventMetricsToJson(isx::EventMetrics_t());
         
 
         // End of expected values ********************************************

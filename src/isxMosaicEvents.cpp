@@ -170,4 +170,38 @@ MosaicEvents::closeForWriting(const std::vector<std::string> & inNewChannelNames
     f->closeFileForWriting();
 }
 
+bool 
+MosaicEvents::hasMetrics() const 
+{
+    if (m_type == FileType::V2)
+    {
+        auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
+        return f->hasMetrics();
+    }
+    
+    return false;
+}
+
+SpTraceMetrics_t 
+MosaicEvents::getTraceMetrics(isize_t inIndex) const 
+{
+    if (m_type == FileType::V2)
+    {
+        auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
+        return f->getTraceMetrics(inIndex);
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+void
+MosaicEvents::setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics) 
+{
+    ISX_ASSERT(m_type == FileType::V2);
+    auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
+    f->setTraceMetrics(inIndex, inMetrics);
+}
+
 } /// namespace isx

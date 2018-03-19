@@ -7,6 +7,8 @@
 #include "isxDataSet.h"
 #include "isxEventBasedFile.h"
 #include "isxFileTypes.h"
+#include "isxEvents.h"
+#include "isxJsonUtils.h"
 
 namespace isx
 {
@@ -115,6 +117,15 @@ namespace isx
         /// 
         void closeFileForWriting();
 
+        bool 
+        hasMetrics() const;
+
+        SpTraceMetrics_t 
+        getTraceMetrics(isize_t inIndex) const;
+
+        void
+        setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics);
+
 
     private:
 
@@ -153,6 +164,8 @@ namespace isx
 
         bool                            m_openForWrite = false;
         bool                            m_closedForWriting = false;
+
+        EventMetrics_t                  m_traceMetrics;
 
         const static size_t             s_fileVersion = 0;
 

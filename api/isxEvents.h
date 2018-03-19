@@ -13,6 +13,57 @@
 namespace isx
 {
 
+/// This struct aggregates temporal statistics of traces. These stats are useful for determining whether a cell is good
+/// or complete trash.
+struct TraceMetrics
+{
+    /// Default contructor
+    ///
+    TraceMetrics() {}
+
+    /// Convenience constructor to fill all members at once
+    /// \param inSnr
+    /// \param inMad
+    /// \param inEventRate
+    /// \param inEventAmpMedian
+    /// \param inEventAmpSd
+    /// \param inRiseMedian
+    /// \param inRiseSd
+    /// \param inDecayMedian
+    /// \param inDecaySd
+    TraceMetrics(
+        float inSnr,
+        float inMad,
+        float inEventRate,
+        float inEventAmpMedian,
+        float inEventAmpSd, 
+        float inRiseMedian,
+        float inRiseSd,
+        float inDecayMedian,
+        float inDecaySd) :
+        m_snr(inSnr),
+        m_mad(inMad),
+        m_eventRate(inEventRate),
+        m_eventAmpMedian(inEventAmpMedian),
+        m_eventAmpSD(inEventAmpSd),
+        m_riseMedian(inRiseMedian),
+        m_riseSD(inRiseSd),
+        m_decayMedian(inDecayMedian),
+        m_decaySD(inDecaySd) {}
+
+    float m_snr         = 0.f; ///< The signal-to-noise ratio of the trace, the median amplitude divided by the median absolute deviation
+    float m_mad         = 0.f; ///< The median absolute deviation of the trace
+    float m_eventRate   = 0.f; ///< The event rate of the trace in Hz
+    float m_eventAmpMedian = 0.f; ///< The median event amplitude of the trace
+    float m_eventAmpSD  = 0.f; ///< The standard deviation from the median of the event amplitudes
+    float m_riseMedian  = 0.f; ///< The median event rise time for events in seconds
+    float m_riseSD      = 0.f; ///< The SD from the median of event rise times in seconds
+    float m_decayMedian = 0.f; ///< The median event decay time in seconds
+    float m_decaySD     = 0.f; ///< The SD from the median of decay time in seconds
+};
+
+using SpTraceMetrics_t = std::shared_ptr<TraceMetrics>;
+
 /// Interface for Events data.
 class Events
 {
@@ -79,6 +130,25 @@ public:
     virtual
     void
     cancelPendingReads() = 0;
+
+    /// \return true if the event set contains trace metrics
+    /// 
+    virtual 
+    bool 
+    hasMetrics() const = 0;
+
+    /// Get all the quality assessment metrics for a given cell trace 
+    /// \param inIndex the cell index
+    virtual 
+    SpTraceMetrics_t 
+    getTraceMetrics(isize_t inIndex) const = 0;
+
+    /// Set the quality assessment metrics for a cell trace
+    /// \param inIndex the cell index
+    /// \param inMetrics the metrics structure
+    virtual 
+    void
+    setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics) = 0;
 
 }; // class Events
 
