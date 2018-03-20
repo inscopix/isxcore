@@ -13,7 +13,7 @@
 #include <fstream>
 #include <algorithm>
 
-const isx::isize_t fileVersion = 0;
+const isx::isize_t fileVersion = 1;
 
 void testNVokeParsing(
     const std::string & inFileName,

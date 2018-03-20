@@ -151,7 +151,7 @@ private:
 
     EventMetrics_t                  m_traceMetrics;
 
-    const static size_t             s_fileVersion = 0;
+    const static size_t             s_fileVersion = 1;
 };
 
 } // namespace isx
