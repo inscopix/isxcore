@@ -22,7 +22,7 @@ CsvTraceImporterParams::getOpName()
     return "Import CSV Trace";
 }
 
-CsvTraceImporterParams 
+CsvTraceImporterParams
 CsvTraceImporterParams::fromString(const std::string & inStr)
 {
     CsvTraceImporterParams params;
@@ -39,14 +39,14 @@ CsvTraceImporterParams::fromString(const std::string & inStr)
 
 std::string CsvTraceImporterParams::toString() const
 {
-    json j; 
+    json j;
     j["startRow"] = m_startRow;
     j["colsToImport"] = m_colsToImport;
     j["titleRow"] = m_titleRow;
     j["timeCol"] = m_timeCol;
     j["startTime"] = convertTimeToJson(m_startTime);
     j["timeUnit"] = convertRatioToJson(m_timeUnit);
-    return j.dump(4);    
+    return j.dump(4);
 }
 
 bool
@@ -186,11 +186,9 @@ runCsvTraceImporter(
 
                 if (value < 0.0 && (col == inParams.m_timeCol))
                 {
-                    
                     ISX_THROW(ExceptionDataIO, "All timestamps must be non-negative. ",
                               "Found a negative timestamp on row ", row, " in column ",
                               col, " (", valueStr, "). ");
-                    
                 }
             }
             catch (const std::exception &)
@@ -206,9 +204,9 @@ runCsvTraceImporter(
         }
     }
 
-    // Convert timestamps to microsecond precision 
+    // Convert timestamps to microsecond precision
     std::vector<uint64_t> timeStampsUSecs;
-    
+
     for (const auto timeValue : colValues.at(inParams.m_timeCol))
     {
         const DurationInSeconds offset = DurationInSeconds(Ratio::fromDouble(double(timeValue), 6)) * inParams.m_timeUnit;
@@ -216,15 +214,17 @@ runCsvTraceImporter(
     }
     const size_t numValues = timeStampsUSecs.size();
 
-    EventBasedFileV2 outputFile(inParams.m_outputFile, DataSet::Type::GPIO, true);
-    std::vector<std::string> signalNames(inParams.m_colsToImport.size() - 1);
-    std::vector<SignalType> types(inParams.m_colsToImport.size() - 1);
+    const size_t numColsToImport = inParams.m_colsToImport.size();
+    ISX_ASSERT(numColsToImport > 0);
+    const size_t numChannels = numColsToImport - 1;
+    std::vector<std::string> signalNames(numChannels);
+    std::vector<SignalType> types(numChannels);
     uint64_t colInd = 0;
     for (const auto c : inParams.m_colsToImport)
     {
         if (c != inParams.m_timeCol)
-        {   
-            SignalType t = SignalType::SPARSE;         
+        {
+            SignalType t = SignalType::SPARSE;
             for (size_t r = 0; r < numValues; ++r)
             {
                 const float value = float(colValues.at(c).at(r));
@@ -232,12 +232,25 @@ runCsvTraceImporter(
                 {
                     t = SignalType::DENSE;
                 }
-                isx::EventBasedFileV2::DataPkt pkt(timeStampsUSecs.at(r), value, colInd);
+            }
+            types.at(colInd) = t;
+            signalNames.at(colInd) = colNames.at(c);
+            colInd++;
+        }
+    }
+
+    EventBasedFileV2 outputFile(inParams.m_outputFile, DataSet::Type::GPIO, signalNames);
+    colInd = 0;
+    for (const auto c : inParams.m_colsToImport)
+    {
+        if (c != inParams.m_timeCol)
+        {
+            for (size_t r = 0; r < numValues; ++r)
+            {
+                EventBasedFileV2::DataPkt pkt(timeStampsUSecs.at(r), float(colValues.at(c).at(r)), colInd);
                 outputFile.writeDataPkt(pkt);
             }
-            types[colInd] = t;
-            signalNames[colInd] = colNames.at(c);
-            colInd++;
+            ++colInd;
         }
     }
 
@@ -258,7 +271,6 @@ runCsvTraceImporter(
         ++i;
     }
 
-    outputFile.setChannelList(signalNames);
     outputFile.setTimingInfo(inParams.m_startTime, inParams.m_startTime + firstOffset + stepDuration * numValues, steps);
     outputFile.closeFileForWriting();
 

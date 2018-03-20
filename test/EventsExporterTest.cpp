@@ -24,8 +24,13 @@ writeNamedPacketsAsEvents(
         const isx::TimingInfo & inTi,
         const std::map<std::string, std::map<isx::Time, float>> & inPackets)
 {
-    isx::SpWritableEvents_t events = isx::writeEvents(inFilePath);
-    std::vector<std::string> names(inPackets.size());
+    std::vector<std::string> names;
+    for (const auto c : inPackets)
+    {
+        names.push_back(c.first);
+    }
+
+    isx::SpWritableEvents_t events = isx::writeEvents(inFilePath, names);
     uint64_t idx = 0;
     for (const auto c : inPackets)
     {
@@ -34,12 +39,10 @@ writeNamedPacketsAsEvents(
             auto offset = convertTimeToUSecsSinceEpoch(e.first) - convertTimeToUSecsSinceEpoch(inTi.getStart());
             events->writeDataPkt(idx, offset, e.second);
         }
-
-        names[idx] = c.first;
         idx++;
     }
     events->setTimingInfo(inTi);
-    events->closeForWriting(names);
+    events->closeForWriting();
     return isx::readEvents(inFilePath);
 }
 
@@ -62,20 +65,20 @@ requireEqualLines(
 TEST_CASE("EventsExport", "[core]")
 {
     isx::CoreInitialize();
-    
+
     const std::string exportDir = g_resources["unitTestDataPath"] + "/events-export";
-    
+
     isx::makeDirectory(exportDir);
-    
+
     const std::string inputBase = exportDir + "/events";
     std::string inputFilePath = inputBase + ".isxd";
     const std::string outputFilePath = inputBase + ".csv";
-    
+
     isx::EventsExporterParams params;
     std::vector<std::string> expLines;
 
     SECTION("Using latest events file format")
-    {        
+    {
         const isx::Time start(2017, 7, 26, 9, 51, 23, isx::DurationInSeconds(0, 1000));
 
         const isx::TimingInfo ti(start, isx::DurationInSeconds(50, 1000), 5);
@@ -105,7 +108,6 @@ TEST_CASE("EventsExport", "[core]")
         const isx::SpEvents_t events = writeNamedPacketsAsEvents(inputFilePath, ti, eventPackets);
 
         params = isx::EventsExporterParams({events}, outputFilePath, isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
-        
 
         SECTION("using first time")
         {
@@ -207,7 +209,6 @@ TEST_CASE("EventsExport", "[core]")
             };
         }
     }
-    
 
     isx::runEventsExporter(params);
 

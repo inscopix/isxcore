@@ -4,7 +4,7 @@
 #include "isxLogicalTrace.h"
 #include "catch.hpp"
 
-namespace 
+namespace
 {
     void compareMetrics(isx::SpTraceMetrics_t a, isx::SpTraceMetrics_t b)
     {
@@ -27,14 +27,14 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
     std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/test_gpio.isxd");
     std::remove(fileName.c_str());
 
-    SECTION("Invalid file object") 
+    SECTION("Invalid file object")
     {
-        isx::EventBasedFileV2 file; 
+        isx::EventBasedFileV2 file;
         REQUIRE(!file.isValid());
     }
 
     SECTION("Logical data file with one channel")
-    {        
+    {
         isx::isize_t numSamples = 20;
         isx::TimingInfo ti(isx::Time(), isx::DurationInSeconds(10, 1), numSamples);
         std::vector<isx::isize_t> timeIndices{3, 6, 10, 11, 18};
@@ -43,8 +43,8 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
 
         // Write a file
         {
-            isx::EventBasedFileV2 file(fileName, isx::DataSet::Type::GPIO, true);            
-            
+            isx::EventBasedFileV2 file(fileName, isx::DataSet::Type::GPIO, {channelName});
+
             isx::isize_t i = 0;
             for (auto & s : data)
             {
@@ -54,18 +54,17 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
                 isx::EventBasedFileV2::DataPkt pkt(t_us, s, 0);
                 file.writeDataPkt(pkt);
             }
-            file.setChannelList({channelName});
             file.setTimingInfo(ti.getStart(), ti.getEnd(), {isx::DurationInSeconds(0, 1)});
             file.closeFileForWriting();
         }
 
-        isx::EventBasedFileV2 file(fileName); 
+        isx::EventBasedFileV2 file(fileName);
         REQUIRE(file.isValid());
         REQUIRE(file.getFileName() == fileName);
         const std::vector<std::string> channels = file.getChannelList();
         REQUIRE(channels.size() == 1);
         REQUIRE(channels.at(0) == channelName);
-        
+
         isx::SpLogicalTrace_t logicalTrace = file.getLogicalData(channelName);
         REQUIRE(logicalTrace != nullptr);
 
@@ -94,16 +93,15 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
 
         // Write a file
         {
-            isx::EventBasedFileV2 file(fileName, isx::DataSet::Type::GPIO, true);
-            
-            
+            isx::EventBasedFileV2 file(fileName, isx::DataSet::Type::GPIO, channelNames);
+
             isx::isize_t i = 0;
             for (auto & s : data)
             {
                 isx::Time t = ti.convertIndexToStartTime(timeIndices[i]);
                 t -= ti.getStart().getSecsSinceEpoch();
                 uint64_t t_us = uint64_t(t.getSecsSinceEpoch().toDouble() * 1E6);
-                
+
                 int c = i % 2;
                 isx::EventBasedFileV2::DataPkt pkt(t_us, s, uint64_t(c));
                 file.writeDataPkt(pkt);
@@ -111,13 +109,12 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
             }
             file.setTraceMetrics(0, metrics[0]);
             file.setTraceMetrics(1, metrics[1]);
-            file.setChannelList(channelNames);
-            file.setTimingInfo(ti.getStart(), ti.getEnd(), std::vector<isx::DurationInSeconds>(2, isx::DurationInSeconds(0, 1)));     
+            file.setTimingInfo(ti.getStart(), ti.getEnd(), std::vector<isx::DurationInSeconds>(2, isx::DurationInSeconds(0, 1)));
             file.closeFileForWriting();
         }
 
         // Read file and verify the data is right
-        isx::EventBasedFileV2 file(fileName); 
+        isx::EventBasedFileV2 file(fileName);
         REQUIRE(file.isValid());
         REQUIRE(file.getFileName() == fileName);
         const std::vector<std::string> channels = file.getChannelList();
@@ -152,9 +149,9 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
             auto m0 = file.getTraceMetrics(0);
             auto m1 = file.getTraceMetrics(1);
             compareMetrics(metrics[0], m0);
-            compareMetrics(metrics[1], m1);            
-        }        
-    }    
+            compareMetrics(metrics[1], m1);
+        }
+    }
 
     std::remove(fileName.c_str());
     isx::CoreShutdown();

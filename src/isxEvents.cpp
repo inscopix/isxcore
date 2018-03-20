@@ -12,9 +12,9 @@ readEvents(const std::string & inFileName)
 }
 
 SpWritableEvents_t
-writeEvents(const std::string & inFileName)
+writeEvents(const std::string & inFileName, const std::vector<std::string> & inChannels)
 {
-    return std::make_shared<MosaicEvents>(inFileName, true);
+    return std::make_shared<MosaicEvents>(inFileName, inChannels);
 }
 
 SpEvents_t

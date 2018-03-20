@@ -160,9 +160,10 @@ readEvents(const std::string & inFileName);
 
 /// Write a Events set to a file.
 /// \param  inFileName  The path of the Events file.
+/// \param  inChannels  The names of the channels.
 /// \return             The Events set to write to.
 SpWritableEvents_t
-writeEvents(const std::string & inFileName);
+writeEvents(const std::string & inFileName, const std::vector<std::string> & inChannels);
 
 /// Attempt to read a series of Events sets from files.
 /// \param  inFileNames The paths of the Events files.

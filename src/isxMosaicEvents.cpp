@@ -12,45 +12,40 @@ namespace isx
 MosaicEvents::MosaicEvents()
     : m_file(new EventBasedFileV2())
 {
-
 }
 
-MosaicEvents::MosaicEvents(const std::string & inFileName, bool inOpenForWrite)
+MosaicEvents::MosaicEvents(const std::string & inFileName)
     : m_logicalIoTaskTracker(new IoTaskTracker<LogicalTrace>())
 {
-    if (inOpenForWrite)
+    m_type = isx::getFileType(inFileName);
+    switch (m_type)
     {
-        m_type = FileType::V2;
-        m_file.reset(new EventBasedFileV2(inFileName, isx::DataSet::Type::EVENTS, true));
+        case FileType::V2:
+        m_file.reset(new EventBasedFileV2(inFileName));
+        break;
+
+        case FileType::V1:
+        m_file.reset(new EventBasedFileV1(inFileName));
+        break;
+
+        default:
+            ISX_THROW(isx::ExceptionUserInput, "The file is not a valid events file.");
     }
-    else
-    {
-        m_type = isx::getFileType(inFileName);
+}
 
-        switch (m_type)
-        {
-            case FileType::V2:
-            m_file.reset(new EventBasedFileV2(inFileName));
-            break;
-
-            case FileType::V1:
-            m_file.reset(new EventBasedFileV1(inFileName));
-            break;
-
-            default:
-                ISX_THROW(isx::ExceptionUserInput, "Invalid file name. The file is not a valid events file.");
-        }        
-    }
-    
+MosaicEvents::MosaicEvents(const std::string & inFileName, const std::vector<std::string> & inChannels)
+    : m_logicalIoTaskTracker(new IoTaskTracker<LogicalTrace>())
+{
+    m_type = FileType::V2;
+    m_file.reset(new EventBasedFileV2(inFileName, isx::DataSet::Type::EVENTS, inChannels));
 }
 
 MosaicEvents::~MosaicEvents()
 {
-
 }
 
 bool
-MosaicEvents::isValid() const 
+MosaicEvents::isValid() const
 {
     return m_file->isValid();
 }
@@ -62,19 +57,19 @@ MosaicEvents::getFileName() const
 }
 
 isize_t
-MosaicEvents::numberOfCells() 
+MosaicEvents::numberOfCells()
 {
     return m_file->getChannelList().size();
 }
 
 const std::vector<std::string>
-MosaicEvents::getCellNamesList() const 
+MosaicEvents::getCellNamesList() const
 {
     return m_file->getChannelList();
 }
 
 SpLogicalTrace_t
-MosaicEvents::getLogicalData(const std::string & inCellName) 
+MosaicEvents::getLogicalData(const std::string & inCellName)
 {
     Mutex mutex;
     ConditionVariable cv;
@@ -95,7 +90,7 @@ MosaicEvents::getLogicalData(const std::string & inCellName)
 }
 
 void
-MosaicEvents::getLogicalDataAsync(const std::string & inCellName, EventsGetLogicalDataCB_t inCallback) 
+MosaicEvents::getLogicalDataAsync(const std::string & inCellName, EventsGetLogicalDataCB_t inCallback)
 {
     // Only get a weak pointer to this, so that we don't bother reading
     // if this has been deleted when the read gets executed.
@@ -112,26 +107,26 @@ MosaicEvents::getLogicalDataAsync(const std::string & inCellName, EventsGetLogic
     m_logicalIoTaskTracker->schedule(getLogicalCB, inCallback);
 }
 
-isx::TimingInfo 
-MosaicEvents::getTimingInfo() const 
+isx::TimingInfo
+MosaicEvents::getTimingInfo() const
 {
     return m_file->getTimingInfo();
 }
 
 isx::TimingInfos_t
-MosaicEvents::getTimingInfosForSeries() const 
+MosaicEvents::getTimingInfosForSeries() const
 {
     return TimingInfos_t{getTimingInfo()};
 }
 
 void
-MosaicEvents::cancelPendingReads() 
+MosaicEvents::cancelPendingReads()
 {
     m_logicalIoTaskTracker->cancelPendingTasks();
 }
 
-void 
-MosaicEvents::setTimingInfo(const isx::TimingInfo & inTimingInfo) 
+void
+MosaicEvents::setTimingInfo(const isx::TimingInfo & inTimingInfo)
 {
     if (m_type == FileType::V2)
     {
@@ -140,50 +135,49 @@ MosaicEvents::setTimingInfo(const isx::TimingInfo & inTimingInfo)
         Time end = inTimingInfo.getEnd();
         std::vector<DurationInSeconds> steps(numberOfCells(), DurationInSeconds(0, 1));
         f->setTimingInfo(start, end, steps);
-               
+
     }
     else if (m_type == FileType::V1)
     {
         auto f = std::static_pointer_cast<isx::EventBasedFileV1>(m_file);
         f->setTimingInfo(inTimingInfo);
-    }    
+    }
 }
 
-void 
+void
 MosaicEvents::writeDataPkt(
     const uint64_t inSignalIdx,
     const uint64_t inTimeStampUSec,
-    const float inValue) 
+    const float inValue)
 {
     EventBasedFileV2::DataPkt pkt(inTimeStampUSec, inValue, inSignalIdx);
     ISX_ASSERT(m_type == FileType::V2);
     auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
-    f->writeDataPkt(pkt);  
+    f->writeDataPkt(pkt);
 }
 
-void 
-MosaicEvents::closeForWriting(const std::vector<std::string> & inNewChannelNames) 
+void
+MosaicEvents::closeForWriting()
 {
     ISX_ASSERT(m_type == FileType::V2);
     auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
-    f->setChannelList(inNewChannelNames);
     f->closeFileForWriting();
 }
 
-bool 
-MosaicEvents::hasMetrics() const 
+bool
+MosaicEvents::hasMetrics() const
 {
     if (m_type == FileType::V2)
     {
         auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
         return f->hasMetrics();
     }
-    
+
     return false;
 }
 
-SpTraceMetrics_t 
-MosaicEvents::getTraceMetrics(isize_t inIndex) const 
+SpTraceMetrics_t
+MosaicEvents::getTraceMetrics(isize_t inIndex) const
 {
     if (m_type == FileType::V2)
     {
@@ -197,7 +191,7 @@ MosaicEvents::getTraceMetrics(isize_t inIndex) const
 }
 
 void
-MosaicEvents::setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics) 
+MosaicEvents::setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics)
 {
     ISX_ASSERT(m_type == FileType::V2);
     auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);

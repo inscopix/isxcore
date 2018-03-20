@@ -18,8 +18,8 @@ const isx::isize_t fileVersion = 0;
 void testNVokeParsing(
     const std::string & inFileName,
     const std::string & inOutputDir,
-    const isx::json inFileJsonHeader, 
-    const std::vector<uint64_t> & inMicroSecs, 
+    const isx::json inFileJsonHeader,
+    const std::vector<uint64_t> & inMicroSecs,
     const std::vector<float> & inPowerLevel
     )
 {
@@ -28,7 +28,6 @@ void testNVokeParsing(
 
     std::string fullName = dir + "/" + base + "_gpio.isxd";
     std::remove(fullName.c_str());
-    
 
     isx::NVokeGpioFile raw(inFileName, inOutputDir);
     try
@@ -48,8 +47,6 @@ void testNVokeParsing(
     REQUIRE(!filename.empty());
     REQUIRE(filename == fullName);
 
-        
-
     // Compare file json header
     std::fstream file(fullName, std::ios::binary | std::ios_base::in);
     if (!file.good() || !file.is_open())
@@ -62,8 +59,6 @@ void testNVokeParsing(
     isx::json j = isx::readJsonHeaderAtEnd(file, headerPos);
     REQUIRE(j == inFileJsonHeader);
 
-    
-
     auto channels = j["channel list"];
 
     for(isx::isize_t channelIdx = 0; channelIdx < channels.size(); ++channelIdx)
@@ -74,7 +69,7 @@ void testNVokeParsing(
 
         while (1)
         {
-            file.read((char *) &pkt, sizeof(pkt));                
+            file.read((char *) &pkt, sizeof(pkt));
             if (!file.good())
             {
                 ISX_THROW(isx::ExceptionFileIO,
@@ -86,29 +81,26 @@ void testNVokeParsing(
                 REQUIRE(pkt.offsetMicroSecs == inMicroSecs.at(channelIdx));
                 REQUIRE(pkt.value == inPowerLevel.at(channelIdx));
                 break;
-            }                    
+            }
         }
-    }   
+    }
 
-    std::remove(filename.c_str());    
+    std::remove(filename.c_str());
 }
 
 // TODO: MOS-584 merge fix
 TEST_CASE("GpioDataTest", "[core]")
 {
+    isx::CoreInitialize();
 
-    isx::CoreInitialize();   
-
-
-    SECTION("Parse a nVoke GPIO file - ANALOG and SYNC") 
+    SECTION("Parse a nVoke GPIO file - ANALOG and SYNC")
     {
         std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/recording_20161104_093749_gpio.raw");
         std::string outputDir = isx::getAbsolutePath(g_resources["unitTestDataPath"]);
 
         ///////////////////////////////////////////////////////////////
-        // Expected values *********************************************
+        // Expected values
 
-        
         isx::Time start(isx::DurationInSeconds(1478277469, 1) + isx::DurationInSeconds(294107, 1000000));
         isx::DurationInSeconds step(1, 1000);
         isx::isize_t numTimes = 3640;
@@ -121,21 +113,19 @@ TEST_CASE("GpioDataTest", "[core]")
         std::vector<std::string> channelList{"GPIO4_AI", "SYNC"};
         header["type"] = size_t(isx::DataSet::Type::GPIO);
         header["channel list"] = channelList;
-        header["global times"] = {isx::convertTimeToJson(ti.getStart()), isx::convertTimeToJson(ti.getEnd())};        
+        header["global times"] = {isx::convertTimeToJson(ti.getStart()), isx::convertTimeToJson(ti.getEnd())};
         header["producer"] = isx::getProducerAsJson();
         header["fileVersion"] = fileVersion;
         header["fileType"] = int(isx::FileType::V2);
         isx::json jsteps = {isx::convertRatioToJson(step), isx::convertRatioToJson(isx::DurationInSeconds(0, 1))};
-        
+
         header["signalSteps"] = jsteps;
         header["startOffsets"] = usecsFromStart;
         header["numSamples"] = std::vector<uint64_t>({numTimes, numTimesSync});
         header["metrics"] = isx::convertEventMetricsToJson(isx::EventMetrics_t());
 
-
-        
-
         // End of expected values ********************************************
+
         testNVokeParsing(
             fileName,
             outputDir,
@@ -144,14 +134,14 @@ TEST_CASE("GpioDataTest", "[core]")
             power);
     }
 
-    SECTION("Parse a nVoke GPIO file - EX_LED, SYNC and TRIG") 
+    SECTION("Parse a nVoke GPIO file - EX_LED, SYNC and TRIG")
     {
         std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/recording_20170126_143728_gpio.raw");
         std::string outputDir = isx::getAbsolutePath(g_resources["unitTestDataPath"]);
 
         ///////////////////////////////////////////////////////////////
-        // Expected values *********************************************      
-        
+        // Expected values *********************************************
+
         isx::Time start(isx::DurationInSeconds(1485470243, 1) + isx::DurationInSeconds(163233, 1000000));
         isx::DurationInSeconds step(1, 1000);
         isx::isize_t numTimes = 9153;
@@ -163,23 +153,23 @@ TEST_CASE("GpioDataTest", "[core]")
         std::vector<std::string> eventsChannelList{"TRIG", "EX_LED", "SYNC"};
         header["type"] = size_t(isx::DataSet::Type::GPIO);
         header["channel list"] = eventsChannelList;
-        header["global times"] = {isx::convertTimeToJson(ti.getStart()), isx::convertTimeToJson(ti.getEnd())}; 
+        header["global times"] = {isx::convertTimeToJson(ti.getStart()), isx::convertTimeToJson(ti.getEnd())};
         header["producer"] = isx::getProducerAsJson();
         header["fileVersion"] = fileVersion;
         header["fileType"] = int(isx::FileType::V2);
 
 
         isx::json jsteps = {isx::convertRatioToJson(isx::DurationInSeconds(0, 1)), isx::convertRatioToJson(isx::DurationInSeconds(0, 1)), isx::convertRatioToJson(isx::DurationInSeconds(0, 1))};
-        
+
         header["signalSteps"] = jsteps;
         header["startOffsets"] = usecsFromStart;
         header["numSamples"] = std::vector<uint64_t>({4, 2, 174});
         header["metrics"] = isx::convertEventMetricsToJson(isx::EventMetrics_t());
-        
+
 
         // End of expected values ********************************************
         //////////////////////////////////////////////////////////////////////
-        
+
         testNVokeParsing(
             fileName,
             outputDir,
@@ -187,10 +177,10 @@ TEST_CASE("GpioDataTest", "[core]")
             usecsFromStart,
             power);
 
-        
+
     }
 
-    SECTION("Parse a nVista GPIO file - SYNC, TRIG, IO1, IO2") 
+    SECTION("Parse a nVista GPIO file - SYNC, TRIG, IO1, IO2")
     {
         std::string fileName = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/nVistaGpio/test_nvista_gpio.hdf5");
         std::string outputDir = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/nVistaGpio");
@@ -215,11 +205,11 @@ TEST_CASE("GpioDataTest", "[core]")
 
         /// Expected output as parsed with export_nvista_gpio.py
         std::map<std::string, std::vector<float>> expected;
-        expected["IO1"] = { 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 
+        expected["IO1"] = { 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
                             1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
                             1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f};
 
-        expected["IO2"] = { 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 
+        expected["IO2"] = { 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
                             1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
                             1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f};
 
@@ -227,12 +217,12 @@ TEST_CASE("GpioDataTest", "[core]")
                              1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
                              1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 0.f, 0.f,};
 
-        expected["trigger"] = { 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 
+        expected["trigger"] = { 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
                                 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
                                 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f};
 
         /// Read the output of the parser
-        isx::SpGpio_t gpio = isx::readGpio(filename);                         
+        isx::SpGpio_t gpio = isx::readGpio(filename);
 
         std::vector<std::string> channels = gpio->getChannelList();
         for (auto & c : channels)
