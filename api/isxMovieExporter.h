@@ -32,6 +32,12 @@ struct MovieExporterParams
     std::string
     getOpName() = 0;    
 
+    /// \return     A string representation of these parameters.
+    ///
+    virtual
+    std::string
+    toString() const = 0;
+
     /// \param inFileName the name of the output file for the export operation
     virtual 
     void
@@ -46,6 +52,14 @@ struct MovieExporterParams
     virtual
     void 
     setSources(const std::vector<SpMovie_t> & inSources) = 0;
+
+    /// \return The input file paths.
+    ///
+    virtual std::vector<std::string> getInputFilePaths() const = 0;
+
+    /// \return The output file paths.
+    ///
+    virtual std::vector<std::string> getOutputFilePaths() const = 0;
 
     /// Set additional information to be saved in the output file
     /// \param inIdentifierBase         identifer base used for creating a unique ID (eg. concatenated lab name, experimentalist, or a hash of
@@ -84,6 +98,13 @@ struct MovieExporterParamsWrapper
     std::string getOpName()
     {
         return m_params->getOpName();
+    }
+
+    /// \return The string representation of these parameters.
+    inline
+    std::string toString() const
+    {
+        return m_params->toString();
     }
 
     /// \param inFileName the name of the output file for the export operation
@@ -144,6 +165,20 @@ struct MovieExporterParamsWrapper
             inInstitution,
             inLab, 
             inSessionId);
+    }
+
+    /// \return The input file paths.
+    ///
+    std::vector<std::string> getInputFilePaths() const
+    {
+        return m_params->getInputFilePaths();
+    }
+
+    /// \return The output file paths.
+    ///
+    std::vector<std::string> getOutputFilePaths() const
+    {
+        return m_params->getOutputFilePaths();
     }
 };
 

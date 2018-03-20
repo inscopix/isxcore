@@ -41,6 +41,14 @@ struct CsvTraceImporterParams
     /// \return             True if the columns are valid, false otherwise.
     bool checkColsToImport(std::string & outMessage) const;
 
+    /// \return The input file paths.
+    ///
+    std::vector<std::string> getInputFilePaths() const;
+
+    /// \return The output file paths.
+    ///
+    std::vector<std::string> getOutputFilePaths() const;
+
     std::string m_inputFile;            ///< The path of the input CSV file.
     std::string m_outputFile;           ///< The path of the output .isxd file.
     size_t m_startRow = 1;              ///< The row where the numerical data starts (i.e. not including the title row).

@@ -165,25 +165,26 @@ namespace isx
 
     }
 
-    void reportAlgoResults(const std::string & inAlgoName, AsyncTaskStatus inStatus, DurationInSeconds inProcessingTime)
+    void reportAlgoResults(const std::string & inAlgoName, AsyncTaskStatus inStatus, const double inDurationInSeconds)
     {
-        ISX_LOG_INFO_NO_PRINT(inAlgoName, " ran for ", inProcessingTime.toDouble(), " secs and finished with status ", int(inStatus));
+        ISX_LOG_INFO_NO_PRINT(inAlgoName, " ran for ", inDurationInSeconds, " seconds and finished with status ", int(inStatus));
     }
 
     void reportAlgoParams(const std::string & inAlgoName, const std::vector<std::string> & inFileNames, const std::string & inParams, const std::vector<std::string> & inOutputFileNames)
     {
         std::stringstream ss;
-        ss << "Algorithm " << inAlgoName << " was applied to: \n";
-        
+        ss << "Running " << inAlgoName << " : \n";
+
+        ss << "Parameters:\n";
+        ss << inParams << "\n";
+
+        ss << "Input files:\n";
         for (const auto & fn : inFileNames)
         {
             ss << fn << "\n";
         }
 
-        ss << "with parameters: \n";
-        ss << inParams << "\n";
-
-        ss << "Output files: \n";
+        ss << "Output files:\n";
         for (const auto & fn : inOutputFileNames)
         {
             ss << fn << "\n";

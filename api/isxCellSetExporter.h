@@ -37,6 +37,19 @@ struct CellSetExporterParams
     std::string
     getOpName();
 
+    /// \return     A string representation of these parameters.
+    ///
+    std::string
+    toString() const;
+
+    /// \return The input file paths.
+    ///
+    std::vector<std::string> getInputFilePaths() const;
+
+    /// \return The output file paths.
+    ///
+    std::vector<std::string> getOutputFilePaths() const;
+
     std::vector<SpCellSet_t> m_srcs;                    ///< input cellsets
     std::string              m_outputTraceFilename;     ///< name of output file for traces
     std::string              m_outputImageFilename;     ///< base filename for output images

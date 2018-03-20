@@ -14,7 +14,7 @@ namespace isx
     void reportSessionStart();
     void reportSessionEnd();
     void reportSystemInfo();
-    void reportAlgoResults(const std::string & inAlgoName, AsyncTaskStatus inStatus, DurationInSeconds inProcessingTime);
+    void reportAlgoResults(const std::string & inAlgoName, AsyncTaskStatus inStatus, const double inDurationInSeconds);
     void reportAlgoParams(const std::string & inAlgoName, const std::vector<std::string> & inFileNames, const std::string & inParams, const std::vector<std::string> & inOutputFileNames);
     void reportOpenProject(const isx::SpProject_t inProject);
     void reportImportData(DataSet * inDataSet);

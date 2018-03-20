@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "json.hpp"
+
 extern "C"
 {
     #include "libavformat/avformat.h"
@@ -437,6 +439,14 @@ MovieCompressedAviExporterParams::getOpName()
     return "Export MP4 Movie";
 }
 
+std::string
+MovieCompressedAviExporterParams::toString() const
+{
+    using json = nlohmann::json;
+    json j;
+    return j.dump(4);
+}
+
 MovieExporterParams::Type
 MovieCompressedAviExporterParams::getType()
 {
@@ -474,6 +484,23 @@ void
 MovieCompressedAviExporterParams::setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
 {
     // Do nothing - currently MP4 cannot contains these details
+}
+
+std::vector<std::string>
+MovieCompressedAviExporterParams::getInputFilePaths() const
+{
+    std::vector<std::string> inputFilePaths;
+    for (const auto & s : m_srcs)
+    {
+        inputFilePaths.push_back(s->getFileName());
+    }
+    return inputFilePaths;
+}
+
+std::vector<std::string>
+MovieCompressedAviExporterParams::getOutputFilePaths() const
+{
+    return {m_filename};
 }
 
 AsyncTaskStatus 

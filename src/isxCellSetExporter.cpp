@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <limits>
 
+#include "json.hpp"
 
 namespace isx {
 
@@ -15,6 +16,32 @@ std::string
 CellSetExporterParams::getOpName()
 {
     return "Export Cell Set";
+}
+
+std::string
+CellSetExporterParams::toString() const
+{
+    using json = nlohmann::json;
+    json j;
+    j["writeTimeRelativeTo"] = int(m_writeTimeRelativeTo);
+    return j.dump(4);
+}
+
+std::vector<std::string>
+CellSetExporterParams::getInputFilePaths() const
+{
+    std::vector<std::string> inputFilePaths;
+    for (const auto & s : m_srcs)
+    {
+        inputFilePaths.push_back(s->getFileName());
+    }
+    return inputFilePaths;
+}
+
+std::vector<std::string>
+CellSetExporterParams::getOutputFilePaths() const
+{
+    return {m_outputTraceFilename, m_outputImageFilename};
 }
 
 AsyncTaskStatus

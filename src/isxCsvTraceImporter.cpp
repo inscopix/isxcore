@@ -49,6 +49,18 @@ std::string CsvTraceImporterParams::toString() const
     return j.dump(4);
 }
 
+std::vector<std::string>
+CsvTraceImporterParams::getInputFilePaths() const
+{
+    return {m_inputFile};
+}
+
+std::vector<std::string>
+CsvTraceImporterParams::getOutputFilePaths() const
+{
+    return {m_outputFile};
+}
+
 bool
 CsvTraceImporterParams::checkColsToImport(std::string & outMessage) const
 {

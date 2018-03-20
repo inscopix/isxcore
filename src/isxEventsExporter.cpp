@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <limits>
 
+#include "json.hpp"
+
 namespace isx
 {
 
@@ -15,6 +17,32 @@ std::string
 EventsExporterParams::getOpName()
 {
     return "Export Events";
+}
+
+std::string
+EventsExporterParams::toString() const
+{
+    using json = nlohmann::json;
+    json j;
+    j["writeTimeRelativeTo"] = int(m_writeTimeRelativeTo);
+    return j.dump(4);
+}
+
+std::vector<std::string>
+EventsExporterParams::getInputFilePaths() const
+{
+    std::vector<std::string> inputFilePaths;
+    for (const auto & s : m_srcs)
+    {
+        inputFilePaths.push_back(s->getFileName());
+    }
+    return inputFilePaths;
+}
+
+std::vector<std::string>
+EventsExporterParams::getOutputFilePaths() const
+{
+    return {m_fileName};
 }
 
 AsyncTaskStatus

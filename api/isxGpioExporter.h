@@ -37,6 +37,19 @@ struct GpioExporterParams
     std::string
     getOpName();
 
+    /// \return     A string representation of these parameters.
+    ///
+    std::string
+    toString() const;
+
+    /// \return The input file paths.
+    ///
+    std::vector<std::string> getInputFilePaths() const;
+
+    /// \return The output file paths.
+    ///
+    std::vector<std::string> getOutputFilePaths() const;
+
     std::vector<SpGpio_t>   m_srcs;                 ///< input GPIO sets
     std::string             m_fileName;             ///< name of output file
     WriteTimeRelativeTo     m_writeTimeRelativeTo;  ///< how to write time stamps in file
