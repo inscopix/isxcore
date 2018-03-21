@@ -642,16 +642,15 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
         const size_t numFooterValues = numHeaderValues;
         const size_t footerSizeInBytes = numFooterValues * sizeof(uint16_t);
 
+        const uint16_t headerValue = 137;
+        const uint16_t footerValue = 92;
+
         std::vector<std::vector<uint16_t>> headers(numFrames);
         std::vector<std::vector<uint16_t>> frames(numFrames);
         std::vector<std::vector<uint16_t>> footers(numFrames);
         for (size_t f = 0; f < numFrames; ++f)
         {
-            headers.at(f) = std::vector<uint16_t>(numHeaderValues);
-            for (size_t p = 0; p < numHeaderValues; ++p)
-            {
-                headers.at(f).at(p) = uint16_t(hashFrameAndPixelIndex(f, p, maxHeaderFooterValue));
-            }
+            headers.at(f) = std::vector<uint16_t>(numHeaderValues, headerValue);
 
             frames.at(f) = std::vector<uint16_t>(totalNumPixels);
             for (isx::isize_t p = 0; p < totalNumPixels; ++p)
@@ -659,11 +658,7 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
                 frames.at(f).at(p) = uint16_t(hashFrameAndPixelIndex(f, p, maxImageValue));
             }
 
-            footers.at(f) = std::vector<uint16_t>(numFooterValues);
-            for (isx::isize_t p = 0; p < numFooterValues; ++p)
-            {
-                footers.at(f).at(p) = uint16_t(hashFrameAndPixelIndex(f, p, maxHeaderFooterValue));
-            }
+            footers.at(f) = std::vector<uint16_t>(numFooterValues, footerValue);
         }
 
         using json = nlohmann::json;
