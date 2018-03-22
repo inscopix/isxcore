@@ -299,9 +299,16 @@ EventBasedFileV2::readFileFooter()
         try
         {
             json j = readJsonHeaderAtEnd(m_file, m_headerOffset);
+
             if (j.find("fileType") == j.end())
             {
                 return;
+            }
+
+            if (j["fileVersion"].get<size_t>() < 1)
+            {
+                ISX_THROW(ExceptionDataIO, "Version 0 of the new type of events file is not supported. ",
+                          "Recreate the events file by rerunning event detection or using the API directly. ");
             }
 
             m_dataType = DataSet::Type(size_t(j["type"]));
@@ -329,11 +336,6 @@ EventBasedFileV2::readFileFooter()
             m_startOffsets = j["startOffsets"].get<std::vector<uint64_t>>();
             m_numSamples = j["numSamples"].get<std::vector<uint64_t>>();
             m_traceMetrics = convertJsonToEventMetrics(j["metrics"]);
-            if (j["fileVersion"].get<size_t>() < 1)
-            {
-                ISX_THROW(ExceptionDataIO, "Version 0 of the events file is not supported. ",
-                        "Recreate the events file by rerunning event detection or using the API directly. ");
-            }
         }
         catch (const std::exception & error)
         {
