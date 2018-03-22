@@ -244,17 +244,16 @@ EventBasedFileV2::getTimingInfo(const std::string & inChannelName) const
 const TimingInfo
 EventBasedFileV2::getTimingInfo() const
 {
-    DurationInSeconds step(50, 1000);
+    DurationInSeconds step(0, 1);
     if (!m_steps.empty())
     {
         step = *(std::max_element(m_steps.begin(), m_steps.end()));
     }
 
-    // TODO : I am pretty certain this timing info is only ever used for playback of
-    // traces, so I limit it to 20Hz instead of what could be 1KHz.
-    if (step < DurationInSeconds(50, 1000))
+    if (step == DurationInSeconds(0, 1))
     {
-        step = DurationInSeconds(50, 1000);
+        step = DurationInSeconds(1, 1000);
+        ISX_LOG_WARNING("EventBasedFileV2::getTimingInfo. Found Infinite sample rate. Assuming 1KHz.");
     }
 
     const isize_t numSamples = isize_t((m_endTime - m_startTime).toDouble() / step.toDouble());
