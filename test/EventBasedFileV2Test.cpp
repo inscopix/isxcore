@@ -43,7 +43,7 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
 
         // Write a file
         {
-            isx::EventBasedFileV2 file(fileName, isx::DataSet::Type::GPIO, {channelName});
+            isx::EventBasedFileV2 file(fileName, isx::DataSet::Type::GPIO, {channelName}, {ti.getStep()}, {isx::SignalType::SPARSE});
 
             isx::isize_t i = 0;
             for (auto & s : data)
@@ -54,7 +54,7 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
                 isx::EventBasedFileV2::DataPkt pkt(t_us, s, 0);
                 file.writeDataPkt(pkt);
             }
-            file.setTimingInfo(ti.getStart(), ti.getEnd(), {isx::DurationInSeconds(0, 1)});
+            file.setTimingInfo(ti.getStart(), ti.getEnd());
             file.closeFileForWriting();
         }
 
@@ -90,10 +90,12 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
         isx::EventMetrics_t metrics = {
             std::make_shared<isx::TraceMetrics>(1.f, 2.f, 3.f, 4.f, 5.f, 6.f, 7.f, 8.f, 9.f),
             std::make_shared<isx::TraceMetrics>(9.f, 8.f, 7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f)};
+        const std::vector<isx::DurationInSeconds> steps(channelNames.size(), ti.getStep());
+        const std::vector<isx::SignalType> types(channelNames.size(), isx::SignalType::SPARSE);
 
         // Write a file
         {
-            isx::EventBasedFileV2 file(fileName, isx::DataSet::Type::GPIO, channelNames);
+            isx::EventBasedFileV2 file(fileName, isx::DataSet::Type::GPIO, channelNames, steps, types);
 
             isx::isize_t i = 0;
             for (auto & s : data)
@@ -109,7 +111,7 @@ TEST_CASE("EventBasedFileV2Test", "[core]")
             }
             file.setTraceMetrics(0, metrics[0]);
             file.setTraceMetrics(1, metrics[1]);
-            file.setTimingInfo(ti.getStart(), ti.getEnd(), std::vector<isx::DurationInSeconds>(2, isx::DurationInSeconds(0, 1)));
+            file.setTimingInfo(ti.getStart(), ti.getEnd());
             file.closeFileForWriting();
         }
 

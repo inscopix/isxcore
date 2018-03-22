@@ -117,9 +117,10 @@ TEST_CASE("GpioDataTest", "[core]")
         header["producer"] = isx::getProducerAsJson();
         header["fileVersion"] = fileVersion;
         header["fileType"] = int(isx::FileType::V2);
-        isx::json jsteps = {isx::convertRatioToJson(step), isx::convertRatioToJson(isx::DurationInSeconds(0, 1))};
+        isx::json jsteps = {isx::convertRatioToJson(step), isx::convertRatioToJson(step)};
 
         header["signalSteps"] = jsteps;
+        header["signalTypes"] = std::vector<uint8_t>({uint8_t(isx::SignalType::DENSE), uint8_t(isx::SignalType::SPARSE)});
         header["startOffsets"] = usecsFromStart;
         header["numSamples"] = std::vector<uint64_t>({numTimes, numTimesSync});
         header["metrics"] = isx::convertEventMetricsToJson(isx::EventMetrics_t());
@@ -158,10 +159,11 @@ TEST_CASE("GpioDataTest", "[core]")
         header["fileVersion"] = fileVersion;
         header["fileType"] = int(isx::FileType::V2);
 
-
-        isx::json jsteps = {isx::convertRatioToJson(isx::DurationInSeconds(0, 1)), isx::convertRatioToJson(isx::DurationInSeconds(0, 1)), isx::convertRatioToJson(isx::DurationInSeconds(0, 1))};
+        const isx::json jstep = isx::convertRatioToJson(step);
+        isx::json jsteps = {jstep, jstep, jstep};
 
         header["signalSteps"] = jsteps;
+        header["signalTypes"] = std::vector<uint8_t>(3, uint8_t(isx::SignalType::SPARSE));
         header["startOffsets"] = usecsFromStart;
         header["numSamples"] = std::vector<uint64_t>({4, 2, 174});
         header["metrics"] = isx::convertEventMetricsToJson(isx::EventMetrics_t());

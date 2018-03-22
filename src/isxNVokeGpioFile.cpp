@@ -269,26 +269,29 @@ NVokeGpioFile::parse()
     const TimingInfo timingInfo(startTime, step, numTimes);
     const Time endTime = timingInfo.getEnd();
 
-    std::vector<std::string> channels(m_analogSignalIds.size() + m_eventSignalIds.size());
-    std::vector<DurationInSeconds> steps(channels.size(), DurationInSeconds(0, 1));
+    const size_t numChannels = m_analogSignalIds.size() + m_eventSignalIds.size();
+    std::vector<std::string> channels(numChannels);
+    std::vector<isx::SignalType> types(numChannels, isx::SignalType::SPARSE);
     for (auto & id : m_analogSignalIds)
     {
         channels.at(id.second) = s_dataTypeMap.at(id.first);
-        steps.at(id.second) = step;
+        types.at(id.second) = isx::SignalType::DENSE;
     }
     for (auto & id : m_eventSignalIds)
     {
         channels.at(id.second) = s_dataTypeMap.at(id.first);
+        types.at(id.second) = isx::SignalType::SPARSE;
     }
 
     m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_gpio.isxd";
-    m_outputFile.reset(new EventBasedFileV2(m_outputFileName, DataSet::Type::GPIO, channels));
+    const std::vector<DurationInSeconds> steps(channels.size(), step);
+    m_outputFile.reset(new EventBasedFileV2(m_outputFileName, DataSet::Type::GPIO, channels, steps, types));
     for (const auto p : packetsToWrite)
     {
         m_outputFile->writeDataPkt(p);
     }
 
-    m_outputFile->setTimingInfo(startTime, endTime, steps);
+    m_outputFile->setTimingInfo(startTime, endTime);
     m_outputFile->closeFileForWriting();
 
     if (cancelled)

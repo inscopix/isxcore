@@ -196,6 +196,8 @@ runCsvTraceImporter(
             {
                 value = std::stod(valueStr);
 
+                // TODO : This seems broken because it will be caught by the following
+                // catch block.
                 if (value < 0.0 && (col == inParams.m_timeCol))
                 {
                     ISX_THROW(ExceptionDataIO, "All timestamps must be non-negative. ",
@@ -251,7 +253,13 @@ runCsvTraceImporter(
         }
     }
 
-    EventBasedFileV2 outputFile(inParams.m_outputFile, DataSet::Type::GPIO, signalNames);
+    // If the sample is really regular then this gives the correct sample duration,
+    // so it seems like a decent way to estimate.
+    const double stepDurationUSecs = double(timeStampsUSecs.back() - timeStampsUSecs.front()) / double(numValues - 1);
+    const DurationInSeconds stepDuration(Ratio::fromDouble(stepDurationUSecs / 1e6, 6));
+    const std::vector<DurationInSeconds> steps(signalNames.size(), stepDuration);
+
+    EventBasedFileV2 outputFile(inParams.m_outputFile, DataSet::Type::GPIO, signalNames, steps, types);
     colInd = 0;
     for (const auto c : inParams.m_colsToImport)
     {
@@ -266,24 +274,8 @@ runCsvTraceImporter(
         }
     }
 
-    // TODO : Verify this is the right thing to store for timing info.
-    const DurationInSeconds firstOffset(timeStampsUSecs.front(), isize_t(1e6));
-    const double stepDurationUSecs = double(timeStampsUSecs.back() - timeStampsUSecs.front()) / double(numValues - 1);
-    const DurationInSeconds stepDuration(Ratio::fromDouble(stepDurationUSecs / 1e6, 6));
-    std::vector<DurationInSeconds> steps(signalNames.size(), stepDuration);
-
-    // Set a step of 0 for sparse signals
-    size_t i = 0;
-    for (auto & t : types)
-    {
-        if (t == SignalType::SPARSE)
-        {
-            steps[i] = DurationInSeconds(0, 1);
-        }
-        ++i;
-    }
-
-    outputFile.setTimingInfo(inParams.m_startTime, inParams.m_startTime + firstOffset + stepDuration * numValues, steps);
+    // We might consider asking for the actual end time, but the last sample will do for now.
+    outputFile.setTimingInfo(inParams.m_startTime, inParams.m_startTime + DurationInSeconds(timeStampsUSecs.back(), isize_t(1e6)));
     outputFile.closeFileForWriting();
 
     if (cancelled)

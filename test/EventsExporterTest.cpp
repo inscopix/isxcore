@@ -30,7 +30,8 @@ writeNamedPacketsAsEvents(
         names.push_back(c.first);
     }
 
-    isx::SpWritableEvents_t events = isx::writeEvents(inFilePath, names);
+    const std::vector<isx::DurationInSeconds> steps(names.size(), inTi.getStep());
+    isx::SpWritableEvents_t events = isx::writeEvents(inFilePath, names, steps);
     uint64_t idx = 0;
     for (const auto c : inPackets)
     {
