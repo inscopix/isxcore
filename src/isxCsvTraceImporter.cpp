@@ -272,7 +272,7 @@ runCsvTraceImporter(
         }
     }
 
-    // We might consider asking for the actual end time, but the sample will do for now.
+    // We might consider asking for the actual end time, but the last sample will do for now.
     outputFile.setTimingInfo(inParams.m_startTime, inParams.m_startTime + DurationInSeconds(timeStampsUSecs.back(), isize_t(1e6)));
     outputFile.closeFileForWriting();
 
