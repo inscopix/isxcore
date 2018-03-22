@@ -10,15 +10,17 @@
 
 void writeEventsTestFile(const std::string & inFileName)
 {
-    isx::TimingInfo ti(isx::Time(), isx::DurationInSeconds(5, 1), 100);
-    std::vector<std::string> cellNames{"C0", "C1"};
-    std::vector<std::vector<float>> values{{2.f, 1.5f}, {1.f, 4.f, 3.f}};
-    std::vector<std::vector<isx::isize_t>> timeIndices{{15, 25}, {35, 50, 75}};
+    const isx::TimingInfo ti(isx::Time(), isx::DurationInSeconds(5, 1), 100);
+    const std::vector<std::string> cellNames{"C0", "C1"};
+    const std::vector<std::vector<float>> values{{2.f, 1.5f}, {1.f, 4.f, 3.f}};
+    const std::vector<std::vector<isx::isize_t>> timeIndices{{15, 25}, {35, 50, 75}};
 
-    isx::SpWritableEvents_t f = isx::writeEvents(inFileName, cellNames);
+    const size_t numCells = cellNames.size();
+    const std::vector<isx::DurationInSeconds> steps(numCells, ti.getStep());
+    isx::SpWritableEvents_t f = isx::writeEvents(inFileName, cellNames, steps);
     f->setTimingInfo(ti);
 
-    for (isx::isize_t cell = 0; cell < cellNames.size(); ++cell)
+    for (isx::isize_t cell = 0; cell < numCells; ++cell)
     {
         auto & v = values.at(cell);
         auto & t = timeIndices.at(cell);

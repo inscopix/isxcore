@@ -28,9 +28,13 @@ public:
     MosaicEvents(const std::string & inFileName);
 
     /// Write constructor
-    /// \param inFileName The path of the Events data file.
-    /// \param inChannels The names of the events channels (e.g. cell names).
-    MosaicEvents(const std::string & inFileName, const std::vector<std::string> & inChannels);
+    /// \param inFileName       The path of the Events data file.
+    /// \param inChannelNames   The names of the events channels (e.g. cell names).
+    /// \param inChannelSteps   The duration of an event sample (e.g. cell acitivity sample duration).
+    MosaicEvents(
+            const std::string & inFileName,
+            const std::vector<std::string> & inChannelNames,
+            const std::vector<DurationInSeconds> & inChannelSteps);
 
     /// Destructor
     ///

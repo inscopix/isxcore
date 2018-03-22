@@ -150,15 +150,18 @@ namespace isx
     {
         // Get filename for output
         m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + ".isxd";
-        std::vector<std::string> channelNames{"IO1", "IO2", "sync", "trigger"};
+        const std::vector<std::string> channelNames{"IO1", "IO2", "sync", "trigger"};
+        const size_t numChannels = channelNames.size();
 
-        EventBasedFileV2 file(m_outputFileName, DataSet::Type::GPIO, channelNames);
+        const DurationInSeconds step = isx::DurationInSeconds(isize_t(1E3), isize_t(1E6));
+        const std::vector<DurationInSeconds> steps(numChannels, step);
+        const std::vector<SignalType> types(numChannels, SignalType::DENSE);
+        EventBasedFileV2 file(m_outputFileName, DataSet::Type::GPIO, channelNames, steps, types);
 
         // Timing info
         isize_t numSamples = m_signals.front().size();
         Time start(DurationInSeconds(isize_t(m_timestamps.front() * 1E6), isize_t(1E6)));
 
-        DurationInSeconds step = isx::DurationInSeconds(isize_t(1E3), isize_t(1E6));
         TimingInfo ti(start, step, numSamples);
 
         float progress = 0.5f;
@@ -167,7 +170,7 @@ namespace isx
         // Write headers and data
 
         for (isize_t i(0); i < m_signals.size(); ++i)
-        {           
+        {
             for (isize_t j(0); (j < m_signals[i].size() && !cancelled); ++j)
             {
                 progress = 0.5f + 0.5f * (float(i) + float(j)/float(m_signals[i].size()))/ float(m_signals.size());
@@ -190,8 +193,7 @@ namespace isx
         }
 
         // Set timing info
-        std::vector<DurationInSeconds> steps(channelNames.size(), step);
-        file.setTimingInfo(start, ti.getEnd(), steps);
+        file.setTimingInfo(start, ti.getEnd());
 
         // Close file
         file.closeFileForWriting();

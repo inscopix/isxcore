@@ -81,7 +81,6 @@ public:
     bool
     isValid() const = 0;
 
-
     /// \return     The name of the file.
     ///
     virtual
@@ -114,6 +113,9 @@ public:
     getLogicalDataAsync(const std::string & inCellName, EventsGetLogicalDataCB_t inCallback) = 0;
 
     /// \return     The timing information read from the Events set.
+    ///             Depending on the signal, you may not want to trust the step and number
+    ///             of times, as they may simply spoofing until we have a proper way to
+    ///             handle irregular timing info.
     virtual
     isx::TimingInfo 
     getTimingInfo() const = 0;
@@ -159,11 +161,15 @@ SpEvents_t
 readEvents(const std::string & inFileName);
 
 /// Write a Events set to a file.
-/// \param  inFileName  The path of the Events file.
-/// \param  inChannels  The names of the channels.
-/// \return             The Events set to write to.
+/// \param  inFileName      The path of the Events file.
+/// \param  inChannelNames  The names of the channels.
+/// \param  inChannelSteps  The steps of the channels.
+/// \return                 The Events set to write to.
 SpWritableEvents_t
-writeEvents(const std::string & inFileName, const std::vector<std::string> & inChannels);
+writeEvents(
+        const std::string & inFileName,
+        const std::vector<std::string> & inChannelNames,
+        const std::vector<DurationInSeconds> & inChannelSteps);
 
 /// Attempt to read a series of Events sets from files.
 /// \param  inFileNames The paths of the Events files.

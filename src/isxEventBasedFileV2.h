@@ -24,9 +24,7 @@ namespace isx
 /// The JSON footer contains start and end times for the recording,
 /// a list of signals, their sampling periods, their number of packets, and their temporal offsets
 /// from the beginning of the recording. All timestamps saved in the data packets are offsets
-/// from the start time in microseconds. If a channel contains data corresponding to
-/// event-triggered data and is therefore not sampled continuously, the sampling period is
-/// DurationInSeconds(0, 1). It is up to the client to pass this information when writing a file.
+/// from the start time in microseconds.
 class EventBasedFileV2 : public EventBasedFile
 {
 public:
@@ -55,7 +53,9 @@ public:
     EventBasedFileV2(
         const std::string & inFileName,
         DataSet::Type inType,
-        const std::vector<std::string> & inChannels);
+        const std::vector<std::string> & inChannelNames,
+        const std::vector<DurationInSeconds> & inChannelSteps,
+        const std::vector<SignalType> & inChannelTypes);
 
     EventBasedFileV2();
 
@@ -86,17 +86,17 @@ public:
     const isx::TimingInfo
     getTimingInfo() const override;
 
-    /// \return     The timing information read from the file.
+    /// TODO : Understand why this is here and what it should do.
     ///
     const TimingInfo
     getTimingInfo(const std::string & inChannelName) const;
 
-    /// Set the timing information that will be written in the file footer
-    /// \param
-    void setTimingInfo(const Time & inStartTime, const Time & inEndTime, const std::vector<DurationInSeconds> & inSteps);
+    /// Set some extra timing information that's special for event
+    /// based files.
+    void setTimingInfo(const Time & inStartTime, const Time & inEndTime);
 
     /// Writes a data packet to the file
-    /// \param
+    ///
     void writeDataPkt(const DataPkt & inData);
 
     /// Write file footer and close the file
@@ -111,7 +111,6 @@ public:
 
     void
     setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics);
-
 
 private:
 
@@ -129,16 +128,28 @@ private:
 
     std::vector<std::string>        m_channelList;
 
+    // These times tell us when we started and stopped listening for events
+    // over all channels.
     Time                            m_startTime;
-
     Time                            m_endTime;
 
+    // The duration of a sample associated with each "dense" channel.
+    // For a sparse signal, this represents the rate at which we listened
+    // for for events (e.g. for events detected from cell activity, this
+    // would match the sample rate of the cell activity).
     std::vector<DurationInSeconds>  m_steps;
+
+    // The type of signal contained in each channel.
+    std::vector<SignalType>         m_signalTypes;
+
+    // The time of the first sample in each channel.
     std::vector<uint64_t>           m_startOffsets;
+
+    // The number of samples in each channel.
     std::vector<uint64_t>           m_numSamples;
 
+    // Used to distinguish between GPIO, events, etc.
     DataSet::Type                   m_dataType;
-
 
     std::fstream                    m_file;
 

@@ -33,11 +33,15 @@ MosaicEvents::MosaicEvents(const std::string & inFileName)
     }
 }
 
-MosaicEvents::MosaicEvents(const std::string & inFileName, const std::vector<std::string> & inChannels)
+MosaicEvents::MosaicEvents(
+        const std::string & inFileName,
+        const std::vector<std::string> & inChannelNames,
+        const std::vector<DurationInSeconds> & inChannelSteps)
     : m_logicalIoTaskTracker(new IoTaskTracker<LogicalTrace>())
 {
     m_type = FileType::V2;
-    m_file.reset(new EventBasedFileV2(inFileName, isx::DataSet::Type::EVENTS, inChannels));
+    const std::vector<SignalType> types(inChannelNames.size(), SignalType::SPARSE);
+    m_file.reset(new EventBasedFileV2(inFileName, isx::DataSet::Type::EVENTS, inChannelNames, inChannelSteps, types));
 }
 
 MosaicEvents::~MosaicEvents()
@@ -131,11 +135,7 @@ MosaicEvents::setTimingInfo(const isx::TimingInfo & inTimingInfo)
     if (m_type == FileType::V2)
     {
         auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
-        Time start = inTimingInfo.getStart();
-        Time end = inTimingInfo.getEnd();
-        std::vector<DurationInSeconds> steps(numberOfCells(), DurationInSeconds(0, 1));
-        f->setTimingInfo(start, end, steps);
-
+        f->setTimingInfo(inTimingInfo.getStart(), inTimingInfo.getEnd());
     }
     else if (m_type == FileType::V1)
     {

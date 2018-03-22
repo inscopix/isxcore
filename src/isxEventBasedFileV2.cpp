@@ -26,9 +26,11 @@ EventBasedFileV2::EventBasedFileV2(const std::string & inFileName)
 EventBasedFileV2::EventBasedFileV2(
         const std::string & inFileName,
         DataSet::Type inType,
-        const std::vector<std::string> & inChannels)
+        const std::vector<std::string> & inChannelNames,
+        const std::vector<DurationInSeconds> & inChannelSteps,
+        const std::vector<SignalType> & inChannelTypes)
     : m_fileName(inFileName)
-    , m_channelList(inChannels)
+    , m_channelList(inChannelNames)
     , m_dataType(inType)
     , m_openForWrite(true)
 {
@@ -38,10 +40,23 @@ EventBasedFileV2::EventBasedFileV2(
         ISX_THROW(ExceptionFileIO, "Failed to open file for writing: ", m_fileName);
     }
 
-    const size_t numChannels = inChannels.size();
+    const size_t numChannels = inChannelSteps.size();
     m_startOffsets = std::vector<uint64_t>(numChannels, 0);
     m_numSamples = std::vector<uint64_t>(numChannels, 0);
-    m_steps = std::vector<DurationInSeconds>(numChannels, DurationInSeconds(0, 1));
+
+    if (inChannelSteps.size() != numChannels)
+    {
+        ISX_THROW(ExceptionUserInput, "Number of steps (", inChannelSteps.size(),
+                ") must be the same as the number of channels (", numChannels, ").");
+    }
+    m_steps = inChannelSteps;
+
+    if (inChannelTypes.size() != numChannels)
+    {
+        ISX_THROW(ExceptionUserInput, "Number of signal types (", inChannelTypes.size(),
+                ") must be the same as the number of channels (", numChannels, ").");
+    }
+    m_signalTypes = inChannelTypes;
 
     m_valid = true;
 }
@@ -63,13 +78,7 @@ EventBasedFileV2::getSignalType(const std::string & inChannelName)
 
     size_t ind = search - m_channelList.begin();
 
-    SignalType st = SignalType::SPARSE;
-    if (m_steps[ind] != DurationInSeconds(0, 1))
-    {
-        st = SignalType::DENSE;
-    }
-
-    return st;
+    return m_signalTypes.at(ind);
 }
 
 bool
@@ -105,7 +114,7 @@ EventBasedFileV2::readAllTraces(std::vector<SpFTrace_t> & inContinuousTraces, st
 
         inLogicalTraces[i] = std::make_shared<LogicalTrace>(timingInfos[i], m_channelList[i]);
 
-        if (m_steps[i] != DurationInSeconds(0, 1))
+        if (m_signalTypes.at(i) == SignalType::DENSE)
         {
             inContinuousTraces[i] = std::make_shared<FTrace_t>(timingInfos[i], m_channelList[i]);
 
@@ -215,15 +224,16 @@ EventBasedFileV2::getTimingInfo(const std::string & inChannelName) const
     }
     size_t i = search - m_channelList.begin();
 
-    if (m_steps[i] == DurationInSeconds(0, 1))
+    if (m_signalTypes.at(i) == SignalType::SPARSE)
     {
-        DurationInSeconds step(1, 1000);
-        isize_t numSamples = isize_t((m_endTime - m_startTime).toDouble() / step.toDouble());
-        return TimingInfo(m_startTime, step, numSamples);
+        const isize_t numSamples = isize_t((m_endTime - m_startTime).toDouble() / m_steps.at(i).toDouble());
+        return TimingInfo(m_startTime, m_steps.at(i), numSamples);
     }
     else
     {
-        DurationInSeconds offset(m_startOffsets[i], 1000000);
+        // I think we need to offset the start time to allow correct conversion
+        // from time to index.
+        const DurationInSeconds offset(m_startOffsets[i], 1000000);
         return TimingInfo(m_startTime + offset, m_steps[i], m_numSamples[i]);
     }
 }
@@ -231,20 +241,20 @@ EventBasedFileV2::getTimingInfo(const std::string & inChannelName) const
 const TimingInfo
 EventBasedFileV2::getTimingInfo() const
 {
-    DurationInSeconds step;
-    if (!m_channelList.empty())
+    DurationInSeconds step(50, 1000);
+    if (!m_steps.empty())
     {
         step = *(std::max_element(m_steps.begin(), m_steps.end()));
     }
 
-    isize_t numSamples;
-    if (step == DurationInSeconds(0, 1))
+    // TODO : I am pretty certain this timing info is only ever used for playback of
+    // traces, so I limit it to 20Hz instead of what could be 1KHz.
+    if (step < DurationInSeconds(50, 1000))
     {
-        step = DurationInSeconds(1, 100);
+        step = DurationInSeconds(50, 1000);
     }
 
-    numSamples = isize_t((m_endTime - m_startTime).toDouble() / step.toDouble());
-
+    const isize_t numSamples = isize_t((m_endTime - m_startTime).toDouble() / step.toDouble());
     return TimingInfo(m_startTime, step, numSamples);
 }
 
@@ -298,10 +308,18 @@ EventBasedFileV2::readFileFooter()
                     "Expected type to be GPIO or EVENTS. Instead got ", size_t(m_dataType), ".");
             }
 
-            for (auto & jsteps : j["signalSteps"])
+            m_steps.resize(0);
+            for (const auto & step : j["signalSteps"])
             {
-                m_steps.push_back(convertJsonToRatio(jsteps));
+                m_steps.push_back(convertJsonToRatio(step));
             }
+
+            m_signalTypes.resize(0);
+            for (const auto & type : j["signalTypes"].get<std::vector<uint8_t>>())
+            {
+                m_signalTypes.push_back(SignalType(type));
+            }
+
             m_startTime = convertJsonToTime(j["global times"].at(0));
             m_endTime = convertJsonToTime(j["global times"].at(1));
             m_channelList = j["channel list"].get<std::vector<std::string>>();
@@ -338,12 +356,20 @@ EventBasedFileV2::writeFileFooter()
         j["fileVersion"] = s_fileVersion;
         j["fileType"] = int(FileType::V2);
 
-        json jsteps;
+        json jsteps = json::array();
         for (auto & s : m_steps)
         {
             jsteps.push_back(convertRatioToJson(s));
         }
         j["signalSteps"] = jsteps;
+
+        json jtypes = json::array();
+        for (const auto t : m_signalTypes)
+        {
+            jtypes.push_back(uint8_t(t));
+        }
+        j["signalTypes"] = jtypes;
+
         j["startOffsets"] = m_startOffsets;
         j["numSamples"] = m_numSamples;
         j["metrics"] = convertEventMetricsToJson(m_traceMetrics);
@@ -360,12 +386,10 @@ EventBasedFileV2::writeFileFooter()
 }
 
 void
-EventBasedFileV2::setTimingInfo(const Time & inStartTime, const Time & inEndTime, const std::vector<DurationInSeconds> & inSteps)
+EventBasedFileV2::setTimingInfo(const Time & inStartTime, const Time & inEndTime)
 {
-    ISX_ASSERT(m_steps.size() == inSteps.size());
     m_startTime = inStartTime;
     m_endTime = inEndTime;
-    m_steps = inSteps;
 }
 
 bool
