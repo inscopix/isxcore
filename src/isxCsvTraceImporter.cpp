@@ -196,6 +196,8 @@ runCsvTraceImporter(
             {
                 value = std::stod(valueStr);
 
+                // TODO : This seems broken because it will be caught by the following
+                // catch block.
                 if (value < 0.0 && (col == inParams.m_timeCol))
                 {
                     ISX_THROW(ExceptionDataIO, "All timestamps must be non-negative. ",

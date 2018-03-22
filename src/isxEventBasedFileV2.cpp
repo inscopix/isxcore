@@ -231,10 +231,13 @@ EventBasedFileV2::getTimingInfo(const std::string & inChannelName) const
     }
     else
     {
-        // I think we need to offset the start time to allow correct conversion
-        // from time to index.
-        const DurationInSeconds offset(m_startOffsets[i], 1000000);
-        return TimingInfo(m_startTime + offset, m_steps[i], m_numSamples[i]);
+        // We used to add the start offset to the start time, but for visualization
+        // it's preferred to show the leading gap.
+        // Leaving the old code here in case we revert soon.
+        // If this has been hanging around for a while, remove it.
+        //const DurationInSeconds offset(m_startOffsets[i], 1000000);
+        //return TimingInfo(m_startTime + offset, m_steps[i], m_numSamples[i]);
+        return TimingInfo(m_startTime, m_steps[i], m_numSamples[i]);
     }
 }
 

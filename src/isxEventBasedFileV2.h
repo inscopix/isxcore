@@ -86,8 +86,12 @@ public:
     const isx::TimingInfo
     getTimingInfo() const override;
 
-    /// TODO : Understand why this is here and what it should do.
-    ///
+    /// \return The timing info associated with a channel.
+    ///         For sparse signals, the start time will match the start time of this file,
+    ///         the step duration will match that given on construction, and the number of samples
+    ///         will be invented to give a regular TimingInfo object.
+    ///         For dense signals, the start time will match the start time of this file, and
+    ///         the step duration and number of samples should be accurate.
     const TimingInfo
     getTimingInfo(const std::string & inChannelName) const;
 
@@ -143,6 +147,10 @@ private:
     std::vector<SignalType>         m_signalTypes;
 
     // The time of the first sample in each channel.
+    // This used to make the channel specific timing info from
+    // EventBasedFileV2::getTimingInfo(const std::string &) return
+    // a TimingInfo object with the offset start time rather than the
+    // global start time over all channels.
     std::vector<uint64_t>           m_startOffsets;
 
     // The number of samples in each channel.
