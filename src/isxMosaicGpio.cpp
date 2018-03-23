@@ -206,7 +206,6 @@ MosaicGpio::getTimingInfo(const std::string & inChannelName) const
         auto f = std::static_pointer_cast<isx::EventBasedFileV1>(m_file);
         return f->getTimingInfo();
     }
-
 }
 
 isx::TimingInfos_t
@@ -234,4 +233,4 @@ MosaicGpio::cancelPendingReads()
     m_logicalIoTaskTracker->cancelPendingTasks();
 }
 
-}
+} // namespace isx

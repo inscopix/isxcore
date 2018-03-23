@@ -8,20 +8,19 @@
 #include <fstream>
 #include <algorithm>
 
-
 void writeEventsTestFile(const std::string & inFileName)
 {
-    isx::SpWritableEvents_t f = isx::writeEvents(inFileName);
+    const isx::TimingInfo ti(isx::Time(), isx::DurationInSeconds(5, 1), 100);
+    const std::vector<std::string> cellNames{"C0", "C1"};
+    const std::vector<std::vector<float>> values{{2.f, 1.5f}, {1.f, 4.f, 3.f}};
+    const std::vector<std::vector<isx::isize_t>> timeIndices{{15, 25}, {35, 50, 75}};
 
-    isx::TimingInfo ti(isx::Time(), isx::DurationInSeconds(5, 1), 100);
-
-    std::vector<std::string> cellNames{"C0", "C1"};
-    std::vector<std::vector<float>> values{{2.f, 1.5f}, {1.f, 4.f, 3.f}};
-    std::vector<std::vector<isx::isize_t>> timeIndices{{15, 25}, {35, 50, 75}};
-
+    const size_t numCells = cellNames.size();
+    const std::vector<isx::DurationInSeconds> steps(numCells, ti.getStep());
+    isx::SpWritableEvents_t f = isx::writeEvents(inFileName, cellNames, steps);
     f->setTimingInfo(ti);
 
-    for (isx::isize_t cell = 0; cell < cellNames.size(); ++cell)
+    for (isx::isize_t cell = 0; cell < numCells; ++cell)
     {
         auto & v = values.at(cell);
         auto & t = timeIndices.at(cell);
@@ -38,20 +37,18 @@ void writeEventsTestFile(const std::string & inFileName)
         }
     }
 
-    f->closeForWriting(cellNames);
-
+    f->closeForWriting();
 }
 
 TEST_CASE("EventsDataTest", "[core]")
 {
     isx::CoreInitialize();
-    
+
     std::string outputDir = isx::getAbsolutePath(g_resources["unitTestDataPath"]);
     std::string fileName = outputDir + "/eventsTest.isxd";
     std::remove(fileName.c_str());
 
-
-    SECTION("Write events and test reading them") 
+    SECTION("Write events and test reading them")
     {
         writeEventsTestFile(fileName);
 
@@ -86,10 +83,9 @@ TEST_CASE("EventsDataTest", "[core]")
                 REQUIRE(pair.second == expected.at(j++));
             }
             ++i;
-        }    
-        
-    }
+        }
 
+    }
 
     isx::CoreShutdown();
     std::remove(fileName.c_str());
