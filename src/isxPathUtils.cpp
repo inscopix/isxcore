@@ -4,6 +4,7 @@
 #include <sstream>
 #include <QFileInfo>
 #include <QDir>
+#include <QFile>
 #include <QStringList>
 #include <QStorageInfo>
 
@@ -128,6 +129,12 @@ removeDirectory(const std::string & inPath)
 {
     QDir dir(QString::fromStdString(inPath));
     return dir.removeRecursively();
+}
+
+bool
+copyFile(const std::string & inSourcePath, const std::string & inDestPath)
+{
+    return QFile::copy(QString::fromStdString(inSourcePath), QString::fromStdString(inDestPath));
 }
 
 std::string

@@ -134,6 +134,12 @@ bool makeDirectory(const std::string & inPath);
 /// \return         True if removing the directory was completely successful.
 bool removeDirectory(const std::string & inPath);
 
+/// Copy a single file without overwriting the destination.
+///
+/// \return True if the copy was successful, false otherwise.
+///         The copy will not be successful if the destination already exists.
+bool copyFile(const std::string & inSourcePath, const std::string & inDestPath);
+
 /// Make a unique path on the file system by appending a zero padded
 /// non-negative number.
 ///
