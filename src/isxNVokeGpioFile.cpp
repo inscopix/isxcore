@@ -8,7 +8,7 @@
 namespace isx
 {
 
-std::map<uint8_t, std::string> NVokeGpioFile::s_dataTypeMap = 
+std::map<uint8_t, std::string> NVokeGpioFile::s_dataTypeMap =
 {
     {0x01, "GPIO1"},
     {0x02, "GPIO2"},
@@ -23,7 +23,7 @@ std::map<uint8_t, std::string> NVokeGpioFile::s_dataTypeMap =
     {0x55, "sync_pkt"}
 };
 
-std::map<uint8_t, std::string> NVokeGpioFile::s_gpioModeMap = 
+std::map<uint8_t, std::string> NVokeGpioFile::s_gpioModeMap =
 {
     {0x00, "Output Manual Mode"},
     {0x01, "TTL Input Mode"},
@@ -31,7 +31,7 @@ std::map<uint8_t, std::string> NVokeGpioFile::s_gpioModeMap =
     {0x03, "Output Pulse Train Mode Inverted"}
 };
 
-std::map<uint8_t, std::string> NVokeGpioFile::s_ledGpioFollowMap = 
+std::map<uint8_t, std::string> NVokeGpioFile::s_ledGpioFollowMap =
 {
     {0x00, "GPIO1"},
     {0x20, "GPIO2"},
@@ -39,7 +39,7 @@ std::map<uint8_t, std::string> NVokeGpioFile::s_ledGpioFollowMap =
     {0x60, "GPIO4"}
 };
 
-std::map<uint8_t, std::string> NVokeGpioFile::s_ledStateMap = 
+std::map<uint8_t, std::string> NVokeGpioFile::s_ledStateMap =
 {
     {0x00, "off"},
     {0x01, "on"},
@@ -47,7 +47,7 @@ std::map<uint8_t, std::string> NVokeGpioFile::s_ledStateMap =
     {0x03, "ramp_down"}
 };
 
-std::map<uint8_t, std::string> NVokeGpioFile::s_ledModeMap = 
+std::map<uint8_t, std::string> NVokeGpioFile::s_ledModeMap =
 {
     {0x00, "Manual Mode"},
     {0x01, "Manual Mode"},
@@ -59,17 +59,15 @@ std::map<uint8_t, std::string> NVokeGpioFile::s_ledModeMap =
 
 };
 
-
 NVokeGpioFile::NVokeGpioFile()
 {
-
 }
 
 NVokeGpioFile::NVokeGpioFile(const std::string & inFileName, const std::string & inOutputDir)
     : m_fileName(inFileName)
     , m_outputDir(inOutputDir)
 {
-    
+
     m_file.open(m_fileName, std::ios::binary | std::ios_base::in);
     if (!m_file.good() || !m_file.is_open())
     {
@@ -77,7 +75,7 @@ NVokeGpioFile::NVokeGpioFile(const std::string & inFileName, const std::string &
             "Failed to open GPIO data file for reading: ", m_fileName);
     }
 
-    // Get the size of the file in bytes 
+    // Get the size of the file in bytes
     m_file.seekg(0, m_file.end);
     m_fileSizeInBytes = m_file.tellg();
     m_file.seekg(0, m_file.beg);
@@ -108,34 +106,34 @@ NVokeGpioFile::~NVokeGpioFile()
     isx::closeFileStreamWithChecks(m_file, m_fileName);
 }
 
-bool 
+bool
 NVokeGpioFile::isValid()
 {
     return m_valid;
 }
 
-const std::string & 
+const std::string &
 NVokeGpioFile::getFileName()
 {
     return m_fileName;
 }
 
-void 
+void
 NVokeGpioFile::setCheckInCallback(AsyncCheckInCB_t inCheckInCB)
 {
     m_checkInCB = inCheckInCB;
 }
 
-bool 
+bool
 NVokeGpioFile::isSyncPacket(uint8_t * data)
 {
     SyncPkt * syncPkt = (SyncPkt *) data;
     return (*syncPkt == SyncPkt::syncValues());
 }
 
-AsyncTaskStatus 
+AsyncTaskStatus
 NVokeGpioFile::parse()
-{   
+{
     float progress = 0.f;
     bool cancelled = false;
 
@@ -147,7 +145,7 @@ NVokeGpioFile::parse()
     while (!syncPacketFound && !m_file.eof() && !cancelled)
     {
         progress = (float)(readPosition) / (float)(lastPosition);
-        if(m_checkInCB)
+        if (m_checkInCB)
         {
             cancelled = m_checkInCB(progress);
         }
@@ -160,7 +158,6 @@ NVokeGpioFile::parse()
         {
             readPosition += 1;
         }
-        
     }
 
     if (!syncPacketFound)
@@ -171,14 +168,16 @@ NVokeGpioFile::parse()
 
     readPosition += SYNC_PKT_LENGTH;
 
+    std::vector<EventBasedFileV2::DataPkt> packetsToWrite;
+
     while (!m_file.eof() && !cancelled)
     {
         progress = (float)(readPosition) / (float)(lastPosition);
-        if(m_checkInCB)
+        if (m_checkInCB)
         {
             cancelled = m_checkInCB(progress);
         }
-        
+
         if (lastPosition - readPosition < (int)sizeof(GenericPktHeader))
         {
             break;
@@ -189,7 +188,7 @@ NVokeGpioFile::parse()
         m_file.seekg(readPosition);
 
         checkEventCounter(buf.data());
-        
+
         switch ((SignalType) buf[0])
         {
             case SignalType::GPIO1:
@@ -203,25 +202,25 @@ NVokeGpioFile::parse()
                 {
                     m_file.read((char *)buf.data(), GPIO_PKT_LENGTH);
                     ISX_ASSERT(buf[1] == GPIO_PKT_LENGTH);
-                    parseGpioPkt(buf);
+                    packetsToWrite.push_back(parseGpioPkt(buf));
                     readPosition = m_file.tellg();
                 }
                 else
                 {
                     readPosition = lastPosition;
                 }
-                
+
                 break;
             }
-            case SignalType::EXLED:    
-            case SignalType::OGLED:    
-            case SignalType::DILED:    
+            case SignalType::EXLED:
+            case SignalType::OGLED:
+            case SignalType::DILED:
             {
                 if (lastPosition - readPosition >= (int)LED_PKT_LENGTH)
                 {
                     m_file.read((char *)buf.data(), LED_PKT_LENGTH);
                     ISX_ASSERT(buf[1] == LED_PKT_LENGTH);
-                    parseLedPkt(buf);
+                    packetsToWrite.push_back(parseLedPkt(buf));
                     readPosition = m_file.tellg();
                 }
                 else
@@ -236,7 +235,8 @@ NVokeGpioFile::parse()
                 {
                     m_file.read((char *)buf.data(), ANALOG_FOLLOW_PKT_LENGTH);
                     ISX_ASSERT(buf[1] == ANALOG_FOLLOW_PKT_LENGTH);
-                    parseAnalogFollowPkt(buf);
+                    const auto analogFollowPackets = parseAnalogFollowPkt(buf);
+                    packetsToWrite.insert(packetsToWrite.end(), analogFollowPackets.begin(), analogFollowPackets.end());
                     readPosition = m_file.tellg();
                 }
                 else
@@ -250,7 +250,7 @@ NVokeGpioFile::parse()
                 readPosition += SYNC_PKT_LENGTH;
                 break;
             }
-            default: 
+            default:
             {
                 readPosition += 1;
                 break;
@@ -263,7 +263,36 @@ NVokeGpioFile::parse()
         }
     }
 
-    closeFile();
+    const DurationInSeconds step(1, 1000);
+    const isize_t numTimes = isize_t(double(m_endTime - m_startTime) * 1E-6 / (step.toDouble())) + 1;
+    const Time startTime(DurationInSeconds(isize_t(m_startTime), isize_t(1E6)));
+    const TimingInfo timingInfo(startTime, step, numTimes);
+    const Time endTime = timingInfo.getEnd();
+
+    const size_t numChannels = m_analogSignalIds.size() + m_eventSignalIds.size();
+    std::vector<std::string> channels(numChannels);
+    std::vector<isx::SignalType> types(numChannels, isx::SignalType::SPARSE);
+    for (auto & id : m_analogSignalIds)
+    {
+        channels.at(id.second) = s_dataTypeMap.at(id.first);
+        types.at(id.second) = isx::SignalType::DENSE;
+    }
+    for (auto & id : m_eventSignalIds)
+    {
+        channels.at(id.second) = s_dataTypeMap.at(id.first);
+        types.at(id.second) = isx::SignalType::SPARSE;
+    }
+
+    m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_gpio.isxd";
+    const std::vector<DurationInSeconds> steps(channels.size(), step);
+    m_outputFile.reset(new EventBasedFileV2(m_outputFileName, DataSet::Type::GPIO, channels, steps, types));
+    for (const auto p : packetsToWrite)
+    {
+        m_outputFile->writeDataPkt(p);
+    }
+
+    m_outputFile->setTimingInfo(startTime, endTime);
+    m_outputFile->closeFileForWriting();
 
     if (cancelled)
     {
@@ -271,39 +300,9 @@ NVokeGpioFile::parse()
     }
 
     return isx::AsyncTaskStatus::COMPLETE;
-       
 }
 
-void 
-NVokeGpioFile::closeFile()
-{
-    DurationInSeconds step(1, 1000);    
-    isize_t numTimes = isize_t(double(m_endTime - m_startTime) * 1E-6 / (step.toDouble())) + 1;
-    Time startTime(DurationInSeconds(isize_t(m_startTime), isize_t(1E6)));
-    TimingInfo timingInfo(startTime, step, numTimes); 
-    Time endTime = timingInfo.getEnd();    
-
-    if(m_outputFile)
-    {
-        std::vector<std::string> names(m_analogSignalIds.size() + m_eventSignalIds.size());
-        std::vector<DurationInSeconds> steps(names.size(), DurationInSeconds(0, 1));
-
-        for (auto & id : m_analogSignalIds)
-        {
-            names[id.second] = s_dataTypeMap.at(id.first);
-            steps[id.second] = step;
-        }
-        for (auto & id : m_eventSignalIds)
-        {
-            names[id.second] = s_dataTypeMap.at(id.first);
-        }
-        m_outputFile->setChannelList(names);
-        m_outputFile->setTimingInfo(startTime, endTime, steps);
-        m_outputFile->closeFileForWriting();
-    }    
-}
-
-void 
+void
 NVokeGpioFile::checkEventCounter(uint8_t * data)
 {
     if((SignalType)data[0] == SignalType::SYNCPKT)
@@ -334,31 +333,13 @@ NVokeGpioFile::checkEventCounter(uint8_t * data)
     m_signalEventCounters[hdr->dataType] = hdr->eventCounter;
 }
 
-
 const std::string &
 NVokeGpioFile::getOutputFileName() const
 {
-    return m_outputFileName; 
+    return m_outputFileName;
 }
 
-
-void 
-NVokeGpioFile::writePktToFile(const EventBasedFileV2::DataPkt & inData)
-{    
-    // If we haven't started writing the file, open it in write mode 
-    if(!m_outputFile)
-    {
-        // Get destination file name
-        m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_gpio.isxd";
-
-        m_outputFile.reset(new EventBasedFileV2(m_outputFileName, DataSet::Type::GPIO, true));        
-    }
-    // Write binary data
-    m_outputFile->writeDataPkt(inData);    
-}
-
-
-void 
+EventBasedFileV2::DataPkt
 NVokeGpioFile::parseGpioPkt(const std::vector<uint8_t> & inPkt)
 {
     ISX_ASSERT(inPkt.size() >= GPIO_PKT_LENGTH);
@@ -372,36 +353,33 @@ NVokeGpioFile::parseGpioPkt(const std::vector<uint8_t> & inPkt)
 
     float state = (pkt->stateMode & GPIO_STATE_MASK) > 0 ? 1.f : 0.f;
 
-    uint64_t usecs = getUsecs(pkt->timeSecs, pkt->timeUSecs);    
+    uint64_t usecs = getUsecs(pkt->timeSecs, pkt->timeUSecs);
 
-    EventBasedFileV2::DataPkt data(usecs, state, m_eventSignalIds.at(pkt->header.dataType));
-    writePktToFile(data);
+    return EventBasedFileV2::DataPkt(usecs, state, m_eventSignalIds.at(pkt->header.dataType));
 }
 
-void 
+EventBasedFileV2::DataPkt
 NVokeGpioFile::parseLedPkt(const std::vector<uint8_t> & inPkt)
 {
     ISX_ASSERT(inPkt.size() >= LED_PKT_LENGTH);
     LedPkt * pkt = (LedPkt *) inPkt.data();
 
     if (m_eventSignalIds.find(pkt->header.dataType) == m_eventSignalIds.end())
-    {   
+    {
         uint64_t next = m_eventSignalIds.size() + m_analogSignalIds.size();
         m_eventSignalIds[pkt->header.dataType] = next;
     }
     uint16_t power1 = (uint16_t)pkt->ledPower & 0x00FF;;
     uint16_t power2 = uint16_t(pkt->powerState & LED_POWER_0_MASK);
-    uint16_t power = (power1 << 1) + (power2 >> 4); 
-    double   dPower = (double)power / 10.0; // In units of mW/mm^2, in the range of [0, 51.1]
+    uint16_t power = (power1 << 1) + (power2 >> 4);
+    double dPower = (double)power / 10.0; // In units of mW/mm^2, in the range of [0, 51.1]
 
-    
     uint64_t usecs = getUsecs(pkt->timeSecs, pkt->timeUSecs);
 
-    EventBasedFileV2::DataPkt data(usecs, float(dPower), m_eventSignalIds.at(pkt->header.dataType));
-    writePktToFile(data);
+    return EventBasedFileV2::DataPkt(usecs, float(dPower), m_eventSignalIds.at(pkt->header.dataType));
 }
 
-void 
+std::vector<EventBasedFileV2::DataPkt>
 NVokeGpioFile::parseAnalogFollowPkt(const std::vector<uint8_t> & inPkt)
 {
     ISX_ASSERT(inPkt.size() >= ANALOG_FOLLOW_PKT_LENGTH);
@@ -413,9 +391,10 @@ NVokeGpioFile::parseAnalogFollowPkt(const std::vector<uint8_t> & inPkt)
         m_analogSignalIds[pkt->header.dataType] = next;
     }
     uint8_t maxPower = (pkt->ogMaxPower[0] & AF_POWER_LAST) | (pkt->ogMaxPower[1] & AF_POWER_FIRST);
-    
+
     uint64_t usecs = getUsecs(pkt->timeSecs, pkt->timeUSecs);
 
+    std::vector<EventBasedFileV2::DataPkt> packets;
     for (isize_t i(0); i < 10; ++i)
     {
         uint16_t hSample = (uint16_t)pkt->analogSamples[2*i] & 0x00FF;
@@ -426,12 +405,12 @@ NVokeGpioFile::parseAnalogFollowPkt(const std::vector<uint8_t> & inPkt)
         uint64_t usecsForPkt = usecs + (uint64_t)(1000*i);
         m_endTime = m_startTime + usecsForPkt;
 
-        EventBasedFileV2::DataPkt data(usecsForPkt, float(dSample), m_analogSignalIds.at(pkt->header.dataType));
-        writePktToFile(data);
+        packets.push_back(EventBasedFileV2::DataPkt(usecsForPkt, float(dSample), m_analogSignalIds.at(pkt->header.dataType)));
     }
+    return packets;
 }
 
-uint64_t 
+uint64_t
 NVokeGpioFile::getUsecs(uint8_t * inSecs, uint8_t * inUSecs)
 {
     uint64_t outUsecs = 0;
@@ -448,7 +427,7 @@ NVokeGpioFile::getUsecs(uint8_t * inSecs, uint8_t * inUSecs)
     for(isize_t i(0); i < 3; ++i)
     {
         uint64_t bytedata = (uint64_t)inUSecs[i] & 0x00000000000000FF;
-        
+
         if(i == 0)
         {
             bytedata &= 0x000000000000000F;
@@ -458,7 +437,7 @@ NVokeGpioFile::getUsecs(uint8_t * inSecs, uint8_t * inUSecs)
     }
 
     // Adjust values to be offsets from start times
-    if(!m_startTimeSet)
+    if (!m_startTimeSet)
     {
         m_startTime = outUsecs;
         m_startTimeSet = true;
@@ -473,7 +452,4 @@ NVokeGpioFile::getUsecs(uint8_t * inSecs, uint8_t * inUSecs)
     return outUsecs;
 }
 
-
-
-
-}
+} // namespace isx

@@ -83,7 +83,6 @@ namespace isx
             }
 
             }
-                            
         }
         catch (const H5::FileIException& error)
         {
@@ -102,9 +101,9 @@ namespace isx
             ISX_ASSERT(false, "Unhandled exception.");
         }
 
-        if(m_checkInCB)
+        if (m_checkInCB)
         {
-            if(m_checkInCB(progress))
+            if (m_checkInCB(progress))
             {
                 return isx::AsyncTaskStatus::CANCELLED;
             }
@@ -151,24 +150,27 @@ namespace isx
     {
         // Get filename for output
         m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + ".isxd";
-        EventBasedFileV2 file(m_outputFileName, DataSet::Type::GPIO, true);
+        const std::vector<std::string> channelNames{"IO1", "IO2", "sync", "trigger"};
+        const size_t numChannels = channelNames.size();
+
+        const DurationInSeconds step = isx::DurationInSeconds(isize_t(1E3), isize_t(1E6));
+        const std::vector<DurationInSeconds> steps(numChannels, step);
+        const std::vector<SignalType> types(numChannels, SignalType::DENSE);
+        EventBasedFileV2 file(m_outputFileName, DataSet::Type::GPIO, channelNames, steps, types);
 
         // Timing info
         isize_t numSamples = m_signals.front().size();
         Time start(DurationInSeconds(isize_t(m_timestamps.front() * 1E6), isize_t(1E6)));
 
-        DurationInSeconds step = isx::DurationInSeconds(isize_t(1E3), isize_t(1E6));
         TimingInfo ti(start, step, numSamples);
-        
 
         float progress = 0.5f;
         bool cancelled = false;
 
         // Write headers and data
-        std::vector<std::string> channelNames{"IO1", "IO2", "sync", "trigger"};
 
         for (isize_t i(0); i < m_signals.size(); ++i)
-        {           
+        {
             for (isize_t j(0); (j < m_signals[i].size() && !cancelled); ++j)
             {
                 progress = 0.5f + 0.5f * (float(i) + float(j)/float(m_signals[i].size()))/ float(m_signals.size());
@@ -187,16 +189,13 @@ namespace isx
                 }
                 EventBasedFileV2::DataPkt pkt(timestamp, val, i);
                 file.writeDataPkt(pkt);
-
             }
         }
 
         // Set timing info
-        std::vector<DurationInSeconds> steps(channelNames.size(), step);
-        file.setTimingInfo(start, ti.getEnd(), steps);
+        file.setTimingInfo(start, ti.getEnd());
 
-        file.setChannelList(channelNames);
-        // Close file and update channel names
+        // Close file
         file.closeFileForWriting();
 
         if (cancelled)

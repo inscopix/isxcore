@@ -13,7 +13,7 @@
 
 namespace isx
 {
-    /// Definitions used to read GPIO raw file that 
+    /// Definitions used to read GPIO raw file that
     /// nVoke outputs
     const isize_t SYNC_PKT_LENGTH           = 7;
     const isize_t GPIO_PKT_LENGTH           = 11;
@@ -49,9 +49,7 @@ namespace isx
                 (syncVal1 == other.syncVal1) &&
                 (syncVal2 == other.syncVal2));
         }
-
-
-    };  
+    };
 
     /// Generic header used to differentiate GPIO, LED and Analog Follow packets
     ///
@@ -61,7 +59,7 @@ namespace isx
         uint8_t pktLength;                     ///< The length of the packet in bytes
         uint8_t eventCounter;                  ///< The event counter used to check if any packets were lost
 
-    }; 
+    };
 
     const uint8_t GPIO_STATE_MASK      = 0x80;
     const uint8_t GPIO_MODE_MASK       = 0x03;
@@ -96,7 +94,6 @@ namespace isx
     const uint8_t AF_POWER_LAST        = 0x80;
     const uint8_t AF_POWER_FIRST       = 0x7F;
 
-
     /// The Analog Follow data packet
     struct AnalogFollowPkt
     {
@@ -112,14 +109,14 @@ namespace isx
 
 
     /// A class that parses an nVoke GPIO file and separates the data packets by stream
-    /// 
+    ///
     class NVokeGpioFile
     {
     public:
 
         /// An enumerator of the different signals available in the GPIO file
         ///
-        enum class SignalType 
+        enum class SignalType
         {
             GPIO1 = 0x01,     ///<
             GPIO2 = 0x02,     ///<
@@ -133,7 +130,7 @@ namespace isx
             DILED = 0x0A,     ///<
             SYNCPKT = 0x55    ///<
         };
- 
+
         /// Default contructor
         /// Constructs an invalid file object
         NVokeGpioFile();
@@ -148,7 +145,7 @@ namespace isx
         ~NVokeGpioFile();
 
         /// \return id this is a valid object
-        /// 
+        ///
         bool isValid();
 
         /// \return the file name for the GPIO original file
@@ -168,38 +165,32 @@ namespace isx
         const std::string & getOutputFileName() const;
 
     private:
-        /// \return whether the input data packet is a sync packet or not. 
+        /// \return whether the input data packet is a sync packet or not.
         /// \param data pointer to a data packet.
         bool isSyncPacket(uint8_t * data);
 
         /// Checks whether any packets have been lost for each signal type
         /// \param data a pointer to the buffer data representing the generic packet header
         void checkEventCounter(uint8_t * data);
-        
 
-        /// Parse the unix time from a data packet in microsecs. 
+
+        /// Parse the unix time from a data packet in microsecs.
         /// \param inSecs a 4 byte array containing the byte data to convert
         /// \param inUSecs a 3 byte array containing the byte data to convert
         uint64_t getUsecs(uint8_t * inSecs, uint8_t * inUSecs);
 
-        /// Parses a GPIO packet 
+        /// Parses a GPIO packet
         /// \param inPkt the data packet
-        void parseGpioPkt(const std::vector<uint8_t> & inPkt);
+        /// \return
+        EventBasedFileV2::DataPkt parseGpioPkt(const std::vector<uint8_t> & inPkt);
 
         /// Parses a LED packet to a file
         /// \param inPkt the data packet
-        void parseLedPkt(const std::vector<uint8_t> & inPkt);
+        EventBasedFileV2::DataPkt parseLedPkt(const std::vector<uint8_t> & inPkt);
 
         /// Parses an analog follow packet to a file
         /// \param inPkt the data packet
-        void parseAnalogFollowPkt(const std::vector<uint8_t> & inPkt);
-
-        /// Closes the output file and writes its footer
-        void closeFile();
-
-        /// Writes the data to an output file
-        /// \param inData           The data packet to write out        
-        void writePktToFile(const EventBasedFileV2::DataPkt & inData);
+        std::vector<EventBasedFileV2::DataPkt> parseAnalogFollowPkt(const std::vector<uint8_t> & inPkt);
 
         /// True if the movie file is valid, false otherwise.
         bool m_valid = false;
@@ -211,8 +202,7 @@ namespace isx
         std::string m_outputDir;
 
         std::string m_outputFileName;
-        std::unique_ptr<EventBasedFileV2> m_outputFile;     
-
+        std::unique_ptr<EventBasedFileV2> m_outputFile;
 
         /// A map used to keep track of event counters per channel (channel, counter)
         std::map<uint8_t, uint8_t> m_signalEventCounters;
@@ -237,8 +227,6 @@ namespace isx
         static std::map<uint8_t, std::string> s_ledGpioFollowMap;
         static std::map<uint8_t, std::string> s_ledStateMap;
         static std::map<uint8_t, std::string> s_ledModeMap;
-
-        
     };
 }
 #endif // ISX_GPIO_DATA_FILE_H

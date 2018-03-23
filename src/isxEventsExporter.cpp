@@ -108,7 +108,6 @@ runEventsExporter(
         std::remove(inParams.m_fileName.c_str());
         throw;
     }
-    
 
     if (cancelled)
     {

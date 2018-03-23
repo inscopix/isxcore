@@ -23,10 +23,18 @@ public:
     ///
     MosaicEvents();
 
-    /// Constructor
+    /// Read constructor.
     /// \param inFileName the name of the Events data file
-    /// \param inOpenForWrite whether to create a writable object or not
-    MosaicEvents(const std::string & inFileName, bool inOpenForWrite = false);
+    MosaicEvents(const std::string & inFileName);
+
+    /// Write constructor
+    /// \param inFileName       The path of the Events data file.
+    /// \param inChannelNames   The names of the events channels (e.g. cell names).
+    /// \param inChannelSteps   The duration of an event sample (e.g. cell acitivity sample duration).
+    MosaicEvents(
+            const std::string & inFileName,
+            const std::vector<std::string> & inChannelNames,
+            const std::vector<DurationInSeconds> & inChannelSteps);
 
     /// Destructor
     ///
@@ -61,22 +69,22 @@ public:
     void
     cancelPendingReads() override;
 
-    void 
+    void
     setTimingInfo(const isx::TimingInfo & inTimingInfo) override;
 
-    void 
+    void
     writeDataPkt(
         const uint64_t inSignalIdx,
         const uint64_t inTimeStampUSec,
         const float inValue) override;
 
-    void 
-    closeForWriting(const std::vector<std::string> & inNewChannelNames = {}) override;
+    void
+    closeForWriting() override;
 
-    bool 
+    bool
     hasMetrics() const override;
 
-    SpTraceMetrics_t 
+    SpTraceMetrics_t
     getTraceMetrics(isize_t inIndex) const override;
 
     void
