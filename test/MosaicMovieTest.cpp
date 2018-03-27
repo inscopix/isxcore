@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <algorithm>
 
+#include "json.hpp"
+using json = nlohmann::json;
+
 namespace
 {
 
@@ -613,24 +616,24 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
     const std::string outputDirPath = g_resources["unitTestDataPath"] + "/MosaicMovieFile";
     isx::makeDirectory(outputDirPath);
 
-    const std::string filePath = outputDirPath + "/movie.isxd";
-
-    const isx::Time start;
-    const isx::DurationInSeconds step(50, 1000);
-    const isx::isize_t numFrames = 3;
-    const isx::TimingInfo timingInfo(start, step, numFrames);
-
-    const isx::SizeInPixels_t numPixels(1280, 800);
-    const isx::SpacingInfo spacingInfo(numPixels);
-    const isx::SpacingInfo paddedSpacingInfo(numPixels + isx::SizeInPixels_t(0, 4));
-    const isx::isize_t totalNumPixels = spacingInfo.getTotalNumPixels();
-    const size_t frameSizeInBytes = totalNumPixels * sizeof(uint16_t);
-    const isx::DataType dataType = isx::DataType::U16;
-
     isx::CoreInitialize();
 
     SECTION("Read frame, frame header/footer and properties after writing")
     {
+        const std::string filePath = outputDirPath + "/movie.isxd";
+
+        const isx::Time start;
+        const isx::DurationInSeconds step(50, 1000);
+        const isx::isize_t numFrames = 3;
+        const isx::TimingInfo timingInfo(start, step, numFrames);
+
+        const isx::SizeInPixels_t numPixels(1280, 800);
+        const isx::SpacingInfo spacingInfo(numPixels);
+        const isx::SpacingInfo paddedSpacingInfo(numPixels + isx::SizeInPixels_t(0, 4));
+        const isx::isize_t totalNumPixels = spacingInfo.getTotalNumPixels();
+        const size_t frameSizeInBytes = totalNumPixels * sizeof(uint16_t);
+        const isx::DataType dataType = isx::DataType::U16;
+
         // The header, frame, and footer values are all some function of
         // the frame and pixel index.
         // Frame values are bounded by the 12-bit sensor, whereas header
@@ -718,6 +721,72 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
 
         // Finally check the extra properties
         REQUIRE(movie->getExtraProperties() == extraPropertiesStr);
+    }
+
+    SECTION("Read movie written by version 0.1 of the hub (no start yet).")
+    {
+        const std::string movieFilePath = g_resources["unitTestDataPath"] + "/hub/2018-03-27-11-15-57_video.isxd";
+
+        const isx::SpMovie_t movie = isx::readMovie(movieFilePath);
+
+        const isx::TimingInfo expTi = isx::TimingInfo(isx::Time(), isx::DurationInSeconds(3, 1000), 7);
+        const isx::SpacingInfo expSi = isx::SpacingInfo(isx::SizeInPixels_t(1280, 800));
+
+        REQUIRE(movie->getTimingInfo() == expTi);
+        REQUIRE(movie->getSpacingInfo() == expSi);
+        REQUIRE(movie->getDataType() == isx::DataType::U16);
+
+        // First get the frames as normal (without the header or footer).
+        const size_t width = expSi.getNumPixels().getWidth();
+        {
+            const isx::SpVideoFrame_t frame = movie->getFrame(0);
+            REQUIRE(frame->getImage().getSpacingInfo() == expSi);
+            const uint16_t * pixels = frame->getPixelsAsU16();
+            REQUIRE(pixels[0] == 365);
+            REQUIRE(pixels[79 + 101*width] == 1247);
+        }
+        {
+            const isx::SpVideoFrame_t frame = movie->getFrame(6);
+            REQUIRE(frame->getImage().getSpacingInfo() == expSi);
+            const uint16_t * pixels = frame->getPixelsAsU16();
+            REQUIRE(pixels[0] == 361);
+            REQUIRE(pixels[79 + 101*width] == 1283);
+        }
+
+        // Then check we can get frame with header and footer.
+        const size_t headerOffset = 2 * width;
+        const isx::SpacingInfo expSiWithHf = isx::SpacingInfo(isx::SizeInPixels_t(1280, 804));
+        {
+            const isx::SpVideoFrame_t frame = movie->getFrameWithHeaderFooter(0);
+            REQUIRE(frame->getImage().getSpacingInfo() == expSiWithHf);
+            const uint16_t * pixels = frame->getPixelsAsU16();
+            REQUIRE(pixels[0] == 160);
+            REQUIRE(pixels[52] == 2128);
+            REQUIRE(pixels[headerOffset] == 365);
+            REQUIRE(pixels[headerOffset + 79 + 101*width] == 1247);
+        }
+        {
+            const isx::SpVideoFrame_t frame = movie->getFrameWithHeaderFooter(6);
+            REQUIRE(frame->getImage().getSpacingInfo() == expSiWithHf);
+            const uint16_t * pixels = frame->getPixelsAsU16();
+            REQUIRE(pixels[0] == 160);
+            REQUIRE(pixels[52] == 2128);
+            REQUIRE(pixels[headerOffset] == 361);
+            REQUIRE(pixels[headerOffset + 79 + 101*width] == 1283);
+        }
+
+        // Finally check some of the extra properties
+        json extraProps = json::parse(movie->getExtraProperties());
+        REQUIRE(extraProps["animal"]["sex"] == "m");
+        REQUIRE(extraProps["animal"]["weight"] == "20");
+        REQUIRE(extraProps["date"] == "Tue Mar 27 2018 11:10:18 GMT-0700 (Pacific Daylight Time)");
+        REQUIRE(extraProps["gpio"][0]["mode"] == "disabled");
+        REQUIRE(extraProps["gpio"][0]["type"] == "analog");
+        REQUIRE(extraProps["microscope"]["binMode"] == "2");
+        REQUIRE(extraProps["microscope"]["type"] == "nVista");
+        REQUIRE(extraProps["probe"]["diameter"] == "0.5");
+        REQUIRE(extraProps["probe"]["type"] == "Straight Lens");
+        REQUIRE(extraProps["name"] == "Session 20180327111018");
     }
 
     isx::CoreShutdown();
