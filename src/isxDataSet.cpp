@@ -233,7 +233,17 @@ DataSet::getMetadata()
     metadata.push_back(std::pair<std::string, std::string>("Duration In Seconds", ss.str()));
     ss.str("");
 
-    ss << m_timingInfo.getStep().getInverse().toDouble();
+    // TODO : This is a temporary workaround for handling files that have 0 step time,
+    // but should be handled more generally when this meta-data display is cleaned up.
+    const isx::DurationInSeconds step = m_timingInfo.getStep();
+    if (step.getNum() == 0)
+    {
+        ss << "Inf";
+    }
+    else
+    {
+        ss << m_timingInfo.getStep().getInverse().toDouble();
+    }
     metadata.push_back(std::pair<std::string, std::string>("Sample Rate In Hertz", ss.str()));
     ss.str("");
 

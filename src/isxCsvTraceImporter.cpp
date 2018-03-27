@@ -22,7 +22,7 @@ CsvTraceImporterParams::getOpName()
     return "Import CSV Trace";
 }
 
-CsvTraceImporterParams 
+CsvTraceImporterParams
 CsvTraceImporterParams::fromString(const std::string & inStr)
 {
     CsvTraceImporterParams params;
@@ -196,13 +196,13 @@ runCsvTraceImporter(
             {
                 value = std::stod(valueStr);
 
+                // TODO : This seems broken because it will be caught by the following
+                // catch block.
                 if (value < 0.0 && (col == inParams.m_timeCol))
                 {
-                    
                     ISX_THROW(ExceptionDataIO, "All timestamps must be non-negative. ",
                               "Found a negative timestamp on row ", row, " in column ",
                               col, " (", valueStr, "). ");
-                    
                 }
             }
             catch (const std::exception &)
@@ -218,9 +218,9 @@ runCsvTraceImporter(
         }
     }
 
-    // Convert timestamps to microsecond precision 
+    // Convert timestamps to microsecond precision
     std::vector<uint64_t> timeStampsUSecs;
-    
+
     for (const auto timeValue : colValues.at(inParams.m_timeCol))
     {
         const DurationInSeconds offset = DurationInSeconds(Ratio::fromDouble(double(timeValue), 6)) * inParams.m_timeUnit;
@@ -228,15 +228,17 @@ runCsvTraceImporter(
     }
     const size_t numValues = timeStampsUSecs.size();
 
-    EventBasedFileV2 outputFile(inParams.m_outputFile, DataSet::Type::GPIO, true);
-    std::vector<std::string> signalNames(inParams.m_colsToImport.size() - 1);
-    std::vector<SignalType> types(inParams.m_colsToImport.size() - 1);
+    const size_t numColsToImport = inParams.m_colsToImport.size();
+    ISX_ASSERT(numColsToImport > 0);
+    const size_t numChannels = numColsToImport - 1;
+    std::vector<std::string> signalNames(numChannels);
+    std::vector<SignalType> types(numChannels);
     uint64_t colInd = 0;
     for (const auto c : inParams.m_colsToImport)
     {
         if (c != inParams.m_timeCol)
-        {   
-            SignalType t = SignalType::SPARSE;         
+        {
+            SignalType t = SignalType::SPARSE;
             for (size_t r = 0; r < numValues; ++r)
             {
                 const float value = float(colValues.at(c).at(r));
@@ -244,34 +246,36 @@ runCsvTraceImporter(
                 {
                     t = SignalType::DENSE;
                 }
-                isx::EventBasedFileV2::DataPkt pkt(timeStampsUSecs.at(r), value, colInd);
-                outputFile.writeDataPkt(pkt);
             }
-            types[colInd] = t;
-            signalNames[colInd] = colNames.at(c);
+            types.at(colInd) = t;
+            signalNames.at(colInd) = colNames.at(c);
             colInd++;
         }
     }
 
-    // TODO : Verify this is the right thing to store for timing info.
-    const DurationInSeconds firstOffset(timeStampsUSecs.front(), isize_t(1e6));
+    // If the sample is really regular then this gives the correct sample duration,
+    // so it seems like a decent way to estimate.
     const double stepDurationUSecs = double(timeStampsUSecs.back() - timeStampsUSecs.front()) / double(numValues - 1);
     const DurationInSeconds stepDuration(Ratio::fromDouble(stepDurationUSecs / 1e6, 6));
-    std::vector<DurationInSeconds> steps(signalNames.size(), stepDuration);
+    const std::vector<DurationInSeconds> steps(signalNames.size(), stepDuration);
 
-    // Set a step of 0 for sparse signals
-    size_t i = 0;
-    for (auto & t : types)
+    EventBasedFileV2 outputFile(inParams.m_outputFile, DataSet::Type::GPIO, signalNames, steps, types);
+    colInd = 0;
+    for (const auto c : inParams.m_colsToImport)
     {
-        if (t == SignalType::SPARSE)
+        if (c != inParams.m_timeCol)
         {
-            steps[i] = DurationInSeconds(0, 1);
+            for (size_t r = 0; r < numValues; ++r)
+            {
+                EventBasedFileV2::DataPkt pkt(timeStampsUSecs.at(r), float(colValues.at(c).at(r)), colInd);
+                outputFile.writeDataPkt(pkt);
+            }
+            ++colInd;
         }
-        ++i;
     }
 
-    outputFile.setChannelList(signalNames);
-    outputFile.setTimingInfo(inParams.m_startTime, inParams.m_startTime + firstOffset + stepDuration * numValues, steps);
+    // We might consider asking for the actual end time, but the last sample will do for now.
+    outputFile.setTimingInfo(inParams.m_startTime, inParams.m_startTime + DurationInSeconds(timeStampsUSecs.back(), isize_t(1e6)));
     outputFile.closeFileForWriting();
 
     if (cancelled)
