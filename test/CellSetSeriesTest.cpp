@@ -70,7 +70,6 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         REQUIRE(css->isValid());
         REQUIRE(css->getSpacingInfo() == spacingInfo);
         REQUIRE(css->getTimingInfo() == expectedTimingInfo);
-        REQUIRE(css->getFileName() == "**CellSetSeries");
         REQUIRE(css->getNumCells() == 0);
 
     }
@@ -93,7 +92,6 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         REQUIRE(css->isValid());
         REQUIRE(css->getSpacingInfo() == spacingInfo);
         REQUIRE(css->getTimingInfo() == expectedTimingInfo);
-        REQUIRE(css->getFileName() == "**CellSetSeries");
         REQUIRE(css->getNumCells() == 0);
 
     }
@@ -184,7 +182,6 @@ TEST_CASE("CellSetSeries", "[core-internal]")
         REQUIRE(css->isValid());
         REQUIRE(css->getSpacingInfo() == spacingInfo);
         REQUIRE(css->getTimingInfo() == expectedTi);
-        REQUIRE(css->getFileName() == "**CellSetSeries");
         REQUIRE(css->getNumCells() == 0);
     }
 

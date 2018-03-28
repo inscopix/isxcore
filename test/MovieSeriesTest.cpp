@@ -118,7 +118,6 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
         REQUIRE(movie->getTimingInfo() == expectedTimingInfo);
         REQUIRE(movie->getTimingInfosForSeries() == expectedTimingInfos);
         REQUIRE(movie->getDataType() == isx::DataType::U16);
-        REQUIRE(movie->getFileName() == "**MovieSeries");
     }
     
     SECTION("Compatible set of movies one with un-aligned start time")
@@ -148,7 +147,6 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
         REQUIRE(movie->getTimingInfo() == expectedTimingInfo);
         REQUIRE(movie->getTimingInfosForSeries() == expectedTimingInfos);
         REQUIRE(movie->getDataType() == isx::DataType::U16);
-        REQUIRE(movie->getFileName() == "**MovieSeries");
     }
 
     SECTION("Compatible set of movies not sequential in time")
@@ -177,7 +175,6 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
         REQUIRE(movie->getTimingInfo() == expectedTimingInfo);
         REQUIRE(movie->getTimingInfosForSeries() == expectedTimingInfos);
         REQUIRE(movie->getDataType() == isx::DataType::U16);
-        REQUIRE(movie->getFileName() == "**MovieSeries");
     }
 
     SECTION("getFrame")
