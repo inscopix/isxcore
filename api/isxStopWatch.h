@@ -26,7 +26,7 @@ public:
     /// Constructor
     ///
     StopWatch();
-    
+
     /// start this stop watch
     ///
     void

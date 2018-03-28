@@ -104,6 +104,11 @@ bool checkNewMemberOfSeries(
 ///         timing infos.
 TimingInfo makeGaplessTimingInfo(const TimingInfos_t & inTis);
 
+/// \param  inType      The type of series (e.g. CellSetSeries).
+/// \param  inFilePaths The paths of the files in the series.
+/// \return             A string that represents the file names of a series.
+std::string makeSeriesFilePathString(const std::string & inType, const std::vector<std::string> & inFilePaths);
+
 } // namespace isx
 
 #endif // ISX_SERIES_UTILS_H

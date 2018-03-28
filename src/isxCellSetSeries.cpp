@@ -74,7 +74,12 @@ namespace isx
     std::string
     CellSetSeries::getFileName() const
     {
-        return "**CellSetSeries";
+        std::vector<std::string> filePaths;
+        for (const auto & cs : m_cellSets)
+        {
+            filePaths.push_back(cs->getFileName());
+        }
+        return makeSeriesFilePathString("CellSetSeries", filePaths);
     }
 
     const isize_t

@@ -43,7 +43,7 @@ public:
     bool
     isValid() const override;
 
-    const std::string &
+    std::string
     getFileName() const override;
 
     isize_t
@@ -83,7 +83,6 @@ private:
 
     TimingInfo                  m_gaplessTimingInfo; ///< only really useful for global number of times
     std::vector<SpEvents_t>     m_events;
-    static const std::string    s_fileName;
 
 }; // class EventsSeries
 

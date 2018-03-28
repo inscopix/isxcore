@@ -12,8 +12,6 @@
 namespace isx
 {
 
-const std::string EventsSeries::s_fileName = "**EventsSeries";
-
 EventsSeries::EventsSeries()
 {
 }
@@ -61,10 +59,15 @@ EventsSeries::isValid() const
     return m_valid;
 }
 
-const std::string &
+std::string
 EventsSeries::getFileName() const
 {
-    return s_fileName;
+    std::vector<std::string> filePaths;
+    for (const auto & e : m_events)
+    {
+        filePaths.push_back(e->getFileName());
+    }
+    return makeSeriesFilePathString("EventSeries", filePaths);
 }
 
 isize_t

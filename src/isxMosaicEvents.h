@@ -45,7 +45,7 @@ public:
     isValid() const override;
 
 
-    const std::string &
+    std::string
     getFileName() const override;
 
     isize_t

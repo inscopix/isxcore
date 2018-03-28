@@ -82,7 +82,12 @@ GpioSeries::isAnalog(const std::string & inChannelName) const
 std::string
 GpioSeries::getFileName() const
 {
-    return "**GpioSeries";
+    std::vector<std::string> filePaths;
+    for (const auto & g : m_gpios)
+    {
+        filePaths.push_back(g->getFileName());
+    }
+    return makeSeriesFilePathString("GpioSeries", filePaths);
 }
 
 isize_t

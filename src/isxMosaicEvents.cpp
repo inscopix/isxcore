@@ -54,7 +54,7 @@ MosaicEvents::isValid() const
     return m_file->isValid();
 }
 
-const std::string &
+std::string
 MosaicEvents::getFileName() const
 {
     return m_file->getFileName();

@@ -84,7 +84,7 @@ public:
     /// \return     The name of the file.
     ///
     virtual
-    const std::string &
+    std::string
     getFileName() const = 0;
 
     /// \return the number of cells contained in the file

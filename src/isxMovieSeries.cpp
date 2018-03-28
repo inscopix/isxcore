@@ -216,7 +216,12 @@ MovieSeries::getDataType() const
 std::string
 MovieSeries::getFileName() const
 {
-    return "**MovieSeries";
+    std::vector<std::string> filePaths;
+    for (const auto & m : m_movies)
+    {
+        filePaths.push_back(m->getFileName());
+    }
+    return makeSeriesFilePathString("MovieSeries", filePaths);
 }
 
 void

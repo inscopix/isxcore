@@ -200,4 +200,21 @@ makeGaplessTimingInfo(const TimingInfos_t & inTis)
     return TimingInfo(first.getStart(), first.getStep(), getTotalNumTimes(inTis));
 }
 
+std::string
+makeSeriesFilePathString(const std::string & inType, const std::vector<std::string> & inFilePaths)
+{
+    std::stringstream stream;
+    stream << inType << "(";
+    for (size_t i = 0; i < inFilePaths.size(); ++i)
+    {
+        stream << inFilePaths.at(i);
+        if (i < (inFilePaths.size() - 1))
+        {
+            stream << ", ";
+        }
+    }
+    stream << ")";
+    return stream.str();
+}
+
 } // namespace isx
