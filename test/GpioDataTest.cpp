@@ -247,7 +247,7 @@ TEST_CASE("GpioDataTest", "[core]")
         ISX_REQUIRE_EXCEPTION(isx::NVokeGpioFile raw(fileName, outputDir), isx::ExceptionFileIO, "");
     }
 
-    SECTION("MOS-1365")
+    SECTION("MOS-1365. Make sure we don't error.")
     {
         const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVokeGpio";
         const std::string filePath = inputDirPath + "/recording_20170917_171029_gpio.raw";
