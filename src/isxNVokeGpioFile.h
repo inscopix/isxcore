@@ -58,7 +58,6 @@ namespace isx
         uint8_t dataType;                      ///< The data type code
         uint8_t pktLength;                     ///< The length of the packet in bytes
         uint8_t eventCounter;                  ///< The event counter used to check if any packets were lost
-
     };
 
     const uint8_t GPIO_STATE_MASK      = 0x80;
@@ -172,7 +171,6 @@ namespace isx
         /// Checks whether any packets have been lost for each signal type
         /// \param data a pointer to the buffer data representing the generic packet header
         void checkEventCounter(uint8_t * data);
-
 
         /// Parse the unix time from a data packet in microsecs.
         /// \param inSecs a 4 byte array containing the byte data to convert
