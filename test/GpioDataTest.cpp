@@ -178,8 +178,6 @@ TEST_CASE("GpioDataTest", "[core]")
             header,
             usecsFromStart,
             power);
-
-
     }
 
     SECTION("Parse a nVista GPIO file - SYNC, TRIG, IO1, IO2")
@@ -239,7 +237,6 @@ TEST_CASE("GpioDataTest", "[core]")
                 REQUIRE(exp.at(i) == t->getValue(i));
             }
         }
-
     }
 
     SECTION("Try to parse an nVista raw file")
@@ -248,6 +245,18 @@ TEST_CASE("GpioDataTest", "[core]")
         const std::string outputDir = isx::getAbsolutePath(g_resources["unitTestDataPath"] + "/nVistaRaw");
 
         ISX_REQUIRE_EXCEPTION(isx::NVokeGpioFile raw(fileName, outputDir), isx::ExceptionFileIO, "");
+    }
+
+    SECTION("MOS-1365. Make sure we don't error.")
+    {
+        const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVokeGpio";
+        const std::string filePath = inputDirPath + "/recording_20170917_171029_gpio.raw";
+
+        const std::string outputDirPath = inputDirPath + "/output";
+        isx::makeDirectory(outputDirPath);
+
+        isx::NVokeGpioFile raw(filePath, outputDirPath);
+        raw.parse();
     }
 
     isx::CoreShutdown();
