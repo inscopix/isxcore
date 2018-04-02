@@ -57,6 +57,14 @@ public:
     void
     getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback) = 0;
 
+    /// Get a frame with its header and footer if it exists. Runs synchronously.
+    ///
+    /// \param  inFrameNumber   The frame number.
+    /// \return                 The frame associated with a given frame number.
+    virtual
+    SpVideoFrame_t
+    getFrameWithHeaderFooter(const size_t inFrameNumber);
+
     /// cancel all pending read requests (scheduled via getFrameAsync) for this movie
     ///
     virtual
@@ -95,6 +103,11 @@ public:
     DataType
     getDataType() const = 0;
 
+    /// \return     The extra properties of this movie which might include things
+    ///             from nVista 3. The string is in JSON format.
+    virtual
+    std::string
+    getExtraProperties() const;
 };
 
 } // namespace isx

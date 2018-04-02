@@ -1,6 +1,7 @@
 #include "isxMosaicMovieFile.h"
 #include "catch.hpp"
 #include "isxTest.h"
+#include "isxPathUtils.h"
 
 #include <stdio.h>
 #include <algorithm>

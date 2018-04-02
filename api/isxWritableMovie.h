@@ -41,12 +41,18 @@ public:
     ///
     /// This does not set the frame type (valid, dropped, etc.) for performance reasons.
     ///
-    /// \param  inIndex     The index of the frame in the given movie.
-    /// \return             The created frame.
+    /// \param  inIndex             The index of the frame in the given movie.
+    /// \param  inWithHeaderFooter  If true, create a frame a with header/footer rows.
+    /// \return                     The created frame.
     virtual
     SpVideoFrame_t
-    makeVideoFrame(isize_t inIndex) = 0;
+    makeVideoFrame(isize_t inIndex, const bool inWithHeaderFooter = false) = 0;
 
+    /// \param  inProperties    The extra properties formatted as a JSON string.
+    ///
+    virtual
+    void
+    setExtraProperties(const std::string & inProperties) = 0;
 };
 
 } // namespace isx

@@ -269,5 +269,4 @@ NVistaTiffMovie::getMovieIndex(isize_t inFrameNumber)
     return idx;
 }
 
-
 } // namespace isx

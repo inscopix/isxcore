@@ -52,7 +52,8 @@ public:
     MosaicMovie(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
                 const SpacingInfo & inSpacingInfo,
-                DataType inDataType);
+                DataType inDataType,
+                const bool inHasFrameHeaderFooter = false);
 
     // Overrides - see base classes for documentation
     bool isValid() const override;
@@ -68,7 +69,7 @@ public:
     void
     closeForWriting(const TimingInfo & inTimingInfo = TimingInfo()) override;
 
-    SpVideoFrame_t makeVideoFrame(isize_t inIndex) override;
+    SpVideoFrame_t makeVideoFrame(isize_t inIndex, const bool inWithHeaderFooter = false) override;
 
     const isx::TimingInfo & getTimingInfo() const override;
 
@@ -83,6 +84,12 @@ public:
 
     void serialize(std::ostream & strm) const override;
 
+    void setExtraProperties(const std::string & inProperties) override;
+
+    std::string getExtraProperties() const override;
+
+    SpVideoFrame_t
+    getFrameWithHeaderFooter(const size_t inFrameNumber) override;
 
 private:
 

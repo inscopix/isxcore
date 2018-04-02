@@ -99,7 +99,8 @@ public:
     std::string getFileName() const override;
 
     void serialize(std::ostream & strm) const override;
-   
+
+    std::string getExtraProperties() const override;
 
 private:
     /// Note that this does not set the type of frame (valid, dropped, etc.)
