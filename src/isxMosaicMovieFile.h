@@ -56,7 +56,8 @@ public:
     MosaicMovieFile(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
                 const SpacingInfo & inSpacingInfo,
-                DataType inDataType);
+                DataType inDataType,
+                const bool inWriteFrameTimeStamps = false);
 
     /// Default destructor
     ///
@@ -77,12 +78,17 @@ public:
 
     /// Read a frame in the file by index.
     ///
-    /// \param  inFrameNumber   The index of the frame.
-    /// \return                 The frame read from the file.
+    /// \param  inFrameNumber       The index of the frame.
+    /// \param  inWithHeaderFooter  If true and the frame has header/footer rows, read the frame with them,
+    ///                             otherwise, do not.
+    /// \return                     The frame read from the file.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If inFrameNumber is out of range.
-    SpVideoFrame_t readFrame(isize_t inFrameNumber);
+    SpVideoFrame_t readFrame(isize_t inFrameNumber, const bool inWithHeaderFooter = false);
+
+    /// \param  inFrameNumber   The index of the frame.
+    /// \return                 The frame with the header and footer if it exists.
 
     /// Write a frame to the file.
     ///
@@ -119,6 +125,21 @@ public:
     ///
     DataType getDataType() const;
 
+    /// \param  inIndex             The index of the frame to generate.
+    /// \param  inWithHeaderFooter  If true, create a frame a with header/footer rows.
+    /// \return                     The frame associated with the given index.
+    SpVideoFrame_t makeVideoFrame(const isize_t inIndex, const bool inWithHeaderFooter = false) const;
+
+    /// \param  inProperties    The extra properties formatted as a JSON string.
+    ///
+    void
+    setExtraProperties(const std::string & inProperties);
+
+    /// \return The extra properties of formatted as a JSON string.
+    ///
+    std::string
+    getExtraProperties() const;
+
 private:
     /// True if the movie file is valid, false otherwise.
     bool m_valid;
@@ -143,7 +164,23 @@ private:
 
     bool m_fileClosedForWriting = false;
 
-    const static size_t s_version = 0;
+    /// The version of this file format.
+    const static size_t s_version = 1;
+
+    /// True if the frame bytes contain fixed size header and footer lines.
+    bool m_hasFrameHeaderFooter = false;
+
+    /// The number of rows in the header.
+    const static size_t s_numHeaderRows = 2;
+
+    /// The number of rows in the footer.
+    const static size_t s_numFooterRows = s_numHeaderRows;
+
+    /// The number of rows in the header and footer.
+    const static size_t s_numHeaderFooterRows = s_numHeaderRows + s_numFooterRows;
+
+    /// The extra properties to write in the JSON footer.
+    json m_extraProperties;
 
     /// Initialize for reading.
     ///
@@ -165,7 +202,8 @@ private:
     void initialize(const std::string & inFileName,
                     const TimingInfo & inTimingInfo,
                     const SpacingInfo & inSpacingInfo,
-                    DataType inDataType);
+                    DataType inDataType,
+                    const bool inWriteFrameTimeStamps);
 
     /// Read the header to populate information about the movie.
     ///
@@ -193,7 +231,9 @@ private:
     /// Seek to the location of a frame for reading.
     ///
     /// \param  inFrameNumber   The number of the frame to which to seek.
-    void seekForReadFrame(isize_t inFrameNumber);
+    /// \param  inSkipHeader    If true, skips the frame header if it exists,
+    ///                         otherwise include the header.
+    void seekForReadFrame(isize_t inFrameNumber, const bool inSkipHeader);
 
     /// Flush the stream
     ///

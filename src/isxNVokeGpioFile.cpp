@@ -20,6 +20,15 @@ std::map<uint8_t, std::string> NVokeGpioFile::s_dataTypeMap =
     {0x08, "EX_LED"},
     {0x09, "OG_LED"},
     {0x0A, "DI_LED"},
+// These are in the Python script, but I don't know if we need
+// them here or should do anything with them.
+// I found them while working on MOS-1365, but left them unused
+// because I fixed that without them.
+//    {0x36, "error"},
+//    {0x37, "error"},
+//    {0x54, "error"},
+//    {0x76, "error"},
+//    {0x85, "error"},
     {0x55, "sync_pkt"}
 };
 
@@ -305,14 +314,22 @@ NVokeGpioFile::parse()
 void
 NVokeGpioFile::checkEventCounter(uint8_t * data)
 {
-    if((SignalType)data[0] == SignalType::SYNCPKT)
+    if (SignalType(data[0]) == SignalType::SYNCPKT)
     {
         return;
     }
 
     GenericPktHeader * hdr = (GenericPktHeader *) data;
+
+    if (s_dataTypeMap.find(hdr->dataType) == s_dataTypeMap.end())
+    {
+        // Thought about logging an error, but think it might be too verbose.
+        //ISX_LOG_ERROR("Unrecognized data type ", hdr->dataType, ".");
+        return;
+    }
+
     auto search = m_signalEventCounters.find(hdr->dataType);
-    if(search != m_signalEventCounters.end())
+    if (search != m_signalEventCounters.end())
     {
         if (m_signalEventCounters.at(hdr->dataType) == 255)
         {

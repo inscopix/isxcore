@@ -47,13 +47,6 @@ public:
             Time inTimeStamp,
             isize_t inFrameIndex);
 
-    /// Construct a frame in a given movie.
-    ///
-    /// \param  inMovie         The movie of which to create a frame.
-    /// \param  inFrameNumber   The index of the frame in the given movie.
-    /// \return                 The created frame.
-    VideoFrame(const SpMovie_t & inMovie, isize_t inFrameNumber);
-
     /// \return the image data for this videoframe
     ///
     Image &

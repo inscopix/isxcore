@@ -65,7 +65,8 @@ MosaicMovie::MosaicMovie(
     const std::string & inFileName,
     const TimingInfo & inTimingInfo,
     const SpacingInfo & inSpacingInfo,
-    const DataType inDataType)
+    const DataType inDataType,
+    const bool inHasFrameHeaderFooter)
     : m_valid(false)
     , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
@@ -104,7 +105,7 @@ MosaicMovie::MosaicMovie(
     //mutex.unlock();
     //m_file = file;
 
-    m_file = std::make_shared<MosaicMovieFile>(inFileName, inTimingInfo, inSpacingInfo, inDataType);
+    m_file = std::make_shared<MosaicMovieFile>(inFileName, inTimingInfo, inSpacingInfo, inDataType, inHasFrameHeaderFooter);
     m_valid = true;
 }
 
@@ -205,20 +206,9 @@ MosaicMovie::closeForWriting(const TimingInfo & inTimingInfo)
 }
 
 SpVideoFrame_t
-MosaicMovie::makeVideoFrame(isize_t inIndex)
+MosaicMovie::makeVideoFrame(isize_t inIndex, const bool inWithHeaderFooter)
 {
-    const SpacingInfo spacingInfo = getSpacingInfo();
-    const DataType dataType = getDataType();
-    const isize_t pixelSizeInBytes = getDataTypeSizeInBytes(dataType);
-    const isize_t rowSizeInBytes = pixelSizeInBytes * spacingInfo.getNumColumns();
-    SpVideoFrame_t outFrame = std::make_shared<VideoFrame>(
-            spacingInfo,
-            rowSizeInBytes,
-            1,
-            dataType,
-            getTimingInfo().convertIndexToStartTime(inIndex),
-            inIndex);
-    return outFrame;
+    return m_file->makeVideoFrame(inIndex, inWithHeaderFooter);
 }
 
 const isx::TimingInfo &
@@ -255,6 +245,53 @@ void
 MosaicMovie::serialize(std::ostream & strm) const
 {
     strm << getFileName();
+}
+
+void
+MosaicMovie::setExtraProperties(const std::string & inProperties)
+{
+    m_file->setExtraProperties(inProperties);
+}
+
+std::string
+MosaicMovie::getExtraProperties() const
+{
+    return m_file->getExtraProperties();
+}
+
+SpVideoFrame_t
+MosaicMovie::getFrameWithHeaderFooter(const size_t inFrameNumber)
+{
+    std::weak_ptr<MosaicMovie> weakThis = shared_from_this();
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("getFrameWithHeaderFooter");
+    AsyncTaskResult<SpVideoFrame_t> asyncTaskResult;
+
+    GetFrameCB_t getFrameCB = [weakThis, this, inFrameNumber]()
+    {
+        auto sharedThis = weakThis.lock();
+        if (sharedThis)
+        {
+            return m_file->readFrame(inFrameNumber, true);
+        }
+        return SpVideoFrame_t();
+    };
+
+    MovieGetFrameCB_t asyncCB = [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
+    {
+        mutex.lock("getFrame async");
+        asyncTaskResult = inAsyncTaskResult;
+        mutex.unlock();
+        cv.notifyOne();
+    };
+
+    m_ioTaskTracker->schedule(getFrameCB, asyncCB);
+
+    cv.wait(mutex);
+    mutex.unlock();
+
+    return asyncTaskResult.get();
 }
 
 } // namespace isx

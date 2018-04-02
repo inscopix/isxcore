@@ -20,6 +20,18 @@ DurationInSeconds::DurationInSeconds(const Ratio & ratio)
     ISX_ASSERT(ratio >= 0);
 }
 
+DurationInSeconds
+DurationInSeconds::fromMicroseconds(const uint64_t inMicroseconds)
+{
+    return DurationInSeconds(inMicroseconds, 1E6);
+}
+
+uint64_t
+DurationInSeconds::toMicroseconds() const
+{
+    return uint64_t(toDouble() * 1E6);
+}
+
 const int32_t Time::s_minUtcOffset = -50400;
 const int32_t Time::s_maxUtcOffset = 50400;
 
