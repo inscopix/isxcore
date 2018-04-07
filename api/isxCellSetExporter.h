@@ -15,21 +15,25 @@ struct CellSetExporterParams
     /// \param inTraceFilename       filename for trace output file
     /// \param inImagesFilename      base filename for cell images output file
     /// \param inWriteTimeRelativeTo time reference point
+    /// \param inWritePngImage       true if PNG cell map image should be written,
+    ///                              false otherwise
     CellSetExporterParams(
         const std::vector<SpCellSet_t> & inSrcs, 
         const std::string & inTraceFilename,
         const std::string & inImagesFilename,
-        WriteTimeRelativeTo inWriteTimeRelativeTo)
+        WriteTimeRelativeTo inWriteTimeRelativeTo,
+        const bool inWritePngImage = true)
     : m_srcs(inSrcs)
     , m_outputTraceFilename(inTraceFilename)
     , m_outputImageFilename(inImagesFilename)
     , m_writeTimeRelativeTo(inWriteTimeRelativeTo)
+    , m_writePngImage(inWritePngImage)
     {}
 
     /// default constructor
     /// 
     CellSetExporterParams() :
-    CellSetExporterParams(std::vector<SpCellSet_t>{}, std::string(), std::string(), WriteTimeRelativeTo(0))
+    CellSetExporterParams(std::vector<SpCellSet_t>{}, std::string(), std::string(), WriteTimeRelativeTo(0), true)
     {}
     
     /// \return export operation name to display to user
@@ -54,6 +58,7 @@ struct CellSetExporterParams
     std::string              m_outputTraceFilename;     ///< name of output file for traces
     std::string              m_outputImageFilename;     ///< base filename for output images
     WriteTimeRelativeTo      m_writeTimeRelativeTo;     ///< how to write time stamps in file
+    bool                     m_writePngImage;           ///< true if PNG cell map should be written, false otherwise
 };
 
 /// CellSet exporter output parameters 

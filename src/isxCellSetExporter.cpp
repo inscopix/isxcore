@@ -24,6 +24,7 @@ CellSetExporterParams::toString() const
     using json = nlohmann::json;
     json j;
     j["writeTimeRelativeTo"] = int(m_writeTimeRelativeTo);
+    j["writePngImage"] = m_writePngImage;
     return j.dump(4);
 }
 
@@ -187,14 +188,15 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
             // export accepted cell map to tiff
             SpImage_t map = cellSetToCellMap(cs, false, true);
             std::string fn = dirname + "/" + basename + "_accepted-cells-map." + extension;
-
             toTiff(fn, map);
 
             // export accepted cell map to png
-            SpImage_t PNGmap = convertImageF32toU8(map);
-            fn = dirname + "/" + basename + "_accepted-cells-map.png";
-
-            toPng(fn, PNGmap);
+            if (inParams.m_writePngImage)
+            {
+                SpImage_t PNGmap = convertImageF32toU8(map);
+                fn = dirname + "/" + basename + "_accepted-cells-map.png";
+                toPng(fn, PNGmap);
+            }
         }
     }
 
