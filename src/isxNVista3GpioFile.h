@@ -1,5 +1,5 @@
-#ifndef ISX_NVOKE_GPIO_FILE_H
-#define ISX_NVOKE_GPIO_FILE_H
+#ifndef ISX_NVISTA3_GPIO_FILE_H
+#define ISX_NVISTA3_GPIO_FILE_H
 
 #include "isxCore.h"
 #include "isxAsync.h"
@@ -110,7 +110,7 @@ struct AnalogFollowPkt
 
 /// A class that parses an nVoke GPIO file and separates the data packets by stream
 ///
-class NVokeGpioFile
+class NVista3GpioFile
 {
 public:
 
@@ -133,16 +133,16 @@ public:
 
     /// Default contructor
     /// Constructs an invalid file object
-    NVokeGpioFile();
+    NVista3GpioFile();
 
     /// Constructor for a valid file object
     /// \param inFileName  the name of the file to read
     /// \param inOutputDir the directory that is going to contain the files for individual streams
-    NVokeGpioFile(const std::string & inFileName, const std::string & inOutputDir);
+    NVista3GpioFile(const std::string & inFileName, const std::string & inOutputDir);
 
     /// Destructor
     ///
-    ~NVokeGpioFile();
+    ~NVista3GpioFile();
 
     /// \return id this is a valid object
     ///
@@ -227,8 +227,8 @@ private:
     static std::map<uint8_t, std::string> s_ledStateMap;
     static std::map<uint8_t, std::string> s_ledModeMap;
 
-}; // class NVokeGpioFile
+}; // class NVista3GpioFile
 
 } // namespace isx
 
-#endif // ISX_NVOKE_GPIO_FILE_H
+#endif // ISX_NVISTA3_GPIO_FILE_H

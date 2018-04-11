@@ -7,6 +7,7 @@
 #include "isxDataSet.h"
 #include "isxGpio.h"
 #include "isxFileTypes.h"
+#include "isxNVista3GpioFile.h"
 
 #include "catch.hpp"
 
@@ -256,6 +257,24 @@ TEST_CASE("GpioDataTest", "[core]")
         isx::makeDirectory(outputDirPath);
 
         isx::NVokeGpioFile raw(filePath, outputDirPath);
+        raw.parse();
+    }
+
+    isx::CoreShutdown();
+}
+
+TEST_CASE("NVista3GpioFile", "[core]")
+{
+    const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio";
+    const std::string outputDirPath = inputDirPath + "/output";
+    isx::makeDirectory(outputDirPath);
+
+    isx::CoreInitialize();
+
+    SECTION("MOS-1450")
+    {
+        const std::string inputFilePath = inputDirPath + "/adp_events.dump";
+        isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
         raw.parse();
     }
 

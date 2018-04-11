@@ -1,5 +1,6 @@
 #ifndef ISX_NVISTA_GPIO_FILE_H
 #define ISX_NVISTA_GPIO_FILE_H
+
 #include "isxCore.h"
 #include "isxCoreFwd.h"
 #include "isxAsync.h"
@@ -10,79 +11,79 @@
 #include <map>
 #include <memory>
 
-
 namespace isx
 {
-    
-    /// A class that parses an nVista GPIO file 
-    /// 
-    class NVistaGpioFile
-    {
-    public:
 
- 
-        /// Default contructor
-        /// Constructs an invalid file object
-        NVistaGpioFile();
+/// A class that parses an nVista GPIO file
+///
+class NVistaGpioFile
+{
+public:
 
-        /// Constructor for a valid file object
-        /// \param inFileName  the name of the file to read
-        /// \param inOutputDir the directory that is going to contain the files for individual streams
-        /// \param inCheckInCB check in callback used for Async processing
-        NVistaGpioFile(const std::string & inFileName, const std::string & inOutputDir, AsyncCheckInCB_t inCheckInCB);
 
-        /// Destructor
-        ///
-        ~NVistaGpioFile();
+    /// Default contructor
+    /// Constructs an invalid file object
+    NVistaGpioFile();
 
-        /// \return id this is a valid object
-        /// 
-        bool isValid();
+    /// Constructor for a valid file object
+    /// \param inFileName  the name of the file to read
+    /// \param inOutputDir the directory that is going to contain the files for individual streams
+    /// \param inCheckInCB check in callback used for Async processing
+    NVistaGpioFile(const std::string & inFileName, const std::string & inOutputDir, AsyncCheckInCB_t inCheckInCB);
 
-        /// \return the file name for the GPIO original file
-        ///
-        const std::string & getFileName();
+    /// Destructor
+    ///
+    ~NVistaGpioFile();
 
-        /// Parses the original file and writes signals from different channels to a separate file
-        /// \throw isx::ExceptionDataIO  if unrecognized packets are read from the file
-        /// \throw isx::ExceptionFileIO  if there is a problem reading or writing files
-        /// \return whether the process completed or it was cancelled
-        AsyncTaskStatus parse();
+    /// \return id this is a valid object
+    ///
+    bool isValid();
 
-        /// Get the ouput file name
-        /// 
-        const std::string & getOutputFileName() const;
+    /// \return the file name for the GPIO original file
+    ///
+    const std::string & getFileName();
 
-    private:
+    /// Parses the original file and writes signals from different channels to a separate file
+    /// \throw isx::ExceptionDataIO  if unrecognized packets are read from the file
+    /// \throw isx::ExceptionFileIO  if there is a problem reading or writing files
+    /// \return whether the process completed or it was cancelled
+    AsyncTaskStatus parse();
 
-        void initTimestamps();
+    /// Get the ouput file name
+    ///
+    const std::string & getOutputFileName() const;
 
-        /// Writes event data (digital packets)
-        AsyncTaskStatus writeLogicalFile();
+private:
 
-        /// True if the movie file is valid, false otherwise.
-        bool m_valid = false;
+    void initTimestamps();
 
-        SpHdf5FileHandle_t m_inputHandle;
+    /// Writes event data (digital packets)
+    AsyncTaskStatus writeLogicalFile();
 
-        /// The name of the data file.
-        std::string m_fileName;
+    /// True if the movie file is valid, false otherwise.
+    bool m_valid = false;
 
-        /// The directory where output files will be written.
-        std::string m_outputDir;
+    SpHdf5FileHandle_t m_inputHandle;
 
-        std::vector<double> m_timestamps;
+    /// The name of the data file.
+    std::string m_fileName;
 
-        std::vector<uint8_t> m_counts;
+    /// The directory where output files will be written.
+    std::string m_outputDir;
 
-        std::vector<std::vector<bool>> m_signals;
+    std::vector<double> m_timestamps;
 
-        std::string m_outputFileName;
+    std::vector<uint8_t> m_counts;
 
-        /// Check in callback for reporting progress
-        AsyncCheckInCB_t m_checkInCB;
+    std::vector<std::vector<bool>> m_signals;
 
-        
-    };
-}
+    std::string m_outputFileName;
+
+    /// Check in callback for reporting progress
+    AsyncCheckInCB_t m_checkInCB;
+
+}; // class NVistaGpioFile
+
+} // namespace isx
+
 #endif // ISX_NVISTA_GPIO_FILE_H
