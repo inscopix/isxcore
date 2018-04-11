@@ -237,7 +237,6 @@ EventBasedFileV2::getTimingInfo(const std::string & inChannelName) const
         // If this has been hanging around for a while, remove it.
         //const DurationInSeconds offset(m_startOffsets[i], 1000000);
         //return TimingInfo(m_startTime + offset, m_steps[i], m_numSamples[i]);
-        // TODO : Why is this m_numSamples?
         return TimingInfo(m_startTime, m_steps[i], m_numSamples[i]);
     }
 }
