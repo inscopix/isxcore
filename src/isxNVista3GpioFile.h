@@ -89,7 +89,14 @@ private:
     enum class Channel : uint32_t
     {
         FRAME_COUNTER,
-        DIGITAL_GPI, // Think there are 8 of these.
+        DIGITAL_GPI_0,
+        DIGITAL_GPI_1,
+        DIGITAL_GPI_2,
+        DIGITAL_GPI_3,
+        DIGITAL_GPI_4,
+        DIGITAL_GPI_5,
+        DIGITAL_GPI_6,
+        DIGITAL_GPI_7,
         BNC_GPIO_IN_1,
         BNC_GPIO_IN_2,
         BNC_GPIO_IN_3,
@@ -98,10 +105,13 @@ private:
         OG_LED,
         DI_LED,
         EFOCUS,
-        TRIG_SYNC_FLASH,
+        BNC_TRIG,
+        BNC_SYNC,
     };
 
     const static std::map<Channel, std::string> s_channelNames;
+
+    const static std::map<Channel, SignalType> s_channelTypes;
 
     /// The signature sync word.
     const static uint32_t s_syncWord = 0x0000AA55;
@@ -130,12 +140,20 @@ private:
     /// Read a variable from the file.
     ///
     template <typename T>
-    void read(T & outVar)
+    T read(T & outVar)
     {
         m_file.read(reinterpret_cast<char *>(&outVar), sizeof(outVar));
+        return outVar;
     }
 
-    void skip(const size_t inNumBytes);
+    void skipBytes(const size_t inNumBytes);
+    void skipWords(const size_t inNumWords);
+
+    std::vector<EventBasedFileV2::DataPkt> m_packets;
+    std::map<Channel, uint64_t> m_indices;
+    uint64_t m_firstTime = 0;
+
+    void addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue);
 
 }; // class NVista3GpioFile
 
