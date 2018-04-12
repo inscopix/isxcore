@@ -792,3 +792,18 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
     isx::CoreShutdown();
     isx::removeDirectory(outputDirPath);
 }
+
+TEST_CASE("MosaicMovie-negative", "[core]")
+{
+    isx::CoreInitialize();
+
+    const std::string inputDirPath = g_resources["unitTestDataPath"] + "/negative";
+
+    SECTION("Empty file")
+    {
+        const std::string inputFilePath = inputDirPath + "/empty.isxd";
+        ISX_REQUIRE_EXCEPTION(isx::readMovie(inputFilePath), isx::Exception, "");
+    }
+
+    isx::CoreShutdown();
+}
