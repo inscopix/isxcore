@@ -105,6 +105,9 @@ private:
         OG_LED,
         DI_LED,
         EFOCUS,
+        TRIG,
+        SYNC,
+        FLASH,
         BNC_TRIG,
         BNC_SYNC,
     };
@@ -154,6 +157,7 @@ private:
     uint64_t m_firstTime = 0;
 
     void addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue);
+    void addDigitalGpiPkts(const uint64_t inTsc, const uint16_t inDigitalGpi);
 
 }; // class NVista3GpioFile
 

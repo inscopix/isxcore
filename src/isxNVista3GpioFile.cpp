@@ -41,6 +41,9 @@ const std::map<NVista3GpioFile::Channel, std::string> NVista3GpioFile::s_channel
     {NVista3GpioFile::Channel::OG_LED, "OG_LED"},
     {NVista3GpioFile::Channel::DI_LED, "DI_LED"},
     {NVista3GpioFile::Channel::EFOCUS, "efocus"},
+    {NVista3GpioFile::Channel::TRIG, "TRIG"},
+    {NVista3GpioFile::Channel::SYNC, "SYNC"},
+    {NVista3GpioFile::Channel::FLASH, "FLASH"},
     {NVista3GpioFile::Channel::BNC_TRIG, "BNC TRIG"},
     {NVista3GpioFile::Channel::BNC_SYNC, "BNC SYNC"},
 };
@@ -63,6 +66,9 @@ const std::map<NVista3GpioFile::Channel, SignalType> NVista3GpioFile::s_channelT
     {NVista3GpioFile::Channel::EX_LED, SignalType::SPARSE},
     {NVista3GpioFile::Channel::OG_LED, SignalType::SPARSE},
     {NVista3GpioFile::Channel::DI_LED, SignalType::SPARSE},
+    {NVista3GpioFile::Channel::TRIG, SignalType::SPARSE},
+    {NVista3GpioFile::Channel::SYNC, SignalType::SPARSE},
+    {NVista3GpioFile::Channel::FLASH, SignalType::SPARSE},
     {NVista3GpioFile::Channel::EFOCUS, SignalType::SPARSE},
     {NVista3GpioFile::Channel::BNC_TRIG, SignalType::SPARSE},
     {NVista3GpioFile::Channel::BNC_SYNC, SignalType::SPARSE},
@@ -136,7 +142,17 @@ NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, con
     if (inChannel == Channel::BNC_GPIO_IN_2)
     {
         ISX_LOG_DEBUG("Wrote packet : ", inTimeStamp, ", ", inValue);
-        //ISX_LOG_DEBUG("Wrote packet : ", inTimeStamp, ", ", inValue, ", ", s_channelNames.at(inChannel));
+    }
+}
+
+void
+NVista3GpioFile::addDigitalGpiPkts(const uint64_t inTsc, const uint16_t inDigitalGpi)
+{
+    uint64_t digitalGpi = inDigitalGpi;
+    for (uint32_t i = uint32_t(Channel::DIGITAL_GPI_0); i <= uint32_t(Channel::DIGITAL_GPI_7); ++i)
+    {
+        addPkt(Channel(i), inTsc, float(digitalGpi & 0b1));
+        digitalGpi >>= 1;
     }
 }
 
@@ -147,12 +163,14 @@ NVista3GpioFile::parse()
     PktHeader header;
 
     uint64_t tsc;
+    uint32_t tscLow;
+    uint32_t tscHigh;
     uint32_t fc;
     uint16_t digitalGpi;
     uint16_t bncGpioIn1, bncGpioIn2, bncGpioIn3, bncGpioIn4;
     uint16_t exLed, ogLed, diLed;
     uint16_t eFocus;
-//    uint16_t trigSyncFlash;
+//    uint32_t trigSyncFlash;
     uint16_t bncTrig, bncSync;
 
     m_packets.clear();
@@ -168,6 +186,7 @@ NVista3GpioFile::parse()
             continue;
         }
         ++syncCount;
+        ISX_LOG_DEBUG("At byte ", m_file.tellg());
 
         //ISX_LOG_DEBUG("Found sync");
 
@@ -175,7 +194,7 @@ NVista3GpioFile::parse()
         //ISX_LOG_DEBUG("Read packet type ", header.m_type);
         if ((header.m_type >> 8) != s_eventSignature)
         {
-            //ISX_LOG_DEBUG("Found non-event header");
+            ISX_LOG_DEBUG("Found non-event header");
             continue;
         }
         //ISX_LOG_DEBUG("Read sequence ", header.m_sequence);
@@ -183,9 +202,14 @@ NVista3GpioFile::parse()
 
         if (Event(header.m_type) != Event::WAVEFORM)
         {
-            read(tsc);
+            read(tscHigh);
+            read(tscLow);
+            ISX_LOG_DEBUG("Read TSC high ", tscHigh);
+            ISX_LOG_DEBUG("Read TSC low ", tscLow);
+            tsc = (uint64_t(tscHigh) << 32) | uint64_t(tscLow);
+            ISX_LOG_DEBUG("Got TSC ", tsc);
+
             read(fc);
-            //ISX_LOG_DEBUG("Read TSC ", tsc);
             //ISX_LOG_DEBUG("Read FC ", fc);
         }
 
@@ -194,12 +218,7 @@ NVista3GpioFile::parse()
             case Event::CAPTURE_ALL:
                 ISX_LOG_DEBUG("Event::CAPTURE_ALL : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 10);
-                read(digitalGpi);
-                for (uint32_t i = uint32_t(Channel::DIGITAL_GPI_0); i < uint32_t(Channel::DIGITAL_GPI_7); ++i)
-                {
-                    addPkt(Channel(i), tsc, float(digitalGpi & 0b1));
-                    digitalGpi >>= 1;
-                }
+                addDigitalGpiPkts(tsc, read(digitalGpi));
                 skipBytes(2);
                 addPkt(Channel::BNC_GPIO_IN_1, tsc, float(read(bncGpioIn1)));
                 addPkt(Channel::BNC_GPIO_IN_2, tsc, float(read(bncGpioIn2)));
@@ -212,17 +231,17 @@ NVista3GpioFile::parse()
                 addPkt(Channel::EFOCUS, tsc, float(read(eFocus)));
                 skipBytes(2);
 //                read(trigSyncFlash);
+//                for (const auto channel : std::vector<Channel>({Channel::TRIG, Channel::SYNC, Channel::FLASH}))
+//                {
+//                    addPkt(channel, tsc, trigSyncFlash & 0b1);
+//                    trigSyncFlash >>= 1;
+//                }
                 break;
 
             case Event::CAPTURE_GPIO:
                 ISX_LOG_DEBUG("Event::CAPTURE_GPIO : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 6);
-                read(digitalGpi);
-                for (uint32_t i = uint32_t(Channel::DIGITAL_GPI_0); i < uint32_t(Channel::DIGITAL_GPI_7); ++i)
-                {
-                    addPkt(Channel(i), tsc, float(digitalGpi & 0b1));
-                    digitalGpi >>= 1;
-                }
+                addDigitalGpiPkts(tsc, read(digitalGpi));
                 addPkt(Channel::BNC_TRIG, tsc, float(read(bncTrig)));
                 addPkt(Channel::BNC_GPIO_IN_1, tsc, float(read(bncGpioIn1)));
                 addPkt(Channel::BNC_GPIO_IN_2, tsc, float(read(bncGpioIn2)));
@@ -257,12 +276,7 @@ NVista3GpioFile::parse()
 
             case Event::DIGITAL_GPI:
                 checkPayloadSize(header.m_payloadSize, 4);
-                read(digitalGpi);
-                for (uint32_t i = uint32_t(Channel::DIGITAL_GPI_0); i < uint32_t(Channel::DIGITAL_GPI_7); ++i)
-                {
-                    addPkt(Channel(i), tsc, float(digitalGpi & 0b1));
-                    digitalGpi >>= 1;
-                }
+                addDigitalGpiPkts(tsc, read(digitalGpi));
                 skipBytes(2);
                 break;
 
