@@ -128,21 +128,12 @@ NVista3GpioFile::skipWords(const size_t inNumWords)
 void
 NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue)
 {
-    if (m_packets.empty())
-    {
-        m_firstTime = inTimeStamp;
-    }
-
     if (m_indices.find(inChannel) == m_indices.end())
     {
         m_indices[inChannel] = m_indices.size();
     }
     const EventBasedFileV2::DataPkt pkt(inTimeStamp, inValue, m_indices[inChannel]);
     m_packets.push_back(pkt);
-    if (inChannel == Channel::BNC_GPIO_IN_2)
-    {
-        ISX_LOG_DEBUG("Wrote packet : ", inTimeStamp, ", ", inValue);
-    }
 }
 
 void
@@ -170,7 +161,7 @@ NVista3GpioFile::parse()
     uint16_t bncGpioIn1, bncGpioIn2, bncGpioIn3, bncGpioIn4;
     uint16_t exLed, ogLed, diLed;
     uint16_t eFocus;
-//    uint32_t trigSyncFlash;
+    uint32_t trigSyncFlash;
     uint16_t bncTrig, bncSync;
 
     m_packets.clear();
@@ -191,6 +182,7 @@ NVista3GpioFile::parse()
         //ISX_LOG_DEBUG("Found sync");
 
         read(header);
+        ISX_LOG_DEBUG("sizeof(header) = ", sizeof(header));
         //ISX_LOG_DEBUG("Read packet type ", header.m_type);
         if ((header.m_type >> 8) != s_eventSignature)
         {
@@ -210,14 +202,14 @@ NVista3GpioFile::parse()
             ISX_LOG_DEBUG("Got TSC ", tsc);
 
             read(fc);
-            //ISX_LOG_DEBUG("Read FC ", fc);
+            ISX_LOG_DEBUG("Read FC ", fc);
         }
 
         switch (Event(header.m_type))
         {
             case Event::CAPTURE_ALL:
                 ISX_LOG_DEBUG("Event::CAPTURE_ALL : ", header.m_sequence);
-                checkPayloadSize(header.m_payloadSize, 10);
+                checkPayloadSize(header.m_payloadSize, 9);
                 addDigitalGpiPkts(tsc, read(digitalGpi));
                 skipBytes(2);
                 addPkt(Channel::BNC_GPIO_IN_1, tsc, float(read(bncGpioIn1)));
@@ -227,15 +219,13 @@ NVista3GpioFile::parse()
                 addPkt(Channel::EX_LED, tsc, float(read(exLed)));
                 addPkt(Channel::OG_LED, tsc, float(read(ogLed)));
                 addPkt(Channel::DI_LED, tsc, float(read(diLed)));
-                skipBytes(2);
                 addPkt(Channel::EFOCUS, tsc, float(read(eFocus)));
-                skipBytes(2);
-//                read(trigSyncFlash);
-//                for (const auto channel : std::vector<Channel>({Channel::TRIG, Channel::SYNC, Channel::FLASH}))
-//                {
-//                    addPkt(channel, tsc, trigSyncFlash & 0b1);
-//                    trigSyncFlash >>= 1;
-//                }
+                read(trigSyncFlash);
+                for (const auto channel : std::vector<Channel>({Channel::TRIG, Channel::SYNC, Channel::FLASH}))
+                {
+                    addPkt(channel, tsc, trigSyncFlash & 0b1);
+                    trigSyncFlash >>= 1;
+                }
                 break;
 
             case Event::CAPTURE_GPIO:
@@ -250,6 +240,7 @@ NVista3GpioFile::parse()
                 break;
 
             case Event::BNC_GPIO_IN_1:
+                ISX_LOG_DEBUG("Event::BNC_GPIO_IN_1 : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::BNC_GPIO_IN_1, tsc, float(read(bncGpioIn1)));
                 skipBytes(2);
@@ -263,59 +254,69 @@ NVista3GpioFile::parse()
                 break;
 
             case Event::BNC_GPIO_IN_3:
+                ISX_LOG_DEBUG("Event::BNC_GPIO_IN_3 : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::BNC_GPIO_IN_3, tsc, float(read(bncGpioIn3)));
                 skipBytes(2);
                 break;
 
             case Event::BNC_GPIO_IN_4:
+                ISX_LOG_DEBUG("Event::BNC_GPIO_IN_4 : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::BNC_GPIO_IN_4, tsc, float(read(bncGpioIn4)));
                 skipBytes(2);
                 break;
 
             case Event::DIGITAL_GPI:
+                ISX_LOG_DEBUG("Event::DIGITAL_GPI : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addDigitalGpiPkts(tsc, read(digitalGpi));
                 skipBytes(2);
                 break;
 
             case Event::EX_LED:
+                ISX_LOG_DEBUG("Event::EX_LED : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::EX_LED, tsc, float(read(exLed)));
                 skipBytes(2);
                 break;
 
             case Event::OG_LED:
+                ISX_LOG_DEBUG("Event::OG_LED : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::OG_LED, tsc, float(read(ogLed)));
                 skipBytes(2);
                 break;
 
             case Event::DI_LED:
+                ISX_LOG_DEBUG("Event::DI_LED : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::DI_LED, tsc, float(read(diLed)));
                 skipBytes(2);
                 break;
 
             case Event::FRAME_COUNT:
+                ISX_LOG_DEBUG("Event::FRAME_COUNT : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 3);
                 addPkt(Channel::FRAME_COUNTER, tsc, float(fc));
                 break;
 
             case Event::BNC_TRIG:
+                ISX_LOG_DEBUG("Event::BNC_TRIG : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::BNC_TRIG, tsc, float(read(bncTrig)));
                 skipBytes(2);
                 break;
 
             case Event::BNC_SYNC:
+                ISX_LOG_DEBUG("Event::BNC_SYNC : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::BNC_SYNC, tsc, float(read(bncSync)));
                 skipBytes(2);
                 break;
 
             case Event::WAVEFORM:
+                ISX_LOG_DEBUG("Event::WAVEFORM : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 2);
                 skipWords(header.m_payloadSize);
                 break;
@@ -333,15 +334,19 @@ NVista3GpioFile::parse()
     }
 
     // TODO : refactor with nVoke.
-    uint64_t lastTime = m_firstTime;
+    uint64_t firstTime = 0;
+    uint64_t lastTime = 0;
     if (!m_packets.empty())
     {
+        firstTime = m_packets.front().offsetMicroSecs;
         lastTime = m_packets.back().offsetMicroSecs;
     }
 
+    // TODO : Need an actual start time.
     const auto step = DurationInSeconds::fromMicroseconds(1);
-    const isize_t numTimes = isize_t(double(lastTime - m_firstTime) * 1E-6 / (step.toDouble())) + 1;
-    const Time startTime(DurationInSeconds::fromMicroseconds(m_firstTime));
+    const isize_t numTimes = lastTime - firstTime + 1;
+    //const isize_t numTimes = isize_t(double(lastTime - firstTime) * 1E-6 / (step.toDouble())) + 1;
+    const Time startTime(DurationInSeconds::fromMicroseconds(firstTime));
     const TimingInfo timingInfo(startTime, step, numTimes);
     const Time endTime = timingInfo.getEnd();
 

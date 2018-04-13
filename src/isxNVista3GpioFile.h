@@ -154,7 +154,6 @@ private:
 
     std::vector<EventBasedFileV2::DataPkt> m_packets;
     std::map<Channel, uint64_t> m_indices;
-    uint64_t m_firstTime = 0;
 
     void addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue);
     void addDigitalGpiPkts(const uint64_t inTsc, const uint16_t inDigitalGpi);
