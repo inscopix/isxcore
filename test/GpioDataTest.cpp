@@ -274,8 +274,19 @@ TEST_CASE("NVista3GpioFile", "[core]")
     SECTION("MOS-1450")
     {
         const std::string inputFilePath = inputDirPath + "/adp_events_10000.dump";
-        isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
-        raw.parse();
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 22);
+
+        const isx::TimingInfo expTi(isx::Time(), isx::DurationInSeconds::fromMicroseconds(1), 10000);
+        REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
     isx::CoreShutdown();
