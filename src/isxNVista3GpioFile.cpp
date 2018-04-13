@@ -5,6 +5,13 @@
 #include <algorithm>
 #include <cstring>
 
+#define ISX_DEBUG_NV3_GPIO 0
+#if ISX_DEBUG_NV3_GPIO
+#define ISX_LOG_DEBUG_NV3_GPIO(...) ISX_LOG_DEBUG(__VA_ARGS__)
+#else
+#define ISX_LOG_DEBUG_NV3_GPIO(...)
+#endif
+
 namespace
 {
 
@@ -13,7 +20,7 @@ checkPayloadSize(const size_t inActual, const size_t inExpected)
 {
     if (inActual != inExpected)
     {
-        ISX_LOG_DEBUG("Unexpected payload size: ", inActual, " != ", inExpected);
+        ISX_LOG_DEBUG_NV3_GPIO("Unexpected payload size: ", inActual, " != ", inExpected);
     }
 }
 
@@ -25,27 +32,27 @@ namespace isx
 const std::map<NVista3GpioFile::Channel, std::string> NVista3GpioFile::s_channelNames
 {
     {NVista3GpioFile::Channel::FRAME_COUNTER, "Frame Count"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_0, "Digital GPI 0"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_1, "Digital GPI 1"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_2, "Digital GPI 2"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_3, "Digital GPI 3"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_4, "Digital GPI 4"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_5, "Digital GPI 5"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_6, "Digital GPI 6"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_7, "Digital GPI 7"},
-    {NVista3GpioFile::Channel::BNC_GPIO_IN_1, "BNC GPIO IN 1"},
-    {NVista3GpioFile::Channel::BNC_GPIO_IN_2, "BNC GPIO IN 2"},
-    {NVista3GpioFile::Channel::BNC_GPIO_IN_3, "BNC GPIO IN 3"},
-    {NVista3GpioFile::Channel::BNC_GPIO_IN_4, "BNC GPIO IN 4"},
-    {NVista3GpioFile::Channel::EX_LED, "EX_LED"},
-    {NVista3GpioFile::Channel::OG_LED, "OG_LED"},
-    {NVista3GpioFile::Channel::DI_LED, "DI_LED"},
-    {NVista3GpioFile::Channel::EFOCUS, "efocus"},
-    {NVista3GpioFile::Channel::TRIG, "TRIG"},
-    {NVista3GpioFile::Channel::SYNC, "SYNC"},
-    {NVista3GpioFile::Channel::FLASH, "FLASH"},
-    {NVista3GpioFile::Channel::BNC_TRIG, "BNC TRIG"},
-    {NVista3GpioFile::Channel::BNC_SYNC, "BNC SYNC"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_0, "IO-9"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_1, "IO-10"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_2, "IO-11"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_3, "IO-12"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_4, "IO-13"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_5, "IO-14"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_6, "IO-15"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_7, "IO-16"},
+    {NVista3GpioFile::Channel::BNC_GPIO_IN_1, "GPIO-1"},
+    {NVista3GpioFile::Channel::BNC_GPIO_IN_2, "GPIO-2"},
+    {NVista3GpioFile::Channel::BNC_GPIO_IN_3, "GPIO-3"},
+    {NVista3GpioFile::Channel::BNC_GPIO_IN_4, "GPIO-4"},
+    {NVista3GpioFile::Channel::EX_LED, "EX-LED"},
+    {NVista3GpioFile::Channel::OG_LED, "OG-LED"},
+    {NVista3GpioFile::Channel::DI_LED, "DI-LED"},
+    {NVista3GpioFile::Channel::EFOCUS, "e-focus"},
+    {NVista3GpioFile::Channel::TRIG, "Sensor TRIG"},
+    {NVista3GpioFile::Channel::SYNC, "Sensor SYNC"},
+    {NVista3GpioFile::Channel::FLASH, "Sensor FLASH"},
+    {NVista3GpioFile::Channel::BNC_TRIG, "TRIG"},
+    {NVista3GpioFile::Channel::BNC_SYNC, "SYNC"},
 };
 
 const std::map<NVista3GpioFile::Channel, SignalType> NVista3GpioFile::s_channelTypes
@@ -177,38 +184,35 @@ NVista3GpioFile::parse()
             continue;
         }
         ++syncCount;
-        ISX_LOG_DEBUG("At byte ", m_file.tellg());
-
-        //ISX_LOG_DEBUG("Found sync");
+        ISX_LOG_DEBUG_NV3_GPIO("Found sync at byte ", m_file.tellg());
 
         read(header);
-        ISX_LOG_DEBUG("sizeof(header) = ", sizeof(header));
-        //ISX_LOG_DEBUG("Read packet type ", header.m_type);
+        ISX_LOG_DEBUG_NV3_GPIO("Read packet type ", header.m_type);
         if ((header.m_type >> 8) != s_eventSignature)
         {
-            ISX_LOG_DEBUG("Found non-event header");
+            ISX_LOG_DEBUG_NV3_GPIO("Found non-event header");
             continue;
         }
-        //ISX_LOG_DEBUG("Read sequence ", header.m_sequence);
-        //ISX_LOG_DEBUG("Read payloadSize ", header.m_payloadSize);
+        ISX_LOG_DEBUG_NV3_GPIO("Read sequence ", header.m_sequence);
+        ISX_LOG_DEBUG_NV3_GPIO("Read payloadSize ", header.m_payloadSize);
 
         if (Event(header.m_type) != Event::WAVEFORM)
         {
             read(tscHigh);
             read(tscLow);
-            ISX_LOG_DEBUG("Read TSC high ", tscHigh);
-            ISX_LOG_DEBUG("Read TSC low ", tscLow);
+            ISX_LOG_DEBUG_NV3_GPIO("Read TSC high ", tscHigh);
+            ISX_LOG_DEBUG_NV3_GPIO("Read TSC low ", tscLow);
             tsc = (uint64_t(tscHigh) << 32) | uint64_t(tscLow);
-            ISX_LOG_DEBUG("Got TSC ", tsc);
+            ISX_LOG_DEBUG_NV3_GPIO("Got TSC ", tsc);
 
             read(fc);
-            ISX_LOG_DEBUG("Read FC ", fc);
+            ISX_LOG_DEBUG_NV3_GPIO("Read FC ", fc);
         }
 
         switch (Event(header.m_type))
         {
             case Event::CAPTURE_ALL:
-                ISX_LOG_DEBUG("Event::CAPTURE_ALL : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::CAPTURE_ALL : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 9);
                 addDigitalGpiPkts(tsc, read(digitalGpi));
                 skipBytes(2);
@@ -229,7 +233,7 @@ NVista3GpioFile::parse()
                 break;
 
             case Event::CAPTURE_GPIO:
-                ISX_LOG_DEBUG("Event::CAPTURE_GPIO : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::CAPTURE_GPIO : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 6);
                 addDigitalGpiPkts(tsc, read(digitalGpi));
                 addPkt(Channel::BNC_TRIG, tsc, float(read(bncTrig)));
@@ -240,83 +244,83 @@ NVista3GpioFile::parse()
                 break;
 
             case Event::BNC_GPIO_IN_1:
-                ISX_LOG_DEBUG("Event::BNC_GPIO_IN_1 : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_GPIO_IN_1 : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::BNC_GPIO_IN_1, tsc, float(read(bncGpioIn1)));
                 skipBytes(2);
                 break;
 
             case Event::BNC_GPIO_IN_2:
-                ISX_LOG_DEBUG("Event::BNC_GPIO_IN_2 : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_GPIO_IN_2 : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::BNC_GPIO_IN_2, tsc, float(read(bncGpioIn2)));
                 skipBytes(2);
                 break;
 
             case Event::BNC_GPIO_IN_3:
-                ISX_LOG_DEBUG("Event::BNC_GPIO_IN_3 : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_GPIO_IN_3 : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::BNC_GPIO_IN_3, tsc, float(read(bncGpioIn3)));
                 skipBytes(2);
                 break;
 
             case Event::BNC_GPIO_IN_4:
-                ISX_LOG_DEBUG("Event::BNC_GPIO_IN_4 : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_GPIO_IN_4 : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::BNC_GPIO_IN_4, tsc, float(read(bncGpioIn4)));
                 skipBytes(2);
                 break;
 
             case Event::DIGITAL_GPI:
-                ISX_LOG_DEBUG("Event::DIGITAL_GPI : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::DIGITAL_GPI : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addDigitalGpiPkts(tsc, read(digitalGpi));
                 skipBytes(2);
                 break;
 
             case Event::EX_LED:
-                ISX_LOG_DEBUG("Event::EX_LED : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::EX_LED : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::EX_LED, tsc, float(read(exLed)));
                 skipBytes(2);
                 break;
 
             case Event::OG_LED:
-                ISX_LOG_DEBUG("Event::OG_LED : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::OG_LED : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::OG_LED, tsc, float(read(ogLed)));
                 skipBytes(2);
                 break;
 
             case Event::DI_LED:
-                ISX_LOG_DEBUG("Event::DI_LED : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::DI_LED : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::DI_LED, tsc, float(read(diLed)));
                 skipBytes(2);
                 break;
 
             case Event::FRAME_COUNT:
-                ISX_LOG_DEBUG("Event::FRAME_COUNT : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::FRAME_COUNT : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 3);
                 addPkt(Channel::FRAME_COUNTER, tsc, float(fc));
                 break;
 
             case Event::BNC_TRIG:
-                ISX_LOG_DEBUG("Event::BNC_TRIG : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_TRIG : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::BNC_TRIG, tsc, float(read(bncTrig)));
                 skipBytes(2);
                 break;
 
             case Event::BNC_SYNC:
-                ISX_LOG_DEBUG("Event::BNC_SYNC : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_SYNC : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 4);
                 addPkt(Channel::BNC_SYNC, tsc, float(read(bncSync)));
                 skipBytes(2);
                 break;
 
             case Event::WAVEFORM:
-                ISX_LOG_DEBUG("Event::WAVEFORM : ", header.m_sequence);
+                ISX_LOG_DEBUG_NV3_GPIO("Event::WAVEFORM : ", header.m_sequence);
                 checkPayloadSize(header.m_payloadSize, 2);
                 skipWords(header.m_payloadSize);
                 break;
@@ -326,7 +330,7 @@ NVista3GpioFile::parse()
         }
     }
 
-    ISX_LOG_DEBUG("syncCount = ", syncCount);
+    ISX_LOG_DEBUG_NV3_GPIO("syncCount = ", syncCount);
 
     if (syncCount == 0)
     {
