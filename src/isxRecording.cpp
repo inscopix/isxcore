@@ -139,7 +139,7 @@ public:
         if (fileNames.empty())
         {
             ISX_THROW(ExceptionFileIO, "The XML file does not contain any TIFF or HDF5 files to load. ",
-                    "You may need to decompress nVista .raw files.");
+                    "You may need to decompress .raw files first.");
         }
 
         std::string extension = isx::getExtension(fileNames.front());
