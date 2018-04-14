@@ -222,11 +222,11 @@ DataSet::getMetadata()
 
     // Timing Info
     ss << m_timingInfo.getStart();
-    metadata.push_back(std::pair<std::string, std::string>("Start time", ss.str()));
+    metadata.push_back(std::pair<std::string, std::string>("Start Time", ss.str()));
     ss.str("");
 
     ss << m_timingInfo.getEnd();
-    metadata.push_back(std::pair<std::string, std::string>("End time", ss.str()));
+    metadata.push_back(std::pair<std::string, std::string>("End Time", ss.str()));
     ss.str("");
 
     ss << m_timingInfo.getDuration().toDouble();
@@ -252,37 +252,47 @@ DataSet::getMetadata()
     ss.str("");
 
     ss << m_timingInfo.getDroppedCount();
-    metadata.push_back(std::pair<std::string, std::string>("Number Of Dropped Frames", ss.str()));
+    metadata.push_back(std::pair<std::string, std::string>("Number Of Dropped Samples", ss.str()));
     ss.str("");
 
-    const std::vector<isize_t> droppedFrames = m_timingInfo.getDroppedFrames();
-    for ( auto & df : droppedFrames)
+    if (m_timingInfo.getDroppedCount() > 0)
     {
-        ss << df << " ";
+        const std::vector<isize_t> droppedFrames = m_timingInfo.getDroppedFrames();
+        for ( auto & df : droppedFrames)
+        {
+            ss << df << " ";
+        }
+        metadata.push_back(std::pair<std::string, std::string>("Dropped Samples", ss.str()));
+        ss.str("");
     }
-    metadata.push_back(std::pair<std::string, std::string>("Dropped Frames", ss.str()));
-    ss.str("");
 
     ss << m_timingInfo.getCroppedCount();
-    metadata.push_back(std::pair<std::string, std::string>("Number Of Cropped Frames", ss.str()));
+    metadata.push_back(std::pair<std::string, std::string>("Number Of Cropped Samples", ss.str()));
     ss.str("");
 
-    const IndexRanges_t croppedFrames = m_timingInfo.getCropped();
-    for (size_t c = 0; c < croppedFrames.size(); ++c)
+    if (m_timingInfo.getCroppedCount() > 0)
     {
-        ss << croppedFrames[c];
-        if (c < (croppedFrames.size() - 1))
+        const IndexRanges_t croppedFrames = m_timingInfo.getCropped();
+        for (size_t c = 0; c < croppedFrames.size(); ++c)
         {
-            ss << ", ";
+            ss << croppedFrames[c];
+            if (c < (croppedFrames.size() - 1))
+            {
+                ss << ", ";
+            }
         }
+        metadata.push_back(std::pair<std::string, std::string>("Cropped Samples", ss.str()));
+        ss.str("");
     }
-    metadata.push_back(std::pair<std::string, std::string>("Cropped Frames", ss.str()));
-    ss.str("");
 
     // Spacing Info
-    ss << m_spacingInfo.getNumPixels();
-    metadata.push_back(std::pair<std::string, std::string>("Number Of Pixels", ss.str()));
-    ss.str("");
+    if (m_type == DataSet::Type::MOVIE || m_type == DataSet::Type::BEHAVIOR
+            || m_type == DataSet::Type::IMAGE || m_type == DataSet::Type::CELLSET)
+    {
+        ss << m_spacingInfo.getNumPixels();
+        metadata.push_back(std::pair<std::string, std::string>("Number Of Pixels", ss.str()));
+        ss.str("");
+    }
 
     // Additional properties
     for (auto & p : m_readOnlyProperties)
@@ -293,7 +303,6 @@ DataSet::getMetadata()
     }
 
     return metadata;
-
 }
 
 bool

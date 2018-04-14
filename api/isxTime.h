@@ -28,6 +28,14 @@ public:
     /// \param  ratio   The duration in seconds.
     DurationInSeconds(const isx::Ratio & ratio);
 
+    /// \param  inMilliseconds  The number of milliseconds of the duration.
+    ///
+    static DurationInSeconds fromMilliseconds(const uint64_t inMilliseconds);
+
+    /// \return The closest integer number of milliseconds this represents.
+    ///
+    uint64_t toMilliseconds() const;
+
     /// \param  inMicroseconds  The number of microseconds of the duration.
     ///
     static DurationInSeconds fromMicroseconds(const uint64_t inMicroseconds);
