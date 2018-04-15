@@ -188,7 +188,32 @@ EventsSeries::hasMetrics() const
 SpTraceMetrics_t 
 EventsSeries::getTraceMetrics(isize_t inIndex) const 
 {
-    return m_events.front()->getTraceMetrics(inIndex);
+    double totalDuration = 0;
+    for (const auto & e : m_events)
+    {
+        totalDuration += e->getTimingInfo().getDuration().toDouble();
+    }
+
+    auto meanTm = std::make_shared<TraceMetrics>();
+    for (const auto & e : m_events)
+    {
+        const double weight = e->getTimingInfo().getDuration().toDouble() / totalDuration;
+        const SpTraceMetrics_t tm = e->getTraceMetrics(inIndex);
+        if (tm != nullptr)
+        {
+            meanTm->m_snr += weight * tm->m_snr;
+            meanTm->m_mad += weight * tm->m_mad;
+            meanTm->m_eventRate += weight * tm->m_eventRate;
+            meanTm->m_eventAmpMedian += weight * tm->m_eventAmpMedian;
+            meanTm->m_eventAmpSD += weight * tm->m_eventAmpSD;
+            meanTm->m_riseMedian += weight * tm->m_riseMedian;
+            meanTm->m_riseSD += weight * tm->m_riseSD;
+            meanTm->m_decayMedian += weight * tm->m_decayMedian;
+            meanTm->m_decaySD += weight * tm->m_decaySD;
+        }
+    }
+
+    return meanTm;
 }
 
 void
