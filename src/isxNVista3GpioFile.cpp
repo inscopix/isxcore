@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cstring>
 
-#define ISX_DEBUG_NV3_GPIO 0
+#define ISX_DEBUG_NV3_GPIO 1
 #if ISX_DEBUG_NV3_GPIO
 #define ISX_LOG_DEBUG_NV3_GPIO(...) ISX_LOG_DEBUG(__VA_ARGS__)
 #else
@@ -123,7 +123,11 @@ NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, con
 {
     if (m_indices.find(inChannel) == m_indices.end())
     {
-        m_indices[inChannel] = m_indices.size();
+        // This used to be one line, but on Linux the first index was 1
+        // instead of 0 and I'm not sure why. Separating the lines fixed
+        // that bug.
+        const size_t numChannels = m_indices.size();
+        m_indices[inChannel] = numChannels;
     }
     const EventBasedFileV2::DataPkt pkt(inTimeStamp, inValue, m_indices[inChannel]);
     m_packets.push_back(pkt);
@@ -332,6 +336,7 @@ NVista3GpioFile::parse()
     const Time startTime(DurationInSeconds::fromMicroseconds(firstTime));
     const TimingInfo timingInfo(startTime, step, numTimes);
     const Time endTime = timingInfo.getEnd();
+    ISX_LOG_DEBUG_NV3_GPIO("timingInfo = ", timingInfo);
 
     const size_t numChannels = m_indices.size();
     std::vector<std::string> channels(numChannels);
