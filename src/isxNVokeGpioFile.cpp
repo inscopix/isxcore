@@ -2,6 +2,7 @@
 #include "isxPathUtils.h"
 #include "isxJsonUtils.h"
 #include "isxException.h"
+#include "isxGpioUtils.h"
 #include <algorithm>
 #include <cstring>
 
@@ -272,11 +273,7 @@ NVokeGpioFile::parse()
         }
     }
 
-    const DurationInSeconds step(1, 1000);
-    const isize_t numTimes = isize_t(double(m_endTime - m_startTime) * 1E-6 / (step.toDouble())) + 1;
-    const Time startTime(DurationInSeconds(isize_t(m_startTime), isize_t(1E6)));
-    const TimingInfo timingInfo(startTime, step, numTimes);
-    const Time endTime = timingInfo.getEnd();
+    m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_gpio.isxd";
 
     const size_t numChannels = m_analogSignalIds.size() + m_eventSignalIds.size();
     std::vector<std::string> channels(numChannels);
@@ -292,16 +289,10 @@ NVokeGpioFile::parse()
         types.at(id.second) = isx::SignalType::SPARSE;
     }
 
-    m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_gpio.isxd";
-    const std::vector<DurationInSeconds> steps(channels.size(), step);
-    m_outputFile.reset(new EventBasedFileV2(m_outputFileName, DataSet::Type::GPIO, channels, steps, types));
-    for (const auto p : packetsToWrite)
-    {
-        m_outputFile->writeDataPkt(p);
-    }
+    const Time startTime(DurationInSeconds::fromMicroseconds(m_startTime));
 
-    m_outputFile->setTimingInfo(startTime, endTime);
-    m_outputFile->closeFileForWriting();
+    writePktsToEventBasedFile(m_outputFileName, packetsToWrite, channels, types,
+            startTime, 0, m_endTime - m_startTime);
 
     if (cancelled)
     {

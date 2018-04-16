@@ -2,6 +2,7 @@
 #include "isxPathUtils.h"
 #include "isxJsonUtils.h"
 #include "isxException.h"
+#include "isxGpioUtils.h"
 #include <algorithm>
 #include <cstring>
 
@@ -342,23 +343,7 @@ NVista3GpioFile::parse()
         ISX_THROW(ExceptionFileIO, "Failed to find the beginning of the data stream and parse the file.");
     }
 
-    // TODO : refactor with nVoke.
-    uint64_t firstTime = 0;
-    uint64_t lastTime = 0;
-    if (!m_packets.empty())
-    {
-        firstTime = m_packets.front().offsetMicroSecs;
-        lastTime = m_packets.back().offsetMicroSecs;
-    }
-
-    // TODO : Need an actual start time.
-    const auto step = DurationInSeconds::fromMicroseconds(1);
-    const isize_t numTimes = lastTime - firstTime + 1;
-    //const isize_t numTimes = isize_t(double(lastTime - firstTime) * 1E-6 / (step.toDouble())) + 1;
-    const Time startTime(DurationInSeconds::fromMicroseconds(firstTime));
-    const TimingInfo timingInfo(startTime, step, numTimes);
-    const Time endTime = timingInfo.getEnd();
-    ISX_LOG_DEBUG_NV3_GPIO("timingInfo = ", timingInfo);
+    m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_gpio.isxd";
 
     const size_t numChannels = m_indices.size();
     std::vector<std::string> channels(numChannels);
@@ -369,16 +354,19 @@ NVista3GpioFile::parse()
         types.at(index.second) = s_channelTypes.at(index.first);
     }
 
-    m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_gpio.isxd";
-    const std::vector<DurationInSeconds> steps(channels.size(), step);
-    EventBasedFileV2 outputFile(m_outputFileName, DataSet::Type::GPIO, channels, steps, types);
-    for (const auto p : m_packets)
+    uint64_t firstTime = 0;
+    uint64_t lastTime = 0;
+    if (!m_packets.empty())
     {
-        outputFile.writeDataPkt(p);
+        firstTime = m_packets.front().offsetMicroSecs;
+        lastTime = m_packets.back().offsetMicroSecs;
     }
 
-    outputFile.setTimingInfo(startTime, endTime);
-    outputFile.closeFileForWriting();
+    // TODO : Need actual start time.
+    const Time startTime = isx::Time();
+
+    writePktsToEventBasedFile(m_outputFileName, m_packets, channels, types,
+            startTime, firstTime, lastTime);
 
     return isx::AsyncTaskStatus::COMPLETE;
 }
