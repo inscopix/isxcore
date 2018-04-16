@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cstring>
 
-#define ISX_DEBUG_NV3_GPIO 1
+#define ISX_DEBUG_NV3_GPIO 0
 #if ISX_DEBUG_NV3_GPIO
 #define ISX_LOG_DEBUG_NV3_GPIO(...) ISX_LOG_DEBUG(__VA_ARGS__)
 #else
@@ -169,9 +169,24 @@ NVista3GpioFile::readParseAddLedPayload(const uint32_t inExpectedSize, const Cha
     addPkt(inChannel, tsc, float(payload.led));
 }
 
+uint64_t
+NVista3GpioFile::parseTsc(const CountPayload & inCount)
+{
+    ISX_LOG_DEBUG_NV3_GPIO("Got TSC high ", inCount.tscHigh);
+    ISX_LOG_DEBUG_NV3_GPIO("Got TSC low ", inCount.tscLow);
+    const uint64_t tsc = (uint64_t(inCount.tscHigh) << 32) | uint64_t(inCount.tscLow);
+    ISX_LOG_DEBUG_NV3_GPIO("Got TSC ", tsc);
+    return tsc;
+}
+
 AsyncTaskStatus
 NVista3GpioFile::parse()
 {
+    m_file.seekg(0, m_file.end);
+    const float progressMultiplier = 1 / float(m_file.tellg());
+    m_file.seekg(0, m_file.beg);
+    std::ios::pos_type curPos = m_file.tellg();
+
     m_packets.clear();
     m_indices.clear();
     size_t syncCount = 0;
@@ -184,12 +199,19 @@ NVista3GpioFile::parse()
             break;
         }
 
+        curPos = m_file.tellg();
+        if (m_checkInCB && m_checkInCB(progressMultiplier * float(curPos)))
+        {
+            return AsyncTaskStatus::CANCELLED;
+        }
+
         if (sync != s_syncWord)
         {
             continue;
         }
         ++syncCount;
-        ISX_LOG_DEBUG_NV3_GPIO("Found sync at byte ", m_file.tellg());
+
+        ISX_LOG_DEBUG_NV3_GPIO("Found sync at byte ", curPos);
 
         const auto header = read<PktHeader>();
         if (!m_file.good())
@@ -365,16 +387,6 @@ const std::string &
 NVista3GpioFile::getOutputFileName() const
 {
     return m_outputFileName;
-}
-
-uint64_t
-NVista3GpioFile::parseTsc(const CountPayload & inCount)
-{
-    ISX_LOG_DEBUG_NV3_GPIO("Got TSC high ", inCount.tscHigh);
-    ISX_LOG_DEBUG_NV3_GPIO("Got TSC low ", inCount.tscLow);
-    const uint64_t tsc = (uint64_t(inCount.tscHigh) << 32) | uint64_t(inCount.tscLow);
-    ISX_LOG_DEBUG_NV3_GPIO("Got TSC ", tsc);
-    return tsc;
 }
 
 } // namespace isx
