@@ -1,6 +1,7 @@
 #include "isxGpioImporter.h"
 #include "isxNVokeGpioFile.h"
 #include "isxNVistaGpioFile.h"
+#include "isxNVista3GpioFile.h"
 #include "isxPathUtils.h"
 
 #include "json.hpp"
@@ -31,7 +32,7 @@ GpioDataParams::getInputFilePaths() const
 std::vector<std::string>
 GpioDataParams::getOutputFilePaths() const
 {
-    // We do not know the output file paths, but at least know what directory
+    // We do not know the output file paths, but at least we know what directory
     // they will be in.
     return {outputDir};
 }
@@ -45,9 +46,7 @@ AsyncTaskStatus runGpioDataImporter(GpioDataParams inParams, std::shared_ptr<Gpi
     {
         NVokeGpioFile raw(inParams.fileName, inParams.outputDir);
         raw.setCheckInCallback(inCheckInCB);
-
         result = raw.parse();
-    
         inOutputParams->filenames = {raw.getOutputFileName()};
     }
     else if (extension == "hdf5")
@@ -56,7 +55,13 @@ AsyncTaskStatus runGpioDataImporter(GpioDataParams inParams, std::shared_ptr<Gpi
         result = input.parse();
         inOutputParams->filenames = {input.getOutputFileName()};
     }
-    
+    else if (extension == "dump")
+    {
+        NVista3GpioFile dump(inParams.fileName, inParams.outputDir);
+        dump.setCheckInCallback(inCheckInCB);
+        result = dump.parse();
+        inOutputParams->filenames = {dump.getOutputFileName()};
+    }
 
     if (result == isx::AsyncTaskStatus::CANCELLED)
     {
@@ -65,8 +70,8 @@ AsyncTaskStatus runGpioDataImporter(GpioDataParams inParams, std::shared_ptr<Gpi
             std::remove(fn.c_str());
         }
     }
-    
+
     return result;
 }
 
-}
+} // namespace
