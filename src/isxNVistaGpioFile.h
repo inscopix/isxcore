@@ -49,7 +49,7 @@ public:
     /// \return whether the process completed or it was cancelled
     AsyncTaskStatus parse();
 
-    /// Get the ouput file name
+    /// \return The output file name
     ///
     const std::string & getOutputFileName() const;
 
