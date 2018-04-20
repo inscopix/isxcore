@@ -21,6 +21,18 @@ DurationInSeconds::DurationInSeconds(const Ratio & ratio)
 }
 
 DurationInSeconds
+DurationInSeconds::fromMilliseconds(const uint64_t inMilliseconds)
+{
+    return DurationInSeconds(inMilliseconds, 1E3);
+}
+
+uint64_t
+DurationInSeconds::toMilliseconds() const
+{
+    return uint64_t(toDouble() * 1E3);
+}
+
+DurationInSeconds
 DurationInSeconds::fromMicroseconds(const uint64_t inMicroseconds)
 {
     return DurationInSeconds(inMicroseconds, 1E6);
@@ -156,17 +168,12 @@ Time::operator >=(const Time & other) const
 void
 Time::serialize(std::ostream& strm) const
 {
-    double secsDouble = m_secsSinceEpoch.toDouble();
-    int64_t secsInt = floor(secsDouble);
-
     QTimeZone timeZone(m_utcOffset);
-    QDateTime dateTime = QDateTime::fromMSecsSinceEpoch(secsInt * 1000, timeZone);
+    QDateTime dateTime = QDateTime::fromMSecsSinceEpoch(m_secsSinceEpoch.toMilliseconds(), timeZone);
 
-    std::string dateTimeStr = dateTime.toString("yyyy/MM/dd-hh:mm:ss").toStdString();
-    DurationInSeconds secsOffset = m_secsSinceEpoch - secsInt;
-    std::string timeZoneStr = timeZone.displayName(dateTime).toStdString();
+    std::string dateTimeStr = dateTime.toString("yyyy/MM/dd-hh:mm:ss.zzz").toStdString();
 
-    strm << dateTimeStr << " " << secsOffset.toDouble() << " " << timeZoneStr;
+    strm << dateTimeStr;
 }
 
 std::string
@@ -189,7 +196,7 @@ Time::now()
     QDateTime nowDateTime = QDateTime::currentDateTime();
     QDate nowDate = nowDateTime.date();
     QTime nowTime = nowDateTime.time();
-    DurationInSeconds secsOffset(nowTime.msec(), 1000);
+    const auto secsOffset = DurationInSeconds::fromMilliseconds(nowTime.msec());
     int32_t utcOffset = nowDateTime.timeZone().offsetFromUtc(nowDateTime);
     return Time(
             nowDate.year(),
