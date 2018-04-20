@@ -100,6 +100,25 @@ bool checkNewMemberOfSeries(
         const SpEvents_t & inNew,
         std::string & outMessage);
 
+/// \param  inMembers   The potential series members to check.
+/// \param  outMessage  The reason why the members do not form a series.
+/// \return             True if the members form a series, false otherwise.
+template <typename T>
+bool
+checkSeriesMembers(const std::vector<std::shared_ptr<T>> & inMembers, std::string & outMessage)
+{
+    std::vector<std::shared_ptr<T>> checked;
+    for (const auto & m : inMembers)
+    {
+        if (!checkNewMemberOfSeries(checked, m, outMessage))
+        {
+            return false;
+        }
+        checked.push_back(m);
+    }
+    return true;
+}
+
 /// \return The timing info for series without gaps from many consistent
 ///         timing infos.
 TimingInfo makeGaplessTimingInfo(const TimingInfos_t & inTis);

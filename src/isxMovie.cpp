@@ -12,7 +12,7 @@ Movie::getFrameWithHeaderFooter(const size_t inFrameNumber)
 std::string
 Movie::getExtraProperties() const
 {
-    return "";
+    return "null";
 }
 
 } // namespace isx
