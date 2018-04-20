@@ -193,7 +193,7 @@ TEST_CASE("TimingInfoConversionTest", "[core]")
         isx::Time start(2016, 6, 20, 11, 10);
         isx::Ratio step(50, 1000);
         isx::TimingInfo timingInfo(start, step, 100);
-        std::string expected = "TimingInfo(Start=2016/06/20-11:10:00 0 UTC, "
+        std::string expected = "TimingInfo(Start=2016/06/20-11:10:00.000, "
             "Step=50 / 1000, NumTimes=100)";
         REQUIRE(timingInfo.toString() == expected);
     }
