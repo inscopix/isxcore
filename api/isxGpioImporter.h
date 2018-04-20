@@ -6,8 +6,8 @@
 
 namespace isx
 {
-    /// A structure containing import parameters for GPIO data
-    ///
+    /// A structure containing import parameters for GPIO data from
+    /// nVista 2 (in HDF5 files), nVoke 1 (.raw files) and nVista 3 (.dump files).
     struct GpioDataParams
     {
         /// Ctor
@@ -17,7 +17,6 @@ namespace isx
         : outputDir(inOutputDir)
         , fileName(inFileName)
         {
-
         }
 
         /// \return export operation name to display to user
@@ -38,16 +37,18 @@ namespace isx
         ///
         std::vector<std::string> getOutputFilePaths() const;
 
-        std::string outputDir;                      ///< The output directory for the output files
-        std::string fileName;                       ///< The filename of the .raw file to process
+        /// The path of the directory where the output files are stored.
+        std::string outputDir;
+
+        /// The path of the GPIO file to import.
+        std::string fileName;
     };
 
     /// GPIO data output parameters
     struct GpioDataOutputParams
     {
-        std::vector<std::string> filenames;         ///< Output filenames. If both logical and analog
-                                                    ///< data are available, the logical data file name
-                                                    ///< will be first.
+        std::vector<std::string> filenames; ///< The paths of the output files.
+                                            ///< This should only contain one path now, but leaving alone as we are close to release.
     };
 
     /// Imports a GPIO data file
@@ -55,6 +56,7 @@ namespace isx
     /// \param inOutputParams a shared pointer for output parameters
     /// \param inCheckInCB check-in callback function that is periodically invoked with progress and to tell algo whether to cancel / abort
     AsyncTaskStatus runGpioDataImporter(GpioDataParams inParams, std::shared_ptr<GpioDataOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB);
-}
+
+} // namespace isx
 
 #endif // ISX_GPIO_IMPORTER_H

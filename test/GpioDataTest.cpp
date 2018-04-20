@@ -7,6 +7,7 @@
 #include "isxDataSet.h"
 #include "isxGpio.h"
 #include "isxFileTypes.h"
+#include "isxNVista3GpioFile.h"
 
 #include "catch.hpp"
 
@@ -88,7 +89,6 @@ void testNVokeParsing(
     std::remove(filename.c_str());
 }
 
-// TODO: MOS-584 merge fix
 TEST_CASE("GpioDataTest", "[core]")
 {
     isx::CoreInitialize();
@@ -102,9 +102,8 @@ TEST_CASE("GpioDataTest", "[core]")
         // Expected values
 
         isx::Time start(isx::DurationInSeconds(1478277469, 1) + isx::DurationInSeconds(294107, 1000000));
-        isx::DurationInSeconds step(1, 1000);
-        isx::isize_t numTimes = 3640;
-        isx::isize_t numTimesSync = 145;
+        auto step = isx::DurationInSeconds::fromMicroseconds(1);
+        const isx::isize_t numTimes = 3639037;
         isx::TimingInfo ti(start, step, numTimes);
         std::vector<uint64_t> usecsFromStart{ 0, 17693};
         std::vector<float> power{float(2.6556396484375), 0.0f};
@@ -122,7 +121,7 @@ TEST_CASE("GpioDataTest", "[core]")
         header["signalSteps"] = jsteps;
         header["signalTypes"] = std::vector<uint8_t>({uint8_t(isx::SignalType::DENSE), uint8_t(isx::SignalType::SPARSE)});
         header["startOffsets"] = usecsFromStart;
-        header["numSamples"] = std::vector<uint64_t>({numTimes, numTimesSync});
+        header["numSamples"] = std::vector<uint64_t>({3640, 145});
         header["metrics"] = isx::convertEventMetricsToJson(isx::EventMetrics_t());
 
         // End of expected values ********************************************
@@ -144,8 +143,8 @@ TEST_CASE("GpioDataTest", "[core]")
         // Expected values *********************************************
 
         isx::Time start(isx::DurationInSeconds(1485470243, 1) + isx::DurationInSeconds(163233, 1000000));
-        isx::DurationInSeconds step(1, 1000);
-        isx::isize_t numTimes = 9153;
+        auto step = isx::DurationInSeconds::fromMicroseconds(1);
+        const isx::isize_t numTimes = 9152909;
         isx::TimingInfo ti(start, step, numTimes);
         std::vector<uint64_t> usecsFromStart{0, 3077753, 3875367};
         std::vector<float> power{1.0f, 1.5f, 1.0f};
@@ -167,7 +166,6 @@ TEST_CASE("GpioDataTest", "[core]")
         header["startOffsets"] = usecsFromStart;
         header["numSamples"] = std::vector<uint64_t>({4, 2, 174});
         header["metrics"] = isx::convertEventMetricsToJson(isx::EventMetrics_t());
-
 
         // End of expected values ********************************************
         //////////////////////////////////////////////////////////////////////
@@ -257,6 +255,35 @@ TEST_CASE("GpioDataTest", "[core]")
 
         isx::NVokeGpioFile raw(filePath, outputDirPath);
         raw.parse();
+    }
+
+    isx::CoreShutdown();
+}
+
+TEST_CASE("NVista3GpioFile", "[core]")
+{
+    const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio";
+    const std::string outputDirPath = inputDirPath + "/output";
+    isx::makeDirectory(outputDirPath);
+
+    isx::CoreInitialize();
+
+    SECTION("MOS-1450")
+    {
+        const std::string inputFilePath = inputDirPath + "/adp_events_10000.dump";
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 22);
+
+        const isx::TimingInfo expTi(isx::Time(), isx::DurationInSeconds::fromMicroseconds(1), 10000);
+        REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
     isx::CoreShutdown();
