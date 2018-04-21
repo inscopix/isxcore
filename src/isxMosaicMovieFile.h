@@ -140,6 +140,11 @@ public:
     std::string
     getExtraProperties() const;
 
+    /// \return The original spacing info associated with the sensor (nVista 2 vs nVista 3).
+    ///
+    SpacingInfo
+    getOriginalSpacingInfo() const;
+
 private:
     /// True if the movie file is valid, false otherwise.
     bool m_valid;
@@ -169,6 +174,9 @@ private:
 
     /// True if the frame bytes contain fixed size header and footer lines.
     bool m_hasFrameHeaderFooter = false;
+
+    /// True if this movie came from the nVista 3 sensor originally.
+    bool m_nVista3Sensor = false;
 
     /// The number of rows in the header.
     const static size_t s_numHeaderRows = 2;

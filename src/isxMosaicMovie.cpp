@@ -259,6 +259,12 @@ MosaicMovie::getExtraProperties() const
     return m_file->getExtraProperties();
 }
 
+SpacingInfo
+MosaicMovie::getOriginalSpacingInfo() const
+{
+    return m_file->getOriginalSpacingInfo();
+}
+
 SpVideoFrame_t
 MosaicMovie::getFrameWithHeaderFooter(const size_t inFrameNumber)
 {

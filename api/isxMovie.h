@@ -108,6 +108,13 @@ public:
     virtual
     std::string
     getExtraProperties() const;
+
+    /// \return     The original spacing info of this movie on the sensor it was captured
+    ///             with. Prior to nVista 3, the assumption is that all microscope movies
+    ///             use the 1440x1080 sensor with 2.2x2.2 micron size.
+    virtual
+    SpacingInfo
+    getOriginalSpacingInfo() const;
 };
 
 } // namespace isx

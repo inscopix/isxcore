@@ -15,4 +15,10 @@ Movie::getExtraProperties() const
     return "null";
 }
 
+SpacingInfo
+Movie::getOriginalSpacingInfo() const
+{
+    return SpacingInfo::getDefault();
+}
+
 } // namespace isx

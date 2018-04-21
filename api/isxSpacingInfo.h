@@ -149,14 +149,17 @@ public:
     ///
     bool isValid() const;
 
-
-    /// \return a SpacingInfo object initialized with default values
+    /// \return a SpacingInfo object initialized with default values for the nVista 2 sensor.
     ///
     static SpacingInfo getDefault();
 
     /// \return a SpacingInfo object initialized with default values for the number of pixels provided
     /// \param numPixels number of pixels in x and y directions
     static SpacingInfo getDefault(const SizeInPixels_t & numPixels);
+
+    /// \return     The spacing info associated with the nVista 3 sensor.
+    ///
+    static SpacingInfo getDefaultForNVista3();
 
 private:
 

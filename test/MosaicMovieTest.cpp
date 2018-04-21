@@ -115,6 +115,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
         REQUIRE(movie->isValid());
         REQUIRE(movie->getTimingInfo() == timingInfo);
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
+        REQUIRE(movie->getOriginalSpacingInfo() == isx::SpacingInfo::getDefault());
 
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
@@ -719,6 +720,8 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
             }
         }
 
+        REQUIRE(movie->getOriginalSpacingInfo() == isx::SpacingInfo::getDefaultForNVista3());
+
         // Finally check the extra properties
         REQUIRE(movie->getExtraProperties() == extraPropertiesStr);
     }
@@ -774,6 +777,8 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
             REQUIRE(pixels[headerOffset] == 361);
             REQUIRE(pixels[headerOffset + 79 + 101*width] == 1283);
         }
+
+        REQUIRE(movie->getOriginalSpacingInfo() == isx::SpacingInfo::getDefaultForNVista3());
 
         // Finally check some of the extra properties
         json extraProps = json::parse(movie->getExtraProperties());
