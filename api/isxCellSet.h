@@ -332,7 +332,7 @@ virtual
 void
 setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics) = 0;
 
-/// \return     The extra properties of this movie which might include things
+/// \return     The extra properties of this which might include things
 ///             from nVista 3. The string is in JSON format.
 virtual
 std::string

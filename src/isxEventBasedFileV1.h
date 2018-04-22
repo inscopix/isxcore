@@ -167,6 +167,9 @@ public:
     /// 
     void closeFileForWriting();
 
+    std::string getExtraProperties() const override;
+
+    void setExtraProperties(const std::string & inProperties) override;
 
 private:
 

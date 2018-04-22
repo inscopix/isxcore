@@ -18,7 +18,6 @@ public:
     void
     setTimingInfo(const isx::TimingInfo & inTimingInfo) = 0;
 
-
     /// Write data for one event
     /// \param inSignalIdx     signal index that uniquely identifies the signal and corresponds to the index in the channel names list
     /// \param inTimeStampUSec event time in microsecs since start time of the recording
@@ -35,6 +34,12 @@ public:
     virtual
     void
     closeForWriting() = 0;
+
+    /// \param  inProperties    The extra properties formatted as a JSON string.
+    ///
+    virtual
+    void
+    setExtraProperties(const std::string & inProperties) = 0;
 };
 
 } // namespace isx

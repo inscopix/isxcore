@@ -116,6 +116,10 @@ public:
     void
     setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics);
 
+    std::string getExtraProperties() const override;
+
+    void setExtraProperties(const std::string & inProperties) override;
+
 private:
 
     /// Reads the file footer and initializes this object with that information
@@ -170,7 +174,10 @@ private:
 
     EventMetrics_t                  m_traceMetrics;
 
-    const static size_t             s_fileVersion = 1;
+    /// The extra properties to write in the JSON footer.
+    json m_extraProperties;
+
+    const static size_t             s_fileVersion = 2;
 };
 
 } // namespace isx

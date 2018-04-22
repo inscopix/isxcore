@@ -425,4 +425,16 @@ EventBasedFileV1::writeFileFooter()
     m_file.close();
 }
 
+std::string
+EventBasedFileV1::getExtraProperties() const
+{
+    return "null";
+}
+
+void
+EventBasedFileV1::setExtraProperties(const std::string & inProperties)
+{
+    ISX_ASSERT("Cannot set extra properties of V1 events file.");
+}
+
 } // namespace isx
