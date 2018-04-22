@@ -624,4 +624,24 @@ namespace isx
         }
         m_cellImageMetrics.at(inIndex) = inMetrics;
     }
-}
+
+    std::string
+    CellSetFile::getExtraProperties() const
+    {
+        return m_extraProperties.dump();
+    }
+
+    void
+    CellSetFile::setExtraProperties(const std::string & inProperties)
+    {
+        try
+        {
+            m_extraProperties = json::parse(inProperties);
+        }
+        catch (const std::exception & error)
+        {
+            ISX_THROW(ExceptionDataIO, "Error parsing extra properties: ", error.what());
+        }
+    }
+
+} // namespace isx

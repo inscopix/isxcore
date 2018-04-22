@@ -332,6 +332,18 @@ virtual
 void
 setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics) = 0;
 
+/// \return     The extra properties of this movie which might include things
+///             from nVista 3. The string is in JSON format.
+virtual
+std::string
+getExtraProperties() const = 0;
+
+/// \param  inProperties    The extra properties formatted as a JSON string.
+///
+virtual
+void
+setExtraProperties(const std::string & inProperties) = 0;
+
 };
 
 }

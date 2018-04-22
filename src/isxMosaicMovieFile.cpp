@@ -247,7 +247,7 @@ MosaicMovieFile::setExtraProperties(const std::string & inProperties)
     }
     catch (const std::exception & error)
     {
-        ISX_THROW(isx::ExceptionDataIO, "Error parsing extra properties: ", error.what());
+        ISX_THROW(ExceptionDataIO, "Error parsing extra properties: ", error.what());
     }
 }
 

@@ -338,5 +338,17 @@ CellSetSimple::setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetri
     m_file->setImageMetrics(inIndex, inMetrics);
 }
 
+std::string
+CellSetSimple::getExtraProperties() const
+{
+    return m_file->getExtraProperties();
 }
+
+void
+CellSetSimple::setExtraProperties(const std::string & inProperties)
+{
+    m_file->setExtraProperties(inProperties);
+}
+
+} // namespace isx
 

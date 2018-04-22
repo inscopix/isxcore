@@ -204,6 +204,12 @@ public:
     void
     setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics);
 
+    std::string
+    getExtraProperties() const;
+
+    void
+    setExtraProperties(const std::string & inProperties);
+
 private:
 
     /// True if the cell set file is valid, false otherwise.
@@ -262,6 +268,9 @@ private:
     std::vector<double> m_centroidDistances;
 
     CellMetrics_t m_cellImageMetrics;
+
+    /// The extra properties to write in the JSON footer.
+    json m_extraProperties;
 
     /// Read the header to populate information about the cell set.
     ///
