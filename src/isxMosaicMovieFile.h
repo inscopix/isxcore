@@ -175,9 +175,6 @@ private:
     /// True if the frame bytes contain fixed size header and footer lines.
     bool m_hasFrameHeaderFooter = false;
 
-    /// True if this movie came from the nVista 3 sensor originally.
-    bool m_nVista3Sensor = false;
-
     /// The number of rows in the header.
     const static size_t s_numHeaderRows = 2;
 
@@ -188,7 +185,7 @@ private:
     const static size_t s_numHeaderFooterRows = s_numHeaderRows + s_numFooterRows;
 
     /// The extra properties to write in the JSON footer.
-    json m_extraProperties;
+    json m_extraProperties = nullptr;
 
     /// Initialize for reading.
     ///

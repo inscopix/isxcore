@@ -650,4 +650,14 @@ namespace isx
         }
     }
 
+    SpacingInfo
+    CellSetFile::getOriginalSpacingInfo() const
+    {
+        if (m_extraProperties != nullptr)
+        {
+            return SpacingInfo::getDefaultForNVista3();
+        }
+        return SpacingInfo::getDefault();
+    }
+
 } // namespace isx

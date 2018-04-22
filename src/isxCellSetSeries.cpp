@@ -435,4 +435,10 @@ namespace isx
         }
     }
 
+    SpacingInfo
+    CellSetSeries::getOriginalSpacingInfo() const
+    {
+        return m_cellSets.front()->getOriginalSpacingInfo();
+    }
+
 } // namespace isx

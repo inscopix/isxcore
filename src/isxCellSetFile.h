@@ -210,6 +210,9 @@ public:
     void
     setExtraProperties(const std::string & inProperties);
 
+    SpacingInfo
+    getOriginalSpacingInfo() const;
+
 private:
 
     /// True if the cell set file is valid, false otherwise.
@@ -270,7 +273,7 @@ private:
     CellMetrics_t m_cellImageMetrics;
 
     /// The extra properties to write in the JSON footer.
-    json m_extraProperties;
+    json m_extraProperties = nullptr;
 
     /// Read the header to populate information about the cell set.
     ///

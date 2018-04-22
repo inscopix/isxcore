@@ -350,5 +350,11 @@ CellSetSimple::setExtraProperties(const std::string & inProperties)
     m_file->setExtraProperties(inProperties);
 }
 
+SpacingInfo
+CellSetSimple::getOriginalSpacingInfo() const
+{
+    return m_file->getOriginalSpacingInfo();
+}
+
 } // namespace isx
 

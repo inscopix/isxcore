@@ -344,7 +344,15 @@ virtual
 void
 setExtraProperties(const std::string & inProperties) = 0;
 
+/// \return     The original spacing info of this cell set on the sensor the corresponding
+///             movie was captured with. Prior to nVista 3, the assumption is that all
+///             microscope movies use the 1440x1080 sensor with 2.2x2.2 micron size.
+virtual
+SpacingInfo
+getOriginalSpacingInfo() const = 0;
+
 };
 
-}
+} // namespace isx
+
 #endif // ISX_CELL_SET_H

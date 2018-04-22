@@ -158,6 +158,9 @@ public:
     void
     setExtraProperties(const std::string & inProperties) override;
 
+    SpacingInfo
+    getOriginalSpacingInfo() const override;
+
 private:
 
     /// True if the cell set is valid, false otherwise.

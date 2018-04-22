@@ -260,7 +260,7 @@ MosaicMovieFile::getExtraProperties() const
 SpacingInfo
 MosaicMovieFile::getOriginalSpacingInfo() const
 {
-    if (m_nVista3Sensor)
+    if (m_extraProperties != nullptr)
     {
         return SpacingInfo::getDefaultForNVista3();
     }
@@ -295,7 +295,6 @@ MosaicMovieFile::readHeader()
         if (j.find("extraProperties") != j.end())
         {
             m_extraProperties = j["extraProperties"];
-            m_nVista3Sensor = m_extraProperties != nullptr;
         }
     }
     catch (const std::exception & error)
