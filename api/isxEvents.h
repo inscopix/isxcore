@@ -152,6 +152,12 @@ public:
     void
     setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics) = 0;
 
+    /// \return     The extra properties of this which might include things
+    ///             from nVista 3. The string is in JSON format.
+    virtual
+    std::string
+    getExtraProperties() const = 0;
+
 }; // class Events
 
 /// Read a Events set from a file.

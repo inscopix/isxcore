@@ -416,4 +416,29 @@ namespace isx
             cs->setImageMetrics(inIndex, inMetrics);
         }
     }
-}
+
+    std::string
+    CellSetSeries::getExtraProperties() const
+    {
+        // TODO : Series does not check extra properties being consistent and
+        // it probably shouldn't, so this isn't quite correct but should do for
+        // the 1.1 release.
+        return m_cellSets.front()->getExtraProperties();
+    }
+
+    void
+    CellSetSeries::setExtraProperties(const std::string & inProperties)
+    {
+        for (auto & cs : m_cellSets)
+        {
+            cs->setExtraProperties(inProperties);
+        }
+    }
+
+    SpacingInfo
+    CellSetSeries::getOriginalSpacingInfo() const
+    {
+        return m_cellSets.front()->getOriginalSpacingInfo();
+    }
+
+} // namespace isx

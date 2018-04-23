@@ -429,27 +429,33 @@ namespace isx
             }
 
             auto version = j["fileVersion"].get<size_t>();
-            switch (version)
+            m_timingInfo = convertJsonToTimingInfo(j["timingInfo"]);
+            m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
+            m_cellNames = convertJsonToCellNames(j["CellNames"]);
+            m_cellStatuses = convertJsonToCellStatuses(j["CellStatuses"]);
+            m_isRoiSet = j["isRoiSet"];
+
+            if (version >= 1)
             {
-            case 4: 
-                m_cellImageMetrics = convertJsonToCellMetrics(j["cellMetrics"]);
-            case 3:
+                m_cellActivity = convertJsonToCellActivities(j["CellActivity"]);
+            }
+
+            if (version >= 2)
+            {
+                m_cellColors = convertJsonToCellColors(j["CellColors"]);
+            }
+
+            if (version >= 3)
+            {
                 m_sizeGlobalCS = j["SizeGlobalCS"];
                 m_matches = j["Matches"].get<std::vector<int16_t>>();
                 m_pairScores = j["PairScores"].get<std::vector<double>>();
                 m_centroidDistances = j["CentroidDistances"].get<std::vector<double>>();
-            case 2:
-                m_cellColors = convertJsonToCellColors(j["CellColors"]);
-            case 1:
-                m_cellActivity = convertJsonToCellActivities(j["CellActivity"]);
-            case 0:
-            default:
-                m_timingInfo = convertJsonToTimingInfo(j["timingInfo"]);
-                m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
-                m_cellNames = convertJsonToCellNames(j["CellNames"]);
-                m_cellStatuses = convertJsonToCellStatuses(j["CellStatuses"]);
-                m_isRoiSet = j["isRoiSet"];
-                break;
+            }
+
+            if (version >= 4)
+            {
+                m_cellImageMetrics = convertJsonToCellMetrics(j["cellMetrics"]);
             }
 
             if (m_cellActivity.empty())
@@ -624,4 +630,34 @@ namespace isx
         }
         m_cellImageMetrics.at(inIndex) = inMetrics;
     }
-}
+
+    std::string
+    CellSetFile::getExtraProperties() const
+    {
+        return m_extraProperties.dump();
+    }
+
+    void
+    CellSetFile::setExtraProperties(const std::string & inProperties)
+    {
+        try
+        {
+            m_extraProperties = json::parse(inProperties);
+        }
+        catch (const std::exception & error)
+        {
+            ISX_THROW(ExceptionDataIO, "Error parsing extra properties: ", error.what());
+        }
+    }
+
+    SpacingInfo
+    CellSetFile::getOriginalSpacingInfo() const
+    {
+        if (m_extraProperties != nullptr)
+        {
+            return SpacingInfo::getDefaultForNVista3();
+        }
+        return SpacingInfo::getDefault();
+    }
+
+} // namespace isx

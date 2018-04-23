@@ -14,7 +14,7 @@
 #include <fstream>
 #include <algorithm>
 
-const isx::isize_t fileVersion = 1;
+const isx::isize_t fileVersion = 2;
 
 void testNVokeParsing(
     const std::string & inFileName,
@@ -123,6 +123,7 @@ TEST_CASE("GpioDataTest", "[core]")
         header["startOffsets"] = usecsFromStart;
         header["numSamples"] = std::vector<uint64_t>({3640, 145});
         header["metrics"] = isx::convertEventMetricsToJson(isx::EventMetrics_t());
+        header["extraProperties"] = nullptr;
 
         // End of expected values ********************************************
 
@@ -166,6 +167,7 @@ TEST_CASE("GpioDataTest", "[core]")
         header["startOffsets"] = usecsFromStart;
         header["numSamples"] = std::vector<uint64_t>({4, 2, 174});
         header["metrics"] = isx::convertEventMetricsToJson(isx::EventMetrics_t());
+        header["extraProperties"] = nullptr;
 
         // End of expected values ********************************************
         //////////////////////////////////////////////////////////////////////

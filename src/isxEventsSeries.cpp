@@ -225,4 +225,10 @@ EventsSeries::setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetric
     }
 }
 
+std::string
+EventsSeries::getExtraProperties() const
+{
+    return m_events.front()->getExtraProperties();
+}
+
 } // namespace isx

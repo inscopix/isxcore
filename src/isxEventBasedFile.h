@@ -58,6 +58,14 @@ public:
     virtual
     const isx::TimingInfo
     getTimingInfo() const = 0;
+
+    virtual
+    std::string
+    getExtraProperties() const = 0;
+
+    virtual
+    void
+    setExtraProperties(const std::string & inProperties) = 0;
 };
 
 } // namespace isx

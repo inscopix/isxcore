@@ -140,6 +140,11 @@ public:
     std::string
     getExtraProperties() const;
 
+    /// \return The original spacing info associated with the sensor (nVista 2 vs nVista 3).
+    ///
+    SpacingInfo
+    getOriginalSpacingInfo() const;
+
 private:
     /// True if the movie file is valid, false otherwise.
     bool m_valid;
@@ -180,7 +185,7 @@ private:
     const static size_t s_numHeaderFooterRows = s_numHeaderRows + s_numFooterRows;
 
     /// The extra properties to write in the JSON footer.
-    json m_extraProperties;
+    json m_extraProperties = nullptr;
 
     /// Initialize for reading.
     ///

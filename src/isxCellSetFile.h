@@ -204,6 +204,15 @@ public:
     void
     setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics);
 
+    std::string
+    getExtraProperties() const;
+
+    void
+    setExtraProperties(const std::string & inProperties);
+
+    SpacingInfo
+    getOriginalSpacingInfo() const;
+
 private:
 
     /// True if the cell set file is valid, false otherwise.
@@ -244,7 +253,7 @@ private:
 
     bool m_fileClosedForWriting = false;
 
-    const static size_t s_version = 4;
+    const static size_t s_version = 5;
 
     /// True if this came from drawing ROIs, false otherwise.
     bool m_isRoiSet = false;
@@ -262,6 +271,9 @@ private:
     std::vector<double> m_centroidDistances;
 
     CellMetrics_t m_cellImageMetrics;
+
+    /// The extra properties to write in the JSON footer.
+    json m_extraProperties = nullptr;
 
     /// Read the header to populate information about the cell set.
     ///

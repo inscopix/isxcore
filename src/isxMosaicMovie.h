@@ -91,6 +91,9 @@ public:
     SpVideoFrame_t
     getFrameWithHeaderFooter(const size_t inFrameNumber) override;
 
+    SpacingInfo
+    getOriginalSpacingInfo() const override;
+
 private:
 
     /// True if the movie file is valid, false otherwise.

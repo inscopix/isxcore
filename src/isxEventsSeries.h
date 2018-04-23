@@ -76,6 +76,9 @@ public:
     void
     setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetrics) override;
 
+    std::string
+    getExtraProperties() const override;
+
 private:
 
     /// True if the events series is valid, false otherwise.

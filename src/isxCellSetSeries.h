@@ -152,6 +152,15 @@ public:
     void
     setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics) override;
 
+    std::string
+    getExtraProperties() const override;
+
+    void
+    setExtraProperties(const std::string & inProperties) override;
+
+    SpacingInfo
+    getOriginalSpacingInfo() const override;
+
 private:
 
     /// True if the cell set is valid, false otherwise.

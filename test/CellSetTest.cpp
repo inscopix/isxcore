@@ -54,15 +54,25 @@ TEST_CASE("CellSetTest", "[core]")
 
     SECTION("Write constructor")
     {
-        isx::SpCellSet_t cellSet = isx::writeCellSet(
-                fileName, timingInfo, spacingInfo);
+        isx::SpCellSet_t cellSet = isx::writeCellSet(fileName, timingInfo, spacingInfo);
 
         REQUIRE(cellSet->isValid());
         REQUIRE(cellSet->getFileName() == fileName);
         REQUIRE(cellSet->getTimingInfo() == timingInfo);
         REQUIRE(cellSet->getSpacingInfo() == spacingInfo);
+        REQUIRE(cellSet->getOriginalSpacingInfo() == isx::SpacingInfo::getDefault());
         REQUIRE(cellSet->getNumCells() == 0);
         REQUIRE(!cellSet->isRoiSet());
+        cellSet->closeForWriting();
+    }
+
+    SECTION("Write nVista 3 cell set")
+    {
+        isx::SpCellSet_t cellSet = isx::writeCellSet(fileName, timingInfo, spacingInfo);
+
+        cellSet->setExtraProperties("{\"microscope\" : \"nVista3\"}");
+        REQUIRE(cellSet->getSpacingInfo() == spacingInfo);
+        REQUIRE(cellSet->getOriginalSpacingInfo() == isx::SpacingInfo::getDefaultForNVista3());
         cellSet->closeForWriting();
     }
 

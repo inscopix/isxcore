@@ -335,6 +335,11 @@ EventBasedFileV2::readFileFooter()
             m_startOffsets = j["startOffsets"].get<std::vector<uint64_t>>();
             m_numSamples = j["numSamples"].get<std::vector<uint64_t>>();
             m_traceMetrics = convertJsonToEventMetrics(j["metrics"]);
+
+            if (j.find("extraProperties") != j.end())
+            {
+                m_extraProperties = j["extraProperties"];
+            }
         }
         catch (const std::exception & error)
         {
@@ -377,7 +382,7 @@ EventBasedFileV2::writeFileFooter()
         j["startOffsets"] = m_startOffsets;
         j["numSamples"] = m_numSamples;
         j["metrics"] = convertEventMetricsToJson(m_traceMetrics);
-
+        j["extraProperties"] = m_extraProperties;
     }
     catch (...)
     {
@@ -425,6 +430,25 @@ EventBasedFileV2::setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMe
         m_traceMetrics = EventMetrics_t(m_channelList.size(), SpTraceMetrics_t());
     }
     m_traceMetrics.at(inIndex) = inMetrics;
+}
+
+std::string
+EventBasedFileV2::getExtraProperties() const
+{
+    return m_extraProperties.dump();
+}
+
+void
+EventBasedFileV2::setExtraProperties(const std::string & inProperties)
+{
+    try
+    {
+        m_extraProperties = json::parse(inProperties);
+    }
+    catch (const std::exception & error)
+    {
+        ISX_THROW(ExceptionDataIO, "Error parsing extra properties: ", error.what());
+    }
 }
 
 } // namespace isx

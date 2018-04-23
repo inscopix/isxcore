@@ -185,4 +185,10 @@ SpacingInfo::getDefault(const SizeInPixels_t & numPixels)
     return defaultSpacingInfo;
 }
 
+SpacingInfo
+SpacingInfo::getDefaultForNVista3()
+{
+    return SpacingInfo(SizeInPixels_t(1280, 800), SizeInMicrons_t(Ratio(3, 1), Ratio(3, 1)), PointInMicrons_t(0, 0));
+}
+
 } // namespace

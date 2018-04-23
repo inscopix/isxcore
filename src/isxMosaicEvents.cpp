@@ -198,4 +198,16 @@ MosaicEvents::setTraceMetrics(isize_t inIndex, const SpTraceMetrics_t & inMetric
     f->setTraceMetrics(inIndex, inMetrics);
 }
 
+void
+MosaicEvents::setExtraProperties(const std::string & inProperties)
+{
+    m_file->setExtraProperties(inProperties);
+}
+
+std::string
+MosaicEvents::getExtraProperties() const
+{
+    return m_file->getExtraProperties();
+}
+
 } /// namespace isx
