@@ -70,7 +70,7 @@ TEST_CASE("CellSetTest", "[core]")
     {
         isx::SpCellSet_t cellSet = isx::writeCellSet(fileName, timingInfo, spacingInfo);
 
-        cellSet->setExtraProperties("{\"microscope\" : \"nVista3\"}");
+        cellSet->setExtraProperties("{\"microscope\":\"nVista3\"}");
         REQUIRE(cellSet->getSpacingInfo() == spacingInfo);
         REQUIRE(cellSet->getOriginalSpacingInfo() == isx::SpacingInfo::getDefaultForNVista3());
         cellSet->closeForWriting();
@@ -88,7 +88,29 @@ TEST_CASE("CellSetTest", "[core]")
         REQUIRE(cellSet->isValid());
         REQUIRE(cellSet->getFileName() == fileName);
         REQUIRE(cellSet->getTimingInfo() == timingInfo);
+        REQUIRE(cellSet->getExtraProperties() == "null");
         REQUIRE(cellSet->getSpacingInfo() == spacingInfo);
+        REQUIRE(cellSet->getNumCells() == 0);
+        REQUIRE(!cellSet->isRoiSet());
+    }
+
+    SECTION("Read nVista 3 extra properties")
+    {
+        const std::string extraProperties = "{\"microscope\":\"nVista3\"}";
+
+        {
+            isx::SpCellSet_t cellSet = isx::writeCellSet(fileName, timingInfo, spacingInfo);
+            cellSet->setExtraProperties(extraProperties);
+            cellSet->closeForWriting();
+        }
+
+        isx::SpCellSet_t cellSet = isx::readCellSet(fileName);
+
+        REQUIRE(cellSet->isValid());
+        REQUIRE(cellSet->getFileName() == fileName);
+        REQUIRE(cellSet->getTimingInfo() == timingInfo);
+        REQUIRE(cellSet->getSpacingInfo() == spacingInfo);
+        REQUIRE(cellSet->getExtraProperties() == extraProperties);
         REQUIRE(cellSet->getNumCells() == 0);
         REQUIRE(!cellSet->isRoiSet());
     }
