@@ -308,7 +308,8 @@ private:
     /// X is the width of the number string and is automatically determined by
     /// the number of cells.
     void replaceEmptyNames();
-
 };
-}
+
+} // namespace isx
+
 #endif // ISX_CELL_SET_FILE_H

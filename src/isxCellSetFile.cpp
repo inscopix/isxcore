@@ -458,15 +458,20 @@ namespace isx
                 m_cellImageMetrics = convertJsonToCellMetrics(j["cellMetrics"]);
             }
 
+            if ((version >= 5) && j.find("extraProperties") != j.end())
+            {
+                m_extraProperties = j["extraProperties"];
+            }
+
             if (m_cellActivity.empty())
             {
                 m_cellActivity = std::vector<bool>(m_cellNames.size(), true);
             }
+
             if (m_cellColors.empty())
             {
                 m_cellColors = CellColors_t(m_cellNames.size(), Color());
             }
-
         }
         catch (const std::exception & error)
         {
@@ -508,6 +513,7 @@ namespace isx
             j["PairScores"] = m_pairScores;
             j["CentroidDistances"] = m_centroidDistances;
             j["cellMetrics"] = convertCellMetricsToJson(m_cellImageMetrics);
+            j["extraProperties"] = m_extraProperties;
         }
         catch (const std::exception & error)
         {
