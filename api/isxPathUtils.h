@@ -99,6 +99,15 @@ std::string getRelativePath(
 /// \return             The absolute version of the given path.
 std::string getAbsolutePath(const std::string & inPath);
 
+/// Get the canonical path of a file/directory on the file system.
+///
+/// If the path cannot be found on the file system, this will return
+/// an empty string.
+///
+/// \param  inPath      The path.
+/// \return             The canonical version of the given path.
+std::string getCanonicalPath(const std::string & inPath);
+
 /// Check if a path exists on the file system.
 ///
 /// \param  inPath      The path to check for existence.

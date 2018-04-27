@@ -83,6 +83,13 @@ getAbsolutePath(const std::string & inPath)
     return pathInfo.absoluteFilePath().toStdString();
 }
 
+std::string
+getCanonicalPath(const std::string & inPath)
+{
+    QFileInfo pathInfo(QString::fromStdString(inPath));
+    return pathInfo.canonicalFilePath().toStdString();
+}
+
 bool
 pathExists(const std::string & inPath)
 {
