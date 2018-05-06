@@ -151,7 +151,7 @@ TEST_CASE("Series-insertUnitarySeries", "[core]")
         ISX_REQUIRE_EXCEPTION(
                 series.insertUnitarySeries(behavMovieSeries),
                 isx::ExceptionSeries,
-                "Unable to add a data set of type Behavior to a series of type Movie.");
+                "Unable to add a data set of type Behavioral Movie to a series of type Movie.");
     }
 
     SECTION("Try to insert a movie with different history")
