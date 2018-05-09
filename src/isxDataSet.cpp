@@ -401,11 +401,11 @@ DataSet::getTypeString(Type inType)
     case Type::CELLSET:
         return std::string("Cell Set");
     case Type::BEHAVIOR:
-        return std::string("Behavior");
+        return std::string("Behavioral Movie");
     case Type::GPIO:
         return std::string("GPIO");
     case Type::EVENTS:
-        return std::string("Events");
+        return std::string("Event Set");
     default: 
         return std::string("");
     }
