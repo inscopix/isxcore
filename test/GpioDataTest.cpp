@@ -272,7 +272,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
 
     SECTION("MOS-1450")
     {
-        const std::string inputFilePath = inputDirPath + "/adp_events_10000.dump";
+        const std::string inputFilePath = inputDirPath + "/adp_events_10000.gpio";
         std::string outputFilePath;
         {
             isx::NVista3GpioFile raw(inputFilePath, outputDirPath);

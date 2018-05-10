@@ -7,7 +7,7 @@
 namespace isx
 {
     /// A structure containing import parameters for GPIO data from
-    /// nVista 2 (in HDF5 files), nVoke 1 (.raw files) and nVista 3 (.dump files).
+    /// nVista 2 (in HDF5 files), nVoke 1 (.raw files) and nVista 3 (.gpio files).
     struct GpioDataParams
     {
         /// Ctor

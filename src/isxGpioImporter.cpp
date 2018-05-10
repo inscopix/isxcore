@@ -55,12 +55,12 @@ AsyncTaskStatus runGpioDataImporter(GpioDataParams inParams, std::shared_ptr<Gpi
         result = input.parse();
         inOutputParams->filenames = {input.getOutputFileName()};
     }
-    else if (extension == "dump")
+    else if (extension == "gpio")
     {
-        NVista3GpioFile dump(inParams.fileName, inParams.outputDir);
-        dump.setCheckInCallback(inCheckInCB);
-        result = dump.parse();
-        inOutputParams->filenames = {dump.getOutputFileName()};
+        NVista3GpioFile gpio(inParams.fileName, inParams.outputDir);
+        gpio.setCheckInCallback(inCheckInCB);
+        result = gpio.parse();
+        inOutputParams->filenames = {gpio.getOutputFileName()};
     }
 
     if (result == isx::AsyncTaskStatus::CANCELLED)
