@@ -352,7 +352,7 @@ NVista3GpioFile::parse()
         {
             readParseAddPayload(header);
         }
-        catch (const BadGpioPacket & error)
+        catch (const BadGpioPacket &)
         {
             ISX_LOG_ERROR("Skipping bad GPIO packet at byte ", curPos, " with header (",
                     header.type, ", ", header.sequence, ", ", header.payloadSize, ").");
