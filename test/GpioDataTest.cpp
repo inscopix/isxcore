@@ -288,5 +288,23 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
+    SECTION("MOS-1548")
+    {
+        const std::string inputFilePath = inputDirPath + "/2018-06-19-15-41-43_video.gpio";
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 19);
+
+        const isx::TimingInfo expTi(isx::Time(), isx::DurationInSeconds::fromMicroseconds(1), 3057457);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+    }
+
     isx::CoreShutdown();
 }
