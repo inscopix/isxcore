@@ -386,7 +386,7 @@ NVista3GpioFile::parse()
     }
 
     // TODO : Need actual start time.
-    const Time startTime = isx::Time();
+    const Time startTime = isx::Time() + DurationInSeconds::fromMicroseconds(firstTime);
 
     writePktsToEventBasedFile(m_outputFileName, m_packets, channels, types,
             startTime, firstTime, lastTime);

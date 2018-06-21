@@ -284,7 +284,8 @@ TEST_CASE("NVista3GpioFile", "[core]")
 
         REQUIRE(gpio->numberOfChannels() == 22);
 
-        const isx::TimingInfo expTi(isx::Time(), isx::DurationInSeconds::fromMicroseconds(1), 10000);
+        const isx::Time startTime;
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 10000);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
@@ -302,7 +303,8 @@ TEST_CASE("NVista3GpioFile", "[core]")
 
         REQUIRE(gpio->numberOfChannels() == 19);
 
-        const isx::TimingInfo expTi(isx::Time(), isx::DurationInSeconds::fromMicroseconds(1), 3057457);
+        const isx::Time startTime(isx::DurationInSeconds::fromMicroseconds(323147381037));
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 3057457);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
