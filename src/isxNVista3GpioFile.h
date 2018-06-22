@@ -154,6 +154,15 @@ private:
         uint32_t count;
     };
 
+    struct AdpDumpHeader
+    {
+        uint64_t secsSinceEpochNum;
+        uint64_t secsSinceEpochDen;
+        int32_t utcOffset;
+        uint32_t eventDataOffset;
+        uint64_t eventCount;
+    };
+
 #pragma pack(pop)
 
     /// Possible types of events.

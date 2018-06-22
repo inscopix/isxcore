@@ -313,6 +313,20 @@ NVista3GpioFile::parse()
     m_indices.clear();
     size_t syncCount = 0;
 
+    // All official releases of nVista3 with GPIO data should have a header
+    // that contains the start time.
+    // In order to continue to read files acquired in alpha testing, we
+    // check to see if the first word is a sync packet which indicates that
+    // the header is missing.
+    isx::Time startTime;
+    const auto potentialSync = read<uint32_t>();
+    m_file.seekg(0, m_file.beg);
+    if (potentialSync != s_syncWord)
+    {
+        const auto fileHeader = read<AdpDumpHeader>();
+        startTime = Time(DurationInSeconds(fileHeader.secsSinceEpochNum, fileHeader.secsSinceEpochDen), fileHeader.utcOffset);
+    }
+
     while (m_file.good())
     {
         const auto sync = read<uint32_t>();
@@ -384,9 +398,6 @@ NVista3GpioFile::parse()
         firstTime = m_packets.front().offsetMicroSecs;
         lastTime = m_packets.back().offsetMicroSecs;
     }
-
-    // TODO : Need actual start time.
-    const Time startTime = isx::Time() + DurationInSeconds::fromMicroseconds(firstTime);
 
     writePktsToEventBasedFile(m_outputFileName, m_packets, channels, types,
             startTime, firstTime, lastTime);
