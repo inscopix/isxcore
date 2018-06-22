@@ -220,69 +220,81 @@ DataSet::getMetadata()
     // File Name
     metadata.push_back(std::pair<std::string, std::string>("File Name", m_fileName));
 
+    // For images, we only want to display the start time, as decided in MOS-1549.
+    // For TIFF images, that start time is bogus and does not matter for playback
+    // so we just skip it.
+    const bool isTiff = isTiffFileExtension(m_fileName);
+    const bool isImage = m_type == Type::IMAGE;
+
     // Timing Info
-    ss << m_timingInfo.getStart();
-    metadata.push_back(std::pair<std::string, std::string>("Start Time", ss.str()));
-    ss.str("");
-
-    ss << m_timingInfo.getEnd();
-    metadata.push_back(std::pair<std::string, std::string>("End Time", ss.str()));
-    ss.str("");
-
-    ss << m_timingInfo.getDuration().toDouble();
-    metadata.push_back(std::pair<std::string, std::string>("Duration In Seconds", ss.str()));
-    ss.str("");
-
-    // TODO : This is a temporary workaround for handling files that have 0 step time,
-    // but should be handled more generally when this meta-data display is cleaned up.
-    const isx::DurationInSeconds step = m_timingInfo.getStep();
-    if (step.getNum() == 0)
+    if (!(isImage && isTiff))
     {
-        ss << "Inf";
-    }
-    else
-    {
-        ss << m_timingInfo.getStep().getInverse().toDouble();
-    }
-    metadata.push_back(std::pair<std::string, std::string>("Sample Rate In Hertz", ss.str()));
-    ss.str("");
-
-    ss << m_timingInfo.getNumTimes();
-    metadata.push_back(std::pair<std::string, std::string>("Number Of Time Samples", ss.str()));
-    ss.str("");
-
-    ss << m_timingInfo.getDroppedCount();
-    metadata.push_back(std::pair<std::string, std::string>("Number Of Dropped Samples", ss.str()));
-    ss.str("");
-
-    if (m_timingInfo.getDroppedCount() > 0)
-    {
-        const std::vector<isize_t> droppedFrames = m_timingInfo.getDroppedFrames();
-        for ( auto & df : droppedFrames)
-        {
-            ss << df << " ";
-        }
-        metadata.push_back(std::pair<std::string, std::string>("Dropped Samples", ss.str()));
+        ss << m_timingInfo.getStart();
+        metadata.push_back(std::pair<std::string, std::string>("Start Time", ss.str()));
         ss.str("");
     }
 
-    ss << m_timingInfo.getCroppedCount();
-    metadata.push_back(std::pair<std::string, std::string>("Number Of Cropped Samples", ss.str()));
-    ss.str("");
-
-    if (m_timingInfo.getCroppedCount() > 0)
+    if (!isImage)
     {
-        const IndexRanges_t croppedFrames = m_timingInfo.getCropped();
-        for (size_t c = 0; c < croppedFrames.size(); ++c)
+        ss << m_timingInfo.getEnd();
+        metadata.push_back(std::pair<std::string, std::string>("End Time", ss.str()));
+        ss.str("");
+
+        ss << m_timingInfo.getDuration().toDouble();
+        metadata.push_back(std::pair<std::string, std::string>("Duration In Seconds", ss.str()));
+        ss.str("");
+
+        // TODO : This is a temporary workaround for handling files that have 0 step time,
+        // but should be handled more generally when this meta-data display is cleaned up.
+        const isx::DurationInSeconds step = m_timingInfo.getStep();
+        if (step.getNum() == 0)
         {
-            ss << croppedFrames[c];
-            if (c < (croppedFrames.size() - 1))
+            ss << "Inf";
+        }
+        else
+        {
+            ss << m_timingInfo.getStep().getInverse().toDouble();
+        }
+        metadata.push_back(std::pair<std::string, std::string>("Sample Rate In Hertz", ss.str()));
+        ss.str("");
+
+        ss << m_timingInfo.getNumTimes();
+        metadata.push_back(std::pair<std::string, std::string>("Number Of Time Samples", ss.str()));
+        ss.str("");
+
+        ss << m_timingInfo.getDroppedCount();
+        metadata.push_back(std::pair<std::string, std::string>("Number Of Dropped Samples", ss.str()));
+        ss.str("");
+
+        if (m_timingInfo.getDroppedCount() > 0)
+        {
+            const std::vector<isize_t> droppedFrames = m_timingInfo.getDroppedFrames();
+            for ( auto & df : droppedFrames)
             {
-                ss << ", ";
+                ss << df << " ";
             }
+            metadata.push_back(std::pair<std::string, std::string>("Dropped Samples", ss.str()));
+            ss.str("");
         }
-        metadata.push_back(std::pair<std::string, std::string>("Cropped Samples", ss.str()));
+
+        ss << m_timingInfo.getCroppedCount();
+        metadata.push_back(std::pair<std::string, std::string>("Number Of Cropped Samples", ss.str()));
         ss.str("");
+
+        if (m_timingInfo.getCroppedCount() > 0)
+        {
+            const IndexRanges_t croppedFrames = m_timingInfo.getCropped();
+            for (size_t c = 0; c < croppedFrames.size(); ++c)
+            {
+                ss << croppedFrames[c];
+                if (c < (croppedFrames.size() - 1))
+                {
+                    ss << ", ";
+                }
+            }
+            metadata.push_back(std::pair<std::string, std::string>("Cropped Samples", ss.str()));
+            ss.str("");
+        }
     }
 
     // Spacing Info
