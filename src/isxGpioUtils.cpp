@@ -23,7 +23,11 @@ writePktsToEventBasedFile(
     EventBasedFileV2 outputFile(inOutputFilePath, DataSet::Type::GPIO, inChannels, steps, inTypes);
     for (const auto p : inPackets)
     {
-        outputFile.writeDataPkt(p);
+        EventBasedFileV2::DataPkt pkt;
+        pkt.offsetMicroSecs = p.offsetMicroSecs - inFirstMicrosecondOffset;
+        pkt.signal = p.signal;
+        pkt.value = p.value;
+        outputFile.writeDataPkt(pkt);
     }
 
     outputFile.setTimingInfo(timing.getStart(), timing.getEnd());

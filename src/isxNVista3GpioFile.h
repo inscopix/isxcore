@@ -14,6 +14,24 @@
 namespace isx
 {
 
+/// Thrown when a GPIO packet read from a file is bad.
+///
+class BadGpioPacket : public Exception
+{
+public:
+
+    /// Constructor
+    ///
+    /// \param  file    The name of the file from where the exception is thrown.
+    /// \param  line    The line in the file from where the exception is thrown.
+    /// \param  message The error message.
+    explicit BadGpioPacket(const std::string & file, int line, const std::string & message);
+
+    /// Destructor
+    ///
+    ~BadGpioPacket() override;
+};
+
 /// A class that parses an nVoke GPIO file and separates the data packets by stream
 ///
 class NVista3GpioFile
@@ -136,6 +154,15 @@ private:
         uint32_t count;
     };
 
+    struct AdpDumpHeader
+    {
+        uint64_t secsSinceEpochNum;
+        uint64_t secsSinceEpochDen;
+        int32_t utcOffset;
+        uint32_t eventDataOffset;
+        uint64_t eventCount;
+    };
+
 #pragma pack(pop)
 
     /// Possible types of events.
@@ -227,7 +254,12 @@ private:
     T read(const uint32_t inNumWords)
     {
         const size_t actualSize = sizeof(T);
-        ISX_ASSERT(actualSize == size_t(inNumWords * sizeof(uint32_t)));
+        const size_t expectedSize = size_t(inNumWords * sizeof(uint32_t));
+        if (actualSize != expectedSize)
+        {
+            ISX_THROW(BadGpioPacket, "Expected to read ", expectedSize, " bytes, ",
+                    "but actual payload is ", actualSize, " bytes.");
+        }
         return read<T>();
     }
 
@@ -264,6 +296,11 @@ private:
 
     /// Parse the high and low components of the TSC.
     static uint64_t parseTsc(const CountPayload & inCount);
+
+    /// Read and parse a packet payload based on its header.
+    /// \throw  BadGpioPacket   If the payload size indicated in the header does
+    ///                         not match the expected size of the payload.
+    void readParseAddPayload(const PktHeader & inHeader);
 
 }; // class NVista3GpioFile
 
