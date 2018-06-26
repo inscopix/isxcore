@@ -327,5 +327,23 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->getTimingInfo().getStart() == movie->getTimingInfo().getStart());
     }
 
+    SECTION("MOS-1552")
+    {
+        const std::string inputFilePath = inputDirPath + "/2018-06-26-13-21-27_video.gpio";
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 19);
+
+        const isx::Time startTime;
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 26569573);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+    }
+
     isx::CoreShutdown();
 }
