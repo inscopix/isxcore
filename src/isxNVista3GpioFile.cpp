@@ -139,8 +139,18 @@ NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, con
         const size_t numChannels = m_indices.size();
         m_indices[inChannel] = numChannels;
     }
-    const EventBasedFileV2::DataPkt pkt(inTimeStamp, inValue, m_indices[inChannel]);
-    m_packets.push_back(pkt);
+    bool valueChanged = true;
+    if (m_lastValues.find(inChannel) != m_lastValues.end())
+    {
+        valueChanged = m_lastValues.at(inChannel) != inValue;
+    }
+    m_lastValues[inChannel] = inValue;
+//    ISX_LOG_DEBUG("addPkt ", int(inChannel), ", ", inTimeStamp, ", ", inValue, ", ", valueChanged);
+    if (valueChanged)
+    {
+        const EventBasedFileV2::DataPkt pkt(inTimeStamp, inValue, m_indices[inChannel]);
+        m_packets.push_back(pkt);
+    }
 }
 
 void

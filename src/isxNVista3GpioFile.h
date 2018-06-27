@@ -268,6 +268,7 @@ private:
 
     std::vector<EventBasedFileV2::DataPkt> m_packets;
     std::map<Channel, uint64_t> m_indices;
+    std::map<Channel, float> m_lastValues;
 
     /// Add a packet to the output file.
     void addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue);
