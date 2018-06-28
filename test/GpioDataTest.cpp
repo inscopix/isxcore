@@ -264,6 +264,24 @@ TEST_CASE("GpioDataTest", "[core]")
     isx::CoreShutdown();
 }
 
+void
+writeNV3SyncPacket(std::ofstream & inStream, const uint32_t inSequence, const bool inSync)
+{
+    uint32_t syncWord = isx::NVista3GpioFile::s_syncWord;
+    inStream.write(reinterpret_cast<char *>(&syncWord), sizeof(syncWord));
+    isx::NVista3GpioFile::PktHeader header;
+    header.type = uint32_t(isx::NVista3GpioFile::Event::BNC_SYNC);
+    header.sequence = inSequence;
+    header.payloadSize = 4;
+    inStream.write(reinterpret_cast<char *>(&header), sizeof(isx::NVista3GpioFile::PktHeader));
+    isx::NVista3GpioFile::SyncPayload payload;
+    payload.count.tscHigh = 0;
+    payload.count.tscLow = inSequence;
+    payload.count.fc = inSequence;
+    payload.bncSync = uint32_t(inSync);
+    inStream.write(reinterpret_cast<char *>(&payload), sizeof(isx::NVista3GpioFile::SyncPayload));
+}
+
 TEST_CASE("NVista3GpioFile", "[core]")
 {
     const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio";
@@ -271,6 +289,44 @@ TEST_CASE("NVista3GpioFile", "[core]")
     isx::makeDirectory(outputDirPath);
 
     isx::CoreInitialize();
+
+    SECTION("Write synthetic file with one channel to check only deltas get recorded")
+    {
+        const std::string inputFilePath = outputDirPath + "/synthetic.gpio";
+        {
+            std::ofstream inputFile(inputFilePath.c_str(), std::ios::binary);
+            REQUIRE(inputFile.good());
+            writeNV3SyncPacket(inputFile, 0, 0);
+            writeNV3SyncPacket(inputFile, 1, 0);
+            writeNV3SyncPacket(inputFile, 2, 1);
+            writeNV3SyncPacket(inputFile, 3, 1);
+            writeNV3SyncPacket(inputFile, 4, 0);
+            REQUIRE(inputFile.good());
+            inputFile.flush();
+        }
+
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 1);
+
+        const isx::Time startTime;
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 5);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+
+        const isx::SpLogicalTrace_t trace = gpio->getLogicalData("SYNC");
+        const std::map<isx::Time, float> values = trace->getValues();
+        REQUIRE(values.size() == 3);
+        REQUIRE(values.at(isx::Time(isx::DurationInSeconds::fromMicroseconds(0))) == 0);
+        REQUIRE(values.at(isx::Time(isx::DurationInSeconds::fromMicroseconds(2))) == 1);
+        REQUIRE(values.at(isx::Time(isx::DurationInSeconds::fromMicroseconds(4))) == 0);
+    }
 
     SECTION("MOS-1450")
     {
@@ -344,6 +400,8 @@ TEST_CASE("NVista3GpioFile", "[core]")
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 26569573);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
+
+    isx::removeDirectory(outputDirPath);
 
     isx::CoreShutdown();
 }

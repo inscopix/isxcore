@@ -38,39 +38,6 @@ class NVista3GpioFile
 {
 public:
 
-    /// Constructs an invalid file object
-    NVista3GpioFile();
-
-    /// \param inFileName  the name of the file to read
-    /// \param inOutputDir the directory that is going to contain the files for individual streams
-    NVista3GpioFile(const std::string & inFileName, const std::string & inOutputDir);
-
-    /// Destructor
-    ///
-    ~NVista3GpioFile();
-
-    /// \return id this is a valid object
-    ///
-    bool isValid();
-
-    /// \return the file name for the GPIO original file
-    ///
-    const std::string & getFileName();
-
-    /// Set a check in callback for reporting progress
-    void setCheckInCallback(AsyncCheckInCB_t inCheckInCB);
-
-    /// Parses the original file and writes signals from different channels to separate files
-    /// \throw isx::ExceptionDataIO  if unrecognized packets are read from the file
-    /// \throw isx::ExceptionFileIO  if there is a problem reading or writing files
-    /// \return whether the process completed or it was cancelled
-    AsyncTaskStatus parse();
-
-    /// Get a list of all the output files this object produces when parsing the original one
-    const std::string & getOutputFileName() const;
-
-private:
-
 #pragma pack(push, 1)
 
     /// Each packet has a header that allows us to identify it.
@@ -185,6 +152,42 @@ private:
         MAX, // 0x4010
     };
 
+    /// The signature sync word.
+    const static uint32_t s_syncWord = 0x0000AA55;
+
+    /// Constructs an invalid file object
+    NVista3GpioFile();
+
+    /// \param inFileName  the name of the file to read
+    /// \param inOutputDir the directory that is going to contain the files for individual streams
+    NVista3GpioFile(const std::string & inFileName, const std::string & inOutputDir);
+
+    /// Destructor
+    ///
+    ~NVista3GpioFile();
+
+    /// \return id this is a valid object
+    ///
+    bool isValid();
+
+    /// \return the file name for the GPIO original file
+    ///
+    const std::string & getFileName();
+
+    /// Set a check in callback for reporting progress
+    void setCheckInCallback(AsyncCheckInCB_t inCheckInCB);
+
+    /// Parses the original file and writes signals from different channels to separate files
+    /// \throw isx::ExceptionDataIO  if unrecognized packets are read from the file
+    /// \throw isx::ExceptionFileIO  if there is a problem reading or writing files
+    /// \return whether the process completed or it was cancelled
+    AsyncTaskStatus parse();
+
+    /// Get a list of all the output files this object produces when parsing the original one
+    const std::string & getOutputFileName() const;
+
+private:
+
     /// Possible channels to write.
     enum class Channel : uint32_t
     {
@@ -215,9 +218,6 @@ private:
     const static std::map<Channel, std::string> s_channelNames;
 
     const static std::map<Channel, SignalType> s_channelTypes;
-
-    /// The signature sync word.
-    const static uint32_t s_syncWord = 0x0000AA55;
 
     /// The signature event half-word.
     const static uint32_t s_eventSignature = 0x40;
