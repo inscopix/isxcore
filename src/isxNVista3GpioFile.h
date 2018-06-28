@@ -38,39 +38,6 @@ class NVista3GpioFile
 {
 public:
 
-    /// Constructs an invalid file object
-    NVista3GpioFile();
-
-    /// \param inFileName  the name of the file to read
-    /// \param inOutputDir the directory that is going to contain the files for individual streams
-    NVista3GpioFile(const std::string & inFileName, const std::string & inOutputDir);
-
-    /// Destructor
-    ///
-    ~NVista3GpioFile();
-
-    /// \return id this is a valid object
-    ///
-    bool isValid();
-
-    /// \return the file name for the GPIO original file
-    ///
-    const std::string & getFileName();
-
-    /// Set a check in callback for reporting progress
-    void setCheckInCallback(AsyncCheckInCB_t inCheckInCB);
-
-    /// Parses the original file and writes signals from different channels to separate files
-    /// \throw isx::ExceptionDataIO  if unrecognized packets are read from the file
-    /// \throw isx::ExceptionFileIO  if there is a problem reading or writing files
-    /// \return whether the process completed or it was cancelled
-    AsyncTaskStatus parse();
-
-    /// Get a list of all the output files this object produces when parsing the original one
-    const std::string & getOutputFileName() const;
-
-private:
-
 #pragma pack(push, 1)
 
     /// Each packet has a header that allows us to identify it.
@@ -185,6 +152,42 @@ private:
         MAX, // 0x4010
     };
 
+    /// The signature sync word.
+    const static uint32_t s_syncWord = 0x0000AA55;
+
+    /// Constructs an invalid file object
+    NVista3GpioFile();
+
+    /// \param inFileName  the name of the file to read
+    /// \param inOutputDir the directory that is going to contain the files for individual streams
+    NVista3GpioFile(const std::string & inFileName, const std::string & inOutputDir);
+
+    /// Destructor
+    ///
+    ~NVista3GpioFile();
+
+    /// \return id this is a valid object
+    ///
+    bool isValid();
+
+    /// \return the file name for the GPIO original file
+    ///
+    const std::string & getFileName();
+
+    /// Set a check in callback for reporting progress
+    void setCheckInCallback(AsyncCheckInCB_t inCheckInCB);
+
+    /// Parses the original file and writes signals from different channels to separate files
+    /// \throw isx::ExceptionDataIO  if unrecognized packets are read from the file
+    /// \throw isx::ExceptionFileIO  if there is a problem reading or writing files
+    /// \return whether the process completed or it was cancelled
+    AsyncTaskStatus parse();
+
+    /// Get a list of all the output files this object produces when parsing the original one
+    const std::string & getOutputFileName() const;
+
+private:
+
     /// Possible channels to write.
     enum class Channel : uint32_t
     {
@@ -215,9 +218,6 @@ private:
     const static std::map<Channel, std::string> s_channelNames;
 
     const static std::map<Channel, SignalType> s_channelTypes;
-
-    /// The signature sync word.
-    const static uint32_t s_syncWord = 0x0000AA55;
 
     /// The signature event half-word.
     const static uint32_t s_eventSignature = 0x40;
@@ -268,6 +268,7 @@ private:
 
     std::vector<EventBasedFileV2::DataPkt> m_packets;
     std::map<Channel, uint64_t> m_indices;
+    std::map<Channel, float> m_lastValues;
 
     /// Add a packet to the output file.
     void addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue);
@@ -282,10 +283,10 @@ private:
     template <typename T>
     void addGpioPkts(const uint64_t inTsc, const T inPayload)
     {
-        addPkt(Channel::BNC_GPIO_1, inTsc, float(inPayload.bncGpio1));
-        addPkt(Channel::BNC_GPIO_2, inTsc, float(inPayload.bncGpio2));
-        addPkt(Channel::BNC_GPIO_3, inTsc, float(inPayload.bncGpio3));
-        addPkt(Channel::BNC_GPIO_4, inTsc, float(inPayload.bncGpio4));
+        addPkt(Channel::BNC_GPIO_1, inTsc, roundGpioValue(inPayload.bncGpio1));
+        addPkt(Channel::BNC_GPIO_2, inTsc, roundGpioValue(inPayload.bncGpio2));
+        addPkt(Channel::BNC_GPIO_3, inTsc, roundGpioValue(inPayload.bncGpio3));
+        addPkt(Channel::BNC_GPIO_4, inTsc, roundGpioValue(inPayload.bncGpio4));
     }
 
     /// Read and parse a single GPIO payload, then add corresponding packet to the output file.
@@ -301,6 +302,15 @@ private:
     /// \throw  BadGpioPacket   If the payload size indicated in the header does
     ///                         not match the expected size of the payload.
     void readParseAddPayload(const PktHeader & inHeader);
+
+    /// Round a BNC GPIO value to prevent detecting changes due to noise alone.
+    ///
+    template<typename T>
+    static float roundGpioValue(const T inValue)
+    {
+        const T precision = 16;
+        return float(precision * (inValue / precision));
+    }
 
 }; // class NVista3GpioFile
 
