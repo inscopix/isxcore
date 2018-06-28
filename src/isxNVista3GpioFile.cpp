@@ -145,7 +145,6 @@ NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, con
         valueChanged = m_lastValues.at(inChannel) != inValue;
     }
     m_lastValues[inChannel] = inValue;
-//    ISX_LOG_DEBUG("addPkt ", int(inChannel), ", ", inTimeStamp, ", ", inValue, ", ", valueChanged);
     if (valueChanged)
     {
         const EventBasedFileV2::DataPkt pkt(inTimeStamp, inValue, m_indices[inChannel]);
