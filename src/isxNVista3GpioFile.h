@@ -283,10 +283,10 @@ private:
     template <typename T>
     void addGpioPkts(const uint64_t inTsc, const T inPayload)
     {
-        addPkt(Channel::BNC_GPIO_1, inTsc, float(inPayload.bncGpio1));
-        addPkt(Channel::BNC_GPIO_2, inTsc, float(inPayload.bncGpio2));
-        addPkt(Channel::BNC_GPIO_3, inTsc, float(inPayload.bncGpio3));
-        addPkt(Channel::BNC_GPIO_4, inTsc, float(inPayload.bncGpio4));
+        addPkt(Channel::BNC_GPIO_1, inTsc, roundGpioValue(inPayload.bncGpio1));
+        addPkt(Channel::BNC_GPIO_2, inTsc, roundGpioValue(inPayload.bncGpio2));
+        addPkt(Channel::BNC_GPIO_3, inTsc, roundGpioValue(inPayload.bncGpio3));
+        addPkt(Channel::BNC_GPIO_4, inTsc, roundGpioValue(inPayload.bncGpio4));
     }
 
     /// Read and parse a single GPIO payload, then add corresponding packet to the output file.
@@ -302,6 +302,15 @@ private:
     /// \throw  BadGpioPacket   If the payload size indicated in the header does
     ///                         not match the expected size of the payload.
     void readParseAddPayload(const PktHeader & inHeader);
+
+    /// Round a BNC GPIO value to prevent detecting changes due to noise alone.
+    ///
+    template<typename T>
+    static float roundGpioValue(const T inValue)
+    {
+        const T precision = 16;
+        return float(precision * (inValue / precision));
+    }
 
 }; // class NVista3GpioFile
 

@@ -177,7 +177,7 @@ NVista3GpioFile::readParseAddGpioPayload(const uint32_t inExpectedSize, const Ch
 {
     const auto payload = read<GpioPayload>(inExpectedSize);
     const uint64_t tsc = parseTsc(payload.count);
-    addPkt(inChannel, tsc, float(payload.bncGpio));
+    addPkt(inChannel, tsc, roundGpioValue(payload.bncGpio));
 }
 
 void

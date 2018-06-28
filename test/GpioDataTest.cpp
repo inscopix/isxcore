@@ -386,19 +386,19 @@ TEST_CASE("NVista3GpioFile", "[core]")
             REQUIRE(inputFile.good());
             writeNV3AllPacket(inputFile, 0,
                     0b0000000010111001,
-                    14523, 34, 263, 2888,
+                    14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000101);
             writeNV3AllPacket(inputFile, 1,
                     0b0000000010111001,
-                    14523, 34, 263, 2888,
+                    14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000101);
             writeNV3AllPacket(inputFile, 2,
                     ~0b0000000010111001,
-                    14524, 35, 264, 2889,
+                    14539, 50, 279, 2896,
                     4001, 6001, 9001,
                     5679,
                     ~0b0000000000000101);
@@ -429,10 +429,10 @@ TEST_CASE("NVista3GpioFile", "[core]")
         requireNV3AllPayload(gpio, "IO-14", {{0, 1.f}, {2, 0.f}});
         requireNV3AllPayload(gpio, "IO-15", {{0, 0.f}, {2, 1.f}});
         requireNV3AllPayload(gpio, "IO-16", {{0, 1.f}, {2, 0.f}});
-        requireNV3AllPayload(gpio, "GPIO-1", {{0, 14523.f}, {2, 14524.f}});
-        requireNV3AllPayload(gpio, "GPIO-2", {{0, 34.f}, {2, 35.f}});
-        requireNV3AllPayload(gpio, "GPIO-3", {{0, 263.f}, {2, 264.f}});
-        requireNV3AllPayload(gpio, "GPIO-4", {{0, 2888.f}, {2, 2889.f}});
+        requireNV3AllPayload(gpio, "GPIO-1", {{0, 14512.f}, {2, 14528.f}});
+        requireNV3AllPayload(gpio, "GPIO-2", {{0, 32.f}, {2, 48.f}});
+        requireNV3AllPayload(gpio, "GPIO-3", {{0, 256.f}, {2, 272.f}});
+        requireNV3AllPayload(gpio, "GPIO-4", {{0, 2880.f}, {2, 2896.f}});
         requireNV3AllPayload(gpio, "EX-LED", {{0, 4000.f}, {2, 4001.f}});
         requireNV3AllPayload(gpio, "OG-LED", {{0, 6000.f}, {2, 6001.f}});
         requireNV3AllPayload(gpio, "DI-LED", {{0, 9000.f}, {2, 9001.f}});
@@ -475,7 +475,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 19);
 
         const isx::Time startTime;
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 3057457);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 1142588);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
