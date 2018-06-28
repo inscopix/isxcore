@@ -378,7 +378,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(values.at(isx::Time(isx::DurationInSeconds::fromMicroseconds(4))) == 0);
     }
 
-    SECTION("Write synthetic file with two all payloads to check files are read correctly")
+    SECTION("Write synthetic file with three all payloads to check files are read correctly")
     {
         const std::string inputFilePath = outputDirPath + "/synthetic.gpio";
         {
@@ -421,25 +421,25 @@ TEST_CASE("NVista3GpioFile", "[core]")
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 3);
         REQUIRE(gpio->getTimingInfo() == expTi);
 
-        requireNV3AllPayload(gpio, "IO-9", {{0, 1}, {2, 0}});
-        requireNV3AllPayload(gpio, "IO-10", {{0, 0}, {2, 1}});
-        requireNV3AllPayload(gpio, "IO-11", {{0, 0}, {2, 1}});
-        requireNV3AllPayload(gpio, "IO-12", {{0, 1}, {2, 0}});
-        requireNV3AllPayload(gpio, "IO-13", {{0, 1}, {2, 0}});
-        requireNV3AllPayload(gpio, "IO-14", {{0, 1}, {2, 0}});
-        requireNV3AllPayload(gpio, "IO-15", {{0, 0}, {2, 1}});
-        requireNV3AllPayload(gpio, "IO-16", {{0, 1}, {2, 0}});
-        requireNV3AllPayload(gpio, "GPIO-1", {{0, 14523}, {2, 14524}});
-        requireNV3AllPayload(gpio, "GPIO-2", {{0, 34}, {2, 35}});
-        requireNV3AllPayload(gpio, "GPIO-3", {{0, 263}, {2, 264}});
-        requireNV3AllPayload(gpio, "GPIO-4", {{0, 2888}, {2, 2889}});
-        requireNV3AllPayload(gpio, "EX-LED", {{0, 4000}, {2, 4001}});
-        requireNV3AllPayload(gpio, "OG-LED", {{0, 6000}, {2, 6001}});
-        requireNV3AllPayload(gpio, "DI-LED", {{0, 9000}, {2, 9001}});
-        requireNV3AllPayload(gpio, "e-focus", {{0, 5678}, {2, 5679}});
-        requireNV3AllPayload(gpio, "Sensor TRIG", {{0, 1}, {2, 0}});
-        requireNV3AllPayload(gpio, "Sensor SYNC", {{0, 0}, {2, 1}});
-        requireNV3AllPayload(gpio, "Sensor FLASH", {{0, 1}, {2, 0}});
+        requireNV3AllPayload(gpio, "IO-9", {{0, 1.f}, {2, 0.f}});
+        requireNV3AllPayload(gpio, "IO-10", {{0, 0.f}, {2, 1.f}});
+        requireNV3AllPayload(gpio, "IO-11", {{0, 0.f}, {2, 1.f}});
+        requireNV3AllPayload(gpio, "IO-12", {{0, 1.f}, {2, 0.f}});
+        requireNV3AllPayload(gpio, "IO-13", {{0, 1.f}, {2, 0.f}});
+        requireNV3AllPayload(gpio, "IO-14", {{0, 1.f}, {2, 0.f}});
+        requireNV3AllPayload(gpio, "IO-15", {{0, 0.f}, {2, 1.f}});
+        requireNV3AllPayload(gpio, "IO-16", {{0, 1.f}, {2, 0.f}});
+        requireNV3AllPayload(gpio, "GPIO-1", {{0, 14523.f}, {2, 14524.f}});
+        requireNV3AllPayload(gpio, "GPIO-2", {{0, 34.f}, {2, 35.f}});
+        requireNV3AllPayload(gpio, "GPIO-3", {{0, 263.f}, {2, 264.f}});
+        requireNV3AllPayload(gpio, "GPIO-4", {{0, 2888.f}, {2, 2889.f}});
+        requireNV3AllPayload(gpio, "EX-LED", {{0, 4000.f}, {2, 4001.f}});
+        requireNV3AllPayload(gpio, "OG-LED", {{0, 6000.f}, {2, 6001.f}});
+        requireNV3AllPayload(gpio, "DI-LED", {{0, 9000.f}, {2, 9001.f}});
+        requireNV3AllPayload(gpio, "e-focus", {{0, 5678.f}, {2, 5679.f}});
+        requireNV3AllPayload(gpio, "Sensor TRIG", {{0, 1.f}, {2, 0.f}});
+        requireNV3AllPayload(gpio, "Sensor SYNC", {{0, 0.f}, {2, 1.f}});
+        requireNV3AllPayload(gpio, "Sensor FLASH", {{0, 1.f}, {2, 0.f}});
     }
 
     SECTION("MOS-1450")
