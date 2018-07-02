@@ -71,7 +71,7 @@ public:
         uint16_t ogLed;
         uint16_t diLed;
         uint16_t eFocus; // 14-bits usable
-        uint32_t trigSyncFlash; // 3-bits usable
+        uint32_t trigSync; // 3-bits usable
     };
 
     struct AllGpioPayload
@@ -208,9 +208,6 @@ private:
         OG_LED,
         DI_LED,
         EFOCUS,
-        TRIG,
-        SYNC,
-        FLASH,
         BNC_TRIG,
         BNC_SYNC,
     };
@@ -276,8 +273,8 @@ private:
     /// Add digital GPI packets based on the packed payload value to the output file.
     void addDigitalGpiPkts(const uint64_t inTsc, const uint16_t inDigitalGpi);
 
-    /// Add sensor TRIG, SYNC, FLASH packets based on the packed payload value to the output file.
-    void addTrigSyncFlashPkts(const uint64_t inTsc, const uint16_t inTrigSyncFlash);
+    /// Add BNC trigger and sync packets based on the packed payload value to the output file.
+    void addTrigSyncPkts(const uint64_t inTsc, const uint16_t inTrigSyncFlash);
 
     /// Add all four GPIO packets to the output file.
     template <typename T>

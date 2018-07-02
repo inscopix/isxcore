@@ -44,11 +44,8 @@ const std::map<NVista3GpioFile::Channel, std::string> NVista3GpioFile::s_channel
     {NVista3GpioFile::Channel::OG_LED, "OG-LED"},
     {NVista3GpioFile::Channel::DI_LED, "DI-LED"},
     {NVista3GpioFile::Channel::EFOCUS, "e-focus"},
-    {NVista3GpioFile::Channel::TRIG, "Sensor TRIG"},
-    {NVista3GpioFile::Channel::SYNC, "Sensor SYNC"},
-    {NVista3GpioFile::Channel::FLASH, "Sensor FLASH"},
-    {NVista3GpioFile::Channel::BNC_TRIG, "TRIG"},
-    {NVista3GpioFile::Channel::BNC_SYNC, "SYNC"},
+    {NVista3GpioFile::Channel::BNC_TRIG, "BNC Trigger Input"},
+    {NVista3GpioFile::Channel::BNC_SYNC, "BNC Sync Output"},
 };
 
 const std::map<NVista3GpioFile::Channel, SignalType> NVista3GpioFile::s_channelTypes
@@ -69,9 +66,6 @@ const std::map<NVista3GpioFile::Channel, SignalType> NVista3GpioFile::s_channelT
     {NVista3GpioFile::Channel::EX_LED, SignalType::SPARSE},
     {NVista3GpioFile::Channel::OG_LED, SignalType::SPARSE},
     {NVista3GpioFile::Channel::DI_LED, SignalType::SPARSE},
-    {NVista3GpioFile::Channel::TRIG, SignalType::SPARSE},
-    {NVista3GpioFile::Channel::SYNC, SignalType::SPARSE},
-    {NVista3GpioFile::Channel::FLASH, SignalType::SPARSE},
     {NVista3GpioFile::Channel::EFOCUS, SignalType::SPARSE},
     {NVista3GpioFile::Channel::BNC_TRIG, SignalType::SPARSE},
     {NVista3GpioFile::Channel::BNC_SYNC, SignalType::SPARSE},
@@ -163,13 +157,11 @@ NVista3GpioFile::addDigitalGpiPkts(const uint64_t inTsc, uint16_t inDigitalGpi)
 }
 
 void
-NVista3GpioFile::addTrigSyncFlashPkts(const uint64_t inTsc, uint16_t inTrigSyncFlash)
+NVista3GpioFile::addTrigSyncPkts(const uint64_t inTsc, uint16_t inTrigSync)
 {
-    for (const auto channel : std::vector<Channel>({Channel::TRIG, Channel::SYNC, Channel::FLASH}))
-    {
-        addPkt(channel, inTsc, float(inTrigSyncFlash & 0b1));
-        inTrigSyncFlash >>= 1;
-    }
+    addPkt(Channel::BNC_SYNC, inTsc, float(inTrigSync & 0b1));
+    inTrigSync >>= 1;
+    addPkt(Channel::BNC_TRIG, inTsc, float(inTrigSync & 0b1));
 }
 
 void
@@ -214,7 +206,7 @@ NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
             addPkt(Channel::OG_LED, tsc, float(payload.ogLed));
             addPkt(Channel::DI_LED, tsc, float(payload.diLed));
             addPkt(Channel::EFOCUS, tsc, float(payload.eFocus));
-            addTrigSyncFlashPkts(tsc, uint16_t(payload.trigSyncFlash));
+            addTrigSyncPkts(tsc, uint16_t(payload.trigSync));
             break;
         }
 
