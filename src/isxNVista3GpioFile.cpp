@@ -307,6 +307,7 @@ NVista3GpioFile::parse()
 {
     m_file.seekg(0, m_file.end);
     const float progressMultiplier = 1 / float(m_file.tellg());
+    size_t progress = 0;
     m_file.seekg(0, m_file.beg);
     std::ios::pos_type curPos = m_file.tellg();
 
@@ -337,9 +338,14 @@ NVista3GpioFile::parse()
         }
 
         curPos = m_file.tellg();
-        if (m_checkInCB && m_checkInCB(progressMultiplier * float(curPos)))
+        const size_t newProgress = size_t(100 * progressMultiplier * double(curPos));
+        if (newProgress != progress)
         {
-            return AsyncTaskStatus::CANCELLED;
+            progress = newProgress;
+            if (m_checkInCB && m_checkInCB(float(progress / 100.0)))
+            {
+                return AsyncTaskStatus::CANCELLED;
+            }
         }
 
         if (sync != s_syncWord)
