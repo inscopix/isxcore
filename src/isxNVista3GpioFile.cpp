@@ -305,12 +305,6 @@ NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
 AsyncTaskStatus
 NVista3GpioFile::parse()
 {
-    m_file.seekg(0, m_file.end);
-    const float progressMultiplier = 1 / float(m_file.tellg());
-    size_t progress = 0;
-    m_file.seekg(0, m_file.beg);
-    std::ios::pos_type curPos = m_file.tellg();
-
     m_packets.clear();
     m_indices.clear();
     size_t syncCount = 0;
@@ -323,12 +317,23 @@ NVista3GpioFile::parse()
     isx::Time startTime;
     const auto potentialSync = read<uint32_t>();
     m_file.seekg(0, m_file.beg);
-    if (potentialSync != s_syncWord)
+    const bool hasHeader = potentialSync != s_syncWord;
+    double progressMultiplier = 0;
+    if (hasHeader)
     {
         const auto fileHeader = read<AdpDumpHeader>();
         startTime = Time(DurationInSeconds(fileHeader.secsSinceEpochNum, fileHeader.secsSinceEpochDen), fileHeader.utcOffset);
+        progressMultiplier = 1 / double(fileHeader.eventCount);
     }
+    else
+    {
+        m_file.seekg(0, m_file.end);
+        progressMultiplier = 1 / float(m_file.tellg());
+        m_file.seekg(0, m_file.beg);
+    }
+    progressMultiplier *= 100;
 
+    size_t progress = 0;
     while (m_file.good())
     {
         const auto sync = read<uint32_t>();
@@ -337,8 +342,22 @@ NVista3GpioFile::parse()
             break;
         }
 
-        curPos = m_file.tellg();
-        const size_t newProgress = size_t(100 * progressMultiplier * double(curPos));
+        if (sync != s_syncWord)
+        {
+            continue;
+        }
+        ++syncCount;
+
+        size_t newProgress = progress;
+        if (hasHeader)
+        {
+            newProgress = size_t(progressMultiplier * syncCount);
+        }
+        else
+        {
+            newProgress = size_t(progressMultiplier * m_file.tellg());
+        }
+
         if (newProgress != progress)
         {
             progress = newProgress;
@@ -348,13 +367,7 @@ NVista3GpioFile::parse()
             }
         }
 
-        if (sync != s_syncWord)
-        {
-            continue;
-        }
-        ++syncCount;
-
-        ISX_LOG_DEBUG_NV3_GPIO("Found sync at byte ", curPos);
+        ISX_LOG_DEBUG_NV3_GPIO("Found sync at byte ", m_file.tellg());
 
         const auto header = read<PktHeader>();
         if (!m_file.good())
@@ -375,7 +388,7 @@ NVista3GpioFile::parse()
         }
         catch (const BadGpioPacket &)
         {
-            ISX_LOG_ERROR("Skipping bad GPIO packet at byte ", curPos, " with header (",
+            ISX_LOG_ERROR("Skipping bad GPIO packet at byte ", m_file.tellg(), " with header (",
                     header.type, ", ", header.sequence, ", ", header.payloadSize, ").");
         }
     }
