@@ -8,6 +8,8 @@
 #include "isxGpio.h"
 #include "isxFileTypes.h"
 #include "isxNVista3GpioFile.h"
+#include "isxMovieFactory.h"
+#include "isxMovie.h"
 
 #include "catch.hpp"
 
@@ -262,6 +264,77 @@ TEST_CASE("GpioDataTest", "[core]")
     isx::CoreShutdown();
 }
 
+void
+writeNV3SyncPacket(std::ofstream & inStream, const uint32_t inSequence, const bool inSync)
+{
+    uint32_t syncWord = isx::NVista3GpioFile::s_syncWord;
+    inStream.write(reinterpret_cast<char *>(&syncWord), sizeof(syncWord));
+    isx::NVista3GpioFile::PktHeader header;
+    header.type = uint32_t(isx::NVista3GpioFile::Event::BNC_SYNC);
+    header.sequence = inSequence;
+    header.payloadSize = 4;
+    inStream.write(reinterpret_cast<char *>(&header), sizeof(isx::NVista3GpioFile::PktHeader));
+    isx::NVista3GpioFile::SyncPayload payload;
+    payload.count.tscHigh = 0;
+    payload.count.tscLow = inSequence;
+    payload.count.fc = inSequence;
+    payload.bncSync = uint32_t(inSync);
+    inStream.write(reinterpret_cast<char *>(&payload), sizeof(isx::NVista3GpioFile::SyncPayload));
+}
+
+void
+writeNV3AllPacket(std::ofstream & inStream, const uint32_t inSequence,
+        const uint32_t inDigitalGpi,
+        const uint16_t inBncGpio1,
+        const uint16_t inBncGpio2,
+        const uint16_t inBncGpio3,
+        const uint16_t inBncGpio4,
+        const uint16_t inExLed,
+        const uint16_t inOgLed,
+        const uint16_t inDiLed,
+        const uint16_t inEFocus,
+        const uint32_t inTrigSync
+)
+{
+    uint32_t syncWord = isx::NVista3GpioFile::s_syncWord;
+    inStream.write(reinterpret_cast<char *>(&syncWord), sizeof(syncWord));
+    isx::NVista3GpioFile::PktHeader header;
+    header.type = uint32_t(isx::NVista3GpioFile::Event::CAPTURE_ALL);
+    header.sequence = inSequence;
+    header.payloadSize = 9;
+    inStream.write(reinterpret_cast<char *>(&header), sizeof(isx::NVista3GpioFile::PktHeader));
+    isx::NVista3GpioFile::AllPayload payload;
+    payload.count.tscHigh = 0;
+    payload.count.tscLow = inSequence;
+    payload.count.fc = inSequence;
+    payload.digitalGpi = inDigitalGpi;
+    payload.bncGpio1 = inBncGpio1;
+    payload.bncGpio2 = inBncGpio2;
+    payload.bncGpio3 = inBncGpio3;
+    payload.bncGpio4 = inBncGpio4;
+    payload.exLed = inExLed;
+    payload.ogLed = inOgLed;
+    payload.diLed = inDiLed;
+    payload.eFocus = inEFocus;
+    payload.trigSync = inTrigSync;
+    inStream.write(reinterpret_cast<char *>(&payload), sizeof(isx::NVista3GpioFile::AllPayload));
+}
+
+void
+requireGpioChannelValues(
+        const isx::SpGpio_t & inGpio,
+        const std::string & inChannel,
+        const std::map<int64_t, float> & inValues,
+        const isx::Time & inStart = isx::Time())
+{
+    const isx::SpLogicalTrace_t trace = inGpio->getLogicalData(inChannel);
+    const std::map<isx::Time, float> values = trace->getValues();
+    for (const auto & v : inValues)
+    {
+        REQUIRE(values.at(inStart + isx::DurationInSeconds::fromMicroseconds(v.first)) == v.second);
+    }
+}
+
 TEST_CASE("NVista3GpioFile", "[core]")
 {
     const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio";
@@ -269,6 +342,107 @@ TEST_CASE("NVista3GpioFile", "[core]")
     isx::makeDirectory(outputDirPath);
 
     isx::CoreInitialize();
+
+    SECTION("Write synthetic file with one channel to check only deltas get recorded")
+    {
+        const std::string inputFilePath = outputDirPath + "/synthetic.gpio";
+        {
+            std::ofstream inputFile(inputFilePath.c_str(), std::ios::binary);
+            REQUIRE(inputFile.good());
+            writeNV3SyncPacket(inputFile, 0, 0);
+            writeNV3SyncPacket(inputFile, 1, 0);
+            writeNV3SyncPacket(inputFile, 2, 1);
+            writeNV3SyncPacket(inputFile, 3, 1);
+            writeNV3SyncPacket(inputFile, 4, 0);
+            REQUIRE(inputFile.good());
+            inputFile.flush();
+        }
+
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 1);
+
+        const isx::Time startTime;
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 5);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+
+        const isx::SpLogicalTrace_t trace = gpio->getLogicalData("BNC Sync Output");
+        const std::map<isx::Time, float> values = trace->getValues();
+        REQUIRE(values.size() == 3);
+        REQUIRE(values.at(isx::Time(isx::DurationInSeconds::fromMicroseconds(0))) == 0);
+        REQUIRE(values.at(isx::Time(isx::DurationInSeconds::fromMicroseconds(2))) == 1);
+        REQUIRE(values.at(isx::Time(isx::DurationInSeconds::fromMicroseconds(4))) == 0);
+    }
+
+    SECTION("Write synthetic file with three all payloads to check files are read correctly")
+    {
+        const std::string inputFilePath = outputDirPath + "/synthetic.gpio";
+        {
+            std::ofstream inputFile(inputFilePath.c_str(), std::ios::binary);
+            REQUIRE(inputFile.good());
+            writeNV3AllPacket(inputFile, 0,
+                    0b0000000010111001,
+                    14523, 34, 263, 2880,
+                    4000, 6000, 9000,
+                    5678,
+                    0b0000000000000001);
+            writeNV3AllPacket(inputFile, 1,
+                    0b0000000010111001,
+                    14523, 34, 263, 2880,
+                    4000, 6000, 9000,
+                    5678,
+                    0b0000000000000001);
+            writeNV3AllPacket(inputFile, 2,
+                    ~0b0000000010111001,
+                    14539, 50, 279, 2896,
+                    4001, 6001, 9001,
+                    5679,
+                    ~0b0000000000000001);
+            REQUIRE(inputFile.good());
+            inputFile.flush();
+        }
+
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 18);
+
+        const isx::Time startTime;
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 3);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+
+        requireGpioChannelValues(gpio, "IO-9", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "IO-10", {{0, 0.f}, {2, 1.f}});
+        requireGpioChannelValues(gpio, "IO-11", {{0, 0.f}, {2, 1.f}});
+        requireGpioChannelValues(gpio, "IO-12", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "IO-13", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "IO-14", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "IO-15", {{0, 0.f}, {2, 1.f}});
+        requireGpioChannelValues(gpio, "IO-16", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "GPIO-1", {{0, 14512.f}, {2, 14528.f}});
+        requireGpioChannelValues(gpio, "GPIO-2", {{0, 32.f}, {2, 48.f}});
+        requireGpioChannelValues(gpio, "GPIO-3", {{0, 256.f}, {2, 272.f}});
+        requireGpioChannelValues(gpio, "GPIO-4", {{0, 2880.f}, {2, 2896.f}});
+        requireGpioChannelValues(gpio, "EX-LED", {{0, 4000.f}, {2, 4001.f}});
+        requireGpioChannelValues(gpio, "OG-LED", {{0, 6000.f}, {2, 6001.f}});
+        requireGpioChannelValues(gpio, "DI-LED", {{0, 9000.f}, {2, 9001.f}});
+        requireGpioChannelValues(gpio, "e-focus", {{0, 5678.f}, {2, 5679.f}});
+        requireGpioChannelValues(gpio, "BNC Trigger Input", {{0, 0.f}, {2, 1.f}});
+        requireGpioChannelValues(gpio, "BNC Sync Output", {{0, 1.f}, {2, 0.f}});
+    }
 
     SECTION("MOS-1450")
     {
@@ -282,11 +456,126 @@ TEST_CASE("NVista3GpioFile", "[core]")
 
         const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
 
-        REQUIRE(gpio->numberOfChannels() == 22);
+        REQUIRE(gpio->numberOfChannels() == 19);
 
-        const isx::TimingInfo expTi(isx::Time(), isx::DurationInSeconds::fromMicroseconds(1), 10000);
+        const isx::Time startTime;
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 10000);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
+
+    SECTION("MOS-1548")
+    {
+        const std::string inputFilePath = inputDirPath + "/2018-06-19-15-41-43_video.gpio";
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 18);
+
+        const isx::Time startTime;
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 1142588);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+    }
+
+    SECTION("Verify that start time matches a corresponding movie")
+    {
+        const std::string baseName = "2018-06-21-17-51-03_video_sched_0";
+        const std::string inputFilePath = inputDirPath + "/" + baseName + ".gpio";
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        const std::string movieFilePath = inputDirPath + "/" + baseName + ".isxd";
+        const isx::SpMovie_t movie = isx::readMovie(movieFilePath);
+
+        REQUIRE(gpio->getTimingInfo().getStart() == movie->getTimingInfo().getStart());
+    }
+
+    SECTION("MOS-1552")
+    {
+        const std::string inputFilePath = inputDirPath + "/2018-06-26-13-21-27_video.gpio";
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 18);
+
+        const isx::Time startTime;
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 26569573);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+    }
+
+    SECTION("MOS-1559: No trigger")
+    {
+        const std::string inputFilePath = inputDirPath + "/2018-06-29-23-02-38_video.gpio";
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 18);
+
+        const isx::Time startTime(2018, 6, 29, 23, 2, 38, isx::DurationInSeconds::fromMilliseconds(865));
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 38270681);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+
+        requireGpioChannelValues(gpio, "BNC Trigger Input", {{0, 0.f}}, startTime);
+        requireGpioChannelValues(gpio, "BNC Sync Output", {
+                {0, 0.f},
+                {8910, 1.f},
+                {18811, 0.f},
+                {58414, 1.f},
+                // Skip most of the packets ...
+                {38224143, 1.f},
+                {38234046, 0.f},
+        }, startTime);
+    }
+
+    SECTION("MOS-1559: Trigger")
+    {
+        const std::string inputFilePath = inputDirPath + "/2018-06-29-23-07-14_video_trig_0.gpio";
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 18);
+
+        const isx::Time startTime(2018, 6, 29, 23, 7, 21, isx::DurationInSeconds::fromMilliseconds(2));
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 9856535);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+
+        requireGpioChannelValues(gpio, "BNC Trigger Input", {{0, 1.f}, {9855543, 0.f}}, startTime);
+        requireGpioChannelValues(gpio, "BNC Sync Output", {
+                {0, 1.f},
+                {4952, 0.f},
+                {44556, 1.f},
+                {54456, 0.f},
+                // Skip most of the packets ...
+                {9809009, 1.f},
+                {9818911, 0.f},
+        }, startTime);
+    }
+
+    isx::removeDirectory(outputDirPath);
 
     isx::CoreShutdown();
 }

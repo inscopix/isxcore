@@ -266,3 +266,40 @@ TEST_CASE("mos-1319", "[core][snapshot]")
 
     isx::CoreShutdown();
 }
+
+TEST_CASE("snapshot-nVista3", "[core][snapshot]")
+{
+    const std::string inputDir = g_resources["unitTestDataPath"] + "/Snapshots/nVista3";
+
+    isx::CoreInitialize();
+
+    SECTION("MOS-1549")
+    {
+        const std::string filePath = inputDir + "/2018-06-19-11-34-37_snap.tiff";
+
+        const isx::SpacingInfo expectedSi = isx::SpacingInfo(
+                isx::SizeInPixels_t(1280, 800),
+                isx::SizeInMicrons_t(isx::DEFAULT_PIXEL_SIZE, isx::DEFAULT_PIXEL_SIZE),
+                isx::PointInMicrons_t(0, 0)
+        );
+
+        const std::map<size_t, uint16_t> expectedValues =
+        {
+            {0, 357},
+            {1, 367},
+            {1280, 368},
+            {1280 * 800 - 1, 636},
+        };
+
+        const isx::SpVideoFrame_t snapshot = isx::readImage(filePath);
+
+        requireSnapshopProperties(
+                filePath,
+                expectedSi,
+                isx::TimingInfo(isx::Time(), isx::TimingInfo::s_defaultStep, 1),
+                expectedValues
+        );
+    }
+
+    isx::CoreShutdown();
+}

@@ -16,6 +16,15 @@
 namespace isx
 {
 
+BadGpioPacket::BadGpioPacket(const std::string & file, int line, const std::string & message)
+    : Exception(file, line, message)
+{
+}
+
+BadGpioPacket::~BadGpioPacket()
+{
+}
+
 const std::map<NVista3GpioFile::Channel, std::string> NVista3GpioFile::s_channelNames
 {
     {NVista3GpioFile::Channel::FRAME_COUNTER, "Frame Count"},
@@ -35,11 +44,8 @@ const std::map<NVista3GpioFile::Channel, std::string> NVista3GpioFile::s_channel
     {NVista3GpioFile::Channel::OG_LED, "OG-LED"},
     {NVista3GpioFile::Channel::DI_LED, "DI-LED"},
     {NVista3GpioFile::Channel::EFOCUS, "e-focus"},
-    {NVista3GpioFile::Channel::TRIG, "Sensor TRIG"},
-    {NVista3GpioFile::Channel::SYNC, "Sensor SYNC"},
-    {NVista3GpioFile::Channel::FLASH, "Sensor FLASH"},
-    {NVista3GpioFile::Channel::BNC_TRIG, "TRIG"},
-    {NVista3GpioFile::Channel::BNC_SYNC, "SYNC"},
+    {NVista3GpioFile::Channel::BNC_TRIG, "BNC Trigger Input"},
+    {NVista3GpioFile::Channel::BNC_SYNC, "BNC Sync Output"},
 };
 
 const std::map<NVista3GpioFile::Channel, SignalType> NVista3GpioFile::s_channelTypes
@@ -60,9 +66,6 @@ const std::map<NVista3GpioFile::Channel, SignalType> NVista3GpioFile::s_channelT
     {NVista3GpioFile::Channel::EX_LED, SignalType::SPARSE},
     {NVista3GpioFile::Channel::OG_LED, SignalType::SPARSE},
     {NVista3GpioFile::Channel::DI_LED, SignalType::SPARSE},
-    {NVista3GpioFile::Channel::TRIG, SignalType::SPARSE},
-    {NVista3GpioFile::Channel::SYNC, SignalType::SPARSE},
-    {NVista3GpioFile::Channel::FLASH, SignalType::SPARSE},
     {NVista3GpioFile::Channel::EFOCUS, SignalType::SPARSE},
     {NVista3GpioFile::Channel::BNC_TRIG, SignalType::SPARSE},
     {NVista3GpioFile::Channel::BNC_SYNC, SignalType::SPARSE},
@@ -130,8 +133,17 @@ NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, con
         const size_t numChannels = m_indices.size();
         m_indices[inChannel] = numChannels;
     }
-    const EventBasedFileV2::DataPkt pkt(inTimeStamp, inValue, m_indices[inChannel]);
-    m_packets.push_back(pkt);
+    bool valueChanged = true;
+    if (m_lastValues.find(inChannel) != m_lastValues.end())
+    {
+        valueChanged = m_lastValues.at(inChannel) != inValue;
+    }
+    m_lastValues[inChannel] = inValue;
+    if (valueChanged)
+    {
+        const EventBasedFileV2::DataPkt pkt(inTimeStamp, inValue, m_indices[inChannel]);
+        m_packets.push_back(pkt);
+    }
 }
 
 void
@@ -145,13 +157,11 @@ NVista3GpioFile::addDigitalGpiPkts(const uint64_t inTsc, uint16_t inDigitalGpi)
 }
 
 void
-NVista3GpioFile::addTrigSyncFlashPkts(const uint64_t inTsc, uint16_t inTrigSyncFlash)
+NVista3GpioFile::addTrigSyncPkts(const uint64_t inTsc, uint16_t inTrigSync)
 {
-    for (const auto channel : std::vector<Channel>({Channel::TRIG, Channel::SYNC, Channel::FLASH}))
-    {
-        addPkt(channel, inTsc, float(inTrigSyncFlash & 0b1));
-        inTrigSyncFlash >>= 1;
-    }
+    addPkt(Channel::BNC_SYNC, inTsc, float(inTrigSync & 0b1));
+    inTrigSync >>= 1;
+    addPkt(Channel::BNC_TRIG, inTsc, float(inTrigSync & 0b1));
 }
 
 void
@@ -159,7 +169,7 @@ NVista3GpioFile::readParseAddGpioPayload(const uint32_t inExpectedSize, const Ch
 {
     const auto payload = read<GpioPayload>(inExpectedSize);
     const uint64_t tsc = parseTsc(payload.count);
-    addPkt(inChannel, tsc, float(payload.bncGpio));
+    addPkt(inChannel, tsc, roundGpioValue(payload.bncGpio));
 }
 
 void
@@ -180,18 +190,150 @@ NVista3GpioFile::parseTsc(const CountPayload & inCount)
     return tsc;
 }
 
+void
+NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
+{
+    switch (Event(inHeader.type))
+    {
+        case Event::CAPTURE_ALL:
+        {
+            ISX_LOG_DEBUG_NV3_GPIO("Event::CAPTURE_ALL");
+            const auto payload = read<AllPayload>(inHeader.payloadSize);
+            const uint64_t tsc = parseTsc(payload.count);
+            addDigitalGpiPkts(tsc, uint16_t(payload.digitalGpi));
+            addGpioPkts(tsc, payload);
+            addPkt(Channel::EX_LED, tsc, float(payload.exLed));
+            addPkt(Channel::OG_LED, tsc, float(payload.ogLed));
+            addPkt(Channel::DI_LED, tsc, float(payload.diLed));
+            addPkt(Channel::EFOCUS, tsc, float(payload.eFocus));
+            addTrigSyncPkts(tsc, uint16_t(payload.trigSync));
+            break;
+        }
+
+        case Event::CAPTURE_GPIO:
+        {
+            ISX_LOG_DEBUG_NV3_GPIO("Event::CAPTURE_GPIO");
+            const auto payload = read<AllGpioPayload>(inHeader.payloadSize);
+            const uint64_t tsc = parseTsc(payload.count);
+            addDigitalGpiPkts(tsc, payload.digitalGpi);
+            addPkt(Channel::BNC_TRIG, tsc, float(payload.bncTrig));
+            addGpioPkts(tsc, payload);
+            break;
+        }
+
+        case Event::BNC_GPIO_1:
+            ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_GPIO_1");
+            readParseAddGpioPayload(inHeader.payloadSize, Channel::BNC_GPIO_1);
+            break;
+
+        case Event::BNC_GPIO_2:
+            ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_GPIO_2");
+            readParseAddGpioPayload(inHeader.payloadSize, Channel::BNC_GPIO_2);
+            break;
+
+        case Event::BNC_GPIO_3:
+            ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_GPIO_3");
+            readParseAddGpioPayload(inHeader.payloadSize, Channel::BNC_GPIO_3);
+            break;
+
+        case Event::BNC_GPIO_4:
+            ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_GPIO_4");
+            readParseAddGpioPayload(inHeader.payloadSize, Channel::BNC_GPIO_4);
+            break;
+
+        case Event::DIGITAL_GPI:
+        {
+            ISX_LOG_DEBUG_NV3_GPIO("Event::DIGITAL_GPI");
+            const auto payload = read<DigitalGpiPayload>(inHeader.payloadSize);
+            const uint64_t tsc = parseTsc(payload.count);
+            addDigitalGpiPkts(tsc, uint16_t(payload.digitalGpi));
+            break;
+        }
+
+        case Event::EX_LED:
+            ISX_LOG_DEBUG_NV3_GPIO("Event::EX_LED");
+            readParseAddLedPayload(inHeader.payloadSize, Channel::EX_LED);
+            break;
+
+        case Event::OG_LED:
+            ISX_LOG_DEBUG_NV3_GPIO("Event::OG_LED");
+            readParseAddLedPayload(inHeader.payloadSize, Channel::OG_LED);
+            break;
+
+        case Event::DI_LED:
+            ISX_LOG_DEBUG_NV3_GPIO("Event::DI_LED");
+            readParseAddLedPayload(inHeader.payloadSize, Channel::DI_LED);
+            break;
+
+        case Event::FRAME_COUNT:
+        {
+            ISX_LOG_DEBUG_NV3_GPIO("Event::FRAME_COUNT");
+            const auto payload = read<CountPayload>(inHeader.payloadSize);
+            const uint64_t tsc = parseTsc(payload);
+            addPkt(Channel::FRAME_COUNTER, tsc, float(payload.fc));
+            break;
+        }
+
+        case Event::BNC_TRIG:
+        {
+            ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_TRIG");
+            const auto payload = read<TrigPayload>(inHeader.payloadSize);
+            const uint64_t tsc = parseTsc(payload.count);
+            addPkt(Channel::BNC_TRIG, tsc, float(payload.bncTrig));
+            break;
+        }
+
+        case Event::BNC_SYNC:
+        {
+            ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_SYNC");
+            const auto payload = read<SyncPayload>(inHeader.payloadSize);
+            const uint64_t tsc = parseTsc(payload.count);
+            addPkt(Channel::BNC_SYNC, tsc, float(payload.bncSync));
+            break;
+        }
+
+        case Event::WAVEFORM:
+            ISX_LOG_DEBUG_NV3_GPIO("Event::WAVEFORM");
+            read<WaveformPayload>(inHeader.payloadSize);
+            break;
+
+        default:
+            break;
+    }
+}
+
 AsyncTaskStatus
 NVista3GpioFile::parse()
 {
-    m_file.seekg(0, m_file.end);
-    const float progressMultiplier = 1 / float(m_file.tellg());
-    m_file.seekg(0, m_file.beg);
-    std::ios::pos_type curPos = m_file.tellg();
-
     m_packets.clear();
     m_indices.clear();
     size_t syncCount = 0;
 
+    // All official releases of nVista3 with GPIO data should have a header
+    // that contains the start time.
+    // In order to continue to read files acquired in alpha testing, we
+    // check to see if the first word is a sync packet which indicates that
+    // the header is missing.
+    isx::Time startTime;
+    const auto potentialSync = read<uint32_t>();
+    m_file.seekg(0, m_file.beg);
+    const bool hasHeader = potentialSync != s_syncWord;
+    double progressMultiplier = 0;
+    if (hasHeader)
+    {
+        const auto fileHeader = read<AdpDumpHeader>();
+        startTime = Time(DurationInSeconds(fileHeader.secsSinceEpochNum, fileHeader.secsSinceEpochDen), fileHeader.utcOffset);
+        progressMultiplier = 1 / double(fileHeader.eventCount);
+    }
+    else
+    {
+        m_file.seekg(0, m_file.end);
+        progressMultiplier = 1 / float(m_file.tellg());
+        m_file.seekg(0, m_file.beg);
+    }
+    progressMultiplier *= 100;
+
+    size_t progress = 0;
     while (m_file.good())
     {
         const auto sync = read<uint32_t>();
@@ -200,19 +342,32 @@ NVista3GpioFile::parse()
             break;
         }
 
-        curPos = m_file.tellg();
-        if (m_checkInCB && m_checkInCB(progressMultiplier * float(curPos)))
-        {
-            return AsyncTaskStatus::CANCELLED;
-        }
-
         if (sync != s_syncWord)
         {
             continue;
         }
         ++syncCount;
 
-        ISX_LOG_DEBUG_NV3_GPIO("Found sync at byte ", curPos);
+        size_t newProgress = progress;
+        if (hasHeader)
+        {
+            newProgress = size_t(progressMultiplier * syncCount);
+        }
+        else
+        {
+            newProgress = size_t(progressMultiplier * m_file.tellg());
+        }
+
+        if (newProgress != progress)
+        {
+            progress = newProgress;
+            if (m_checkInCB && m_checkInCB(float(progress / 100.0)))
+            {
+                return AsyncTaskStatus::CANCELLED;
+            }
+        }
+
+        ISX_LOG_DEBUG_NV3_GPIO("Found sync at byte ", m_file.tellg());
 
         const auto header = read<PktHeader>();
         if (!m_file.good())
@@ -227,112 +382,14 @@ NVista3GpioFile::parse()
             continue;
         }
 
-        switch (Event(header.type))
+        try
         {
-            case Event::CAPTURE_ALL:
-            {
-                ISX_LOG_DEBUG_NV3_GPIO("Event::CAPTURE_ALL");
-                const auto payload = read<AllPayload>(header.payloadSize);
-                const uint64_t tsc = parseTsc(payload.count);
-                addDigitalGpiPkts(tsc, uint16_t(payload.digitalGpi));
-                addGpioPkts(tsc, payload);
-                addPkt(Channel::EX_LED, tsc, float(payload.exLed));
-                addPkt(Channel::OG_LED, tsc, float(payload.ogLed));
-                addPkt(Channel::DI_LED, tsc, float(payload.diLed));
-                addPkt(Channel::EFOCUS, tsc, float(payload.eFocus));
-                addTrigSyncFlashPkts(tsc, uint16_t(payload.trigSyncFlash));
-                break;
-            }
-
-            case Event::CAPTURE_GPIO:
-            {
-                ISX_LOG_DEBUG_NV3_GPIO("Event::CAPTURE_GPIO");
-                const auto payload = read<AllGpioPayload>(header.payloadSize);
-                const uint64_t tsc = parseTsc(payload.count);
-                addDigitalGpiPkts(tsc, payload.digitalGpi);
-                addPkt(Channel::BNC_TRIG, tsc, float(payload.bncTrig));
-                addGpioPkts(tsc, payload);
-                break;
-            }
-
-            case Event::BNC_GPIO_1:
-                ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_GPIO_1");
-                readParseAddGpioPayload(header.payloadSize, Channel::BNC_GPIO_1);
-                break;
-
-            case Event::BNC_GPIO_2:
-                ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_GPIO_2");
-                readParseAddGpioPayload(header.payloadSize, Channel::BNC_GPIO_2);
-                break;
-
-            case Event::BNC_GPIO_3:
-                ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_GPIO_3");
-                readParseAddGpioPayload(header.payloadSize, Channel::BNC_GPIO_3);
-                break;
-
-            case Event::BNC_GPIO_4:
-                ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_GPIO_4");
-                readParseAddGpioPayload(header.payloadSize, Channel::BNC_GPIO_4);
-                break;
-
-            case Event::DIGITAL_GPI:
-            {
-                ISX_LOG_DEBUG_NV3_GPIO("Event::DIGITAL_GPI");
-                const auto payload = read<DigitalGpiPayload>(header.payloadSize);
-                const uint64_t tsc = parseTsc(payload.count);
-                addDigitalGpiPkts(tsc, uint16_t(payload.digitalGpi));
-                break;
-            }
-
-            case Event::EX_LED:
-                ISX_LOG_DEBUG_NV3_GPIO("Event::EX_LED");
-                readParseAddLedPayload(header.payloadSize, Channel::EX_LED);
-                break;
-
-            case Event::OG_LED:
-                ISX_LOG_DEBUG_NV3_GPIO("Event::OG_LED");
-                readParseAddLedPayload(header.payloadSize, Channel::OG_LED);
-                break;
-
-            case Event::DI_LED:
-                ISX_LOG_DEBUG_NV3_GPIO("Event::DI_LED");
-                readParseAddLedPayload(header.payloadSize, Channel::DI_LED);
-                break;
-
-            case Event::FRAME_COUNT:
-            {
-                ISX_LOG_DEBUG_NV3_GPIO("Event::FRAME_COUNT");
-                const auto payload = read<CountPayload>(header.payloadSize);
-                const uint64_t tsc = parseTsc(payload);
-                addPkt(Channel::FRAME_COUNTER, tsc, float(payload.fc));
-                break;
-            }
-
-            case Event::BNC_TRIG:
-            {
-                ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_TRIG");
-                const auto payload = read<TrigPayload>(header.payloadSize);
-                const uint64_t tsc = parseTsc(payload.count);
-                addPkt(Channel::BNC_TRIG, tsc, float(payload.bncTrig));
-                break;
-            }
-
-            case Event::BNC_SYNC:
-            {
-                ISX_LOG_DEBUG_NV3_GPIO("Event::BNC_SYNC");
-                const auto payload = read<SyncPayload>(header.payloadSize);
-                const uint64_t tsc = parseTsc(payload.count);
-                addPkt(Channel::BNC_SYNC, tsc, float(payload.bncSync));
-                break;
-            }
-
-            case Event::WAVEFORM:
-                ISX_LOG_DEBUG_NV3_GPIO("Event::WAVEFORM");
-                read<WaveformPayload>(header.payloadSize);
-                break;
-
-            default:
-                break;
+            readParseAddPayload(header);
+        }
+        catch (const BadGpioPacket &)
+        {
+            ISX_LOG_ERROR("Skipping bad GPIO packet at byte ", m_file.tellg(), " with header (",
+                    header.type, ", ", header.sequence, ", ", header.payloadSize, ").");
         }
     }
 
@@ -361,9 +418,6 @@ NVista3GpioFile::parse()
         firstTime = m_packets.front().offsetMicroSecs;
         lastTime = m_packets.back().offsetMicroSecs;
     }
-
-    // TODO : Need actual start time.
-    const Time startTime = isx::Time();
 
     writePktsToEventBasedFile(m_outputFileName, m_packets, channels, types,
             startTime, firstTime, lastTime);

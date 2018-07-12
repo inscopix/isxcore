@@ -23,7 +23,18 @@ writePktsToEventBasedFile(
     EventBasedFileV2 outputFile(inOutputFilePath, DataSet::Type::GPIO, inChannels, steps, inTypes);
     for (const auto p : inPackets)
     {
-        outputFile.writeDataPkt(p);
+        EventBasedFileV2::DataPkt pkt;
+        if (p.offsetMicroSecs >= inFirstMicrosecondOffset)
+        {
+            pkt.offsetMicroSecs = p.offsetMicroSecs - inFirstMicrosecondOffset;
+            pkt.signal = p.signal;
+            pkt.value = p.value;
+            outputFile.writeDataPkt(pkt);
+        }
+        else
+        {
+            ISX_LOG_ERROR("Tried to write packet with negative offset. Skipping.");
+        }
     }
 
     outputFile.setTimingInfo(timing.getStart(), timing.getEnd());
