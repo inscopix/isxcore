@@ -2,6 +2,8 @@
 #include "isxLog.h"
 #include "isxAssert.h"
 
+#include <cmath>
+
 namespace
 {
 
@@ -9,6 +11,18 @@ bool
 contains(const isx::TimingInfo & inTi, const isx::Time & inTime)
 {
     return (inTime >= inTi.getStart()) && (inTime < inTi.getEnd());
+}
+
+double
+toMicrosecondPrecision(const double inSeconds)
+{
+    return std::round(inSeconds * 1e6) / 1e6;
+}
+
+void
+addXCoordinate(std::vector<double> & inCoords, const double inX)
+{
+    inCoords.push_back(toMicrosecondPrecision(inX));
 }
 
 } // namespace
@@ -41,7 +55,7 @@ getCoordinatesFromLogicalTrace(
     isize_t segmentIdx = 0;
     if (inCoordsForSquareWave)
     {
-        outX.at(segmentIdx).push_back(durationOfPrevSegments[segmentIdx]);
+        addXCoordinate(outX.at(segmentIdx), durationOfPrevSegments[segmentIdx]);
         outY.at(segmentIdx).push_back(0.0);
     }
     double startTimeForSegment = inTis.at(segmentIdx).getStart().getSecsSinceEpoch().toDouble();
@@ -65,17 +79,15 @@ getCoordinatesFromLogicalTrace(
             // Make sure each segment starts with zero
             if (inCoordsForSquareWave)
             {
-                outX.at(segmentIdx).push_back(durationOfPrevSegments[segmentIdx]);
+                addXCoordinate(outX.at(segmentIdx), durationOfPrevSegments[segmentIdx]);
                 outY.at(segmentIdx).push_back(0.0);
             }
         }
-        outX.at(segmentIdx).push_back(time.getSecsSinceEpoch().toDouble() - startTimeForSegment + durationOfPrevSegments[segmentIdx]);
+        addXCoordinate(outX.at(segmentIdx), time.getSecsSinceEpoch().toDouble() - startTimeForSegment + durationOfPrevSegments[segmentIdx]);
         outY.at(segmentIdx).push_back(double(pair.second));
     }
 
     // This should ensure that we assume the same value until the end of each segment.
-    // TODO : The x-coordinates for the separators and plot points can be slightly different
-    // due to slightly different arithmetic. In the future, it would be nice if these were shared.
     if (inCoordsForSquareWave)
     {
         for (size_t i = 0; i < outX.size(); ++i)
@@ -84,7 +96,7 @@ getCoordinatesFromLogicalTrace(
             {
                 const double lastTime = inTis.at(i).getLastStartTime().getSecsSinceEpoch().toDouble();
                 const double startTime = inTis.at(i).getStart().getSecsSinceEpoch().toDouble();
-                outX.at(i).push_back(lastTime - startTime + durationOfPrevSegments.at(i));
+                addXCoordinate(outX.at(i), lastTime - startTime + durationOfPrevSegments.at(i));
                 outY.at(i).push_back(outY.at(i).back());
             }
         }
