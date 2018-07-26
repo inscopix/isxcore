@@ -9,7 +9,7 @@ requireApproxEqual(
         const std::vector<std::vector<T>> & inActual,
         const std::vector<std::vector<T>> & inExpected)
 {
-    REQUIRE(inActual.size() == inExpected.size());
+    REQUIRE((inActual.size() == inExpected.size()));
     for (size_t i = 0; i < inActual.size(); ++i)
     {
         REQUIRE(inActual[i].size() == inExpected[i].size());
