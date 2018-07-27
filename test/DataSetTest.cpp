@@ -164,3 +164,118 @@ TEST_CASE("DataSet-deleteFile", "[core]")
 
     std::remove(filePath.c_str());
 }
+
+namespace
+{
+
+std::map<std::string, std::string>
+convertMetadataToMap(const isx::DataSet::Metadata & inMetadata)
+{
+    std::map<std::string, std::string> map;
+    for (const auto & p : inMetadata)
+    {
+        map[p.first] = p.second;
+    }
+    return map;
+}
+
+} // namespace
+
+TEST_CASE("DataSet-getMetadata", "[core]")
+{
+    isx::CoreInitialize();
+
+    SECTION("nVista 2 movie")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/recording_20161104_145443.xml";
+        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, filePath, isx::HistoricalDetails());
+
+        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+
+        REQUIRE(metaData.at("Start Time") == "2016/11/04-14:54:43.662");
+        REQUIRE(metaData.at("End Time") == "2016/11/04-14:54:46.328");
+        REQUIRE(metaData.at("Duration (s)") == "2.667");
+        REQUIRE(metaData.at("Sample Rate (Hz)") == "15.000");
+        REQUIRE(metaData.at("Number of Time Samples") == "40");
+        REQUIRE(metaData.at("Number of Dropped Samples") == "1");
+        REQUIRE(metaData.at("Dropped Samples") == "10 ");
+        REQUIRE(metaData.at("Number of Cropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Pixels") == "1440 x 1080");
+
+    }
+
+    SECTION("nVoke 1 movie")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/nVoke/recording_20170130_165221.xml";
+        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, filePath, isx::HistoricalDetails());
+
+        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+
+        REQUIRE(metaData.at("Start Time") == "2017/01/30-16:52:21.754");
+        REQUIRE(metaData.at("End Time") == "2017/01/30-16:52:21.903");
+        REQUIRE(metaData.at("Duration (s)") == "0.150");
+        REQUIRE(metaData.at("Sample Rate (Hz)") == "20.010");
+        REQUIRE(metaData.at("Number of Time Samples") == "3");
+        REQUIRE(metaData.at("Number of Dropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Cropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Pixels") == "1440 x 1080");
+
+        REQUIRE(metaData.at("Acquisition SW Version") == "2.1.8-20161128-093054");
+        REQUIRE(metaData.at("Exposure (ms)") == "49.664");
+        REQUIRE(metaData.at("Gain") == "1.0");
+        REQUIRE(metaData.at("LED Power") == "0.20");
+        REQUIRE(metaData.at("Recording Schedule Name") == "[]");
+        REQUIRE(metaData.at("Total Time LED was ON in Session") == "00:00");
+    }
+
+    SECTION("nVista 3 movie")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/nVista3Gpio/2018-06-21-17-51-03_video_sched_0.isxd";
+        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, filePath, isx::HistoricalDetails());
+
+        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+
+        REQUIRE(metaData.at("Start Time") == "2018/06/21-17:51:03.965");
+        REQUIRE(metaData.at("End Time") == "2018/06/21-17:51:05.005");
+        REQUIRE(metaData.at("Duration (s)") == "1.041");
+        REQUIRE(metaData.at("Sample Rate (Hz)") == "12.490");
+        REQUIRE(metaData.at("Number of Time Samples") == "13");
+        REQUIRE(metaData.at("Number of Dropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Cropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Pixels") == "1280 x 800");
+
+        REQUIRE(metaData.at("Animal Sex") == "m");
+        REQUIRE(metaData.at("Animal Date of Birth") == "");
+        REQUIRE(metaData.at("Animal ID") == "");
+        REQUIRE(metaData.at("Animal Species") == "");
+        REQUIRE(metaData.at("Animal Weight") == "0");
+
+        REQUIRE(metaData.at("Microscope Binning Mode") == "1");
+        REQUIRE(metaData.at("Microscope Focus") == "0");
+        REQUIRE(metaData.at("Microscope Gain") == "7");
+        REQUIRE(metaData.at("Microscope DI LED Power") == "0.200");
+        REQUIRE(metaData.at("Microscope EX LED Power") == "0");
+        REQUIRE(metaData.at("Microscope OG LED Power") == "0");
+        REQUIRE(metaData.at("Microscope Sensor Mode") == "master");
+        REQUIRE(metaData.at("Microscope Serial Number") == "unknown");
+        REQUIRE(metaData.at("Microscope Type") == "nVista");
+
+        REQUIRE(metaData.at("Session Name") == "Session 20180621-174314");
+
+        REQUIRE(metaData.at("Experimenter Name") == "John Doe");
+
+        REQUIRE(metaData.at("Probe Diameter (mm)") == "0");
+        REQUIRE(metaData.at("Probe Flip") == "none");
+        REQUIRE(metaData.at("Probe ID") == "none");
+        REQUIRE(metaData.at("Probe Length (mm)") == "0");
+        REQUIRE(metaData.at("Probe Name") == "None");
+        REQUIRE(metaData.at("Probe Pitch") == "0");
+        REQUIRE(metaData.at("Probe Rotation") == "0");
+        REQUIRE(metaData.at("Probe Type") == "None");
+
+        REQUIRE(metaData.at("Acquisition SW Version (BE)") == "1.1.0-4453328");
+        REQUIRE(metaData.at("Acquisition SW Version (FE)") == "1.1.0-ae0e21a");
+    }
+
+    isx::CoreShutdown();
+}

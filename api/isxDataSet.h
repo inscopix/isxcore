@@ -242,6 +242,9 @@ private:
     /// Callback to set the modified flag of the containig series to true 
     ModifiedCB_t m_modifiedCB = nullptr;
 
+    /// The extra properties as a JSON string, which should be updated by readMetaData.
+    std::string m_extraProps;
+
     /// Read the meta data from the data set file.
     ///
     /// \throw  ExceptionFileIO     If the read fails.
