@@ -4,6 +4,8 @@
 #include "catch.hpp"
 #include "isxPathUtils.h"
 #include "isxEventBasedFileV2.h"
+#include "isxGpio.h"
+#include "isxCsvTraceImporter.h"
 
 template <typename T>
 void
@@ -119,7 +121,7 @@ TEST_CASE("getCoordinatesFromLogicalTrace", "[core][logicaltrace]")
             eventFile.closeFileForWriting();
         }
 
-        const isx::SpEvents_t series = isx::readEventsSeries(eventFilePaths);
+        const isx::SpGpio_t series = isx::readGpioSeries(eventFilePaths);
         const isx::TimingInfos_t tis = series->getTimingInfosForSeries();
 
         std::vector<std::vector<double>> x, y;
@@ -133,6 +135,61 @@ TEST_CASE("getCoordinatesFromLogicalTrace", "[core][logicaltrace]")
                 {0, 1, 1},
                 {0, 1, 1},
         }));
+    }
+
+    SECTION("Series of two imported CSV traces found during QA of MOS-1602")
+    {
+        const std::string inputDir = g_resources["unitTestDataPath"] + "/CSV_traces/Bonsai";
+        const std::string fileBase = "272-05Min-pasted-titled";
+        const std::string outputFileBase = outputDir + "/" + fileBase + "-";
+        const std::vector<std::string> outputFiles =
+        {
+            outputFileBase + "0.isxd",
+            outputFileBase + "1.isxd",
+        };
+        const std::vector<isx::Time> startTimes =
+        {
+            isx::Time(2018, 8, 8, 9, 45, 0),
+            isx::Time(2018, 8, 8, 10, 45, 0),
+        };
+
+        isx::CsvTraceImporterParams params;
+        params.m_inputFile = inputDir + "/" + fileBase + ".csv";
+        params.m_outputFile = outputFiles[0];
+        params.m_startTime = startTimes[0];
+        params.m_timeUnit = isx::DurationInSeconds::fromMicroseconds(1);
+        REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+
+        params.m_outputFile = outputFiles[1];
+        params.m_startTime = startTimes[1];
+        REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+
+        const isx::SpGpio_t gpio = isx::readGpioSeries(outputFiles);
+        const isx::TimingInfos_t tis = gpio->getTimingInfosForSeries();
+
+        std::vector<std::vector<double>> x, y;
+        const std::string channelName = "X";
+        const isx::SpLogicalTrace_t trace = gpio->getLogicalData(channelName);
+        getCoordinatesFromLogicalTrace(trace, tis, !gpio->isAnalog(channelName), x, y);
+
+        REQUIRE(x.size() == 2);
+
+            const size_t numSamples = 7500;
+
+        REQUIRE(x[0].size() == numSamples);
+        REQUIRE(y[0].size() == numSamples);
+
+        REQUIRE(x[0][0] == Approx(0.1257077888));
+        REQUIRE(y[0][0] == Approx(25.55296));
+
+        REQUIRE(x[0][7499] == Approx(0.4256995072));
+        REQUIRE(y[0][7499] == Approx(615.0051));
+
+        REQUIRE(x[1].size() == numSamples);
+        REQUIRE(y[1].size() == numSamples);
+
+        REQUIRE(x[1][0] == Approx(tis[0].getDuration().toDouble() + 0.1257077888));
+        REQUIRE(y[1][0] == Approx(25.55296));
     }
 
     isx::CoreShutdown();

@@ -7,12 +7,6 @@
 namespace
 {
 
-bool
-contains(const isx::TimingInfo & inTi, const isx::Time & inTime)
-{
-    return (inTime >= inTi.getStart()) && (inTime < inTi.getEnd());
-}
-
 double
 toMicrosecondPrecision(const double inSeconds)
 {
@@ -63,17 +57,27 @@ getCoordinatesFromLogicalTrace(
     for (auto & pair : values)
     {
         const Time & time = pair.first;
-        if (!contains(inTis.at(segmentIdx), time))
+
+        // The logic here is a little delicate, but we want to detect a change in the
+        // segment without doing silly things as was the case in MOS-1602.
+        // Therefore, we keep trying new segments until we get one that ends before
+        // the current time, but only add that time if it occurs after the start time.
+        // This means we might miss some coordinates around the boundaries, but should
+        // not make any really bad mistakes.
+        bool newSegment = false;
+        while (time > inTis.at(segmentIdx).getEnd())
         {
-            while (!contains(inTis.at(segmentIdx), time))
+            newSegment = true;
+            ++segmentIdx;
+            if (segmentIdx >= inTis.size())
             {
-                ++segmentIdx;
-                if (segmentIdx >= inTis.size())
-                {
-                    return;
-                }
-                startTimeForSegment = inTis.at(segmentIdx).getStart().getSecsSinceEpoch().toDouble();
+                return;
             }
+        }
+
+        if (newSegment)
+        {
+            startTimeForSegment = inTis.at(segmentIdx).getStart().getSecsSinceEpoch().toDouble();
 
             // GPIO requires at least two points to have a graph plotted
             // Make sure each segment starts with zero
@@ -83,8 +87,12 @@ getCoordinatesFromLogicalTrace(
                 outY.at(segmentIdx).push_back(0.0);
             }
         }
-        addXCoordinate(outX.at(segmentIdx), time.getSecsSinceEpoch().toDouble() - startTimeForSegment + durationOfPrevSegments[segmentIdx]);
-        outY.at(segmentIdx).push_back(double(pair.second));
+
+        if (time >= inTis.at(segmentIdx).getStart())
+        {
+            addXCoordinate(outX.at(segmentIdx), time.getSecsSinceEpoch().toDouble() - startTimeForSegment + durationOfPrevSegments[segmentIdx]);
+            outY.at(segmentIdx).push_back(double(pair.second));
+        }
     }
 
     // This should ensure that we assume the same value until the end of each segment.
