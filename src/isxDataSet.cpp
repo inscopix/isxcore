@@ -23,15 +23,15 @@ namespace
 {
 
 void
-addMetadataFromJson(
+addMetadataFromExtraProps(
         isx::DataSet::Metadata & inMetadata,
         std::stringstream & inStream,
-        const json & inJson,
-        const std::string & inKey,
-        const std::string & inProperty)
+        const std::string & inExtraPropsStr)
 {
-    const auto it = inJson.find(inKey);
-    if (it != inJson.end())
+    const std::string acqInfoStr = isx::getAcquisitionInfoFromExtraProps(inExtraPropsStr);
+    const json acqInfo = json::parse(acqInfoStr);
+
+    for (json::const_iterator it = acqInfo.cbegin(); it != acqInfo.cend(); ++it)
     {
         std::string value;
         const json::value_t type = it->type();
@@ -52,71 +52,7 @@ addMetadataFromJson(
             value = inStream.str();
             inStream.str("");
         }
-        inMetadata.push_back(std::pair<std::string, std::string>(inProperty, value));
-    }
-}
-
-void
-addMetadataFromExtraProps(
-        isx::DataSet::Metadata & inMetadata,
-        std::stringstream & inStream,
-        const std::string & inExtraPropsStr)
-{
-    const json extraProps = json::parse(inExtraPropsStr);
-
-    const auto animal = extraProps.find("animal");
-    if (animal != extraProps.end())
-    {
-        addMetadataFromJson(inMetadata, inStream, *animal, "sex", "Animal Sex");
-        addMetadataFromJson(inMetadata, inStream, *animal, "dob", "Animal Date of Birth");
-        addMetadataFromJson(inMetadata, inStream, *animal, "id", "Animal ID");
-        addMetadataFromJson(inMetadata, inStream, *animal, "species", "Animal Species");
-        addMetadataFromJson(inMetadata, inStream, *animal, "weight", "Animal Weight");
-    }
-
-    const auto microscope = extraProps.find("microscope");
-    if (microscope != extraProps.end())
-    {
-        addMetadataFromJson(inMetadata, inStream, *microscope, "binMode", "Microscope Binning Mode");
-        addMetadataFromJson(inMetadata, inStream, *microscope, "focus", "Microscope Focus");
-        addMetadataFromJson(inMetadata, inStream, *microscope, "gain", "Microscope Gain");
-
-        const auto microscopeLed = microscope->find("led");
-        addMetadataFromJson(inMetadata, inStream, *microscopeLed, "diPower", "Microscope DI LED Power");
-        addMetadataFromJson(inMetadata, inStream, *microscopeLed, "exPower", "Microscope EX LED Power");
-        addMetadataFromJson(inMetadata, inStream, *microscopeLed, "ogPower", "Microscope OG LED Power");
-
-        addMetadataFromJson(inMetadata, inStream, *microscope, "sensorMode", "Microscope Sensor Mode");
-        addMetadataFromJson(inMetadata, inStream, *microscope, "serial", "Microscope Serial Number");
-        addMetadataFromJson(inMetadata, inStream, *microscope, "type", "Microscope Type");
-    }
-
-    addMetadataFromJson(inMetadata, inStream, extraProps, "name", "Session Name");
-
-    const auto personnel = extraProps.find("personnel");
-    if (personnel != extraProps.end())
-    {
-        addMetadataFromJson(inMetadata, inStream, *personnel, "name", "Experimenter Name");
-    }
-
-    const auto probe = extraProps.find("probe");
-    if (probe != extraProps.end())
-    {
-        addMetadataFromJson(inMetadata, inStream, *probe, "diameter", "Probe Diameter (mm)");
-        addMetadataFromJson(inMetadata, inStream, *probe, "flip", "Probe Flip");
-        addMetadataFromJson(inMetadata, inStream, *probe, "id", "Probe ID");
-        addMetadataFromJson(inMetadata, inStream, *probe, "length", "Probe Length (mm)");
-        addMetadataFromJson(inMetadata, inStream, *probe, "name", "Probe Name");
-        addMetadataFromJson(inMetadata, inStream, *probe, "pitch", "Probe Pitch");
-        addMetadataFromJson(inMetadata, inStream, *probe, "rotation", "Probe Rotation");
-        addMetadataFromJson(inMetadata, inStream, *probe, "type", "Probe Type");
-    }
-
-    const auto producer = extraProps.find("producer");
-    if (producer != extraProps.end())
-    {
-        addMetadataFromJson(inMetadata, inStream, *producer, "versionBE", "Acquisition SW Version (BE)");
-        addMetadataFromJson(inMetadata, inStream, *producer, "versionFE", "Acquisition SW Version (FE)");
+        inMetadata.push_back(std::pair<std::string, std::string>(it.key(), value));
     }
 }
 
@@ -689,6 +625,73 @@ void
 DataSet::setModifiedCallback(ModifiedCB_t inCallback)
 {
     m_modifiedCB = inCallback;
+}
+
+std::string
+getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
+{
+    json acqInfo;
+    const json extraProps = json::parse(inExtraPropsStr);
+
+    if (extraProps != nullptr)
+    {
+        const auto animal = extraProps.find("animal");
+        if (animal != extraProps.end())
+        {
+            acqInfo["Animal Sex"] = animal->at("sex");
+            acqInfo["Animal Date of Birth"] = animal->at("dob");
+            acqInfo["Animal ID"] = animal->at("id");
+            acqInfo["Animal Species"] = animal->at("species");
+            acqInfo["Animal Weight"] = animal->at("weight");
+        }
+
+        const auto microscope = extraProps.find("microscope");
+        if (microscope != extraProps.end())
+        {
+            acqInfo["Microscope Binning Mode"] = microscope->at("binMode");
+            acqInfo["Microscope Focus"] = microscope->at("focus");
+            acqInfo["Microscope Gain"] = microscope->at("gain");
+
+            const auto microscopeLed = microscope->find("led");
+            acqInfo["Microscope DI LED Power"] = microscopeLed->at("diPower");
+            acqInfo["Microscope EX LED Power"] = microscopeLed->at("exPower");
+            acqInfo["Microscope OG LED Power"] = microscopeLed->at("ogPower");
+
+            acqInfo["Microscope Sensor Mode"] = microscope->at("sensorMode");
+            acqInfo["Microscope Serial Number"] = microscope->at("serial");
+            acqInfo["Microscope Type"] = microscope->at("type");
+        }
+
+        acqInfo["Session Name"] = extraProps.at("name");
+
+        const auto personnel = extraProps.find("personnel");
+        if (personnel != extraProps.end())
+        {
+            acqInfo["Experimenter Name"] = personnel->at("name");
+        }
+
+        const auto probe = extraProps.find("probe");
+        if (probe != extraProps.end())
+        {
+            acqInfo["Probe Diameter (mm)"] = probe->at("diameter");
+            acqInfo["Probe Flip"] = probe->at("flip");
+            acqInfo["Probe ID"] = probe->at("id");
+            acqInfo["Probe Length (mm)"] = probe->at("length");
+            acqInfo["Probe Name"] = probe->at("name");
+            acqInfo["Probe Pitch"] = probe->at("pitch");
+            acqInfo["Probe Rotation"] = probe->at("rotation");
+            acqInfo["Probe Type"] = probe->at("type");
+        }
+
+        const auto producer = extraProps.find("producer");
+        if (producer != extraProps.end())
+        {
+            acqInfo["Acquisition SW Version (BE)"] = producer->at("versionBE");
+            acqInfo["Acquisition SW Version (FE)"] = producer->at("versionFE");
+        }
+    }
+
+    return acqInfo.dump();
 }
 
 } // namespace isx
