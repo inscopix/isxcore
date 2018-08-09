@@ -10,6 +10,61 @@
 
 #include "catch.hpp"
 
+namespace
+{
+
+void
+checkDataset1Metadata(
+        const std::map<std::string, std::string> & inMeta,
+        const std::string & inNumPixels = "")
+{
+    REQUIRE(inMeta.at("Start Time") == "2018/06/21-17:51:03.965");
+    REQUIRE(inMeta.at("End Time") == "2018/06/21-17:51:05.005");
+    REQUIRE(inMeta.at("Duration (s)") == "1.041");
+    REQUIRE(inMeta.at("Sample Rate (Hz)") == "12.490");
+    REQUIRE(inMeta.at("Number of Time Samples") == "13");
+    REQUIRE(inMeta.at("Number of Dropped Samples") == "0");
+    REQUIRE(inMeta.at("Number of Cropped Samples") == "0");
+    if (!inNumPixels.empty())
+    {
+        REQUIRE(inMeta.at("Number of Pixels") == inNumPixels);
+    }
+
+    REQUIRE(inMeta.at("Animal Sex") == "m");
+    REQUIRE(inMeta.at("Animal Date of Birth") == "");
+    REQUIRE(inMeta.at("Animal ID") == "");
+    REQUIRE(inMeta.at("Animal Species") == "");
+    REQUIRE(inMeta.at("Animal Weight") == "0");
+
+    REQUIRE(inMeta.at("Microscope Binning Mode") == "1");
+    REQUIRE(inMeta.at("Microscope Focus") == "0");
+    REQUIRE(inMeta.at("Microscope Gain") == "7");
+    REQUIRE(inMeta.at("Microscope DI LED Power") == "0.200");
+    REQUIRE(inMeta.at("Microscope EX LED Power") == "0");
+    REQUIRE(inMeta.at("Microscope OG LED Power") == "0");
+    REQUIRE(inMeta.at("Microscope Sensor Mode") == "master");
+    REQUIRE(inMeta.at("Microscope Serial Number") == "unknown");
+    REQUIRE(inMeta.at("Microscope Type") == "nVista");
+
+    REQUIRE(inMeta.at("Session Name") == "Session 20180621-174314");
+
+    REQUIRE(inMeta.at("Experimenter Name") == "John Doe");
+
+    REQUIRE(inMeta.at("Probe Diameter (mm)") == "0");
+    REQUIRE(inMeta.at("Probe Flip") == "none");
+    REQUIRE(inMeta.at("Probe ID") == "none");
+    REQUIRE(inMeta.at("Probe Length (mm)") == "0");
+    REQUIRE(inMeta.at("Probe Name") == "None");
+    REQUIRE(inMeta.at("Probe Pitch") == "0");
+    REQUIRE(inMeta.at("Probe Rotation") == "0");
+    REQUIRE(inMeta.at("Probe Type") == "None");
+
+    REQUIRE(inMeta.at("Acquisition SW Version (BE)") == "1.1.0-4453328");
+    REQUIRE(inMeta.at("Acquisition SW Version (FE)") == "1.1.0-ae0e21a");
+}
+
+} // namespace
+
 TEST_CASE("DataSet-DataSet", "[core]")
 {
     isx::HistoricalDetails hd("mainTest", "");
@@ -228,53 +283,30 @@ TEST_CASE("DataSet-getMetadata", "[core]")
         REQUIRE(metaData.at("Total Time LED was ON in Session") == "00:00");
     }
 
+    const std::string nV3Ds1Base = g_resources["unitTestDataPath"] + "/acquisition_info/2018-06-21-17-51-03_video_sched_0";
+
     SECTION("nVista 3 movie")
     {
-        const std::string filePath = g_resources["unitTestDataPath"] + "/nVista3Gpio/2018-06-21-17-51-03_video_sched_0.isxd";
-        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, filePath, isx::HistoricalDetails());
+        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, nV3Ds1Base + ".isxd", isx::HistoricalDetails());
+        checkDataset1Metadata(convertMetadataToMap(ds.getMetadata()), "1280 x 800");
+    }
 
-        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+    SECTION("movie derived from nVista 3 movie")
+    {
+        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, nV3Ds1Base + "-PP.isxd", isx::HistoricalDetails());
+        checkDataset1Metadata(convertMetadataToMap(ds.getMetadata()), "572 x 353");
+    }
 
-        REQUIRE(metaData.at("Start Time") == "2018/06/21-17:51:03.965");
-        REQUIRE(metaData.at("End Time") == "2018/06/21-17:51:05.005");
-        REQUIRE(metaData.at("Duration (s)") == "1.041");
-        REQUIRE(metaData.at("Sample Rate (Hz)") == "12.490");
-        REQUIRE(metaData.at("Number of Time Samples") == "13");
-        REQUIRE(metaData.at("Number of Dropped Samples") == "0");
-        REQUIRE(metaData.at("Number of Cropped Samples") == "0");
-        REQUIRE(metaData.at("Number of Pixels") == "1280 x 800");
+    SECTION("cellset derived from nVista 3 movie")
+    {
+        isx::DataSet ds("cellset", isx::DataSet::Type::CELLSET, nV3Ds1Base + "-PP-ROI.isxd", isx::HistoricalDetails());
+        checkDataset1Metadata(convertMetadataToMap(ds.getMetadata()), "572 x 353");
+    }
 
-        REQUIRE(metaData.at("Animal Sex") == "m");
-        REQUIRE(metaData.at("Animal Date of Birth") == "");
-        REQUIRE(metaData.at("Animal ID") == "");
-        REQUIRE(metaData.at("Animal Species") == "");
-        REQUIRE(metaData.at("Animal Weight") == "0");
-
-        REQUIRE(metaData.at("Microscope Binning Mode") == "1");
-        REQUIRE(metaData.at("Microscope Focus") == "0");
-        REQUIRE(metaData.at("Microscope Gain") == "7");
-        REQUIRE(metaData.at("Microscope DI LED Power") == "0.200");
-        REQUIRE(metaData.at("Microscope EX LED Power") == "0");
-        REQUIRE(metaData.at("Microscope OG LED Power") == "0");
-        REQUIRE(metaData.at("Microscope Sensor Mode") == "master");
-        REQUIRE(metaData.at("Microscope Serial Number") == "unknown");
-        REQUIRE(metaData.at("Microscope Type") == "nVista");
-
-        REQUIRE(metaData.at("Session Name") == "Session 20180621-174314");
-
-        REQUIRE(metaData.at("Experimenter Name") == "John Doe");
-
-        REQUIRE(metaData.at("Probe Diameter (mm)") == "0");
-        REQUIRE(metaData.at("Probe Flip") == "none");
-        REQUIRE(metaData.at("Probe ID") == "none");
-        REQUIRE(metaData.at("Probe Length (mm)") == "0");
-        REQUIRE(metaData.at("Probe Name") == "None");
-        REQUIRE(metaData.at("Probe Pitch") == "0");
-        REQUIRE(metaData.at("Probe Rotation") == "0");
-        REQUIRE(metaData.at("Probe Type") == "None");
-
-        REQUIRE(metaData.at("Acquisition SW Version (BE)") == "1.1.0-4453328");
-        REQUIRE(metaData.at("Acquisition SW Version (FE)") == "1.1.0-ae0e21a");
+    SECTION("eventset derived from nVista 3 movie")
+    {
+        isx::DataSet ds("eventset", isx::DataSet::Type::EVENTS, nV3Ds1Base + "-PP-ROI-ED.isxd", isx::HistoricalDetails());
+        checkDataset1Metadata(convertMetadataToMap(ds.getMetadata()));
     }
 
     isx::CoreShutdown();
