@@ -421,6 +421,21 @@ NVista3GpioFile::parse()
         ISX_THROW(ExceptionFileIO, "Failed to find the beginning of the data stream and parse the file.");
     }
 
+    // Add all the last values with the last time stamp.
+    // This fixes MOS-1674.
+    for (const auto & p : m_lastValues)
+    {
+        if (m_indices.find(p.first) != m_indices.end())
+        {
+            const EventBasedFileV2::DataPkt pkt(m_lastTimeStamp, p.second, m_indices.at(p.first));
+            m_packets.push_back(pkt);
+        }
+        else
+        {
+            ISX_ASSERT(false, "Tried to write last value without an index.");
+        }
+    }
+
     m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_gpio.isxd";
 
     const size_t numChannels = m_indices.size();

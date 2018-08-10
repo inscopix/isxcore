@@ -569,7 +569,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 18);
 
         const isx::Time startTime;
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 3025774);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 3057457);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
@@ -623,7 +623,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 18);
 
         const isx::Time startTime(2018, 6, 29, 23, 2, 38, isx::DurationInSeconds::fromMilliseconds(865));
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 38270681);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 38272661);
         REQUIRE(gpio->getTimingInfo() == expTi);
 
         requireGpioChannelValues(gpio, "BNC Trigger Input", {
@@ -633,6 +633,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
                 // Skip most of the packets ...
                 {37609288, nan},
                 {37611267, 0.f},
+                {38272660, 0.f},
         }, startTime);
         requireGpioChannelValues(gpio, "BNC Sync Output", {
                 {0, 0.f},
@@ -643,6 +644,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
                 // Skip most of the packets ...
                 {38224143, 1.f},
                 {38234046, 0.f},
+                {38272660, 0.f},
         }, startTime);
     }
 
