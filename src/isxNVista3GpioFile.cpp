@@ -125,7 +125,11 @@ NVista3GpioFile::skipWords(const size_t inNumWords)
 void
 NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue)
 {
-    m_lastTimeStamp = inTimeStamp;
+    const bool isNan = std::isnan(inValue);
+    if (!isNan)
+    {
+        m_lastTimeStamp = inTimeStamp;
+    }
     if (m_indices.find(inChannel) == m_indices.end())
     {
         // This used to be one line, but on Linux the first index was 1
@@ -137,7 +141,17 @@ NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, con
     bool valueChanged = true;
     if (m_lastValues.find(inChannel) != m_lastValues.end())
     {
-        valueChanged = m_lastValues.at(inChannel) != inValue;
+        // Right now, there is no way I know to add two NaN values in
+        // succession, so this is not strictly needed, but leaving in
+        // for clarity and for future-proofing.
+        if (isNan)
+        {
+            valueChanged = !std::isnan(m_lastValues.at(inChannel));
+        }
+        else
+        {
+            valueChanged = m_lastValues.at(inChannel) != inValue;
+        }
     }
     m_lastValues[inChannel] = inValue;
     if (valueChanged)

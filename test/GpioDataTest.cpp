@@ -339,7 +339,16 @@ requireGpioChannelValues(
     const std::map<isx::Time, float> values = trace->getValues();
     for (const auto & v : inValues)
     {
-        REQUIRE(values.at(inStart + isx::DurationInSeconds::fromMicroseconds(v.first)) == v.second);
+        const float expValue = v.second;
+        const float actValue = values.at(inStart + isx::DurationInSeconds::fromMicroseconds(v.first));
+        if (std::isnan(expValue))
+        {
+            REQUIRE(std::isnan(actValue));
+        }
+        else
+        {
+            REQUIRE(actValue == expValue);
+        }
     }
 }
 
@@ -450,6 +459,80 @@ TEST_CASE("NVista3GpioFile", "[core]")
         requireGpioChannelValues(gpio, "e-focus", {{0, 5678.f}, {2, 5679.f}});
         requireGpioChannelValues(gpio, "BNC Trigger Input", {{0, 0.f}, {2, 1.f}});
         requireGpioChannelValues(gpio, "BNC Sync Output", {{0, 1.f}, {2, 0.f}});
+    }
+
+    SECTION("Write synthetic file with some all payloads and dropped packets")
+    {
+        const std::string inputFilePath = outputDirPath + "/synthetic.gpio";
+        {
+            std::ofstream inputFile(inputFilePath.c_str(), std::ios::binary);
+            REQUIRE(inputFile.good());
+            // Initial values => one write.
+            writeNV3AllPacket(inputFile, 0, 0, 0,
+                    0b0000000010111001,
+                    14523, 34, 263, 2880,
+                    4000, 6000, 9000,
+                    5678,
+                    0b0000000000000001);
+            // No change, no dropped => no write.
+            writeNV3AllPacket(inputFile, 1, 2, 0,
+                    0b0000000010111001,
+                    14523, 34, 263, 2880,
+                    4000, 6000, 9000,
+                    5678,
+                    0b0000000000000001);
+            // No change, dropped => two writes (one for dropped, one for recovery).
+            writeNV3AllPacket(inputFile, 3, 6, 1,
+                    0b0000000010111001,
+                    14523, 34, 263, 2880,
+                    4000, 6000, 9000,
+                    5678,
+                    0b0000000000000001);
+            // Change, dropped => two writes (one for dropped, one for change).
+            writeNV3AllPacket(inputFile, 6, 12, 2,
+                    ~0b0000000010111001,
+                    14539, 50, 279, 2896,
+                    4001, 6001, 9001,
+                    5679,
+                    ~0b0000000000000001);
+            REQUIRE(inputFile.good());
+            inputFile.flush();
+        }
+
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 18);
+
+        const isx::Time startTime;
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 13);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+
+        const float nan = std::numeric_limits<float>::quiet_NaN();
+        requireGpioChannelValues(gpio, "IO-9", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "IO-10", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
+        requireGpioChannelValues(gpio, "IO-11", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
+        requireGpioChannelValues(gpio, "IO-12", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "IO-13", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "IO-14", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "IO-15", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
+        requireGpioChannelValues(gpio, "IO-16", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "GPIO-1", {{0, 14512.f}, {3, nan}, {6, 14512.f}, {7, nan}, {12, 14528.f}});
+        requireGpioChannelValues(gpio, "GPIO-2", {{0, 32.f}, {3, nan}, {6, 32.f}, {7, nan}, {12, 48.f}});
+        requireGpioChannelValues(gpio, "GPIO-3", {{0, 256.f}, {3, nan}, {6, 256.f}, {7, nan}, {12, 272.f}});
+        requireGpioChannelValues(gpio, "GPIO-4", {{0, 2880.f}, {3, nan}, {6, 2880.f}, {7, nan}, {12, 2896.f}});
+        requireGpioChannelValues(gpio, "EX-LED", {{0, 4000.f}, {3, nan}, {6, 4000.f}, {7, nan}, {12, 4001.f}});
+        requireGpioChannelValues(gpio, "OG-LED", {{0, 6000.f}, {3, nan}, {6, 6000.f}, {7, nan}, {12, 6001.f}});
+        requireGpioChannelValues(gpio, "DI-LED", {{0, 9000.f}, {3, nan}, {6, 9000.f}, {7, nan}, {12, 9001.f}});
+        requireGpioChannelValues(gpio, "e-focus", {{0, 5678.f}, {3, nan}, {6, 5678.f}, {7, nan}, {12, 5679.f}});
+        requireGpioChannelValues(gpio, "BNC Trigger Input", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
+        requireGpioChannelValues(gpio, "BNC Sync Output", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
     }
 
     SECTION("MOS-1450")
