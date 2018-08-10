@@ -307,33 +307,30 @@ NVista3GpioFile::parse()
 {
     m_packets.clear();
     m_indices.clear();
-    size_t syncCount = 0;
 
     // All official releases of nVista3 with GPIO data should have a header
     // that contains the start time.
     // In order to continue to read files acquired in alpha testing, we
     // check to see if the first word is a sync packet which indicates that
     // the header is missing.
-    isx::Time startTime;
+    m_file.seekg(0, m_file.beg);
     const auto potentialSync = read<uint32_t>();
     m_file.seekg(0, m_file.beg);
     const bool hasHeader = potentialSync != s_syncWord;
-    double progressMultiplier = 0;
+    isx::Time startTime;
     if (hasHeader)
     {
         const auto fileHeader = read<AdpDumpHeader>();
         startTime = Time(DurationInSeconds(fileHeader.secsSinceEpochNum, fileHeader.secsSinceEpochDen), fileHeader.utcOffset);
-        progressMultiplier = 1 / double(fileHeader.eventCount);
     }
-    else
-    {
-        m_file.seekg(0, m_file.end);
-        progressMultiplier = 1 / float(m_file.tellg());
-        m_file.seekg(0, m_file.beg);
-    }
-    progressMultiplier *= 100;
 
+    // We keep track of progress as an integer to avoid too many updates.
+    m_file.seekg(0, m_file.end);
+    const double progressMultiplier = 100.0 / double(m_file.tellg());
+    m_file.seekg(0, m_file.beg);
     size_t progress = 0;
+
+    size_t syncCount = 0;
     while (m_file.good())
     {
         const auto sync = read<uint32_t>();
@@ -348,22 +345,17 @@ NVista3GpioFile::parse()
         }
         ++syncCount;
 
-        size_t newProgress = progress;
-        if (hasHeader)
+        // Only call tellg every 100 sync packets for efficiency reasons.
+        if ((syncCount % 100) == 0)
         {
-            newProgress = size_t(progressMultiplier * syncCount);
-        }
-        else
-        {
-            newProgress = size_t(progressMultiplier * m_file.tellg());
-        }
-
-        if (newProgress != progress)
-        {
-            progress = newProgress;
-            if (m_checkInCB && m_checkInCB(float(progress / 100.0)))
+            const size_t newProgress = size_t(progressMultiplier * m_file.tellg());
+            if (newProgress != progress)
             {
-                return AsyncTaskStatus::CANCELLED;
+                progress = newProgress;
+                if (m_checkInCB && m_checkInCB(float(progress / 100.0)))
+                {
+                    return AsyncTaskStatus::CANCELLED;
+                }
             }
         }
 
