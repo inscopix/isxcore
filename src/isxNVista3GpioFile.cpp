@@ -125,6 +125,7 @@ NVista3GpioFile::skipWords(const size_t inNumWords)
 void
 NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue)
 {
+    m_lastTimeStamp = inTimeStamp;
     if (m_indices.find(inChannel) == m_indices.end())
     {
         // This used to be one line, but on Linux the first index was 1
@@ -193,6 +194,20 @@ NVista3GpioFile::parseTsc(const CountPayload & inCount)
 void
 NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
 {
+    // Unsigned integer addition should rollover with the need for modulo.
+    const bool droppedPackets = m_lastSequenceSet && ((m_lastSequence + 1) != inHeader.sequence);
+    m_lastSequence = inHeader.sequence;
+    m_lastSequenceSet = true;
+    if (droppedPackets)
+    {
+        ISX_LOG_DEBUG_NV3_GPIO("Detected dropped GPIO packets from timestamp ", m_lastTimeStamp + 1);
+        // We deliberately skip FRAME_COUNTER because we do not write that yet.
+        for (uint32_t c = uint32_t(Channel::DIGITAL_GPI_0); c <= uint32_t(Channel::BNC_SYNC); ++c)
+        {
+            addPkt(Channel(c), m_lastTimeStamp + 1, std::numeric_limits<float>::quiet_NaN());
+        }
+    }
+
     switch (Event(inHeader.type))
     {
         case Event::CAPTURE_ALL:

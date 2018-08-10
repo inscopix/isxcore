@@ -44,7 +44,7 @@ public:
     struct PktHeader
     {
         uint32_t type;            ///< Type of packet (e.g. command, response, event).
-        uint32_t sequence;        ///< Incrementing number. May not be useful for us.
+        uint32_t sequence;        ///< Incrementing number. Used to detect dropped packets.
         uint32_t payloadSize;     ///< The size of the payload in 32-bit words.
     };
 
@@ -236,6 +236,16 @@ private:
 
     /// Check in callback for reporting progress
     AsyncCheckInCB_t m_checkInCB;
+
+    /// The last sequence number read.
+    uint32_t m_lastSequence = 0;
+
+    /// True if a sequence number has been read, false otherwise.
+    bool m_lastSequenceSet = false;
+
+    /// The last timestamp written. This is used to choose a timestamp
+    /// to associated with dropped packets.
+    uint64_t m_lastTimeStamp = 0;
 
     /// Read a value of arbitrary size from the file.
     template <typename T>
