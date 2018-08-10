@@ -265,7 +265,12 @@ TEST_CASE("GpioDataTest", "[core]")
 }
 
 void
-writeNV3SyncPacket(std::ofstream & inStream, const uint32_t inSequence, const bool inSync)
+writeNV3SyncPacket(
+        std::ofstream & inStream,
+        const uint32_t inSequence,
+        const uint32_t inTimeStamp,
+        const uint32_t inFrameCount,
+        const bool inSync)
 {
     uint32_t syncWord = isx::NVista3GpioFile::s_syncWord;
     inStream.write(reinterpret_cast<char *>(&syncWord), sizeof(syncWord));
@@ -276,14 +281,17 @@ writeNV3SyncPacket(std::ofstream & inStream, const uint32_t inSequence, const bo
     inStream.write(reinterpret_cast<char *>(&header), sizeof(isx::NVista3GpioFile::PktHeader));
     isx::NVista3GpioFile::SyncPayload payload;
     payload.count.tscHigh = 0;
-    payload.count.tscLow = inSequence;
-    payload.count.fc = inSequence;
+    payload.count.tscLow = inTimeStamp;
+    payload.count.fc = inFrameCount;
     payload.bncSync = uint32_t(inSync);
     inStream.write(reinterpret_cast<char *>(&payload), sizeof(isx::NVista3GpioFile::SyncPayload));
 }
 
 void
-writeNV3AllPacket(std::ofstream & inStream, const uint32_t inSequence,
+writeNV3AllPacket(std::ofstream & inStream,
+        const uint32_t inSequence,
+        const uint32_t inTimeStamp,
+        const uint32_t inFrameCount,
         const uint32_t inDigitalGpi,
         const uint16_t inBncGpio1,
         const uint16_t inBncGpio2,
@@ -305,8 +313,8 @@ writeNV3AllPacket(std::ofstream & inStream, const uint32_t inSequence,
     inStream.write(reinterpret_cast<char *>(&header), sizeof(isx::NVista3GpioFile::PktHeader));
     isx::NVista3GpioFile::AllPayload payload;
     payload.count.tscHigh = 0;
-    payload.count.tscLow = inSequence;
-    payload.count.fc = inSequence;
+    payload.count.tscLow = inTimeStamp;
+    payload.count.fc = inFrameCount;
     payload.digitalGpi = inDigitalGpi;
     payload.bncGpio1 = inBncGpio1;
     payload.bncGpio2 = inBncGpio2;
@@ -349,11 +357,11 @@ TEST_CASE("NVista3GpioFile", "[core]")
         {
             std::ofstream inputFile(inputFilePath.c_str(), std::ios::binary);
             REQUIRE(inputFile.good());
-            writeNV3SyncPacket(inputFile, 0, 0);
-            writeNV3SyncPacket(inputFile, 1, 0);
-            writeNV3SyncPacket(inputFile, 2, 1);
-            writeNV3SyncPacket(inputFile, 3, 1);
-            writeNV3SyncPacket(inputFile, 4, 0);
+            writeNV3SyncPacket(inputFile, 0, 0, 0, 0);
+            writeNV3SyncPacket(inputFile, 1, 1, 1, 0);
+            writeNV3SyncPacket(inputFile, 2, 2, 2, 1);
+            writeNV3SyncPacket(inputFile, 3, 3, 3, 1);
+            writeNV3SyncPacket(inputFile, 4, 4, 4, 0);
             REQUIRE(inputFile.good());
             inputFile.flush();
         }
@@ -387,19 +395,19 @@ TEST_CASE("NVista3GpioFile", "[core]")
         {
             std::ofstream inputFile(inputFilePath.c_str(), std::ios::binary);
             REQUIRE(inputFile.good());
-            writeNV3AllPacket(inputFile, 0,
+            writeNV3AllPacket(inputFile, 0, 0, 0,
                     0b0000000010111001,
                     14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000001);
-            writeNV3AllPacket(inputFile, 1,
+            writeNV3AllPacket(inputFile, 1, 1, 1,
                     0b0000000010111001,
                     14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000001);
-            writeNV3AllPacket(inputFile, 2,
+            writeNV3AllPacket(inputFile, 2, 2, 2,
                     ~0b0000000010111001,
                     14539, 50, 279, 2896,
                     4001, 6001, 9001,
@@ -477,7 +485,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 18);
 
         const isx::Time startTime;
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 1142588);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 3025774);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
@@ -560,7 +568,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 18);
 
         const isx::Time startTime(2018, 6, 29, 23, 7, 21, isx::DurationInSeconds::fromMilliseconds(2));
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 9856535);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 9859507);
         REQUIRE(gpio->getTimingInfo() == expTi);
 
         requireGpioChannelValues(gpio, "BNC Trigger Input", {{0, 1.f}, {9855543, 0.f}}, startTime);
