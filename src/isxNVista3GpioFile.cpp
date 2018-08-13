@@ -456,7 +456,7 @@ NVista3GpioFile::parse()
     }
 
     writePktsToEventBasedFile(m_outputFileName, m_packets, channels, types,
-            startTime, firstTime, lastTime);
+            startTime, DurationInSeconds::fromMilliseconds(1), firstTime, lastTime);
 
     return isx::AsyncTaskStatus::COMPLETE;
 }

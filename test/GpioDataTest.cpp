@@ -104,8 +104,8 @@ TEST_CASE("GpioDataTest", "[core]")
         // Expected values
 
         isx::Time start(isx::DurationInSeconds(1478277469, 1) + isx::DurationInSeconds(294107, 1000000));
-        auto step = isx::DurationInSeconds::fromMicroseconds(1);
-        const isx::isize_t numTimes = 3639037;
+        auto step = isx::DurationInSeconds::fromMilliseconds(1);
+        const isx::isize_t numTimes = 3640;
         isx::TimingInfo ti(start, step, numTimes);
         std::vector<uint64_t> usecsFromStart{ 0, 17693};
         std::vector<float> power{float(2.6556396484375), 0.0f};
@@ -146,8 +146,8 @@ TEST_CASE("GpioDataTest", "[core]")
         // Expected values *********************************************
 
         isx::Time start(isx::DurationInSeconds(1485470243, 1) + isx::DurationInSeconds(163233, 1000000));
-        auto step = isx::DurationInSeconds::fromMicroseconds(1);
-        const isx::isize_t numTimes = 9152909;
+        auto step = isx::DurationInSeconds::fromMilliseconds(1);
+        const isx::isize_t numTimes = 9153;
         isx::TimingInfo ti(start, step, numTimes);
         std::vector<uint64_t> usecsFromStart{0, 3077753, 3875367};
         std::vector<float> power{1.0f, 1.5f, 1.0f};
@@ -389,7 +389,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 1);
 
         const isx::Time startTime;
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 5);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 1);
         REQUIRE(gpio->getTimingInfo() == expTi);
 
         const isx::SpLogicalTrace_t trace = gpio->getLogicalData("BNC Sync Output");
@@ -440,7 +440,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 18);
 
         const isx::Time startTime;
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 3);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 1);
         REQUIRE(gpio->getTimingInfo() == expTi);
 
         requireGpioChannelValues(gpio, "IO-9", {{0, 1.f}, {2, 0.f}});
@@ -513,7 +513,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 18);
 
         const isx::Time startTime;
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 13);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 1);
         REQUIRE(gpio->getTimingInfo() == expTi);
 
         requireGpioChannelValues(gpio, "IO-9", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
@@ -551,7 +551,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 19);
 
         const isx::Time startTime;
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 10000);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 10);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
@@ -569,7 +569,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 18);
 
         const isx::Time startTime;
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 3057457);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 3057);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
@@ -605,7 +605,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 18);
 
         const isx::Time startTime;
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 26569573);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 26570);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
@@ -623,7 +623,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 18);
 
         const isx::Time startTime(2018, 6, 29, 23, 2, 38, isx::DurationInSeconds::fromMilliseconds(865));
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 38272661);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 38273);
         REQUIRE(gpio->getTimingInfo() == expTi);
 
         requireGpioChannelValues(gpio, "BNC Trigger Input", {
@@ -662,7 +662,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
         REQUIRE(gpio->numberOfChannels() == 18);
 
         const isx::Time startTime(2018, 6, 29, 23, 7, 21, isx::DurationInSeconds::fromMilliseconds(2));
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMicroseconds(1), 9859507);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 9860);
         REQUIRE(gpio->getTimingInfo() == expTi);
 
         requireGpioChannelValues(gpio, "BNC Trigger Input", {
