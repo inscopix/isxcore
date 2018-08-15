@@ -445,14 +445,14 @@ TEST_CASE("NVista3GpioFile", "[core]")
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 1);
         REQUIRE(gpio->getTimingInfo() == expTi);
 
-        requireGpioChannelValues(gpio, "IO-9", {{0, 1.f}, {2, 0.f}});
-        requireGpioChannelValues(gpio, "IO-10", {{0, 0.f}, {2, 1.f}});
-        requireGpioChannelValues(gpio, "IO-11", {{0, 0.f}, {2, 1.f}});
-        requireGpioChannelValues(gpio, "IO-12", {{0, 1.f}, {2, 0.f}});
-        requireGpioChannelValues(gpio, "IO-13", {{0, 1.f}, {2, 0.f}});
-        requireGpioChannelValues(gpio, "IO-14", {{0, 1.f}, {2, 0.f}});
-        requireGpioChannelValues(gpio, "IO-15", {{0, 0.f}, {2, 1.f}});
-        requireGpioChannelValues(gpio, "IO-16", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 0", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 1", {{0, 0.f}, {2, 1.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 2", {{0, 0.f}, {2, 1.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 3", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 4", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 5", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 6", {{0, 0.f}, {2, 1.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 7", {{0, 1.f}, {2, 0.f}});
         requireGpioChannelValues(gpio, "GPIO-1", {{0, 14512.f}, {2, 14528.f}});
         requireGpioChannelValues(gpio, "GPIO-2", {{0, 32.f}, {2, 48.f}});
         requireGpioChannelValues(gpio, "GPIO-3", {{0, 256.f}, {2, 272.f}});
@@ -518,14 +518,14 @@ TEST_CASE("NVista3GpioFile", "[core]")
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 1);
         REQUIRE(gpio->getTimingInfo() == expTi);
 
-        requireGpioChannelValues(gpio, "IO-9", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
-        requireGpioChannelValues(gpio, "IO-10", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
-        requireGpioChannelValues(gpio, "IO-11", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
-        requireGpioChannelValues(gpio, "IO-12", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
-        requireGpioChannelValues(gpio, "IO-13", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
-        requireGpioChannelValues(gpio, "IO-14", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
-        requireGpioChannelValues(gpio, "IO-15", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
-        requireGpioChannelValues(gpio, "IO-16", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 0", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 1", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 2", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 3", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 4", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 5", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 6", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
+        requireGpioChannelValues(gpio, "Digital GPI 7", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
         requireGpioChannelValues(gpio, "GPIO-1", {{0, 14512.f}, {3, nan}, {6, 14512.f}, {7, nan}, {12, 14528.f}});
         requireGpioChannelValues(gpio, "GPIO-2", {{0, 32.f}, {3, nan}, {6, 32.f}, {7, nan}, {12, 48.f}});
         requireGpioChannelValues(gpio, "GPIO-3", {{0, 256.f}, {3, nan}, {6, 256.f}, {7, nan}, {12, 272.f}});
