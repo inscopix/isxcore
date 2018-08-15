@@ -343,22 +343,29 @@ NVista3GpioFile::parse()
     // check to see if the first word is a sync packet which indicates that
     // the header is missing.
     m_file.seekg(0, m_file.beg);
-    const auto potentialSync = read<uint32_t>();
-    m_file.seekg(0, m_file.beg);
-    const bool hasHeader = potentialSync != s_syncWord;
     isx::Time startTime;
-    if (hasHeader)
+    size_t eventDataOffset = 0;
+    size_t sessionDataOffset = 0;
+    if (readAndRewind<uint32_t>() != s_syncWord)
     {
         const auto fileHeader = read<AdpDumpHeader>();
         startTime = Time(DurationInSeconds(fileHeader.secsSinceEpochNum, fileHeader.secsSinceEpochDen), fileHeader.utcOffset);
+        eventDataOffset = size_t(fileHeader.eventDataOffset);
+
+        if (readAndRewind<uint32_t>() != s_syncWord)
+        {
+            ISX_LOG_DEBUG_NV3_GPIO("Found header extras.");
+            const auto fileHeaderExtras = read<AdpDumpHeaderExtras>();
+            sessionDataOffset = fileHeaderExtras.sessionDataOffset;
+        }
     }
 
     // We keep track of progress as an integer to avoid too many updates.
     m_file.seekg(0, m_file.end);
     const double progressMultiplier = 100.0 / double(m_file.tellg());
-    m_file.seekg(0, m_file.beg);
-    size_t progress = 0;
 
+    m_file.seekg(eventDataOffset, m_file.beg);
+    size_t progress = 0;
     size_t syncCount = 0;
     while (m_file.good())
     {
@@ -455,8 +462,27 @@ NVista3GpioFile::parse()
         lastTime = m_packets.back().offsetMicroSecs;
     }
 
+    size_t adClockInHz = 1000;
+    std::string extraPropsStr;
+    if (sessionDataOffset > 0)
+    {
+        try
+        {
+            m_file.clear();
+            m_file.seekg(sessionDataOffset, m_file.beg);
+            std::getline(m_file, extraPropsStr);
+            const json extraProps = json::parse(extraPropsStr);
+            adClockInHz = extraProps.at("ad").at("clock");
+        }
+        catch (const std::exception & inError)
+        {
+            ISX_LOG_WARNING("Failed to read ADP clock from nVista 3 GPIO file.");
+        }
+    }
+    const DurationInSeconds period(1, adClockInHz);
+
     writePktsToEventBasedFile(m_outputFileName, m_packets, channels, types,
-            startTime, DurationInSeconds::fromMilliseconds(1), firstTime, lastTime);
+            startTime, period, firstTime, lastTime, extraPropsStr);
 
     return isx::AsyncTaskStatus::COMPLETE;
 }

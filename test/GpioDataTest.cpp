@@ -13,6 +13,9 @@
 
 #include "catch.hpp"
 
+#include "json.hpp"
+using json = nlohmann::json;
+
 #include <fstream>
 #include <algorithm>
 
@@ -357,7 +360,6 @@ TEST_CASE("NVista3GpioFile", "[core]")
     const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio";
     const std::string outputDirPath = inputDirPath + "/output";
     isx::makeDirectory(outputDirPath);
-
     isx::CoreInitialize();
 
     const float nan = std::numeric_limits<float>::quiet_NaN();
@@ -688,6 +690,63 @@ TEST_CASE("NVista3GpioFile", "[core]")
     }
 
     isx::removeDirectory(outputDirPath);
+    isx::CoreShutdown();
+}
 
+TEST_CASE("nVista3GpioWithExtras", "[core][gpio]")
+{
+    const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio";
+    const std::string outputDirPath = inputDirPath + "/output";
+    isx::makeDirectory(outputDirPath);
+    isx::CoreInitialize();
+
+    SECTION("MOS-1669-oldFile")
+    {
+        const std::string inputFilePath = inputDirPath + "/2018-08-09-11-13-52_video.gpio";
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 18);
+
+        const isx::Time startTime(2018, 8, 9, 11, 13, 52, isx::DurationInSeconds::fromMilliseconds(747));
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 1000), 8938672);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+
+        const std::string extraPropsStr = gpio->getExtraProperties();
+        const json extraProps = json::parse(extraPropsStr);
+        REQUIRE(extraProps == nullptr);
+    }
+
+    SECTION("MOS-1669-newFile")
+    {
+        const std::string inputFilePath = inputDirPath + "/2018-08-15-09-01-58_video.gpio";
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == 18);
+
+        const isx::Time startTime(2018, 8, 15, 9, 1, 58, isx::DurationInSeconds::fromMilliseconds(159));
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 5000), 42778);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+
+        const std::string extraPropsStr = gpio->getExtraProperties();
+        const json extraProps = json::parse(extraPropsStr);
+        REQUIRE(extraProps != nullptr);
+        REQUIRE(extraProps.at("ad").at("clock").get<size_t>() == 5000);
+    }
+
+    isx::removeDirectory(outputDirPath);
     isx::CoreShutdown();
 }

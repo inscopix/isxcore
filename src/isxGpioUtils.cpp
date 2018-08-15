@@ -12,7 +12,8 @@ writePktsToEventBasedFile(
         const Time & inStartTime,
         const DurationInSeconds & inSamplePeriod,
         const uint64_t inFirstMicrosecondOffset,
-        const uint64_t inLastMicrosecondOffset)
+        const uint64_t inLastMicrosecondOffset,
+        const std::string & inExtraProps)
 {
     const auto duration = DurationInSeconds::fromMicroseconds(inLastMicrosecondOffset - inFirstMicrosecondOffset + 1);
     const isize_t numTimes = isize_t(std::ceil(duration.toDouble() / inSamplePeriod.toDouble()));
@@ -36,6 +37,11 @@ writePktsToEventBasedFile(
         {
             ISX_LOG_ERROR("Tried to write packet with negative offset. Skipping.");
         }
+    }
+
+    if (!inExtraProps.empty())
+    {
+        outputFile.setExtraProperties(inExtraProps);
     }
 
     outputFile.setTimingInfo(timing.getStart(), timing.getEnd());

@@ -20,7 +20,8 @@ writePktsToEventBasedFile(
         const Time & inStartTime,
         const DurationInSeconds & inSamplePeriod,
         const uint64_t inFirstMicrosecondOffset,
-        const uint64_t inLastMicrosecondOffset);
+        const uint64_t inLastMicrosecondOffset,
+        const std::string & inExtraProps = "");
 
 } // namespace isx
 

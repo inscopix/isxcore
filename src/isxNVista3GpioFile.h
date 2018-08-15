@@ -130,6 +130,12 @@ public:
         uint64_t eventCount;
     };
 
+    struct AdpDumpHeaderExtras
+    {
+        uint64_t fileFormat;
+        uint64_t sessionDataOffset;
+    };
+
 #pragma pack(pop)
 
     /// Possible types of events.
@@ -268,6 +274,16 @@ private:
                     "but actual payload is ", actualSize, " bytes.");
         }
         return read<T>();
+    }
+
+    /// Read a valuue from the file, and rewind to the position before the read.
+    template <typename T>
+    T readAndRewind()
+    {
+        auto pos = m_file.tellg();
+        const T value = read<T>();
+        m_file.seekg(pos);
+        return value;
     }
 
     void skipBytes(const size_t inNumBytes);
