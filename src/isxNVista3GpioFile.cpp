@@ -476,7 +476,7 @@ NVista3GpioFile::parse()
         }
         catch (const std::exception & inError)
         {
-            ISX_LOG_WARNING("Failed to read ADP clock from nVista 3 GPIO file.");
+            ISX_LOG_WARNING("Failed to read ADP clock from nVista 3 GPIO file with error: ", inError.what());
         }
     }
     const DurationInSeconds period(1, adClockInHz);
