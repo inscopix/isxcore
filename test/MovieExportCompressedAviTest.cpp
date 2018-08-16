@@ -8,6 +8,7 @@
 #include "isxCore.h"
 
 #include <array>
+#include <sys/stat.h>
 
 namespace
 {
