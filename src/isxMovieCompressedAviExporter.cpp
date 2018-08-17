@@ -468,12 +468,15 @@ void
 MovieCompressedAviExporterParams::setBitRate(const isize_t inBitRate)
 {
     m_bitRate = inBitRate;
+    m_bitRateFraction = 0;
 }
 
 void
 MovieCompressedAviExporterParams::setBitRateFraction(const double inBitRateFraction)
 {
     m_bitRateFraction = inBitRateFraction;
+    m_bitRate = 0;
+    updateBitRateBasedOnFraction();
 }
 
 void
@@ -486,7 +489,7 @@ MovieCompressedAviExporterParams::updateBitRateBasedOnFraction()
     double frameRate = 1 / firstSrc->getTimingInfo().getStep().toDouble();
     // explicit enforcement of left-to-right precedence rule
     // purpose: sub-product will be a double, thus avoiding any possibility of "wrapping-around" of unsigned int's
-    double bitRateNoCompression = (((frameRate * si.getNumRows()) * si.getNumColumns()) * bytesPerPixel) * bitPerByte;
+    double bitRateNoCompression = ((frameRate * si.getTotalNumPixels()) * bytesPerPixel) * bitPerByte;
     m_bitRate = isize_t(m_bitRateFraction * bitRateNoCompression);
 }
 
@@ -543,8 +546,6 @@ MovieCompressedAviExporterParams::getBitRateFraction() const
 AsyncTaskStatus 
 runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::shared_ptr<MovieCompressedAviExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
 {
-    inParams.updateBitRateBasedOnFraction(); // TODO: determine if this line should be here or elsewhere
-
     if (inParams.m_filename.empty())
     {
         ISX_THROW(isx::ExceptionUserInput, "No output video file specified.");
@@ -568,9 +569,14 @@ runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::sh
         }
     }
 
+    if (inParams.getBitRate() == 0)
+    {
+        inParams.updateBitRateBasedOnFraction();
+    }
+
     try
     {
-        cancelled = toCompressedAVI(inParams.m_filename, inParams.m_srcs, inCheckInCB, inParams.m_bitRate);
+        cancelled = toCompressedAVI(inParams.m_filename, inParams.m_srcs, inCheckInCB, inParams.getBitRate());
     }
     catch (...)
     {

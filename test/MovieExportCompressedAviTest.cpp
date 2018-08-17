@@ -315,11 +315,11 @@ TEST_CASE("MovieCompressedAviExportBitrateTest", "[core]")
             int64_t compressedFileSize = GetFileSize(exportedCompressedAviFileName);
             if (bitRateFraction == startBitRateFraction)
             {
-                REQUIRE(compressedFileSize <= uncompressedFileSize); // file size is not greater than for original movie
+                REQUIRE(compressedFileSize <= uncompressedFileSize); // file size has not increased relative to original movie
             }
             else
             {
-                REQUIRE(compressedFileSize <= compressedFileSizeLast); // file size is not greater than when bit-rate was larger
+                REQUIRE(compressedFileSize <= compressedFileSizeLast); // file size does not increase as bit-rate decreases
             }
             compressedFileSizeLast = compressedFileSize;
         }

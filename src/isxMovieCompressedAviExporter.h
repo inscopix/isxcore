@@ -35,19 +35,13 @@ struct MovieCompressedAviExporterParams : MovieExporterParams
         : m_srcs(inSrcs)
         , m_filename(inCompressedAviFilename)
         , m_bitRateFraction(inBitRateFraction)
-    {
-        updateBitRateBasedOnFraction();
-    }
+    { }
 
     /// default constructor
     /// 
     MovieCompressedAviExporterParams()
     {
-        const isize_t bitRate = 400000;
-        setBitRate(bitRate);
-
-        const double bitRateFraction = .25;
-        setBitRateFraction(bitRateFraction);
+        setBitRateFraction(.25);
     }
 
     std::string
