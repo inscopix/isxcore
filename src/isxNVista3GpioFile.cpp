@@ -208,7 +208,7 @@ NVista3GpioFile::parseTsc(const CountPayload & inCount)
 void
 NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
 {
-    // Unsigned integer addition should rollover with the need for modulo.
+    // Unsigned integer addition should rollover without the need for modulo.
     const bool droppedPackets = m_lastSequenceSet && ((m_lastSequence + 1) != inHeader.sequence);
     m_lastSequence = inHeader.sequence;
     m_lastSequenceSet = true;
