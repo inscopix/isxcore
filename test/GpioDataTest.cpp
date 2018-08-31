@@ -295,7 +295,7 @@ writeNV3AllPacket(std::ofstream & inStream,
         const uint32_t inSequence,
         const uint32_t inTimeStamp,
         const uint32_t inFrameCount,
-        const uint32_t inDigitalGpi,
+        const uint32_t inDigitalGpio,
         const uint16_t inBncGpio1,
         const uint16_t inBncGpio2,
         const uint16_t inBncGpio3,
@@ -318,7 +318,7 @@ writeNV3AllPacket(std::ofstream & inStream,
     payload.count.tscHigh = 0;
     payload.count.tscLow = inTimeStamp;
     payload.count.fc = inFrameCount;
-    payload.digitalGpi = inDigitalGpi;
+    payload.digitalGpio = inDigitalGpio;
     payload.bncGpio1 = inBncGpio1;
     payload.bncGpio2 = inBncGpio2;
     payload.bncGpio3 = inBncGpio3;
@@ -355,7 +355,7 @@ requireGpioChannelValues(
     }
 }
 
-TEST_CASE("NVista3GpioFile", "[core]")
+TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
 {
     const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio";
     const std::string outputDirPath = inputDirPath + "/output";
@@ -693,7 +693,7 @@ TEST_CASE("NVista3GpioFile", "[core]")
     isx::CoreShutdown();
 }
 
-TEST_CASE("nVista3GpioWithExtras", "[core][gpio]")
+TEST_CASE("nVista3GpioWithExtras", "[core][nv3_gpio]")
 {
     const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio";
     const std::string outputDirPath = inputDirPath + "/output";
@@ -735,7 +735,7 @@ TEST_CASE("nVista3GpioWithExtras", "[core][gpio]")
 
         const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
 
-        REQUIRE(gpio->numberOfChannels() == 18);
+        REQUIRE(gpio->numberOfChannels() == 26);
 
         const isx::Time startTime(2018, 8, 15, 9, 1, 58, isx::DurationInSeconds::fromMilliseconds(159));
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 5000), 42778);

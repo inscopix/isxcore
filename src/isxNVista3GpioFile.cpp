@@ -36,6 +36,14 @@ const std::map<NVista3GpioFile::Channel, std::string> NVista3GpioFile::s_channel
     {NVista3GpioFile::Channel::DIGITAL_GPI_5, "Digital GPI 5"},
     {NVista3GpioFile::Channel::DIGITAL_GPI_6, "Digital GPI 6"},
     {NVista3GpioFile::Channel::DIGITAL_GPI_7, "Digital GPI 7"},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_0, "Digital GPO 0"},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_1, "Digital GPO 1"},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_2, "Digital GPO 2"},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_3, "Digital GPO 3"},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_4, "Digital GPO 4"},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_5, "Digital GPO 5"},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_6, "Digital GPO 6"},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_7, "Digital GPO 7"},
     {NVista3GpioFile::Channel::BNC_GPIO_1, "GPIO-1"},
     {NVista3GpioFile::Channel::BNC_GPIO_2, "GPIO-2"},
     {NVista3GpioFile::Channel::BNC_GPIO_3, "GPIO-3"},
@@ -59,6 +67,14 @@ const std::map<NVista3GpioFile::Channel, SignalType> NVista3GpioFile::s_channelT
     {NVista3GpioFile::Channel::DIGITAL_GPI_5, SignalType::SPARSE},
     {NVista3GpioFile::Channel::DIGITAL_GPI_6, SignalType::SPARSE},
     {NVista3GpioFile::Channel::DIGITAL_GPI_7, SignalType::SPARSE},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_0, SignalType::SPARSE},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_1, SignalType::SPARSE},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_2, SignalType::SPARSE},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_3, SignalType::SPARSE},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_4, SignalType::SPARSE},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_5, SignalType::SPARSE},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_6, SignalType::SPARSE},
+    {NVista3GpioFile::Channel::DIGITAL_GPO_7, SignalType::SPARSE},
     {NVista3GpioFile::Channel::BNC_GPIO_1, SignalType::SPARSE},
     {NVista3GpioFile::Channel::BNC_GPIO_2, SignalType::SPARSE},
     {NVista3GpioFile::Channel::BNC_GPIO_3, SignalType::SPARSE},
@@ -125,6 +141,11 @@ NVista3GpioFile::skipWords(const size_t inNumWords)
 void
 NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue)
 {
+    if (!m_includeDigitalGpo && (inChannel >= Channel::DIGITAL_GPO_0) && (inChannel <= Channel::DIGITAL_GPO_7))
+    {
+        return;
+    }
+
     const bool isNan = std::isnan(inValue);
     if (!isNan)
     {
@@ -132,9 +153,8 @@ NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, con
     }
     if (m_indices.find(inChannel) == m_indices.end())
     {
-        // This used to be one line, but on Linux the first index was 1
-        // instead of 0 and I'm not sure why. Separating the lines fixed
-        // that bug.
+        // This used to be one line, but on Linux the first index was 1 instead of 0.
+        // I guess that is because the LHS is evaluated before the RHS.
         const size_t numChannels = m_indices.size();
         m_indices[inChannel] = numChannels;
     }
@@ -162,12 +182,12 @@ NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, con
 }
 
 void
-NVista3GpioFile::addDigitalGpiPkts(const uint64_t inTsc, uint16_t inDigitalGpi)
+NVista3GpioFile::addDigitalGpioPkts(const uint64_t inTsc, uint16_t inDigitalGpio)
 {
-    for (uint32_t i = uint32_t(Channel::DIGITAL_GPI_0); i <= uint32_t(Channel::DIGITAL_GPI_7); ++i)
+    for (uint32_t i = uint32_t(Channel::DIGITAL_GPI_0); i <= uint32_t(Channel::DIGITAL_GPO_7); ++i)
     {
-        addPkt(Channel(i), inTsc, float(inDigitalGpi & 0b1));
-        inDigitalGpi >>= 1;
+        addPkt(Channel(i), inTsc, float(inDigitalGpio & 0b1));
+        inDigitalGpio >>= 1;
     }
 }
 
@@ -182,7 +202,7 @@ NVista3GpioFile::addTrigSyncPkts(const uint64_t inTsc, uint16_t inTrigSync)
 void
 NVista3GpioFile::readParseAddGpioPayload(const uint32_t inExpectedSize, const Channel inChannel)
 {
-    const auto payload = read<GpioPayload>(inExpectedSize);
+    const auto payload = read<BncGpioPayload>(inExpectedSize);
     const uint64_t tsc = parseTsc(payload.count);
     addPkt(inChannel, tsc, roundGpioValue(payload.bncGpio));
 }
@@ -214,7 +234,7 @@ NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
     m_lastSequenceSet = true;
     if (droppedPackets)
     {
-        ISX_LOG_DEBUG_NV3_GPIO("Detected dropped GPIO packets from timestamp ", m_lastTimeStamp + 1);
+        ISX_LOG_DEBUG_NV3_GPIO("Detected dropped packets from timestamp ", m_lastTimeStamp + 1);
         // We deliberately skip FRAME_COUNTER because we do not write that yet.
         for (uint32_t c = uint32_t(Channel::DIGITAL_GPI_0); c <= uint32_t(Channel::BNC_SYNC); ++c)
         {
@@ -229,8 +249,8 @@ NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
             ISX_LOG_DEBUG_NV3_GPIO("Event::CAPTURE_ALL");
             const auto payload = read<AllPayload>(inHeader.payloadSize);
             const uint64_t tsc = parseTsc(payload.count);
-            addDigitalGpiPkts(tsc, uint16_t(payload.digitalGpi));
-            addGpioPkts(tsc, payload);
+            addDigitalGpioPkts(tsc, uint16_t(payload.digitalGpio));
+            addBncGpioPkts(tsc, payload);
             addPkt(Channel::EX_LED, tsc, float(payload.exLed));
             addPkt(Channel::OG_LED, tsc, float(payload.ogLed));
             addPkt(Channel::DI_LED, tsc, float(payload.diLed));
@@ -244,9 +264,9 @@ NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
             ISX_LOG_DEBUG_NV3_GPIO("Event::CAPTURE_GPIO");
             const auto payload = read<AllGpioPayload>(inHeader.payloadSize);
             const uint64_t tsc = parseTsc(payload.count);
-            addDigitalGpiPkts(tsc, payload.digitalGpi);
+            addDigitalGpioPkts(tsc, payload.digitalGpio);
             addPkt(Channel::BNC_TRIG, tsc, float(payload.bncTrig));
-            addGpioPkts(tsc, payload);
+            addBncGpioPkts(tsc, payload);
             break;
         }
 
@@ -270,12 +290,12 @@ NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
             readParseAddGpioPayload(inHeader.payloadSize, Channel::BNC_GPIO_4);
             break;
 
-        case Event::DIGITAL_GPI:
+        case Event::DIGITAL_GPIO:
         {
-            ISX_LOG_DEBUG_NV3_GPIO("Event::DIGITAL_GPI");
-            const auto payload = read<DigitalGpiPayload>(inHeader.payloadSize);
+            ISX_LOG_DEBUG_NV3_GPIO("Event::DIGITAL_GPIO");
+            const auto payload = read<DigitalGpioPayload>(inHeader.payloadSize);
             const uint64_t tsc = parseTsc(payload.count);
-            addDigitalGpiPkts(tsc, uint16_t(payload.digitalGpi));
+            addDigitalGpioPkts(tsc, uint16_t(payload.digitalGpio));
             break;
         }
 
@@ -336,6 +356,9 @@ NVista3GpioFile::parse()
 {
     m_packets.clear();
     m_indices.clear();
+    m_lastSequence = 0;
+    m_lastSequenceSet = false;
+    m_includeDigitalGpo = false;
 
     // All official releases of nVista3 with GPIO data should have a header
     // that contains the start time.
@@ -354,9 +377,10 @@ NVista3GpioFile::parse()
 
         if (readAndRewind<uint32_t>() != s_syncWord)
         {
-            ISX_LOG_DEBUG_NV3_GPIO("Found header extras.");
             const auto fileHeaderExtras = read<AdpDumpHeaderExtras>();
+            ISX_LOG_DEBUG_NV3_GPIO("Found header extras with fileFormat ", fileHeaderExtras.fileFormat);
             sessionDataOffset = fileHeaderExtras.sessionDataOffset;
+            m_includeDigitalGpo = fileHeaderExtras.fileFormat >= 111;
         }
     }
 
