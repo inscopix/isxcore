@@ -38,7 +38,7 @@ namespace
 } // namespace
 
     
-TEST_CASE("MovieCompressedAviExportF32Test", "[core]")
+TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
 {
     std::array<const char *, 3> names =
     { {
@@ -117,7 +117,7 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core]")
 
 }
 
-TEST_CASE("MovieCompressedAviExportU16Test", "[core]")
+TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
 {
     std::array<const char *, 3> names =
     { {
@@ -196,3 +196,26 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core]")
     }
 }
 
+TEST_CASE("MOS-1675", "[core][export_mp4]")
+{
+    isx::CoreInitialize();
+
+    const std::string inputDir = g_resources["unitTestDataPath"] + "/export_mp4";
+    const std::string outputDir = inputDir + "/output";
+
+    isx::removeDirectory(outputDir);
+    isx::makeDirectory(outputDir);
+
+    SECTION("Data with a frame period of greater than 2^16 - 1")
+    {
+        const std::string inputFile = inputDir + "/2018-08-09-17-05-09_video-PP-TPC.isxd";
+        const isx::SpMovie_t movie = isx::readMovie(inputFile);
+        const std::string outputFile = outputDir + "/" + isx::getBaseName(inputFile) + ".mp4";
+        isx::MovieCompressedAviExporterParams params({movie}, outputFile);
+
+        REQUIRE(isx::runMovieCompressedAviExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+    }
+
+    isx::removeDirectory(outputDir);
+    isx::CoreShutdown();
+}

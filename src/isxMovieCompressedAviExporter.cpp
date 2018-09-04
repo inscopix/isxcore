@@ -160,10 +160,14 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
 
     avcc->codec_id = avOutFmt->video_codec;
     avcc->bit_rate = bitRate;
-    avcc->time_base.num = int(framePeriod.getNum());
-    avcc->time_base.den = int(framePeriod.getDen());
-    avcc->framerate.num = int(framePeriod.getDen());
-    avcc->framerate.den = int(framePeriod.getNum());
+
+    // The MPEG4 codec only supports frame period denominators of up to 2^16 - 1.
+    const int framePeriodDen = 65535;
+    const int framePeriodNum = int(std::round(framePeriod.toDouble() * framePeriodDen));
+    avcc->time_base.num = framePeriodNum;
+    avcc->time_base.den = framePeriodDen;
+    avcc->framerate.num = framePeriodDen;
+    avcc->framerate.den = framePeriodNum;
 
     if (inImg)
     {
