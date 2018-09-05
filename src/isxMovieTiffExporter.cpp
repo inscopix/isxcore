@@ -12,7 +12,7 @@ namespace isx {
 std::string
 MovieTiffExporterParams::getOpName()
 {
-    return "Export Tiff Movie";
+    return "Export TIFF";
 }
 
 std::string
