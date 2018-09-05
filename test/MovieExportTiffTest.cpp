@@ -663,7 +663,7 @@ TEST_CASE("MovieTiffExport-one_image", "[core][export_tiff]")
     isx::CoreInitialize();
 
     const std::string snapshotDir = g_resources["unitTestDataPath"] + "/Snapshots";
-    const std::string outputDir = g_resources["unitTestDataPath"] + "/export_tiff/output";
+    const std::string outputDir = g_resources["unitTestDataPath"] + "/export_tiff_output";
     isx::removeDirectory(outputDir);
     isx::makeDirectory(outputDir);
 
