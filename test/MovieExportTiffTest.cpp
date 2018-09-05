@@ -12,42 +12,42 @@
 namespace
 {
 
-void
-createFrameData(float * outBuf, int32_t inNumFrames, int32_t inPixelsPerFrame, int32_t inBaseValueForFrame)
-{
-    for (int32_t f = 0; f < inNumFrames; ++f)
+    void
+    createFrameData(float * outBuf, int32_t inNumFrames, int32_t inPixelsPerFrame, int32_t inBaseValueForFrame)
     {
-        for (int32_t p = 0; p < inPixelsPerFrame; ++p)
+        for (int32_t f = 0; f < inNumFrames; ++f)
         {
-            outBuf[f * inPixelsPerFrame + p] = float((inBaseValueForFrame + f) * inPixelsPerFrame + p);
+            for (int32_t p = 0; p < inPixelsPerFrame; ++p)
+            {
+                outBuf[f * inPixelsPerFrame + p] = float((inBaseValueForFrame + f) * inPixelsPerFrame + p);
+            }
         }
     }
-}
 
-void
-createFrameData(uint16_t * outBuf, int32_t inNumFrames, int32_t inPixelsPerFrame, int32_t inBaseValueForFrame)
-{
-    for (int32_t f = 0; f < inNumFrames; ++f)
+    void
+    createFrameData(uint16_t * outBuf, int32_t inNumFrames, int32_t inPixelsPerFrame, int32_t inBaseValueForFrame)
     {
-        for (int32_t p = 0; p < inPixelsPerFrame; ++p)
+        for (int32_t f = 0; f < inNumFrames; ++f)
         {
-            outBuf[f * inPixelsPerFrame + p] = uint16_t((inBaseValueForFrame + f) * inPixelsPerFrame + p);
+            for (int32_t p = 0; p < inPixelsPerFrame; ++p)
+            {
+                outBuf[f * inPixelsPerFrame + p] = uint16_t((inBaseValueForFrame + f) * inPixelsPerFrame + p);
+            }
         }
     }
-}
 
-void
-exportImageAndCheckOutput(const std::string & inInputFile, const std::string & inOutputDir)
-{
-    const std::string outputFile = inOutputDir + "/" + isx::getBaseName(inInputFile) + ".tif";
-    const isx::SpMovie_t inputMovie = isx::readMovie(inInputFile);
-    const isx::MovieTiffExporterParams params({inputMovie}, {outputFile});
-    REQUIRE(isx::runMovieTiffExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+    void
+    exportImageAndCheckOutput(const std::string & inInputFile, const std::string & inOutputDir)
+    {
+        const std::string outputFile = inOutputDir + "/" + isx::getBaseName(inInputFile) + ".tif";
+        const isx::SpMovie_t inputMovie = isx::readMovie(inInputFile);
+        const isx::MovieTiffExporterParams params({inputMovie}, {outputFile});
+        REQUIRE(isx::runMovieTiffExporter(params) == isx::AsyncTaskStatus::COMPLETE);
 
-    const isx::SpVideoFrame_t inputFrame = isx::readImage(inInputFile);
-    const isx::SpVideoFrame_t outputFrame = isx::readImage(outputFile);
-    requireEqualImages(outputFrame->getImage(), inputFrame->getImage());
-}
+        const isx::SpVideoFrame_t inputFrame = isx::readImage(inInputFile);
+        const isx::SpVideoFrame_t outputFrame = isx::readImage(outputFile);
+        requireEqualImages(outputFrame->getImage(), inputFrame->getImage());
+    }
 
 } // namespace
 
