@@ -606,3 +606,36 @@ TEST_CASE("convertExcelIndicesToIndices", "[core][importCsvTraces]")
         REQUIRE(isx::convertExcelIndicesToIndices("1, C, 4-5, Z-AC") == std::set<size_t>({0, 2, 3, 4, 25, 26, 27, 28}));
     }
 }
+
+TEST_CASE("MOS-1690", "[core][importCsvTraces]")
+{
+    const std::string inputDataDir = g_resources["unitTestDataPath"] + "/CSV_traces/buggy";
+    const std::string outputDataDir = inputDataDir + "/output";
+    isx::removeDirectory(outputDataDir);
+    isx::makeDirectory(outputDataDir);
+
+    isx::CoreInitialize();
+
+    SECTION("Original file that produces bug")
+    {
+        const std::string dataName = "test_titles";
+
+        isx::CsvTraceImporterParams params;
+        params.m_inputFile = inputDataDir + "/" + dataName + ".csv";
+        params.m_outputFile = outputDataDir + "/" + dataName + ".isxd";
+        params.m_startTime = isx::Time(2018, 1, 18, 15, 23, 4);
+        params.m_timeUnit = isx::DurationInSeconds(1, 1000);
+
+        REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+
+        const isx::SpGpio_t gpio = isx::readGpioSeries({params.m_outputFile});
+
+        std::vector<isx::SpFTrace_t> continuousTraces;
+        std::vector<isx::SpLogicalTrace_t> logicalTraces;
+        gpio->getAllTraces(continuousTraces, logicalTraces);
+    }
+
+    isx::removeDirectory(outputDataDir);
+
+    isx::CoreShutdown();
+}

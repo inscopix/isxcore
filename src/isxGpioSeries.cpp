@@ -136,10 +136,11 @@ GpioSeries::getAllTraces(std::vector<SpFTrace_t> & outContinuousTraces, std::vec
         isize_t partialIdx = 0;
         for (auto & v : globalContVals)
         {
-            if (v != nullptr)
+            auto & p = partialContinuousTraces[partialIdx];
+            if (v != nullptr && p != nullptr)
             {
-                float * partialContVals = partialContinuousTraces[partialIdx]->getValues();
-                const isize_t numSamples = partialContinuousTraces[partialIdx]->getTimingInfo().getNumTimes();
+                float * partialContVals = p->getValues();
+                const isize_t numSamples = p->getTimingInfo().getNumTimes();
                 memcpy((char *)v, (char *)partialContVals, sizeof(float) * numSamples);
                 v += numSamples;
             }
