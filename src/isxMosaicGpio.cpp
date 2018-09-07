@@ -233,4 +233,10 @@ MosaicGpio::cancelPendingReads()
     m_logicalIoTaskTracker->cancelPendingTasks();
 }
 
+std::string
+MosaicGpio::getExtraProperties() const
+{
+    return m_file->getExtraProperties();
+}
+
 } // namespace isx

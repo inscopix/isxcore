@@ -9,6 +9,8 @@
 namespace isx
 {
 
+/// This is currently used when writing nVoke 1 and nVista 3
+/// GPIO data, so they they do things fairly consistently.
 void
 writePktsToEventBasedFile(
         const std::string & inOutputFilePath,
@@ -16,8 +18,10 @@ writePktsToEventBasedFile(
         const std::vector<std::string> & inChannels,
         const std::vector<SignalType> & inTypes,
         const Time & inStartTime,
+        const DurationInSeconds & inSamplePeriod,
         const uint64_t inFirstMicrosecondOffset,
-        const uint64_t inLastMicrosecondOffset);
+        const uint64_t inLastMicrosecondOffset,
+        const std::string & inExtraProps = "");
 
 } // namespace isx
 

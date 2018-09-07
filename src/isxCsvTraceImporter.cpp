@@ -255,8 +255,11 @@ runCsvTraceImporter(
 
     // If the sample is really regular then this gives the correct sample duration,
     // so it seems like a decent way to estimate.
+    // Note that we err on the side of the step size being a little long, so
+    // that any regular timing info calculated later will be long enough to
+    // contain all the timestamps.
     const double stepDurationUSecs = double(timeStampsUSecs.back() - timeStampsUSecs.front()) / double(numValues - 1);
-    const DurationInSeconds stepDuration(Ratio::fromDouble(stepDurationUSecs / 1e6, 6));
+    const auto stepDuration = DurationInSeconds::fromMicroseconds(uint64_t(std::ceil(stepDurationUSecs)));
     const std::vector<DurationInSeconds> steps(signalNames.size(), stepDuration);
 
     EventBasedFileV2 outputFile(inParams.m_outputFile, DataSet::Type::GPIO, signalNames, steps, types);
@@ -274,8 +277,11 @@ runCsvTraceImporter(
         }
     }
 
-    // We might consider asking for the actual end time, but the last sample will do for now.
-    outputFile.setTimingInfo(inParams.m_startTime, inParams.m_startTime + DurationInSeconds(timeStampsUSecs.back(), isize_t(1e6)));
+    // We might consider asking for a specific end-time, but for now
+    // we use the last timestamp plus the step duration so that any
+    // regular timing info constructed later should contain all the
+    // timestamps (see QA comments of MOS-1602 for related bug).
+    outputFile.setTimingInfo(inParams.m_startTime, inParams.m_startTime + DurationInSeconds::fromMicroseconds(timeStampsUSecs.back()) + stepDuration);
     outputFile.closeFileForWriting();
 
     if (cancelled)

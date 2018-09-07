@@ -47,23 +47,9 @@ writeNamedPacketsAsEvents(
     return isx::readEvents(inFilePath);
 }
 
-void
-requireEqualLines(
-        const std::string inFilePath,
-        const std::vector<std::string> inExpLines)
-{
-    std::ifstream outputFile(inFilePath);
-    std::string line;
-    for (const auto & expLine : inExpLines)
-    {
-        getline(outputFile, line);
-        REQUIRE(line == expLine);
-    }
-}
-
 } // namespace
 
-TEST_CASE("EventsExport", "[core]")
+TEST_CASE("EventsExport", "[core][event_export]")
 {
     isx::CoreInitialize();
 
@@ -220,7 +206,7 @@ TEST_CASE("EventsExport", "[core]")
     isx::CoreShutdown();
 }
 
-TEST_CASE("EventsExport-series", "[core]")
+TEST_CASE("EventsExport-series", "[core][event_export]")
 {
     isx::CoreInitialize();
 
@@ -325,20 +311,6 @@ TEST_CASE("EventsExport-series", "[core]")
     SECTION("using unix time")
     {
         params.m_writeTimeRelativeTo = isx::WriteTimeRelativeTo::UNIX_EPOCH;
-
-        expLines =
-        {
-            "Time (s), C0, C1, C2",
-            "1501062683, 1, 0, 0",
-            "1501062683.05, 3, 2.5, 0",
-            "1501062683.1, 0, 0, 0",
-            "1501062683.15, 0, 0, 2.9",
-            "1501062683.2, 0.8, 0, 1.7",
-            "1501062688, 0, 0, 1.4",
-            "1501062688.05, 2.2, 1.5, 0",
-            "1501062688.1, 0, 3.5, 1.3",
-            "1501062688.15, 0, 0, 0",
-        };
 
         expLines =
         {
