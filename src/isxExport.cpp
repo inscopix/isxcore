@@ -251,8 +251,14 @@ toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, 
 void 
 toTiff(const std::string & inFileName, const SpImage_t & inImage)
 {
+    toTiff(inFileName, inImage.get());
+}
+
+void 
+toTiff(const std::string & inFileName, const Image * inImage)
+{
     TiffExporter out(inFileName);
-    out.toTiffOut(inImage.get());
+    out.toTiffOut(inImage);
 }
 
 } // namespace isx

@@ -71,6 +71,14 @@ void toTiff(
         const std::string & inFileName,
         const SpImage_t & inImage);
 
+/// Export an image to TIFF
+///
+/// \param inFileName   The filename for the output file.
+/// \param inImage      The image to export.
+void toTiff(
+        const std::string & inFileName,
+        const Image * inImage);
+
 /// Export a movie to TIFF
 ///
 /// \param inFileName       The filename for the output file.
