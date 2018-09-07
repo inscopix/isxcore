@@ -292,7 +292,7 @@ NVokeGpioFile::parse()
     const Time startTime(DurationInSeconds::fromMicroseconds(m_startTime));
 
     writePktsToEventBasedFile(m_outputFileName, packetsToWrite, channels, types,
-            startTime, 0, m_endTime - m_startTime);
+            startTime, DurationInSeconds::fromMilliseconds(1), 0, m_endTime - m_startTime);
 
     if (cancelled)
     {

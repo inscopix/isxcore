@@ -160,10 +160,14 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
 
     avcc->codec_id = avOutFmt->video_codec;
     avcc->bit_rate = bitRate;
-    avcc->time_base.num = int(framePeriod.getNum());
-    avcc->time_base.den = int(framePeriod.getDen());
-    avcc->framerate.num = int(framePeriod.getDen());
-    avcc->framerate.den = int(framePeriod.getNum());
+
+    // The MPEG4 codec only supports frame period denominators of up to 2^16 - 1.
+    const int framePeriodDen = 65535;
+    const int framePeriodNum = int(std::round(framePeriod.toDouble() * framePeriodDen));
+    avcc->time_base.num = framePeriodNum;
+    avcc->time_base.den = framePeriodDen;
+    avcc->framerate.num = framePeriodDen;
+    avcc->framerate.den = framePeriodNum;
 
     if (inImg)
     {
@@ -342,7 +346,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<isx::S
 }
 
 bool
-compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, float progressBarStart, float progressBarEnd)
+compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, float progressBarStart, float progressBarEnd, const isx::isize_t inBitRate)
 {
     int tInd = 0;
     bool cancelled = false;
@@ -366,7 +370,6 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
         count++;
     }
     ISX_ASSERT(stepFirst != isx::DurationInSeconds());
-    isx::isize_t bitRate = 400000; // TODO: possibly connect to front end for user control
 
     VideoOutput vOut;
     AVFormatContext *avFmtCnxt;
@@ -382,7 +385,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
                 
                 if (tInd == 0)
                 {
-                    if (preLoop(inFileName.c_str(), avFmtCnxt, vOut, &img, stepFirst, bitRate))
+                    if (preLoop(inFileName.c_str(), avFmtCnxt, vOut, &img, stepFirst, inBitRate))
                     {
                         return true;
                     }
@@ -414,7 +417,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
 }
 
 bool
-toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB)
+toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, const isx::isize_t inBitRate)
 {
     bool cancelled;
     float minVal = -1;
@@ -423,7 +426,7 @@ toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t
     cancelled = compressedAVIFindMinMax(inFileName, inMovies, inCheckInCB, minVal, maxVal, 0.0f, 0.1f);
     if (cancelled) return true;
 
-    cancelled = compressedAVIOutputMovie(inFileName, inMovies, inCheckInCB, minVal, maxVal, 0.1f, 1.0f);
+    cancelled = compressedAVIOutputMovie(inFileName, inMovies, inCheckInCB, minVal, maxVal, 0.1f, 1.0f, inBitRate);
     if (cancelled) return true;
     
     return false;
@@ -466,6 +469,35 @@ MovieCompressedAviExporterParams::setSources(const std::vector<SpMovie_t> & inSo
 }
 
 void
+MovieCompressedAviExporterParams::setBitRate(const isize_t inBitRate)
+{
+    m_bitRate = inBitRate;
+    m_bitRateFraction = 0;
+}
+
+void
+MovieCompressedAviExporterParams::setBitRateFraction(const double inBitRateFraction)
+{
+    m_bitRateFraction = inBitRateFraction;
+    m_bitRate = 0;
+    updateBitRateBasedOnFraction();
+}
+
+void
+MovieCompressedAviExporterParams::updateBitRateBasedOnFraction()
+{
+    isize_t bitPerByte = 8;
+    SpMovie_t & firstSrc = m_srcs[0];
+    SpacingInfo si = firstSrc->getSpacingInfo();
+    isize_t bytesPerPixel = getDataTypeSizeInBytes(firstSrc->getDataType());
+    double frameRate = 1 / firstSrc->getTimingInfo().getStep().toDouble();
+    // explicit enforcement of left-to-right precedence rule
+    // purpose: sub-product will be a double, thus avoiding any possibility of "wrapping-around" of unsigned int's
+    double bitRateNoCompression = ((frameRate * si.getTotalNumPixels()) * bytesPerPixel) * bitPerByte;
+    m_bitRate = isize_t(m_bitRateFraction * bitRateNoCompression);
+}
+
+void
 MovieCompressedAviExporterParams::setAdditionalInfo(
         const std::string & inIdentifierBase,
         const std::string & inSessionDescription,
@@ -503,6 +535,18 @@ MovieCompressedAviExporterParams::getOutputFilePaths() const
     return {m_filename};
 }
 
+isx::isize_t
+MovieCompressedAviExporterParams::getBitRate() const
+{
+    return m_bitRate;
+}
+
+double
+MovieCompressedAviExporterParams::getBitRateFraction() const
+{
+    return m_bitRateFraction;
+}
+
 AsyncTaskStatus 
 runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::shared_ptr<MovieCompressedAviExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
 {
@@ -529,9 +573,14 @@ runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::sh
         }
     }
 
+    if (inParams.getBitRate() == 0)
+    {
+        inParams.updateBitRateBasedOnFraction();
+    }
+
     try
     {
-        cancelled = toCompressedAVI(inParams.m_filename, inParams.m_srcs, inCheckInCB);
+        cancelled = toCompressedAVI(inParams.m_filename, inParams.m_srcs, inCheckInCB, inParams.getBitRate());
     }
     catch (...)
     {
