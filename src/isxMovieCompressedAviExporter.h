@@ -12,18 +12,37 @@ namespace isx
 struct MovieCompressedAviExporterParams : MovieExporterParams
 {
     /// convenience constructor to fill struct members in one shot
-    /// \param inSrcs                   input movies
-    /// \param inCompressedAviFilename           filename for CompressedAvi output file
+    /// \param inSrcs                      input movies
+    /// \param inCompressedAviFilename     filename for CompressedAvi output file
+    /// \param inBitRate                   bit-rate in bps
     MovieCompressedAviExporterParams(
         const std::vector<SpMovie_t> & inSrcs,
-        const std::string & inCompressedAviFilename)
+        const std::string & inCompressedAviFilename,
+        const isize_t inBitRate)
     : m_srcs(inSrcs)
     , m_filename(inCompressedAviFilename)
+    , m_bitRate(inBitRate)
     {}
+
+    /// convenience constructor to fill struct members in one shot
+    /// \param inSrcs                      input movies
+    /// \param inCompressedAviFilename     filename for CompressedAvi output file
+    /// \param inBitRateFraction           bit-rate as fraction of uncompressed bit-rate
+    MovieCompressedAviExporterParams(
+        const std::vector<SpMovie_t> & inSrcs,
+        const std::string & inCompressedAviFilename,
+        const double inBitRateFraction)
+        : m_srcs(inSrcs)
+        , m_filename(inCompressedAviFilename)
+        , m_bitRateFraction(inBitRateFraction)
+    { }
 
     /// default constructor
     /// 
-    MovieCompressedAviExporterParams(){}
+    MovieCompressedAviExporterParams()
+    {
+        setBitRateFraction(.25);
+    }
 
     std::string
     getOpName() override;
@@ -38,6 +57,10 @@ struct MovieCompressedAviExporterParams : MovieExporterParams
 
     std::vector<std::string> getOutputFilePaths() const override;
 
+    isize_t getBitRate() const;
+
+    double getBitRateFraction() const;
+
     void
     setOutputFileName(const std::string & inFileName) override;
 
@@ -46,6 +69,15 @@ struct MovieCompressedAviExporterParams : MovieExporterParams
 
     void 
     setSources(const std::vector<SpMovie_t> & inSources) override;
+
+    void
+    setBitRate(const isize_t inBitRate);
+
+    void
+    setBitRateFraction(const double inBitRateFraction);
+
+    void
+    updateBitRateBasedOnFraction();
 
     void
     setAdditionalInfo(
@@ -61,6 +93,8 @@ struct MovieCompressedAviExporterParams : MovieExporterParams
 
     std::vector<SpMovie_t>  m_srcs;                         ///< input movies
     std::string             m_filename;                     ///< name of output file
+    isize_t                 m_bitRate;                      ///< bitrate in bps
+    double                  m_bitRateFraction;              ///< bitrate as fraction of theoretical uncompressed
 };
 
 /// Movie exporter output parameters 

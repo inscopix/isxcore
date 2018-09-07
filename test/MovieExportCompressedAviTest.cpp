@@ -8,6 +8,7 @@
 #include "isxCore.h"
 
 #include <array>
+#include <sys/stat.h>
 
 namespace
 {
@@ -35,10 +36,54 @@ namespace
         }
     }
 
+    void
+    createFrameDataCheckerboard(float * outBuf, int32_t inNumFrames, int32_t inPixelsPerFrame, int32_t inWidth, int32_t szSquare, int32_t inVelX, int32_t inVelY)
+    {
+        for (int32_t f = 0; f < inNumFrames; ++f)
+        {
+            for (int32_t p = 0; p < inPixelsPerFrame; ++p)
+            {
+                int32_t x = p % inWidth + f * inVelX;
+                int32_t y = p / inWidth + f * inVelY;
+
+                int32_t xLowRes;
+                if (x >= 0)
+                {
+                    xLowRes = x / szSquare;
+                }
+                else // this implements floor for negative number
+                {
+                    xLowRes = -((-x - 1) / szSquare) - 1;
+                }
+
+                int32_t yLowRes;
+                if (y >= 0)
+                {
+                    yLowRes = y / szSquare;
+                }
+                else // this implements floor for negative number
+                {
+                    yLowRes = -((-y - 1) / szSquare) - 1;
+                }
+
+                // abs is used to avoid naive floor of a negative number: abs does not change result for "% 2"
+                float intensityValue = float((abs(xLowRes + yLowRes)) % 2);
+                outBuf[f * inPixelsPerFrame + p] = intensityValue;
+            }
+        }
+    }
+
+    int64_t GetFileSize(std::string filename)
+    {
+        struct stat stat_buf;
+        int rc = stat(filename.c_str(), &stat_buf);
+        return rc == 0 ? stat_buf.st_size : -1;
+    }
+
 } // namespace
 
     
-TEST_CASE("MovieCompressedAviExportF32Test", "[core]")
+TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
 {
     std::array<const char *, 3> names =
     { {
@@ -97,13 +142,14 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core]")
         }
         isx::MovieCompressedAviExporterParams params(
             movies,
-			exportedCompressedAviFileName);
+            exportedCompressedAviFileName,
+            isx::isize_t(400000));
         isx::runMovieCompressedAviExporter(params);
         
         
         // verify exported data
         {
-			// TODO: CompressedAviMovie not implemented yet
+            // TODO: CompressedAviMovie not implemented yet
             //isx::CompressedAviMovie compressedAviMovie(exportedCompressedAviFileName); // TODO: import is not implemented yet
 
         }
@@ -117,7 +163,7 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core]")
 
 }
 
-TEST_CASE("MovieCompressedAviExportU16Test", "[core]")
+TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
 {
     std::array<const char *, 3> names =
     { {
@@ -174,13 +220,14 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core]")
         }
         isx::MovieCompressedAviExporterParams params(
             movies,
-			exportedCompressedAviFileName);
+            exportedCompressedAviFileName,
+            isx::isize_t(400000));
         isx::runMovieCompressedAviExporter(params);
 
 
         // verify exported data
         {
-			// TODO: CompressedAviMovie not implemented yet
+            // TODO: CompressedAviMovie not implemented yet
             // isx::CompressedAviMovie compressedAviMovie(exportedCompressedAviFileName);
             // REQUIRE(compressedAviMovie.getFrameHeight() == sizePixels.getHeight());
             // REQUIRE(compressedAviMovie.getFrameWidth() == sizePixels.getWidth());
@@ -196,3 +243,117 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core]")
     }
 }
 
+TEST_CASE("MovieCompressedAviExportBitrateTest", "[core][export_mp4]")
+{
+    std::array<const char *, 1> names =
+    { {
+            "seriesMovie0_avi.isxd"
+    } };
+    std::vector<std::string> filenames;
+
+    for (auto n : names)
+    {
+        filenames.push_back(g_resources["unitTestDataPath"] + "/" + n);
+    }
+
+    for (const auto & fn : filenames)
+    {
+        std::remove(fn.c_str());
+    }
+
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.avi";
+
+    //std::vector<isx::isize_t> dropped = { 2 };
+    std::array<isx::TimingInfo, 1> timingInfos =
+    { {
+        { isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 200 }
+    } };
+
+    isx::SizeInPixels_t sizePixels(240, 160);
+    isx::SpacingInfo spacingInfo(sizePixels);
+
+    isx::CoreInitialize();
+
+    SECTION("Export F32 movie series")
+    {
+        // write isxds
+        const auto pixelsPerFrame = int32_t(sizePixels.getWidth() * sizePixels.getHeight());
+        std::vector<float> buf(pixelsPerFrame * 200);   // longest movie segment has 200 frames
+
+        int32_t i = 0;
+        for (const auto fn : filenames)
+        {
+            int32_t width = int32_t(sizePixels.getWidth());
+            int32_t szSquare = 15; // size of each square on checkerboard pattern
+            int32_t velX = -3; // motion of checkerboard
+            int32_t velY = 2;
+            createFrameDataCheckerboard(buf.data(), int32_t(timingInfos[i].getNumTimes()), pixelsPerFrame, width, szSquare, velX, velY);
+            writeTestF32MovieGeneric(fn, timingInfos[i], spacingInfo, buf.data());
+            ++i;
+        }
+
+        std::vector<isx::SpMovie_t> movies;
+        for (const auto fn : filenames)
+        {
+            movies.push_back(isx::readMovie(fn));
+        }
+
+        double startBitRateFraction = .1;
+        double endBitRateFraction = .0001;
+        double incBitRateFraction = .1;
+
+        int64_t uncompressedFileSize = GetFileSize(filenames[0]);
+        int64_t compressedFileSizeLast = 0;
+        for (double bitRateFraction = startBitRateFraction; bitRateFraction >= endBitRateFraction; bitRateFraction *= incBitRateFraction)
+        {
+            std::remove(exportedCompressedAviFileName.c_str());
+            isx::MovieCompressedAviExporterParams params(
+                movies,
+                exportedCompressedAviFileName,
+                bitRateFraction);
+            isx::runMovieCompressedAviExporter(params);
+            int64_t compressedFileSize = GetFileSize(exportedCompressedAviFileName);
+            if (bitRateFraction == startBitRateFraction)
+            {
+                REQUIRE(compressedFileSize <= uncompressedFileSize); // file size has not increased relative to original movie
+            }
+            else
+            {
+                REQUIRE(compressedFileSize <= compressedFileSizeLast); // file size does not increase as bit-rate decreases
+            }
+            compressedFileSizeLast = compressedFileSize;
+        }
+    }
+
+    for (const auto & fn : filenames)
+    {
+        std::remove(fn.c_str());
+    }
+    std::remove(exportedCompressedAviFileName.c_str());
+
+}
+
+TEST_CASE("MOS-1675", "[core][export_mp4]")
+{
+    isx::CoreInitialize();
+
+    const std::string inputDir = g_resources["unitTestDataPath"] + "/export_mp4";
+    const std::string outputDir = inputDir + "/output";
+
+    isx::removeDirectory(outputDir);
+    isx::makeDirectory(outputDir);
+
+    SECTION("Data with a frame period of greater than 2^16 - 1")
+    {
+        const std::string inputFile = inputDir + "/2018-08-09-17-05-09_video-PP-TPC.isxd";
+        const isx::SpMovie_t movie = isx::readMovie(inputFile);
+        const std::string outputFile = outputDir + "/" + isx::getBaseName(inputFile) + ".mp4";
+        isx::MovieCompressedAviExporterParams params({movie}, outputFile, 0.25);
+        params.m_bitRate = 0;
+
+        REQUIRE(isx::runMovieCompressedAviExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+    }
+
+    isx::removeDirectory(outputDir);
+    isx::CoreShutdown();
+}
