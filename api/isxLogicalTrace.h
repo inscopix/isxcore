@@ -86,6 +86,21 @@ private:
 
 }; // class
 
+/// Gets the plot coordinates for a logical trace.
+///
+/// \param  inTrace                 The trace to plot, which could be a series.
+/// \param  inTis                   The timing infos associated with the trace.
+/// \param  inCoordsForSquareWave   True if a square wave is being plotted, false otherwise.
+/// \param  outX                    The x-coordinates for each member of the series.
+/// \param  outY                    The y-coordinates for each member of the series.
+void
+getCoordinatesFromLogicalTrace(
+        const SpLogicalTrace_t & inTrace,
+        const TimingInfos_t & inTis,
+        const bool inCoordsForSquareWave,
+        std::vector<std::vector<double>> & outX,
+        std::vector<std::vector<double>> & outY);
+
 } // namespace
 
 #endif // ISX_LOGICAL_TRACE_H

@@ -28,14 +28,14 @@ BadGpioPacket::~BadGpioPacket()
 const std::map<NVista3GpioFile::Channel, std::string> NVista3GpioFile::s_channelNames
 {
     {NVista3GpioFile::Channel::FRAME_COUNTER, "Frame Count"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_0, "IO-9"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_1, "IO-10"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_2, "IO-11"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_3, "IO-12"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_4, "IO-13"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_5, "IO-14"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_6, "IO-15"},
-    {NVista3GpioFile::Channel::DIGITAL_GPI_7, "IO-16"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_0, "Digital GPI 0"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_1, "Digital GPI 1"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_2, "Digital GPI 2"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_3, "Digital GPI 3"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_4, "Digital GPI 4"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_5, "Digital GPI 5"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_6, "Digital GPI 6"},
+    {NVista3GpioFile::Channel::DIGITAL_GPI_7, "Digital GPI 7"},
     {NVista3GpioFile::Channel::BNC_GPIO_1, "GPIO-1"},
     {NVista3GpioFile::Channel::BNC_GPIO_2, "GPIO-2"},
     {NVista3GpioFile::Channel::BNC_GPIO_3, "GPIO-3"},
@@ -125,6 +125,11 @@ NVista3GpioFile::skipWords(const size_t inNumWords)
 void
 NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue)
 {
+    const bool isNan = std::isnan(inValue);
+    if (!isNan)
+    {
+        m_lastTimeStamp = inTimeStamp;
+    }
     if (m_indices.find(inChannel) == m_indices.end())
     {
         // This used to be one line, but on Linux the first index was 1
@@ -136,7 +141,17 @@ NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, con
     bool valueChanged = true;
     if (m_lastValues.find(inChannel) != m_lastValues.end())
     {
-        valueChanged = m_lastValues.at(inChannel) != inValue;
+        // Right now, there is no way I know to add two NaN values in
+        // succession, so this is not strictly needed, but leaving in
+        // for clarity and for future-proofing.
+        if (isNan)
+        {
+            valueChanged = !std::isnan(m_lastValues.at(inChannel));
+        }
+        else
+        {
+            valueChanged = m_lastValues.at(inChannel) != inValue;
+        }
     }
     m_lastValues[inChannel] = inValue;
     if (valueChanged)
@@ -193,6 +208,20 @@ NVista3GpioFile::parseTsc(const CountPayload & inCount)
 void
 NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
 {
+    // Unsigned integer addition should rollover without the need for modulo.
+    const bool droppedPackets = m_lastSequenceSet && ((m_lastSequence + 1) != inHeader.sequence);
+    m_lastSequence = inHeader.sequence;
+    m_lastSequenceSet = true;
+    if (droppedPackets)
+    {
+        ISX_LOG_DEBUG_NV3_GPIO("Detected dropped GPIO packets from timestamp ", m_lastTimeStamp + 1);
+        // We deliberately skip FRAME_COUNTER because we do not write that yet.
+        for (uint32_t c = uint32_t(Channel::DIGITAL_GPI_0); c <= uint32_t(Channel::BNC_SYNC); ++c)
+        {
+            addPkt(Channel(c), m_lastTimeStamp + 1, std::numeric_limits<float>::quiet_NaN());
+        }
+    }
+
     switch (Event(inHeader.type))
     {
         case Event::CAPTURE_ALL:
@@ -307,33 +336,37 @@ NVista3GpioFile::parse()
 {
     m_packets.clear();
     m_indices.clear();
-    size_t syncCount = 0;
 
     // All official releases of nVista3 with GPIO data should have a header
     // that contains the start time.
     // In order to continue to read files acquired in alpha testing, we
     // check to see if the first word is a sync packet which indicates that
     // the header is missing.
-    isx::Time startTime;
-    const auto potentialSync = read<uint32_t>();
     m_file.seekg(0, m_file.beg);
-    const bool hasHeader = potentialSync != s_syncWord;
-    double progressMultiplier = 0;
-    if (hasHeader)
+    isx::Time startTime;
+    size_t eventDataOffset = 0;
+    size_t sessionDataOffset = 0;
+    if (readAndRewind<uint32_t>() != s_syncWord)
     {
         const auto fileHeader = read<AdpDumpHeader>();
         startTime = Time(DurationInSeconds(fileHeader.secsSinceEpochNum, fileHeader.secsSinceEpochDen), fileHeader.utcOffset);
-        progressMultiplier = 1 / double(fileHeader.eventCount);
-    }
-    else
-    {
-        m_file.seekg(0, m_file.end);
-        progressMultiplier = 1 / float(m_file.tellg());
-        m_file.seekg(0, m_file.beg);
-    }
-    progressMultiplier *= 100;
+        eventDataOffset = size_t(fileHeader.eventDataOffset);
 
+        if (readAndRewind<uint32_t>() != s_syncWord)
+        {
+            ISX_LOG_DEBUG_NV3_GPIO("Found header extras.");
+            const auto fileHeaderExtras = read<AdpDumpHeaderExtras>();
+            sessionDataOffset = fileHeaderExtras.sessionDataOffset;
+        }
+    }
+
+    // We keep track of progress as an integer to avoid too many updates.
+    m_file.seekg(0, m_file.end);
+    const double progressMultiplier = 100.0 / double(m_file.tellg());
+
+    m_file.seekg(eventDataOffset, m_file.beg);
     size_t progress = 0;
+    size_t syncCount = 0;
     while (m_file.good())
     {
         const auto sync = read<uint32_t>();
@@ -348,22 +381,17 @@ NVista3GpioFile::parse()
         }
         ++syncCount;
 
-        size_t newProgress = progress;
-        if (hasHeader)
+        // Only call tellg every 100 sync packets for efficiency reasons.
+        if ((syncCount % 100) == 0)
         {
-            newProgress = size_t(progressMultiplier * syncCount);
-        }
-        else
-        {
-            newProgress = size_t(progressMultiplier * m_file.tellg());
-        }
-
-        if (newProgress != progress)
-        {
-            progress = newProgress;
-            if (m_checkInCB && m_checkInCB(float(progress / 100.0)))
+            const size_t newProgress = size_t(progressMultiplier * m_file.tellg());
+            if (newProgress != progress)
             {
-                return AsyncTaskStatus::CANCELLED;
+                progress = newProgress;
+                if (m_checkInCB && m_checkInCB(float(progress / 100.0)))
+                {
+                    return AsyncTaskStatus::CANCELLED;
+                }
             }
         }
 
@@ -400,6 +428,21 @@ NVista3GpioFile::parse()
         ISX_THROW(ExceptionFileIO, "Failed to find the beginning of the data stream and parse the file.");
     }
 
+    // Add all the last values with the last time stamp.
+    // This fixes MOS-1674.
+    for (const auto & p : m_lastValues)
+    {
+        if (m_indices.find(p.first) != m_indices.end())
+        {
+            const EventBasedFileV2::DataPkt pkt(m_lastTimeStamp, p.second, m_indices.at(p.first));
+            m_packets.push_back(pkt);
+        }
+        else
+        {
+            ISX_ASSERT(false, "Tried to write last value without an index.");
+        }
+    }
+
     m_outputFileName = m_outputDir + "/" + isx::getBaseName(m_fileName) + "_gpio.isxd";
 
     const size_t numChannels = m_indices.size();
@@ -419,8 +462,27 @@ NVista3GpioFile::parse()
         lastTime = m_packets.back().offsetMicroSecs;
     }
 
+    size_t adClockInHz = 1000;
+    std::string extraPropsStr;
+    if (sessionDataOffset > 0)
+    {
+        try
+        {
+            m_file.clear();
+            m_file.seekg(sessionDataOffset, m_file.beg);
+            std::getline(m_file, extraPropsStr);
+            const json extraProps = json::parse(extraPropsStr);
+            adClockInHz = extraProps.at("ad").at("clock");
+        }
+        catch (const std::exception & inError)
+        {
+            ISX_LOG_WARNING("Failed to read ADP clock from nVista 3 GPIO file with error: ", inError.what());
+        }
+    }
+    const DurationInSeconds period(1, adClockInHz);
+
     writePktsToEventBasedFile(m_outputFileName, m_packets, channels, types,
-            startTime, firstTime, lastTime);
+            startTime, period, firstTime, lastTime, extraPropsStr);
 
     return isx::AsyncTaskStatus::COMPLETE;
 }

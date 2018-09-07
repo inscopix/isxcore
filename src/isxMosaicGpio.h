@@ -78,6 +78,9 @@ public:
     void
     cancelPendingReads() override;
 
+    std::string
+    getExtraProperties() const override;
+
 private:
     FileType                                          m_type;
     std::shared_ptr<EventBasedFile>                   m_file;

@@ -44,7 +44,7 @@ public:
     struct PktHeader
     {
         uint32_t type;            ///< Type of packet (e.g. command, response, event).
-        uint32_t sequence;        ///< Incrementing number. May not be useful for us.
+        uint32_t sequence;        ///< Incrementing number. Used to detect dropped packets.
         uint32_t payloadSize;     ///< The size of the payload in 32-bit words.
     };
 
@@ -128,6 +128,12 @@ public:
         int32_t utcOffset;
         uint32_t eventDataOffset;
         uint64_t eventCount;
+    };
+
+    struct AdpDumpHeaderExtras
+    {
+        uint64_t fileFormat;
+        uint64_t sessionDataOffset;
     };
 
 #pragma pack(pop)
@@ -237,6 +243,16 @@ private:
     /// Check in callback for reporting progress
     AsyncCheckInCB_t m_checkInCB;
 
+    /// The last sequence number read.
+    uint32_t m_lastSequence = 0;
+
+    /// True if a sequence number has been read, false otherwise.
+    bool m_lastSequenceSet = false;
+
+    /// The last timestamp written. This is used to choose a timestamp
+    /// to associated with dropped packets.
+    uint64_t m_lastTimeStamp = 0;
+
     /// Read a value of arbitrary size from the file.
     template <typename T>
     T read()
@@ -258,6 +274,16 @@ private:
                     "but actual payload is ", actualSize, " bytes.");
         }
         return read<T>();
+    }
+
+    /// Read a valuue from the file, and rewind to the position before the read.
+    template <typename T>
+    T readAndRewind()
+    {
+        auto pos = m_file.tellg();
+        const T value = read<T>();
+        m_file.seekg(pos);
+        return value;
     }
 
     void skipBytes(const size_t inNumBytes);

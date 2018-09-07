@@ -5,6 +5,12 @@
 namespace isx
 {
 
+std::string
+Gpio::getExtraProperties() const
+{
+    return "null";
+}
+
 SpGpio_t
 readGpio(const std::string & inFileName)
 {
