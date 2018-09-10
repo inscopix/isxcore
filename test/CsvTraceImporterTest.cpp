@@ -626,13 +626,23 @@ TEST_CASE("MOS-1690", "[core][importCsvTraces]")
         params.m_startTime = isx::Time(2018, 1, 18, 15, 23, 4);
         params.m_timeUnit = isx::DurationInSeconds(1, 1000);
 
-        REQUIRE(isx::runCsvTraceImporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+        ISX_REQUIRE_EXCEPTION(
+                isx::runCsvTraceImporter(params, nullptr, [](float){return false;}),
+                isx::ExceptionDataIO, "");
+    }
 
-        const isx::SpGpio_t gpio = isx::readGpioSeries({params.m_outputFile});
+    SECTION("Simpler file that only has two counts of duplication")
+    {
+        const std::string dataName = "duplicate_titles";
 
-        std::vector<isx::SpFTrace_t> continuousTraces;
-        std::vector<isx::SpLogicalTrace_t> logicalTraces;
-        gpio->getAllTraces(continuousTraces, logicalTraces);
+        isx::CsvTraceImporterParams params;
+        params.m_inputFile = inputDataDir + "/" + dataName + ".csv";
+        params.m_outputFile = outputDataDir + "/" + dataName + ".isxd";
+        params.m_startTime = isx::Time(2018, 1, 18, 15, 23, 4);
+
+        ISX_REQUIRE_EXCEPTION(
+                isx::runCsvTraceImporter(params, nullptr, [](float){return false;}),
+                isx::ExceptionDataIO, "");
     }
 
     isx::removeDirectory(outputDataDir);
