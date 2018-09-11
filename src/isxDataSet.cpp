@@ -643,21 +643,19 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             acqInfo["Animal ID"] = animal->at("id");
             acqInfo["Animal Species"] = animal->at("species");
             acqInfo["Animal Weight"] = animal->at("weight");
+            acqInfo["Animal Description"] = animal->at("description");
         }
 
         const auto microscope = extraProps.find("microscope");
         if (microscope != extraProps.end())
         {
-            acqInfo["Microscope Binning Mode"] = microscope->at("binMode");
             acqInfo["Microscope Focus"] = microscope->at("focus");
             acqInfo["Microscope Gain"] = microscope->at("gain");
 
             const auto microscopeLed = microscope->find("led");
-            acqInfo["Microscope DI LED Power"] = microscopeLed->at("diPower");
-            acqInfo["Microscope EX LED Power"] = microscopeLed->at("exPower");
-            acqInfo["Microscope OG LED Power"] = microscopeLed->at("ogPower");
+            acqInfo["Microscope EX LED Power (mw/mm^2)"] = microscopeLed->at("exPower");
+            acqInfo["Microscope OG LED Power (mw/mm^2)"] = microscopeLed->at("ogPower");
 
-            acqInfo["Microscope Sensor Mode"] = microscope->at("sensorMode");
             acqInfo["Microscope Serial Number"] = microscope->at("serial");
             acqInfo["Microscope Type"] = microscope->at("type");
         }
@@ -675,19 +673,17 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
         {
             acqInfo["Probe Diameter (mm)"] = probe->at("diameter");
             acqInfo["Probe Flip"] = probe->at("flip");
-            acqInfo["Probe ID"] = probe->at("id");
             acqInfo["Probe Length (mm)"] = probe->at("length");
-            acqInfo["Probe Name"] = probe->at("name");
             acqInfo["Probe Pitch"] = probe->at("pitch");
-            acqInfo["Probe Rotation"] = probe->at("rotation");
+            acqInfo["Probe Rotation (degrees)"] = probe->at("rotation");
             acqInfo["Probe Type"] = probe->at("type");
         }
 
         const auto producer = extraProps.find("producer");
         if (producer != extraProps.end())
         {
-            acqInfo["Acquisition SW Version (BE)"] = producer->at("versionBE");
-            acqInfo["Acquisition SW Version (FE)"] = producer->at("versionFE");
+            const std::vector<std::string> versionTokens = splitString(producer->at("versionBE"), '-');
+            acqInfo["Acquisition SW Version"] = versionTokens.at(0);
         }
     }
 

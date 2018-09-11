@@ -35,14 +35,12 @@ checkDataset1Metadata(
     REQUIRE(inMeta.at("Animal ID") == "");
     REQUIRE(inMeta.at("Animal Species") == "");
     REQUIRE(inMeta.at("Animal Weight") == "0");
+    REQUIRE(inMeta.at("Animal Description") == "");
 
-    REQUIRE(inMeta.at("Microscope Binning Mode") == "1");
     REQUIRE(inMeta.at("Microscope Focus") == "0");
     REQUIRE(inMeta.at("Microscope Gain") == "7");
-    REQUIRE(inMeta.at("Microscope DI LED Power") == "0.200");
-    REQUIRE(inMeta.at("Microscope EX LED Power") == "0");
-    REQUIRE(inMeta.at("Microscope OG LED Power") == "0");
-    REQUIRE(inMeta.at("Microscope Sensor Mode") == "master");
+    REQUIRE(inMeta.at("Microscope EX LED Power (mw/mm^2)") == "0");
+    REQUIRE(inMeta.at("Microscope OG LED Power (mw/mm^2)") == "0");
     REQUIRE(inMeta.at("Microscope Serial Number") == "unknown");
     REQUIRE(inMeta.at("Microscope Type") == "nVista");
 
@@ -52,15 +50,12 @@ checkDataset1Metadata(
 
     REQUIRE(inMeta.at("Probe Diameter (mm)") == "0");
     REQUIRE(inMeta.at("Probe Flip") == "none");
-    REQUIRE(inMeta.at("Probe ID") == "none");
     REQUIRE(inMeta.at("Probe Length (mm)") == "0");
-    REQUIRE(inMeta.at("Probe Name") == "None");
     REQUIRE(inMeta.at("Probe Pitch") == "0");
-    REQUIRE(inMeta.at("Probe Rotation") == "0");
+    REQUIRE(inMeta.at("Probe Rotation (degrees)") == "0");
     REQUIRE(inMeta.at("Probe Type") == "None");
 
-    REQUIRE(inMeta.at("Acquisition SW Version (BE)") == "1.1.0-4453328");
-    REQUIRE(inMeta.at("Acquisition SW Version (FE)") == "1.1.0-ae0e21a");
+    REQUIRE(inMeta.at("Acquisition SW Version") == "1.1.0");
 }
 
 } // namespace
