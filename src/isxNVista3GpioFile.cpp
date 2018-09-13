@@ -141,11 +141,6 @@ NVista3GpioFile::skipWords(const size_t inNumWords)
 void
 NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue)
 {
-    if (!m_includeDigitalGpo && (inChannel >= Channel::DIGITAL_GPO_0) && (inChannel <= Channel::DIGITAL_GPO_7))
-    {
-        return;
-    }
-
     const bool isNan = std::isnan(inValue);
     if (!isNan)
     {
@@ -358,7 +353,6 @@ NVista3GpioFile::parse()
     m_indices.clear();
     m_lastSequence = 0;
     m_lastSequenceSet = false;
-    m_includeDigitalGpo = false;
 
     // All official releases of nVista3 with GPIO data should have a header
     // that contains the start time.
@@ -380,7 +374,6 @@ NVista3GpioFile::parse()
             const auto fileHeaderExtras = read<AdpDumpHeaderExtras>();
             ISX_LOG_DEBUG_NV3_GPIO("Found header extras with fileFormat ", fileHeaderExtras.fileFormat);
             sessionDataOffset = fileHeaderExtras.sessionDataOffset;
-            m_includeDigitalGpo = fileHeaderExtras.fileFormat >= 111;
         }
     }
 

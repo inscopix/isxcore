@@ -271,9 +271,6 @@ private:
     /// to associated with dropped packets.
     uint64_t m_lastTimeStamp = 0;
 
-    /// True if digital GPO channels should be written, false otherwise.
-    bool m_includeDigitalGpo = false;
-
     /// Read a value of arbitrary size from the file.
     template <typename T>
     T read()

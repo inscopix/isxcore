@@ -20,6 +20,7 @@ using json = nlohmann::json;
 #include <algorithm>
 
 const isx::isize_t fileVersion = 2;
+const size_t numNVista3Channels = 26;
 
 void testNVokeParsing(
     const std::string & inFileName,
@@ -439,7 +440,7 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
 
         const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
 
-        REQUIRE(gpio->numberOfChannels() == 18);
+        REQUIRE(gpio->numberOfChannels() == numNVista3Channels);
 
         const isx::Time startTime;
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 1);
@@ -512,7 +513,7 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
 
         const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
 
-        REQUIRE(gpio->numberOfChannels() == 18);
+        REQUIRE(gpio->numberOfChannels() == numNVista3Channels);
 
         const isx::Time startTime;
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 1);
@@ -550,7 +551,8 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
 
         const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
 
-        REQUIRE(gpio->numberOfChannels() == 19);
+        // This has one more than usual because of the frame count.
+        REQUIRE(gpio->numberOfChannels() == numNVista3Channels + 1);
 
         const isx::Time startTime;
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 10);
@@ -568,7 +570,7 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
         }
         const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
 
-        REQUIRE(gpio->numberOfChannels() == 18);
+        REQUIRE(gpio->numberOfChannels() == numNVista3Channels);
 
         const isx::Time startTime;
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 3057);
@@ -604,7 +606,7 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
         }
         const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
 
-        REQUIRE(gpio->numberOfChannels() == 18);
+        REQUIRE(gpio->numberOfChannels() == numNVista3Channels);
 
         const isx::Time startTime;
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 26570);
@@ -622,7 +624,7 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
         }
         const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
 
-        REQUIRE(gpio->numberOfChannels() == 18);
+        REQUIRE(gpio->numberOfChannels() == numNVista3Channels);
 
         const isx::Time startTime(2018, 6, 29, 23, 2, 38, isx::DurationInSeconds::fromMilliseconds(865));
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 38273);
@@ -661,7 +663,7 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
         }
         const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
 
-        REQUIRE(gpio->numberOfChannels() == 18);
+        REQUIRE(gpio->numberOfChannels() == numNVista3Channels);
 
         const isx::Time startTime(2018, 6, 29, 23, 7, 21, isx::DurationInSeconds::fromMilliseconds(2));
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 9860);
@@ -712,7 +714,7 @@ TEST_CASE("nVista3GpioWithExtras", "[core][nv3_gpio]")
 
         const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
 
-        REQUIRE(gpio->numberOfChannels() == 18);
+        REQUIRE(gpio->numberOfChannels() == numNVista3Channels);
 
         const isx::Time startTime(2018, 8, 9, 11, 13, 52, isx::DurationInSeconds::fromMilliseconds(747));
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 1000), 8938672);
