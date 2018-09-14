@@ -62,14 +62,22 @@ public:
 
     void getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback) override;
 
+    std::vector<uint16_t> getFrameHeader(const size_t inFrameNumber) override;
+
+    std::vector<uint16_t> getFrameFooter(const size_t inFrameNumber) override;
+
     void cancelPendingReads() override;
 
     void writeFrame(const SpVideoFrame_t & inVideoFrame) override;
 
+    void writeFrameWithHeaderFooter(const uint16_t * inBuffer) override;
+
+    void writeFrameWithHeaderFooter(const uint16_t * inHeader, const uint16_t * inPixels, const uint16_t * inFooter) override;
+
     void
     closeForWriting(const TimingInfo & inTimingInfo = TimingInfo()) override;
 
-    SpVideoFrame_t makeVideoFrame(isize_t inIndex, const bool inWithHeaderFooter = false) override;
+    SpVideoFrame_t makeVideoFrame(isize_t inIndex) override;
 
     const isx::TimingInfo & getTimingInfo() const override;
 
@@ -88,9 +96,6 @@ public:
 
     std::string getExtraProperties() const override;
 
-    SpVideoFrame_t
-    getFrameWithHeaderFooter(const size_t inFrameNumber) override;
-
     SpacingInfo
     getOriginalSpacingInfo() const override;
 
@@ -102,6 +107,9 @@ private:
     /// The shared pointer to the movie file that stores data.
     std::shared_ptr<MosaicMovieFile>            m_file;
     std::shared_ptr<IoTaskTracker<VideoFrame>>  m_ioTaskTracker;
+
+    /// Writes to the movie file and waits for the operation to finished on the I/O thread.
+    void writeAndWait(std::function<void()> inCallback, const std::string & inName);
 };
 
 } // namespace isx

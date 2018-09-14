@@ -57,13 +57,21 @@ public:
     void
     getFrameAsync(size_t inFrameNumber, MovieGetFrameCB_t inCallback) = 0;
 
-    /// Get a frame with its header and footer if it exists. Runs synchronously.
+    /// Get the frame header. Runs synchronously on the same thread that calls it.
     ///
     /// \param  inFrameNumber   The frame number.
-    /// \return                 The frame associated with a given frame number.
+    /// \return                 The frame footer associated with a given frame number.
     virtual
-    SpVideoFrame_t
-    getFrameWithHeaderFooter(const size_t inFrameNumber);
+    std::vector<uint16_t>
+    getFrameHeader(const size_t inFrameNumber);
+
+    /// Get the frame footer. Runs synchronously on the same thread that calls it.
+    ///
+    /// \param  inFrameNumber   The frame number.
+    /// \return                 The frame header associated with a given frame number.
+    virtual
+    std::vector<uint16_t>
+    getFrameFooter(const size_t inFrameNumber);
 
     /// cancel all pending read requests (scheduled via getFrameAsync) for this movie
     ///
