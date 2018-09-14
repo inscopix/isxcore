@@ -623,9 +623,19 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core][mosaic_movie]")
             numPixels = isx::SizeInPixels_t(640, 400);
         }
 
-        SECTION("640x400 - downsampled by a factor of 2 and cropped")
+        SECTION("567x272 - downsampled by a factor of 2 and cropped")
         {
             numPixels = isx::SizeInPixels_t(567, 272);
+        }
+
+        SECTION("426x266 - downsampled by a factor of 3")
+        {
+            numPixels = isx::SizeInPixels_t(426, 266);
+        }
+
+        SECTION("320x200 - downsampled by a factor of 4")
+        {
+            numPixels = isx::SizeInPixels_t(320, 200);
         }
 
         const isx::SpacingInfo spacingInfo(numPixels);
@@ -681,10 +691,17 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core][mosaic_movie]")
             isx::SpWritableMovie_t movie = isx::writeMosaicMovie(filePath, timingInfo, spacingInfo, dataType, true);
             for (isx::isize_t f = 0; f < numFrames; ++f)
             {
-                std::memcpy(buffer.get(), headers.at(f).data(), headerSizeInBytes);
-                std::memcpy(buffer.get() + numHeaderValues, frames.at(f).data(), frameSizeInBytes);
-                std::memcpy(buffer.get() + numHeaderValues + totalNumPixels, footers.at(f).data(), footerSizeInBytes);
-                movie->writeFrameWithHeaderFooter(buffer.get());
+                if (numPixels == isx::SizeInPixels_t(1280, 800))
+                {
+                    std::memcpy(buffer.get(), headers.at(f).data(), headerSizeInBytes);
+                    std::memcpy(buffer.get() + numHeaderValues, frames.at(f).data(), frameSizeInBytes);
+                    std::memcpy(buffer.get() + numHeaderValues + totalNumPixels, footers.at(f).data(), footerSizeInBytes);
+                    movie->writeFrameWithHeaderFooter(buffer.get());
+                }
+                else
+                {
+                    movie->writeFrameWithHeaderFooter(headers.at(f).data(), frames.at(f).data(), footers.at(f).data());
+                }
             }
             movie->setExtraProperties(extraProperties.dump());
             movie->closeForWriting();
