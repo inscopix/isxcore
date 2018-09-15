@@ -12,17 +12,6 @@
 #include "json.hpp"
 using json = nlohmann::json;
 
-namespace
-{
-
-size_t
-hashFrameAndPixelIndex(const size_t inFrameIndex, const size_t inPixelIndex, const size_t inMaxValue)
-{
-    return (inFrameIndex + inPixelIndex) % (inMaxValue + 1);
-}
-
-} // namespace
-
 TEST_CASE("MosaicMovieU16", "[core-internal][mosaic_movie]")
 {
     std::string fileName = g_resources["unitTestDataPath"] + "/movie.isxd";
