@@ -737,7 +737,7 @@ TEST_CASE("nVista3GpioWithExtras", "[core][nv3_gpio]")
 
         const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
 
-        REQUIRE(gpio->numberOfChannels() == 26);
+        REQUIRE(gpio->numberOfChannels() == numNVista3Channels);
 
         const isx::Time startTime(2018, 8, 15, 9, 1, 58, isx::DurationInSeconds::fromMilliseconds(159));
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 5000), 42778);
