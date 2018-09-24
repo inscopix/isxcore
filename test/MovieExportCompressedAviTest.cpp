@@ -349,7 +349,6 @@ TEST_CASE("MOS-1675", "[core][export_mp4]")
         const isx::SpMovie_t movie = isx::readMovie(inputFile);
         const std::string outputFile = outputDir + "/" + isx::getBaseName(inputFile) + ".mp4";
         isx::MovieCompressedAviExporterParams params({movie}, outputFile, 0.25);
-        params.m_bitRate = 0;
 
         REQUIRE(isx::runMovieCompressedAviExporter(params) == isx::AsyncTaskStatus::COMPLETE);
     }
