@@ -410,19 +410,19 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
             std::ofstream inputFile(inputFilePath.c_str(), std::ios::binary);
             REQUIRE(inputFile.good());
             writeNV3AllPacket(inputFile, 0, 0, 0,
-                    0b0000000010111001,
+                    0b1011011010111001,
                     14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000001);
             writeNV3AllPacket(inputFile, 1, 1, 1,
-                    0b0000000010111001,
+                    0b1011011010111001,
                     14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000001);
             writeNV3AllPacket(inputFile, 2, 2, 2,
-                    ~0b0000000010111001,
+                    ~0b1011011010111001,
                     14539, 50, 279, 2896,
                     4001, 6001, 9001,
                     5679,
@@ -454,6 +454,16 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
         requireGpioChannelValues(gpio, "Digital GPI 5", {{0, 1.f}, {2, 0.f}});
         requireGpioChannelValues(gpio, "Digital GPI 6", {{0, 0.f}, {2, 1.f}});
         requireGpioChannelValues(gpio, "Digital GPI 7", {{0, 1.f}, {2, 0.f}});
+
+        requireGpioChannelValues(gpio, "Digital GPO 0", {{0, 0.f}, {2, 1.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 1", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 2", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 3", {{0, 0.f}, {2, 1.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 4", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 5", {{0, 1.f}, {2, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 6", {{0, 0.f}, {2, 1.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 7", {{0, 1.f}, {2, 0.f}});
+
         requireGpioChannelValues(gpio, "GPIO-1", {{0, 14512.f}, {2, 14528.f}});
         requireGpioChannelValues(gpio, "GPIO-2", {{0, 32.f}, {2, 48.f}});
         requireGpioChannelValues(gpio, "GPIO-3", {{0, 256.f}, {2, 272.f}});
@@ -474,28 +484,28 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
             REQUIRE(inputFile.good());
             // Initial values => one write.
             writeNV3AllPacket(inputFile, 0, 0, 0,
-                    0b0000000010111001,
+                    0b0101011010111001,
                     14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000001);
             // No change, no dropped => no write.
             writeNV3AllPacket(inputFile, 1, 2, 0,
-                    0b0000000010111001,
+                    0b0101011010111001,
                     14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000001);
             // No change, dropped => two writes (one for dropped, one for recovery).
             writeNV3AllPacket(inputFile, 3, 6, 1,
-                    0b0000000010111001,
+                    0b0101011010111001,
                     14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000001);
             // Change, dropped => two writes (one for dropped, one for change).
             writeNV3AllPacket(inputFile, 6, 12, 2,
-                    ~0b0000000010111001,
+                    ~0b0101011010111001,
                     14539, 50, 279, 2896,
                     4001, 6001, 9001,
                     5679,
@@ -527,6 +537,16 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
         requireGpioChannelValues(gpio, "Digital GPI 5", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
         requireGpioChannelValues(gpio, "Digital GPI 6", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
         requireGpioChannelValues(gpio, "Digital GPI 7", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+
+        requireGpioChannelValues(gpio, "Digital GPO 0", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 1", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 2", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 3", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 4", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 5", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 6", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
+        requireGpioChannelValues(gpio, "Digital GPO 7", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
+
         requireGpioChannelValues(gpio, "GPIO-1", {{0, 14512.f}, {3, nan}, {6, 14512.f}, {7, nan}, {12, 14528.f}});
         requireGpioChannelValues(gpio, "GPIO-2", {{0, 32.f}, {3, nan}, {6, 32.f}, {7, nan}, {12, 48.f}});
         requireGpioChannelValues(gpio, "GPIO-3", {{0, 256.f}, {3, nan}, {6, 256.f}, {7, nan}, {12, 272.f}});
