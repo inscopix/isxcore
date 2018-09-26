@@ -92,7 +92,7 @@ struct MovieExporterParams
 
 
     /// The default bit-rate fraction for lossy exporters.
-    constexpr static double s_defaultBitRateFraction = 0.25;
+    constexpr static double s_defaultBitRateFraction = 0.1;
 };
 
 /// Wrapper for movie export params.
