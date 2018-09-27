@@ -158,6 +158,20 @@ runCsvTraceImporter(
         }
     }
 
+    std::map<std::string, size_t> colNameCounts;
+    for (const size_t c : inParams.m_colsToImport)
+    {
+        if (c != inParams.m_timeCol)
+        {
+            const std::string & name = colNames.at(c);
+            if (++colNameCounts[name] > 1)
+            {
+                ISX_THROW(ExceptionDataIO, "Each imported column title must be unique. "
+                        "The column title '", name, "' appears more than once.");
+            }
+        }
+    }
+
     // Go back to the beginning of the file and parse the data values.
     // Clearing the error state flags in case the title was the last line.
     inputStream.clear();
@@ -195,15 +209,6 @@ runCsvTraceImporter(
             try
             {
                 value = std::stod(valueStr);
-
-                // TODO : This seems broken because it will be caught by the following
-                // catch block.
-                if (value < 0.0 && (col == inParams.m_timeCol))
-                {
-                    ISX_THROW(ExceptionDataIO, "All timestamps must be non-negative. ",
-                              "Found a negative timestamp on row ", row, " in column ",
-                              col, " (", valueStr, "). ");
-                }
             }
             catch (const std::exception &)
             {
@@ -214,6 +219,14 @@ runCsvTraceImporter(
                             col, " (", valueStr, "). ");
                 }
             }
+
+            if ((col == inParams.m_timeCol) && (value < 0.0))
+            {
+                ISX_THROW(ExceptionDataIO, "All timestamps must be non-negative. ",
+                        "Found a negative timestamp on row ", row, " in column ",
+                        col, " (", valueStr, "). ");
+            }
+
             colValues.at(col).push_back(value);
         }
     }
