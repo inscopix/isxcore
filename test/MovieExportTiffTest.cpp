@@ -11,6 +11,7 @@
 
 namespace
 {
+
     void
     createFrameData(float * outBuf, int32_t inNumFrames, int32_t inPixelsPerFrame, int32_t inBaseValueForFrame)
     {
@@ -33,6 +34,19 @@ namespace
                 outBuf[f * inPixelsPerFrame + p] = uint16_t((inBaseValueForFrame + f) * inPixelsPerFrame + p);
             }
         }
+    }
+
+    void
+    exportImageAndCheckOutput(const std::string & inInputFile, const std::string & inOutputDir)
+    {
+        const std::string outputFile = inOutputDir + "/" + isx::getBaseName(inInputFile) + ".tif";
+        const isx::SpMovie_t inputMovie = isx::readMovie(inInputFile);
+        const isx::MovieTiffExporterParams params({inputMovie}, {outputFile});
+        REQUIRE(isx::runMovieTiffExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+
+        const isx::SpVideoFrame_t inputFrame = isx::readImage(inInputFile);
+        const isx::SpVideoFrame_t outputFrame = isx::readImage(outputFile);
+        requireEqualImages(outputFrame->getImage(), inputFrame->getImage());
     }
 
 } // namespace
@@ -643,3 +657,60 @@ TEST_CASE("MovieTiffExportBigTiff", "[core][!hide]")
 
     isx::removeDirectory(dataDir);
 }
+
+TEST_CASE("MovieTiffExport-one_image", "[core][export_tiff]")
+{
+    isx::CoreInitialize();
+
+    const std::string snapshotDir = g_resources["unitTestDataPath"] + "/Snapshots";
+    const std::string outputDir = g_resources["unitTestDataPath"] + "/export_tiff_output";
+    isx::removeDirectory(outputDir);
+    isx::makeDirectory(outputDir);
+
+    SECTION("Export an .isxd file containing a single frame")
+    {
+        const std::string inputFile = g_resources["unitTestDataPath"] + "/50fr10_l1-3cells_he-Mean Image-v2.isxd";
+        exportImageAndCheckOutput(inputFile, outputDir);
+    }
+
+    SECTION("Export an nVista 2 XML+TIFF snapshot")
+    {
+        const std::string inputFile = snapshotDir + "/nVista_PrismC1AAV1_tif/snapshot_20160613_102103.xml";
+        exportImageAndCheckOutput(inputFile, outputDir);
+    }
+
+    SECTION("Export an nVista 2 TIFF snapshot")
+    {
+        const std::string inputFile = snapshotDir + "/nVista_ratPFC2_tif/snapshot_20160705_094404.tif";
+        exportImageAndCheckOutput(inputFile, outputDir);
+    }
+
+    SECTION("Export an nVista 2 XML+HDF5 snapshot")
+    {
+        const std::string inputFile = snapshotDir + "/nVista_ratPFC3_raw2hdf5_converted/snapshot_20160622_154726.xml";
+        exportImageAndCheckOutput(inputFile, outputDir);
+    }
+
+    SECTION("Export an nVoke XML snapshot")
+    {
+        const std::string inputFile = snapshotDir + "/nVoke/snapshot_20170619_160245.xml";
+        exportImageAndCheckOutput(inputFile, outputDir);
+    }
+
+    SECTION("Export an nVoke TIFF snapshot")
+    {
+        const std::string inputFile = snapshotDir + "/nVoke/snapshot_20170619_160245.tif";
+        exportImageAndCheckOutput(inputFile, outputDir);
+    }
+
+    SECTION("Export an nVista 3 TIFF snapshot")
+    {
+        const std::string inputFile = snapshotDir + "/nVista3/2018-06-19-11-34-37_snap.tiff";
+        exportImageAndCheckOutput(inputFile, outputDir);
+    }
+
+    isx::removeDirectory(outputDir);
+
+    isx::CoreShutdown();
+}
+

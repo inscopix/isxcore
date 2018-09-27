@@ -16,6 +16,7 @@ namespace isx
 /// Time stamps in the input file must be located in one column and
 /// must be strictly increasing.
 /// All row/column indices are 0-based.
+/// If any channels have the same names, the import will fail.
 struct CsvTraceImporterParams
 {
 
