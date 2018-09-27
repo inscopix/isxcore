@@ -311,7 +311,8 @@ private:
     void addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue);
 
     /// Add digital GPI and GPO packets based on the packed payload value to the output file.
-    void addDigitalGpioPkts(const uint64_t inTsc, const uint16_t inDigitalGpio);
+    void addDigitalGpiPkts(const uint64_t inTsc, const uint16_t inDigitalGpi);
+    void addDigitalGpoPkts(const uint64_t inTsc, const uint16_t inDigitalGpo);
 
     /// Add BNC trigger and sync packets based on the packed payload value to the output file.
     void addTrigSyncPkts(const uint64_t inTsc, const uint16_t inTrigSyncFlash);

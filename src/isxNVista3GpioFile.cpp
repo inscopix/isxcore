@@ -177,12 +177,22 @@ NVista3GpioFile::addPkt(const Channel inChannel, const uint64_t inTimeStamp, con
 }
 
 void
-NVista3GpioFile::addDigitalGpioPkts(const uint64_t inTsc, uint16_t inDigitalGpio)
+NVista3GpioFile::addDigitalGpiPkts(const uint64_t inTsc, uint16_t inDigitalGpi)
 {
-    for (uint32_t i = uint32_t(Channel::DIGITAL_GPI_0); i <= uint32_t(Channel::DIGITAL_GPO_7); ++i)
+    for (uint32_t i = uint32_t(Channel::DIGITAL_GPI_0); i <= uint32_t(Channel::DIGITAL_GPI_7); ++i)
     {
-        addPkt(Channel(i), inTsc, float(inDigitalGpio & 0b1));
-        inDigitalGpio >>= 1;
+        addPkt(Channel(i), inTsc, float(inDigitalGpi & 0b1));
+        inDigitalGpi >>= 1;
+    }
+}
+
+void
+NVista3GpioFile::addDigitalGpoPkts(const uint64_t inTsc, uint16_t inDigitalGpo)
+{
+    for (uint32_t i = uint32_t(Channel::DIGITAL_GPO_0); i <= uint32_t(Channel::DIGITAL_GPO_7); ++i)
+    {
+        addPkt(Channel(i), inTsc, float(inDigitalGpo & 0b1));
+        inDigitalGpo >>= 1;
     }
 }
 
@@ -244,7 +254,8 @@ NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
             ISX_LOG_DEBUG_NV3_GPIO("Event::CAPTURE_ALL");
             const auto payload = read<AllPayload>(inHeader.payloadSize);
             const uint64_t tsc = parseTsc(payload.count);
-            addDigitalGpioPkts(tsc, uint16_t(payload.digitalGpio));
+            addDigitalGpiPkts(tsc, uint16_t(payload.digitalGpio));
+            addDigitalGpoPkts(tsc, uint16_t(payload.digitalGpio >> 16));
             addBncGpioPkts(tsc, payload);
             addPkt(Channel::EX_LED, tsc, float(payload.exLed));
             addPkt(Channel::OG_LED, tsc, float(payload.ogLed));
@@ -259,7 +270,7 @@ NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
             ISX_LOG_DEBUG_NV3_GPIO("Event::CAPTURE_GPIO");
             const auto payload = read<AllGpioPayload>(inHeader.payloadSize);
             const uint64_t tsc = parseTsc(payload.count);
-            addDigitalGpioPkts(tsc, payload.digitalGpio);
+            addDigitalGpiPkts(tsc, payload.digitalGpio);
             addPkt(Channel::BNC_TRIG, tsc, float(payload.bncTrig));
             addBncGpioPkts(tsc, payload);
             break;
@@ -290,7 +301,7 @@ NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
             ISX_LOG_DEBUG_NV3_GPIO("Event::DIGITAL_GPIO");
             const auto payload = read<DigitalGpioPayload>(inHeader.payloadSize);
             const uint64_t tsc = parseTsc(payload.count);
-            addDigitalGpioPkts(tsc, uint16_t(payload.digitalGpio));
+            addDigitalGpiPkts(tsc, uint16_t(payload.digitalGpio));
             break;
         }
 
@@ -487,9 +498,17 @@ NVista3GpioFile::parse()
         {
             m_file.clear();
             m_file.seekg(sessionDataOffset, m_file.beg);
-            std::getline(m_file, extraPropsStr);
-            const json extraProps = json::parse(extraPropsStr);
-            adClockInHz = extraProps.at("ad").at("clock");
+            json extraProps;
+            m_file >> extraProps;
+            if (extraProps.find("ad") != extraProps.end())
+            {
+                adClockInHz = extraProps.at("ad").at("clock");
+            }
+            else if (extraProps.find("autoAd") != extraProps.end())
+            {
+                adClockInHz = extraProps.at("autoAd").at("clock");
+            }
+            extraPropsStr = extraProps.dump();
         }
         catch (const std::exception & inError)
         {

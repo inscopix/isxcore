@@ -410,19 +410,19 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
             std::ofstream inputFile(inputFilePath.c_str(), std::ios::binary);
             REQUIRE(inputFile.good());
             writeNV3AllPacket(inputFile, 0, 0, 0,
-                    0b1011011010111001,
+                    0b101101100000000010111001,
                     14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000001);
             writeNV3AllPacket(inputFile, 1, 1, 1,
-                    0b1011011010111001,
+                    0b101101100000000010111001,
                     14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000001);
             writeNV3AllPacket(inputFile, 2, 2, 2,
-                    ~0b1011011010111001,
+                    ~0b101101100000000010111001,
                     14539, 50, 279, 2896,
                     4001, 6001, 9001,
                     5679,
@@ -484,28 +484,28 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
             REQUIRE(inputFile.good());
             // Initial values => one write.
             writeNV3AllPacket(inputFile, 0, 0, 0,
-                    0b0101011010111001,
+                    0b010101100000000010111001,
                     14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000001);
             // No change, no dropped => no write.
             writeNV3AllPacket(inputFile, 1, 2, 0,
-                    0b0101011010111001,
+                    0b010101100000000010111001,
                     14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000001);
             // No change, dropped => two writes (one for dropped, one for recovery).
             writeNV3AllPacket(inputFile, 3, 6, 1,
-                    0b0101011010111001,
+                    0b010101100000000010111001,
                     14523, 34, 263, 2880,
                     4000, 6000, 9000,
                     5678,
                     0b0000000000000001);
             // Change, dropped => two writes (one for dropped, one for change).
             writeNV3AllPacket(inputFile, 6, 12, 2,
-                    ~0b0101011010111001,
+                    ~0b010101100000000010111001,
                     14539, 50, 279, 2896,
                     4001, 6001, 9001,
                     5679,
@@ -767,6 +767,46 @@ TEST_CASE("nVista3GpioWithExtras", "[core][nv3_gpio]")
         const json extraProps = json::parse(extraPropsStr);
         REQUIRE(extraProps != nullptr);
         REQUIRE(extraProps.at("ad").at("clock").get<size_t>() == 5000);
+    }
+
+    isx::removeDirectory(outputDirPath);
+    isx::CoreShutdown();
+}
+
+TEST_CASE("nVista3Gpio-digitalGPO", "[core][nv3_gpio]")
+{
+    const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio";
+    const std::string outputDirPath = inputDirPath + "/output";
+    isx::removeDirectory(outputDirPath);
+    isx::makeDirectory(outputDirPath);
+    isx::CoreInitialize();
+
+    SECTION("File with digital GPO 1, 3, 5 enabled")
+    {
+        const std::string inputFilePath = inputDirPath + "/2018-09-26-18-01-57_video.gpio";
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        REQUIRE(gpio->numberOfChannels() == numNVista3Channels);
+
+        const isx::Time startTime(2018, 9, 26, 18, 1, 57, isx::DurationInSeconds::fromMilliseconds(118));
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 1000), 4598);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+
+        for (size_t i = 0; i < 8; ++i)
+        {
+            const isx::SpLogicalTrace_t gpo = gpio->getLogicalData("Digital GPO " + std::to_string(i));
+            // Even when there is no change in signal, the converter still outputs
+            // 0 for the first and last timestamp, so we define channels with more than
+            // 2 values to be "non-empty".
+            REQUIRE((gpo->getValues().size() > 2) == (((i % 2) == 1) && (i <= 5)));
+        }
     }
 
     isx::removeDirectory(outputDirPath);
