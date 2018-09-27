@@ -12,7 +12,7 @@ namespace isx {
 std::string
 MovieTiffExporterParams::getOpName()
 {
-    return "Export Tiff Movie";
+    return "Export TIFF";
 }
 
 std::string
@@ -108,7 +108,17 @@ runMovieTiffExporter(MovieTiffExporterParams inParams, std::shared_ptr<MovieTiff
     {
         try
         {
-            cancelled = toTiff(inParams.m_filename, inParams.m_srcs, inParams.m_writeInvalidFrames, inParams.m_numFramesInMovie, inCheckInCB);
+            // If there is only one source with one frame, then write a regular TIFF image.
+            // Otherwise, write a BigTIFF movie.
+            if ((inParams.m_srcs.size() == 1) && (inParams.m_srcs.front()->getTimingInfo().getNumTimes() == 1))
+            {
+                const isx::SpVideoFrame_t frame = inParams.m_srcs.front()->getFrame(0);
+                toTiff(inParams.m_filename, &frame->getImage());
+            }
+            else
+            {
+                cancelled = toTiff(inParams.m_filename, inParams.m_srcs, inParams.m_writeInvalidFrames, inParams.m_numFramesInMovie, inCheckInCB);
+            }
         }
         catch (...)
         {
