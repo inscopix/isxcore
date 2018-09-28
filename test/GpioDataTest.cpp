@@ -793,6 +793,34 @@ TEST_CASE("nVoke1Gpio", "[core][gpio]")
         );
     }
 
+    SECTION("MOS-1701")
+    {
+        const std::string inputFile = inputDir + "/recording_20180928_103522_gpio.raw";
+        isx::NVokeGpioFile raw(inputFile, outputDir);
+        raw.parse();
+
+        const isx::Time start(2018, 9, 28, 17, 35, 22, isx::DurationInSeconds::fromMicroseconds(22474));
+
+        const isx::SpGpio_t gpio = isx::readGpio(raw.getOutputFileName());
+        REQUIRE(gpio->getTimingInfo().getStart() == start);
+        const isx::SpLogicalTrace_t ogLed = gpio->getLogicalData("OG_LED");
+
+        requireGpioChannelValues(gpio, "OG_LED",
+            {
+                {0, 0.f},
+                {3660328, 1.f},
+                {9602068, 0.f},
+                {10703405, 1.f},
+                {12300614, 0.f},
+                {13109846, 1.f},
+                {14202742, 0.f},
+                {15004025, 1.f},
+                {16298505, 0.f},
+            },
+            start
+        );
+    }
+
     isx::removeDirectory(outputDir);
     isx::CoreShutdown();
 }
