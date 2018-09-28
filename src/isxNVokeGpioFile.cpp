@@ -372,11 +372,6 @@ NVokeGpioFile::parseLedPkt(const std::vector<uint8_t> & inPkt)
     ISX_ASSERT(inPkt.size() >= LED_PKT_LENGTH);
     LedPkt * pkt = (LedPkt *) inPkt.data();
 
-    if (m_eventSignalIds.find(pkt->header.dataType) == m_eventSignalIds.end())
-    {
-        uint64_t next = m_eventSignalIds.size() + m_analogSignalIds.size();
-        m_eventSignalIds[pkt->header.dataType] = next;
-    }
     uint16_t power1 = (uint16_t)pkt->ledPower & 0x00FF;;
     uint16_t power2 = uint16_t(pkt->powerState & LED_POWER_0_MASK);
     uint16_t power = (power1 << 1) + (power2 >> 4);
@@ -384,7 +379,35 @@ NVokeGpioFile::parseLedPkt(const std::vector<uint8_t> & inPkt)
 
     uint64_t usecs = getUsecs(pkt->timeSecs, pkt->timeUSecs);
 
-    return EventBasedFileV2::DataPkt(usecs, float(dPower), m_eventSignalIds.at(pkt->header.dataType));
+    // For OG-LED only output a non-zero power if the state is on.
+    // As we want to capture ramp up/down behavior, this becomes a dense trace.
+    const bool ogLed = pkt->header.dataType == 0x09;
+    const uint64_t nextSignalId = m_eventSignalIds.size() + m_analogSignalIds.size();
+    if (ogLed)
+    {
+        if (m_analogSignalIds.find(pkt->header.dataType) == m_analogSignalIds.end())
+        {
+            m_analogSignalIds[pkt->header.dataType] = nextSignalId;
+        }
+
+        // We only want to keep the power for ON and RAMP-DOWN events.
+        const uint8_t ledState = pkt->powerState & LED_STATE_MASK;
+        if (!((ledState == 1) || (ledState == 3)))
+        {
+            dPower = 0;
+        }
+
+        return EventBasedFileV2::DataPkt(usecs, float(dPower), m_analogSignalIds.at(pkt->header.dataType));
+    }
+    else
+    {
+        if (m_eventSignalIds.find(pkt->header.dataType) == m_eventSignalIds.end())
+        {
+            m_eventSignalIds[pkt->header.dataType] = nextSignalId;
+        }
+
+        return EventBasedFileV2::DataPkt(usecs, float(dPower), m_eventSignalIds.at(pkt->header.dataType));
+    }
 }
 
 std::vector<EventBasedFileV2::DataPkt>
