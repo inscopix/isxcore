@@ -48,6 +48,12 @@ struct Rect
     bool
     isValid() const;
 
+    /// Write the rectangle to a CSV file.
+    ///
+    /// \param  inFilePath  The path of the file in which to write.
+    void
+    toCsv(const std::string & inFilePath) const;
+
     /// Exact comparison with another rectangle.
     ///
     /// \param  inOther     The rectangle with which to compare.

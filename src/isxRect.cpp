@@ -37,6 +37,13 @@ Rect::isValid() const
         && (m_bottomRight == SpatialPoint<int64_t>(-1, -1)));
 }
 
+void
+Rect::toCsv(const std::string & inFilePath) const
+{
+    std::ofstream cropFile(inFilePath);
+    cropFile << x() << "," << y() << "," << width() << "," << height() << std::endl;
+}
+
 bool
 Rect::operator ==(const Rect & inOther) const
 {
