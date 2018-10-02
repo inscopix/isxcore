@@ -44,6 +44,16 @@ Rect::toCsv(const std::string & inFilePath) const
     cropFile << x() << "," << y() << "," << width() << "," << height() << std::endl;
 }
 
+Rect
+Rect::fromCsv(const std::string & inFilePath)
+{
+    std::ifstream cropFile(inFilePath);
+    int64_t left, top, width, height;
+    char delim;
+    cropFile >> left >> delim >> top >> delim >> width >> delim >> height;
+    return Rect(SpatialPoint<int64_t>(left, top), SpatialPoint<int64_t>(left + width - 1, top + height - 1));
+}
+
 bool
 Rect::operator ==(const Rect & inOther) const
 {
