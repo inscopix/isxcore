@@ -61,10 +61,9 @@ struct CsvTraceImporterParams
 
 }; // struct CsvTraceImporterParams
 
-/// CellSet exporter output parameters
+/// There are no output parameters for importing CSV traces.
 struct CsvTraceImporterOutputParams
 {
-    // There are no output parameters for exporting cellsets.
 };
 
 /// Runs CsvTraceImporter
