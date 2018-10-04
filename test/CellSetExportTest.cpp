@@ -385,14 +385,12 @@ TEST_CASE("CellSetExport-properties-longitudinal", "[core][cellset_export]")
         inputCellSets.push_back(isx::readCellSet(inputDir + "/50fr10_l" + std::to_string(i) + "-3cells_he-ROI-LCR.isxd"));
     }
 
-    const std::string outputTracesFile = outputDir + "/traces.csv";
-    const std::string outputImagesFile = outputDir + "/images.tiff";
     const std::string outputPropsFile = outputDir + "/props.csv";
 
     const isx::CellSetExporterParams params(
             inputCellSets,
-            outputTracesFile,
-            outputImagesFile,
+            "",
+            "",
             isx::WriteTimeRelativeTo::FIRST_DATA_ITEM,
             true,
             outputPropsFile);
@@ -427,14 +425,12 @@ TEST_CASE("CellSetExport-properties-no_metrics", "[core][cellset_export]")
     makeCleanDirectory(outputDir);
 
     const std::vector<isx::SpCellSet_t> inputCellSets = {isx::readCellSet(inputDir + "/cellset_no_metrics.isxd")};
-    const std::string outputTracesFile = outputDir + "/traces.csv";
-    const std::string outputImagesFile = outputDir + "/images.tiff";
     const std::string outputPropsFile = outputDir + "/props.csv";
 
     const isx::CellSetExporterParams params(
             inputCellSets,
-            outputTracesFile,
-            outputImagesFile,
+            "",
+            "",
             isx::WriteTimeRelativeTo::FIRST_DATA_ITEM,
             true,
             outputPropsFile);
