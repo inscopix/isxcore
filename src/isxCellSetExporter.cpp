@@ -3,6 +3,7 @@
 #include "isxExport.h"
 #include "isxExportPNG.h"
 #include "isxCellSetUtils.h"
+#include "isxCellSetFactory.h"
 
 #include <fstream>
 #include <iomanip>
@@ -76,8 +77,9 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
     }
 
     // For progress report
-    isize_t numSections = isize_t(inParams.m_outputTraceFilename.empty() == false) +
-                            isize_t(inParams.m_outputImageFilename.empty() == false);
+    const isize_t numSections = isize_t(!inParams.m_outputTraceFilename.empty()) +
+                            isize_t(!inParams.m_outputImageFilename.empty()) +
+                            isize_t(!inParams.m_propertiesFilename.empty());
     float progress = 0.f;
 
     /// Traces to CSV
@@ -132,6 +134,67 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
             strm.close();
             std::remove(inParams.m_outputTraceFilename.c_str());
             throw;
+        }
+    }
+
+    /// Cell properties to CSV
+    if (!inParams.m_propertiesFilename.empty())
+    {
+        // Read the cellsets as a series to be consistent with the GUI's report of metrics.
+        std::vector<std::string> csFiles;
+        for (const auto & cs : srcs)
+        {
+            csFiles.push_back(cs->getFileName());
+        }
+        const SpCellSet_t csSeries = isx::readCellSetSeries(csFiles);
+        const size_t numSegments = csSeries->getTimingInfosForSeries().size();
+        const bool hasMetrics = csSeries->hasMetrics();
+
+        std::ofstream csv(inParams.m_propertiesFilename);
+        csv << "Name,Status,Color(R),Color(G),Color(B)";
+        if (hasMetrics)
+        {
+            csv << ",Centroid(X),Centroid(Y),NumComponents,Size";
+        }
+        for (size_t i = 0; i < numSegments; ++i)
+        {
+            csv << ",Active(" << i << ")";
+        }
+        csv << std::endl;
+
+        for (isx::isize_t c = 0; c < numCells; ++c)
+        {
+            const Color color = csSeries->getCellColor(c);
+            const SpImageMetrics_t imageMetrics = csSeries->getImageMetrics(c);
+
+            csv << csSeries->getCellName(c)
+                << "," << csSeries->getCellStatusString(c)
+                << "," << int(color.getRed())
+                << "," << int(color.getGreen())
+                << "," << int(color.getBlue());
+
+            if (hasMetrics)
+            {
+                const PointInPixels_t & center = imageMetrics->m_largestComponentCenterInPixels;
+                csv << "," << center.getX()
+                    << "," << center.getY()
+                    << "," << imageMetrics->m_numComponents
+                    << "," << imageMetrics->m_largestComponentMaxContourWidthInPixels;
+            }
+
+            ISX_ASSERT(csSeries->getCellActivity(c).size() == numSegments);
+            for (const auto a : csSeries->getCellActivity(c))
+            {
+                csv << "," << int(a);
+            }
+
+            if (inCheckInCB(progress + float(c) / float(numCells) / float(numSections)))
+            {
+                cancelled = true;
+                break;
+            }
+
+            csv << std::endl;
         }
     }
 
@@ -202,9 +265,14 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
 
     if (cancelled)
     {
-        if(!inParams.m_outputTraceFilename.empty())
+        if (!inParams.m_outputTraceFilename.empty())
         {
             std::remove(inParams.m_outputTraceFilename.c_str());
+        }
+
+        if (!inParams.m_propertiesFilename.empty())
+        {
+            std::remove(inParams.m_propertiesFilename.c_str());
         }
 
         return AsyncTaskStatus::CANCELLED;

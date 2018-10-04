@@ -12,10 +12,11 @@
 #include <cstring>
 #include <fstream>
 #include <memory>
+#include <array>
 
 #include <tiffio.h>
 
-TEST_CASE("CellSetExportTest", "[core]")
+TEST_CASE("CellSetExportTest", "[core][cellset_export]")
 {
     std::string fileName = g_resources["unitTestDataPath"] + "/cellset.isxd";
     std::remove(fileName.c_str());
@@ -370,4 +371,91 @@ TEST_CASE("CellSetExport-generatePythonTestData", "[!hide]")
     isx::CoreShutdown();
 }
 
+TEST_CASE("CellSetExport-properties-longitudinal", "[core][cellset_export]")
+{
+    isx::CoreInitialize();
 
+    const std::string inputDir = g_resources["unitTestDataPath"] + "/cellset_exporter";
+    const std::string outputDir = inputDir + "/output";
+    makeCleanDirectory(outputDir);
+
+    std::vector<isx::SpCellSet_t> inputCellSets;
+    for (size_t i = 1; i <= 3; ++i)
+    {
+        inputCellSets.push_back(isx::readCellSet(inputDir + "/50fr10_l" + std::to_string(i) + "-3cells_he-ROI-LCR.isxd"));
+    }
+
+    const std::string outputTracesFile = outputDir + "/traces.csv";
+    const std::string outputImagesFile = outputDir + "/images.tiff";
+    const std::string outputPropsFile = outputDir + "/props.csv";
+
+    const isx::CellSetExporterParams params(
+            inputCellSets,
+            outputTracesFile,
+            outputImagesFile,
+            isx::WriteTimeRelativeTo::FIRST_DATA_ITEM,
+            true,
+            outputPropsFile);
+
+    REQUIRE(isx::runCellSetExporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+
+    std::ifstream outputProps(outputPropsFile);
+    std::vector<std::string> lines;
+    std::string line;
+    while (isx::getLine(outputProps, line))
+    {
+        lines.push_back(line);
+    }
+
+    REQUIRE(lines.size() == 4);
+
+    REQUIRE(lines[0] == "Name,Status,Color(R),Color(G),Color(B),Centroid(X),Centroid(Y),NumComponents,Size,Active(0),Active(1),Active(2)");
+    REQUIRE(lines[1] == "C0,accepted,244,44,82,17,30,1,36.2353,1,1,0");
+    REQUIRE(lines[2] == "C1,undecided,221,168,36,147,28,1,10.0499,1,1,1");
+    REQUIRE(lines[3] == "C2,rejected,0,188,165,148,129,1,10.4403,1,0,1");
+
+    isx::removeDirectory(outputDir);
+    isx::CoreShutdown();
+}
+
+TEST_CASE("CellSetExport-properties-no_metrics", "[core][cellset_export]")
+{
+    isx::CoreInitialize();
+
+    const std::string inputDir = g_resources["unitTestDataPath"] + "/cellset_exporter";
+    const std::string outputDir = inputDir + "/output";
+    makeCleanDirectory(outputDir);
+
+    const std::vector<isx::SpCellSet_t> inputCellSets = {isx::readCellSet(inputDir + "/cellset_no_metrics.isxd")};
+    const std::string outputTracesFile = outputDir + "/traces.csv";
+    const std::string outputImagesFile = outputDir + "/images.tiff";
+    const std::string outputPropsFile = outputDir + "/props.csv";
+
+    const isx::CellSetExporterParams params(
+            inputCellSets,
+            outputTracesFile,
+            outputImagesFile,
+            isx::WriteTimeRelativeTo::FIRST_DATA_ITEM,
+            true,
+            outputPropsFile);
+
+    REQUIRE(isx::runCellSetExporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+
+    std::ifstream outputProps(outputPropsFile);
+    std::vector<std::string> lines;
+    std::string line;
+    while (isx::getLine(outputProps, line))
+    {
+        lines.push_back(line);
+    }
+
+    REQUIRE(lines.size() == 4);
+
+    REQUIRE(lines[0] == "Name,Status,Color(R),Color(G),Color(B),Active(0)");
+    REQUIRE(lines[1] == "C0,undecided,255,255,255,1");
+    REQUIRE(lines[2] == "C1,undecided,255,255,255,1");
+    REQUIRE(lines[3] == "C2,undecided,255,255,255,1");
+
+    isx::removeDirectory(outputDir);
+    isx::CoreShutdown();
+}

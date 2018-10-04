@@ -1,6 +1,10 @@
 #ifndef ISX_COLOR_H
 #define ISX_COLOR_H
 
+#include <stdint.h>
+#include <vector>
+#include <utility>
+
 namespace isx
 {
 
@@ -32,17 +36,34 @@ namespace isx
             m_rgba = (a << 24) | (r << 16) | (g << 8) | (b);
         }
 
+        /// \return The red value.
+        ///
+        inline uint8_t getRed() const
+        {
+            return uint8_t((m_rgba >> 16) & 0xffu);
+        }
+
+        /// \return The green value.
+        ///
+        inline uint8_t getGreen() const
+        {
+            return uint8_t((m_rgba >> 8) & 0xffu);
+        }
+
+        /// \return The blue value.
+        ///
+        inline uint8_t getBlue() const
+        {
+            return uint8_t(m_rgba & 0xffu);
+        }
+
         /// Verifies whether color is gray or not
         ///
         inline bool isGray() const
         {
-            uint8_t r = (m_rgba >> 16) & 0xffu; // red
-            uint8_t g = (m_rgba >>  8) & 0xffu; // green
-            uint8_t b = (m_rgba      ) & 0xffu; // blue
-
-            return ((r == g) && (r == b));
+            const uint8_t r = getRed();
+            return ((r == getGreen()) && (r == getBlue()));
         }
-
     };
 
     /// Equality operator

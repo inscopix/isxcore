@@ -17,23 +17,26 @@ struct CellSetExporterParams
     /// \param inWriteTimeRelativeTo time reference point
     /// \param inWritePngImage       true if PNG cell map image should be written,
     ///                              false otherwise
+    /// \param inPropertiesFilename  filename for properties output file
     CellSetExporterParams(
         const std::vector<SpCellSet_t> & inSrcs, 
         const std::string & inTraceFilename,
         const std::string & inImagesFilename,
         WriteTimeRelativeTo inWriteTimeRelativeTo,
-        const bool inWritePngImage = true)
+        const bool inWritePngImage = true,
+        const std::string & inPropertiesFilename = "")
     : m_srcs(inSrcs)
     , m_outputTraceFilename(inTraceFilename)
     , m_outputImageFilename(inImagesFilename)
     , m_writeTimeRelativeTo(inWriteTimeRelativeTo)
     , m_writePngImage(inWritePngImage)
+    , m_propertiesFilename(inPropertiesFilename)
     {}
 
     /// default constructor
     /// 
     CellSetExporterParams() :
-    CellSetExporterParams(std::vector<SpCellSet_t>{}, std::string(), std::string(), WriteTimeRelativeTo(0), true)
+    CellSetExporterParams(std::vector<SpCellSet_t>{}, std::string(), std::string(), WriteTimeRelativeTo(0), true, "")
     {}
     
     /// \return export operation name to display to user
@@ -59,6 +62,7 @@ struct CellSetExporterParams
     std::string              m_outputImageFilename;     ///< base filename for output images
     WriteTimeRelativeTo      m_writeTimeRelativeTo;     ///< how to write time stamps in file
     bool                     m_writePngImage;           ///< true if PNG cell map should be written, false otherwise
+    std::string              m_propertiesFilename;      ///< path of the cell properties file
 };
 
 /// CellSet exporter output parameters 
