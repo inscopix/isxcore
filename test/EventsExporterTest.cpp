@@ -340,7 +340,7 @@ TEST_CASE("EventsExport-series", "[core][event_export]")
     isx::CoreShutdown();
 }
 
-TEST_CASE("EventsExport-properties", "[core][event_export]")
+TEST_CASE("EventsExport-properties-longitudinal", "[core][event_export]")
 {
     isx::CoreInitialize();
 
@@ -366,6 +366,33 @@ TEST_CASE("EventsExport-properties", "[core][event_export]")
     REQUIRE(lines[1] == "C0,0.8,2.20437");
     REQUIRE(lines[2] == "C1,1.2,2.57958");
     REQUIRE(lines[3] == "C2,0.666667,1.5594");
+
+    isx::removeDirectory(outputDir);
+    isx::CoreShutdown();
+}
+
+TEST_CASE("EventsExport-properties-no_metrics", "[core][event_export]")
+{
+    isx::CoreInitialize();
+
+    const std::string inputDir = g_resources["unitTestDataPath"] + "/events-export";
+    const std::string outputDir = inputDir + "/output";
+    makeCleanDirectory(outputDir);
+
+    const std::vector<isx::SpEvents_t> events = {isx::readEvents(inputDir + "/eventset_no_metrics.isxd")};
+
+    const std::string outputFilePath = outputDir + "/events.csv";
+    const std::string outputPropsFile = outputDir + "/props.csv";
+
+    const isx::EventsExporterParams params(events, outputFilePath, isx::WriteTimeRelativeTo::FIRST_DATA_ITEM, outputPropsFile);
+    REQUIRE(isx::runEventsExporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+
+    const std::vector<std::string> lines = getLinesFromFile(outputPropsFile);
+    REQUIRE(lines.size() == 4);
+    REQUIRE(lines[0] == "Name");
+    REQUIRE(lines[1] == "C0");
+    REQUIRE(lines[2] == "C1");
+    REQUIRE(lines[3] == "C2");
 
     isx::removeDirectory(outputDir);
     isx::CoreShutdown();
