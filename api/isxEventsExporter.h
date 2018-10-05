@@ -15,20 +15,23 @@ struct EventsExporterParams
     /// \param inSrcs                   input events
     /// \param inFileName               filename for output file
     /// \param inWriteTimeRelativeTo    time reference point
+    /// \param inPropertiesFilename  filename for properties output file
     EventsExporterParams(
         const std::vector<SpEvents_t> & inSrcs,
         const std::string & inFileName,
-        WriteTimeRelativeTo inWriteTimeRelativeTo)
+        WriteTimeRelativeTo inWriteTimeRelativeTo,
+        const std::string & inPropertiesFilename = "")
     : m_srcs(inSrcs)
     , m_fileName(inFileName)
     , m_writeTimeRelativeTo(inWriteTimeRelativeTo)
+    , m_propertiesFilename(inPropertiesFilename)
     {
     }
 
     /// default constructor
     ///
     EventsExporterParams() :
-    EventsExporterParams(std::vector<SpEvents_t>{}, std::string(), WriteTimeRelativeTo(0))
+    EventsExporterParams(std::vector<SpEvents_t>{}, std::string(), WriteTimeRelativeTo(0), "")
     {
     }
 
@@ -53,6 +56,7 @@ struct EventsExporterParams
     std::vector<SpEvents_t> m_srcs;                 ///< input event sets
     std::string             m_fileName;             ///< name of output file
     WriteTimeRelativeTo     m_writeTimeRelativeTo;  ///< how to write time stamps in file
+    std::string             m_propertiesFilename;   ///< path of the cell properties file
 };
 
 /// There are no output parameters for exporting events.

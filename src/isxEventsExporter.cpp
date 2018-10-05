@@ -109,10 +109,47 @@ runEventsExporter(
         throw;
     }
 
+    if (!inParams.m_propertiesFilename.empty())
+    {
+        std::vector<std::string> eventsFilePaths;
+        for (const auto & e : events)
+        {
+            eventsFilePaths.push_back(e->getFileName());
+        }
+        const isx::SpEvents_t eventsSeries = isx::readEventsSeries(eventsFilePaths);
+        const bool hasMetrics = eventsSeries->hasMetrics();
+
+        std::ofstream csv(inParams.m_propertiesFilename);
+        csv << "Name";
+        if (hasMetrics)
+        {
+            csv << ",EventRate(Hz),SNR";
+        }
+        csv << std::endl;
+
+        const std::vector<std::string> cellNames = eventsSeries->getCellNamesList();
+        ISX_ASSERT(cellNames.size() == numCells);
+        for (size_t c = 0; c < numCells; ++c)
+        {
+            csv << cellNames.at(c);
+            if (hasMetrics)
+            {
+                const isx::SpTraceMetrics_t traceMetrics = eventsSeries->getTraceMetrics(c);
+                csv << "," << traceMetrics->m_eventRate
+                    << "," << traceMetrics->m_snr;
+            }
+            csv << std::endl;
+        }
+    }
+
     if (cancelled)
     {
         strm.flush();
         std::remove(inParams.m_fileName.c_str());
+        if (!inParams.m_propertiesFilename.empty())
+        {
+            std::remove(inParams.m_propertiesFilename.c_str());
+        }
         return AsyncTaskStatus::CANCELLED;
     }
 

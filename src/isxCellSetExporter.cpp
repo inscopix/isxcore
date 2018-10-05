@@ -165,7 +165,6 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
         for (isx::isize_t c = 0; c < numCells; ++c)
         {
             const Color color = csSeries->getCellColor(c);
-            const SpImageMetrics_t imageMetrics = csSeries->getImageMetrics(c);
 
             csv << csSeries->getCellName(c)
                 << "," << csSeries->getCellStatusString(c)
@@ -175,6 +174,7 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
 
             if (hasMetrics)
             {
+                const SpImageMetrics_t imageMetrics = csSeries->getImageMetrics(c);
                 const PointInPixels_t & center = imageMetrics->m_largestComponentCenterInPixels;
                 csv << "," << center.getX()
                     << "," << center.getY()

@@ -397,14 +397,7 @@ TEST_CASE("CellSetExport-properties-longitudinal", "[core][cellset_export]")
 
     REQUIRE(isx::runCellSetExporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
-    std::ifstream outputProps(outputPropsFile);
-    std::vector<std::string> lines;
-    std::string line;
-    while (isx::getLine(outputProps, line))
-    {
-        lines.push_back(line);
-    }
-
+    const std::vector<std::string> lines = getLinesFromFile(outputPropsFile);
     REQUIRE(lines.size() == 4);
 
     REQUIRE(lines[0] == "Name,Status,Color(R),Color(G),Color(B),Centroid(X),Centroid(Y),NumComponents,Size,Active(0),Active(1),Active(2)");
@@ -437,16 +430,8 @@ TEST_CASE("CellSetExport-properties-no_metrics", "[core][cellset_export]")
 
     REQUIRE(isx::runCellSetExporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
 
-    std::ifstream outputProps(outputPropsFile);
-    std::vector<std::string> lines;
-    std::string line;
-    while (isx::getLine(outputProps, line))
-    {
-        lines.push_back(line);
-    }
-
+    const std::vector<std::string> lines = getLinesFromFile(outputPropsFile);
     REQUIRE(lines.size() == 4);
-
     REQUIRE(lines[0] == "Name,Status,Color(R),Color(G),Color(B),Active(0)");
     REQUIRE(lines[1] == "C0,undecided,255,255,255,1");
     REQUIRE(lines[2] == "C1,undecided,255,255,255,1");
