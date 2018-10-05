@@ -109,6 +109,12 @@ runEventsExporter(
         throw;
     }
 
+    /// Event properties to CSV.
+    if (inParams.m_autoOutputProps && inParams.m_propertiesFilename.empty())
+    {
+        inParams.m_propertiesFilename = makeOutputFilePath(inParams.m_fileName, "-props.csv");
+    }
+
     if (!inParams.m_propertiesFilename.empty())
     {
         std::vector<std::string> eventsFilePaths;

@@ -355,17 +355,61 @@ TEST_CASE("EventsExport-properties-longitudinal", "[core][event_export]")
     }
 
     const std::string outputFilePath = outputDir + "/events.csv";
-    const std::string outputPropsFile = outputDir + "/props.csv";
+    const std::string autoPropsFile = outputDir + "/events-props.csv";
+    const std::string manualPropsFile = outputDir + "/props.csv";
 
-    const isx::EventsExporterParams params(events, outputFilePath, isx::WriteTimeRelativeTo::FIRST_DATA_ITEM, outputPropsFile);
-    REQUIRE(isx::runEventsExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+    isx::EventsExporterParams params(events, outputFilePath, isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
 
-    const std::vector<std::string> lines = getLinesFromFile(outputPropsFile);
-    REQUIRE(lines.size() == 4);
-    REQUIRE(lines[0] == "Name,EventRate(Hz),SNR");
-    REQUIRE(lines[1] == "C0,0.8,2.20437");
-    REQUIRE(lines[2] == "C1,1.2,2.57958");
-    REQUIRE(lines[3] == "C2,0.666667,1.5594");
+    std::string outputPropsFile;
+
+    SECTION("No properties")
+    {
+        REQUIRE(isx::runEventsExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+        REQUIRE(!isx::pathExists(autoPropsFile));
+        REQUIRE(!isx::pathExists(manualPropsFile));
+    }
+
+    SECTION("Auto properties")
+    {
+        outputPropsFile = autoPropsFile;
+        params.m_autoOutputProps = true;
+
+        REQUIRE(isx::runEventsExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+        REQUIRE(isx::pathExists(autoPropsFile));
+        REQUIRE(!isx::pathExists(manualPropsFile));
+    }
+
+    SECTION("Manually specify properties (auto off)")
+    {
+        outputPropsFile = manualPropsFile;
+        params.m_propertiesFilename = outputPropsFile;
+        params.m_autoOutputProps = false;
+
+        REQUIRE(isx::runEventsExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+        REQUIRE(!isx::pathExists(autoPropsFile));
+        REQUIRE(isx::pathExists(manualPropsFile));
+    }
+
+    SECTION("Manually specify properties (auto on, but ignored)")
+    {
+        outputPropsFile = manualPropsFile;
+        params.m_propertiesFilename = outputPropsFile;
+        params.m_autoOutputProps = true;
+
+        REQUIRE(isx::runEventsExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+        REQUIRE(!isx::pathExists(autoPropsFile));
+        REQUIRE(isx::pathExists(manualPropsFile));
+    }
+
+    if (!outputPropsFile.empty())
+    {
+        const std::vector<std::string> lines = getLinesFromFile(outputPropsFile);
+        REQUIRE(lines.size() == 4);
+        REQUIRE(lines[0] == "Name,EventRate(Hz),SNR");
+        REQUIRE(lines[1] == "C0,0.8,2.20437");
+        REQUIRE(lines[2] == "C1,1.2,2.57958");
+        REQUIRE(lines[3] == "C2,0.666667,1.5594");
+    }
 
     isx::removeDirectory(outputDir);
     isx::CoreShutdown();

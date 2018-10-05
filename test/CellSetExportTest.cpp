@@ -385,25 +385,70 @@ TEST_CASE("CellSetExport-properties-longitudinal", "[core][cellset_export]")
         inputCellSets.push_back(isx::readCellSet(inputDir + "/50fr10_l" + std::to_string(i) + "-3cells_he-ROI-LCR.isxd"));
     }
 
-    const std::string outputPropsFile = outputDir + "/props.csv";
+    const std::string outputTraceFile = outputDir + "/traces.csv";
+    const std::string autoPropsFile = outputDir + "/traces-props.csv";
+    const std::string manualPropsFile = outputDir + "/props.csv";
 
-    const isx::CellSetExporterParams params(
+    isx::CellSetExporterParams params(
             inputCellSets,
-            "",
+            outputTraceFile,
             "",
             isx::WriteTimeRelativeTo::FIRST_DATA_ITEM,
             true,
-            outputPropsFile);
+            "",
+            false);
 
-    REQUIRE(isx::runCellSetExporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+    std::string outputPropsFile;
 
-    const std::vector<std::string> lines = getLinesFromFile(outputPropsFile);
-    REQUIRE(lines.size() == 4);
+    SECTION("No properties")
+    {
+        REQUIRE(isx::runCellSetExporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+        REQUIRE(!isx::pathExists(autoPropsFile));
+        REQUIRE(!isx::pathExists(manualPropsFile));
+    }
 
-    REQUIRE(lines[0] == "Name,Status,Color(R),Color(G),Color(B),Centroid(X),Centroid(Y),NumComponents,Size,Active(0),Active(1),Active(2)");
-    REQUIRE(lines[1] == "C0,accepted,244,44,82,17,30,1,36.2353,1,1,0");
-    REQUIRE(lines[2] == "C1,undecided,221,168,36,147,28,1,10.0499,1,1,1");
-    REQUIRE(lines[3] == "C2,rejected,0,188,165,148,129,1,10.4403,1,0,1");
+    SECTION("Auto properties")
+    {
+        outputPropsFile = autoPropsFile;
+        params.m_autoOutputProps = true;
+
+        REQUIRE(isx::runCellSetExporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+        REQUIRE(isx::pathExists(autoPropsFile));
+        REQUIRE(!isx::pathExists(manualPropsFile));
+    }
+
+    SECTION("Manually specify properties (auto off)")
+    {
+        outputPropsFile = manualPropsFile;
+        params.m_propertiesFilename = outputPropsFile;
+        params.m_autoOutputProps = false;
+
+        REQUIRE(isx::runCellSetExporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+        REQUIRE(!isx::pathExists(autoPropsFile));
+        REQUIRE(isx::pathExists(manualPropsFile));
+    }
+
+    SECTION("Manually specify properties (auto on, but ignored)")
+    {
+        outputPropsFile = manualPropsFile;
+        params.m_propertiesFilename = outputPropsFile;
+        params.m_autoOutputProps = true;
+
+        REQUIRE(isx::runCellSetExporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+        REQUIRE(!isx::pathExists(autoPropsFile));
+        REQUIRE(isx::pathExists(manualPropsFile));
+    }
+
+    if (!outputPropsFile.empty())
+    {
+        const std::vector<std::string> lines = getLinesFromFile(outputPropsFile);
+        REQUIRE(lines.size() == 4);
+
+        REQUIRE(lines[0] == "Name,Status,Color(R),Color(G),Color(B),Centroid(X),Centroid(Y),NumComponents,Size,Active(0),Active(1),Active(2)");
+        REQUIRE(lines[1] == "C0,accepted,244,44,82,17,30,1,36.2353,1,1,0");
+        REQUIRE(lines[2] == "C1,undecided,221,168,36,147,28,1,10.0499,1,1,1");
+        REQUIRE(lines[3] == "C2,rejected,0,188,165,148,129,1,10.4403,1,0,1");
+    }
 
     isx::removeDirectory(outputDir);
     isx::CoreShutdown();
