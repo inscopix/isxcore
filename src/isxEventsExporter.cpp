@@ -74,7 +74,6 @@ EventsExporterParams::toString() const
     using json = nlohmann::json;
     json j;
     j["writeTimeRelativeTo"] = int(m_writeTimeRelativeTo);
-    j["autoOutputProps"] = m_autoOutputProps;
     return j.dump(4);
 }
 
@@ -92,7 +91,7 @@ EventsExporterParams::getInputFilePaths() const
 std::vector<std::string>
 EventsExporterParams::getOutputFilePaths() const
 {
-    return {m_fileName, m_propertiesFilename};
+    return {m_fileName};
 }
 
 AsyncTaskStatus
