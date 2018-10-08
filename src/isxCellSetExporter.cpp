@@ -96,6 +96,7 @@ CellSetExporterParams::toString() const
     json j;
     j["writeTimeRelativeTo"] = int(m_writeTimeRelativeTo);
     j["writePngImage"] = m_writePngImage;
+    j["autoOutputProps"] = m_autoOutputProps;
     return j.dump(4);
 }
 
@@ -113,7 +114,7 @@ CellSetExporterParams::getInputFilePaths() const
 std::vector<std::string>
 CellSetExporterParams::getOutputFilePaths() const
 {
-    return {m_outputTraceFilename, m_outputImageFilename};
+    return {m_outputTraceFilename, m_outputImageFilename, m_propertiesFilename};
 }
 
 AsyncTaskStatus
