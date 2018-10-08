@@ -10,6 +10,55 @@
 
 #include "json.hpp"
 
+namespace
+{
+
+bool
+writeEventsProperties(
+        const std::vector<isx::SpEvents_t> & inEvents,
+        const std::string & inFilePath,
+        isx::AsyncCheckInCB_t inCheckInCB)
+{
+    std::vector<std::string> eventsFilePaths;
+    for (const auto & e : inEvents)
+    {
+        eventsFilePaths.push_back(e->getFileName());
+    }
+    const isx::SpEvents_t eventsSeries = isx::readEventsSeries(eventsFilePaths);
+    const std::vector<std::string> cellNames = eventsSeries->getCellNamesList();
+    const size_t numCells = cellNames.size();
+    const bool hasMetrics = eventsSeries->hasMetrics();
+
+    std::ofstream csv(inFilePath);
+    csv << "Name";
+    if (hasMetrics)
+    {
+        csv << ",EventRate(Hz),SNR";
+    }
+    csv << std::endl;
+
+    for (size_t c = 0; c < numCells; ++c)
+    {
+        csv << cellNames.at(c);
+        if (hasMetrics)
+        {
+            const isx::SpTraceMetrics_t traceMetrics = eventsSeries->getTraceMetrics(c);
+            csv << "," << traceMetrics->m_eventRate
+                << "," << traceMetrics->m_snr;
+        }
+        csv << std::endl;
+
+        if (inCheckInCB && inCheckInCB(float(c) / float(numCells)))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+} // namespace
+
 namespace isx
 {
 
@@ -80,12 +129,20 @@ runEventsExporter(
             ISX_THROW(ExceptionUserInput, "Invalid setting for writeTimeRelativeTo");
     }
 
+    if (inParams.m_autoOutputProps && inParams.m_propertiesFilename.empty())
+    {
+        inParams.m_propertiesFilename = makeOutputFilePath(inParams.m_fileName, "-props.csv");
+    }
+
     std::ofstream strm(inParams.m_fileName, std::ios::trunc);
     if (!strm.good())
     {
         ISX_THROW(ExceptionFileIO, "Error writing to output file.");
     }
 
+    const bool outputProps = !inParams.m_propertiesFilename.empty();
+
+    // Event traces to CSV.
     const std::vector<std::string> cellNames = refEvents->getCellNamesList();
     const size_t numCells = cellNames.size();
     const size_t numSegments = events.size();
@@ -98,64 +155,39 @@ runEventsExporter(
         }
     }
 
+    AsyncCheckInCB_t tracesCheckInCB = rescaleCheckInCB(inCheckInCB, 0.f, outputProps ? 0.8f : 1.f);
+    std::vector<std::string> filesToCleanUp = {inParams.m_fileName};
     try
     {
-        cancelled = writeLogicalTraces(strm, traces, cellNames, "Cell Name", baseTime, inCheckInCB);
+        cancelled = writeLogicalTraces(strm, traces, cellNames, "Cell Name", baseTime, tracesCheckInCB);
     }
     catch (...)
     {
         strm.close();
-        std::remove(inParams.m_fileName.c_str());
+        removeFiles(filesToCleanUp);
         throw;
     }
 
     /// Event properties to CSV.
-    if (inParams.m_autoOutputProps && inParams.m_propertiesFilename.empty())
+    if (outputProps)
     {
-        inParams.m_propertiesFilename = makeOutputFilePath(inParams.m_fileName, "-props.csv");
-    }
-
-    if (!inParams.m_propertiesFilename.empty())
-    {
-        std::vector<std::string> eventsFilePaths;
-        for (const auto & e : events)
+        AsyncCheckInCB_t propsCheckInCB = rescaleCheckInCB(inCheckInCB, 0.8f, 0.2f);
+        filesToCleanUp.push_back(inParams.m_propertiesFilename);
+        try
         {
-            eventsFilePaths.push_back(e->getFileName());
+            cancelled = writeEventsProperties(events, inParams.m_propertiesFilename, propsCheckInCB);
         }
-        const isx::SpEvents_t eventsSeries = isx::readEventsSeries(eventsFilePaths);
-        const bool hasMetrics = eventsSeries->hasMetrics();
-
-        std::ofstream csv(inParams.m_propertiesFilename);
-        csv << "Name";
-        if (hasMetrics)
+        catch (...)
         {
-            csv << ",EventRate(Hz),SNR";
-        }
-        csv << std::endl;
-
-        const std::vector<std::string> cellNames = eventsSeries->getCellNamesList();
-        ISX_ASSERT(cellNames.size() == numCells);
-        for (size_t c = 0; c < numCells; ++c)
-        {
-            csv << cellNames.at(c);
-            if (hasMetrics)
-            {
-                const isx::SpTraceMetrics_t traceMetrics = eventsSeries->getTraceMetrics(c);
-                csv << "," << traceMetrics->m_eventRate
-                    << "," << traceMetrics->m_snr;
-            }
-            csv << std::endl;
+            removeFiles(filesToCleanUp);
+            throw;
         }
     }
 
     if (cancelled)
     {
         strm.flush();
-        std::remove(inParams.m_fileName.c_str());
-        if (!inParams.m_propertiesFilename.empty())
-        {
-            std::remove(inParams.m_propertiesFilename.c_str());
-        }
+        removeFiles(filesToCleanUp);
         return AsyncTaskStatus::CANCELLED;
     }
 
