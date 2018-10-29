@@ -217,7 +217,15 @@ NVista3GpioFile::readParseAddLedPayload(const uint32_t inExpectedSize, const Cha
 {
     const auto payload = read<LedPayload>(inExpectedSize);
     const uint64_t tsc = parseTsc(payload.count);
-    addPkt(inChannel, tsc, float(payload.led));
+    addLedPkt(inChannel, tsc, uint16_t(payload.led));
+}
+
+void
+NVista3GpioFile::addLedPkt(const Channel inChannel, const uint64_t inTsc, const uint16_t inValue)
+{
+    // All LED powers are in counts of 100 uW, but we want to report the values in
+    // units of mW, so divide by 10.
+    addPkt(inChannel, inTsc, float(inValue) / 10.f);
 }
 
 uint64_t
@@ -257,9 +265,9 @@ NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
             addDigitalGpiPkts(tsc, uint16_t(payload.digitalGpio));
             addDigitalGpoPkts(tsc, uint16_t(payload.digitalGpio >> 16));
             addBncGpioPkts(tsc, payload);
-            addPkt(Channel::EX_LED, tsc, float(payload.exLed));
-            addPkt(Channel::OG_LED, tsc, float(payload.ogLed));
-            addPkt(Channel::DI_LED, tsc, float(payload.diLed));
+            addLedPkt(Channel::EX_LED, tsc, payload.exLed);
+            addLedPkt(Channel::OG_LED, tsc, payload.ogLed);
+            addLedPkt(Channel::DI_LED, tsc, payload.diLed);
             addPkt(Channel::EFOCUS, tsc, float(payload.eFocus));
             addTrigSyncPkts(tsc, uint16_t(payload.trigSync));
             break;

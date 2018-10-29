@@ -468,9 +468,9 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
         requireGpioChannelValues(gpio, "GPIO-2", {{0, 32.f}, {2, 48.f}});
         requireGpioChannelValues(gpio, "GPIO-3", {{0, 256.f}, {2, 272.f}});
         requireGpioChannelValues(gpio, "GPIO-4", {{0, 2880.f}, {2, 2896.f}});
-        requireGpioChannelValues(gpio, "EX-LED", {{0, 4000.f}, {2, 4001.f}});
-        requireGpioChannelValues(gpio, "OG-LED", {{0, 6000.f}, {2, 6001.f}});
-        requireGpioChannelValues(gpio, "DI-LED", {{0, 9000.f}, {2, 9001.f}});
+        requireGpioChannelValues(gpio, "EX-LED", {{0, 400.f}, {2, 400.1f}});
+        requireGpioChannelValues(gpio, "OG-LED", {{0, 600.f}, {2, 600.1f}});
+        requireGpioChannelValues(gpio, "DI-LED", {{0, 900.f}, {2, 900.1f}});
         requireGpioChannelValues(gpio, "e-focus", {{0, 5678.f}, {2, 5679.f}});
         requireGpioChannelValues(gpio, "BNC Trigger Input", {{0, 0.f}, {2, 1.f}});
         requireGpioChannelValues(gpio, "BNC Sync Output", {{0, 1.f}, {2, 0.f}});
@@ -551,9 +551,9 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
         requireGpioChannelValues(gpio, "GPIO-2", {{0, 32.f}, {3, nan}, {6, 32.f}, {7, nan}, {12, 48.f}});
         requireGpioChannelValues(gpio, "GPIO-3", {{0, 256.f}, {3, nan}, {6, 256.f}, {7, nan}, {12, 272.f}});
         requireGpioChannelValues(gpio, "GPIO-4", {{0, 2880.f}, {3, nan}, {6, 2880.f}, {7, nan}, {12, 2896.f}});
-        requireGpioChannelValues(gpio, "EX-LED", {{0, 4000.f}, {3, nan}, {6, 4000.f}, {7, nan}, {12, 4001.f}});
-        requireGpioChannelValues(gpio, "OG-LED", {{0, 6000.f}, {3, nan}, {6, 6000.f}, {7, nan}, {12, 6001.f}});
-        requireGpioChannelValues(gpio, "DI-LED", {{0, 9000.f}, {3, nan}, {6, 9000.f}, {7, nan}, {12, 9001.f}});
+        requireGpioChannelValues(gpio, "EX-LED", {{0, 400.f}, {3, nan}, {6, 400.f}, {7, nan}, {12, 400.1f}});
+        requireGpioChannelValues(gpio, "OG-LED", {{0, 600.f}, {3, nan}, {6, 600.f}, {7, nan}, {12, 600.1f}});
+        requireGpioChannelValues(gpio, "DI-LED", {{0, 900.f}, {3, nan}, {6, 900.f}, {7, nan}, {12, 900.1f}});
         requireGpioChannelValues(gpio, "e-focus", {{0, 5678.f}, {3, nan}, {6, 5678.f}, {7, nan}, {12, 5679.f}});
         requireGpioChannelValues(gpio, "BNC Trigger Input", {{0, 0.f}, {3, nan}, {6, 0.f}, {7, nan}, {12, 1.f}});
         requireGpioChannelValues(gpio, "BNC Sync Output", {{0, 1.f}, {3, nan}, {6, 1.f}, {7, nan}, {12, 0.f}});
@@ -810,5 +810,43 @@ TEST_CASE("nVista3Gpio-digitalGPO", "[core][nv3_gpio]")
     }
 
     isx::removeDirectory(outputDirPath);
+    isx::CoreShutdown();
+}
+
+TEST_CASE("nVoke2-LEDPowerConversion", "[core][nv3_gpio]")
+{
+    isx::CoreInitialize();
+    const std::string inputDir = g_resources["unitTestDataPath"] + "/nVista3Gpio";
+    const std::string outputDir = inputDir + "/output";
+    isx::removeDirectory(outputDir);
+    isx::makeDirectory(outputDir);
+
+    const std::string inputFile = inputDir + "/2018-10-26-16-08-31_video.gpio";
+    std::string outputFile;
+    {
+        isx::NVista3GpioFile raw(inputFile, outputDir);
+        raw.parse();
+        outputFile = raw.getOutputFileName();
+    }
+
+    const isx::SpGpio_t gpio = isx::readGpio(outputFile);
+
+    REQUIRE(gpio->numberOfChannels() == numNVista3Channels);
+
+    const isx::Time startTime(2018, 10, 26, 16, 8, 31, isx::DurationInSeconds::fromMilliseconds(358));
+    const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 1000), 16568);
+    REQUIRE(gpio->getTimingInfo() == expTi);
+
+    const isx::SpLogicalTrace_t exLed = gpio->getLogicalData("EX-LED");
+    const std::map<isx::Time, float> & exLedValues = exLed->getValues();
+    REQUIRE(exLedValues.at(startTime) == 2.f);
+    REQUIRE(exLedValues.at(startTime + isx::DurationInSeconds::fromMicroseconds(16567000)) == 2.f);
+
+    const isx::SpLogicalTrace_t ogLed = gpio->getLogicalData("OG-LED");
+    const std::map<isx::Time, float> & ogLedValues = ogLed->getValues();
+    REQUIRE(ogLedValues.at(startTime) == 10.f);
+    REQUIRE(ogLedValues.at(startTime + isx::DurationInSeconds::fromMicroseconds(16567000)) == 10.f);
+
+    isx::removeDirectory(outputDir);
     isx::CoreShutdown();
 }
