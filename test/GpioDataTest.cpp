@@ -10,6 +10,7 @@
 #include "isxNVista3GpioFile.h"
 #include "isxMovieFactory.h"
 #include "isxMovie.h"
+#include "isxStopWatch.h"
 
 #include "catch.hpp"
 
@@ -810,5 +811,31 @@ TEST_CASE("nVista3Gpio-digitalGPO", "[core][nv3_gpio]")
     }
 
     isx::removeDirectory(outputDirPath);
+    isx::CoreShutdown();
+}
+
+TEST_CASE("nVista3Gpio-benchmark", "[!hide]")
+{
+    const std::string inputDir = g_resources["realTestDataPath"] + "/nvista3_movie_gpio_sync";
+    const std::string outputDir = inputDir + "/output";
+    isx::removeDirectory(outputDir);
+    isx::makeDirectory(outputDir);
+    isx::CoreInitialize();
+
+    SECTION("60 MB file")
+    {
+        const std::string inputFile = inputDir + "/2018-09-27-08-39-00_video_trig_0.gpio";
+        std::string outputFile;
+        {
+            isx::NVista3GpioFile raw(inputFile, outputDir);
+            isx::StopWatch sw;
+            sw.start();
+            raw.parse();
+            sw.stop();
+            ISX_LOG_INFO("Parsing took ", sw.getElapsedMs(), " ms.");
+        }
+    }
+
+    isx::removeDirectory(outputDir);
     isx::CoreShutdown();
 }
