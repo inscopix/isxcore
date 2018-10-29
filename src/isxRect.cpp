@@ -41,7 +41,7 @@ void
 Rect::toCsv(const std::string & inFilePath) const
 {
     std::ofstream cropFile(inFilePath, std::ios::trunc);
-    cropFile << x() << "," << y() << "," << width() << "," << height() << std::endl;
+    cropFile << x() << "," << y() << "," << width() << "," << height() << "\n";
 }
 
 Rect
