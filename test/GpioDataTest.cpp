@@ -877,3 +877,32 @@ TEST_CASE("nVista3Gpio-benchmark", "[!hide]")
     isx::removeDirectory(outputDir);
     isx::CoreShutdown();
 }
+
+TEST_CASE("nVoke2-newClockKey", "[core][nv3_gpio]")
+{
+    isx::CoreInitialize();
+    const std::string inputDir = g_resources["unitTestDataPath"] + "/nVista3Gpio";
+    const std::string outputDir = inputDir + "/output";
+    isx::removeDirectory(outputDir);
+    isx::makeDirectory(outputDir);
+
+    SECTION("manual mode")
+    {
+        const std::string inputFile = inputDir + "/2018-10-26-16-08-31_video.gpio";
+        std::string outputFile;
+        {
+            isx::NVista3GpioFile raw(inputFile, outputDir);
+            raw.parse();
+            outputFile = raw.getOutputFileName();
+        }
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFile);
+
+        const isx::Time startTime(2018, 10, 26, 16, 8, 31, isx::DurationInSeconds::fromMilliseconds(358));
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 1000), 16568);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+    }
+
+    isx::removeDirectory(outputDir);
+    isx::CoreShutdown();
+}

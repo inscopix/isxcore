@@ -13,6 +13,42 @@
 #define ISX_LOG_DEBUG_NV3_GPIO(...)
 #endif
 
+namespace
+{
+
+using json = nlohmann::json;
+
+size_t
+getAdClockInHz(const json & inExtraProps)
+{
+    // From version 1.2.0 of the acqusition software, we should first look
+    // up "adMode", then then corresponding value's "clock".
+    // To support older files, we need to look for some other keys as backup.
+    size_t adClockInHz = 1000;
+
+    auto adModeIt = inExtraProps.find("adMode");
+    if (adModeIt != inExtraProps.end())
+    {
+        const std::string & adKey = *adModeIt;
+        adClockInHz = inExtraProps.at(adKey).at("clock");
+    }
+    else
+    {
+        if (inExtraProps.find("ad") != inExtraProps.end())
+        {
+            adClockInHz = inExtraProps.at("ad").at("clock");
+        }
+        else if (inExtraProps.find("autoAd") != inExtraProps.end())
+        {
+            adClockInHz = inExtraProps.at("autoAd").at("clock");
+        }
+    }
+
+    return adClockInHz;
+}
+
+} // namespace
+
 namespace isx
 {
 
@@ -508,19 +544,12 @@ NVista3GpioFile::parse()
             m_file.seekg(sessionDataOffset, m_file.beg);
             json extraProps;
             m_file >> extraProps;
-            if (extraProps.find("ad") != extraProps.end())
-            {
-                adClockInHz = extraProps.at("ad").at("clock");
-            }
-            else if (extraProps.find("autoAd") != extraProps.end())
-            {
-                adClockInHz = extraProps.at("autoAd").at("clock");
-            }
             extraPropsStr = extraProps.dump();
+            adClockInHz = getAdClockInHz(extraProps);
         }
         catch (const std::exception & inError)
         {
-            ISX_LOG_WARNING("Failed to read ADP clock from nVista 3 GPIO file with error: ", inError.what());
+            ISX_LOG_WARNING("Failed to read extra properties from nVista 3 GPIO file with error: ", inError.what());
         }
     }
     const DurationInSeconds period(1, adClockInHz);
