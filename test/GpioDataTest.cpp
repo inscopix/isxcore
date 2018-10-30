@@ -594,7 +594,7 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
         REQUIRE(gpio->numberOfChannels() == numNVista3Channels);
 
         const isx::Time startTime;
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 3057);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds::fromMilliseconds(1), 3058);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
@@ -761,7 +761,7 @@ TEST_CASE("nVista3GpioWithExtras", "[core][nv3_gpio]")
         REQUIRE(gpio->numberOfChannels() == numNVista3Channels);
 
         const isx::Time startTime(2018, 8, 15, 9, 1, 58, isx::DurationInSeconds::fromMilliseconds(159));
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 5000), 42778);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 5000), 42779);
         REQUIRE(gpio->getTimingInfo() == expTi);
 
         const std::string extraPropsStr = gpio->getExtraProperties();
@@ -922,7 +922,7 @@ TEST_CASE("nVoke2-newClockKey", "[core][nv3_gpio]")
 
         const isx::SpGpio_t gpio = isx::readGpio(outputFile);
         const isx::Time startTime(2018, 10, 30, 11, 11, 53, isx::DurationInSeconds::fromMilliseconds(500));
-        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 4800), 130165);
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 4800), 130166);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
