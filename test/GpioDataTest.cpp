@@ -890,16 +890,39 @@ TEST_CASE("nVoke2-newClockKey", "[core][nv3_gpio]")
     {
         const std::string inputFile = inputDir + "/2018-10-26-16-08-31_video.gpio";
         std::string outputFile;
-        {
-            isx::NVista3GpioFile raw(inputFile, outputDir);
-            raw.parse();
-            outputFile = raw.getOutputFileName();
-        }
+        isx::NVista3GpioFile raw(inputFile, outputDir);
+        raw.parse();
+        outputFile = raw.getOutputFileName();
 
         const isx::SpGpio_t gpio = isx::readGpio(outputFile);
-
         const isx::Time startTime(2018, 10, 26, 16, 8, 31, isx::DurationInSeconds::fromMilliseconds(358));
         const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 1000), 16568);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+    }
+
+    SECTION("auto mode from davep")
+    {
+        const std::string inputFile = inputDir + "/2018-10-26-09-42-53_video_trig_0.gpio";
+        isx::NVista3GpioFile raw(inputFile, outputDir);
+        raw.parse();
+        const std::string outputFile = raw.getOutputFileName();
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFile);
+        const isx::Time startTime(2018, 10, 26, 9, 42, 53, isx::DurationInSeconds::fromMilliseconds(138));
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 4800), 29468);
+        REQUIRE(gpio->getTimingInfo() == expTi);
+    }
+
+    SECTION("auto mode from camille")
+    {
+        const std::string inputFile = inputDir + "/2018-10-30-11-11-53_video_trig_0.gpio";
+        isx::NVista3GpioFile raw(inputFile, outputDir);
+        raw.parse();
+        const std::string outputFile = raw.getOutputFileName();
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFile);
+        const isx::Time startTime(2018, 10, 30, 11, 11, 53, isx::DurationInSeconds::fromMilliseconds(500));
+        const isx::TimingInfo expTi(startTime, isx::DurationInSeconds(1, 4800), 130165);
         REQUIRE(gpio->getTimingInfo() == expTi);
     }
 
