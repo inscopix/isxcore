@@ -271,8 +271,6 @@ void EventBasedFileV2::writeDataPkt(const DataPkt & inData)
             ISX_THROW(ExceptionFileIO, "Error writing output data file: ", m_fileName);
         }
 
-        m_file.flush();
-
         if (m_numSamples.at(inData.signal) == 0)
         {
             m_startOffsets.at(inData.signal) = inData.offsetMicroSecs;
