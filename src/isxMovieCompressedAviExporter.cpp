@@ -479,8 +479,6 @@ void
 MovieCompressedAviExporterParams::setBitRateFraction(const double inBitRateFraction)
 {
     m_bitRateFraction = inBitRateFraction;
-    m_bitRate = 0;
-    updateBitRateBasedOnFraction();
 }
 
 void
@@ -513,7 +511,7 @@ MovieCompressedAviExporterParams::setAdditionalInfo(
 }
 
 void
-MovieCompressedAviExporterParams::setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
+MovieCompressedAviExporterParams::setWriteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
 {
     // Do nothing - currently MP4 cannot contains these details
 }

@@ -89,7 +89,10 @@ struct MovieNWBExporterParams : MovieExporterParams
         const std::string & inSessionId = std::string()) override;
 
     void
-    setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped) override;
+    setWriteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped) override;
+
+    void
+    setBitRateFraction(const double inBitRateFraction) override;
 
     /// \return id string
     ///
