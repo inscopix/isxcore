@@ -9,7 +9,6 @@
 namespace isx 
 {
 
-
 /// Base class for parameters used for exporting movies
 ///
 struct MovieExporterParams
@@ -46,7 +45,13 @@ struct MovieExporterParams
     /// \param inWriteDroppedAndCropped the flag specifies whether invalid frames should be written as zero-frames or not
     virtual
     void
-    setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped) = 0;
+    setWriteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped) = 0;
+
+    /// \param  inBitRateFraction    The compression quality in (0, 1]. This will only be used with
+    ///                                 exporters that allow lossy compression.
+    virtual
+    void
+    setBitRateFraction(const double inBitRateFraction) = 0;
 
     /// \param inSources the input movies to be exported
     virtual
@@ -84,6 +89,10 @@ struct MovieExporterParams
         const std::string & inInstitution = std::string(),
         const std::string & inLab = std::string(),
         const std::string & inSessionId = std::string()) = 0;
+
+
+    /// The default bit-rate fraction for lossy exporters.
+    constexpr static double s_defaultBitRateFraction = 0.1;
 };
 
 /// Wrapper for movie export params.
@@ -126,9 +135,18 @@ struct MovieExporterParamsWrapper
     /// \param inWriteDroppedAndCropped the flag specifies whether invalid frames should be written as zero-frames or not
     inline
     void
-    setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
+    setWriteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
     {
-        m_params->setWirteDroppedAndCroppedParameter(inWriteDroppedAndCropped);
+        m_params->setWriteDroppedAndCroppedParameter(inWriteDroppedAndCropped);
+    }
+
+    /// \param  inBitRateFraction    The compression quality in (0, 1]. This will only be used with
+    ///                                 exporters that allow lossy compression.
+    inline
+    void
+    setBitRateFraction(const double inBitRateFraction)
+    {
+        m_params->setBitRateFraction(inBitRateFraction);
     }
 
     /// Set additional information to be saved in the output file
