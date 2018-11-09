@@ -45,8 +45,18 @@ struct Rect
 
     /// \return True if this is valid, false otherwise.
     ///         We use (-1, -1, -1, -1) to indicate an invalid rectangle.
-    bool
-    isValid() const;
+    bool isValid() const;
+
+    /// Write the rectangle to a CSV file.
+    ///
+    /// \param  inFilePath  The path of the file in which to write.
+    void toCsv(const std::string & inFilePath) const;
+
+    /// Read from a CSV file.
+    ///
+    /// \param  inFilePath  The path of the file in which to write.
+    /// \return             The rectangle defined by the file.
+    static Rect fromCsv(const std::string & inFilePath);
 
     /// Exact comparison with another rectangle.
     ///
