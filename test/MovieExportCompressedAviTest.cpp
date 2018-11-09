@@ -6,6 +6,7 @@
 #include "isxTiffMovie.h"
 #include "isxPathUtils.h"
 #include "isxCore.h"
+#include "isxTemporalCrop.h"
 
 #include <array>
 #include <sys/stat.h>
@@ -78,6 +79,37 @@ namespace
         struct stat stat_buf;
         int rc = stat(filename.c_str(), &stat_buf);
         return rc == 0 ? stat_buf.st_size : -1;
+    }
+
+
+    void
+    trimAndCompressMovie(
+            const std::string & inInputFile,
+            const std::string & inOutputDir,
+            const isx::isize_t inNumFramesToKeep,
+            const std::vector<double> & inBitRateFractions)
+    {
+        const std::string outputBase = inOutputDir + "/" + isx::getBaseName(inInputFile) + "-trimmed";
+
+        const std::string trimmedFile = outputBase + ".isxd";
+        std::remove(trimmedFile.c_str());
+        const isx::SpMovie_t movie = isx::readMovie(inInputFile);
+        const isx::isize_t numFrames = movie->getTimingInfo().getNumTimes();
+        const isx::TemporalCropParams trimInputParams(movie, trimmedFile,
+                {isx::IndexRange(inNumFramesToKeep, numFrames - 1)});
+        auto trimOutputParams = std::make_shared<isx::TemporalCropOutputParams>();
+        isx::temporalCrop(trimInputParams, trimOutputParams, [](float){return false;});
+
+        const isx::SpMovie_t trimmedMovie = isx::readMovie(trimmedFile);
+        isx::MovieCompressedAviExporterParams params({trimmedMovie}, "", 1.0);
+        for (const double bitRateFraction : inBitRateFractions)
+        {
+            ISX_LOG_INFO("Compressing ", trimmedFile, " with bit-rate fraction ", bitRateFraction);
+            params.m_filename = outputBase + "-brf_" + std::to_string(size_t(bitRateFraction * 1000)) + ".mp4";
+            std::remove(params.m_filename.c_str());
+            params.m_bitRateFraction = bitRateFraction;
+            isx::runMovieCompressedAviExporter(params);
+        }
     }
 
 } // namespace
@@ -349,11 +381,74 @@ TEST_CASE("MOS-1675", "[core][export_mp4]")
         const isx::SpMovie_t movie = isx::readMovie(inputFile);
         const std::string outputFile = outputDir + "/" + isx::getBaseName(inputFile) + ".mp4";
         isx::MovieCompressedAviExporterParams params({movie}, outputFile, 0.25);
-        params.m_bitRate = 0;
 
         REQUIRE(isx::runMovieCompressedAviExporter(params) == isx::AsyncTaskStatus::COMPLETE);
     }
 
     isx::removeDirectory(outputDir);
+    isx::CoreShutdown();
+}
+
+TEST_CASE("MOS-1408", "[!hide]")
+{
+    isx::CoreInitialize();
+
+    // You will likely need to change these when running on your own machine.
+    const std::string data2Dir = "/Volumes/Data2";
+    const std::string outputDir = "/Users/sweet/scratch/mos1408";
+
+    isx::makeDirectory(outputDir);
+
+    const std::string inputDir = data2Dir + "/standard_datasets";
+    const std::vector<std::pair<std::string, std::string>> dataPaths =
+    {
+        {"hippocampus/inscopix/BO3/20170818", "recording_20170818_125053"},
+        {"hippocampus/inscopix/BO4/20170818", "recording_20170818_133231"},
+        {"hippocampus/inscopix/DD1/20171013", "recording_20171013_133816"},
+        {"hippocampus/inscopix/SAAV1-H-IM10/20170202", "recording_20170202_135509"},
+        {"hippocampus/inscopix/SAAV1-H-IM7/20170202", "recording_20170202_100149"},
+        {"hippocampus/inscopix/SAAV1-H-IM9/20170202", "recording_20170202_114629"},
+        {"pfc/inscopix/IM2/20171130", "recording_20171130_084154"},
+        {"pfc/inscopix/V3_38/20170825", "recording_20170825_143312"},
+        {"pfc/inscopix/V3_40/20170830", "recording_20170830_100336"},
+    };
+
+    std::vector<std::string> ppFiles;
+    std::vector<std::string> bpFiles;
+    std::vector<std::string> dffFiles;
+    for (const auto & p : dataPaths)
+    {
+        const std::string dataDir = inputDir + "/" + p.first;
+        ppFiles.push_back(dataDir + "/" + p.second + "-PP.isxd");
+        bpFiles.push_back(dataDir + "/pipeline/" + p.second + "-PP-bp.isxd");
+        dffFiles.push_back(dataDir + "/pipeline/" + p.second + "-PP-bp-mc-dff.isxd");
+    }
+    const isx::isize_t numFramesToKeep = 1000;
+    const std::vector<double> bitRateFractions({0.001, 0.01, 0.1, 1.0});
+
+    SECTION("PP")
+    {
+        for (const auto & ppFile : ppFiles)
+        {
+            trimAndCompressMovie(ppFile, outputDir, numFramesToKeep, bitRateFractions);
+        }
+    }
+
+    SECTION("BP")
+    {
+        for (const auto & bpFile : bpFiles)
+        {
+            trimAndCompressMovie(bpFile, outputDir, numFramesToKeep, bitRateFractions);
+        }
+    }
+
+    SECTION("DFF")
+    {
+        for (const auto & dffFile : dffFiles)
+        {
+            trimAndCompressMovie(dffFile, outputDir, numFramesToKeep, bitRateFractions);
+        }
+    }
+
     isx::CoreShutdown();
 }
