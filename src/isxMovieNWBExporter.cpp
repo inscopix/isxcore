@@ -84,9 +84,15 @@ MovieNWBExporterParams::setAdditionalInfo(
 }
 
 void
-MovieNWBExporterParams::setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
+MovieNWBExporterParams::setWriteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
 {
-    // Do nothing - currently NWB cannot contains these details
+    // Do nothing - currently NWB cannot contain these details
+}
+
+void
+MovieNWBExporterParams::setBitRateFraction(const double inBitRateFraction)
+{
+    // Do nothing - currently NWB cannot contain these details
 }
 
 std::vector<std::string>
