@@ -40,9 +40,7 @@ struct MovieCompressedAviExporterParams : MovieExporterParams
     /// default constructor
     /// 
     MovieCompressedAviExporterParams()
-    {
-        setBitRateFraction(.25);
-    }
+    {}
 
     std::string
     getOpName() override;
@@ -65,7 +63,7 @@ struct MovieCompressedAviExporterParams : MovieExporterParams
     setOutputFileName(const std::string & inFileName) override;
 
     void
-    setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped) override;
+    setWriteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped) override;
 
     void 
     setSources(const std::vector<SpMovie_t> & inSources) override;
@@ -74,7 +72,7 @@ struct MovieCompressedAviExporterParams : MovieExporterParams
     setBitRate(const isize_t inBitRate);
 
     void
-    setBitRateFraction(const double inBitRateFraction);
+    setBitRateFraction(const double inBitRateFraction) override;
 
     void
     updateBitRateBasedOnFraction();
@@ -93,8 +91,8 @@ struct MovieCompressedAviExporterParams : MovieExporterParams
 
     std::vector<SpMovie_t>  m_srcs;                         ///< input movies
     std::string             m_filename;                     ///< name of output file
-    isize_t                 m_bitRate;                      ///< bitrate in bps
-    double                  m_bitRateFraction;              ///< bitrate as fraction of theoretical uncompressed
+    isize_t                 m_bitRate = 0;                  ///< bitrate in bps
+    double                  m_bitRateFraction = s_defaultBitRateFraction;   ///< bitrate as fraction of theoretical uncompressed
 };
 
 /// Movie exporter output parameters 
