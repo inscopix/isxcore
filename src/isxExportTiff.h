@@ -40,7 +40,9 @@ private:
     /// The opaque TIFF directory struct used by libtiff.
     TIFF * out;
     /// The offset of the last TIFF directory written.
-    unsigned long lastOffDir = 0;
+    /// Note that uint64 is a typedef defined by libtiff and
+    /// comes from including tiffio.
+    uint64 lastOffDir = 0;
 };
 
 } // namespace isx
