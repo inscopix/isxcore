@@ -49,7 +49,10 @@ struct MovieTiffExporterParams : MovieExporterParams
     setOutputFileName(const std::string & inFileName) override;
 
     void
-    setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped) override;
+    setWriteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped) override;
+
+    void
+    setBitRateFraction(const double inBitRateFraction) override;
 
     void 
     setSources(const std::vector<SpMovie_t> & inSources) override;

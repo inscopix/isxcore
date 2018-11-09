@@ -39,9 +39,15 @@ MovieTiffExporterParams::setOutputFileName(const std::string & inFileName)
 }
 
 void
-MovieTiffExporterParams::setWirteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
+MovieTiffExporterParams::setWriteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
 {
     m_writeInvalidFrames = inWriteDroppedAndCropped;
+}
+
+void
+MovieTiffExporterParams::setBitRateFraction(const double inBitRateFraction)
+{
+    // Do nothing - currently TIFF cannot contain these details
 }
 
 void
