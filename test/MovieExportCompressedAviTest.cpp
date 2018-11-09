@@ -6,7 +6,10 @@
 #include "isxTiffMovie.h"
 #include "isxPathUtils.h"
 #include "isxCore.h"
+
+#if ISX_ARCH_ARM == 0
 #include "isxTemporalCrop.h"
+#endif
 
 #include <array>
 #include <sys/stat.h>
@@ -81,7 +84,7 @@ namespace
         return rc == 0 ? stat_buf.st_size : -1;
     }
 
-
+#if ISX_ARCH_ARM == 0
     void
     trimAndCompressMovie(
             const std::string & inInputFile,
@@ -111,6 +114,7 @@ namespace
             isx::runMovieCompressedAviExporter(params);
         }
     }
+#endif
 
 } // namespace
 
@@ -389,6 +393,8 @@ TEST_CASE("MOS-1675", "[core][export_mp4]")
     isx::CoreShutdown();
 }
 
+#if ISX_ARCH_ARM == 0
+
 TEST_CASE("MOS-1408", "[!hide]")
 {
     isx::CoreInitialize();
@@ -452,3 +458,5 @@ TEST_CASE("MOS-1408", "[!hide]")
 
     isx::CoreShutdown();
 }
+
+#endif
