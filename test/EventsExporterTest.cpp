@@ -405,10 +405,10 @@ TEST_CASE("EventsExport-properties-longitudinal", "[core][event_export]")
     {
         const std::vector<std::string> lines = getLinesFromFile(outputPropsFile);
         REQUIRE(lines.size() == 4);
-        REQUIRE(lines[0] == "Name,EventRate(Hz),SNR");
-        REQUIRE(lines[1] == "C0,0.8,2.20437");
-        REQUIRE(lines[2] == "C1,1.2,2.57958");
-        REQUIRE(lines[3] == "C2,0.666667,1.5594");
+        REQUIRE(lines[0] == "Name,SNR,EventRate(Hz)");
+        REQUIRE(lines[1] == "C0,2.20437,0.8");
+        REQUIRE(lines[2] == "C1,2.57958,1.2");
+        REQUIRE(lines[3] == "C2,1.5594,0.666667");
     }
 
     isx::removeDirectory(outputDir);

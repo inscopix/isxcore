@@ -33,7 +33,7 @@ writeEventsProperties(
     csv << "Name";
     if (hasMetrics)
     {
-        csv << ",EventRate(Hz),SNR";
+        csv << ",SNR,EventRate(Hz)";
     }
     csv << std::endl;
 
@@ -43,8 +43,8 @@ writeEventsProperties(
         if (hasMetrics)
         {
             const isx::SpTraceMetrics_t traceMetrics = eventsSeries->getTraceMetrics(c);
-            csv << "," << traceMetrics->m_eventRate
-                << "," << traceMetrics->m_snr;
+            csv << "," << traceMetrics->m_snr
+                << "," << traceMetrics->m_eventRate;
         }
         csv << std::endl;
 
