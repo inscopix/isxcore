@@ -444,7 +444,7 @@ TEST_CASE("CellSetExport-properties-longitudinal", "[core][cellset_export]")
         const std::vector<std::string> lines = getLinesFromFile(outputPropsFile);
         REQUIRE(lines.size() == 4);
 
-        REQUIRE(lines[0] == "Name,Status,Color(R),Color(G),Color(B),Centroid(X),Centroid(Y),NumComponents,Size,Active(0),Active(1),Active(2)");
+        REQUIRE(lines[0] == "Name,Status,ColorR,ColorG,ColorB,CentroidX,CentroidY,NumComponents,Size,ActiveSegment0,ActiveSegment1,ActiveSegment2");
         REQUIRE(lines[1] == "C0,accepted,244,44,82,17,30,1,36.2353,1,1,0");
         REQUIRE(lines[2] == "C1,undecided,221,168,36,147,28,1,10.0499,1,1,1");
         REQUIRE(lines[3] == "C2,rejected,0,188,165,148,129,1,10.4403,1,0,1");
@@ -477,7 +477,7 @@ TEST_CASE("CellSetExport-properties-no_metrics", "[core][cellset_export]")
 
     const std::vector<std::string> lines = getLinesFromFile(outputPropsFile);
     REQUIRE(lines.size() == 4);
-    REQUIRE(lines[0] == "Name,Status,Color(R),Color(G),Color(B),Active(0)");
+    REQUIRE(lines[0] == "Name,Status,ColorR,ColorG,ColorB,ActiveSegment0");
     REQUIRE(lines[1] == "C0,undecided,255,255,255,1");
     REQUIRE(lines[2] == "C1,undecided,255,255,255,1");
     REQUIRE(lines[3] == "C2,undecided,255,255,255,1");

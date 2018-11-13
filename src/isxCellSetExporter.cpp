@@ -31,14 +31,14 @@ writeCellProperties(
     const bool hasMetrics = csSeries->hasMetrics();
 
     std::ofstream csv(inFilePath);
-    csv << "Name,Status,Color(R),Color(G),Color(B)";
+    csv << "Name,Status,ColorR,ColorG,ColorB";
     if (hasMetrics)
     {
-        csv << ",Centroid(X),Centroid(Y),NumComponents,Size";
+        csv << ",CentroidX,CentroidY,NumComponents,Size";
     }
     for (size_t i = 0; i < numSegments; ++i)
     {
-        csv << ",Active(" << i << ")";
+        csv << ",ActiveSegment" << i;
     }
     csv << std::endl;
 
