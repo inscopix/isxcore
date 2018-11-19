@@ -128,12 +128,12 @@ TEST_CASE("getCoordinatesFromLogicalTrace", "[core][logicaltrace]")
         const isx::SpLogicalTrace_t trace = series->getLogicalData(channelName);
         getCoordinatesFromLogicalTrace(trace, tis, true, x, y);
         requireApproxEqual(x, std::vector<std::vector<double>>({
-                {0, 0.000001, 0.000003},
-                {0.000004, 0.000005, 0.000007},
+                {0.000001, 0.000003},
+                {0.000005, 0.000007},
         }), g_xPrecision);
         REQUIRE(y == std::vector<std::vector<double>>({
-                {0, 1, 1},
-                {0, 1, 1},
+                {1, 1},
+                {1, 1},
         }));
     }
 

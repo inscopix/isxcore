@@ -10,6 +10,7 @@
 #include <fstream>
 #include <map>
 #include <memory>
+#include <unordered_set>
 
 namespace isx
 {
@@ -217,6 +218,9 @@ private:
     uint64_t        m_startTime;        // Number of micro secs since unix epoch
     uint64_t        m_endTime;
     bool        m_startTimeSet = false;
+
+    // The set of signals that should be labelled as DENSE (e.g. LED signals with ramps).
+    std::unordered_set<uint8_t> m_denseSignals;
 
     std::map<uint8_t, uint64_t> m_eventSignalIds;        // <DataType, signalID>
     std::map<uint8_t, uint64_t> m_analogSignalIds;        // <DataType, signalID>

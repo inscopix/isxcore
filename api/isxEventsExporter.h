@@ -15,20 +15,26 @@ struct EventsExporterParams
     /// \param inSrcs                   input events
     /// \param inFileName               filename for output file
     /// \param inWriteTimeRelativeTo    time reference point
+    /// \param inPropertiesFilename  filename for properties output file
+    /// \param inAutoOutputProps     if true, automatically output a properties file
     EventsExporterParams(
         const std::vector<SpEvents_t> & inSrcs,
         const std::string & inFileName,
-        WriteTimeRelativeTo inWriteTimeRelativeTo)
+        WriteTimeRelativeTo inWriteTimeRelativeTo,
+        const std::string & inPropertiesFilename = "",
+        const bool inAutoOutputProps = false)
     : m_srcs(inSrcs)
     , m_fileName(inFileName)
     , m_writeTimeRelativeTo(inWriteTimeRelativeTo)
+    , m_propertiesFilename(inPropertiesFilename)
+    , m_autoOutputProps(inAutoOutputProps)
     {
     }
 
     /// default constructor
     ///
     EventsExporterParams() :
-    EventsExporterParams(std::vector<SpEvents_t>{}, std::string(), WriteTimeRelativeTo(0))
+    EventsExporterParams(std::vector<SpEvents_t>{}, std::string(), WriteTimeRelativeTo(0), "", false)
     {
     }
 
@@ -53,6 +59,12 @@ struct EventsExporterParams
     std::vector<SpEvents_t> m_srcs;                 ///< input event sets
     std::string             m_fileName;             ///< name of output file
     WriteTimeRelativeTo     m_writeTimeRelativeTo;  ///< how to write time stamps in file
+    std::string             m_propertiesFilename;   ///< path of the cell properties file
+    bool                    m_autoOutputProps;      ///< If true and the properties file name is empty,
+                                                    ///< automatically output a properties file
+                                                    ///< that shares the same base name as the trace file
+                                                    ///< but with "-properties" appended before the extension.
+                                                    ///< Otherwise, do not output a properties file automatically.
 };
 
 /// There are no output parameters for exporting events.

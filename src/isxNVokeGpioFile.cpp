@@ -146,6 +146,7 @@ NVokeGpioFile::parse()
 {
     float progress = 0.f;
     bool cancelled = false;
+    m_denseSignals.clear();
 
     std::vector<uint8_t> buf(MAX_PACKET_SIZE);
     std::ios::pos_type readPosition = 0;
@@ -286,7 +287,10 @@ NVokeGpioFile::parse()
     for (auto & id : m_eventSignalIds)
     {
         channels.at(id.second) = s_dataTypeMap.at(id.first);
-        types.at(id.second) = isx::SignalType::SPARSE;
+        if (m_denseSignals.count(id.first) > 0)
+        {
+            types.at(id.second) = isx::SignalType::DENSE;
+        }
     }
 
     const Time startTime(DurationInSeconds::fromMicroseconds(m_startTime));
@@ -372,17 +376,30 @@ NVokeGpioFile::parseLedPkt(const std::vector<uint8_t> & inPkt)
     ISX_ASSERT(inPkt.size() >= LED_PKT_LENGTH);
     LedPkt * pkt = (LedPkt *) inPkt.data();
 
-    if (m_eventSignalIds.find(pkt->header.dataType) == m_eventSignalIds.end())
-    {
-        uint64_t next = m_eventSignalIds.size() + m_analogSignalIds.size();
-        m_eventSignalIds[pkt->header.dataType] = next;
-    }
     uint16_t power1 = (uint16_t)pkt->ledPower & 0x00FF;;
     uint16_t power2 = uint16_t(pkt->powerState & LED_POWER_0_MASK);
     uint16_t power = (power1 << 1) + (power2 >> 4);
     double dPower = (double)power / 10.0; // In units of mW/mm^2, in the range of [0, 51.1]
 
+    // We only want to keep the power for ON and RAMP-DOWN events.
+    const uint8_t ledState = pkt->powerState & LED_STATE_MASK;
+    if (!((ledState == 1) || (ledState == 3)))
+    {
+        dPower = 0;
+    }
+
+    if ((ledState == 2) || (ledState == 3))
+    {
+        m_denseSignals.insert(pkt->header.dataType);
+    }
+
     uint64_t usecs = getUsecs(pkt->timeSecs, pkt->timeUSecs);
+
+    if (m_eventSignalIds.find(pkt->header.dataType) == m_eventSignalIds.end())
+    {
+        uint64_t next = m_eventSignalIds.size() + m_analogSignalIds.size();
+        m_eventSignalIds[pkt->header.dataType] = next;
+    }
 
     return EventBasedFileV2::DataPkt(usecs, float(dPower), m_eventSignalIds.at(pkt->header.dataType));
 }
