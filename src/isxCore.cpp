@@ -190,7 +190,8 @@ namespace isx
     std::string
     getHostName()
     {
-        return QSysInfo::machineHostName().toStdString();
+        return "placeholder";
+        //return QSysInfo::machineHostName().toStdString();
     }
 
     std::vector<std::string>

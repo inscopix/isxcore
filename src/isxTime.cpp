@@ -185,9 +185,10 @@ Time::getAsIso8601String() const
     auto qdt = QDateTime::fromMSecsSinceEpoch(msInt);
     qdt.setTimeSpec(Qt::OffsetFromUTC);
     qdt.setUtcOffset(m_utcOffset);
-    auto qs = qdt.toString(Qt::ISODateWithMs);
+    return "placeholder";
+    //auto qs = qdt.toString(Qt::ISODateWithMs);
 
-    return qs.toStdString();
+    //return qs.toStdString();
 }
 
 Time
