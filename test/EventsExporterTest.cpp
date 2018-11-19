@@ -53,11 +53,12 @@ TEST_CASE("EventsExport", "[core][event_export]")
 {
     isx::CoreInitialize();
 
-    const std::string exportDir = g_resources["unitTestDataPath"] + "/events-export";
+    const std::string inputDir = g_resources["unitTestDataPath"] + "/events-export";
+    const std::string outputDir = inputDir + "/output";
 
-    isx::makeDirectory(exportDir);
+    makeCleanDirectory(outputDir);
 
-    const std::string inputBase = exportDir + "/events";
+    const std::string inputBase = outputDir + "/events";
     std::string inputFilePath = inputBase + ".isxd";
     const std::string outputFilePath = inputBase + ".csv";
 
@@ -201,7 +202,7 @@ TEST_CASE("EventsExport", "[core][event_export]")
 
     requireEqualLines(outputFilePath, expLines);
 
-    isx::removeDirectory(exportDir);
+    isx::removeDirectory(outputDir);
 
     isx::CoreShutdown();
 }
@@ -211,9 +212,10 @@ TEST_CASE("EventsExport-series", "[core][event_export]")
     isx::CoreInitialize();
 
     const std::string inputDir = g_resources["unitTestDataPath"] + "/events-export";
-    isx::makeDirectory(inputDir);
+    const std::string outputDir = inputDir + "/output";
+    makeCleanDirectory(outputDir);
 
-    const std::string inputBase = inputDir + "/events";
+    const std::string inputBase = outputDir + "/events";
     const std::array<std::string, 2> inputFilePaths =
     {{
         inputBase + "_0.isxd",
@@ -333,7 +335,109 @@ TEST_CASE("EventsExport-series", "[core][event_export]")
 
     requireEqualLines(outputFilePath, expLines);
 
-    isx::removeDirectory(inputDir);
+    isx::removeDirectory(outputDir);
 
+    isx::CoreShutdown();
+}
+
+TEST_CASE("EventsExport-properties-longitudinal", "[core][event_export]")
+{
+    isx::CoreInitialize();
+
+    const std::string inputDir = g_resources["unitTestDataPath"] + "/events-export";
+    const std::string outputDir = inputDir + "/output";
+    makeCleanDirectory(outputDir);
+
+    std::vector<isx::SpEvents_t> events;
+    for (size_t i = 1; i <= 3; ++i)
+    {
+        events.push_back(isx::readEvents(inputDir + "/50fr10_l" + std::to_string(i) + "-3cells_he-ROI-LCR-ED.isxd"));
+    }
+
+    const std::string outputFilePath = outputDir + "/events.csv";
+    const std::string autoPropsFile = outputDir + "/events-props.csv";
+    const std::string manualPropsFile = outputDir + "/props.csv";
+
+    isx::EventsExporterParams params(events, outputFilePath, isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
+
+    std::string outputPropsFile;
+
+    SECTION("No properties")
+    {
+        REQUIRE(isx::runEventsExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+        REQUIRE(!isx::pathExists(autoPropsFile));
+        REQUIRE(!isx::pathExists(manualPropsFile));
+    }
+
+    SECTION("Auto properties")
+    {
+        outputPropsFile = autoPropsFile;
+        params.m_autoOutputProps = true;
+
+        REQUIRE(isx::runEventsExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+        REQUIRE(isx::pathExists(autoPropsFile));
+        REQUIRE(!isx::pathExists(manualPropsFile));
+    }
+
+    SECTION("Manually specify properties (auto off)")
+    {
+        outputPropsFile = manualPropsFile;
+        params.m_propertiesFilename = outputPropsFile;
+        params.m_autoOutputProps = false;
+
+        REQUIRE(isx::runEventsExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+        REQUIRE(!isx::pathExists(autoPropsFile));
+        REQUIRE(isx::pathExists(manualPropsFile));
+    }
+
+    SECTION("Manually specify properties (auto on, but ignored)")
+    {
+        outputPropsFile = manualPropsFile;
+        params.m_propertiesFilename = outputPropsFile;
+        params.m_autoOutputProps = true;
+
+        REQUIRE(isx::runEventsExporter(params) == isx::AsyncTaskStatus::COMPLETE);
+        REQUIRE(!isx::pathExists(autoPropsFile));
+        REQUIRE(isx::pathExists(manualPropsFile));
+    }
+
+    if (!outputPropsFile.empty())
+    {
+        const std::vector<std::string> lines = getLinesFromFile(outputPropsFile);
+        REQUIRE(lines.size() == 4);
+        REQUIRE(lines[0] == "Name,SNR,EventRate(Hz)");
+        REQUIRE(lines[1] == "C0,2.20437,0.8");
+        REQUIRE(lines[2] == "C1,2.57958,1.2");
+        REQUIRE(lines[3] == "C2,1.5594,0.666667");
+    }
+
+    isx::removeDirectory(outputDir);
+    isx::CoreShutdown();
+}
+
+TEST_CASE("EventsExport-properties-no_metrics", "[core][event_export]")
+{
+    isx::CoreInitialize();
+
+    const std::string inputDir = g_resources["unitTestDataPath"] + "/events-export";
+    const std::string outputDir = inputDir + "/output";
+    makeCleanDirectory(outputDir);
+
+    const std::vector<isx::SpEvents_t> events = {isx::readEvents(inputDir + "/eventset_no_metrics.isxd")};
+
+    const std::string outputFilePath = outputDir + "/events.csv";
+    const std::string outputPropsFile = outputDir + "/props.csv";
+
+    const isx::EventsExporterParams params(events, outputFilePath, isx::WriteTimeRelativeTo::FIRST_DATA_ITEM, outputPropsFile);
+    REQUIRE(isx::runEventsExporter(params, nullptr, [](float){return false;}) == isx::AsyncTaskStatus::COMPLETE);
+
+    const std::vector<std::string> lines = getLinesFromFile(outputPropsFile);
+    REQUIRE(lines.size() == 4);
+    REQUIRE(lines[0] == "Name");
+    REQUIRE(lines[1] == "C0");
+    REQUIRE(lines[2] == "C1");
+    REQUIRE(lines[3] == "C2");
+
+    isx::removeDirectory(outputDir);
     isx::CoreShutdown();
 }

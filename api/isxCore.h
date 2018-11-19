@@ -104,6 +104,17 @@ namespace isx
 
     void closeFileStreamWithChecks(std::fstream & inFile, const std::string & inFileName);
 
+    /// Define a file path based on a reference file path and a given suffix.
+    ///
+    /// For example, makeOutputFilePath("/a/b/c.isxd", "-crop.csv") will
+    /// return "/a/b/c-crop.csv".
+    ///
+    /// This does not attempt to find a unique path on the file system.
+    ///
+    /// \param  inFilePath  The reference file path.
+    /// \param  inSuffix    The suffix to append to the file after the base name.
+    std::string makeOutputFilePath(const std::string & inFilePath, const std::string & inSuffix);
+
 } // namespace isx
 
 #endif // def ISX_CORE_H

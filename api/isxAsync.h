@@ -40,6 +40,8 @@ SpAsyncTaskHandle_t CreateAsyncTask(
         AsyncFinishedCB_t inFinishedCB,
         AsyncTaskThreadForFinishedCB inThreadForFinishedCB);
 
+AsyncCheckInCB_t rescaleCheckInCB(AsyncCheckInCB_t inCheckInCB, const float inOffset, const float inScale);
+
 } // namespace isx
 
 #endif // def ISX_ASYNC_H
