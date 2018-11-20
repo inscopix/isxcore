@@ -96,7 +96,7 @@ void testNVokeParsing(
     std::remove(filename.c_str());
 }
 
-TEST_CASE("GpioDataTest", "[core]")
+TEST_CASE("GpioDataTest", "[core][gpio]")
 {
     isx::CoreInitialize();
 
@@ -357,7 +357,7 @@ requireGpioChannelValues(
     }
 }
 
-TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
+TEST_CASE("NVista3GpioFile", "[core][gpio][nv3_gpio]")
 {
     const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio";
     const std::string outputDirPath = inputDirPath + "/output";
@@ -716,7 +716,7 @@ TEST_CASE("NVista3GpioFile", "[core][nv3_gpio]")
     isx::CoreShutdown();
 }
 
-TEST_CASE("nVista3GpioWithExtras", "[core][nv3_gpio]")
+TEST_CASE("nVista3GpioWithExtras", "[core][gpio][nv3_gpio]")
 {
     const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio";
     const std::string outputDirPath = inputDirPath + "/output";
@@ -774,7 +774,81 @@ TEST_CASE("nVista3GpioWithExtras", "[core][nv3_gpio]")
     isx::CoreShutdown();
 }
 
-TEST_CASE("nVista3Gpio-digitalGPO", "[core][nv3_gpio]")
+TEST_CASE("nVoke1Gpio", "[core][gpio]")
+{
+    isx::CoreInitialize();
+
+    const std::string inputDir = g_resources["unitTestDataPath"] + "/nVokeGpio";
+    const std::string outputDir = inputDir + "/output";
+
+    isx::removeDirectory(outputDir);
+    isx::makeDirectory(outputDir);
+
+    SECTION("MOS-1406")
+    {
+        const std::string inputFile = inputDir + "/gpio_3.raw";
+        isx::NVokeGpioFile raw(inputFile, outputDir);
+        raw.parse();
+
+        const isx::Time start(2018, 3, 8, 0, 13, 25, isx::DurationInSeconds::fromMicroseconds(911315));
+
+        const isx::SpGpio_t gpio = isx::readGpio(raw.getOutputFileName());
+        REQUIRE(gpio->getTimingInfo().getStart() == start);
+        const isx::SpLogicalTrace_t ogLed = gpio->getLogicalData("OG_LED");
+
+        requireGpioChannelValues(gpio, "OG_LED",
+            {
+                {0, 0.f},
+                {7174850, 0.f},
+                {7174901, 5.f},
+                {19402739, 5.f},
+                {21403082, 0.f},
+                {31630919, 0.f},
+                {31630970, 5.f},
+                {43858809, 5.f},
+                {45858964, 0.f},
+                {56086799, 0.f},
+                {56086850, 5.f},
+                {68314689, 5.f},
+                {70314846, 0.f},
+            },
+            start
+        );
+    }
+
+    SECTION("MOS-1701")
+    {
+        const std::string inputFile = inputDir + "/recording_20180928_103522_gpio.raw";
+        isx::NVokeGpioFile raw(inputFile, outputDir);
+        raw.parse();
+
+        const isx::Time start(2018, 9, 28, 17, 35, 22, isx::DurationInSeconds::fromMicroseconds(22474));
+
+        const isx::SpGpio_t gpio = isx::readGpio(raw.getOutputFileName());
+        REQUIRE(gpio->getTimingInfo().getStart() == start);
+        const isx::SpLogicalTrace_t ogLed = gpio->getLogicalData("OG_LED");
+
+        requireGpioChannelValues(gpio, "OG_LED",
+            {
+                {0, 0.f},
+                {3660328, 1.f},
+                {9602068, 0.f},
+                {10703405, 1.f},
+                {12300614, 0.f},
+                {13109846, 1.f},
+                {14202742, 0.f},
+                {15004025, 1.f},
+                {16298505, 0.f},
+            },
+            start
+        );
+    }
+
+    isx::removeDirectory(outputDir);
+    isx::CoreShutdown();
+}
+
+TEST_CASE("nVista3Gpio-digitalGPO", "[core][gpio][nv3_gpio]")
 {
     const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio";
     const std::string outputDirPath = inputDirPath + "/output";

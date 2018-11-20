@@ -3,12 +3,83 @@
 #include "isxExport.h"
 #include "isxExportPNG.h"
 #include "isxCellSetUtils.h"
+#include "isxCellSetFactory.h"
 
 #include <fstream>
 #include <iomanip>
 #include <limits>
 
 #include "json.hpp"
+
+namespace
+{
+
+bool
+writeCellProperties(
+        const std::vector<isx::SpCellSet_t> & inCellSets,
+        const std::string & inFilePath,
+        isx::AsyncCheckInCB_t inCheckInCB)
+{
+    // Read the cellsets as a series to be consistent with the GUI's report of metrics.
+    std::vector<std::string> csFiles;
+    for (const auto & cs : inCellSets)
+    {
+        csFiles.push_back(cs->getFileName());
+    }
+    const isx::SpCellSet_t csSeries = isx::readCellSetSeries(csFiles);
+    const size_t numSegments = csSeries->getTimingInfosForSeries().size();
+    const bool hasMetrics = csSeries->hasMetrics();
+
+    std::ofstream csv(inFilePath);
+    csv << "Name,Status,ColorR,ColorG,ColorB";
+    if (hasMetrics)
+    {
+        csv << ",CentroidX,CentroidY,NumComponents,Size";
+    }
+    for (size_t i = 0; i < numSegments; ++i)
+    {
+        csv << ",ActiveSegment" << i;
+    }
+    csv << std::endl;
+
+    const isx::isize_t numCells = csSeries->getNumCells();
+    for (isx::isize_t c = 0; c < numCells; ++c)
+    {
+        const isx::Color color = csSeries->getCellColor(c);
+
+        csv << csSeries->getCellName(c)
+            << "," << csSeries->getCellStatusString(c)
+            << "," << int(color.getRed())
+            << "," << int(color.getGreen())
+            << "," << int(color.getBlue());
+
+        if (hasMetrics)
+        {
+            const isx::SpImageMetrics_t imageMetrics = csSeries->getImageMetrics(c);
+            const isx::PointInPixels_t & center = imageMetrics->m_largestComponentCenterInPixels;
+            csv << "," << center.getX()
+                << "," << center.getY()
+                << "," << imageMetrics->m_numComponents
+                << "," << imageMetrics->m_largestComponentMaxContourWidthInPixels;
+        }
+
+        ISX_ASSERT(csSeries->getCellActivity(c).size() == numSegments);
+        for (const auto a : csSeries->getCellActivity(c))
+        {
+            csv << "," << int(a);
+        }
+
+        if (inCheckInCB(float(c) / float(numCells)))
+        {
+            return true;
+        }
+
+        csv << std::endl;
+    }
+    return false;
+}
+
+} // namespace
 
 namespace isx {
 
@@ -75,14 +146,35 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
         }
     }
 
+    if (inParams.m_autoOutputProps && inParams.m_propertiesFilename.empty() && !inParams.m_outputTraceFilename.empty())
+    {
+        inParams.m_propertiesFilename = makeOutputFilePath(inParams.m_outputTraceFilename, "-props.csv");
+    }
+
     // For progress report
-    isize_t numSections = isize_t(inParams.m_outputTraceFilename.empty() == false) +
-                            isize_t(inParams.m_outputImageFilename.empty() == false);
-    float progress = 0.f;
+    const bool outputTraces = !inParams.m_outputTraceFilename.empty();
+    const bool outputImages = !inParams.m_outputImageFilename.empty();
+    const bool outputProps = !inParams.m_propertiesFilename.empty();
+
+    std::vector<std::string> filesToCleanUp;
 
     /// Traces to CSV
-    if (inParams.m_outputTraceFilename.empty() == false)
+    if (outputTraces)
     {
+        float checkInOffset = 0.f;
+        float checkInScale = 1.f;
+        if (outputImages)
+        {
+            checkInScale = outputProps ? 0.4f : 0.5f;
+        }
+        else if (outputProps)
+        {
+            checkInScale = 0.8f;
+        }
+        AsyncCheckInCB_t tracesCheckInCB = rescaleCheckInCB(inCheckInCB, checkInOffset, checkInScale);
+
+        filesToCleanUp.push_back(inParams.m_outputTraceFilename);
+
         std::ofstream strm(inParams.m_outputTraceFilename, std::ios::trunc);
 
         if (!strm.good())
@@ -125,19 +217,32 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
 
         try
         {
-            cancelled = writeTraces(strm, traces, names, statuses, baseTime, inCheckInCB);
+            cancelled = writeTraces(strm, traces, names, statuses, baseTime, tracesCheckInCB);
         }
         catch (...)
         {
             strm.close();
-            std::remove(inParams.m_outputTraceFilename.c_str());
+            removeFiles(filesToCleanUp);
             throw;
         }
     }
 
     /// Images to TIFF
-    if(inParams.m_outputImageFilename.empty() == false)
+    if (outputImages)
     {
+        float checkInOffset = 0.f;
+        float checkInScale = 1.f;
+        if (outputTraces)
+        {
+            checkInOffset = outputProps ? 0.4f : 0.5f;
+            checkInScale = outputProps ? 0.4f : 0.5f;
+        }
+        else if (outputProps)
+        {
+            checkInScale = 0.8f;
+        }
+        AsyncCheckInCB_t imagesCheckInCB = rescaleCheckInCB(inCheckInCB, checkInOffset, checkInScale);
+
         // If many srcs are provided, it's enough to use the first one only since
         // cell images in a cellset series are the same for different segments
         auto & cs =  srcs[0];
@@ -147,8 +252,10 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
 
         for (isize_t cell = 0; cell < numCells; ++cell)
         {
-            std::string cellname = cs->getCellName(cell);
-            std::string fn = dirname + "/" + basename + "_" + cellname + "." + extension;
+            const std::string cellname = cs->getCellName(cell);
+            const std::string fn = dirname + "/" + basename + "_" + cellname + "." + extension;
+
+            filesToCleanUp.push_back(fn);
 
             SpImage_t cellIm = cs->getImage(cell);
 
@@ -158,27 +265,13 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
             }
             catch (...)
             {
-                for (isize_t c = 0; c <= cell; ++c)
-                {
-                    std::string cellname = cs->getCellName(c);
-                    std::string fn = dirname + "/" + basename + "_" + cellname + "." + extension;
-                    std::remove(fn.c_str());
-                }
+                removeFiles(filesToCleanUp);
                 throw;
             }
 
-
-            cancelled = inCheckInCB(progress + float(cell)/float(numCells)/float(numSections));
+            cancelled = imagesCheckInCB(float(cell) / float(numCells));
             if (cancelled)
             {
-                // Remove previously created files - Do this here and not in finishedCB because
-                // only here we know exactly which files we wrote out
-                for (isize_t c = 0; c <= cell; ++c)
-                {
-                    std::string cellname = cs->getCellName(c);
-                    std::string fn = dirname + "/" + basename + "_" + cellname + "." + extension;
-                    std::remove(fn.c_str());
-                }
                 break;
             }
         }
@@ -188,6 +281,7 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
             // export accepted cell map to tiff
             SpImage_t map = cellSetToCellMap(cs, false, true);
             std::string fn = dirname + "/" + basename + "_accepted-cells-map." + extension;
+            filesToCleanUp.push_back(fn);
             toTiff(fn, map);
 
             // export accepted cell map to png
@@ -195,18 +289,33 @@ runCellSetExporter(CellSetExporterParams inParams, std::shared_ptr<CellSetExport
             {
                 SpImage_t PNGmap = convertImageF32toU8(map);
                 fn = dirname + "/" + basename + "_accepted-cells-map.png";
+                filesToCleanUp.push_back(fn);
                 toPng(fn, PNGmap);
             }
         }
     }
 
+    /// Cell properties to CSV
+    if (outputProps)
+    {
+        const bool outputOther = outputTraces || outputImages;
+        AsyncCheckInCB_t propsCheckInCB = rescaleCheckInCB(inCheckInCB, outputOther ? 0.8f : 0.f, outputOther ? 0.2f : 1.f);
+
+        filesToCleanUp.push_back(inParams.m_propertiesFilename);
+        try
+        {
+            cancelled = writeCellProperties(srcs, inParams.m_propertiesFilename, propsCheckInCB);
+        }
+        catch (...)
+        {
+            removeFiles(filesToCleanUp);
+            throw;
+        }
+    }
+
     if (cancelled)
     {
-        if(!inParams.m_outputTraceFilename.empty())
-        {
-            std::remove(inParams.m_outputTraceFilename.c_str());
-        }
-
+        removeFiles(filesToCleanUp);
         return AsyncTaskStatus::CANCELLED;
     }
 

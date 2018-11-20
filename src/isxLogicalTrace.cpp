@@ -47,11 +47,6 @@ getCoordinatesFromLogicalTrace(
     outX = std::vector<std::vector<double>>(inTis.size());
     outY = std::vector<std::vector<double>>(inTis.size());
     isize_t segmentIdx = 0;
-    if (inCoordsForSquareWave)
-    {
-        addXCoordinate(outX.at(segmentIdx), durationOfPrevSegments[segmentIdx]);
-        outY.at(segmentIdx).push_back(0.0);
-    }
     double startTimeForSegment = inTis.at(segmentIdx).getStart().getSecsSinceEpoch().toDouble();
 
     for (auto & pair : values)
@@ -78,14 +73,6 @@ getCoordinatesFromLogicalTrace(
         if (newSegment)
         {
             startTimeForSegment = inTis.at(segmentIdx).getStart().getSecsSinceEpoch().toDouble();
-
-            // GPIO requires at least two points to have a graph plotted
-            // Make sure each segment starts with zero
-            if (inCoordsForSquareWave)
-            {
-                addXCoordinate(outX.at(segmentIdx), durationOfPrevSegments[segmentIdx]);
-                outY.at(segmentIdx).push_back(0.0);
-            }
         }
 
         if (time >= inTis.at(segmentIdx).getStart())
@@ -95,7 +82,9 @@ getCoordinatesFromLogicalTrace(
         }
     }
 
-    // This should ensure that we assume the same value until the end of each segment.
+    // This should ensure that we assume the same value until the end of each segment,
+    // which means we will definitely have an least 2 points for non-empty channels,
+    // which is necessary for a line to be drawn.
     if (inCoordsForSquareWave)
     {
         for (size_t i = 0; i < outX.size(); ++i)
