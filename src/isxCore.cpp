@@ -6,6 +6,10 @@
 #include "isxReportUtils.h"
 #include <QString>
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
+#include <QHostInfo>
+#endif
+
 extern "C"
 {
 #include "libavformat/avformat.h"
@@ -190,8 +194,11 @@ namespace isx
     std::string
     getHostName()
     {
-        return "placeholder";
-        //return QSysInfo::machineHostName().toStdString();
+#if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
+        return QHostInfo::localHostName().toStdString();
+#else
+        return QSysInfo::machineHostName().toStdString();
+#endif
     }
 
     std::vector<std::string>
