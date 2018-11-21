@@ -317,6 +317,9 @@ private:
     /// Add BNC trigger and sync packets based on the packed payload value to the output file.
     void addTrigSyncPkts(const uint64_t inTsc, const uint16_t inTrigSyncFlash);
 
+    /// Add an LED packet, taking care of power conversion.
+    void addLedPkt(const Channel inChannel, const uint64_t inTsc, const uint16_t inValue);
+
     /// Add all four BNC GPIO packets to the output file.
     template <typename T>
     void addBncGpioPkts(const uint64_t inTsc, const T inPayload)
