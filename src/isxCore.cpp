@@ -4,6 +4,8 @@
 #include "isxException.h"
 #include "isxLogger.h"
 #include "isxReportUtils.h"
+#include "isxPathUtils.h"
+
 #include <QString>
 
 extern "C"
@@ -257,4 +259,11 @@ namespace isx
             }
         }
     }
-}
+
+    std::string
+    makeOutputFilePath(const std::string & inFilePath, const std::string & inSuffix)
+    {
+        return getDirName(inFilePath) + "/" + getBaseName(inFilePath) + inSuffix;
+    }
+
+} // namespace isx

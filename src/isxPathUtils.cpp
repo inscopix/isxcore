@@ -192,4 +192,12 @@ availableNumberOfBytesOnVolume(const std::string & inDirPath, std::string & outR
     return (long long) numBytes;
 }
 
+void removeFiles(const std::vector<std::string> & inFilePaths)
+{
+    for (const auto & f : inFilePaths)
+    {
+        std::remove(f.c_str());
+    }
+}
+
 } // namespace isx

@@ -62,7 +62,7 @@ public:
     struct AllPayload
     {
         CountPayload count;
-        uint32_t digitalGpi; // 8-bit usable
+        uint32_t digitalGpio; // 16-bits usable
         uint16_t bncGpio1;
         uint16_t bncGpio2;
         uint16_t bncGpio3;
@@ -77,7 +77,7 @@ public:
     struct AllGpioPayload
     {
         CountPayload count;
-        uint16_t digitalGpi; // 8-bits usable
+        uint16_t digitalGpio;
         uint16_t bncTrig; // 1-bit usable
         uint16_t bncGpio1;
         uint16_t bncGpio2;
@@ -85,16 +85,16 @@ public:
         uint16_t bncGpio4;
     };
 
-    struct GpioPayload
+    struct BncGpioPayload
     {
         CountPayload count;
         uint32_t bncGpio; // 16-bits usable
     };
 
-    struct DigitalGpiPayload
+    struct DigitalGpioPayload
     {
         CountPayload count;
-        uint32_t digitalGpi; // 16-bits usable
+        uint32_t digitalGpio; // 16-bits usable
     };
 
     struct LedPayload
@@ -147,7 +147,7 @@ public:
         BNC_GPIO_2, // 0x4004
         BNC_GPIO_3, // 0x4005
         BNC_GPIO_4, // 0x4006
-        DIGITAL_GPI, // 0x4007
+        DIGITAL_GPIO, // 0x4007
         EX_LED, // 0x4008
         OG_LED, // 0x4009
         DI_LED, // 0x400A
@@ -206,6 +206,14 @@ private:
         DIGITAL_GPI_5,
         DIGITAL_GPI_6,
         DIGITAL_GPI_7,
+        DIGITAL_GPO_0,
+        DIGITAL_GPO_1,
+        DIGITAL_GPO_2,
+        DIGITAL_GPO_3,
+        DIGITAL_GPO_4,
+        DIGITAL_GPO_5,
+        DIGITAL_GPO_6,
+        DIGITAL_GPO_7,
         BNC_GPIO_1,
         BNC_GPIO_2,
         BNC_GPIO_3,
@@ -242,6 +250,16 @@ private:
 
     /// Check in callback for reporting progress
     AsyncCheckInCB_t m_checkInCB;
+
+    /// The packets captured so far.
+    std::vector<EventBasedFileV2::DataPkt> m_packets;
+
+    /// The channel indices to provide to the output file.
+    std::map<Channel, uint64_t> m_indices;
+
+    /// The last values of each channel are stored so that
+    /// we only captured changes in value.
+    std::map<Channel, float> m_lastValues;
 
     /// The last sequence number read.
     uint32_t m_lastSequence = 0;
@@ -289,22 +307,22 @@ private:
     void skipBytes(const size_t inNumBytes);
     void skipWords(const size_t inNumWords);
 
-    std::vector<EventBasedFileV2::DataPkt> m_packets;
-    std::map<Channel, uint64_t> m_indices;
-    std::map<Channel, float> m_lastValues;
-
     /// Add a packet to the output file.
     void addPkt(const Channel inChannel, const uint64_t inTimeStamp, const float inValue);
 
-    /// Add digital GPI packets based on the packed payload value to the output file.
+    /// Add digital GPI and GPO packets based on the packed payload value to the output file.
     void addDigitalGpiPkts(const uint64_t inTsc, const uint16_t inDigitalGpi);
+    void addDigitalGpoPkts(const uint64_t inTsc, const uint16_t inDigitalGpo);
 
     /// Add BNC trigger and sync packets based on the packed payload value to the output file.
     void addTrigSyncPkts(const uint64_t inTsc, const uint16_t inTrigSyncFlash);
 
-    /// Add all four GPIO packets to the output file.
+    /// Add an LED packet, taking care of power conversion.
+    void addLedPkt(const Channel inChannel, const uint64_t inTsc, const uint16_t inValue);
+
+    /// Add all four BNC GPIO packets to the output file.
     template <typename T>
-    void addGpioPkts(const uint64_t inTsc, const T inPayload)
+    void addBncGpioPkts(const uint64_t inTsc, const T inPayload)
     {
         addPkt(Channel::BNC_GPIO_1, inTsc, roundGpioValue(inPayload.bncGpio1));
         addPkt(Channel::BNC_GPIO_2, inTsc, roundGpioValue(inPayload.bncGpio2));
