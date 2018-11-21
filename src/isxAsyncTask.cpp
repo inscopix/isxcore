@@ -108,4 +108,17 @@ CreateAsyncTask(
     return std::make_shared<AsyncTask>(inTask, inProgressCB, inFinishedCB, inThreadForFinishedCB);
 }
 
+AsyncCheckInCB_t
+rescaleCheckInCB(AsyncCheckInCB_t inCheckInCB, const float inOffset, const float inScale)
+{
+    return [inCheckInCB, inOffset, inScale](float progress)
+    {
+        if (inCheckInCB)
+        {
+            return inCheckInCB(inOffset + (inScale * progress));
+        }
+        return false;
+    };
+}
+
 } // namespace isx

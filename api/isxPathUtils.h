@@ -164,6 +164,14 @@ std::string makeUniqueFilePath(const std::string & inPath, const isize_t inWidth
 /// \return         The number of available bytes.
 long long availableNumberOfBytesOnVolume(const std::string & dirPath, std::string & outRootDir);
 
+/// Removes given file paths. Failure to remove a file is silent and will not error.
+///
+/// This is used by some algorithms and exporters to clean up multiple
+/// output files on cancellation or error.
+///
+/// \param  inFilePaths     The paths of the files to remove.
+void removeFiles(const std::vector<std::string> & inFilePaths);
+
 } // namespace isx
 
 #endif // ISX_PATH_UTILS_H

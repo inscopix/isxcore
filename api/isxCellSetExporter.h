@@ -17,23 +17,29 @@ struct CellSetExporterParams
     /// \param inWriteTimeRelativeTo time reference point
     /// \param inWritePngImage       true if PNG cell map image should be written,
     ///                              false otherwise
+    /// \param inPropertiesFilename  filename for properties output file
+    /// \param inAutoOutputProps     if true, automatically output a properties file
     CellSetExporterParams(
         const std::vector<SpCellSet_t> & inSrcs, 
         const std::string & inTraceFilename,
         const std::string & inImagesFilename,
         WriteTimeRelativeTo inWriteTimeRelativeTo,
-        const bool inWritePngImage = true)
+        const bool inWritePngImage = true,
+        const std::string & inPropertiesFilename = "",
+        const bool inAutoOutputProps = false)
     : m_srcs(inSrcs)
     , m_outputTraceFilename(inTraceFilename)
     , m_outputImageFilename(inImagesFilename)
     , m_writeTimeRelativeTo(inWriteTimeRelativeTo)
     , m_writePngImage(inWritePngImage)
+    , m_propertiesFilename(inPropertiesFilename)
+    , m_autoOutputProps(inAutoOutputProps)
     {}
 
     /// default constructor
     /// 
     CellSetExporterParams() :
-    CellSetExporterParams(std::vector<SpCellSet_t>{}, std::string(), std::string(), WriteTimeRelativeTo(0), true)
+    CellSetExporterParams(std::vector<SpCellSet_t>{}, std::string(), std::string(), WriteTimeRelativeTo(0), true, "", false)
     {}
     
     /// \return export operation name to display to user
@@ -59,6 +65,12 @@ struct CellSetExporterParams
     std::string              m_outputImageFilename;     ///< base filename for output images
     WriteTimeRelativeTo      m_writeTimeRelativeTo;     ///< how to write time stamps in file
     bool                     m_writePngImage;           ///< true if PNG cell map should be written, false otherwise
+    std::string              m_propertiesFilename;      ///< path of the cell properties file
+    bool                     m_autoOutputProps;         ///< If true and the properties file name is empty,
+                                                        ///< automatically output a properties file
+                                                        ///< that shares the same base name as the trace file
+                                                        ///< but with "-properties" appended before the extension.
+                                                        ///< Otherwise, do not output a properties file automatically.
 };
 
 /// CellSet exporter output parameters 
