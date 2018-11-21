@@ -13,6 +13,42 @@
 #define ISX_LOG_DEBUG_NV3_GPIO(...)
 #endif
 
+namespace
+{
+
+using json = nlohmann::json;
+
+size_t
+getAdClockInHz(const json & inExtraProps)
+{
+    // From version 1.2.0 of the acqusition software, we should first look
+    // up "adMode", then then corresponding value's "clock".
+    // To support older files, we need to look for some other keys as backup.
+    size_t adClockInHz = 1000;
+
+    auto adModeIt = inExtraProps.find("adMode");
+    if (adModeIt != inExtraProps.end())
+    {
+        const std::string & adKey = *adModeIt;
+        adClockInHz = inExtraProps.at(adKey).at("clock");
+    }
+    else
+    {
+        if (inExtraProps.find("ad") != inExtraProps.end())
+        {
+            adClockInHz = inExtraProps.at("ad").at("clock");
+        }
+        else if (inExtraProps.find("autoAd") != inExtraProps.end())
+        {
+            adClockInHz = inExtraProps.at("autoAd").at("clock");
+        }
+    }
+
+    return adClockInHz;
+}
+
+} // namespace
+
 namespace isx
 {
 
@@ -217,7 +253,15 @@ NVista3GpioFile::readParseAddLedPayload(const uint32_t inExpectedSize, const Cha
 {
     const auto payload = read<LedPayload>(inExpectedSize);
     const uint64_t tsc = parseTsc(payload.count);
-    addPkt(inChannel, tsc, float(payload.led));
+    addLedPkt(inChannel, tsc, uint16_t(payload.led));
+}
+
+void
+NVista3GpioFile::addLedPkt(const Channel inChannel, const uint64_t inTsc, const uint16_t inValue)
+{
+    // All LED powers are in counts of 100 uW, but we want to report the values in
+    // units of mW, so divide by 10.
+    addPkt(inChannel, inTsc, float(inValue) / 10.f);
 }
 
 uint64_t
@@ -257,9 +301,9 @@ NVista3GpioFile::readParseAddPayload(const PktHeader & inHeader)
             addDigitalGpiPkts(tsc, uint16_t(payload.digitalGpio));
             addDigitalGpoPkts(tsc, uint16_t(payload.digitalGpio >> 16));
             addBncGpioPkts(tsc, payload);
-            addPkt(Channel::EX_LED, tsc, float(payload.exLed));
-            addPkt(Channel::OG_LED, tsc, float(payload.ogLed));
-            addPkt(Channel::DI_LED, tsc, float(payload.diLed));
+            addLedPkt(Channel::EX_LED, tsc, payload.exLed);
+            addLedPkt(Channel::OG_LED, tsc, payload.ogLed);
+            addLedPkt(Channel::DI_LED, tsc, payload.diLed);
             addPkt(Channel::EFOCUS, tsc, float(payload.eFocus));
             addTrigSyncPkts(tsc, uint16_t(payload.trigSync));
             break;
@@ -500,19 +544,12 @@ NVista3GpioFile::parse()
             m_file.seekg(sessionDataOffset, m_file.beg);
             json extraProps;
             m_file >> extraProps;
-            if (extraProps.find("ad") != extraProps.end())
-            {
-                adClockInHz = extraProps.at("ad").at("clock");
-            }
-            else if (extraProps.find("autoAd") != extraProps.end())
-            {
-                adClockInHz = extraProps.at("autoAd").at("clock");
-            }
             extraPropsStr = extraProps.dump();
+            adClockInHz = getAdClockInHz(extraProps);
         }
         catch (const std::exception & inError)
         {
-            ISX_LOG_WARNING("Failed to read ADP clock from nVista 3 GPIO file with error: ", inError.what());
+            ISX_LOG_WARNING("Failed to read extra properties from nVista 3 GPIO file with error: ", inError.what());
         }
     }
     const DurationInSeconds period(1, adClockInHz);
