@@ -6,6 +6,7 @@
 #include "isxTiffMovie.h"
 #include "isxPathUtils.h"
 #include "isxCore.h"
+#include "isxStopWatch.h"
 
 #include <array>
 
@@ -51,8 +52,7 @@ namespace
 
 } // namespace
 
-    
-TEST_CASE("MovieTiffExportF32Test", "[core]")
+TEST_CASE("MovieTiffExportF32Test", "[core][export_tiff]")
 {
     std::array<const char *, 1> names =
     { {
@@ -64,7 +64,7 @@ TEST_CASE("MovieTiffExportF32Test", "[core]")
     {
         filenames.push_back(g_resources["unitTestDataPath"] + "/" + n);
     }
-    
+
     for (const auto & fn: filenames)
     {
         std::remove(fn.c_str());
@@ -115,7 +115,7 @@ TEST_CASE("MovieTiffExportF32Test", "[core]")
             REQUIRE(tiffMovie.getFrameWidth() == sizePixels.getWidth());
             REQUIRE(tiffMovie.getDataType() == isx::DataType::F32);
             REQUIRE(tiffMovie.getNumFrames() == 1);
-            
+
             auto originImage = movies[0]->getFrame(0);
             auto importedImage = tiffMovie.getVideoFrame(0, spacingInfo, timingInfos[0].convertIndexToStartTime(1));
             requireEqualImages(importedImage->getImage(), originImage->getImage());
@@ -131,7 +131,7 @@ TEST_CASE("MovieTiffExportF32Test", "[core]")
     }
 }
 
-TEST_CASE("MovieTiffExportU16Test", "[core]")
+TEST_CASE("MovieTiffExportU16Test", "[core][export_tiff]")
 {
     std::array<const char *, 1> names =
     { {
@@ -209,7 +209,7 @@ TEST_CASE("MovieTiffExportU16Test", "[core]")
     }
 }
 
-TEST_CASE("MovieTiffExportU16ComplexTest", "[core]")
+TEST_CASE("MovieTiffExportU16ComplexTest", "[core][export_tiff]")
 {
     std::array<const char *, 3> names =
     { {
@@ -312,7 +312,7 @@ TEST_CASE("MovieTiffExportU16ComplexTest", "[core]")
     }
 }
 
-TEST_CASE("MovieTiffExportF32ComplexTest", "[core]")
+TEST_CASE("MovieTiffExportF32ComplexTest", "[core][export_tiff]")
 {
     std::array<const char *, 3> names =
     { {
@@ -415,7 +415,7 @@ TEST_CASE("MovieTiffExportF32ComplexTest", "[core]")
     }
 }
 
-TEST_CASE("MovieTiffExportSplittedTest", "[core]")
+TEST_CASE("MovieTiffExportSplittedTest", "[core][export_tiff]")
 {
     const int numInputMovies = 1;
     std::array<const char *, numInputMovies> names =
@@ -508,7 +508,7 @@ TEST_CASE("MovieTiffExportSplittedTest", "[core]")
     }
 }
 
-TEST_CASE("MovieTiffExportWithDroppedTest", "[core]")
+TEST_CASE("MovieTiffExportWithDroppedTest", "[core][export_tiff]")
 {
     std::array<const char *, 1> names =
     { {
@@ -714,3 +714,26 @@ TEST_CASE("MovieTiffExport-one_image", "[core][export_tiff]")
     isx::CoreShutdown();
 }
 
+TEST_CASE("MovieTiffExport-benchmark", "[!hide]")
+{
+    isx::CoreInitialize();
+
+    const std::string outputDir = g_resources["unitTestDataPath"] + "/export_tiff_output";
+    isx::removeDirectory(outputDir);
+    isx::makeDirectory(outputDir);
+
+    const std::string inputFile = g_resources["unitTestDataPath"] + "/cnmfe/recording_20160517_172653-cropped.isxd";
+    const std::string outputFile = outputDir + "/output.tif";
+
+    isx::MovieTiffExporterParams params({isx::readMovie(inputFile)}, {outputFile});
+
+    isx::StopWatch sw;
+    sw.start();
+    isx::runMovieTiffExporter(params);
+    sw.stop();
+    ISX_LOG_INFO("TIFF exporter took ", sw.getElapsedMs(), " ms.");
+
+    isx::removeDirectory(outputDir);
+
+    isx::CoreShutdown();
+}

@@ -15,31 +15,7 @@
 #include <limits>
 #include <cmath>
 
-// TODO: Ask Sylvana why specific macros was used for MacOS
-
-//#if ISX_OS_MACOS
-//#include <sys/types.h>
-//#include <sys/stat.h>
-//#include <fcntl.h>
-//#include <unistd.h>
-//#endif
-
-//#if ISX_OS_MACOS
-//    fd = creat(inFileName.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-//    out = TIFFFdOpen(fd, inFileName.c_str(), "w");
-//#else
-//    out = TIFFOpen(inFileName.c_str(), "w");
-//#endif
-
-//#if ISX_OS_MACOS
-//    TIFFCleanup(out);
-//    close(fd);
-//#else
-//    TIFFClose(out);
-//#endif
-
 namespace isx {
-
 
 uint16_t
 getTiffSampleFormat(DataType type)
@@ -59,7 +35,7 @@ getTiffSampleFormat(DataType type)
     }
 }
 
-void 
+void
 TiffExporter::toTiffOut(const Image * inImage, const bool inZeroImage)
 {
     if (!inImage)
@@ -79,7 +55,7 @@ TiffExporter::toTiffOut(const Image * inImage, const bool inZeroImage)
     TIFFSetField(out, TIFFTAG_SAMPLEFORMAT, sampleFormat);             // how to interpret each data sample in a pixel
     TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, bitsPerSample);                  // set the size of the channels
     TIFFSetField(out, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);              // set the origin of the image.
-    TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);             // set how the components of each pixel are stored (i.e. RGBRGBRGB or R plane, then G plane, then B plane ) 
+    TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);             // set how the components of each pixel are stored (i.e. RGBRGBRGB or R plane, then G plane, then B plane )
     TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);          // set the color space of the image data
 
     isize_t linebytes = inImage->getRowBytes();
@@ -126,13 +102,11 @@ TiffExporter::~TiffExporter()
     TIFFClose(out);
 }
 
-
-void 
+void
 TiffExporter::nextTiffDir()
 {
-    TIFFWriteDirectory(out);
+    TIFFWriteDirectoryFast(out, lastOffDir, &lastOffDir);
     TIFFFlush(out);
 }
-
 
 } // namespace isx
