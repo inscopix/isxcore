@@ -242,6 +242,9 @@ private:
     /// Callback to set the modified flag of the containig series to true 
     ModifiedCB_t m_modifiedCB = nullptr;
 
+    /// The extra properties as a JSON string, which should be updated by readMetaData.
+    std::string m_extraProps;
+
     /// Read the meta data from the data set file.
     ///
     /// \throw  ExceptionFileIO     If the read fails.
@@ -263,6 +266,13 @@ private:
 DataSet::Type readDataSetType(const std::string & inFileName, const DataSet::Properties & inProperties);
 
 using SpDataSetProperties_t = std::shared_ptr<DataSet::Properties>;
+
+/// Get acquisition information from extra properties.
+///
+/// \param  inExtraPropsStr The extra properties JSON string.
+/// \return                 The acquisition info JSON string.
+std::string
+getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr);
 
 } // namespace isx
 

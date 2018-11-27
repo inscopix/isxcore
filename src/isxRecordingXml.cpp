@@ -97,7 +97,7 @@ namespace isx
                                 }
                                 else if (attrs.value("name") == "exposure")
                                 {
-                                    m_additionalProperties["Exposure"] = isx::Variant(reader.readElementText().toStdString());
+                                    m_additionalProperties["Exposure (ms)"] = isx::Variant(reader.readElementText().toStdString());
                                 } 
                                 else if (attrs.value("name") == "led_power")
                                 {
