@@ -17,10 +17,49 @@
 #include <algorithm>
 #include <iomanip>
 
-namespace isx
+using json = nlohmann::json;
+
+namespace
 {
 
-using json = nlohmann::json;
+void
+addMetadataFromExtraProps(
+        isx::DataSet::Metadata & inMetadata,
+        std::stringstream & inStream,
+        const std::string & inExtraPropsStr)
+{
+    const std::string acqInfoStr = isx::getAcquisitionInfoFromExtraProps(inExtraPropsStr);
+    const json acqInfo = json::parse(acqInfoStr);
+
+    for (json::const_iterator it = acqInfo.cbegin(); it != acqInfo.cend(); ++it)
+    {
+        std::string value;
+        const json::value_t type = it->type();
+        if (type == json::value_t::string)
+        {
+            value = it->get<std::string>();
+        }
+        else
+        {
+            if (type == json::value_t::number_float)
+            {
+                inStream << it->get<double>();
+            }
+            else
+            {
+                inStream << *it;
+            }
+            value = inStream.str();
+            inStream.str("");
+        }
+        inMetadata.push_back(std::pair<std::string, std::string>(it.key(), value));
+    }
+}
+
+} // namespace
+
+namespace isx
+{
 
 const std::string DataSet::PROP_DATA_MIN = "dmin";
 const std::string DataSet::PROP_DATA_MAX = "dmax";
@@ -241,7 +280,7 @@ DataSet::getMetadata()
         ss.str("");
 
         ss << m_timingInfo.getDuration().toDouble();
-        metadata.push_back(std::pair<std::string, std::string>("Duration In Seconds", ss.str()));
+        metadata.push_back(std::pair<std::string, std::string>("Duration (s)", ss.str()));
         ss.str("");
 
         // TODO : This is a temporary workaround for handling files that have 0 step time,
@@ -255,15 +294,15 @@ DataSet::getMetadata()
         {
             ss << m_timingInfo.getStep().getInverse().toDouble();
         }
-        metadata.push_back(std::pair<std::string, std::string>("Sample Rate In Hertz", ss.str()));
+        metadata.push_back(std::pair<std::string, std::string>("Sample Rate (Hz)", ss.str()));
         ss.str("");
 
         ss << m_timingInfo.getNumTimes();
-        metadata.push_back(std::pair<std::string, std::string>("Number Of Time Samples", ss.str()));
+        metadata.push_back(std::pair<std::string, std::string>("Number of Time Samples", ss.str()));
         ss.str("");
 
         ss << m_timingInfo.getDroppedCount();
-        metadata.push_back(std::pair<std::string, std::string>("Number Of Dropped Samples", ss.str()));
+        metadata.push_back(std::pair<std::string, std::string>("Number of Dropped Samples", ss.str()));
         ss.str("");
 
         if (m_timingInfo.getDroppedCount() > 0)
@@ -278,7 +317,7 @@ DataSet::getMetadata()
         }
 
         ss << m_timingInfo.getCroppedCount();
-        metadata.push_back(std::pair<std::string, std::string>("Number Of Cropped Samples", ss.str()));
+        metadata.push_back(std::pair<std::string, std::string>("Number of Cropped Samples", ss.str()));
         ss.str("");
 
         if (m_timingInfo.getCroppedCount() > 0)
@@ -302,7 +341,7 @@ DataSet::getMetadata()
             || m_type == DataSet::Type::IMAGE || m_type == DataSet::Type::CELLSET)
     {
         ss << m_spacingInfo.getNumPixels();
-        metadata.push_back(std::pair<std::string, std::string>("Number Of Pixels", ss.str()));
+        metadata.push_back(std::pair<std::string, std::string>("Number of Pixels", ss.str()));
         ss.str("");
     }
 
@@ -312,6 +351,19 @@ DataSet::getMetadata()
         Variant::MetaType type = p.second.getType();
         ISX_ASSERT(type == Variant::MetaType::STRING);
         metadata.push_back(std::pair<std::string, std::string>(p.first, p.second.value<std::string>()));
+    }
+
+    // Extra properties (from nVista 3).
+    if (!m_extraProps.empty())
+    {
+        try
+        {
+            addMetadataFromExtraProps(metadata, ss, m_extraProps);
+        }
+        catch (const std::exception & inError)
+        {
+            ISX_LOG_ERROR("Failed to parse metadata from extra properties with error: ", inError.what());
+        }
     }
 
     return metadata;
@@ -508,6 +560,7 @@ DataSet::readMetaData()
         m_timingInfo = movie->getTimingInfo();
         m_spacingInfo = movie->getSpacingInfo();
         m_dataType = movie->getDataType();
+        m_extraProps = movie->getExtraProperties();
         m_hasMetaData = true;
 
         const auto nVistaMovie = std::dynamic_pointer_cast<isx::NVistaHdf5Movie>(movie);
@@ -522,6 +575,7 @@ DataSet::readMetaData()
         m_timingInfo = cellSet->getTimingInfo();
         m_spacingInfo = cellSet->getSpacingInfo();
         m_dataType = isx::DataType::F32;
+        m_extraProps = cellSet->getExtraProperties();
         m_hasMetaData = true;
     }
     else if (m_type == Type::BEHAVIOR)
@@ -553,6 +607,7 @@ DataSet::readMetaData()
         const SpEvents_t events = readEvents(m_fileName);
         m_timingInfo = events->getTimingInfo();
         m_dataType = isx::DataType::F32;
+        m_extraProps = events->getExtraProperties();
         m_hasMetaData = true;
     }
 }
@@ -570,6 +625,69 @@ void
 DataSet::setModifiedCallback(ModifiedCB_t inCallback)
 {
     m_modifiedCB = inCallback;
+}
+
+std::string
+getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
+{
+    json acqInfo;
+    const json extraProps = json::parse(inExtraPropsStr);
+
+    if (extraProps != nullptr)
+    {
+        const auto animal = extraProps.find("animal");
+        if (animal != extraProps.end())
+        {
+            acqInfo["Animal Sex"] = animal->at("sex");
+            acqInfo["Animal Date of Birth"] = animal->at("dob");
+            acqInfo["Animal ID"] = animal->at("id");
+            acqInfo["Animal Species"] = animal->at("species");
+            acqInfo["Animal Weight"] = animal->at("weight");
+            acqInfo["Animal Description"] = animal->at("description");
+        }
+
+        const auto microscope = extraProps.find("microscope");
+        if (microscope != extraProps.end())
+        {
+            acqInfo["Microscope Focus"] = microscope->at("focus");
+            acqInfo["Microscope Gain"] = microscope->at("gain");
+
+            const auto microscopeLed = microscope->find("led");
+            acqInfo["Microscope EX LED Power (mw/mm^2)"] = microscopeLed->at("exPower");
+            acqInfo["Microscope OG LED Power (mw/mm^2)"] = microscopeLed->at("ogPower");
+
+            acqInfo["Microscope Serial Number"] = microscope->at("serial");
+            acqInfo["Microscope Type"] = microscope->at("type");
+        }
+
+        acqInfo["Session Name"] = extraProps.at("name");
+
+        const auto personnel = extraProps.find("personnel");
+        if (personnel != extraProps.end())
+        {
+            acqInfo["Experimenter Name"] = personnel->at("name");
+        }
+
+        const auto probe = extraProps.find("probe");
+        if (probe != extraProps.end())
+        {
+            acqInfo["Probe Diameter (mm)"] = probe->at("diameter");
+            acqInfo["Probe Flip"] = probe->at("flip");
+            acqInfo["Probe Length (mm)"] = probe->at("length");
+            acqInfo["Probe Pitch"] = probe->at("pitch");
+            acqInfo["Probe Rotation (degrees)"] = probe->at("rotation");
+            acqInfo["Probe Type"] = probe->at("type");
+        }
+
+        const auto producer = extraProps.find("producer");
+        if (producer != extraProps.end())
+        {
+            const std::vector<std::string> versionTokens = splitString(producer->at("versionBE"), '-');
+            acqInfo["Acquisition SW Version"] = versionTokens.at(0);
+        }
+    }
+
+    return acqInfo.dump();
 }
 
 } // namespace isx

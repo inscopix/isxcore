@@ -3,10 +3,16 @@
 namespace isx
 {
 
-SpVideoFrame_t
-Movie::getFrameWithHeaderFooter(const size_t inFrameNumber)
+std::vector<uint16_t>
+Movie::getFrameHeader(const size_t inFrameNumber)
 {
-    return getFrame(inFrameNumber);
+    return std::vector<uint16_t>();
+}
+
+std::vector<uint16_t>
+Movie::getFrameFooter(const size_t inFrameNumber)
+{
+    return std::vector<uint16_t>();
 }
 
 std::string

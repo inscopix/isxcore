@@ -227,4 +227,11 @@ Time::floorToDenomOf(const Ratio & inRatio) const
     return Time(m_secsSinceEpoch.floorToDenomOf(inRatio), m_utcOffset);
 }
 
+isize_t
+getNumSamplesFromTiming(const Time & inStart, const Time & inEnd, const DurationInSeconds & inPeriod)
+{
+    const isx::Ratio numSamples = (inEnd - inStart) / inPeriod;
+    return isize_t(std::ceil(numSamples.toDouble()));
+}
+
 } // namespace

@@ -226,7 +226,7 @@ EventBasedFileV2::getTimingInfo(const std::string & inChannelName) const
 
     if (m_signalTypes.at(i) == SignalType::SPARSE)
     {
-        const isize_t numSamples = isize_t(std::ceil((m_endTime - m_startTime).toDouble() / m_steps.at(i).toDouble()));
+        const isize_t numSamples = getNumSamplesFromTiming(m_startTime, m_endTime, m_steps.at(i));
         return TimingInfo(m_startTime, m_steps.at(i), numSamples);
     }
     else
@@ -256,7 +256,7 @@ EventBasedFileV2::getTimingInfo() const
         ISX_LOG_WARNING("EventBasedFileV2::getTimingInfo. Found Infinite sample rate. Assuming 1KHz.");
     }
 
-    const isize_t numSamples = isize_t(std::ceil((m_endTime - m_startTime).toDouble() / step.toDouble()));
+    const isize_t numSamples = getNumSamplesFromTiming(m_startTime, m_endTime, step);
     return TimingInfo(m_startTime, step, numSamples);
 }
 
