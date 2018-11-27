@@ -12,18 +12,7 @@
 #include "json.hpp"
 using json = nlohmann::json;
 
-namespace
-{
-
-size_t
-hashFrameAndPixelIndex(const size_t inFrameIndex, const size_t inPixelIndex, const size_t inMaxValue)
-{
-    return (inFrameIndex + inPixelIndex) % (inMaxValue + 1);
-}
-
-} // namespace
-
-TEST_CASE("MosaicMovieU16", "[core-internal]")
+TEST_CASE("MosaicMovieU16", "[core-internal][mosaic_movie]")
 {
     std::string fileName = g_resources["unitTestDataPath"] + "/movie.isxd";
 
@@ -204,7 +193,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal]")
     isx::CoreShutdown();
 }
 
-TEST_CASE("MosaicMovieF32", "[core-internal]")
+TEST_CASE("MosaicMovieF32", "[core-internal][mosaic_movie]")
 {
     std::string fileName = g_resources["unitTestDataPath"] + "/movie.isxd";
 
@@ -366,49 +355,32 @@ TEST_CASE("MosaicMovieF32", "[core-internal]")
                 timingInfo.convertIndexToStartTime(f),
                 f);
             std::fill(frame->getPixelsAsF32(), frame->getPixelsAsF32() + numPixels, 3.14159265f);
-            ISX_REQUIRE_EXCEPTION(
-                movie->writeFrame(frame),
-                isx::ExceptionFileIO,
-                "Writing frame after file was closed for writing." + fileName);
+            ISX_REQUIRE_EXCEPTION(movie->writeFrame(frame), isx::ExceptionFileIO, "");
         }
     }
 
     isx::CoreShutdown();
 }
 
-TEST_CASE("Corrupt file", "[core-meme]")
+TEST_CASE("Corrupt file", "[core][mosaic_movie]")
 {
     isx::CoreInitialize();
 
     SECTION("Header-only file")
     {
         std::string fileName = g_resources["unitTestDataPath"] + "/negative/NullDataSet_he.isxd";
-        
+
         auto movie = std::make_shared<isx::MosaicMovie>(fileName);
         REQUIRE(movie->isValid());
         REQUIRE(movie->getTimingInfo().getNumTimes() != 0);
 
-        ISX_EXPECT_EXCEPTION();
-        try
-        {
-            auto frame = movie->getFrame(0);
-            FAIL("Failed to throw an exception.");
-        }
-        catch (const isx::ExceptionFileIO & error)
-        {
-            REQUIRE(std::string(error.what()) ==
-                    "Error reading movie frame.");
-        }
-        catch (...)
-        {
-            FAIL("Failed to throw an isx::ExceptionFileIO");
-        }
+        ISX_REQUIRE_EXCEPTION(movie->getFrame(0), isx::ExceptionFileIO, "");
     }
 
     isx::CoreShutdown();
 }
 
-TEST_CASE("MosaicMovie-croppedFrames", "[core]")
+TEST_CASE("MosaicMovie-croppedFrames", "[core][mosaic_movie]")
 {
     isx::CoreInitialize();
 
@@ -486,7 +458,7 @@ TEST_CASE("MosaicMovie-croppedFrames", "[core]")
     isx::CoreShutdown();
 }
 
-TEST_CASE("MosaicMovie-RGB888", "[core-internal]")
+TEST_CASE("MosaicMovie-RGB888", "[core-internal][mosaic_movie]")
 {
     isx::CoreInitialize();
 
@@ -612,7 +584,7 @@ TEST_CASE("MosaicMovieCreateRGB888Sample", "[core-internal][!hide]")
     isx::CoreShutdown();
 }
 
-TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
+TEST_CASE("MosaicMovieU16-forTheHub", "[core][mosaic_movie]")
 {
     const std::string outputDirPath = g_resources["unitTestDataPath"] + "/MosaicMovieFile";
     isx::makeDirectory(outputDirPath);
@@ -628,9 +600,34 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
         const isx::isize_t numFrames = 3;
         const isx::TimingInfo timingInfo(start, step, numFrames);
 
-        const isx::SizeInPixels_t numPixels(1280, 800);
+        isx::SizeInPixels_t numPixels(1280, 800);
+
+        SECTION("1280x800 - full resolution")
+        {
+            numPixels = isx::SizeInPixels_t(1280, 800);
+        }
+
+        SECTION("640x400 - downsampled by a factor of 2")
+        {
+            numPixels = isx::SizeInPixels_t(640, 400);
+        }
+
+        SECTION("567x272 - downsampled by a factor of 2 and cropped")
+        {
+            numPixels = isx::SizeInPixels_t(567, 272);
+        }
+
+        SECTION("426x266 - downsampled by a factor of 3")
+        {
+            numPixels = isx::SizeInPixels_t(426, 266);
+        }
+
+        SECTION("320x200 - downsampled by a factor of 4")
+        {
+            numPixels = isx::SizeInPixels_t(320, 200);
+        }
+
         const isx::SpacingInfo spacingInfo(numPixels);
-        const isx::SpacingInfo paddedSpacingInfo(numPixels + isx::SizeInPixels_t(0, 4));
         const isx::isize_t totalNumPixels = spacingInfo.getTotalNumPixels();
         const size_t frameSizeInBytes = totalNumPixels * sizeof(uint16_t);
         const isx::DataType dataType = isx::DataType::U16;
@@ -641,7 +638,7 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
         // and footer values are only bounded by the uint16_t type.
         const size_t maxImageValue = 4095;
         const size_t maxHeaderFooterValue = 65535;
-        const size_t numHeaderValues = 2 * numPixels.getWidth();
+        const size_t numHeaderValues = 2 * 1280;
         const size_t headerSizeInBytes = numHeaderValues * sizeof(uint16_t);
         const size_t numFooterValues = numHeaderValues;
         const size_t footerSizeInBytes = numFooterValues * sizeof(uint16_t);
@@ -673,51 +670,41 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
         extraProperties["probe"]["diameter"] = 0.6;
         extraProperties["microscope"]["EX-LED power"] = 9000;
         extraProperties["microscope"]["Spatial downsample"] = 2;
-        extraProperties["microscope"]["FOV"]["width"] = 1280;
-        extraProperties["microscope"]["FOV"]["height"] = 800;
+        extraProperties["microscope"]["FOV"]["width"] = numPixels.getWidth();
+        extraProperties["microscope"]["FOV"]["height"] = numPixels.getHeight();
         const std::string extraPropertiesStr = extraProperties.dump();
 
-        // Actually write the frames with headers and footers to the file
+        // Write the frames with headers and footers to the file.
+        std::unique_ptr<uint16_t[]> buffer(new uint16_t[numHeaderValues + totalNumPixels + numFooterValues]);
         {
             isx::SpWritableMovie_t movie = isx::writeMosaicMovie(filePath, timingInfo, spacingInfo, dataType, true);
             for (isx::isize_t f = 0; f < numFrames; ++f)
             {
-                isx::SpVideoFrame_t frame = movie->makeVideoFrame(f, true);
-                REQUIRE(frame->getImage().getSpacingInfo() == paddedSpacingInfo);
-                uint16_t * pixels = frame->getPixelsAsU16();
-
-                std::memcpy(pixels, headers.at(f).data(), headerSizeInBytes);
-                std::memcpy(pixels + numHeaderValues, frames.at(f).data(), frameSizeInBytes);
-                std::memcpy(pixels + numHeaderValues + totalNumPixels, footers.at(f).data(), footerSizeInBytes);
-
-                movie->writeFrame(frame);
+                if (numPixels == isx::SizeInPixels_t(1280, 800))
+                {
+                    std::memcpy(buffer.get(), headers.at(f).data(), headerSizeInBytes);
+                    std::memcpy(buffer.get() + numHeaderValues, frames.at(f).data(), frameSizeInBytes);
+                    std::memcpy(buffer.get() + numHeaderValues + totalNumPixels, footers.at(f).data(), footerSizeInBytes);
+                    movie->writeFrameWithHeaderFooter(buffer.get());
+                }
+                else
+                {
+                    movie->writeFrameWithHeaderFooter(headers.at(f).data(), frames.at(f).data(), footers.at(f).data());
+                }
             }
             movie->setExtraProperties(extraProperties.dump());
             movie->closeForWriting();
         }
 
+        // Check we get the frame data, header, and footer back.
         const isx::SpMovie_t movie = isx::readMovie(filePath);
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
-            // First check that we get the frame without header and footer
-            // with a regular call to getFrame.
-            {
-                const isx::SpVideoFrame_t frame = movie->getFrame(f);
-                REQUIRE(frame->getImage().getSpacingInfo() == spacingInfo);
-                const uint16_t * pixels = frame->getPixelsAsU16();
-                REQUIRE(std::memcmp(pixels, frames.at(f).data(), frameSizeInBytes) == 0);
-            }
-
-            // Then check we can get frame with header and footer.
-            {
-                const isx::SpVideoFrame_t frame = movie->getFrameWithHeaderFooter(f);
-                REQUIRE(frame->getImage().getSpacingInfo() == paddedSpacingInfo);
-                const uint16_t * pixels = frame->getPixelsAsU16();
-
-                REQUIRE(std::memcmp(pixels, headers.at(f).data(), headerSizeInBytes) == 0);
-                REQUIRE(std::memcmp(pixels + numHeaderValues, frames.at(f).data(), frameSizeInBytes) == 0);
-                REQUIRE(std::memcmp(pixels + numHeaderValues + totalNumPixels, footers.at(f).data(), footerSizeInBytes) == 0);
-            }
+            const isx::SpVideoFrame_t frame = movie->getFrame(f);
+            REQUIRE(frame->getImage().getSpacingInfo() == spacingInfo);
+            REQUIRE(std::memcmp(frame->getPixelsAsU16(), frames.at(f).data(), frameSizeInBytes) == 0);
+            REQUIRE(movie->getFrameHeader(f) == headers.at(f));
+            REQUIRE(movie->getFrameFooter(f) == footers.at(f));
         }
 
         REQUIRE(movie->getOriginalSpacingInfo() == isx::SpacingInfo::getDefaultForNVista3());
@@ -739,43 +726,32 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
         REQUIRE(movie->getSpacingInfo() == expSi);
         REQUIRE(movie->getDataType() == isx::DataType::U16);
 
-        // First get the frames as normal (without the header or footer).
         const size_t width = expSi.getNumPixels().getWidth();
+
+        // Check frame 0 and its header.
         {
             const isx::SpVideoFrame_t frame = movie->getFrame(0);
             REQUIRE(frame->getImage().getSpacingInfo() == expSi);
             const uint16_t * pixels = frame->getPixelsAsU16();
             REQUIRE(pixels[0] == 365);
             REQUIRE(pixels[79 + 101*width] == 1247);
+
+            const std::vector<uint16_t> header = movie->getFrameHeader(0);
+            REQUIRE(header[0] == 160);
+            REQUIRE(header[52] == 2128);
         }
+
+        // Check frame 6 and its header.
         {
             const isx::SpVideoFrame_t frame = movie->getFrame(6);
             REQUIRE(frame->getImage().getSpacingInfo() == expSi);
             const uint16_t * pixels = frame->getPixelsAsU16();
             REQUIRE(pixels[0] == 361);
             REQUIRE(pixels[79 + 101*width] == 1283);
-        }
 
-        // Then check we can get frame with header and footer.
-        const size_t headerOffset = 2 * width;
-        const isx::SpacingInfo expSiWithHf = isx::SpacingInfo(isx::SizeInPixels_t(1280, 804));
-        {
-            const isx::SpVideoFrame_t frame = movie->getFrameWithHeaderFooter(0);
-            REQUIRE(frame->getImage().getSpacingInfo() == expSiWithHf);
-            const uint16_t * pixels = frame->getPixelsAsU16();
-            REQUIRE(pixels[0] == 160);
-            REQUIRE(pixels[52] == 2128);
-            REQUIRE(pixels[headerOffset] == 365);
-            REQUIRE(pixels[headerOffset + 79 + 101*width] == 1247);
-        }
-        {
-            const isx::SpVideoFrame_t frame = movie->getFrameWithHeaderFooter(6);
-            REQUIRE(frame->getImage().getSpacingInfo() == expSiWithHf);
-            const uint16_t * pixels = frame->getPixelsAsU16();
-            REQUIRE(pixels[0] == 160);
-            REQUIRE(pixels[52] == 2128);
-            REQUIRE(pixels[headerOffset] == 361);
-            REQUIRE(pixels[headerOffset + 79 + 101*width] == 1283);
+            const std::vector<uint16_t> header = movie->getFrameHeader(6);
+            REQUIRE(header[0] == 160);
+            REQUIRE(header[52] == 2128);
         }
 
         REQUIRE(movie->getOriginalSpacingInfo() == isx::SpacingInfo::getDefaultForNVista3());
@@ -798,7 +774,7 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core]")
     isx::removeDirectory(outputDirPath);
 }
 
-TEST_CASE("MosaicMovie-negative", "[core]")
+TEST_CASE("MosaicMovie-negative", "[core][mosaic_movie]")
 {
     isx::CoreInitialize();
 

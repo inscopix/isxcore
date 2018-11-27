@@ -79,16 +79,19 @@ public:
     /// Read a frame in the file by index.
     ///
     /// \param  inFrameNumber       The index of the frame.
-    /// \param  inWithHeaderFooter  If true and the frame has header/footer rows, read the frame with them,
-    ///                             otherwise, do not.
     /// \return                     The frame read from the file.
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If inFrameNumber is out of range.
-    SpVideoFrame_t readFrame(isize_t inFrameNumber, const bool inWithHeaderFooter = false);
+    SpVideoFrame_t readFrame(isize_t inFrameNumber);
 
     /// \param  inFrameNumber   The index of the frame.
-    /// \return                 The frame with the header and footer if it exists.
+    /// \return                 The frame header.
+    std::vector<uint16_t> readFrameHeader(const isize_t inFrameNumber);
+
+    /// \param  inFrameNumber   The index of the frame.
+    /// \return                 The frame footer.
+    std::vector<uint16_t> readFrameFooter(const isize_t inFrameNumber);
 
     /// Write a frame to the file.
     ///
@@ -100,6 +103,26 @@ public:
     ///
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void writeFrame(const SpVideoFrame_t & inVideoFrame);
+
+    /// Write a frame with a header and footer.
+    ///
+    /// \param  inHeader    The header data.
+    /// \param  inPixels    The pixel data.
+    /// \param  inFooter    The footer data.
+    ///
+    /// \throw  isx::ExceptionDataIO    If the frame data type does not match the movie data type.
+    /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
+    /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+    void writeFrameWithHeaderFooter(const uint16_t * inHeader, const uint16_t * inPixels, const uint16_t * inFooter);
+
+    /// Write a frame with a header and footer.
+    ///
+    /// \param  inBuffer    The header, pixel, and footer data all in one buffer.
+    ///
+    /// \throw  isx::ExceptionDataIO    If the frame data type does not match the movie data type.
+    /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
+    /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+    void writeFrameWithHeaderFooter(const uint16_t * inBuffer);
 
     /// \return     The name of the file.
     ///
@@ -126,9 +149,8 @@ public:
     DataType getDataType() const;
 
     /// \param  inIndex             The index of the frame to generate.
-    /// \param  inWithHeaderFooter  If true, create a frame a with header/footer rows.
     /// \return                     The frame associated with the given index.
-    SpVideoFrame_t makeVideoFrame(const isize_t inIndex, const bool inWithHeaderFooter = false) const;
+    SpVideoFrame_t makeVideoFrame(const isize_t inIndex) const;
 
     /// \param  inProperties    The extra properties formatted as a JSON string.
     ///
@@ -175,14 +197,11 @@ private:
     /// True if the frame bytes contain fixed size header and footer lines.
     bool m_hasFrameHeaderFooter = false;
 
-    /// The number of rows in the header.
-    const static size_t s_numHeaderRows = 2;
+    /// The number of values in the frame header. The same for the footer.
+    const static size_t s_numHeaderFooterValues = 2560;
 
-    /// The number of rows in the footer.
-    const static size_t s_numFooterRows = s_numHeaderRows;
-
-    /// The number of rows in the header and footer.
-    const static size_t s_numHeaderFooterRows = s_numHeaderRows + s_numFooterRows;
+    /// The size of the frame header in bytes. The same for the footer.
+    const static size_t s_headerFooterSizeInBytes = s_numHeaderFooterValues * sizeof(uint16_t);
 
     /// The extra properties to write in the JSON footer.
     json m_extraProperties = nullptr;
@@ -236,9 +255,9 @@ private:
     /// Seek to the location of a frame for reading.
     ///
     /// \param  inFrameNumber   The number of the frame to which to seek.
-    /// \param  inSkipHeader    If true, skips the frame header if it exists,
-    ///                         otherwise include the header.
-    void seekForReadFrame(isize_t inFrameNumber, const bool inSkipHeader);
+    /// \param  inSkipHeader    If true, skips the frame header, otherwise does not.
+    /// \param  inSkipFrame     If true, skips the frame, otherwise does not.
+    void seekForReadFrame(isize_t inFrameNumber, const bool inSkipHeader, const bool inSkipFrame);
 
     /// Flush the stream
     ///
@@ -249,6 +268,20 @@ private:
     /// intended to be used during data acquisition, when the client has 
     /// finished writing frame data. 
     void setTimingInfo(const TimingInfo & inTimingInfo);
+
+    /// Throw an exception is the file is closed for writing.
+    ///
+    void checkFileNotClosedForWriting() const;
+
+    /// Throw an exception if the data type is not the same as that of this movie.
+    ///
+    /// \param  inDataType  The data type to compare.
+    void checkDataType(const isx::DataType inDataType) const;
+
+    /// Throw an exception is the file has gone bad.
+    ///
+    /// \param  inMessage   The message to prepend to the file name.
+    void checkFileGood(const std::string & inMessage) const;
 };
 
 }
