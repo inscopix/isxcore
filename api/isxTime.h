@@ -172,6 +172,14 @@ private:
 
 }; // class
 
+/// Used to convert events' start, end, and period, to a number of samples.
+///
+/// \param  inStart     The start time of the samples.
+/// \param  inEnd       The end time of the samples.
+/// \param  inPeriod    The sample period.
+/// \return             The number of inferred samples.
+isize_t getNumSamplesFromTiming(const Time & inStart, const Time & inEnd, const DurationInSeconds & inPeriod);
+
 } // namespace
 
 #endif // ISX_TIME_H

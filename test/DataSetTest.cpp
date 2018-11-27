@@ -60,7 +60,7 @@ checkDataset1Metadata(
 
 } // namespace
 
-TEST_CASE("DataSet-DataSet", "[core]")
+TEST_CASE("DataSet-DataSet", "[core][dataset]")
 {
     isx::HistoricalDetails hd("mainTest", "");
     isx::HistoricalDetails hdd("derivedTest", "");
@@ -105,7 +105,7 @@ TEST_CASE("DataSet-DataSet", "[core]")
 
 }
 
-TEST_CASE("DataSet-setName", "[core]")
+TEST_CASE("DataSet-setName", "[core][dataset]")
 {
     isx::HistoricalDetails hd("mainTest", "");
     isx::DataSet dataSet("myDataSet", isx::DataSet::Type::MOVIE, "movie.isxd", hd);
@@ -118,7 +118,7 @@ TEST_CASE("DataSet-setName", "[core]")
     }
 }
 
-TEST_CASE("readDataSetType", "[core]")
+TEST_CASE("readDataSetType", "[core][dataset]")
 {
 
     std::string fileName = g_resources["unitTestDataPath"] + "/myDataSet.isxd";
@@ -146,7 +146,7 @@ TEST_CASE("readDataSetType", "[core]")
 
 }
 
-TEST_CASE("DataSet-toFromJsonString", "[core]")
+TEST_CASE("DataSet-toFromJsonString", "[core][dataset]")
 {
     isx::HistoricalDetails hd("mainTest", "");
     isx::HistoricalDetails hdd("derivedTest", "");
@@ -192,7 +192,7 @@ makeDeleteFilesFilePath(const std::string & inName)
 
 } // namespace
 
-TEST_CASE("DataSet-deleteFile", "[core]")
+TEST_CASE("DataSet-deleteFile", "[core][dataset]")
 {
     const isx::TimingInfo ti(isx::Time(), isx::DurationInSeconds(50, 1000), 4);
     const isx::SpacingInfo si(isx::SizeInPixels_t(2, 3));
@@ -231,7 +231,7 @@ convertMetadataToMap(const isx::DataSet::Metadata & inMetadata)
 
 } // namespace
 
-TEST_CASE("DataSet-getMetadata", "[core]")
+TEST_CASE("DataSet-getMetadata", "[core][dataset]")
 {
     isx::CoreInitialize();
 
