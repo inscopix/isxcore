@@ -22,41 +22,6 @@ MosaicMovie::MosaicMovie(const std::string & inFileName)
     : m_valid(false)
     , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
-    // TODO sweet : decide if we want all IO on the IO thread or if
-    // it's okay to read the header on the current thread.
-    // If we decide on the former, use this code.
-
-    //std::shared_ptr<MosaicMovieFile> file = std::make_shared<MosaicMovieFile>();
-    //Mutex mutex;
-    //ConditionVariable cv;
-    //mutex.lock("MosaicMovie read");
-    //IoQueue::instance()->enqueue(
-    //    IoQueue::IoTask(
-    //        [&file, &inFileName, &cv, &mutex]()
-    //        {
-    //            mutex.lock("MosaicMovieFile read initialize");
-    //            file->initialize(inFileName);
-    //            mutex.unlock();
-    //            cv.notifyOne();
-    //        }
-    //        ,
-    //        [](AsyncTaskStatus inStatus)
-    //        {
-    //            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
-    //            {
-    //                ISX_LOG_ERROR("An exception occurred while initializing a MosaicMovieFile for reading.");
-    //            }
-    //            else if (inStatus != AsyncTaskStatus::COMPLETE)
-    //            {
-    //                ISX_LOG_ERROR("An error occurred while initializing a MosaicMovieFile for reading.");
-    //            }
-    //        }
-    //    )
-    //);
-    //cv.wait(mutex);
-    //mutex.unlock();
-    //m_file = file;
-
     m_file = std::make_shared<MosaicMovieFile>(inFileName);
     m_valid = true;
 }
@@ -70,41 +35,6 @@ MosaicMovie::MosaicMovie(
     : m_valid(false)
     , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
-    // TODO sweet : decide if we want all IO on the IO thread or if
-    // it's okay to write the header on the current thread.
-    // If we decide on the former, use this code.
-
-    //std::shared_ptr<MosaicMovieFile> file = std::make_shared<MosaicMovieFile>();
-    //Mutex mutex;
-    //ConditionVariable cv;
-    //mutex.lock("MosaicMovie write");
-    //IoQueue::instance()->enqueue(
-    //    IoQueue::IoTask(
-    //        [&file, &inFileName, &inTimingInfo, &inSpacingInfo, &cv, &mutex]()
-    //        {
-    //            mutex.lock("MosaicMovieFile write initialize");
-    //            file->initialize(inFileName, inTimingInfo, inSpacingInfo);
-    //            mutex.unlock();
-    //            cv.notifyOne();
-    //        }
-    //        ,
-    //        [](AsyncTaskStatus inStatus)
-    //        {
-    //            if (inStatus == AsyncTaskStatus::ERROR_EXCEPTION)
-    //            {
-    //                ISX_LOG_ERROR("An exception occurred while initializing a MosaicMovieFile for writing.");
-    //            }
-    //            else if (inStatus != AsyncTaskStatus::COMPLETE)
-    //            {
-    //                ISX_LOG_ERROR("An error occurred while initializing a MosaicMovieFile for writing.");
-    //            }
-    //        }
-    //    )
-    //);
-    //cv.wait(mutex);
-    //mutex.unlock();
-    //m_file = file;
-
     m_file = std::make_shared<MosaicMovieFile>(inFileName, inTimingInfo, inSpacingInfo, inDataType, inHasFrameHeaderFooter);
     m_valid = true;
 }
@@ -153,6 +83,18 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
     m_ioTaskTracker->schedule(getFrameCB, inCallback);
 }
 
+std::vector<uint16_t>
+MosaicMovie::getFrameHeader(const size_t inFrameNumber)
+{
+    return m_file->readFrameHeader(inFrameNumber);
+}
+
+std::vector<uint16_t>
+MosaicMovie::getFrameFooter(const size_t inFrameNumber)
+{
+    return m_file->readFrameFooter(inFrameNumber);
+}
+
 void
 MosaicMovie::cancelPendingReads()
 {
@@ -171,32 +113,32 @@ MosaicMovie::writeFrame(const SpVideoFrame_t & inVideoFrame)
 
     // Get a new shared pointer to the file, so we can guarantee the write.
     std::shared_ptr<MosaicMovieFile> file = m_file;
-    Mutex mutex;
-    ConditionVariable cv;
-    mutex.lock("writeFrame");
-    auto writeIoTask = std::make_shared<IoTask>(
-        [file, inVideoFrame]()
-        {
-            file->writeFrame(inVideoFrame);
-        },
-        [&cv, &mutex](AsyncTaskStatus inStatus)
-        {
-            if (inStatus != AsyncTaskStatus::COMPLETE)
-            {
-                ISX_LOG_ERROR("An error occurred while writing a frame to a MosaicMovieFile.");
-            }
-            mutex.lock("writeFrame finished");  // will only be able to take lock when client reaches cv.waitForMs
-            mutex.unlock();
-            cv.notifyOne();
-        });
-    writeIoTask->schedule();
-    cv.wait(mutex);
-    mutex.unlock();
-
-    if(writeIoTask->getTaskStatus() == AsyncTaskStatus::ERROR_EXCEPTION)
+    writeAndWait([file, inVideoFrame]()
     {
-        std::rethrow_exception(writeIoTask->getExceptionPtr());
-    }
+        file->writeFrame(inVideoFrame);
+    }, "writeFrame");
+}
+
+void
+MosaicMovie::writeFrameWithHeaderFooter(const uint16_t * inBuffer)
+{
+    // Get a new shared pointer to the file, so we can guarantee the write.
+    std::shared_ptr<MosaicMovieFile> file = m_file;
+    writeAndWait([file, inBuffer]()
+    {
+        file->writeFrameWithHeaderFooter(inBuffer);
+    }, "writeFrameWithHeaderFooterTogether");
+}
+
+void
+MosaicMovie::writeFrameWithHeaderFooter(const uint16_t * inHeader, const uint16_t * inPixels, const uint16_t * inFooter)
+{
+    // Get a new shared pointer to the file, so we can guarantee the write.
+    std::shared_ptr<MosaicMovieFile> file = m_file;
+    writeAndWait([file, inHeader, inPixels, inFooter]()
+    {
+        file->writeFrameWithHeaderFooter(inHeader, inPixels, inFooter);
+    }, "writeFrameWithHeaderFooterSeparate");
 }
 
 void
@@ -206,9 +148,9 @@ MosaicMovie::closeForWriting(const TimingInfo & inTimingInfo)
 }
 
 SpVideoFrame_t
-MosaicMovie::makeVideoFrame(isize_t inIndex, const bool inWithHeaderFooter)
+MosaicMovie::makeVideoFrame(isize_t inIndex)
 {
-    return m_file->makeVideoFrame(inIndex, inWithHeaderFooter);
+    return m_file->makeVideoFrame(inIndex);
 }
 
 const isx::TimingInfo &
@@ -265,39 +207,32 @@ MosaicMovie::getOriginalSpacingInfo() const
     return m_file->getOriginalSpacingInfo();
 }
 
-SpVideoFrame_t
-MosaicMovie::getFrameWithHeaderFooter(const size_t inFrameNumber)
+void
+MosaicMovie::writeAndWait(std::function<void()> inCallback, const std::string & inName)
 {
-    std::weak_ptr<MosaicMovie> weakThis = shared_from_this();
     Mutex mutex;
     ConditionVariable cv;
-    mutex.lock("getFrameWithHeaderFooter");
-    AsyncTaskResult<SpVideoFrame_t> asyncTaskResult;
-
-    GetFrameCB_t getFrameCB = [weakThis, this, inFrameNumber]()
-    {
-        auto sharedThis = weakThis.lock();
-        if (sharedThis)
+    mutex.lock(inName);
+    auto writeIoTask = std::make_shared<IoTask>(
+        inCallback,
+        [&cv, &mutex, &inName](AsyncTaskStatus inStatus)
         {
-            return m_file->readFrame(inFrameNumber, true);
-        }
-        return SpVideoFrame_t();
-    };
-
-    MovieGetFrameCB_t asyncCB = [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
-    {
-        mutex.lock("getFrame async");
-        asyncTaskResult = inAsyncTaskResult;
-        mutex.unlock();
-        cv.notifyOne();
-    };
-
-    m_ioTaskTracker->schedule(getFrameCB, asyncCB);
-
+            if (inStatus != AsyncTaskStatus::COMPLETE)
+            {
+                ISX_LOG_ERROR("An error occurred while writing data to MosaicMovieFile.");
+            }
+            mutex.lock(inName + " finished");  // will only be able to take lock when client reaches cv.waitForMs
+            mutex.unlock();
+            cv.notifyOne();
+        });
+    writeIoTask->schedule();
     cv.wait(mutex);
     mutex.unlock();
 
-    return asyncTaskResult.get();
+    if (writeIoTask->getTaskStatus() == AsyncTaskStatus::ERROR_EXCEPTION)
+    {
+        std::rethrow_exception(writeIoTask->getExceptionPtr());
+    }
 }
 
 } // namespace isx

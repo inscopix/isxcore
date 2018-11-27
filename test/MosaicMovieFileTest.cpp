@@ -78,7 +78,7 @@ writeTestF32Movie(
 
 } // namespace
 
-TEST_CASE("MosaicMovieFileU16", "[core-internal]")
+TEST_CASE("MosaicMovieFileU16", "[core-internal][mosaic_movie_file]")
 {
     std::string fileName = g_resources["unitTestDataPath"] + "/movie.isxd";
 
@@ -204,7 +204,7 @@ TEST_CASE("MosaicMovieFileU16", "[core-internal]")
 
 }
 
-TEST_CASE("MosaicMovieFileF32", "[core-internal]")
+TEST_CASE("MosaicMovieFileF32", "[core-internal][mosaic_movie_file]")
 {
     std::string fileName = g_resources["unitTestDataPath"] + "/movie.isxd";
 
@@ -348,10 +348,7 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal]")
                 timingInfo.convertIndexToStartTime(f),
                 f);
             std::fill(frame->getPixelsAsF32(), frame->getPixelsAsF32() + numPixels, 3.14159265f);
-            ISX_REQUIRE_EXCEPTION(
-                movie.writeFrame(frame),
-                isx::ExceptionFileIO,
-                "Writing frame after file was closed for writing." + fileName);
+            ISX_REQUIRE_EXCEPTION(movie.writeFrame(frame), isx::ExceptionFileIO, "");
         }
     }
 }
