@@ -1,7 +1,7 @@
 #include "isxDispatchQueue.h"
 #include "isxDispatchQueueMain.h"
 #include "isxDispatchQueueDispatcher.h"
-#include <QApplication>
+#include <QCoreApplication>
 #include <QThreadPool>
 
 #include "isxAssert.h"
@@ -13,9 +13,9 @@ DispatchQueueMain::DispatchQueueMain()
 : m_dispatcher(new DispatchQueueDispatcher())
 {
     // if possible, verify that we're called on main thread
-    if (QApplication::instance())
+    if (QCoreApplication::instance())
     {
-        ISX_ASSERT(QApplication::instance()->thread() == QThread::currentThread());
+        ISX_ASSERT(QCoreApplication::instance()->thread() == QThread::currentThread());
     }
 }
 
@@ -24,7 +24,7 @@ DispatchQueueMain::dispatch(Task_t inTask)
 {
     emit m_dispatcher->dispatch(inTask);
 }
-    
+
 void
 DispatchQueueMain::dispatch(void * inContext, ContextTask_t inContextTask)
 {

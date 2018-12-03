@@ -185,7 +185,19 @@ Time::getAsIso8601String() const
     auto qdt = QDateTime::fromMSecsSinceEpoch(msInt);
     qdt.setTimeSpec(Qt::OffsetFromUTC);
     qdt.setUtcOffset(m_utcOffset);
-    auto qs = qdt.toString(Qt::ISODateWithMs);
+    QString qs;
+#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
+    auto qsNoMs = qdt.toString(Qt::ISODate);
+    // The first 19 characters of Qt::ISODate and Qt::ISODateWithMs are the same
+    // as they only include the date and time up to second precision.
+    // In older versions of Qt where Qt::ISODateWithMs is not available we
+    // manually add the millisecond part of the string before the rest of it
+    // (i.e. the time zone spec).
+    const int tzPos = 19;
+    qs = QString("%1.%2%3").arg(qsNoMs.left(tzPos)).arg(msInt % 1000, 3, 10, QChar('0')).arg(qsNoMs.mid(tzPos, -1));
+#else
+    qs = qdt.toString(Qt::ISODateWithMs);
+#endif
 
     return qs.toStdString();
 }
