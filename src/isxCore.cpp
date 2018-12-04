@@ -192,7 +192,11 @@ namespace isx
     std::string
     getHostName()
     {
+#if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
+        return "Unknown";
+#else
         return QSysInfo::machineHostName().toStdString();
+#endif
     }
 
     std::vector<std::string>
