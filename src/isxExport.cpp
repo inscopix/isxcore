@@ -15,6 +15,8 @@
 #include <iomanip>
 #include <limits>
 #include <cmath>
+#include "QImage"
+#include "QImageWriter"
 
 #if ISX_OS_MACOS
 #include <sys/types.h>
@@ -259,6 +261,20 @@ toTiff(const std::string & inFileName, const Image * inImage)
 {
     TiffExporter out(inFileName);
     out.toTiffOut(inImage);
+}
+
+void
+rgb888ToPng(
+        const std::string & inFileName,
+        const uint8_t * inData,
+        const int inWidth,
+        const int inHeight,
+        const int inRowBytes)
+{
+    QImage image(inData, inWidth, inHeight, inRowBytes, QImage::Format_RGB888);
+    QImageWriter writer(QString::fromStdString(inFileName));
+    writer.setFormat("PNG");
+    writer.write(image);
 }
 
 } // namespace isx

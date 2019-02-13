@@ -93,6 +93,20 @@ bool toTiff(
         const isize_t inMaxFrameIndex,
         AsyncCheckInCB_t & inCheckInCB);
 
+/// Export an RGB image to PNG.
+///
+/// \param  inFileName  The output file path.
+/// \param  inData      The raw image data.
+/// \param  inWidth     The width of the image.
+/// \param  inHeight    The height of the image.
+/// \param  inRowBytes  The number of bytes in a row/line of the image.
+void rgb888ToPng(
+        const std::string & inFileName,
+        const uint8_t * inData,
+        const int inWidth,
+        const int inHeight,
+        const int inRowBytes);
+
 } // namespace isx
 
 #endif // ISX_EXPORT_H
