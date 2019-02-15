@@ -268,27 +268,18 @@ void
 toPng(const std::string & inFileName, const SpImage_t & inImage)
 {
     ISX_ASSERT(inImage->getDataType() == DataType::U8);
+    const isize_t numChannels = inImage->getNumChannels();
+    ISX_ASSERT((numChannels == 1) || (numChannels == 3));
 
-    QImage outImage = QImage(reinterpret_cast<const uchar*>(inImage->getPixels()), (int)inImage->getWidth(), (int)inImage->getHeight(), (int)inImage->getRowBytes(), QImage::Format_Grayscale8);
+    QImage::Format format = (numChannels == 3) ? QImage::Format_RGB888 : QImage::Format_Grayscale8;
+
+    QImage outImage = QImage(reinterpret_cast<const uchar*>(inImage->getPixels()),
+            int(inImage->getWidth()), int(inImage->getHeight()), int(inImage->getRowBytes()), format);
 
     QImageWriter writer(inFileName.c_str());
     writer.setFormat("PNG");
 
     writer.write(outImage);
-}
-
-void
-rgb888ToPng(
-        const std::string & inFileName,
-        const uint8_t * inData,
-        const int inWidth,
-        const int inHeight,
-        const int inRowBytes)
-{
-    QImage image(inData, inWidth, inHeight, inRowBytes, QImage::Format_RGB888);
-    QImageWriter writer(QString::fromStdString(inFileName));
-    writer.setFormat("PNG");
-    writer.write(image);
 }
 
 } // namespace isx
