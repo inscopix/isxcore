@@ -93,6 +93,11 @@ bool toTiff(
         const isize_t inMaxFrameIndex,
         AsyncCheckInCB_t & inCheckInCB);
 
+/// Export an image to PNG.
+/// \param inFileName   The filename for the output file.
+/// \param inImage      The image to export.
+void toPng(const std::string & inFileName, const SpImage_t & inImage);
+
 /// Export an RGB image to PNG.
 ///
 /// \param  inFileName  The output file path.
