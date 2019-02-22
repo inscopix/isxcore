@@ -15,6 +15,9 @@
 #include <iomanip>
 #include <limits>
 #include <cmath>
+#include <qglobal.h>
+#include "QImage"
+#include "QImageWriter"
 
 #if ISX_OS_MACOS
 #include <sys/types.h>
@@ -259,6 +262,24 @@ toTiff(const std::string & inFileName, const Image * inImage)
 {
     TiffExporter out(inFileName);
     out.toTiffOut(inImage);
+}
+
+void
+toPng(const std::string & inFileName, const SpImage_t & inImage)
+{
+    ISX_ASSERT(inImage->getDataType() == DataType::U8);
+    const isize_t numChannels = inImage->getNumChannels();
+    ISX_ASSERT((numChannels == 1) || (numChannels == 3));
+
+    QImage::Format format = (numChannels == 3) ? QImage::Format_RGB888 : QImage::Format_Grayscale8;
+
+    QImage outImage = QImage(reinterpret_cast<const uchar*>(inImage->getPixels()),
+            int(inImage->getWidth()), int(inImage->getHeight()), int(inImage->getRowBytes()), format);
+
+    QImageWriter writer(inFileName.c_str());
+    writer.setFormat("PNG");
+
+    writer.write(outImage);
 }
 
 } // namespace isx

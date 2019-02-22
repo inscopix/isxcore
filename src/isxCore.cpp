@@ -266,4 +266,10 @@ namespace isx
         return getDirName(inFilePath) + "/" + getBaseName(inFilePath) + inSuffix;
     }
 
+    std::string
+    toLower(const std::string & inStr)
+    {
+        return QString::fromStdString(inStr).toLower().toStdString();
+    }
+
 } // namespace isx

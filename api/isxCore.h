@@ -115,6 +115,10 @@ namespace isx
     /// \param  inSuffix    The suffix to append to the file after the base name.
     std::string makeOutputFilePath(const std::string & inFilePath, const std::string & inSuffix);
 
+    /// \param  inStr   The string to convert.
+    /// \return         The string with lowercase characters only.
+    std::string toLower(const std::string & inStr);
+
 } // namespace isx
 
 #endif // def ISX_CORE_H
