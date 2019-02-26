@@ -50,6 +50,7 @@ public:
     /// \param  inTimingInfo    The timing information of the movie.
     /// \param  inSpacingInfo   The spacing information of the movie.
     /// \param  inDataType      The pixel value data type.
+    /// \param  inHasFrameHeaderFooter  True if the frames will contain frame header/footer lines.
     ///
     /// \throw  isx::ExceptionFileIO    If writing the movie file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the movie data fails.
@@ -57,7 +58,7 @@ public:
                 const TimingInfo & inTimingInfo,
                 const SpacingInfo & inSpacingInfo,
                 DataType inDataType,
-                const bool inWriteFrameTimeStamps = false);
+                const bool inHasFrameHeaderFooter = false);
 
     /// Default destructor
     ///
@@ -166,6 +167,13 @@ public:
     ///
     SpacingInfo
     getOriginalSpacingInfo() const;
+
+    /// Read the timestamp associated with a frame on the calling thread.
+    ///
+    /// \param  inIndex     The index of a frame in this movie.
+    /// \return             The timestamp associated with the given frame,
+    ///                     or 0 if it does not have one.
+    uint64_t readFrameTimestamp(const isize_t inIndex);
 
 private:
     /// True if the movie file is valid, false otherwise.
@@ -282,6 +290,10 @@ private:
     ///
     /// \param  inMessage   The message to prepend to the file name.
     void checkFileGood(const std::string & inMessage) const;
+
+    /// \return     True if this movie has a specific timestamp (or TSC) for each frame,
+    ///             false otherwise.
+    bool hasFrameSpecificTimestamps() const;
 };
 
 }

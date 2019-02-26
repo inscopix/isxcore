@@ -6,6 +6,15 @@
 
 #include <cstring>
 
+#include <QVersionNumber>
+
+#define ISX_DEBUG_FRAME_TIME 0
+#if ISX_DEBUG_FRAME_TIME
+#define ISX_LOG_DEBUG_FRAME_TIME(...) ISX_LOG_DEBUG(__VA_ARGS__)
+#else
+#define ISX_LOG_DEBUG_FRAME_TIME(...)
+#endif
+
 namespace isx
 {
 
@@ -480,6 +489,77 @@ MosaicMovieFile::checkFileGood(const std::string & inMessage) const
     {
         ISX_THROW(ExceptionFileIO, inMessage + ": " + m_fileName);
     }
+}
+
+uint64_t
+MosaicMovieFile::readFrameTimestamp(const isize_t inIndex)
+{
+    const TimingInfo & ti = getTimingInfo();
+
+    if (hasFrameSpecificTimestamps() && ti.isIndexValid(inIndex))
+    {
+        // The first pixel of the header should evaluate to 0x0A0 according
+        // to the sensor spec, so check that in debug mode for sanity.
+#ifndef NDEBUG
+        seekForReadFrame(ti.timeIdxToRecordedIdx(inIndex), false, false);
+        uint16_t sanityCheck = 0;
+        m_file.read(reinterpret_cast<char *>(&sanityCheck), sizeof(sanityCheck));
+        ISX_ASSERT(sanityCheck == 0x0A0);
+#endif
+
+        // The TSC bytes are spread across the last 8 pixels of the first line.
+        // See sensor spec for more details.
+        constexpr size_t tscOffset = 1272 * sizeof(uint16_t);
+        std::array<uint16_t, 8> tscPixels;
+
+        // We convert them to 4 roomy 64-bit components so that they can shifted and stitched
+        // together into the final 64-bit TSC.
+        std::array<uint64_t, 4> tscComps;
+
+        seekForReadFrame(ti.timeIdxToRecordedIdx(inIndex), false, false);
+        m_file.seekg(tscOffset, m_file.cur);
+        ISX_LOG_DEBUG_FRAME_TIME("Reading TSC bytes from file location ", m_file.tellg());
+        m_file.read(reinterpret_cast<char *>(&(tscPixels[0])), sizeof(tscPixels));
+        if (!m_file.good())
+        {
+            ISX_THROW(ExceptionFileIO, "Error reading TSC ", inIndex);
+        }
+
+        // Deal with the 16bit->12bit->16bit encoding from register->sensor->file.
+        for (size_t j = 0; j < tscComps.size(); ++j)
+        {
+            ISX_LOG_DEBUG_FRAME_TIME("Read TSC pixels ", 2*j, ", ", 2*j + 1, ": ", tscPixels[2*j], ", ", tscPixels[2*j + 1]);
+            tscComps[j] = uint64_t((tscPixels[2*j + 1] << 4) | (tscPixels[2*j] >> 4));
+            ISX_LOG_DEBUG_FRAME_TIME("Recovered TSC comp ", j, ": ", tscComps[j]);
+        }
+
+        // Shift and stitch the 16-bit components of the 64-bit timestamp together.
+        const uint64_t tsc = (tscComps[3] << 48) | (tscComps[2] << 32) | (tscComps[1] << 16) | tscComps[0];
+        ISX_LOG_DEBUG_FRAME_TIME("Recovered TSC ", tsc);
+        return tsc;
+    }
+
+    return 0;
+}
+
+bool
+MosaicMovieFile::hasFrameSpecificTimestamps() const
+{
+    bool hasThem = false;
+    if ((m_extraProperties != nullptr) && m_hasFrameHeaderFooter)
+    {
+        if (m_extraProperties.find("producer") != m_extraProperties.end())
+        {
+            const json & producer = m_extraProperties.at("producer");
+            if (producer.find("versionBE") != producer.end())
+            {
+                const std::string versionStr = producer.at("versionBE");
+                const auto version = QVersionNumber::fromString(versionStr.c_str());
+                hasThem = version >= QVersionNumber(1, 1, 1);
+            }
+        }
+    }
+    return hasThem;
 }
 
 } // namespace isx

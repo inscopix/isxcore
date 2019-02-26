@@ -123,6 +123,13 @@ public:
     virtual
     SpacingInfo
     getOriginalSpacingInfo() const;
+
+    /// \param  inIndex     The index of a frame in this movie.
+    /// \return             The timestamp associated with the given frame,
+    ///                     or 0 if it does not have one.
+    virtual
+    uint64_t
+    getFrameTimestamp(const isize_t inIndex);
 };
 
 } // namespace isx

@@ -235,4 +235,10 @@ MosaicMovie::writeAndWait(std::function<void()> inCallback, const std::string & 
     }
 }
 
+uint64_t
+MosaicMovie::getFrameTimestamp(const isize_t inIndex)
+{
+    return m_file->readFrameTimestamp(inIndex);
+}
+
 } // namespace isx

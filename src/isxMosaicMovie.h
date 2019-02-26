@@ -96,8 +96,9 @@ public:
 
     std::string getExtraProperties() const override;
 
-    SpacingInfo
-    getOriginalSpacingInfo() const override;
+    SpacingInfo getOriginalSpacingInfo() const override;
+
+    uint64_t getFrameTimestamp(const isize_t inIndex) override;
 
 private:
 
