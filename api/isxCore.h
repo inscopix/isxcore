@@ -119,6 +119,20 @@ namespace isx
     /// \return         The string with lowercase characters only.
     std::string toLower(const std::string & inStr);
 
+    /// Check if a version string is greater than some predefined version numbers.
+    ///
+    /// \param  inVersion   The version to check of the form "<major>.<minor>.<patch>-<suffix>".
+    /// \param  inMajor     The major version number with whcih to compare.
+    /// \param  inMinor     The minor version number with which to compare.
+    /// \param  inPatch     The patch version number with which to compare.
+    /// \return             True if the given version string is greater than or equal to the
+    ///                     given version major, minor, and patch version numbers.
+    bool versionAtLeast(
+            const std::string & inVersion,
+            const size_t inMajor,
+            const size_t inMinor = 0,
+            const size_t inPatch = 0);
+
 } // namespace isx
 
 #endif // def ISX_CORE_H

@@ -7,6 +7,9 @@
 #include "isxPathUtils.h"
 
 #include <QString>
+#include <QStringList>
+
+#include <algorithm>
 
 extern "C"
 {
@@ -270,6 +273,63 @@ namespace isx
     toLower(const std::string & inStr)
     {
         return QString::fromStdString(inStr).toLower().toStdString();
+    }
+
+    bool versionAtLeast(
+            const std::string & inVersion,
+            const size_t inMajor,
+            const size_t inMinor,
+            const size_t inPatch)
+    {
+        // This implementation cannot use QVersionNumber right now, because it
+        // was introduced in Qt 5.6, but the MATLAB API is built against Qt 5.5.
+        const QString version = QString::fromStdString(inVersion);
+        QStringList versionParts = version.split('-');
+        if (versionParts.empty())
+        {
+            ISX_LOG_WARNING("Failed to parse version ", inVersion);
+            return false;
+        }
+
+        versionParts = versionParts[0].split('.');
+        if (versionParts.empty())
+        {
+            ISX_LOG_WARNING("Failed to parse version ", inVersion);
+            return false;
+        }
+
+        std::array<size_t, 3> versionNumbers = {0, 0, 0};
+        for (int i = 0; i < std::min(int(versionNumbers.size()), versionParts.size()); ++i)
+        {
+            bool ok = true;
+            versionNumbers[i] = size_t(versionParts[i].toInt(&ok));
+            if (!ok)
+            {
+                ISX_LOG_WARNING("Failed to parse version ", inVersion);
+                return false;
+            }
+        }
+
+        const size_t major = versionNumbers[0];
+        if (major < inMajor)
+        {
+            return false;
+        }
+        else if (major == inMajor)
+        {
+            const size_t minor = versionNumbers[1];
+            if (minor < inMinor)
+            {
+                return false;
+            }
+            else if (minor == inMinor)
+            {
+                const size_t patch = versionNumbers[2];
+                return patch < inPatch;
+            }
+        }
+
+        return true;
     }
 
 } // namespace isx

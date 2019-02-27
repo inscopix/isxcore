@@ -1,12 +1,11 @@
 #include "isxMosaicMovieFile.h"
 #include "isxException.h"
 #include "isxStopWatch.h"
+#include "isxCore.h"
 
 #include <sys/stat.h>
 
 #include <cstring>
-
-#include <QVersionNumber>
 
 #define ISX_DEBUG_FRAME_TIME 0
 #if ISX_DEBUG_FRAME_TIME
@@ -545,21 +544,19 @@ MosaicMovieFile::readFrameTimestamp(const isize_t inIndex)
 bool
 MosaicMovieFile::hasFrameSpecificTimestamps() const
 {
-    bool hasThem = false;
     if ((m_extraProperties != nullptr) && m_hasFrameHeaderFooter)
     {
-        if (m_extraProperties.find("producer") != m_extraProperties.end())
+        const auto producer = m_extraProperties.find("producer");
+        if (producer != m_extraProperties.end())
         {
-            const json & producer = m_extraProperties.at("producer");
-            if (producer.find("versionBE") != producer.end())
+            const auto version = producer->find("versionBE");
+            if (version != producer->end())
             {
-                const std::string versionStr = producer.at("versionBE");
-                const auto version = QVersionNumber::fromString(versionStr.c_str());
-                hasThem = version >= QVersionNumber(1, 1, 1);
+                return versionAtLeast(version->get<std::string>(), 1, 1, 1);
             }
         }
     }
-    return hasThem;
+    return false;
 }
 
 } // namespace isx
