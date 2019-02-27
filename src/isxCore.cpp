@@ -10,6 +10,7 @@
 #include <QStringList>
 
 #include <algorithm>
+#include <array>
 
 extern "C"
 {
@@ -298,7 +299,7 @@ namespace isx
             return false;
         }
 
-        std::array<size_t, 3> versionNumbers = {0, 0, 0};
+        std::array<size_t, 3> versionNumbers = {{0, 0, 0}};
         for (int i = 0; i < std::min(int(versionNumbers.size()), versionParts.size()); ++i)
         {
             bool ok = true;
@@ -311,22 +312,22 @@ namespace isx
         }
 
         const size_t major = versionNumbers[0];
-        if (major < inMajor)
-        {
-            return false;
-        }
-        else if (major == inMajor)
+        if (major == inMajor)
         {
             const size_t minor = versionNumbers[1];
-            if (minor < inMinor)
-            {
-                return false;
-            }
-            else if (minor == inMinor)
+            if (minor == inMinor)
             {
                 const size_t patch = versionNumbers[2];
-                return patch < inPatch;
+                return patch >= inPatch;
             }
+            else
+            {
+                return minor > inMinor;
+            }
+        }
+        else
+        {
+            return major > inMajor;
         }
 
         return true;
