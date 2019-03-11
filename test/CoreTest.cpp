@@ -21,26 +21,26 @@ TEST_CASE("versionAtLeast", "[core]")
 {
     SECTION("2.1.1 >= 1.1.1")
     {
-        REQUIRE(isx::versionAtLeast("2.1.1-badface", 1, 1, 1));
+        REQUIRE(isx::versionAtLeast("2.1.1-aabbccd", 1, 1, 1));
     }
 
     SECTION("1.2.1 >= 1.1.1")
     {
-        REQUIRE(isx::versionAtLeast("1.2.1-badface", 1, 1, 1));
+        REQUIRE(isx::versionAtLeast("1.2.1-aabbccd", 1, 1, 1));
     }
 
     SECTION("1.1.2 >= 1.1.1")
     {
-        REQUIRE(isx::versionAtLeast("1.1.2-badface", 1, 1, 1));
+        REQUIRE(isx::versionAtLeast("1.1.2-aabbccd", 1, 1, 1));
     }
 
     SECTION("1.1.1 >= 1.1.1")
     {
-        REQUIRE(isx::versionAtLeast("1.1.1-badface", 1, 1, 1));
+        REQUIRE(isx::versionAtLeast("1.1.1-aabbccd", 1, 1, 1));
     }
 
     SECTION("1.1.0 >= 1.1.1")
     {
-        REQUIRE(!isx::versionAtLeast("1.1.0-badface", 1, 1, 1));
+        REQUIRE(!isx::versionAtLeast("1.1.0-aabbccd", 1, 1, 1));
     }
 }
