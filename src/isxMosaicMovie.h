@@ -98,6 +98,8 @@ public:
 
     SpacingInfo getOriginalSpacingInfo() const override;
 
+    bool hasFrameTimestamps() const override;
+
     uint64_t getFrameTimestamp(const isize_t inIndex) override;
 
 private:

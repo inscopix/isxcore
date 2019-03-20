@@ -235,6 +235,12 @@ MosaicMovie::writeAndWait(std::function<void()> inCallback, const std::string & 
     }
 }
 
+bool
+MosaicMovie::hasFrameTimestamps() const
+{
+    return m_file->hasFrameTimestamps();
+}
+
 uint64_t
 MosaicMovie::getFrameTimestamp(const isize_t inIndex)
 {

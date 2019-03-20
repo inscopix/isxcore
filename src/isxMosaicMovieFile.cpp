@@ -495,7 +495,7 @@ MosaicMovieFile::readFrameTimestamp(const isize_t inIndex)
 {
     const TimingInfo & ti = getTimingInfo();
 
-    if (hasFrameSpecificTimestamps() && ti.isIndexValid(inIndex))
+    if (hasFrameTimestamps() && ti.isIndexValid(inIndex))
     {
         // The first pixel of the header should evaluate to 0x0A0 according
         // to the sensor spec, so check that in debug mode for sanity.
@@ -542,14 +542,14 @@ MosaicMovieFile::readFrameTimestamp(const isize_t inIndex)
 }
 
 bool
-MosaicMovieFile::hasFrameSpecificTimestamps() const
+MosaicMovieFile::hasFrameTimestamps() const
 {
     if ((m_extraProperties != nullptr) && m_hasFrameHeaderFooter)
     {
         const auto producer = m_extraProperties.find("producer");
         if (producer != m_extraProperties.end())
         {
-            const auto version = producer->find("versionBE");
+            const auto version = producer->find("version");
             if (version != producer->end())
             {
                 return versionAtLeast(version->get<std::string>(), 1, 1, 1);

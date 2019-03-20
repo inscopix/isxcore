@@ -168,6 +168,10 @@ public:
     SpacingInfo
     getOriginalSpacingInfo() const;
 
+    /// \return     True if the movie has specific timestamp (e.g. TSC) for each frame,
+    ///             false otherwise.
+    bool hasFrameTimestamps() const;
+
     /// Read the timestamp associated with a frame on the calling thread.
     ///
     /// \param  inIndex     The index of a frame in this movie.
@@ -290,11 +294,8 @@ private:
     ///
     /// \param  inMessage   The message to prepend to the file name.
     void checkFileGood(const std::string & inMessage) const;
-
-    /// \return     True if this movie has a specific timestamp (or TSC) for each frame,
-    ///             false otherwise.
-    bool hasFrameSpecificTimestamps() const;
 };
 
-}
+} // namespace isx
+
 #endif // ISX_MOSAIC_MOVIE_FILE_H
