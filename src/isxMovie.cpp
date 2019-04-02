@@ -27,4 +27,17 @@ Movie::getOriginalSpacingInfo() const
     return SpacingInfo::getDefault();
 }
 
+bool
+Movie::hasFrameTimestamps() const
+{
+    return false;
+}
+
+uint64_t
+Movie::getFrameTimestamp(const isize_t inIndex)
+{
+    (void)inIndex;
+    return 0;
+}
+
 } // namespace isx
