@@ -139,14 +139,6 @@ bool isNVistaImagingFileExtension(const std::string & inFileName);
 /// \return                 True if filename has a TIF extension.
 bool isTiffFileExtension(const std::string & inFileName);
 
-/// Determine if all frames from a single plane movie file have the same efocus as provided.
-///
-/// \param  inFileName      The filename to check.
-/// \param  inEfocus        The efocus to compare with.
-/// \return                 True if filename has the same efocus as provided in all its frames.
-bool
-verifyDeInterleavedMovie(const std::string & inFileName, uint16_t inEfocus);
-
 } // namespace isx
 
 #endif // ifndef ISX_MOVIE_FACTORY_H

@@ -5,7 +5,6 @@
 #include "isxMovieSeries.h"
 #include "isxRecording.h"
 #include "isxPathUtils.h"
-#include "modules/algo/api/isxVolumetricImaging.h"
 
 #include <ctype.h>
 #include <algorithm>
@@ -106,30 +105,6 @@ isTiffFileExtension(const std::string & inFileName)
     auto e = isx::getExtension(inFileName);
     std::transform(e.begin(), e.end(), e.begin(), ::tolower);
     return (e == "tif") || (e == "tiff");
-}
-
-bool
-verifyDeInterleavedMovie(const std::string & inFileName, uint16_t inEfocus)
-{
-    SpMovie_t singlePlaneMovie = readMosaicMovie(inFileName);
-    ISX_LOG_DEBUG("Input efocus=", inEfocus);
-    const isx::TimingInfo srcTimingInfo = singlePlaneMovie->getTimingInfo();
-    const isize_t numFrames = srcTimingInfo.getNumTimes();
-    for (isize_t f = 0; f < numFrames; ++f)
-    {
-        if (srcTimingInfo.isIndexValid(f))
-        {
-            const std::vector<uint16_t> header = singlePlaneMovie->getFrameHeader(f);
-            const uint16_t efocusForFrame = isx::getEfocusFromHeader(header);
-            if (efocusForFrame != inEfocus)
-            {
-                ISX_LOG_ERROR("Movie frame=", f, " efocus=", efocusForFrame, " != ", inEfocus);
-                return false;
-            }
-        }
-    }
-    ISX_LOG_DEBUG("All frames in the movie ", inFileName, " has been verified to have efocus=", inEfocus);
-    return true;
 }
 
 } // namespace isx
