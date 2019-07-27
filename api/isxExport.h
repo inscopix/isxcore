@@ -43,6 +43,24 @@ bool writeLogicalTraces(
         const Time & inBaseTime,
         AsyncCheckInCB_t inCheckInCB = [](float){return false;});
 
+/// Write logical traces with names to an output stream, which is used when
+/// exporting logical IMU traces and events.
+///
+/// \param  inStream        The stream to which to append.
+/// \param  inTraces        Outer dimension corresponds to number of named traces,
+///                         inner dimension to number of segments.
+/// \param  inNames         The names of the traces.
+/// \param  inBaseTime      The 0 time, with which to write relative to.
+/// \param  inCheckInCB     Check-in callback function that is periodically invoked
+///                         with progress and to tell algo whether to cancel / abort.
+/// \return                 True if cancelled.
+bool writeIMULogicalTraces(
+    std::ofstream & inStream,
+    const std::vector<std::vector<std::vector<SpLogicalTrace_t>>> & inTraces,
+    const std::vector<std::vector<std::string>> & inNames,
+    const Time & inBaseTime,
+    AsyncCheckInCB_t inCheckInCB = [](float){return false;});
+
 /// Write regular traces with names to an output stream, which is used when
 /// exporting analog GPIO and cellset traces.
 ///

@@ -29,6 +29,69 @@
 namespace isx {
 
 bool
+writeIMULogicalTraces(
+    std::ofstream & inStream,
+    const std::vector<std::vector<std::vector<SpLogicalTrace_t>>> & inTraces,
+    const std::vector<std::vector<std::string>> & inNames,
+    const Time & inBaseTime,
+    AsyncCheckInCB_t inCheckInCB)
+{
+    const size_t numSections = inTraces.size();
+    ISX_ASSERT(numSections > 0);
+
+    size_t numTraces = 0;
+    for (isize_t s = 0; s < numSections; ++s)
+    {
+        numTraces += inTraces[s].size();
+    }
+    ISX_ASSERT(numTraces > 0);
+    ISX_ASSERT(inNames.size() == inTraces.size());
+//    const size_t numSegments = inTraces.front().size();
+//    ISX_ASSERT(numSegments > 0);
+
+    const int32_t maxDecimalsForDouble = std::numeric_limits<double>::digits10 + 1;
+
+    for (isize_t sec = 0; sec < numSections; ++sec)
+    {
+        // Section header
+        inStream << "Time (s)";
+        const std::vector<std::string> & sectionNames = inNames[sec];
+        const size_t numSectionNames = sectionNames.size();
+        for (const std::string & name : sectionNames)
+        {
+            inStream << ", " << name;
+        }
+        inStream << std::endl;
+
+        // Section content
+        const std::vector<std::vector<SpLogicalTrace_t>> & sectionTraces = inTraces[sec];
+        const size_t numSectionTraces = sectionTraces.size();
+        const size_t numSectionSegments = sectionTraces.front().size();
+        ISX_ASSERT(numSectionTraces > 0);
+        ISX_ASSERT(numSectionNames == numSectionTraces);
+        ISX_ASSERT(numSectionSegments > 0);
+
+        for (isize_t seg = 0; seg < numSectionSegments; ++seg)
+        {
+            for (auto & tv : sectionTraces[0][seg]->getValues())
+            {
+                inStream << std::setprecision(maxDecimalsForDouble) << (tv.first - inBaseTime).toDouble();
+                for (isize_t t = 0; t < numSectionTraces; ++t)
+                {
+                    inStream << ", " << sectionTraces[t][seg]->getValues().at(tv.first);
+                }
+                inStream << std::endl;
+            }
+        }
+
+        // Section footer
+        inStream << std::endl;
+    }
+
+    return false;
+}
+
+bool
 writeLogicalTraces(
         std::ofstream & inStream,
         const std::vector<std::vector<SpLogicalTrace_t>> & inTraces,

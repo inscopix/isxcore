@@ -39,7 +39,8 @@ public:
         GPIO, 
 		IMAGE,
         EVENTS,
-        METRICS
+        METRICS,
+        IMU
     };
 
     // Property names as used in the property map

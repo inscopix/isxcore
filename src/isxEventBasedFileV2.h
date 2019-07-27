@@ -120,6 +120,8 @@ public:
 
     void setExtraProperties(const std::string & inProperties) override;
 
+    void setStep(bool smallStep);
+
 private:
 
     /// Reads the file footer and initializes this object with that information
@@ -171,6 +173,8 @@ private:
 
     bool                            m_openForWrite = false;
     bool                            m_closedForWriting = false;
+
+    bool                            m_smallStep = false;
 
     EventMetrics_t                  m_traceMetrics;
 
