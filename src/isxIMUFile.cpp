@@ -69,15 +69,15 @@ IMUFile::parse()
     m_file.read((char *)&header, sizeof(header));
     ISX_LOG_DEBUG("header read");
 
-    float progress = 0.f;
+    size_t progress = 0;
     m_file.seekg(0, std::fstream::end);
     const double progressMultiplier = 100.0 / double(m_file.tellg());
 
     // TODO: use template
     // accelerometer
-    AccPayload accPkts[header.accCount];
+    auto accPkts = new AccPayload[header.accCount];
     m_file.seekg(header.accOffset, std::fstream::beg);
-    ISX_ASSERT(header.accSize == sizeof(accPkts));
+    ISX_ASSERT(header.accSize == sizeof(AccPayload) * header.accCount);
     double accAvgStep = s_accOriRate;
     for (isize_t i = 0; i < header.accCount; ++i)
     {
@@ -108,9 +108,9 @@ IMUFile::parse()
     ISX_LOG_DEBUG("All acc read: ", header.accCount);
 
     // magnetometer
-    MagPayload magPkts[header.magCount];
+    auto magPkts = new MagPayload[header.magCount];
     m_file.seekg(header.magOffset, std::fstream::beg);
-    ISX_ASSERT(header.magSize == sizeof(magPkts));
+    ISX_ASSERT(header.magSize == sizeof(MagPayload) * header.magCount);
     double magAvgStep = s_accOriRate * 20;
     for (isize_t i = 0; i < header.magCount; ++i)
     {
@@ -140,9 +140,9 @@ IMUFile::parse()
     ISX_LOG_DEBUG("All mag read: ", header.magCount);
 
     // orientation
-    OriPayload oriPkts[header.oriCount];
+    auto oriPkts = new OriPayload[header.oriCount];
     m_file.seekg(header.oriOffset, std::fstream::beg);
-    ISX_ASSERT(header.oriSize == sizeof(oriPkts));
+    ISX_ASSERT(header.oriSize == sizeof(OriPayload) * header.oriCount);
     for (isize_t i = 0; i < header.oriCount; ++i)
     {
         OriPayload oriPkt{};
@@ -187,7 +187,7 @@ IMUFile::parse()
     const DurationInSeconds headerTime(header.epochTimeSecNum, header.epochTimeSecDen);
     const Time startTime(headerTime, header.utcOffset);
     // Use micro second here to preserve more precision
-    const DurationInSeconds minStep = DurationInSeconds::fromMicroseconds(std::round(accAvgStep * 1000));
+    const DurationInSeconds minStep = DurationInSeconds::fromMicroseconds(uint64_t(std::round(accAvgStep * 1000)));
     const TimingInfo timing(
         startTime,
         minStep,
@@ -197,7 +197,7 @@ IMUFile::parse()
     steps.insert(
         steps.begin() + s_maxAccArrSize,
         s_maxMagArrSize,
-        DurationInSeconds::fromMicroseconds(std::round(magAvgStep * 1000))); // mag
+        DurationInSeconds::fromMicroseconds(uint64_t(std::round(magAvgStep * 1000)))); // mag
     std::vector<SignalType> types(m_channels.size(), SignalType::DENSE);
 
     EventBasedFileV2 outputFile(m_outputFileName, DataSet::Type::IMU, m_channels, steps, types);
@@ -249,6 +249,10 @@ IMUFile::parse()
             }
         }
     }
+
+    delete[] accPkts;
+    delete[] magPkts;
+    delete[] oriPkts;
 
     outputFile.setExtraProperties(m_sessionStr);
     outputFile.setStep(true);
