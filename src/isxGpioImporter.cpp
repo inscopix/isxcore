@@ -14,7 +14,7 @@ namespace isx
 std::string
 GpioDataParams::getOpName()
 {
-    return "GPIO Import";
+    return "Import";
 }
 
 std::string

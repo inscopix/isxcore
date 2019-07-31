@@ -46,8 +46,6 @@ writeIMULogicalTraces(
     }
     ISX_ASSERT(numTraces > 0);
     ISX_ASSERT(inNames.size() == inTraces.size());
-//    const size_t numSegments = inTraces.front().size();
-//    ISX_ASSERT(numSegments > 0);
 
     const int32_t maxDecimalsForDouble = std::numeric_limits<double>::digits10 + 1;
 

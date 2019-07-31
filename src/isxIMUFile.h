@@ -1,7 +1,11 @@
 #ifndef ISX_IMUFILE_H
 #define ISX_IMUFILE_H
+
+#include <unordered_map>
+
 #include "isxAsync.h"
 #include "isxCore.h"
+#include "isxTimingInfo.h"
 
 namespace isx
 {
@@ -96,6 +100,14 @@ public:
     /// \return whether the process completed or it was cancelled
     AsyncTaskStatus parse();
 
+    /// Constants
+    static constexpr uint8_t s_dataTypes = 3;
+    static constexpr uint8_t s_maxAccArrSize = 3;
+    static constexpr uint8_t s_maxMagArrSize = 3;
+    static constexpr uint8_t s_maxOriArrSize = 3;
+    static constexpr uint8_t s_channelNum = s_maxAccArrSize + s_maxMagArrSize + s_maxOriArrSize;
+    static constexpr uint8_t s_accOriRate = 20; /// 20 ms (or 50 Hz)
+
 private:
     /// The name of the data file.
     std::string m_fileName;
@@ -118,14 +130,6 @@ private:
     /// The output/display channels
     std::vector<std::string> m_channels;
 
-
-    /// Constants
-    static constexpr uint8_t s_dataTypes = 3;
-    static constexpr uint8_t s_maxAccArrSize = 3;
-    static constexpr uint8_t s_maxMagArrSize = 3;
-    static constexpr uint8_t s_maxOriArrSize = 3;
-    static constexpr uint16_t s_channelNum = s_maxAccArrSize + s_maxMagArrSize + s_maxOriArrSize;
-    static constexpr uint8_t s_accOriRate = 20; /// 20 ms (or 50 Hz)
 };
 
 } // def namespace

@@ -120,7 +120,7 @@ public:
 
     void setExtraProperties(const std::string & inProperties) override;
 
-    void setStep(bool smallStep);
+    void setSmallStep(bool smallStep);
 
 private:
 

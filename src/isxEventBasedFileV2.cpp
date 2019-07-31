@@ -460,7 +460,7 @@ EventBasedFileV2::setExtraProperties(const std::string & inProperties)
 }
 
 void
-EventBasedFileV2::setStep(bool smallStep)
+EventBasedFileV2::setSmallStep(bool smallStep)
 {
     m_smallStep = smallStep;
 }

@@ -190,30 +190,29 @@ runIMUExporter(
     std::vector<std::vector<std::vector<SpLogicalTrace_t>>> tracesIMU;
     std::vector<std::vector<SpLogicalTrace_t>> sectionTraces1;
     std::vector<std::vector<SpLogicalTrace_t>> sectionTraces2;
-    sectionTraces1.push_back(traces[0]);
-    sectionTraces1.push_back(traces[1]);
-    sectionTraces1.push_back(traces[2]);
-    sectionTraces2.push_back(traces[3]);
-    sectionTraces2.push_back(traces[4]);
-    sectionTraces2.push_back(traces[5]);
-    sectionTraces1.push_back(traces[6]);
-    sectionTraces1.push_back(traces[7]);
-    sectionTraces1.push_back(traces[8]);
+    uint8_t section1Size = IMUFile::s_maxAccArrSize + IMUFile::s_maxOriArrSize;
+    for (uint8_t i = 0; i < section1Size; ++i)
+    {
+        sectionTraces1.push_back(traces[i]);
+    }
+    for (uint8_t i = section1Size; i < section1Size + IMUFile::s_maxMagArrSize; ++i)
+    {
+        sectionTraces2.push_back(traces[i]);
+    }
     tracesIMU.push_back(sectionTraces1);
     tracesIMU.push_back(sectionTraces2);
 
     std::vector<std::vector<std::string>> names;
     std::vector<std::string> names1;
     std::vector<std::string> names2;
-    names1.push_back(channelNames[0]);
-    names1.push_back(channelNames[1]);
-    names1.push_back(channelNames[2]);
-    names2.push_back(channelNames[3]);
-    names2.push_back(channelNames[4]);
-    names2.push_back(channelNames[5]);
-    names1.push_back(channelNames[6]);
-    names1.push_back(channelNames[7]);
-    names1.push_back(channelNames[8]);
+    for (uint8_t i = 0; i < section1Size; ++i)
+    {
+        names1.push_back(channelNames[i]);
+    }
+    for (uint8_t i = section1Size; i < section1Size + IMUFile::s_maxMagArrSize; ++i)
+    {
+        names2.push_back(channelNames[i]);
+    }
     names.push_back(names1);
     names.push_back(names2);
 

@@ -23,14 +23,13 @@ IMUFile::IMUFile(const std::string & inFileName, const std::string & inOutputDir
     m_channels.push_back("Acc y");
     m_channels.push_back("Acc z");
 
-    m_channels.push_back("Mag x");
-    m_channels.push_back("Mag y");
-    m_channels.push_back("Mag z");
-//    m_channels.push_back("Mag temp");
-
     m_channels.push_back("Ori yaw");
     m_channels.push_back("Ori pitch");
     m_channels.push_back("Ori roll");
+
+    m_channels.push_back("Mag x");
+    m_channels.push_back("Mag y");
+    m_channels.push_back("Mag z");
 }
 
 IMUFile::~IMUFile()
@@ -73,24 +72,16 @@ IMUFile::parse()
     m_file.seekg(0, std::fstream::end);
     const double progressMultiplier = 100.0 / double(m_file.tellg());
 
-    // TODO: use template
+    // This is kept separate here in case payload size/field differs from each other in the future
     // accelerometer
     auto accPkts = new AccPayload[header.accCount];
     m_file.seekg(header.accOffset, std::fstream::beg);
     ISX_ASSERT(header.accSize == sizeof(AccPayload) * header.accCount);
-    double accAvgStep = s_accOriRate;
     for (isize_t i = 0; i < header.accCount; ++i)
     {
         AccPayload accPkt{};
         m_file.read((char *)&accPkt, sizeof(accPkt));
         accPkts[i] = accPkt;
-        // Using EMA(exponential moving average) to prevent overflow
-        accAvgStep -= accAvgStep / header.accCount;
-        if (i > 0)
-        {
-            accAvgStep += double(accPkt.timeStamp - accPkts[i-1].timeStamp) / double(header.accCount);
-        }
-
         // Report the progress for every 100 packet
         if ((i % 100) == 0)
         {
@@ -111,17 +102,11 @@ IMUFile::parse()
     auto magPkts = new MagPayload[header.magCount];
     m_file.seekg(header.magOffset, std::fstream::beg);
     ISX_ASSERT(header.magSize == sizeof(MagPayload) * header.magCount);
-    double magAvgStep = s_accOriRate * 20;
     for (isize_t i = 0; i < header.magCount; ++i)
     {
         MagPayload magPkt{};
         m_file.read((char *) &magPkt, sizeof(magPkt));
         magPkts[i] = magPkt;
-        magAvgStep -= magAvgStep / header.magCount;
-        if (i > 0)
-        {
-            magAvgStep += double(magPkt.timeStamp - magPkts[i - 1].timeStamp) / double(header.magCount);
-        }
 
         // Report the progress for every 100 packet
         if ((i % 100) == 0)
@@ -166,46 +151,62 @@ IMUFile::parse()
     }
     ISX_LOG_DEBUG("All ori read: ", header.oriCount);
 
-    if (header.sessionOffset > 0)
+    // Session footer
+    auto accAvgStep = DurationInSeconds::fromMilliseconds(s_accOriRate);
+    auto magAvgStep = accAvgStep * 20;
+    Time start;
+    Time end;
+    try
     {
-        try
+        m_file.clear();
+        m_file.seekg(header.sessionOffset, std::fstream::beg);
+        json sessionFooter;
+        m_file >> sessionFooter;
+        m_sessionStr = sessionFooter.dump();
+
+        // Read timing info
+        json timingInfo = sessionFooter.at("timingInfo");
+        start = convertJsonToTime(timingInfo.at("start"));
+        end = convertJsonToTime(timingInfo.at("end"));
+        auto accTi = timingInfo.find("accelerometer");
+        if (accTi != timingInfo.end())
         {
-            m_file.clear();
-            m_file.seekg(header.sessionOffset, std::fstream::beg);
-            json extraProps;
-            m_file >> extraProps;
-            m_sessionStr = extraProps.dump();
+            Ratio milliSecRatio = convertJsonToRatio(accTi.value().at("periodMs"));
+            Ratio secRatio(milliSecRatio.getNum(), milliSecRatio.getDen() * 1000);
+            accAvgStep = secRatio;
         }
-        catch (const std::exception & inError)
+
+        auto magTi = timingInfo.find("magnetometer");
+        if (magTi != timingInfo.end())
         {
-            ISX_LOG_WARNING("Failed to read extra properties from IMU file with error: ", inError.what());
+            Ratio milliSecRatio = convertJsonToRatio(magTi.value().at("periodMs"));
+            Ratio secRatio(milliSecRatio.getNum(), milliSecRatio.getDen() * 1000);
+            magAvgStep = secRatio;
         }
     }
-
+    catch (const std::exception & inError)
+    {
+        ISX_LOG_WARNING("Failed to read json footer from IMU file with error: ", inError.what());
+    }
 
     /// Write to isxd file
     const DurationInSeconds headerTime(header.epochTimeSecNum, header.epochTimeSecDen);
     const Time startTime(headerTime, header.utcOffset);
-    // Use micro second here to preserve more precision
-    const DurationInSeconds minStep = DurationInSeconds::fromMicroseconds(uint64_t(std::round(accAvgStep * 1000)));
     const TimingInfo timing(
         startTime,
-        minStep,
+        accAvgStep,
         std::max({header.accCount, header.oriCount}));
     std::vector<DurationInSeconds> steps;
-    steps.insert(steps.end(), s_maxAccArrSize + s_maxOriArrSize, minStep); // acc + ori
-    steps.insert(
-        steps.begin() + s_maxAccArrSize,
-        s_maxMagArrSize,
-        DurationInSeconds::fromMicroseconds(uint64_t(std::round(magAvgStep * 1000)))); // mag
+    steps.insert(steps.end(), s_maxAccArrSize + s_maxOriArrSize, accAvgStep); // acc + ori
+    steps.insert(steps.end(), s_maxMagArrSize, magAvgStep); // mag
     std::vector<SignalType> types(m_channels.size(), SignalType::DENSE);
 
     EventBasedFileV2 outputFile(m_outputFileName, DataSet::Type::IMU, m_channels, steps, types);
 
     std::vector<IMUSignalType> channelList;
     channelList.insert(channelList.end(), s_maxAccArrSize, IMUSignalType::ACC);
-    channelList.insert(channelList.end(), s_maxMagArrSize, IMUSignalType::MAG);
     channelList.insert(channelList.end(), s_maxOriArrSize, IMUSignalType::ORI);
+    channelList.insert(channelList.end(), s_maxMagArrSize, IMUSignalType::MAG);
 
     for (isize_t i = 0; i < channelList.size(); ++i)
     {
@@ -255,8 +256,8 @@ IMUFile::parse()
     delete[] oriPkts;
 
     outputFile.setExtraProperties(m_sessionStr);
-    outputFile.setStep(true);
-    outputFile.setTimingInfo(timing.getStart(), timing.getEnd());
+    outputFile.setSmallStep(true);
+    outputFile.setTimingInfo(start, end);
     outputFile.closeFileForWriting();
 
     return isx::AsyncTaskStatus::COMPLETE;
