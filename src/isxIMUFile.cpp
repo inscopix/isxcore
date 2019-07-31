@@ -224,25 +224,25 @@ IMUFile::parse()
                 }
                 break;
             }
-            case IMUSignalType::MAG:
-            {
-                for (isize_t j = 0; j < header.magCount; ++j)
-                {
-                    EventBasedFileV2::DataPkt pkt;
-                    pkt.offsetMicroSecs = (magPkts[j].timeStamp - accPkts[0].timeStamp) * 1000; // use acc as it is earliest
-                    pkt.value = magPkts[j].magData[i-s_maxAccArrSize];
-                    pkt.signal = i;
-                    outputFile.writeDataPkt(pkt);
-                }
-                break;
-            }
             case IMUSignalType::ORI:
             {
                 for (isize_t j = 0; j < header.oriCount; ++j)
                 {
                     EventBasedFileV2::DataPkt pkt;
                     pkt.offsetMicroSecs = (oriPkts[j].timeStamp - accPkts[0].timeStamp) * 1000; // use acc as it is earliest
-                    pkt.value = float(oriPkts[j].oriData[i-s_maxAccArrSize-s_maxMagArrSize]) / float(2048); // S4.11
+                    pkt.value = float(oriPkts[j].oriData[i-s_maxAccArrSize]) / float(2048); // S4.11
+                    pkt.signal = i;
+                    outputFile.writeDataPkt(pkt);
+                }
+                break;
+            }
+            case IMUSignalType::MAG:
+            {
+                for (isize_t j = 0; j < header.magCount; ++j)
+                {
+                    EventBasedFileV2::DataPkt pkt;
+                    pkt.offsetMicroSecs = (magPkts[j].timeStamp - accPkts[0].timeStamp) * 1000; // use acc as it is earliest
+                    pkt.value = magPkts[j].magData[i-s_maxAccArrSize-s_maxOriArrSize];
                     pkt.signal = i;
                     outputFile.writeDataPkt(pkt);
                 }
