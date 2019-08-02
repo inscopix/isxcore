@@ -152,8 +152,8 @@ IMUFile::parse()
     ISX_LOG_DEBUG("All ori read: ", header.oriCount);
 
     // Session footer
-    auto accAvgStep = DurationInSeconds::fromMilliseconds(s_accOriRate);
-    auto magAvgStep = accAvgStep * 20;
+    TimingInfo accOriTimingInfo;
+    TimingInfo magTimingInfo;
     Time start;
     Time end;
     try
@@ -164,25 +164,44 @@ IMUFile::parse()
         m_file >> sessionFooter;
         m_sessionStr = sessionFooter.dump();
 
-        // Read timing info
+
+        // Read timing info - start/end
         json timingInfo = sessionFooter.at("timingInfo");
         start = convertJsonToTime(timingInfo.at("start"));
         end = convertJsonToTime(timingInfo.at("end"));
-        auto accTi = timingInfo.find("accelerometer");
-        if (accTi != timingInfo.end())
+
+        // Read timing info - acc/ori
+        std::vector<isize_t> accDropped;
+        auto accStep = DurationInSeconds::fromMilliseconds(s_accOriRate);
+        isize_t accCount = 0; // normal + dropped, differs from header(only normal)
+        auto accJsonTiI = timingInfo.find("accelerometer");
+        if (accJsonTiI != timingInfo.end())
         {
-            Ratio milliSecRatio = convertJsonToRatio(accTi.value().at("periodMs"));
+            json accJsonTi = accJsonTiI.value();
+            Ratio milliSecRatio = convertJsonToRatio(accJsonTi.at("periodMs"));
             Ratio secRatio(milliSecRatio.getNum(), milliSecRatio.getDen() * 1000);
-            accAvgStep = secRatio;
+            accStep = secRatio;
+            accDropped = accJsonTi.at("dropped").get<std::vector<isize_t>>();
+            accCount = accJsonTi.at("numTimes");
         }
 
-        auto magTi = timingInfo.find("magnetometer");
-        if (magTi != timingInfo.end())
+        // Read timing info - mag
+        std::vector<isize_t> magDropped;
+        auto magStep = accStep * 20;
+        isize_t magCount = 0; // normal + dropped, differs from header(only normal)
+        auto magJsonTiI = timingInfo.find("magnetometer");
+        if (magJsonTiI != timingInfo.end())
         {
-            Ratio milliSecRatio = convertJsonToRatio(magTi.value().at("periodMs"));
+            json magJsonTi = magJsonTiI.value();
+            Ratio milliSecRatio = convertJsonToRatio(magJsonTi.at("periodMs"));
             Ratio secRatio(milliSecRatio.getNum(), milliSecRatio.getDen() * 1000);
-            magAvgStep = secRatio;
+            magStep = secRatio;
+            magDropped = magJsonTi.at("dropped").get<std::vector<isize_t>>();
+            magCount = magJsonTi.at("numTimes");
         }
+
+        accOriTimingInfo = TimingInfo(start, accStep, accCount, accDropped);
+        magTimingInfo = TimingInfo(start, magStep, magCount, magDropped);
     }
     catch (const std::exception & inError)
     {
@@ -190,15 +209,9 @@ IMUFile::parse()
     }
 
     /// Write to isxd file
-    const DurationInSeconds headerTime(header.epochTimeSecNum, header.epochTimeSecDen);
-    const Time startTime(headerTime, header.utcOffset);
-    const TimingInfo timing(
-        startTime,
-        accAvgStep,
-        std::max({header.accCount, header.oriCount}));
     std::vector<DurationInSeconds> steps;
-    steps.insert(steps.end(), s_maxAccArrSize + s_maxOriArrSize, accAvgStep); // acc + ori
-    steps.insert(steps.end(), s_maxMagArrSize, magAvgStep); // mag
+    steps.insert(steps.end(), s_maxAccArrSize + s_maxOriArrSize, accOriTimingInfo.getStep()); // acc + ori
+    steps.insert(steps.end(), s_maxMagArrSize, magTimingInfo.getStep()); // mag
     std::vector<SignalType> types(m_channels.size(), SignalType::DENSE);
 
     EventBasedFileV2 outputFile(m_outputFileName, DataSet::Type::IMU, m_channels, steps, types);
@@ -214,36 +227,69 @@ IMUFile::parse()
         {
             case IMUSignalType::ACC:
             {
-                for (isize_t j = 0; j < header.accCount; ++j)
+                for (isize_t j = 0; j < accOriTimingInfo.getNumTimes(); ++j)
                 {
                     EventBasedFileV2::DataPkt pkt;
-                    pkt.offsetMicroSecs = (accPkts[j].timeStamp - accPkts[0].timeStamp) * 1000;
-                    pkt.value = accPkts[j].accData[i];
                     pkt.signal = i;
+                    pkt.offsetMicroSecs =
+                        accOriTimingInfo.convertIndexToStartTime(j).getSecsSinceEpoch().toMicroseconds()
+                            -
+                                start.getSecsSinceEpoch().toMicroseconds();
+                    if (!accOriTimingInfo.isDropped(j))
+                    {
+                        pkt.value = accPkts[accOriTimingInfo.timeIdxToRecordedIdx(j)].accData[i];
+                    }
+                    else
+                    {
+                        pkt.value = std::numeric_limits<float>::quiet_NaN();
+                    }
                     outputFile.writeDataPkt(pkt);
                 }
                 break;
             }
             case IMUSignalType::ORI:
             {
-                for (isize_t j = 0; j < header.oriCount; ++j)
+                for (isize_t j = 0; j < accOriTimingInfo.getNumTimes(); ++j)
                 {
                     EventBasedFileV2::DataPkt pkt;
-                    pkt.offsetMicroSecs = (oriPkts[j].timeStamp - accPkts[0].timeStamp) * 1000; // use acc as it is earliest
-                    pkt.value = float(oriPkts[j].oriData[i-s_maxAccArrSize]) / float(2048); // S4.11
                     pkt.signal = i;
+                    pkt.offsetMicroSecs =
+                        accOriTimingInfo.convertIndexToStartTime(j).getSecsSinceEpoch().toMicroseconds()
+                            -
+                                start.getSecsSinceEpoch().toMicroseconds();
+                    if (!accOriTimingInfo.isDropped(j))
+                    {
+                        pkt.value =
+                            float(oriPkts[accOriTimingInfo.timeIdxToRecordedIdx(j)].oriData[i-s_maxAccArrSize])
+                            / float(2048); // S4.11
+                    }
+                    else
+                    {
+                        pkt.value = std::numeric_limits<float>::quiet_NaN();
+                    }
                     outputFile.writeDataPkt(pkt);
                 }
                 break;
             }
             case IMUSignalType::MAG:
             {
-                for (isize_t j = 0; j < header.magCount; ++j)
+                for (isize_t j = 0; j < magTimingInfo.getNumTimes(); ++j)
                 {
                     EventBasedFileV2::DataPkt pkt;
-                    pkt.offsetMicroSecs = (magPkts[j].timeStamp - accPkts[0].timeStamp) * 1000; // use acc as it is earliest
-                    pkt.value = magPkts[j].magData[i-s_maxAccArrSize-s_maxOriArrSize];
                     pkt.signal = i;
+                    pkt.offsetMicroSecs =
+                        magTimingInfo.convertIndexToStartTime(j).getSecsSinceEpoch().toMicroseconds()
+                            -
+                                start.getSecsSinceEpoch().toMicroseconds();
+
+                    if (!magTimingInfo.isDropped(j))
+                    {
+                        pkt.value = magPkts[magTimingInfo.timeIdxToRecordedIdx(j)].magData[i-s_maxAccArrSize-s_maxOriArrSize];
+                    }
+                    else
+                    {
+                        pkt.value = std::numeric_limits<float>::quiet_NaN();
+                    }
                     outputFile.writeDataPkt(pkt);
                 }
                 break;
