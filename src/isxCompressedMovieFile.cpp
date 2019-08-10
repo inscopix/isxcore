@@ -6,7 +6,7 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
 }
-#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 
 #include "isxException.h"
 #include "isxMovieFactory.h"
@@ -168,26 +168,28 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
                     ISX_LOG_DEBUG("frame[", actualFrameIndex, "]: open=", m_file.is_open(), " good=", m_file.good(), " tellg=", m_file.tellg());
                     isx_comp_sensor_meta_data meta {};
                     m_file.read((char*)&meta, sizeof(meta));
-                    uint8_t data[m_header.tile_count];
-                    m_file.read((char*)data, m_header.tile_count);
+                    std::vector<uint8_t> data(m_header.tile_count);
+                    m_file.read((char*)data.data(), m_header.tile_count);
 
-                    uint64_t tilePerLine = m_header.frame.width / m_header.meta.width;
-                    for (isize_t i = 0; i < m_header.tile_count; ++i)
+                    uint32_t tilePerLine = m_header.frame.width / m_header.meta.width;
+                    for (uint32_t i = 0; i < m_header.tile_count; ++i)
                     {
                         // calc_m: m = 0(<=80), 1(<=112), 2(<=144), 3(<=176), 4(<=208)
                         uint8_t m = (data[i] - (81-32)) / 32;
                         uint8_t s = 4 - m;
+                        uint32_t x = m_header.meta.width * (i % tilePerLine);
+                        uint32_t y = m_header.meta.height * (i / tilePerLine);
 //                        ISX_LOG_DEBUG("\ttile=", i, " m=", std::to_string(m), " s=", std::to_string(s));
                         cv::Rect tileRoi(
-                            m_header.meta.width * (i % tilePerLine),
-                            m_header.meta.height * (i / tilePerLine),
+                            x,
+                            y,
                             m_header.meta.width,
                             m_header.meta.height);
                         cv::Mat croppedRef(frame, tileRoi);
                         cv::Mat resultCroppedRef(resultFrame, tileRoi);
 //                        ISX_LOG_DEBUG("\t\tROI       : x=", tileRoi.x, " y=", tileRoi.y);
 
-                        uint64_t alpha = std::pow(2, s);
+                        double alpha = std::pow(2, s);
                         croppedRef.convertTo(resultCroppedRef, CV_16U, alpha);
                     }
 

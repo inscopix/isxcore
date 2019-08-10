@@ -8,7 +8,6 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
 }
-#include <opencv2/opencv.hpp>
 
 #include "isxAsync.h"
 #include "isxCore.h"
