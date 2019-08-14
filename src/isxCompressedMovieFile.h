@@ -207,9 +207,9 @@ private:
     /// The helper function to read both header and session footer
     void readVideoInfo();
 
-    /// Flush the stream
+    /// Clean up for libav allocations.
     ///
-    void flush();
+    void avCleanUp();
 
     /// Throw an exception is the file has gone bad.
     ///

@@ -72,13 +72,22 @@ CompressedMovieFile::~CompressedMovieFile()
 //    m_intermediate.flush();
 //    m_intermediate.close();
     /// Free decoder allocation
-    av_frame_free(&m_frame);
-    av_packet_free(&m_packet);
+    avCleanUp();
 
     /// Close file descriptors
     m_file.close();
 
     isx::closeFileStreamWithChecks(m_file, m_fileName);
+}
+
+void
+CompressedMovieFile::avCleanUp()
+{
+    ISX_LOG_DEBUG("AV clean up called");
+    av_frame_free(&m_frame);
+    av_packet_free(&m_packet);
+    avformat_close_input(&m_formatCtx);
+    avcodec_free_context(&m_decoderCtx);
 }
 
 void
@@ -214,6 +223,7 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
                 }
             }
         }
+        av_packet_unref(m_packet);
     }
     m_decompressedMovie->setExtraProperties(m_extraProperties.dump());
     m_decompressedMovie->closeForWriting(m_timingInfo);
