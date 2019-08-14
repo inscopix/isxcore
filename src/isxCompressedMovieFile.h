@@ -154,7 +154,7 @@ private:
     ///
     /// enums
     ///
-    /* file descriptor type */
+    // file descriptor type
     enum CompDescType {
         ISX_COMP_DESC_TYPE_NONE,
         ISX_COMP_DESC_TYPE_VIDEO,
@@ -163,7 +163,7 @@ private:
         ISX_COMP_DESC_TYPE_MAX
     };
 
-    /* compression type for video frame data */
+    // compression type for video frame data
     enum VideoCompType {
         ISX_VIDEO_COMP_TYPE_NONE,
         ISX_VIDEO_COMP_TYPE_H264,
@@ -174,7 +174,7 @@ private:
         ISX_VIDEO_COMP_TYPE_MAX
     };
 
-    /* compression type for meta data */
+    // compression type for meta data
     enum MetaCompType {
         ISX_META_COMP_TYPE_NONE,
         ISX_META_COMP_TYPE_ZIP,

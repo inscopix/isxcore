@@ -148,12 +148,6 @@ CompressedMovieFile::readVideoInfo()
     }
 }
 
-//void
-//CompressedMovieFile::setCheckInCallback(AsyncCheckInCB_t inCheckInCB)
-//{
-//    m_checkInCB = inCheckInCB;
-//}
-
 AsyncTaskStatus
 CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
 {
@@ -180,7 +174,7 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
 
                 // Our isxc file has metadata right after the video
                 // libav decoder might treat the metadata as the frame
-                // A hard stop is required to prevent extra broken frames being read
+                // A hard stop is required to prevent metadata is treated as frames and read
                 if (actualFrameIndex >= m_timingInfo.getNumTimes())
                 {
                     break;
@@ -189,10 +183,18 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
                 if (response >= 0) {
                     ISX_LOG_DEBUG("Frame[", m_decoderCtx->frame_number, "]: type=", av_get_picture_type_char(m_frame->pict_type));
 
-                    cv::Mat frame(m_frame->height, m_frame->width, CV_8UC1, m_frame->data[0], m_frame->linesize[0]);
+                    // Convert AVFrame to OpenCV mat with 8 bit and grayscale
+                    cv::Mat frame(
+                        m_frame->height,
+                        m_frame->width,
+                        CV_8UC1,
+                        m_frame->data[0],
+                        m_frame->linesize[0]);
 
-                    // Recover frame with meta (8 -> 16 bit)
+                    // Create result: OpenCV frame with 16 bit (used in isxd files)
                     cv::Mat resultFrame(frame.rows, frame.cols, CV_16U);
+
+                    // Read metadata
                     m_file.seekg(m_header.meta.offset + m_frameMetaSize*actualFrameIndex, std::ios::beg);
                     checkFileGood("Cannot locate metadata of frame=" + std::to_string(actualFrameIndex));
 //                    ISX_LOG_DEBUG("frame[", actualFrameIndex, "]: open=", m_file.is_open(), " good=", m_file.good(), " tellg=", m_file.tellg());
@@ -201,6 +203,7 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
                     std::vector<uint8_t> data(m_header.tileCount);
                     m_file.read((char*)data.data(), m_header.tileCount);
 
+                    // Recover frame with metadata (8 -> 16 bit)
                     uint32_t tilePerLine = m_header.frame.width / m_header.meta.width;
                     for (uint32_t i = 0; i < m_header.tileCount; ++i)
                     {
@@ -215,20 +218,22 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
                             m_header.meta.height);
                         cv::Mat croppedRef(frame, tileRoi);
                         cv::Mat resultCroppedRef(resultFrame, tileRoi);
-//                        ISX_LOG_DEBUG("\t\tROI       : x=", tileRoi.x, " y=", tileRoi.y);
 
                         double alpha = std::pow(2, s);
                         croppedRef.convertTo(resultCroppedRef, CV_16U, alpha);
                     }
 
-                    ISX_ASSERT(resultFrame.isContinuous()); // frame.type() == CV_16U
+                    ISX_ASSERT(resultFrame.isContinuous());
                     ISX_ASSERT(resultFrame.type() == CV_16U);
+
+                    // Make output frame and write to file
                     SpVideoFrame_t outFrame = m_decompressedMovie->makeVideoFrame(actualFrameIndex);
                     std::memcpy(outFrame->getPixels(), resultFrame.ptr(), outFrame->getImageSizeInBytes());
                     m_decompressedMovie->writeFrame(outFrame);
 
                     actualFrameIndex += 1;
 
+                    // Update progress
                     // This progress is not accurate if there are dropped frames
                     // A more accurate way is to add actualFrameIndex with all previous drops getting from timinginfo
                     // However, this will slow down the performance if a search is preformed too often
