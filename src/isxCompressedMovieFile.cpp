@@ -207,7 +207,8 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
                     progress = float(actualFrameIndex) / float(m_timingInfo.getNumTimes());
                     if (inCheckinCB(progress))
                     {
-                        m_decompressedMovie->closeForWriting(m_timingInfo);
+                        // Close the file descriptor (file deletion is done at upper level function)
+                        m_decompressedMovie->closeForWriting();
                         return AsyncTaskStatus::CANCELLED;
                     }
                 }

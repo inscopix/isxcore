@@ -33,6 +33,16 @@ runDecompression(DecompressParams inParams, SpDecompressOutputParams_t inOutputP
 
     inOutputParams->filename = outFileName;
 
+    /// Remove file if cancel
+    if (result == AsyncTaskStatus::CANCELLED)
+    {
+        if (isx::pathExists(outFileName))
+        {
+            std::remove(outFileName.c_str());
+        }
+
+    }
+
     return result;
 }
 
