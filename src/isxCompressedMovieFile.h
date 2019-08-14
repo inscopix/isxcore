@@ -75,75 +75,87 @@ public:
     DataType getDataType() const;
     AsyncTaskStatus readAllFrames(AsyncCheckInCB_t inCheckinCB);
 
-//    void
-//    setCheckInCallback(AsyncCheckInCB_t inCheckInCB);
-
 private:
-    static constexpr uint16_t ISX_META_MAX_TILES = 1024; ///<The maximum number of tiles that can be used
+    ///
+    /// Constants
+    ///
+    static constexpr uint16_t ISX_META_MAX_TILES = 1000; ///< The maximum number of tiles that can be used
+    static constexpr uint16_t ISX_FRAME_HEADER_FOOTER_SIZE = 2560; ///< The number of pixels of header+footer of each frame
 
-#pragma pack(push, 1)
+    ///
     /// Structs
+    ///
+    /// Need to read directly from the file, compacted
+#pragma pack(push, 1)
     /* common descriptor header */
-    struct desc_comp_header {
-        uint16_t desc_type; /* isx_comp_desc_type */
-        uint16_t is_comp; /* if video data is compressed */
-        uint16_t comp_type; /* isx_video_comp_type or isx_meta_comp_type */
-        uint16_t reserved; /* 32 bit packing */
-    };
+    struct DescCompHeader
+    {
+        uint16_t descType; ///< isx_comp_desc_type
+        uint16_t isComp;   ///< if video data is compressed
+        uint16_t compType; ///< isx_video_comp_type or isx_meta_comp_type
+        uint16_t reserved; ///< 32 bit packing */
+    }; // 8 bytes
 
-    /* common compression descriptor */
-    struct isx_comp_desc {
-        desc_comp_header header; /* compression header descriptor */
+    // common compression descriptor
+    struct CompDesc
+    {
+        DescCompHeader header; ///< compression header descriptor
 
-        uint32_t width; /* frame/tile width for data */
-        uint32_t height; /* frame/tile height for data */
+        uint32_t width;        ///< frame/tile width for data
+        uint32_t height;       ///< frame/tile height for data
 
-        uint64_t size; /* compressed/meta file size in bytes */
-        uint64_t offset; /* data start offset in bytes from beginning of file */
-    };
+        uint64_t size;         ///< compressed/meta file size in bytes
+        uint64_t offset;       ///< data start offset in bytes from beginning of file
+    }; // 32 bytes
 
-    /* isxd video file header */
-    struct isx_comp_file_header {
-        uint64_t secs_since_epoch_num; /* unix epoch time numerator */
-        uint64_t secs_since_epoch_den; /* unix epoch time denominator */
+    // isxd video file header
+    struct CompFileHeader
+    {
+        uint64_t secsSinceEpochNum; ///< unix epoch time numerator
+        uint64_t secsSinceEpochDen; ///< unix epoch time denominator
 
-        int32_t utc_offset; /* utc offset time */
-        uint16_t file_format; /* file writer software version marker */
-        uint16_t tile_count; /* tile count */
+        int32_t utcOffset;          ///< utc offset time
+        uint16_t fileFormat;        ///< file writer software version marker
+        uint16_t tileCount;         ///< tile count
 
-        uint64_t frame_count; /* video frame counter */
+        uint64_t frameCount;        ///< video frame counter
 
-        isx_comp_desc frame; /* video frame compressed data */
-        isx_comp_desc meta; /* meta data file information */
+        CompDesc frame;             ///< video frame compressed data
+        CompDesc meta;              ///< meta data file information
 
-        uint64_t session_offset; /* session data offset */
-        uint64_t session_size; /* session data size */
-    };
+        uint64_t sessionOffset;     ///< session data offset
+        uint64_t sessionSize;       ///< session data size
+    }; // 112 bytes
 
-    /* sensor meta data register values */
-    struct isx_comp_sensor_meta_data {
-        uint16_t led1_power; /* led 1 power */
-        uint16_t led1_vf; /* led 1 forward voltage */
-        uint16_t led2_power; /* led 2 power */
-        uint16_t led2_vf; /* led 2 forward voltage */
+    // sensor meta data register values
+    struct CompSensorMetaData
+    {
+        uint16_t led1Power;    ///< led 1 power
+        uint16_t led1Vf;       ///< led 1 forward voltage
+        uint16_t led2Power;    ///< led 2 power
+        uint16_t led2Vf;       ///< led 2 forward voltage
 
-        uint16_t efocus; /* efocus diopter */
-        uint16_t reserved_1; /* reserved for future */
-        uint16_t frame_counter;
-        uint16_t reserved_2; /* reserved for 32 bit frame counter msb */
+        uint16_t efocus;       ///< efocus diopter
+        uint16_t reserved1;    ///< reserved for future
+        uint16_t frameCounter; ///< corresponding frame's index
+        uint16_t reserved2;    ///< reserved for 32 bit frame counter msb
 
-        uint64_t timestamp; /* 64 bit time stamp inserted by FPGA in frame */
+        uint64_t timestamp;    ///< 64 bit time stamp inserted by FPGA in frame
     }; // 24 bytes
 
-    /* frame meta data structure */
-    struct isx_comp_frame_meta_data {
-        isx_comp_sensor_meta_data meta; /* 12 short */
-        uint8_t data[ISX_META_MAX_TILES]; /* actual size = tile_count for color */
-    };
+    // frame meta data structure (placeholder, allocation is done with the CompFileHeader.tileCount)
+    struct CompFrameMetaData
+    {
+        CompSensorMetaData meta;          ///< 12 short
+        uint8_t data[ISX_META_MAX_TILES]; ///< actual size = tileCount for color
+    }; // max 1024 bytes
 #pragma pack(pop)
 
+    ///
+    /// enums
+    ///
     /* file descriptor type */
-    enum isx_comp_desc_type {
+    enum CompDescType {
         ISX_COMP_DESC_TYPE_NONE,
         ISX_COMP_DESC_TYPE_VIDEO,
         ISX_COMP_DESC_TYPE_META,
@@ -152,7 +164,7 @@ private:
     };
 
     /* compression type for video frame data */
-    enum isx_video_comp_type {
+    enum VideoCompType {
         ISX_VIDEO_COMP_TYPE_NONE,
         ISX_VIDEO_COMP_TYPE_H264,
         ISX_VIDEO_COMP_TYPE_VP8,
@@ -163,7 +175,7 @@ private:
     };
 
     /* compression type for meta data */
-    enum isx_meta_comp_type {
+    enum MetaCompType {
         ISX_META_COMP_TYPE_NONE,
         ISX_META_COMP_TYPE_ZIP,
         ISX_META_COMP_TYPE_GZIP,
@@ -173,6 +185,10 @@ private:
         ISX_META_COMP_TYPE_MAX
     };
 
+
+    ///
+    /// Members
+    ///
     /// The name of the movie file.
     std::string m_fileName;
 
@@ -185,9 +201,8 @@ private:
     /// The data type of the pixel values.
     DataType m_dataType = DataType::U16;
 
-    /// The file stream
+    /// The input file stream.
     std::fstream m_file;
-//    std::fstream m_intermediate;
 
     /// The session size with indent == 4
     isize_t m_sessionSize = 0;
@@ -196,26 +211,29 @@ private:
     SpWritableMovie_t m_decompressedMovie;
 
     /// The libav parameters
-    AVCodec *m_codec = nullptr; ///<The codec of the encoded stream
-    AVCodecContext* m_decoderCtx = nullptr; ///<Decoder
-    AVCodecParameters *m_decoderParameters = nullptr; ///Decoder's parameter
-    AVFormatContext * m_formatCtx = nullptr; ///<Format decoder
-    AVFrame* m_frame = nullptr; ///<The receiver of the frame
-    AVPacket * m_packet = nullptr; ///<The packet send to decoder
-    uint8_t m_videoStreamIndex = 0; ///<The stream index of the video. Our video should only get 1 stream (video).
+    AVCodec * m_codec = nullptr;                       ///< The codec of the encoded stream.
+    AVCodecContext * m_decoderCtx = nullptr;           ///< Decoder.
+    AVCodecParameters * m_decoderParameters = nullptr; ///< Decoder's parameter.
+    AVFormatContext * m_formatCtx = nullptr;           ///< Format I/O context.
+    AVFrame * m_frame = nullptr;                       ///< The receiver of the frame.
+    AVPacket * m_packet = nullptr;                     ///< The packet send to decoder.
+    uint8_t m_videoStreamIndex = 0;                    ///< The stream index of the video.
+                                                       ///< isxd video should contain only 1 stream (video).
 
     /// The header for the compressed movie file
-    isx_comp_file_header m_header{};
+    CompFileHeader m_header{};
 
     /// The size of metadata of each frame in bytes
     uint32_t m_frameMetaSize;
 
-//    cv::VideoCapture m_vc;
-
     /// The extra properties to write in the JSON footer.
     json m_extraProperties = nullptr;
 
+    ///
+    /// Functions
+    ///
     /// The helper function to read both header and session footer
+    ///
     void readVideoInfo();
 
     /// Clean up for libav allocations.

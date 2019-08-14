@@ -21,23 +21,29 @@ CompressedMovieFile::CompressedMovieFile()
 
 CompressedMovieFile::CompressedMovieFile(const std::string & inFileName, const std::string & outFileName)
 {
-    /// members
+    /// private members
     m_fileName = inFileName;
     m_file.open(m_fileName, std::ios::binary | std::ios_base::in);
     if (!m_file.good() || !m_file.is_open())
     {
-        ISX_THROW(isx::ExceptionFileIO,
-                  "Failed to open movie file for reading: ", m_fileName);
+        ISX_THROW(isx::ExceptionFileIO, "Failed to open movie file for reading: ", m_fileName);
     }
+    // Read video header + session
     readVideoInfo();
     m_decompressedMovie = writeMosaicMovie(outFileName, m_timingInfo, m_spacingInfo, m_dataType, false);
 
     /// decoder
+    // create format context
     m_formatCtx = avformat_alloc_context();
-    avformat_open_input(&m_formatCtx, m_fileName.c_str(), nullptr, nullptr);
-    avformat_find_stream_info(m_formatCtx, nullptr);
-
-    // find first video stream
+    if (avformat_open_input(&m_formatCtx, m_fileName.c_str(), nullptr, nullptr) < 0)
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Decoder: Failed to open movie file ", m_fileName);
+    }
+    if (avformat_find_stream_info(m_formatCtx, nullptr) < 0)
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Decoder: No stream exists in the movie file ", m_fileName);
+    }
+    // find first video stream and set (params + codec)
     int firstVideoStreamIndex = -1;
     for (uint32_t i = 0; i < m_formatCtx->nb_streams; ++i)
     {
@@ -45,38 +51,41 @@ CompressedMovieFile::CompressedMovieFile(const std::string & inFileName, const s
         {
             m_decoderParameters = m_formatCtx->streams[i]->codecpar;
             m_codec = avcodec_find_decoder(m_decoderParameters->codec_id);
+            if (m_codec == nullptr)
+            {
+                ISX_THROW(isx::ExceptionFileIO, "Decoder: Cannot find the correct codec to decode file ", m_fileName);
+            }
             firstVideoStreamIndex = i;
             break;
         }
     }
-
     if (firstVideoStreamIndex == -1)
     {
         ISX_THROW(isx::ExceptionFileIO,
                   "Failed to find video stream: ", m_fileName);
     }
     m_videoStreamIndex = firstVideoStreamIndex;
-
+    // create codec context
     m_decoderCtx = avcodec_alloc_context3(m_codec);
-    avcodec_parameters_to_context(m_decoderCtx, m_decoderParameters);
-    avcodec_open2(m_decoderCtx, m_codec, nullptr);
+    if (avcodec_parameters_to_context(m_decoderCtx, m_decoderParameters) < 0)
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Decoder: Cannot convert codec parameters for file ", m_fileName);
+    }
+    if (avcodec_open2(m_decoderCtx, m_codec, nullptr) < 0)
+    {
+        ISX_THROW(isx::ExceptionFileIO, "Decoder: Cannot initialize the context for codec of file ", m_fileName);
+    }
 
     m_frame = av_frame_alloc();
     m_packet = av_packet_alloc();
-
-//    m_intermediate.open("/home/ayang/Downloads/compression/decompress_8bit.isxd", std::ios::binary | std::ios::trunc | std::ios::in | std::ios::out);
 }
 
 CompressedMovieFile::~CompressedMovieFile()
 {
-//    m_intermediate.flush();
-//    m_intermediate.close();
     /// Free decoder allocation
     avCleanUp();
 
     /// Close file descriptors
-    m_file.close();
-
     isx::closeFileStreamWithChecks(m_file, m_fileName);
 }
 
@@ -96,18 +105,18 @@ CompressedMovieFile::readVideoInfo()
     /// Header
     m_file.seekg(0, std::ios::beg);
     m_file.read((char *)&m_header, sizeof(m_header));
-    m_frameMetaSize = sizeof(isx_comp_sensor_meta_data) + m_header.tile_count;
+    m_frameMetaSize = sizeof(CompSensorMetaData) + m_header.tileCount;
 
     /// Session json footer
     try
     {
-        m_file.seekg(m_header.session_offset, std::ios::beg);
+        m_file.seekg(m_header.sessionOffset, std::ios::beg);
         if (!m_file.good())
         {
             ISX_THROW(isx::ExceptionFileIO, "Cannot seek to session offset");
         }
-        std::string jsonStr(m_header.session_size, '\0');
-        m_file.read(&jsonStr[0], m_header.session_size);
+        std::string jsonStr(m_header.sessionSize, '\0');
+        m_file.read(&jsonStr[0], m_header.sessionSize);
         json session = json::parse(jsonStr);
 
         m_dataType = DataType(isize_t(session["dataType"]));
@@ -162,8 +171,16 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
                 {
                     break;
                 }
+                else if (response < 0)
+                {
+                    ISX_THROW(
+                        isx::ExceptionFileIO,
+                        "Decoder: Failed to read frame ", actualFrameIndex, " for file ", m_fileName);
+                }
 
-                // Our isxc file has metadata right after the video, libav decoder might treat the metadata as the frame
+                // Our isxc file has metadata right after the video
+                // libav decoder might treat the metadata as the frame
+                // A hard stop is required to prevent extra broken frames being read
                 if (actualFrameIndex >= m_timingInfo.getNumTimes())
                 {
                     break;
@@ -178,24 +195,22 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
                     cv::Mat resultFrame(frame.rows, frame.cols, CV_16U);
                     m_file.seekg(m_header.meta.offset + m_frameMetaSize*actualFrameIndex, std::ios::beg);
                     checkFileGood("Cannot locate metadata of frame=" + std::to_string(actualFrameIndex));
-                    ISX_LOG_DEBUG("frame[", actualFrameIndex, "]: open=", m_file.is_open(), " good=", m_file.good(), " tellg=", m_file.tellg());
-                    isx_comp_sensor_meta_data meta {};
+//                    ISX_LOG_DEBUG("frame[", actualFrameIndex, "]: open=", m_file.is_open(), " good=", m_file.good(), " tellg=", m_file.tellg());
+                    CompSensorMetaData meta {};
                     m_file.read((char*)&meta, sizeof(meta));
-                    std::vector<uint8_t> data(m_header.tile_count);
-                    m_file.read((char*)data.data(), m_header.tile_count);
+                    std::vector<uint8_t> data(m_header.tileCount);
+                    m_file.read((char*)data.data(), m_header.tileCount);
 
                     uint32_t tilePerLine = m_header.frame.width / m_header.meta.width;
-                    for (uint32_t i = 0; i < m_header.tile_count; ++i)
+                    for (uint32_t i = 0; i < m_header.tileCount; ++i)
                     {
                         // calc_m: m = 0(<=80), 1(<=112), 2(<=144), 3(<=176), 4(<=208)
                         uint8_t m = (data[i] - (81-32)) / 32;
                         uint8_t s = 4 - m;
-                        uint32_t x = m_header.meta.width * (i % tilePerLine);
-                        uint32_t y = m_header.meta.height * (i / tilePerLine);
 //                        ISX_LOG_DEBUG("\ttile=", i, " m=", std::to_string(m), " s=", std::to_string(s));
                         cv::Rect tileRoi(
-                            x,
-                            y,
+                            m_header.meta.width * (i % tilePerLine),
+                            m_header.meta.height * (i / tilePerLine),
                             m_header.meta.width,
                             m_header.meta.height);
                         cv::Mat croppedRef(frame, tileRoi);
@@ -276,18 +291,11 @@ CompressedMovieFile::getDataType() const
 }
 
 void
-CompressedMovieFile::flush()
-{
-    m_file.flush();
-    checkFileGood("Error flushing the file stream");
-}
-
-void
 CompressedMovieFile::checkFileGood(const std::string & inMessage) const
 {
     if (!m_file.good())
     {
-        ISX_THROW(ExceptionFileIO, inMessage + ": " + m_fileName);
+        ISX_THROW(isx::ExceptionFileIO, inMessage + ": " + m_fileName);
     }
 }
 
