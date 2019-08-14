@@ -63,6 +63,13 @@ public:
     ///
     const isx::SpacingInfo & getSpacingInfo() const;
 
+    /// Calculate the size of the decompressed movie.
+    /// \param hasFrameHeaderFooter   Whether the decompressed frame has header/footer (4 lines * 1280[uint16_t]pixels)
+    /// \param bufferSize             The size of the extra buffer in case of the really full disk, default is 500 MB.
+    /// \return                       The estimated size of the decompressed movie.
+    ///
+    isize_t getDecompressedFileSize(bool hasFrameHeaderFooter = true, isize_t bufferSize = 500000000) const;
+
     /// \return     The data type of a pixel value.
     ///
     DataType getDataType() const;
@@ -182,7 +189,11 @@ private:
     std::fstream m_file;
 //    std::fstream m_intermediate;
 
-    SpWritableMovie_t m_decompressedMovie; ///<The output writable movie
+    /// The session size with indent == 4
+    isize_t m_sessionSize = 0;
+
+    /// The output writable movie.
+    SpWritableMovie_t m_decompressedMovie;
 
     /// The libav parameters
     AVCodec *m_codec = nullptr; ///<The codec of the encoded stream

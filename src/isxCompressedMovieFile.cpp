@@ -123,7 +123,11 @@ CompressedMovieFile::readVideoInfo()
         {
             m_extraProperties = session["extraProperties"];
         }
-        ISX_LOG_DEBUG(m_file.is_open(), m_file.good());
+
+        // Get the session size that matches how json is written in isxd file (writeJsonHeaderAtEnd)
+        // 4 space indented json + endl + '\0' + session size at the end
+        m_sessionSize = session.dump(4).length() + 2 + sizeof(isize_t);
+        ISX_ASSERT(m_sessionSize >= m_header.sessionSize);
     }
     catch (const std::exception & error)
     {
@@ -247,6 +251,22 @@ const isx::SpacingInfo &
 CompressedMovieFile::getSpacingInfo() const
 {
     return m_spacingInfo;
+}
+
+isize_t
+CompressedMovieFile::getDecompressedFileSize(bool hasFrameHeaderFooter, isize_t bufferSize) const
+{
+    isize_t numPixels = getSpacingInfo().getTotalNumPixels();
+    if (hasFrameHeaderFooter)
+    {
+        numPixels += ISX_FRAME_HEADER_FOOTER_SIZE;
+    }
+    const isize_t nFrames = getTimingInfo().getNumValidTimes();
+    isize_t contentNumBytes = getDataTypeSizeInBytes(getDataType()) * nFrames * numPixels;
+
+    isize_t calculatedSize = contentNumBytes + m_sessionSize + bufferSize;
+    ISX_LOG_DEBUG("Decompressed file size=", calculatedSize);
+    return calculatedSize;
 }
 
 DataType
