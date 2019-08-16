@@ -309,7 +309,8 @@ CompressedMovieFile::getDecompressedFileSize (bool hasFrameHeaderFooter, isize_t
     isize_t contentNumBytes = getDataTypeSizeInBytes(getDataType()) * nFrames * numPixels;
 
     isize_t calculatedSize = contentNumBytes + m_sessionSize + bufferSize;
-    ISX_LOG_DEBUG("Decompressed file size=", calculatedSize);
+    ISX_LOG_DEBUG("Decompressed file size=", contentNumBytes,
+        " session=", m_sessionSize, " buffer=", bufferSize, " total=", calculatedSize);
     return calculatedSize;
 }
 

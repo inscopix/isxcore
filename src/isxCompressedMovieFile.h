@@ -216,7 +216,7 @@ private:
     CompFileHeader m_header{};
 
     /// The size of metadata of each frame in bytes
-    uint32_t m_frameMetaSize;
+    isize_t m_frameMetaSize;
 
     /// The extra properties to write in the JSON footer.
     json m_extraProperties = nullptr;
