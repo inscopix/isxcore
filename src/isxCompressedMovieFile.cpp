@@ -15,11 +15,11 @@ extern "C" {
 namespace isx
 {
 
-CompressedMovieFile::CompressedMovieFile()
+CompressedMovieFile::CompressedMovieFile ()
 {
 }
 
-CompressedMovieFile::CompressedMovieFile(const std::string & inFileName, const std::string & outFileName)
+CompressedMovieFile::CompressedMovieFile (const std::string &inFileName, const std::string &outFileName)
 {
     /// private members
     m_fileName = inFileName;
@@ -30,7 +30,7 @@ CompressedMovieFile::CompressedMovieFile(const std::string & inFileName, const s
     }
     // Read video header + session
     readVideoInfo();
-    m_decompressedMovie = writeMosaicMovie(outFileName, m_timingInfo, m_spacingInfo, m_dataType, false);
+    m_decompressedMovie = writeMosaicMovie(outFileName, m_timingInfo, m_spacingInfo, m_dataType, true);
 
     /// decoder
     // create format context
@@ -80,7 +80,7 @@ CompressedMovieFile::CompressedMovieFile(const std::string & inFileName, const s
     m_packet = av_packet_alloc();
 }
 
-CompressedMovieFile::~CompressedMovieFile()
+CompressedMovieFile::~CompressedMovieFile ()
 {
     /// Free decoder allocation
     avCleanUp();
@@ -90,7 +90,7 @@ CompressedMovieFile::~CompressedMovieFile()
 }
 
 void
-CompressedMovieFile::avCleanUp()
+CompressedMovieFile::avCleanUp ()
 {
     ISX_LOG_DEBUG("AV clean up called");
     av_frame_free(&m_frame);
@@ -100,12 +100,15 @@ CompressedMovieFile::avCleanUp()
 }
 
 void
-CompressedMovieFile::readVideoInfo()
+CompressedMovieFile::readVideoInfo ()
 {
     /// Header
     m_file.seekg(0, std::ios::beg);
-    m_file.read((char *)&m_header, sizeof(m_header));
-    m_frameMetaSize = sizeof(CompSensorMetaData) + m_header.tileCount;
+    m_file.read((char *) &m_header, sizeof(m_header));
+    ISX_ASSERT(m_header.tileCount >= 1 && m_header.tileCount <= ISX_META_MAX_TILES);
+    ISX_ASSERT(m_header.pixelCount <= ISX_META_MAX_PIXELS);
+    // sensor metadata (in 16 bit pixels) + tile data (each tile is 8 byte so tileCount is enough)
+    m_frameMetaSize = (sizeof(uint16_t) * m_header.pixelCount) + m_header.tileCount;
 
     /// Session json footer
     try
@@ -138,7 +141,7 @@ CompressedMovieFile::readVideoInfo()
         m_sessionSize = session.dump(4).length() + 2 + sizeof(isize_t);
         ISX_ASSERT(m_sessionSize >= m_header.sessionSize);
     }
-    catch (const std::exception & error)
+    catch (const std::exception &error)
     {
         ISX_THROW(isx::ExceptionDataIO, "Error parsing movie header: ", error.what());
     }
@@ -149,13 +152,14 @@ CompressedMovieFile::readVideoInfo()
 }
 
 AsyncTaskStatus
-CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
+CompressedMovieFile::readAllFrames (AsyncCheckInCB_t inCheckinCB)
 {
     isize_t actualFrameIndex = 0;
     float progress;
-    while (av_read_frame(m_formatCtx, m_packet) >=0)
+    while (av_read_frame(m_formatCtx, m_packet) >= 0)
     {
-        if (m_packet->stream_index == m_videoStreamIndex) {
+        if (m_packet->stream_index == m_videoStreamIndex)
+        {
             int response = avcodec_send_packet(m_decoderCtx, m_packet);
             while (response >= 0)
             {
@@ -180,8 +184,12 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
                     break;
                 }
 
-                if (response >= 0) {
-                    ISX_LOG_DEBUG("Frame[", m_decoderCtx->frame_number, "]: type=", av_get_picture_type_char(m_frame->pict_type));
+                if (response >= 0)
+                {
+                    ISX_LOG_DEBUG("Frame[",
+                                  m_decoderCtx->frame_number,
+                                  "]: type=",
+                                  av_get_picture_type_char(m_frame->pict_type));
 
                     // Convert AVFrame to OpenCV mat with 8 bit and grayscale
                     cv::Mat frame(
@@ -195,20 +203,20 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
                     cv::Mat resultFrame(frame.rows, frame.cols, CV_16U);
 
                     // Read metadata
-                    m_file.seekg(m_header.meta.offset + m_frameMetaSize*actualFrameIndex, std::ios::beg);
+                    m_file.seekg(m_header.meta.offset + (m_frameMetaSize * actualFrameIndex), std::ios::beg);
                     checkFileGood("Cannot locate metadata of frame=" + std::to_string(actualFrameIndex));
 //                    ISX_LOG_DEBUG("frame[", actualFrameIndex, "]: open=", m_file.is_open(), " good=", m_file.good(), " tellg=", m_file.tellg());
-                    CompSensorMetaData meta {};
-                    m_file.read((char*)&meta, sizeof(meta));
-                    std::vector<uint8_t> data(m_header.tileCount);
-                    m_file.read((char*)data.data(), m_header.tileCount);
+                    std::vector<uint16_t> frameHeaderPixels(m_header.pixelCount);
+                    m_file.read((char *) frameHeaderPixels.data(), m_header.pixelCount * sizeof(uint16_t));
+                    std::vector<uint8_t> metadata(m_header.tileCount);
+                    m_file.read((char *) metadata.data(), m_header.tileCount);
 
                     // Recover frame with metadata (8 -> 16 bit)
                     uint32_t tilePerLine = m_header.frame.width / m_header.meta.width;
                     for (uint32_t i = 0; i < m_header.tileCount; ++i)
                     {
                         // calc_m: m = 0(<=80), 1(<=112), 2(<=144), 3(<=176), 4(<=208)
-                        uint8_t m = (data[i] - (81-32)) / 32;
+                        uint8_t m = (metadata[i] - (81 - 32)) / 32;
                         uint8_t s = 4 - m;
 //                        ISX_LOG_DEBUG("\ttile=", i, " m=", std::to_string(m), " s=", std::to_string(s));
                         cv::Rect tileRoi(
@@ -227,9 +235,25 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
                     ISX_ASSERT(resultFrame.type() == CV_16U);
 
                     // Make output frame and write to file
+                    // Re-create frame header (2 lines, hardcoded to 1280) by:
+                    // 1. insert (cols - sensor pixel count) 0 in the front => first line
+                    // 2. insert cols 0 at the back => second line
+                    frameHeaderPixels.insert(
+                        frameHeaderPixels.begin(),
+                        (ISX_START_PIXEL_IN_HEADER + 1) - m_header.pixelCount,
+                        0);
+                    frameHeaderPixels.insert(
+                        frameHeaderPixels.end(),
+                        (ISX_START_PIXEL_IN_HEADER + 1),
+                        0);
+                    ISX_ASSERT(frameHeaderPixels.size() == ISX_FRAME_HEADER_FOOTER_SIZE);
+                    std::vector<uint16_t> footer(ISX_FRAME_HEADER_FOOTER_SIZE, 0);
                     SpVideoFrame_t outFrame = m_decompressedMovie->makeVideoFrame(actualFrameIndex);
                     std::memcpy(outFrame->getPixels(), resultFrame.ptr(), outFrame->getImageSizeInBytes());
-                    m_decompressedMovie->writeFrame(outFrame);
+                    m_decompressedMovie->writeFrameWithHeaderFooter(
+                        frameHeaderPixels.data(),
+                        outFrame->getPixelsAsU16(),
+                        footer.data());
 
                     actualFrameIndex += 1;
 
@@ -256,30 +280,30 @@ CompressedMovieFile::readAllFrames(AsyncCheckInCB_t inCheckinCB)
 }
 
 std::string
-CompressedMovieFile::getFileName() const
+CompressedMovieFile::getFileName () const
 {
     return m_fileName;
 }
 
 const isx::TimingInfo &
-CompressedMovieFile::getTimingInfo() const
+CompressedMovieFile::getTimingInfo () const
 {
     return m_timingInfo;
 }
 
 const isx::SpacingInfo &
-CompressedMovieFile::getSpacingInfo() const
+CompressedMovieFile::getSpacingInfo () const
 {
     return m_spacingInfo;
 }
 
 isize_t
-CompressedMovieFile::getDecompressedFileSize(bool hasFrameHeaderFooter, isize_t bufferSize) const
+CompressedMovieFile::getDecompressedFileSize (bool hasFrameHeaderFooter, isize_t bufferSize) const
 {
     isize_t numPixels = getSpacingInfo().getTotalNumPixels();
     if (hasFrameHeaderFooter)
     {
-        numPixels += ISX_FRAME_HEADER_FOOTER_SIZE;
+        numPixels += ISX_FRAME_HEADER_FOOTER_SIZE * 2; // Header + Footer
     }
     const isize_t nFrames = getTimingInfo().getNumValidTimes();
     isize_t contentNumBytes = getDataTypeSizeInBytes(getDataType()) * nFrames * numPixels;

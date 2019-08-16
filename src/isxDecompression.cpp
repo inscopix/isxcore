@@ -33,7 +33,7 @@ runDecompression(DecompressParams inParams, SpDecompressOutputParams_t inOutputP
 
     /// Check space, need information from the header and session from the file
     // Same as sufficientDiskSpace() from algo/isxOutputValidation since we can't access that function
-    const isize_t compressedMovieSizeInBytes = compressedMovie.getDecompressedFileSize(false);
+    const isize_t compressedMovieSizeInBytes = compressedMovie.getDecompressedFileSize();
     std::string rootDir;
     long long availableNumBytes = availableNumberOfBytesOnVolume(inParams.m_outputDir, rootDir);
     bool partitionExists = availableNumBytes >= 0;

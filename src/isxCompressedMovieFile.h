@@ -79,15 +79,17 @@ private:
     ///
     /// Constants
     ///
-    static constexpr uint16_t ISX_META_MAX_TILES = 1000; ///< The maximum number of tiles that can be used
-    static constexpr uint16_t ISX_FRAME_HEADER_FOOTER_SIZE = 2560; ///< The number of pixels of header+footer of each frame
+    static constexpr uint16_t ISX_META_MAX_TILES = 1000;           ///< metadata max tiles count (32x32)
+    static constexpr uint16_t ISX_META_MAX_PIXELS = 22;            ///< sensor header pixels
+    static constexpr uint16_t ISX_FRAME_HEADER_FOOTER_SIZE = 2560; ///< number of pixels of header+footer of each frame
+    static constexpr uint16_t ISX_START_PIXEL_IN_HEADER = 1279;    ///< starting pixel for sensor data in frame header
 
     ///
     /// Structs
     ///
     /// Need to read directly from the file, compacted
 #pragma pack(push, 1)
-    /* common descriptor header */
+    // common descriptor header
     struct DescCompHeader
     {
         uint16_t descType; ///< isx_comp_desc_type
@@ -113,11 +115,11 @@ private:
     {
         uint64_t secsSinceEpochNum; ///< unix epoch time numerator
         uint64_t secsSinceEpochDen; ///< unix epoch time denominator
+        int64_t utcOffset;          ///< utc offset time
 
-        int32_t utcOffset;          ///< utc offset time
-        uint16_t fileFormat;        ///< file writer software version marker
-        uint16_t tileCount;         ///< tile count
-
+        uint64_t fileFormat;        ///< file writer software version marker
+        uint64_t tileCount;         ///< actual tile count (<= ISX_META_MAX_TILES)
+        uint64_t pixelCount;        ///< actual 2 bytes per pixel count in sensor meta data (<= ISX_META_MAX_PIXELS)
         uint64_t frameCount;        ///< video frame counter
 
         CompDesc frame;             ///< video frame compressed data
@@ -125,30 +127,20 @@ private:
 
         uint64_t sessionOffset;     ///< session data offset
         uint64_t sessionSize;       ///< session data size
-    }; // 112 bytes
+    }; // 128 bytes
 
-    // sensor meta data register values
+    // sensor meta data register values (placeholder, allocation is done with the CompFileHeader.pixelCount)
     struct CompSensorMetaData
     {
-        uint16_t led1Power;    ///< led 1 power
-        uint16_t led1Vf;       ///< led 1 forward voltage
-        uint16_t led2Power;    ///< led 2 power
-        uint16_t led2Vf;       ///< led 2 forward voltage
-
-        uint16_t efocus;       ///< efocus diopter
-        uint16_t reserved1;    ///< reserved for future
-        uint16_t frameCounter; ///< corresponding frame's index
-        uint16_t reserved2;    ///< reserved for 32 bit frame counter msb
-
-        uint64_t timestamp;    ///< 64 bit time stamp inserted by FPGA in frame
-    }; // 24 bytes
+        uint16_t data[ISX_META_MAX_PIXELS];
+    }; // max 44 bytes
 
     // frame meta data structure (placeholder, allocation is done with the CompFileHeader.tileCount)
     struct CompFrameMetaData
     {
-        CompSensorMetaData meta;          ///< 12 short
+        CompSensorMetaData meta;
         uint8_t data[ISX_META_MAX_TILES]; ///< actual size = tileCount for color
-    }; // max 1024 bytes
+    }; // max 1044 (1000 + 44) bytes
 #pragma pack(pop)
 
     ///
