@@ -10,6 +10,7 @@ extern "C" {
 
 #include "isxException.h"
 #include "isxMovieFactory.h"
+#include "isxPathUtils.h"
 
 
 namespace isx
@@ -23,6 +24,7 @@ CompressedMovieFile::CompressedMovieFile (const std::string &inFileName, const s
 {
     /// private members
     m_fileName = inFileName;
+    m_decompressedMoviePath = outFileName;
     m_file.open(m_fileName, std::ios::binary | std::ios_base::in);
     if (!m_file.good() || !m_file.is_open())
     {
@@ -30,7 +32,6 @@ CompressedMovieFile::CompressedMovieFile (const std::string &inFileName, const s
     }
     // Read video header + session
     readVideoInfo();
-    m_decompressedMovie = writeMosaicMovie(outFileName, m_timingInfo, m_spacingInfo, m_dataType, true);
 
     /// decoder
     // create format context
@@ -154,6 +155,28 @@ CompressedMovieFile::readVideoInfo ()
 AsyncTaskStatus
 CompressedMovieFile::readAllFrames (AsyncCheckInCB_t inCheckinCB)
 {
+    /// Check space, need information from the header and session from the file
+    // Same as sufficientDiskSpace() from algo/isxOutputValidation since we don't have access to that function
+    const isize_t compressedMovieSizeInBytes = getDecompressedFileSize();
+    std::string rootDir;
+    long long availableNumBytes = availableNumberOfBytesOnVolume(m_decompressedMoviePath, rootDir);
+    bool partitionExists = availableNumBytes >= 0;
+    ISX_ASSERT(partitionExists);
+
+    if (isize_t(availableNumBytes) <= compressedMovieSizeInBytes)
+    {
+        const double availableGB = double(availableNumBytes) / std::pow(2, 30);
+        const double requiredGB = double(compressedMovieSizeInBytes) / std::pow(2, 30);
+
+        ISX_THROW(
+            ExceptionUserInput,
+            "You have insufficient disk space to write the output files.",
+            "The outputs will require about ", requiredGB, " GB.",
+            "We estimate you only have about ", availableGB, " GB in the destination partition. ");
+    }
+    SpWritableMovie_t decompressedOutputMovie = writeMosaicMovie(
+        m_decompressedMoviePath, m_timingInfo, m_spacingInfo, m_dataType, true);
+
     isize_t actualFrameIndex = 0;
     float progress;
     while (av_read_frame(m_formatCtx, m_packet) >= 0)
@@ -248,9 +271,9 @@ CompressedMovieFile::readAllFrames (AsyncCheckInCB_t inCheckinCB)
                         0);
                     ISX_ASSERT(frameHeaderPixels.size() == ISX_FRAME_HEADER_FOOTER_SIZE);
                     std::vector<uint16_t> footer(ISX_FRAME_HEADER_FOOTER_SIZE, 0);
-                    SpVideoFrame_t outFrame = m_decompressedMovie->makeVideoFrame(actualFrameIndex);
+                    SpVideoFrame_t outFrame = decompressedOutputMovie->makeVideoFrame(actualFrameIndex);
                     std::memcpy(outFrame->getPixels(), resultFrame.ptr(), outFrame->getImageSizeInBytes());
-                    m_decompressedMovie->writeFrameWithHeaderFooter(
+                    decompressedOutputMovie->writeFrameWithHeaderFooter(
                         frameHeaderPixels.data(),
                         outFrame->getPixelsAsU16(),
                         footer.data());
@@ -265,7 +288,7 @@ CompressedMovieFile::readAllFrames (AsyncCheckInCB_t inCheckinCB)
                     if (inCheckinCB(progress))
                     {
                         // Close the file descriptor (file deletion is done at upper level function)
-                        m_decompressedMovie->closeForWriting();
+                        decompressedOutputMovie->closeForWriting();
                         return AsyncTaskStatus::CANCELLED;
                     }
                 }
@@ -273,8 +296,8 @@ CompressedMovieFile::readAllFrames (AsyncCheckInCB_t inCheckinCB)
         }
         av_packet_unref(m_packet);
     }
-    m_decompressedMovie->setExtraProperties(m_extraProperties.dump());
-    m_decompressedMovie->closeForWriting(m_timingInfo);
+    decompressedOutputMovie->setExtraProperties(m_extraProperties.dump());
+    decompressedOutputMovie->closeForWriting(m_timingInfo);
 
     return AsyncTaskStatus::COMPLETE;
 }

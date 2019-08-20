@@ -199,8 +199,8 @@ private:
     /// The session size with indent == 4
     isize_t m_sessionSize = 0;
 
-    /// The output writable movie.
-    SpWritableMovie_t m_decompressedMovie;
+    /// The output writable movie name.
+    std::string m_decompressedMoviePath;
 
     /// The libav parameters
     AVCodec * m_codec = nullptr;                       ///< The codec of the encoded stream.
