@@ -385,6 +385,7 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
             }
             case DataSet::Type::BEHAVIOR:
             case DataSet::Type::GPIO:
+            case DataSet::Type::IMU:
             case DataSet::Type::IMAGE:
             case DataSet::Type::EVENTS:
             default:
@@ -589,7 +590,7 @@ Series::checkNewMember(DataSet * inDataSet, std::string & outMessage)
             }
             break;
         }
-
+        case DataSet::Type::IMU:
         case DataSet::Type::GPIO:
         {
             std::vector<SpGpio_t> existingGpios;

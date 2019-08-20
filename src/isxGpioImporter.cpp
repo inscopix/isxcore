@@ -1,4 +1,6 @@
 #include "isxGpioImporter.h"
+
+#include "isxIMUFile.h"
 #include "isxNVokeGpioFile.h"
 #include "isxNVistaGpioFile.h"
 #include "isxNVista3GpioFile.h"
@@ -12,7 +14,7 @@ namespace isx
 std::string
 GpioDataParams::getOpName()
 {
-    return "GPIO Import";
+    return "Import";
 }
 
 std::string
@@ -61,6 +63,13 @@ AsyncTaskStatus runGpioDataImporter(GpioDataParams inParams, std::shared_ptr<Gpi
         gpio.setCheckInCallback(inCheckInCB);
         result = gpio.parse();
         inOutputParams->filenames = {gpio.getOutputFileName()};
+    }
+    else if (extension == "imu")
+    {
+        IMUFile imu(inParams.fileName, inParams.outputDir);
+        imu.setCheckInCallback(inCheckInCB);
+        result = imu.parse();
+        inOutputParams->filenames = {imu.getOutputFileName()};
     }
 
     if (result == isx::AsyncTaskStatus::CANCELLED)

@@ -595,7 +595,7 @@ DataSet::readMetaData()
             m_hasMetaData = true;
         }
     }
-    else if (m_type == Type::GPIO)
+    else if (m_type == Type::GPIO || m_type == Type::IMU)
     {
         const SpGpio_t gpio = readGpio(m_fileName);
         m_timingInfo = gpio->getTimingInfo();
