@@ -41,7 +41,6 @@ MosaicMovieFile::MosaicMovieFile(
 
 MosaicMovieFile::~MosaicMovieFile()
 {
-    ISX_LOG_DEBUG("Closing ", m_fileName);
     if (isValid())
     {
         if (!m_fileClosedForWriting)
