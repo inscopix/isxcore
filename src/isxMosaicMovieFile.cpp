@@ -41,6 +41,7 @@ MosaicMovieFile::MosaicMovieFile(
 
 MosaicMovieFile::~MosaicMovieFile()
 {
+    ISX_LOG_DEBUG("Closing ", m_fileName);
     if (isValid())
     {
         if (!m_fileClosedForWriting)
@@ -66,6 +67,7 @@ MosaicMovieFile::initialize(const std::string & inFileName)
     readHeader();
     m_fileClosedForWriting = true;
     m_valid = true;
+    m_readOnly = true;
 }
 
 void
@@ -89,6 +91,8 @@ MosaicMovieFile::initialize(
     }
 
     m_valid = true;
+
+    m_readOnly = false;
 }
 
 void
@@ -487,6 +491,19 @@ MosaicMovieFile::checkFileGood(const std::string & inMessage) const
     if (!m_file.good())
     {
         ISX_THROW(ExceptionFileIO, inMessage + ": " + m_fileName);
+    }
+}
+
+void
+MosaicMovieFile::closeFileStream()
+{
+    if (isValid() && m_readOnly)
+    {
+        m_fileClosedForWriting = true;
+
+        isx::closeFileStreamWithChecks(m_file, m_fileName);
+
+        m_valid = false;
     }
 }
 
