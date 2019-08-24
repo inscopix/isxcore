@@ -247,4 +247,10 @@ MosaicMovie::getFrameTimestamp(const isize_t inIndex)
     return m_file->readFrameTimestamp(inIndex);
 }
 
+void
+MosaicMovie::closeFileStream()
+{
+    return m_file->closeFileStream();
+}
+
 } // namespace isx

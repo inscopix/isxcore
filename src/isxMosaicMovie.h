@@ -102,6 +102,8 @@ public:
 
     uint64_t getFrameTimestamp(const isize_t inIndex) override;
 
+    void closeFileStream() override;
+
 private:
 
     /// True if the movie file is valid, false otherwise.

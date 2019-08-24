@@ -104,7 +104,7 @@ DataSet::getFileName() const
     return m_fileName;
 }
 
-void 
+void
 DataSet::setFileName(const std::string & inFileName)
 {
     m_fileName = inFileName;
@@ -117,7 +117,7 @@ DataSet::getProperties() const
     return m_properties;
 }
 
-const HistoricalDetails & 
+const HistoricalDetails &
 DataSet::getHistoricalDetails() const
 {
     return m_history;
@@ -158,7 +158,7 @@ void
 DataSet::setPropertyValue(const std::string & inPropertyName, Variant inValue)
 {
     if (m_properties[inPropertyName] != inValue)
-    {   
+    {
         m_properties[inPropertyName] = inValue;
         setModified();
 
@@ -235,7 +235,7 @@ DataSet::setName(const std::string & inName)
     setModified();
 }
 
-void 
+void
 DataSet::setModified()
 {
     if (m_modifiedCB)
@@ -244,15 +244,15 @@ DataSet::setModified()
     }
 }
 
-DataSet::Metadata 
-DataSet::getMetadata() 
+DataSet::Metadata
+DataSet::getMetadata()
 {
     if (!m_hasMetaData)
     {
         readMetaData();
     }
 
-    Metadata metadata; 
+    Metadata metadata;
     std::stringstream ss;
     ss << std::fixed << std::setprecision(3);
 
@@ -406,7 +406,7 @@ DataSet::locateFile(const std::string & inDirectory)
         {
             // Properties are set here because if the file is TIF, these are needed and do not impact the result of 
             // readDataSetType (which depends on the number of frames)
-            isx::DataSet::Properties props; 
+            isx::DataSet::Properties props;
             props[PROP_MOVIE_START_TIME] = isx::Variant(isx::Time());
             props[PROP_MOVIE_FRAME_RATE] = isx::Variant(20.f);
             if (m_type == readDataSetType(newFilePath, props))
@@ -438,7 +438,7 @@ DataSet::toJsonString(const bool inPretty, const std::string & inPathToOmit) con
         if(p != std::string::npos)
         {
             ISX_ASSERT(p == 0);
-            fileName = m_fileName.substr(p + inPathToOmit.size() + 1); 
+            fileName = m_fileName.substr(p + inPathToOmit.size() + 1);
         }
     }
 
@@ -455,12 +455,12 @@ DataSet::toJsonString(const bool inPretty, const std::string & inPathToOmit) con
 }
 
 /*static*/
-std::string 
+std::string
 DataSet::getTypeString(Type inType)
 {
     switch (inType)
     {
-    case Type::MOVIE: 
+    case Type::MOVIE:
         return std::string("Movie");
     case Type::CELLSET:
         return std::string("Cell Set");
@@ -470,10 +470,10 @@ DataSet::getTypeString(Type inType)
         return std::string("GPIO");
     case Type::EVENTS:
         return std::string("Event Set");
-    default: 
+    default:
         return std::string("");
     }
-    
+
 }
 
 std::shared_ptr<DataSet>
@@ -484,10 +484,10 @@ DataSet::fromJsonString(const std::string & inString, const std::string & inAbso
         return std::shared_ptr<DataSet>();
     }
 
-    const json jsonObj = json::parse(inString);    
+    const json jsonObj = json::parse(inString);
     const std::string name = jsonObj.at("name");
     const DataSet::Type dataSetType = DataSet::Type(size_t(jsonObj.at("dataSetType")));
-    
+
     std::string fileName = jsonObj.at("fileName");
     if(isRelative(fileName) && !inAbsolutePathToPrepend.empty())
     {
@@ -566,7 +566,7 @@ DataSet::readMetaData()
         const auto nVistaMovie = std::dynamic_pointer_cast<isx::NVistaHdf5Movie>(movie);
         if(nVistaMovie)
         {
-            m_readOnlyProperties = nVistaMovie->getAdditionalProperties();     
+            m_readOnlyProperties = nVistaMovie->getAdditionalProperties();
         }
     }
     else if (m_type == Type::CELLSET)
@@ -612,7 +612,7 @@ DataSet::readMetaData()
     }
 }
 
-std::string 
+std::string
 DataSet::getHistory() const
 {
     std::string str = "Operation Name: " + m_history.getOperation() + "\n"
@@ -621,7 +621,7 @@ DataSet::getHistory() const
     return str;
 }
 
-void 
+void
 DataSet::setModifiedCallback(ModifiedCB_t inCallback)
 {
     m_modifiedCB = inCallback;
@@ -660,7 +660,11 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             acqInfo["Microscope Type"] = microscope->at("type");
         }
 
-        acqInfo["Session Name"] = extraProps.at("name");
+        const auto name = extraProps.find("name");
+        if (name != extraProps.end())
+        {
+            acqInfo["Session Name"] = extraProps.at("name");
+        }
 
         const auto personnel = extraProps.find("personnel");
         if (personnel != extraProps.end())
@@ -684,6 +688,16 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
         {
             const std::vector<std::string> versionTokens = splitString(producer->at("versionBE"), '-');
             acqInfo["Acquisition SW Version"] = versionTokens.at(0);
+        }
+
+        const auto idps = extraProps.find("idps");
+        if (idps != extraProps.end())
+        {
+            const auto efocus = idps->find("efocus");
+            if (efocus != idps->end())
+            {
+                acqInfo["efocus"] = efocus->get<uint16_t>();
+            }
         }
     }
 

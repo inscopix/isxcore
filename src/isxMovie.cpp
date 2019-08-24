@@ -40,4 +40,9 @@ Movie::getFrameTimestamp(const isize_t inIndex)
     return 0;
 }
 
+void
+Movie::closeFileStream()
+{
+}
+
 } // namespace isx
