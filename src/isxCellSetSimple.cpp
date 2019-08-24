@@ -296,6 +296,18 @@ CellSetSimple::setMatches(const std::vector<int16_t> & inMatches)
     m_file->setMatches(inMatches);
 }
 
+std::vector<uint16_t>
+CellSetSimple::getEfocusValues ()
+{
+    return m_file->getEfocusValues();
+}
+
+void
+CellSetSimple::setEfocusValues (const std::vector<uint16_t> &inEfocus)
+{
+    m_file->setEfocusValues(inEfocus);
+};
+
 std::vector<double>
 CellSetSimple::getPairScores()
 {

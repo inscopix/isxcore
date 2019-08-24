@@ -97,6 +97,12 @@ public:
         return m_name;
     }
 
+    /// Very aggressive approach to change the ti, unique_prt is used so it should be fine
+    void setTimingInfo(const TimingInfo & ti)
+    {
+        m_timingInfo = ti;
+    }
+
 private:
 
     /// The temporal domain of the function.

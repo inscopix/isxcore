@@ -362,6 +362,20 @@ namespace isx
         // placeholder
     }
 
+    std::vector<uint16_t>
+    CellSetSeries::getEfocusValues ()
+    {
+        ISX_ASSERT(m_cellSets.size() == 1);
+        return m_cellSets[0]->getEfocusValues();
+    }
+
+    void
+    CellSetSeries::setEfocusValues (const std::vector<uint16_t> &inEfocus)
+    {
+        ISX_ASSERT(false);
+        // placeholder
+    };
+
     std::vector<double>
     CellSetSeries::getPairScores()
     {

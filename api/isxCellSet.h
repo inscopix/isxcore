@@ -288,6 +288,16 @@ virtual
 void
 setMatches(const std::vector<int16_t> & inMatches) = 0;
 
+/// get the cell set matches
+/// \return  cell set matches
+virtual
+std::vector<uint16_t>
+getEfocusValues() = 0;
+
+virtual
+void
+setEfocusValues(const std::vector<uint16_t> & inEfocus) = 0;
+
 /// get cell set pair scores
 /// \return  cell set pair scores
 virtual
