@@ -34,9 +34,10 @@ CompressedMovieFile::CompressedMovieFile (const std::string &inFileName, const s
     readVideoInfo();
 
     /// decoder
-    // create format context
-    m_formatCtx = avformat_alloc_context();
-    if (avformat_open_input(&m_formatCtx, m_fileName.c_str(), nullptr, nullptr) < 0)
+    auto infmt = av_find_input_format("avi");
+    AVDictionary *dict = nullptr;
+    av_dict_set_int(&dict, "skip_initial_bytes", m_header.frame.offset, 0);
+    if (avformat_open_input(&m_formatCtx, m_fileName.c_str(), infmt, &dict) < 0)
     {
         ISX_THROW(isx::ExceptionFileIO, "Decoder: Failed to open movie file ", m_fileName);
     }
