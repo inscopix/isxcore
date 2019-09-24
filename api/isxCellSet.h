@@ -294,6 +294,8 @@ virtual
 std::vector<uint16_t>
 getEfocusValues() = 0;
 
+/// set the efocus values
+/// \param inEfocus efocus value
 virtual
 void
 setEfocusValues(const std::vector<uint16_t> & inEfocus) = 0;
