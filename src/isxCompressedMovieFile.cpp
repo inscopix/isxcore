@@ -12,6 +12,8 @@ extern "C" {
 #include "isxMovieFactory.h"
 #include "isxPathUtils.h"
 
+#undef av_err2str
+#define av_err2str(errnum) av_make_error_string((char*)__builtin_alloca(AV_ERROR_MAX_STRING_SIZE), AV_ERROR_MAX_STRING_SIZE, errnum)
 
 namespace isx
 {
@@ -34,15 +36,21 @@ CompressedMovieFile::CompressedMovieFile (const std::string &inFileName, const s
     readVideoInfo();
 
     /// decoder
-    // create format context
-    m_formatCtx = avformat_alloc_context();
-    if (avformat_open_input(&m_formatCtx, m_fileName.c_str(), nullptr, nullptr) < 0)
+    int avRetCode;
+    auto infmt = av_find_input_format("avi");
+    AVDictionary *dict = nullptr;
+    av_dict_set_int(&dict, "skip_initial_bytes", m_header.frame.offset, 0);
+    avRetCode = avformat_open_input(&m_formatCtx, m_fileName.c_str(), infmt, &dict);
+    if (avRetCode < 0)
     {
-        ISX_THROW(isx::ExceptionFileIO, "Decoder: Failed to open movie file ", m_fileName);
+        ISX_THROW(isx::ExceptionFileIO,
+                "Decoder: Failed to open movie file ", m_fileName, " with error(", av_err2str(avRetCode), ")");
     }
-    if (avformat_find_stream_info(m_formatCtx, nullptr) < 0)
+    avRetCode = avformat_find_stream_info(m_formatCtx, nullptr);
+    if (avRetCode < 0)
     {
-        ISX_THROW(isx::ExceptionFileIO, "Decoder: No stream exists in the movie file ", m_fileName);
+        ISX_THROW(isx::ExceptionFileIO,
+                "Decoder: No stream exists in the movie file ", m_fileName, " with error(", av_err2str(avRetCode), ")");
     }
     // find first video stream and set (params + codec)
     int firstVideoStreamIndex = -1;
@@ -68,13 +76,19 @@ CompressedMovieFile::CompressedMovieFile (const std::string &inFileName, const s
     m_videoStreamIndex = firstVideoStreamIndex;
     // create codec context
     m_decoderCtx = avcodec_alloc_context3(m_codec);
-    if (avcodec_parameters_to_context(m_decoderCtx, m_decoderParameters) < 0)
+    avRetCode = avcodec_parameters_to_context(m_decoderCtx, m_decoderParameters);
+    if (avRetCode < 0)
     {
-        ISX_THROW(isx::ExceptionFileIO, "Decoder: Cannot convert codec parameters for file ", m_fileName);
+        ISX_THROW(isx::ExceptionFileIO,
+                "Decoder: Cannot convert codec parameters for file ", m_fileName,
+                " with error(", av_err2str(avRetCode), ")");
     }
-    if (avcodec_open2(m_decoderCtx, m_codec, nullptr) < 0)
+    avRetCode = avcodec_open2(m_decoderCtx, m_codec, nullptr);
+    if (avRetCode < 0)
     {
-        ISX_THROW(isx::ExceptionFileIO, "Decoder: Cannot initialize the context for codec of file ", m_fileName);
+        ISX_THROW(isx::ExceptionFileIO,
+                "Decoder: Cannot initialize the context for codec of file ", m_fileName,
+                " with error(", av_err2str(avRetCode), ")");
     }
 
     m_frame = av_frame_alloc();
@@ -196,7 +210,8 @@ CompressedMovieFile::readAllFrames (AsyncCheckInCB_t inCheckinCB)
                 {
                     ISX_THROW(
                         isx::ExceptionFileIO,
-                        "Decoder: Failed to read frame ", actualFrameIndex, " for file ", m_fileName);
+                        "Decoder: Failed to read frame ", actualFrameIndex,
+                        " for file ", m_fileName, " with error(", av_err2str(response), ")");
                 }
 
                 // Our isxc file has metadata right after the video
