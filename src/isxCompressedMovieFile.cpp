@@ -34,6 +34,7 @@ CompressedMovieFile::CompressedMovieFile (const std::string &inFileName, const s
     }
     // Read video header + session
     readVideoInfo();
+    verifyVideoInfo();
 
     /// decoder
     int avRetCode;
@@ -122,7 +123,7 @@ CompressedMovieFile::readVideoInfo ()
     m_file.read((char *) &m_header, sizeof(m_header));
     ISX_ASSERT(m_header.tileCount >= 1 && m_header.tileCount <= ISX_META_MAX_TILES);
     ISX_ASSERT(m_header.pixelCount <= ISX_META_MAX_PIXELS);
-    // sensor metadata (in 16 bit pixels) + tile data (each tile is 8 byte so tileCount is enough)
+    // sensor metadata (in 16 bit pixels) + tile data (each tile data is 8 bit int which is 1 byte)
     m_frameMetaSize = (sizeof(uint16_t) * m_header.pixelCount) + m_header.tileCount;
 
     /// Session json footer
@@ -163,6 +164,24 @@ CompressedMovieFile::readVideoInfo ()
     catch (...)
     {
         ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing movie header.");
+    }
+}
+
+void
+CompressedMovieFile::verifyVideoInfo()
+{
+    /// Metadata
+    uint64_t metadataExpectedSize =  m_frameMetaSize * m_timingInfo.getNumValidTimes();
+    if (metadataExpectedSize != m_header.meta.size)
+    {
+        ISX_THROW(isx::ExceptionDataIO,
+                "File (", m_fileName, ") is corrupted: metadata size=", m_header.meta.size, "!" , metadataExpectedSize);
+    }
+    // This check might not be necessary.
+    if (metadataExpectedSize + m_header.meta.offset != m_header.sessionOffset)
+    {
+        ISX_THROW(isx::ExceptionDataIO,
+                  "File (", m_fileName, ") is corrupted: metadata size is not correct.");
     }
 }
 
