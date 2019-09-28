@@ -228,6 +228,10 @@ private:
     ///
     void readVideoInfo();
 
+    /// Verify the integrity of the compresssed video file
+    ///
+    void verifyVideoInfo();
+
     /// Clean up for libav allocations.
     ///
     void avCleanUp();
