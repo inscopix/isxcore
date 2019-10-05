@@ -389,6 +389,19 @@ namespace isx
         m_matches = inMatches;
     }
 
+    std::vector<uint16_t>
+    CellSetFile::getEfocusValues ()
+    {
+        return m_efocusValues;
+    }
+
+    void
+    CellSetFile::setEfocusValues(const std::vector<uint16_t> & inEfocus)
+    {
+        m_efocusValues = inEfocus;
+    }
+
+
     std::vector<double>
     CellSetFile::getPairScores()
     {
@@ -463,6 +476,21 @@ namespace isx
                 m_extraProperties = j["extraProperties"];
             }
 
+            if (j.find("efocusValues") != j.end())
+            {
+                m_efocusValues = j["efocusValues"].get<std::vector<uint16_t>>();
+            }
+            else if (m_extraProperties.find("idps") != m_extraProperties.end())
+            {
+                json idps = m_extraProperties["idps"];
+                ISX_LOG_DEBUG(idps.dump());
+                if (idps.find("efocus") != idps.end())
+                {
+                    ISX_LOG_DEBUG(idps["efocus"].get<uint16_t>());
+                    m_efocusValues = {idps["efocus"].get<uint16_t>()};
+                }
+            }
+
             if (m_cellActivity.empty())
             {
                 m_cellActivity = std::vector<bool>(m_cellNames.size(), true);
@@ -514,6 +542,7 @@ namespace isx
             j["CentroidDistances"] = m_centroidDistances;
             j["cellMetrics"] = convertCellMetricsToJson(m_cellImageMetrics);
             j["extraProperties"] = m_extraProperties;
+            j["efocusValues"] = m_efocusValues;
         }
         catch (const std::exception & error)
         {
