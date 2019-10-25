@@ -37,7 +37,7 @@ writeIMULogicalTraces(
     AsyncCheckInCB_t inCheckInCB)
 {
     const size_t numSections = inTraces.size();
-    ISX_ASSERT(numSections > 0);
+    ISX_ASSERT(numSections == 2);
 
     size_t numTraces = 0;
     for (isize_t s = 0; s < numSections; ++s)
@@ -49,43 +49,88 @@ writeIMULogicalTraces(
 
     const int32_t maxDecimalsForDouble = std::numeric_limits<double>::digits10 + 1;
 
-    for (isize_t sec = 0; sec < numSections; ++sec)
+    // Write mag data in appended columns instead of rows
+    // Section header
+    inStream << "IMU Time (s)";
+    for (const std::string & name : inNames[0])
     {
-        // Section header
-        inStream << "Time (s)";
-        const std::vector<std::string> & sectionNames = inNames[sec];
-        const size_t numSectionNames = sectionNames.size();
-        for (const std::string & name : sectionNames)
+        inStream << ", " << name;
+    }
+    inStream << ", Mag Time (s)";
+    for (const std::string & name : inNames[1])
+    {
+        inStream << ", " << name;
+    }
+    inStream << std::endl;
+
+    std::vector<isx::Time> imuTimeVec;
+    std::vector<std::vector<float>> imuTraceVec;
+    std::vector<isx::Time> magTimeVec;
+    std::vector<std::vector<float>> magTraceVec;
+
+    // populate time vectors
+    for (auto & it: inTraces[0][0][0]->getValues())
+    {
+        imuTimeVec.push_back(it.first);
+    }
+    for (auto & it: inTraces[1][0][0]->getValues())
+    {
+        magTimeVec.push_back(it.first);
+    }
+    // populate data vectors
+    for (const auto & i : inTraces[0])
+    {
+        std::vector<float> trace;
+        for (auto & it: i[0]->getValues())
         {
-            inStream << ", " << name;
+            trace.push_back(it.second);
         }
-        inStream << std::endl;
-
-        // Section content
-        const std::vector<std::vector<SpLogicalTrace_t>> & sectionTraces = inTraces[sec];
-        const size_t numSectionTraces = sectionTraces.size();
-        const size_t numSectionSegments = sectionTraces.front().size();
-        ISX_ASSERT(numSectionTraces > 0);
-        ISX_ASSERT(numSectionNames == numSectionTraces);
-        ISX_ASSERT(numSectionSegments > 0);
-
-        for (isize_t seg = 0; seg < numSectionSegments; ++seg)
+        imuTraceVec.push_back(trace);
+    }
+    for (const auto & i : inTraces[1])
+    {
+        std::vector<float> trace;
+        for (auto & it: i[0]->getValues())
         {
-            for (auto & tv : sectionTraces[0][seg]->getValues())
-            {
-                inStream << std::setprecision(maxDecimalsForDouble) << (tv.first - inBaseTime).toDouble();
-                for (isize_t t = 0; t < numSectionTraces; ++t)
-                {
-                    inStream << ", " << sectionTraces[t][seg]->getValues().at(tv.first);
-                }
-                inStream << std::endl;
-            }
+            trace.push_back(it.second);
         }
-
-        // Section footer
-        inStream << std::endl;
+        magTraceVec.push_back(trace);
     }
 
+    // output csv one line at a time
+    for (isize_t line = 0; line < imuTimeVec.size(); ++line)
+    {
+        // write imu time
+        inStream << std::setprecision(maxDecimalsForDouble) << (imuTimeVec[line] - inBaseTime).toDouble();
+        
+        isize_t i = 0;
+        // write imu data
+        for (auto & tr : imuTraceVec)
+        {
+            // if acc, output in Gs
+            if (i < 3)
+            {
+                inStream << ", " << tr[line] / 16384.f;
+            }
+            else
+            {
+                inStream << ", " << tr[line];
+            }
+            ++i;
+        }
+
+        // Write mag data
+        if (line < magTimeVec.size())
+        {
+            // write mag time
+            inStream << ", " << std::setprecision(maxDecimalsForDouble) << (magTimeVec[line] - inBaseTime).toDouble();
+            for (auto & tr: magTraceVec)
+            {
+                inStream << ", " << tr[line];
+            }
+        }
+        inStream << std::endl;
+    }
     return false;
 }
 
