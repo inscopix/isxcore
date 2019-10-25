@@ -35,6 +35,15 @@ int64_t getLeastCommonMultiple(int64_t x, int64_t y)
     return x * (y / gcd);
 }
 
+/// \param x First integer.
+/// \param y Second integer.
+/// \return  Whether the multiplication will overflow.
+bool isMultiplicationOverflow(int64_t x, int64_t y)
+{
+    int64_t z = x * y;
+    return z != 0 && z / x != y;
+}
+
 } // namespace
 
 namespace isx
@@ -139,6 +148,15 @@ Ratio::operator *(const Ratio & other) const
     }
     const Ratio thisSim(m_num, m_den, true);
     const Ratio otherSim(other.m_num, other.m_den, true);
+
+    // Detect for the potential overflow and use double to calculate if detected.
+    if (isMultiplicationOverflow(thisSim.m_num, otherSim.m_num)
+    || isMultiplicationOverflow(thisSim.m_den, otherSim.m_den))
+    {
+        return Ratio::fromDouble(
+                (thisSim.m_num / (double) thisSim.m_den) * (otherSim.m_num / (double) otherSim.m_den));
+    }
+
     return Ratio(thisSim.m_num * otherSim.m_num, thisSim.m_den * otherSim.m_den);
 }
 
