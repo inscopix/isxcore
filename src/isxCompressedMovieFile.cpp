@@ -208,7 +208,7 @@ CompressedMovieFile::readAllFrames (AsyncCheckInCB_t inCheckinCB)
             "We estimate you only have about ", availableGB, " GB in the destination partition. ");
     }
     SpWritableMovie_t decompressedOutputMovie = writeMosaicMovie(
-        m_decompressedMoviePath, m_timingInfo, m_spacingInfo, m_dataType, true);
+        m_decompressedMoviePath, m_timingInfo, m_spacingInfo, m_dataType, m_header.pixelCount > 0);
 
     isize_t actualFrameIndex = 0;
     float progress;
@@ -259,12 +259,15 @@ CompressedMovieFile::readAllFrames (AsyncCheckInCB_t inCheckinCB)
                     // Create result: OpenCV frame with 16 bit (used in isxd files)
                     cv::Mat resultFrame(frame.rows, frame.cols, CV_16U);
 
-                    // Read metadata
+                    // Read metadata (frame's header pixels + mantissa)
                     m_file.seekg(m_header.meta.offset + (m_frameMetaSize * actualFrameIndex), std::ios::beg);
                     checkFileGood("Cannot locate metadata of frame=" + std::to_string(actualFrameIndex));
 //                    ISX_LOG_DEBUG("frame[", actualFrameIndex, "]: open=", m_file.is_open(), " good=", m_file.good(), " tellg=", m_file.tellg());
                     std::vector<uint16_t> frameHeaderPixels(m_header.pixelCount);
-                    m_file.read((char *) frameHeaderPixels.data(), m_header.pixelCount * sizeof(uint16_t));
+                    if (m_header.pixelCount > 0)
+                    {
+                        m_file.read((char *) frameHeaderPixels.data(), m_header.pixelCount * sizeof(uint16_t));
+                    }
                     std::vector<uint8_t> metadata(m_header.tileCount);
                     m_file.read((char *) metadata.data(), m_header.tileCount);
 
@@ -291,26 +294,34 @@ CompressedMovieFile::readAllFrames (AsyncCheckInCB_t inCheckinCB)
                     ISX_ASSERT(resultFrame.isContinuous());
                     ISX_ASSERT(resultFrame.type() == CV_16U);
 
-                    // Make output frame and write to file
-                    // Re-create frame header (2 lines, hardcoded to 1280) by:
-                    // 1. insert (cols - sensor pixel count) 0 in the front => first line
-                    // 2. insert cols 0 at the back => second line
-                    frameHeaderPixels.insert(
-                        frameHeaderPixels.begin(),
-                        (ISX_START_PIXEL_IN_HEADER + 1) - m_header.pixelCount,
-                        0);
-                    frameHeaderPixels.insert(
-                        frameHeaderPixels.end(),
-                        (ISX_START_PIXEL_IN_HEADER + 1),
-                        0);
-                    ISX_ASSERT(frameHeaderPixels.size() == ISX_FRAME_HEADER_FOOTER_SIZE);
-                    std::vector<uint16_t> footer(ISX_FRAME_HEADER_FOOTER_SIZE, 0);
                     SpVideoFrame_t outFrame = decompressedOutputMovie->makeVideoFrame(actualFrameIndex);
                     std::memcpy(outFrame->getPixels(), resultFrame.ptr(), outFrame->getImageSizeInBytes());
-                    decompressedOutputMovie->writeFrameWithHeaderFooter(
-                        frameHeaderPixels.data(),
-                        outFrame->getPixelsAsU16(),
-                        footer.data());
+                    if (m_header.pixelCount > 0)
+                    {
+                        // Make output frame and write to file
+                        // Re-create frame header (2 lines, hardcoded to ISX_START_PIXEL_IN_HEADER + 1) by:
+                        // 1. insert 0s(= #col - sensor pixel count) in front of read sensor pixels => first line
+                        // 2. insert 0s(= #col) at the back => second line
+                        frameHeaderPixels.insert(
+                            frameHeaderPixels.begin(),
+                            (ISX_START_PIXEL_IN_HEADER + 1) - m_header.pixelCount,
+                            0);
+                        frameHeaderPixels.insert(
+                            frameHeaderPixels.end(),
+                            (ISX_START_PIXEL_IN_HEADER + 1),
+                            0);
+                        frameHeaderPixels[0] = 0x0A0;  // Bypass MosaicMovieFile::readFrameTimestamp sanity check
+                        ISX_ASSERT(frameHeaderPixels.size() == ISX_FRAME_HEADER_FOOTER_SIZE);
+                        std::vector<uint16_t> footer(ISX_FRAME_HEADER_FOOTER_SIZE, 0);
+                        decompressedOutputMovie->writeFrameWithHeaderFooter(
+                            frameHeaderPixels.data(),
+                            outFrame->getPixelsAsU16(),
+                            footer.data());
+                    }
+                    else
+                    {
+                        decompressedOutputMovie->writeFrame(outFrame);
+                    }
 
                     actualFrameIndex += 1;
 
