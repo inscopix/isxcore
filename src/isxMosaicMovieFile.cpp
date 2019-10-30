@@ -565,7 +565,10 @@ MosaicMovieFile::readFrameTimestamp(const isize_t inIndex)
         seekForReadFrame(ti.timeIdxToRecordedIdx(inIndex), false, false);
         uint16_t sanityCheck = 0;
         m_file.read(reinterpret_cast<char *>(&sanityCheck), sizeof(sanityCheck));
-        ISX_LOG_WARNING(sanityCheck == 0x0A0);
+        if (sanityCheck != 0x0A0)
+        {
+            ISX_LOG_WARNING("First pixel value of the header=", sanityCheck, " != 0x0A0");
+        }
 #endif
 
         // The TSC bytes are spread across the last 8 pixels of the first line.
