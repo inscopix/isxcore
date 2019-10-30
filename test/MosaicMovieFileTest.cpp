@@ -352,3 +352,26 @@ TEST_CASE("MosaicMovieFileF32", "[core-internal][mosaic_movie_file]")
         }
     }
 }
+
+TEST_CASE("MosaicMovieFileTimingInfo[MOS-1838]", "[core-internal][mosaic_movie_file]")
+{
+    std::string fileName = g_resources["unitTestDataPath"] + "/MOS-1838/50_frames_39999_to_39959.isxd";
+
+    SECTION("Step modified according to tsc")
+    {
+        std::fstream fileStream(fileName, std::ios::binary | std::ios_base::in);
+        if (!fileStream.good() || !fileStream.is_open())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Failed to open movie file for reading: ", fileName);
+        }
+
+        std::ios::pos_type headerPos;
+        isx::json j = isx::readJsonHeaderAtEnd(fileStream, headerPos);
+        isx::DurationInSeconds prevStep = isx::convertJsonToRatio(j["timingInfo"].at("period"));
+        REQUIRE(prevStep == isx::DurationInSeconds::fromMicroseconds(39999));
+
+        isx::MosaicMovieFile movie(fileName);
+        isx::DurationInSeconds modStep = movie.getTimingInfo().getStep();
+        REQUIRE(modStep == isx::DurationInSeconds::fromMicroseconds(39959));
+    }
+}

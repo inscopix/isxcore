@@ -68,9 +68,9 @@ MosaicMovieFile::initialize(const std::string & inFileName)
     m_valid = true;
     m_readOnly = true;
 
-    ISX_LOG_DEBUG("old step: NUM=", m_timingInfos[0].getStep().getNum(),
-            " DEN=", m_timingInfos[0].getStep().getDen(),
-            " double=", m_timingInfos[0].getStep().toDouble());
+    // ISX_LOG_DEBUG("old step: NUM=", m_timingInfos[0].getStep().getNum(),
+    //         " DEN=", m_timingInfos[0].getStep().getDen(),
+    //         " double=", m_timingInfos[0].getStep().toDouble());
 
     if (hasFrameTimestamps())
     {
@@ -108,9 +108,9 @@ MosaicMovieFile::initialize(const std::string & inFileName)
                     m_timingInfos[0].getDroppedFrames(),
                     m_timingInfos[0].getCropped()
                     );
-            ISX_LOG_DEBUG("new step: NUM=", m_timingInfos[0].getStep().getNum(),
-                    " DEN=", m_timingInfos[0].getStep().getDen(),
-                    " double=", m_timingInfos[0].getStep().toDouble());
+            // ISX_LOG_DEBUG("new step: NUM=", m_timingInfos[0].getStep().getNum(),
+            //         " DEN=", m_timingInfos[0].getStep().getDen(),
+            //         " double=", m_timingInfos[0].getStep().toDouble());
         }
     }
 }
