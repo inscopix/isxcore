@@ -67,6 +67,52 @@ MosaicMovieFile::initialize(const std::string & inFileName)
     m_fileClosedForWriting = true;
     m_valid = true;
     m_readOnly = true;
+
+    ISX_LOG_DEBUG("old step: NUM=", m_timingInfos[0].getStep().getNum(),
+            " DEN=", m_timingInfos[0].getStep().getDen(),
+            " double=", m_timingInfos[0].getStep().toDouble());
+
+    if (hasFrameTimestamps())
+    {
+        isize_t firstFrameIndex = 0;
+        isize_t lastFrameIndex = m_timingInfos[0].getNumTimes() - 1;
+        for (isize_t f = firstFrameIndex; f < m_timingInfos[0].getNumTimes(); ++f)
+        {
+            if (m_timingInfos[0].isIndexValid(f))
+            {
+                firstFrameIndex = f;
+                break;
+            }
+        }
+        for (auto f = int64_t(lastFrameIndex); f >= 0; --f)
+        {
+            if (m_timingInfos[0].isIndexValid(f))
+            {
+                lastFrameIndex = f;
+                break;
+            }
+        }
+
+        isize_t numFrameWithin = lastFrameIndex - firstFrameIndex;
+        if (numFrameWithin > 1)
+        {
+            uint64_t startTsc = readFrameTimestamp(firstFrameIndex);
+            uint64_t endTsc = readFrameTimestamp(lastFrameIndex);
+            uint64_t durationInMicroSec = endTsc - startTsc;
+            uint64_t stepInMicroSec = durationInMicroSec / numFrameWithin;
+
+            m_timingInfos[0] = TimingInfo(
+                    m_timingInfos[0].getStart(),
+                    DurationInSeconds::fromMicroseconds(stepInMicroSec),
+                    m_timingInfos[0].getNumTimes(),
+                    m_timingInfos[0].getDroppedFrames(),
+                    m_timingInfos[0].getCropped()
+                    );
+            ISX_LOG_DEBUG("new step: NUM=", m_timingInfos[0].getStep().getNum(),
+                    " DEN=", m_timingInfos[0].getStep().getDen(),
+                    " double=", m_timingInfos[0].getStep().toDouble());
+        }
+    }
 }
 
 void
