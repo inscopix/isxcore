@@ -615,7 +615,7 @@ MosaicMovieFile::hasFrameTimestamps() const
         if (producer != m_extraProperties.end())
         {
             const auto version = producer->find("version");
-            if (version != producer->end())
+            if (version != producer->end() && version->is_string())
             {
                 return versionAtLeast(version->get<std::string>(), 1, 1, 1);
             }
