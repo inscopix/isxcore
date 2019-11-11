@@ -69,6 +69,15 @@ AsyncTaskStatus runGpioExporter(
         std::shared_ptr<GpioExporterOutputParams> inOutputParams = nullptr,
         AsyncCheckInCB_t inCheckInCB = [](float){return false;});
 
+/// Runs IMUExporter
+/// \param inParams parameters for this IMU export
+/// \param inOutputParams a shared pointer for output parameters
+/// \param inCheckInCB check-in callback function that is periodically invoked with progress and to tell algo whether to cancel / abort
+AsyncTaskStatus runIMUExporter(
+    GpioExporterParams inParams,
+    std::shared_ptr<GpioExporterOutputParams> inOutputParams = nullptr,
+    AsyncCheckInCB_t inCheckInCB = [](float){return false;});
+
 } // namespace isx
 
 #endif // ISX_GPIO_EXPORTER_H

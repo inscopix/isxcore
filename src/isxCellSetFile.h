@@ -179,6 +179,14 @@ public:
     /// \param inCsMatches cell set matches
     void setMatches(const std::vector<int16_t> & inCsMatches);
 
+    /// get the cell set matches
+    /// \return  cell set matches
+    std::vector<uint16_t> getEfocusValues();
+
+    /// set the cell set matches
+    /// \param inCsMatches cell set matches
+    void setEfocusValues(const std::vector<uint16_t> & inEfocus);
+
     /// get cell set pair scores
     /// \return  cell set pair scores
     std::vector<double> getPairScores();
@@ -244,6 +252,9 @@ private:
 
     /// Flag indicating whether a cell is active in this file
     CellActivities_t m_cellActivity;
+
+    /// Efocus values for each cell, used by Multiplane registration
+    std::vector<uint16_t> m_efocusValues = {0};
 
     /// The file stream
     std::fstream m_file;

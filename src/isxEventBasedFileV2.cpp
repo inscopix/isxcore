@@ -247,7 +247,14 @@ EventBasedFileV2::getTimingInfo() const
     DurationInSeconds step(0, 1);
     if (!m_steps.empty())
     {
-        step = *(std::max_element(m_steps.begin(), m_steps.end()));
+        if (m_smallStep)
+        {
+            step = *(std::max_element(m_steps.begin(), m_steps.end()));
+        }
+        else
+        {
+            step = *(std::min_element(m_steps.begin(), m_steps.end()));
+        }
     }
 
     if (step == DurationInSeconds(0, 1))
@@ -309,10 +316,13 @@ EventBasedFileV2::readFileFooter()
             }
 
             m_dataType = DataSet::Type(size_t(j["type"]));
-            if ((m_dataType != DataSet::Type::GPIO) && (m_dataType != DataSet::Type::EVENTS))
+            if (
+                (m_dataType != DataSet::Type::GPIO) &&
+                (m_dataType != DataSet::Type::IMU) &&
+                (m_dataType != DataSet::Type::EVENTS))
             {
                 ISX_THROW(ExceptionDataIO,
-                    "Expected type to be GPIO or EVENTS. Instead got ", size_t(m_dataType), ".");
+                    "Expected type to be GPIO, IMU or EVENTS. Instead got ", size_t(m_dataType), ".");
             }
 
             m_steps.resize(0);
@@ -447,6 +457,12 @@ EventBasedFileV2::setExtraProperties(const std::string & inProperties)
     {
         ISX_THROW(ExceptionDataIO, "Error parsing extra properties: ", error.what());
     }
+}
+
+void
+EventBasedFileV2::setSmallStep(bool smallStep)
+{
+    m_smallStep = smallStep;
 }
 
 } // namespace isx

@@ -136,6 +136,11 @@ public:
     virtual
     uint64_t
     getFrameTimestamp(const isize_t inIndex);
+
+    /// \return     Aggressively close the file stream
+    virtual
+    void
+    closeFileStream();
 };
 
 } // namespace isx

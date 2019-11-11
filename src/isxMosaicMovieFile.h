@@ -179,6 +179,9 @@ public:
     ///                     or 0 if it does not have one.
     uint64_t readFrameTimestamp(const isize_t inIndex);
 
+    /// Aggressively close the file stream.
+    void closeFileStream();
+
 private:
     /// True if the movie file is valid, false otherwise.
     bool m_valid;
@@ -208,6 +211,9 @@ private:
 
     /// True if the frame bytes contain fixed size header and footer lines.
     bool m_hasFrameHeaderFooter = false;
+
+    // True if file is opened with only std::ios::in flag.
+    bool m_readOnly = false;
 
     /// The number of values in the frame header. The same for the footer.
     const static size_t s_numHeaderFooterValues = 2560;

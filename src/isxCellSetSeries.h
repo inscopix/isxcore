@@ -131,6 +131,12 @@ public:
     void
     setMatches(const std::vector<int16_t> & inMatches) override;
 
+    std::vector<uint16_t>
+    getEfocusValues() override;
+
+    void
+    setEfocusValues(const std::vector<uint16_t> & inEfocus) override;
+
     std::vector<double>
     getPairScores() override;
 

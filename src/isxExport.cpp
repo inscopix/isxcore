@@ -29,6 +29,112 @@
 namespace isx {
 
 bool
+writeIMULogicalTraces(
+    std::ofstream & inStream,
+    const std::vector<std::vector<std::vector<SpLogicalTrace_t>>> & inTraces,
+    const std::vector<std::vector<std::string>> & inNames,
+    const Time & inBaseTime,
+    AsyncCheckInCB_t inCheckInCB)
+{
+    const size_t numSections = inTraces.size();
+    ISX_ASSERT(numSections == 2);
+
+    size_t numTraces = 0;
+    for (isize_t s = 0; s < numSections; ++s)
+    {
+        numTraces += inTraces[s].size();
+    }
+    ISX_ASSERT(numTraces > 0);
+    ISX_ASSERT(inNames.size() == inTraces.size());
+
+    const int32_t maxDecimalsForDouble = std::numeric_limits<double>::digits10 + 1;
+
+    // Write mag data in appended columns instead of rows
+    // Section header
+    inStream << "IMU Time (s)";
+    for (const std::string & name : inNames[0])
+    {
+        inStream << ", " << name;
+    }
+    inStream << ", Mag Time (s)";
+    for (const std::string & name : inNames[1])
+    {
+        inStream << ", " << name;
+    }
+    inStream << std::endl;
+
+    std::vector<isx::Time> imuTimeVec;
+    std::vector<std::vector<float>> imuTraceVec;
+    std::vector<isx::Time> magTimeVec;
+    std::vector<std::vector<float>> magTraceVec;
+
+    // populate time vectors
+    for (auto & it: inTraces[0][0][0]->getValues())
+    {
+        imuTimeVec.push_back(it.first);
+    }
+    for (auto & it: inTraces[1][0][0]->getValues())
+    {
+        magTimeVec.push_back(it.first);
+    }
+    // populate data vectors
+    for (const auto & i : inTraces[0])
+    {
+        std::vector<float> trace;
+        for (auto & it: i[0]->getValues())
+        {
+            trace.push_back(it.second);
+        }
+        imuTraceVec.push_back(trace);
+    }
+    for (const auto & i : inTraces[1])
+    {
+        std::vector<float> trace;
+        for (auto & it: i[0]->getValues())
+        {
+            trace.push_back(it.second);
+        }
+        magTraceVec.push_back(trace);
+    }
+
+    // output csv one line at a time
+    for (isize_t line = 0; line < imuTimeVec.size(); ++line)
+    {
+        // write imu time
+        inStream << std::setprecision(maxDecimalsForDouble) << (imuTimeVec[line] - inBaseTime).toDouble();
+        
+        isize_t i = 0;
+        // write imu data
+        for (auto & tr : imuTraceVec)
+        {
+            // if acc, output in Gs
+            if (i < 3)
+            {
+                inStream << ", " << tr[line] / 16384.f;
+            }
+            else
+            {
+                inStream << ", " << tr[line];
+            }
+            ++i;
+        }
+
+        // Write mag data
+        if (line < magTimeVec.size())
+        {
+            // write mag time
+            inStream << ", " << std::setprecision(maxDecimalsForDouble) << (magTimeVec[line] - inBaseTime).toDouble();
+            for (auto & tr: magTraceVec)
+            {
+                inStream << ", " << tr[line];
+            }
+        }
+        inStream << std::endl;
+    }
+    return false;
+}
+
+bool
 writeLogicalTraces(
         std::ofstream & inStream,
         const std::vector<std::vector<SpLogicalTrace_t>> & inTraces,
