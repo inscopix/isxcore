@@ -69,30 +69,42 @@ writeIMULogicalTraces(
     std::vector<std::vector<float>> magTraceVec;
 
     // populate time vectors
-    for (auto & it: inTraces[0][0][0]->getValues())
+    for (auto & dataset: inTraces[0][0])
     {
-        imuTimeVec.push_back(it.first);
+        for (auto & it: dataset->getValues())
+        {
+            imuTimeVec.push_back(it.first);
+        }
     }
-    for (auto & it: inTraces[1][0][0]->getValues())
+    for (auto & dataset: inTraces[1][0])
     {
-        magTimeVec.push_back(it.first);
+        for (auto & it: dataset->getValues())
+        {
+            magTimeVec.push_back(it.first);
+        }
     }
     // populate data vectors
     for (const auto & i : inTraces[0])
     {
         std::vector<float> trace;
-        for (auto & it: i[0]->getValues())
+        for (auto & dataset: i)
         {
-            trace.push_back(it.second);
+            for (auto & it: dataset->getValues())
+            {
+                trace.push_back(it.second);
+            }
         }
         imuTraceVec.push_back(trace);
     }
     for (const auto & i : inTraces[1])
     {
         std::vector<float> trace;
-        for (auto & it: i[0]->getValues())
+        for (auto & dataset: i)
         {
-            trace.push_back(it.second);
+            for (auto & it: dataset->getValues())
+            {
+                trace.push_back(it.second);
+            }
         }
         magTraceVec.push_back(trace);
     }
