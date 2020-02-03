@@ -29,7 +29,7 @@ typedef SpatialSize<Ratio> SizeInMicrons_t;
 typedef std::vector<PointInPixels_t> Contour_t;
 typedef std::vector<Contour_t> Contours_t;
 
-const Ratio DEFAULT_PIXEL_SIZE(22, 10);
+const Ratio DEFAULT_PIXEL_SIZE(3, 1);
 
 /// The spacing info associated with spatial samples.
 ///
