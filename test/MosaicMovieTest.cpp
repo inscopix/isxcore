@@ -52,7 +52,7 @@ TEST_CASE("MosaicMovieU16", "[core-internal][mosaic_movie]")
         REQUIRE(movie->isValid());
         REQUIRE(movie->getTimingInfo() == timingInfo);
         REQUIRE(movie->getSpacingInfo() == spacingInfo);
-        
+
         isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
         for (isx::isize_t f = 0; f < numFrames; ++f)
         {
@@ -331,7 +331,7 @@ TEST_CASE("MosaicMovieF32", "[core-internal][mosaic_movie]")
         {
             auto movie = std::make_shared<isx::MosaicMovie>(
                 fileName, timingInfo, spacingInfo, dataType);
-            
+
             for (isx::isize_t f = 0; f < numFrames - 1; ++f)
             {
                 auto frame = std::make_shared<isx::VideoFrame>(
@@ -345,7 +345,7 @@ TEST_CASE("MosaicMovieF32", "[core-internal][mosaic_movie]")
                 movie->writeFrame(frame);
             }
             movie->closeForWriting();
-            
+
             const auto f = numFrames - 1;
             auto frame = std::make_shared<isx::VideoFrame>(
                 spacingInfo,
@@ -720,7 +720,8 @@ TEST_CASE("MosaicMovieU16-forTheHub", "[core][mosaic_movie]")
         const isx::SpMovie_t movie = isx::readMovie(movieFilePath);
 
         const isx::TimingInfo expTi = isx::TimingInfo(isx::Time(), isx::DurationInSeconds(3, 1000), 7);
-        const isx::SpacingInfo expSi = isx::SpacingInfo(isx::SizeInPixels_t(1280, 800));
+        const isx::SpacingInfo expSi = isx::SpacingInfo(isx::SizeInPixels_t(1280, 800),
+                                                        isx::SizeInMicrons_t(isx::Ratio(22, 10), isx::Ratio(22, 10)));
 
         REQUIRE(movie->getTimingInfo() == expTi);
         REQUIRE(movie->getSpacingInfo() == expSi);
