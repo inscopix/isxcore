@@ -292,9 +292,13 @@ DataSet::getMetadata()
         }
         else
         {
-            ss << m_timingInfo.getStep().getInverse().toDouble();
+            ss << step.getInverse().toDouble();
         }
         metadata.push_back(std::pair<std::string, std::string>("Sample Rate (Hz)", ss.str()));
+        ss.str("");
+
+        ss << (step.toDouble() * 1000);
+        metadata.push_back(std::pair<std::string, std::string>("Exposure Time (ms)", ss.str()));
         ss.str("");
 
         ss << m_timingInfo.getNumTimes();
