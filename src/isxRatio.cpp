@@ -132,7 +132,7 @@ Ratio::toDouble() const
 }
 
 /*static*/
-Ratio 
+Ratio
 Ratio::fromDouble(double inValue, size_t inPrecision)
 {
     int64_t num, den;
@@ -250,9 +250,9 @@ Ratio::operator <(const Ratio & other) const
     }
 
     if (isMultiplicationOverflow(thisSim.m_num, otherSim.m_den) ||
-            isMultiplicationOverflow(thisSim.m_den, otherSim.m_num))
+        isMultiplicationOverflow(thisSim.m_den, otherSim.m_num))
     {
-        ISX_LOG_WARNING("Failed to prevent overflow, unexpeected behaviour may occur");
+        ISX_LOG_WARNING("Failed to prevent overflow, unexpected behaviour may occur");
     }
 
     return (thisSim.m_num * otherSim.m_den) < (thisSim.m_den * otherSim.m_num);

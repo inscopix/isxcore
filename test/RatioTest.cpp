@@ -155,6 +155,12 @@ TEST_CASE("RatioTest", "[core]")
         REQUIRE(first < second);
     }
 
+    SECTION("Less than operator overflow") {
+        isx::Ratio  first(4504925000000000, 1000000);
+        isx::Ratio second(4504925999000000000, 1000000000);
+        REQUIRE(first < second);
+    }
+
     SECTION("Less than or equal to operator")
     {
         isx::Ratio first(1, 6);
@@ -183,18 +189,18 @@ TEST_CASE("RatioTest", "[core]")
         std::string expected("3 / 7");
         REQUIRE(actual == expected);
     }
-    
+
     SECTION("floorToDenomOf")
     {
         isx::Ratio r1(3, 7);
         isx::Ratio r2(20, 23);
         isx::Ratio f = r1.floorToDenomOf(r2);
         REQUIRE(f.getDen() == r2.getDen());
-        
+
         double r1Value = r1.toDouble();
         double fvBelow = f.toDouble();
         double fvAbove = double(f.getNum() + 1) / double(f.getDen());
-        
+
         REQUIRE(fvBelow <= r1Value);
         REQUIRE(fvAbove > r1Value);
         REQUIRE(f.getNum() == 9);
