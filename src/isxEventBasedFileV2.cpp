@@ -253,7 +253,15 @@ EventBasedFileV2::getTimingInfo() const
         }
         else
         {
-            step = *(std::min_element(m_steps.begin(), m_steps.end()));
+            // Get smallest non-zero step
+            DurationInSeconds minStep = m_steps[0];
+            for (auto & currStep : m_steps) {
+                if (currStep < minStep && currStep > step) {
+                    minStep = currStep;
+                }
+            }
+
+            step = minStep;
         }
     }
 
