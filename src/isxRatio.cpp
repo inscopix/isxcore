@@ -44,46 +44,38 @@ bool isMultiplicationOverflow(int64_t x, int64_t y)
     return z != 0 && z / x != y;
 }
 
-/// Shortens the length of the ratios by the greatest common prefix to prevent overflow.
-/// ONLY use this for comparison as it changes the actual value of the ratios.
+/// \param num Integer to check.
+bool isPowerOfTen(int64_t num) {
+    while (num > 9 && num % 10 == 0)
+    {
+        num /= 10;
+    }
+    return num == 1;
+}
+
+/// Compare ratios by converting to string and comparing character by character
 ///
 /// \param firstRatio First ratio.
 /// \param secondRatio Second ratio.
-void shortenRatiosByPrefix(isx::Ratio &firstRatio, isx::Ratio &secondRatio)
+bool lessThanByString(const isx::Ratio &firstRatio, const isx::Ratio &secondRatio)
 {
-    std::string firstNumString = std::to_string(firstRatio.getNum());
-    std::string secondNumString = std::to_string(secondRatio.getNum());
-
-    uint64_t prefixLen = 0;
-    while (prefixLen < firstNumString.length() && prefixLen < secondNumString.length() && firstNumString[prefixLen] == secondNumString[prefixLen])
+    if (!isPowerOfTen(firstRatio.getDen()) || !isPowerOfTen(secondRatio.getDen()))
     {
-        prefixLen++;
+        ISX_LOG_WARNING("Denominator is not power of 10, cannot compare.");
+        return false;
     }
 
-    firstRatio = isx::Ratio(std::stoll(firstNumString.substr(prefixLen, firstNumString.length())), firstRatio.getDen(), true);
-    secondRatio = isx::Ratio(std::stoll(secondNumString.substr(prefixLen, secondNumString.length())), secondRatio.getDen(), true);
+    std::string firstNumString = std::to_string(firstRatio.getNum()) + std::to_string(secondRatio.getDen()).substr(1);
+    std::string secondNumString = std::to_string(secondRatio.getNum()) + std::to_string(firstRatio.getDen()).substr(1);
 
-    /* In the code above, I have sacrificed readability for runtime. The expanded code I have left below for clarity.
-     *
-    std::string firstNumString = std::to_string(firstRatio.getNum());
-    std::string secondNumString = std::to_string(secondRatio.getNum());
-
-    uint64_t prefixLen = 0;
-    while (prefixLen < firstNumString.length() && prefixLen < secondNumString.length())
+    for (uint64_t i = 0; i < firstNumString.length() && i < secondNumString.length(); i++)
     {
-        if (firstNumString[prefixLen] != secondNumString[prefixLen])
+        if (firstNumString[i] != secondNumString[i])
         {
-            break;
+            return firstNumString[i] < secondNumString[i];
         }
-        prefixLen++;
     }
-
-    firstNumString = firstNumString.substr(prefixLen, firstNumString.length());
-    secondNumString = secondNumString.substr(prefixLen, secondNumString.length());
-
-    firstRatio = isx::Ratio(std::stoll(firstNumString), firstRatio.getDen(), true);
-    secondRatio = isx::Ratio(std::stoll(secondNumString), secondRatio.getDen(), true);
-    */
+    return firstNumString.length() < secondNumString.length();
 }
 
 } // namespace
@@ -240,19 +232,11 @@ Ratio::operator <(const Ratio & other) const
     Ratio thisSim(m_num, m_den, true);
     Ratio otherSim(other.m_num, other.m_den, true);
 
-    // If cross multiplication fails, try to remove common prefix from original Ratios
+    // If cross multiplication fails, compare as string
     if (isMultiplicationOverflow(thisSim.m_num, otherSim.m_den) ||
         isMultiplicationOverflow(thisSim.m_den, otherSim.m_num))
     {
-        thisSim = Ratio(m_num, m_den);
-        otherSim = Ratio(other.m_num, other.m_den);
-        shortenRatiosByPrefix(thisSim, otherSim);
-    }
-
-    if (isMultiplicationOverflow(thisSim.m_num, otherSim.m_den) ||
-        isMultiplicationOverflow(thisSim.m_den, otherSim.m_num))
-    {
-        ISX_LOG_WARNING("Failed to prevent overflow, unexpected behaviour may occur");
+        return lessThanByString(*this, other);
     }
 
     return (thisSim.m_num * otherSim.m_den) < (thisSim.m_den * otherSim.m_num);
