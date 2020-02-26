@@ -52,7 +52,21 @@ addMetadataFromExtraProps(
             value = inStream.str();
             inStream.str("");
         }
-        inMetadata.push_back(std::pair<std::string, std::string>(it.key(), value));
+
+        // If exposure time exists, insert after sample rate
+        if (it.key() == "Exposure Time (ms)")
+        {
+            auto sampleRateIt = std::find_if(inMetadata.begin(), inMetadata.end(),
+                                             [](const std::pair<std::string, std::string> &element)
+                                             {
+                                                return element.first == "Sample Rate (Hz)";
+                                             });
+
+            inMetadata.insert(++sampleRateIt, std::pair<std::string, std::string>(it.key(), value));
+        } else
+        {
+            inMetadata.push_back(std::pair<std::string, std::string>(it.key(), value));
+        }
     }
 }
 
@@ -295,10 +309,6 @@ DataSet::getMetadata()
             ss << step.getInverse().toDouble();
         }
         metadata.push_back(std::pair<std::string, std::string>("Sample Rate (Hz)", ss.str()));
-        ss.str("");
-
-        ss << (step.toDouble() * 1000);
-        metadata.push_back(std::pair<std::string, std::string>("Exposure Time (ms)", ss.str()));
         ss.str("");
 
         ss << m_timingInfo.getNumTimes();
@@ -662,6 +672,8 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
 
             acqInfo["Microscope Serial Number"] = microscope->at("serial");
             acqInfo["Microscope Type"] = microscope->at("type");
+
+            acqInfo["Exposure Time (ms)"] = microscope->at("exp");
         }
 
         const auto name = extraProps.find("name");
