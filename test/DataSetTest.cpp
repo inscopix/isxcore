@@ -22,6 +22,7 @@ checkDataset1Metadata(
     REQUIRE(inMeta.at("End Time") == "2018/06/21-17:51:05.005");
     REQUIRE(inMeta.at("Duration (s)") == "1.041");
     REQUIRE(inMeta.at("Sample Rate (Hz)") == "12.490");
+    REQUIRE(inMeta.at("Exposure Time (ms)") == "80");
     REQUIRE(inMeta.at("Number of Time Samples") == "13");
     REQUIRE(inMeta.at("Number of Dropped Samples") == "0");
     REQUIRE(inMeta.at("Number of Cropped Samples") == "0");
@@ -245,7 +246,6 @@ TEST_CASE("DataSet-getMetadata", "[core][dataset]")
         REQUIRE(metaData.at("Start Time") == "2016/11/04-14:54:43.662");
         REQUIRE(metaData.at("End Time") == "2016/11/04-14:54:46.328");
         REQUIRE(metaData.at("Duration (s)") == "2.667");
-        REQUIRE(metaData.at("Sample Rate (Hz)") == "15.000");
         REQUIRE(metaData.at("Number of Time Samples") == "40");
         REQUIRE(metaData.at("Number of Dropped Samples") == "1");
         REQUIRE(metaData.at("Dropped Samples") == "10 ");
