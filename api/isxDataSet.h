@@ -227,6 +227,9 @@ private:
     /// The timing info of this data set.
     TimingInfo m_timingInfo;
 
+    /// Timing info of secondary data in this data set.
+    TimingInfo m_secondaryTimingInfo;
+
     /// The spacing info of this data set.
     SpacingInfo m_spacingInfo;
 

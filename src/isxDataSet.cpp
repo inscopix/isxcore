@@ -63,10 +63,28 @@ addMetadataFromExtraProps(
                                              });
 
             inMetadata.insert(++sampleRateIt, std::pair<std::string, std::string>(it.key(), value));
-        } else
+        }
+        else
         {
             inMetadata.push_back(std::pair<std::string, std::string>(it.key(), value));
         }
+    }
+}
+
+void
+addSampleRateToStream(
+        isx::DurationInSeconds inStep,
+        std::stringstream & inStream)
+{
+    // TODO : This is a temporary workaround for handling files that have 0 step time,
+    // but should be handled more generally when this meta-data display is cleaned up.
+    if (inStep.getNum() == 0)
+    {
+        inStream << "Inf";
+    }
+    else
+    {
+        inStream << inStep.getInverse().toDouble();
     }
 }
 
@@ -297,19 +315,23 @@ DataSet::getMetadata()
         metadata.push_back(std::pair<std::string, std::string>("Duration (s)", ss.str()));
         ss.str("");
 
-        // TODO : This is a temporary workaround for handling files that have 0 step time,
-        // but should be handled more generally when this meta-data display is cleaned up.
-        const isx::DurationInSeconds step = m_timingInfo.getStep();
-        if (step.getNum() == 0)
+        // If IMU with magnetometer, show both
+        if (m_type == Type::IMU && m_secondaryTimingInfo.isValid())
         {
-            ss << "Inf";
+            addSampleRateToStream(m_timingInfo.getStep(), ss);
+            metadata.push_back(std::pair<std::string, std::string>("Accelerometer Sample Rate (Hz)", ss.str()));
+            ss.str("");
+
+            addSampleRateToStream(m_secondaryTimingInfo.getStep(), ss);
+            metadata.push_back(std::pair<std::string, std::string>("Magnetometer Sample Rate (Hz)", ss.str()));
+            ss.str("");
         }
         else
         {
-            ss << step.getInverse().toDouble();
+            addSampleRateToStream(m_timingInfo.getStep(), ss);
+            metadata.push_back(std::pair<std::string, std::string>("Sample Rate (Hz)", ss.str()));
+            ss.str("");
         }
-        metadata.push_back(std::pair<std::string, std::string>("Sample Rate (Hz)", ss.str()));
-        ss.str("");
 
         ss << m_timingInfo.getNumTimes();
         metadata.push_back(std::pair<std::string, std::string>("Number of Time Samples", ss.str()));
@@ -613,6 +635,23 @@ DataSet::readMetaData()
     {
         const SpGpio_t gpio = readGpio(m_fileName);
         m_timingInfo = gpio->getTimingInfo();
+
+        // Store magnetometer timing info for metadata
+        if (m_type == Type::IMU)
+        {
+            std::vector<std::string> channels = gpio->getChannelList();
+            auto channelIt = std::find(channels.begin(), channels.end(), "Mag x");
+            if (channelIt != channels.end())
+            {
+                isx::TimingInfo magTimingInfo = gpio->getTimingInfo("Mag x");
+
+                if (magTimingInfo.getStep() > 0)
+                {
+                    m_secondaryTimingInfo = magTimingInfo;
+                }
+            }
+        }
+
         m_dataType = isx::DataType::F32;
         m_hasMetaData = true;
     }
