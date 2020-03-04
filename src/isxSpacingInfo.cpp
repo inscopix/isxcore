@@ -188,7 +188,12 @@ SpacingInfo::getDefault(const SizeInPixels_t & numPixels)
 SpacingInfo
 SpacingInfo::getDefaultForNVista3()
 {
-    return SpacingInfo(SizeInPixels_t(1280, 800), SizeInMicrons_t(Ratio(3, 1), Ratio(3, 1)), PointInMicrons_t(0, 0));
+    return SpacingInfo(SizeInPixels_t(1280, 800), SizeInMicrons_t(DEFAULT_PIXEL_SIZE, DEFAULT_PIXEL_SIZE), PointInMicrons_t(0, 0));
 }
 
+SpacingInfo
+SpacingInfo::getDefaultForNVista2()
+{
+    return SpacingInfo(SizeInPixels_t(1440, 1080), SizeInMicrons_t(NVISTA2_DEFAULT_PIXEL_SIZE, NVISTA2_DEFAULT_PIXEL_SIZE), PointInMicrons_t(0, 0));
+}
 } // namespace

@@ -30,6 +30,7 @@ typedef std::vector<PointInPixels_t> Contour_t;
 typedef std::vector<Contour_t> Contours_t;
 
 const Ratio DEFAULT_PIXEL_SIZE(3, 1);
+const Ratio NVISTA2_DEFAULT_PIXEL_SIZE(3, 1);
 
 /// The spacing info associated with spatial samples.
 ///
@@ -160,6 +161,10 @@ public:
     /// \return     The spacing info associated with the nVista 3 sensor.
     ///
     static SpacingInfo getDefaultForNVista3();
+
+    /// \return     The spacing info associated with the nVista 2 sensor.
+    ///
+    static SpacingInfo getDefaultForNVista2();
 
 private:
 

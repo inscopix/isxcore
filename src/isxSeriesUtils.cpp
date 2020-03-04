@@ -78,6 +78,13 @@ checkSeriesSpacingInfo(
 {
     if (!(inRef == inNew))
     {
+        if (inRef == isx::SpacingInfo::getDefaultForNVista2() &&
+            inNew == isx::SpacingInfo::getDefaultForNVista3())
+        {
+            outMessage = "The new data set has different spacing information than the rest of the series. If working with data from nVista2/nVoke1, please use IDPS 1.3.0 or older.";
+            return false;
+        }
+
         outMessage = "The new data set has different spacing information than the rest of the series. Spacing information must be equal among series' components.";
         return false;
     }
