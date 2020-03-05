@@ -147,6 +147,12 @@ SpacingInfo::operator ==(const SpacingInfo& other) const
         && (m_numPixels == other.m_numPixels);
 }
 
+bool
+SpacingInfo::operator !=(const SpacingInfo& other) const
+{
+    return !(*this == other);
+}
+
 void
 SpacingInfo::serialize(std::ostream& strm) const
 {

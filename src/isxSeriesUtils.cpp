@@ -76,12 +76,11 @@ checkSeriesSpacingInfo(
         const SpacingInfo & inNew,
         std::string & outMessage)
 {
-    if (!(inRef == inNew))
+    if (inRef != inNew)
     {
-        if (inRef == isx::SpacingInfo::getDefaultForNVista2() &&
-            inNew == isx::SpacingInfo::getDefaultForNVista3())
+        if (!(inRef.getPixelSize() == inNew.getPixelSize()))
         {
-            outMessage = "The new data set has different spacing information than the rest of the series. If working with data from nVista2/nVoke1, please use IDPS 1.3.0 or older.";
+            outMessage = "The new data set has a different pixel size than the rest of the series. If this data was recorded using an nVista 2.0 or nVoke 1.0 please use IDPS version 1.3.0 for this step.";
             return false;
         }
 

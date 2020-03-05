@@ -139,6 +139,10 @@ public:
     /// \return         True if this is exactly equal to other, false otherwise.
     bool operator ==(const SpacingInfo& other) const;
 
+    /// \param  other   The other spacing information with which to compare.
+    /// \return         False if this is exactly equal to other, true otherwise.
+    bool operator !=(const SpacingInfo& other) const;
+
     // Overrides
     void serialize(std::ostream& strm) const override;
 
