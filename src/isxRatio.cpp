@@ -44,38 +44,51 @@ bool isMultiplicationOverflow(int64_t x, int64_t y)
     return z != 0 && z / x != y;
 }
 
-/// \param num Integer to check.
-bool isPowerOfTen(int64_t num) {
-    while (num > 9 && num % 10 == 0)
-    {
-        num /= 10;
-    }
-    return num == 1;
-}
+/// declaration
+bool lessThanOrEqualFraction(int64_t first_num, int64_t first_den, int64_t second_num, int64_t second_den);
 
-/// Compare ratios by converting to string and comparing character by character
-///
-/// \param firstRatio First ratio.
-/// \param secondRatio Second ratio.
-bool lessThanByString(const isx::Ratio &firstRatio, const isx::Ratio &secondRatio)
+/// Compare fractions by comparing quotients. If they are the same, compare remainders
+bool lessThanFraction(int64_t first_num, int64_t first_den, int64_t second_num, int64_t second_den)
 {
-    if (!isPowerOfTen(firstRatio.getDen()) || !isPowerOfTen(secondRatio.getDen()))
+    if (second_den == 0)
     {
-        ISX_LOG_WARNING("Denominator is not power of 10, cannot compare.");
         return false;
     }
-
-    std::string firstNumString = std::to_string(firstRatio.getNum()) + std::to_string(secondRatio.getDen()).substr(1);
-    std::string secondNumString = std::to_string(secondRatio.getNum()) + std::to_string(firstRatio.getDen()).substr(1);
-
-    for (uint64_t i = 0; i < firstNumString.length() && i < secondNumString.length(); i++)
+    if (first_den == 0)
     {
-        if (firstNumString[i] != secondNumString[i])
-        {
-            return firstNumString[i] < secondNumString[i];
-        }
+        return true;
     }
-    return firstNumString.length() < secondNumString.length();
+    if (first_num/first_den < second_num/second_den)
+    {
+        return true;
+    }
+    if (first_num/first_den > second_num/second_den)
+    {
+       return false;
+    }
+    return !lessThanOrEqualFraction(first_den, first_num%first_den, second_den, second_num%second_num);
+}
+
+/// Compare fractions by comparing quotients. If they are the same, compare remainders
+bool lessThanOrEqualFraction(int64_t first_num, int64_t first_den, int64_t second_num, int64_t second_den)
+{
+    if (first_den == 0)
+    {
+        return true;
+    }
+    if (second_den == 0)
+    {
+        return false;
+    }
+    if (first_num/first_den < second_num/second_den)
+    {
+        return true;
+    }
+    if (first_num/first_den > second_num/second_den)
+    {
+       return false;
+    }
+    return !lessThanFraction(first_den, first_num%first_den, second_den, second_num%second_num);
 }
 
 } // namespace
@@ -236,7 +249,7 @@ Ratio::operator <(const Ratio & other) const
     if (isMultiplicationOverflow(thisSim.m_num, otherSim.m_den) ||
         isMultiplicationOverflow(thisSim.m_den, otherSim.m_num))
     {
-        return lessThanByString(*this, other);
+        return lessThanFraction(thisSim.m_num, thisSim.m_den, otherSim.m_num, otherSim.m_den);
     }
 
     return (thisSim.m_num * otherSim.m_den) < (thisSim.m_den * otherSim.m_num);
