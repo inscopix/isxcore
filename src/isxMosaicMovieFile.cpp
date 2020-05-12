@@ -98,16 +98,22 @@ MosaicMovieFile::initialize(const std::string & inFileName)
         {
             uint64_t startTsc = readFrameTimestamp(firstFrameIndex);
             uint64_t endTsc = readFrameTimestamp(lastFrameIndex);
-            uint64_t durationInMicroSec = endTsc - startTsc;
-            uint64_t stepInMicroSec = durationInMicroSec / numFrameWithin;
 
-            m_timingInfos[0] = TimingInfo(
-                    m_timingInfos[0].getStart(),
-                    DurationInSeconds::fromMicroseconds(stepInMicroSec),
-                    m_timingInfos[0].getNumTimes(),
-                    m_timingInfos[0].getDroppedFrames(),
-                    m_timingInfos[0].getCropped()
-                    );
+            // If startTsc >= endTsc, getting the average step will not work, so
+            // don't change the step and instead fall back to the IDPS 1.2.1
+            // implementation which uses the timing info from the json metadata.
+            if (startTsc < endTsc) {
+                uint64_t durationInMicroSec = endTsc - startTsc;
+                uint64_t stepInMicroSec = durationInMicroSec / numFrameWithin;
+
+                m_timingInfos[0] = TimingInfo(
+                        m_timingInfos[0].getStart(),
+                        DurationInSeconds::fromMicroseconds(stepInMicroSec),
+                        m_timingInfos[0].getNumTimes(),
+                        m_timingInfos[0].getDroppedFrames(),
+                        m_timingInfos[0].getCropped()
+                        );
+            }
             // ISX_LOG_DEBUG("new step: NUM=", m_timingInfos[0].getStep().getNum(),
             //         " DEN=", m_timingInfos[0].getStep().getDen(),
             //         " double=", m_timingInfos[0].getStep().toDouble());
@@ -157,7 +163,7 @@ MosaicMovieFile::closeForWriting(const TimingInfo & inTimingInfo)
                 writeHeader();
                 m_fileClosedForWriting = true;
             }
-        } 
+        }
         catch(isx::Exception &)
         {
         }
@@ -172,12 +178,12 @@ MosaicMovieFile::closeForWriting(const TimingInfo & inTimingInfo)
     }
 }
 
-void 
+void
 MosaicMovieFile::setTimingInfo(const TimingInfo & inTimingInfo)
 {
     m_timingInfos = {inTimingInfo};
 }
-    
+
 bool
 MosaicMovieFile::isValid() const
 {
@@ -302,7 +308,7 @@ MosaicMovieFile::getTimingInfosForSeries() const
 {
     return m_timingInfos;
 }
-   
+
 const isx::SpacingInfo &
 MosaicMovieFile::getSpacingInfo() const
 {
@@ -431,7 +437,7 @@ MosaicMovieFile::writeHeader()
     }
     // Seek to end of file before writing header.
     // Linux was complaining when writing frames to a movie,
-    // then reading from it and only after reading closing 
+    // then reading from it and only after reading closing
     // the file (and thus writing the header). flush was
     // causing a segfault
     m_file.seekp(0, std::ios_base::end);
