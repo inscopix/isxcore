@@ -137,10 +137,11 @@ public:
 }; // class Gpio
 
 /// Read a GPIO set from a file.
-/// \param  inFileName  The path of the GPIO file.
-/// \return             The GPIO set read.
+/// \param  inFileName      The path of the GPIO file.
+/// \param inOutputIsxdDir  The path of the intermediate ISXD file if input is not .isxd
+/// \return                 The GPIO set read.
 SpGpio_t
-readGpio(const std::string & inFileName);
+readGpio(const std::string & inFileName, const std::string & inOutputIsxdDir = "/tmp");
 
 /// Attempt to read a series of GPIO sets from files.
 /// \param  inFileNames The paths of the GPIO files.
