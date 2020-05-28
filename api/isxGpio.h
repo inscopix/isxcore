@@ -149,6 +149,12 @@ readGpio(const std::string & inFileName, const std::string & inOutputIsxdDir = "
 SpGpio_t
 readGpioSeries(const std::vector<std::string> & inFileNames);
 
+/// Determine if a file is a GPIO file by its extension.
+///
+/// \param  inFileName      The filename to check.
+/// \return                 True if filename has an extension for a GPIO file that is supported.
+bool isGpioFileExtension(const std::string & inFileName);
+
 } // namespace isx
 
 #endif /// ISX_GPIO_H

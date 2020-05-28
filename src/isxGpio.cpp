@@ -44,4 +44,12 @@ readGpioSeries(const std::vector<std::string> & inFileNames)
     return std::make_shared<GpioSeries>(inFileNames);
 }
 
+bool
+isGpioFileExtension(const std::string & inFileName)
+{
+    auto e = isx::getExtension(inFileName);
+    std::transform(e.begin(), e.end(), e.begin(), ::tolower);
+    return ((e == "raw") || (e == "hdf5") || (e == "gpio"));
+}
+
 } // namespace isx

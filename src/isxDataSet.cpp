@@ -242,6 +242,14 @@ readDataSetType(const std::string & inFileName, const DataSet::Properties & inPr
     {
         return DataSet::Type::BEHAVIOR;
     }
+    else if (extension == "imu")
+    {
+        return DataSet::Type::IMU;
+    }
+    else if (isGpioFileExtension(inFileName))
+    {
+        return DataSet::Type::GPIO;
+    }
     else
     {
         ISX_THROW(ExceptionFileIO, "File extension not supported: ", extension);
