@@ -137,16 +137,23 @@ public:
 }; // class Gpio
 
 /// Read a GPIO set from a file.
-/// \param  inFileName  The path of the GPIO file.
-/// \return             The GPIO set read.
+/// \param  inFileName      The path of the GPIO file.
+/// \param inOutputIsxdDir  The path of the intermediate ISXD file if input is not .isxd
+/// \return                 The GPIO set read.
 SpGpio_t
-readGpio(const std::string & inFileName);
+readGpio(const std::string & inFileName, const std::string & inOutputIsxdDir = "/tmp");
 
 /// Attempt to read a series of GPIO sets from files.
 /// \param  inFileNames The paths of the GPIO files.
 /// \return             The series of GPIO sets.
 SpGpio_t
 readGpioSeries(const std::vector<std::string> & inFileNames);
+
+/// Determine if a file is a GPIO file by its extension.
+///
+/// \param  inFileName      The filename to check.
+/// \return                 True if filename has an extension for a GPIO file that is supported.
+bool isGpioFileExtension(const std::string & inFileName);
 
 } // namespace isx
 
