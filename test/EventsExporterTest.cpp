@@ -96,21 +96,58 @@ TEST_CASE("EventsExport", "[core][event_export]")
         const isx::SpEvents_t events = writeNamedPacketsAsEvents(inputFilePath, ti, eventPackets);
 
         params = isx::EventsExporterParams({events}, outputFilePath, isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
+        params.m_writeSparseOutput = false;
 
         SECTION("using first time")
         {
             params.m_writeTimeRelativeTo = isx::WriteTimeRelativeTo::FIRST_DATA_ITEM;
 
-            expLines =
+            SECTION("sparse output")
             {
-                "Time (s), Cell Name, Value",
-                "0, C0, 1",
-                "0.05, C0, 3",
-                "0.2, C0, 0.8",
-                "0.05, C1, 2.5",
-                "0.15, C2, 2.9",
-                "0.2, C2, 1.7",
-            };
+                params.m_writeSparseOutput = true;
+
+                SECTION("display amplitude")
+                {
+                    params.m_writeAmplitude = true;
+                    expLines =
+                    {
+                        "Time (s), C0, C1, C2",
+                        "0, 1, 0, 0",
+                        "0.05, 3, 2.5, 0",
+                        "0.1, 0, 0, 0",
+                        "0.15, 0, 0, 2.9",
+                        "0.2, 0.8, 0, 1.7",
+                    };
+                }
+
+                SECTION("display binary")
+                {
+                    params.m_writeAmplitude = false;
+                    expLines =
+                    {
+                        "Time (s), C0, C1, C2",
+                        "0, 1, 0, 0",
+                        "0.05, 1, 1, 0",
+                        "0.1, 0, 0, 0",
+                        "0.15, 0, 0, 1",
+                        "0.2, 1, 0, 1",
+                    };
+                }
+            }
+
+            SECTION("dense output")
+            {
+                expLines =
+                {
+                    "Time (s), Cell Name, Value",
+                    "0, C0, 1",
+                    "0.05, C0, 3",
+                    "0.2, C0, 0.8",
+                    "0.05, C1, 2.5",
+                    "0.15, C2, 2.9",
+                    "0.2, C2, 1.7",
+                };
+            }
         }
 
         SECTION("using unix epoch")
@@ -136,6 +173,7 @@ TEST_CASE("EventsExport", "[core][event_export]")
         const isx::SpEvents_t events = isx::readEvents(inputFilePath);
 
         params = isx::EventsExporterParams({events}, outputFilePath, isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
+        params.m_writeSparseOutput = false;
 
         SECTION("using first time")
         {
@@ -285,6 +323,7 @@ TEST_CASE("EventsExport-series", "[core][event_export]")
     };
 
     isx::EventsExporterParams params({events}, outputFilePath, isx::WriteTimeRelativeTo::FIRST_DATA_ITEM);
+    params.m_writeSparseOutput = false;
 
     std::vector<std::string> expLines;
 
