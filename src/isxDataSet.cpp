@@ -62,7 +62,15 @@ addMetadataFromExtraProps(
                                                 return element.first == "Sample Rate (Hz)";
                                              });
 
-            inMetadata.insert(++sampleRateIt, std::pair<std::string, std::string>(it.key(), value));
+            // If sample rate not in metadata, add to end of vector
+            if (sampleRateIt == inMetadata.end())
+            {
+                inMetadata.emplace_back(std::pair<std::string, std::string>(it.key(), value));
+            }
+            else
+            {
+                inMetadata.insert(++sampleRateIt, std::pair<std::string, std::string>(it.key(), value));
+            }
         }
         else
         {
