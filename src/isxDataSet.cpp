@@ -53,7 +53,7 @@ addMetadataFromExtraProps(
             inStream.str("");
         }
 
-        // If exposure time exists, insert after sample rate
+        // If exposure time exists, insert after sample rate if already in metadata
         if (it.key() == "Exposure Time (ms)")
         {
             auto sampleRateIt = std::find_if(inMetadata.begin(), inMetadata.end(),
@@ -62,20 +62,14 @@ addMetadataFromExtraProps(
                                                 return element.first == "Sample Rate (Hz)";
                                              });
 
-            // If sample rate not in metadata, add to end of vector
-            if (sampleRateIt == inMetadata.end())
-            {
-                inMetadata.emplace_back(std::pair<std::string, std::string>(it.key(), value));
-            }
-            else
+            // If sample rate in metadata
+            if (sampleRateIt != inMetadata.end())
             {
                 inMetadata.insert(++sampleRateIt, std::pair<std::string, std::string>(it.key(), value));
+                continue;
             }
         }
-        else
-        {
-            inMetadata.push_back(std::pair<std::string, std::string>(it.key(), value));
-        }
+        inMetadata.emplace_back(it.key(), value);
     }
 }
 
