@@ -80,7 +80,8 @@ checkSeriesSpacingInfo(
     {
         if (!(inRef.getPixelSize() == inNew.getPixelSize()))
         {
-            outMessage = "The new data set has a different pixel size than the rest of the series. If this data was recorded using an nVista 2.0 or nVoke 1.0 please use IDPS version 1.3.0 for this step.";
+            outMessage = "The new data set has a different pixel size than the rest of the series. If this data was recorded using an nVista 2.0 or nVoke 1.0 please use IDPS version 1.3.0 for this step.\n";
+            outMessage += "If you are adding a TIFF file, note that IDPS does not currently support combining downsampled TIFF files to a series.";
             return false;
         }
 
