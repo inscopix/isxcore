@@ -516,6 +516,8 @@ DataSet::getTypeString(Type inType)
         return std::string("GPIO");
     case Type::EVENTS:
         return std::string("Event Set");
+    case Type::IMAGE:
+        return std::string("Image");
     default:
         return std::string("");
     }
