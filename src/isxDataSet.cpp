@@ -765,6 +765,12 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             {
                 acqInfo["efocus"] = efocus->get<uint16_t>();
             }
+
+            const auto channel = idps->find("channel");
+            if (channel != idps->end())
+            {
+                acqInfo["channel"] = channel->get<std::string>();
+            }
         }
     }
 
