@@ -70,6 +70,12 @@ public:
     /// \return         True if this is exactly equal to the other point.
     bool operator ==(const SpatialVector<T> & other) const;
 
+    /// Exact comparison.
+    ///
+    /// param   other   The point with which to compare.
+    /// \return         False if this is exactly equal to the other point.
+    bool operator !=(const SpatialVector<T> & other) const;
+
     // Overrides
     void serialize(std::ostream& strm) const override;
 
@@ -149,6 +155,13 @@ bool
 SpatialVector<T>::operator ==(const SpatialVector<T> & other) const
 {
     return (m_x == other.m_x) && (m_y == other.m_y);
+}
+
+template <typename T>
+bool
+SpatialVector<T>::operator !=(const SpatialVector<T> & other) const
+{
+    return !(*this == other);
 }
 
 template <typename T>
