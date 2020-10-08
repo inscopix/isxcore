@@ -47,6 +47,38 @@ namespace isx
         CellSetType_t  m_type = CellSetType_t::UNAVAILABLE;
     };
 
+
+    inline std::string getCellSetMethodString(CellSetMethod_t cellSetMethod)
+    {
+        switch(cellSetMethod)
+        {
+            case CellSetMethod_t::PCAICA:
+                return "pca-ica";
+            case CellSetMethod_t::CNMFE:
+                return "cnmfe";
+            case CellSetMethod_t::MANUAL:
+                return "manual";
+            case CellSetMethod_t::APPLIED:
+                return "applied";
+            case CellSetMethod_t::UNAVAILABLE:
+                return "";
+        }
+    }
+
+    inline std::string getCellSetTypeString(CellSetType_t cellSetType)
+    {
+        switch(cellSetType)
+        {
+            case CellSetType_t::ANALOG:
+                return "analog";
+            case CellSetType_t::BINARY:
+                return "binary";
+            case CellSetType_t::UNAVAILABLE:
+                return "";
+        }
+    }
+
+
     // Getters
     template <class T>
     CellSetMethod_t getCellSetMethod(T & inData)
@@ -68,8 +100,8 @@ namespace isx
     CellSetType_t getCellSetType(T & inData)
     {
         using json = nlohmann::json;
-        json extraProps = json::parse(inData->getExtraProperties());
-        if (extraProps["idps"] != "" && !extraProps["idps"]["cellset"]["type"].is_null())
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["cellset"]["type"].is_null())
         {
             std::string method = extraProps["idps"]["cellset"]["type"].get<std::string>();
             if (method == "analog") return CellSetType_t::ANALOG;
@@ -78,66 +110,36 @@ namespace isx
         return CellSetType_t::UNAVAILABLE;
     }
 
+    template <typename T>
+    nlohmann::json getExtraPropertiesJSON(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = json::parse(inData->getExtraProperties());
+        if (!extraProps["idps"].is_null() && !extraProps["idps"].is_object() && extraProps["idps"].is_string())
+        {
+            extraProps["idps"] = json::object();
+        }
+        return extraProps;
+    }
+
     // Setters
     template <typename T>
     void setCellSetMethod(T & inData, CellSetMethod_t cellSetMethod)
     {
-        std::string method;
-        switch(cellSetMethod)
-        {
-            case CellSetMethod_t::PCAICA:
-                method = "pca-ica";
-                break;
-            case CellSetMethod_t::CNMFE:
-                method = "cnmfe";
-                break;
-            case CellSetMethod_t::MANUAL:
-                method = "manual";
-                break;
-            case CellSetMethod_t::APPLIED:
-                method = "applied";
-                break;
-            case CellSetMethod_t::UNAVAILABLE:
-                return;
-        }
-
+        if (cellSetMethod == CellSetMethod_t::UNAVAILABLE) return;
         using json = nlohmann::json;
-        json extraProps = json::parse(inData->getExtraProperties());
-//        ISX_LOG_INFO("HereA: ", extraProps["idps"].is_string(), extraProps["idps"].is_null(), extraProps["idps"].is_object());
-        if (!extraProps["idps"].is_null() && extraProps["idps"].get<std::string>().empty())
-        {
-            ISX_LOG_INFO("executedA");
-            extraProps["idps"] = json::object();
-        }
-        extraProps["idps"]["cellset"]["method"] = method;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["cellset"]["method"] = getCellSetMethodString(cellSetMethod);
         inData->setExtraProperties(extraProps.dump());
     }
 
     template <typename T>
     void setCellSetType(T & inData, CellSetType_t cellSetType)
     {
-        std::string type;
-        switch(cellSetType)
-        {
-            case CellSetType_t::ANALOG:
-                type = "analog";
-                break;
-            case CellSetType_t::BINARY:
-                type = "binary";
-                break;
-            case CellSetType_t::UNAVAILABLE:
-                return;
-        }
-
+        if (cellSetType == CellSetType_t::UNAVAILABLE) return;
         using json = nlohmann::json;
-        json extraProps = json::parse(inData->getExtraProperties());
-//        ISX_LOG_INFO("HereB: ", extraProps["idps"].is_string(), extraProps["idps"].is_null(), extraProps["idps"].is_object());
-        if (!extraProps["idps"].is_null() && !extraProps["idps"].is_object() && extraProps["idps"].is_string())
-        {
-            ISX_LOG_INFO("executedB");
-            extraProps["idps"] = json::object();
-        }
-        extraProps["idps"]["cellset"]["type"] = type;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["cellset"]["type"] = getCellSetTypeString(cellSetType);
         inData->setExtraProperties(extraProps.dump());
     }
 
@@ -147,6 +149,26 @@ namespace isx
         setCellSetMethod(inData, cellSetMetadata.m_method);
         setCellSetType(inData, cellSetMetadata.m_type);
     }
+
+    template <typename T>
+    std::string addCellSetMetadata(T & inData, CellSetMetadata cellSetMetadata)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        if (cellSetMetadata.m_method != CellSetMethod_t ::UNAVAILABLE)
+        {
+            extraProps["idps"]["cellset"]["method"] = getCellSetMethodString(cellSetMetadata.m_method);
+        }
+
+        if (cellSetMetadata.m_type != CellSetType_t::UNAVAILABLE)
+        {
+            extraProps["idps"]["cellset"]["type"] = getCellSetTypeString(cellSetMetadata.m_type);
+        }
+
+        return extraProps.dump();
+    }
+
 
 } // namespace isx
 
