@@ -104,6 +104,8 @@ namespace isx
                 return "applied";
             case CellSetMethod_t::UNAVAILABLE:
                 return "";
+            default:
+                return "";
         }
     }
 
@@ -116,6 +118,8 @@ namespace isx
             case CellSetType_t::BINARY:
                 return "binary";
             case CellSetType_t::UNAVAILABLE:
+                return "";
+            default:
                 return "";
         }
     }
