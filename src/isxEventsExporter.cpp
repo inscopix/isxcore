@@ -146,26 +146,79 @@ runEventsExporter(
     const std::vector<std::string> cellNames = refEvents->getCellNamesList();
     const size_t numCells = cellNames.size();
     const size_t numSegments = events.size();
-    std::vector<std::vector<SpLogicalTrace_t>> traces(numCells);
-    for (size_t c = 0; c < numCells; ++c)
-    {
-        for (size_t s = 0; s < numSegments; ++s)
-        {
-            traces[c].push_back(events[s]->getLogicalData(cellNames[c]));
-        }
-    }
 
     AsyncCheckInCB_t tracesCheckInCB = rescaleCheckInCB(inCheckInCB, 0.f, outputProps ? 0.8f : 1.f);
     std::vector<std::string> filesToCleanUp = {inParams.m_fileName};
-    try
+
+    if (inParams.m_writeSparseOutput)
     {
-        cancelled = writeLogicalTraces(strm, traces, cellNames, "Cell Name", baseTime, tracesCheckInCB);
+        std::vector<std::vector<SpFTrace_t>> traces(numSegments);
+        for (size_t s = 0; s < numSegments; ++s)
+        {
+            for (size_t c = 0; c < numCells; ++c)
+            {
+                // Convert logical trace to trace
+                const SpLogicalTrace_t & eventsLogicalTrace = events[s]->getLogicalData(cellNames[c]);
+                const TimingInfo & ti = eventsLogicalTrace->getTimingInfo();
+
+                traces[s].emplace_back(std::make_shared<Trace<float>>(ti, eventsLogicalTrace->getName()));
+
+                const double halfStepSize = ti.getStep().toDouble() / 2.0;
+                auto eventsMap = eventsLogicalTrace->getValues();
+                auto eventsIter = eventsMap.begin();
+
+                // Populate trace values
+                for (size_t t = 0; t < ti.getNumTimes(); ++t)
+                {
+                    // If there are still events for this cell 
+                    if (eventsIter != eventsMap.end())
+                    {
+                        // If time of next event in map is closest to this time
+                        if (fabs((eventsIter->first - ti.convertIndexToStartTime(t)).toDouble()) <= halfStepSize)
+                        {
+                            traces[s][c]->setValue(t, inParams.m_writeAmplitude ? eventsIter->second : 1);
+                            eventsIter++;
+                            continue;
+                        }
+                    }
+                    // No event at this time -> default value 0
+                    traces[s][c]->setValue(t, 0.0);
+                }
+            }
+        }
+
+        try
+        {
+            cancelled = writeTraces(strm, traces, cellNames, {}, baseTime, tracesCheckInCB);
+        }
+        catch (...)
+        {
+            strm.close();
+            removeFiles(filesToCleanUp);
+            throw;
+        }
     }
-    catch (...)
+    else
     {
-        strm.close();
-        removeFiles(filesToCleanUp);
-        throw;
+        std::vector<std::vector<SpLogicalTrace_t>> traces(numCells);
+        for (size_t c = 0; c < numCells; ++c)
+        {
+            for (size_t s = 0; s < numSegments; ++s)
+            {
+                traces[c].push_back(events[s]->getLogicalData(cellNames[c]));
+            }
+        }
+
+        try
+        {
+            cancelled = writeLogicalTraces(strm, traces, cellNames, "Cell Name", baseTime, tracesCheckInCB);
+        }
+        catch (...)
+        {
+            strm.close();
+            removeFiles(filesToCleanUp);
+            throw;
+        }
     }
 
     /// Event properties to CSV.

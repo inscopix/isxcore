@@ -516,6 +516,8 @@ DataSet::getTypeString(Type inType)
         return std::string("GPIO");
     case Type::EVENTS:
         return std::string("Event Set");
+    case Type::IMAGE:
+        return std::string("Image");
     default:
         return std::string("");
     }
@@ -762,6 +764,12 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             if (efocus != idps->end())
             {
                 acqInfo["efocus"] = efocus->get<uint16_t>();
+            }
+
+            const auto channel = idps->find("channel");
+            if (channel != idps->end())
+            {
+                acqInfo["channel"] = channel->get<std::string>();
             }
         }
     }

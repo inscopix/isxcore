@@ -546,6 +546,23 @@ NVista3GpioFile::parse()
             m_file >> extraProps;
             extraPropsStr = extraProps.dump();
             adClockInHz = getAdClockInHz(extraProps);
+
+            // update LED channel names if file is from dual color miniscope
+            json dualColor = extraProps["microscope"]["dualColor"];
+            if (!dualColor.is_null() && dualColor["enabled"].get<bool>())
+            {
+                for (std::string &s : channels)
+                {
+                    if (s == s_channelNames.at(NVista3GpioFile::Channel::EX_LED))
+                    {
+                        s = "EX-LED1";
+                    }
+                    else if (s == s_channelNames.at(NVista3GpioFile::Channel::OG_LED))
+                    {
+                        s = "EX-LED2";
+                    }
+                }
+            }
         }
         catch (const std::exception & inError)
         {

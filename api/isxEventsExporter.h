@@ -17,17 +17,23 @@ struct EventsExporterParams
     /// \param inWriteTimeRelativeTo    time reference point
     /// \param inPropertiesFilename  filename for properties output file
     /// \param inAutoOutputProps     if true, automatically output a properties file
+    /// \param inWriteSparseOutput   if true, produce sparse output, otherwise produce dense output
+    /// \param inWriteAmplitude      if true, write amplitude of event, otherwise write boolean value
     EventsExporterParams(
         const std::vector<SpEvents_t> & inSrcs,
         const std::string & inFileName,
         WriteTimeRelativeTo inWriteTimeRelativeTo,
         const std::string & inPropertiesFilename = "",
-        const bool inAutoOutputProps = false)
+        const bool inAutoOutputProps = false,
+        const bool inWriteSparseOutput = true,
+        const bool inWriteAmplitude = true)
     : m_srcs(inSrcs)
     , m_fileName(inFileName)
     , m_writeTimeRelativeTo(inWriteTimeRelativeTo)
     , m_propertiesFilename(inPropertiesFilename)
     , m_autoOutputProps(inAutoOutputProps)
+    , m_writeSparseOutput(inWriteSparseOutput)
+    , m_writeAmplitude(inWriteAmplitude)
     {
     }
 
@@ -65,6 +71,12 @@ struct EventsExporterParams
                                                     ///< that shares the same base name as the trace file
                                                     ///< but with "-properties" appended before the extension.
                                                     ///< Otherwise, do not output a properties file automatically.
+    bool                    m_writeSparseOutput;    ///< If true, produce sparse output, with equally spaced
+                                                    ///< timesteps and non-zero values indicating when events occur.
+                                                    ///< Otherwise, produce dense output, with entries only
+                                                    ///< where events occur, 
+    bool                    m_writeAmplitude;       ///< If true, write events with their amplitude.
+                                                    ///< Otherwise, write a boolean value.
 };
 
 /// There are no output parameters for exporting events.
