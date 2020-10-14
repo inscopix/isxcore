@@ -153,7 +153,8 @@ writeLogicalTraces(
         const std::vector<std::string> & inNames,
         const std::string & inNameHeader,
         const Time & inBaseTime,
-        AsyncCheckInCB_t inCheckInCB)
+        AsyncCheckInCB_t inCheckInCB,
+        const bool inWriteValue)
 {
     const size_t numTraces = inTraces.size();
     ISX_ASSERT(numTraces > 0);
@@ -166,7 +167,12 @@ writeLogicalTraces(
 
     // we write all time/value pairs of each channel sequentially, so
     // we need a channel name column (which will be sorted)
-    inStream << "Time (s), " << inNameHeader << ", Value\n";
+    inStream << "Time (s), " << inNameHeader;
+    if (inWriteValue)
+    {
+        inStream << ", Value";
+    }
+    inStream << "\n";
 
     if (!inStream.good())
     {
@@ -193,9 +199,12 @@ writeLogicalTraces(
         {
             for (const auto & tv : inTraces[t][s]->getValues())
             {
-                inStream << std::setprecision(maxDecimalsForDouble) << (tv.first - inBaseTime).toDouble()
-                         << ", " << name << ", "
-                         << std::setprecision(maxDecimalsForFloat) << tv.second << "\n";
+                inStream << std::setprecision(maxDecimalsForDouble) << (tv.first - inBaseTime).toDouble() << ", " << name;
+                if (inWriteValue)
+                {
+                    inStream << ", " << std::setprecision(maxDecimalsForFloat) << tv.second;
+                }
+                inStream << "\n";
 
                 if (!inStream.good())
                 {
