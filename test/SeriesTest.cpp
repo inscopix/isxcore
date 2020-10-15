@@ -895,9 +895,15 @@ TEST_CASE("Series-addChildWithCompatibilityCheck", "[core]")
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
-        SECTION("Child has one cellset")
+        SECTION("Child has one cellset with the same spacing info")
         {
-            const isx::SpSeries_t childSeries = makeMovieSeries("child", childFilePath1, ti1, si1);
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, ti1, si1);
+            REQUIRE(parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
+        }
+
+        SECTION("Child has one cellset with different spacing info")
+        {
+            const isx::SpSeries_t childSeries = makeCellSetSeries("child", childFilePath1, ti1, si2);
             REQUIRE(!parentSeries->addChildWithCompatibilityCheck(childSeries, errorMessage));
         }
 
