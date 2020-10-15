@@ -9,6 +9,7 @@
 #include "isxReportUtils.h"
 #include "isxGpio.h"
 #include "isxEvents.h"
+#include "isxMetadata.h"
 
 #include "json.hpp"
 
@@ -712,14 +713,17 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
         }
 
         const auto microscope = extraProps.find("microscope");
+        const bool isDualColor = hasDualColorMetadata(inExtraPropsStr);
         if (microscope != extraProps.end())
         {
             acqInfo["Microscope Focus"] = microscope->at("focus");
             acqInfo["Microscope Gain"] = microscope->at("gain");
 
             const auto microscopeLed = microscope->find("led");
-            acqInfo["Microscope EX LED Power (mw/mm^2)"] = microscopeLed->at("exPower");
-            acqInfo["Microscope OG LED Power (mw/mm^2)"] = microscopeLed->at("ogPower");
+            const std::string led1Name = isDualColor ? "EX LED 1" : "EX LED";
+            const std::string led2Name = isDualColor ? "EX LED 2" : "OG LED";
+            acqInfo["Microscope " + led1Name + " Power (mw/mm^2)"] = microscopeLed->at("exPower");
+            acqInfo["Microscope " + led2Name + " Power (mw/mm^2)"] = microscopeLed->at("ogPower");
 
             acqInfo["Microscope Serial Number"] = microscope->at("serial");
             acqInfo["Microscope Type"] = microscope->at("type");
