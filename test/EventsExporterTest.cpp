@@ -137,16 +137,34 @@ TEST_CASE("EventsExport", "[core][event_export]")
 
             SECTION("dense output")
             {
-                expLines =
+                SECTION("display amplitude")
                 {
-                    "Time (s), Cell Name, Value",
-                    "0, C0, 1",
-                    "0.05, C0, 3",
-                    "0.2, C0, 0.8",
-                    "0.05, C1, 2.5",
-                    "0.15, C2, 2.9",
-                    "0.2, C2, 1.7",
-                };
+                    expLines =
+                    {
+                        "Time (s), Cell Name, Value",
+                        "0, C0, 1",
+                        "0.05, C0, 3",
+                        "0.2, C0, 0.8",
+                        "0.05, C1, 2.5",
+                        "0.15, C2, 2.9",
+                        "0.2, C2, 1.7",
+                    };
+                }
+
+                SECTION("do not display amplitude")
+                {
+                    params.m_writeAmplitude = false;
+                    expLines =
+                    {
+                        "Time (s), Cell Name",
+                        "0, C0",
+                        "0.05, C0",
+                        "0.2, C0",
+                        "0.05, C1",
+                        "0.15, C2",
+                        "0.2, C2",
+                    };
+                }
             }
         }
 

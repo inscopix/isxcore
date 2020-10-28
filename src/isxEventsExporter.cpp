@@ -211,7 +211,7 @@ runEventsExporter(
 
         try
         {
-            cancelled = writeLogicalTraces(strm, traces, cellNames, "Cell Name", baseTime, tracesCheckInCB);
+            cancelled = writeLogicalTraces(strm, traces, cellNames, "Cell Name", baseTime, tracesCheckInCB, inParams.m_writeAmplitude);
         }
         catch (...)
         {

@@ -34,6 +34,7 @@ enum class WriteTimeRelativeTo
 /// \param  inBaseTime      The 0 time, with which to write relative to.
 /// \param  inCheckInCB     Check-in callback function that is periodically invoked
 ///                         with progress and to tell algo whether to cancel / abort.
+/// \param  inWriteValue     Writes the value column if true.
 /// \return                 True if cancelled.
 bool writeLogicalTraces(
         std::ofstream & inStream,
@@ -41,7 +42,8 @@ bool writeLogicalTraces(
         const std::vector<std::string> & inNames,
         const std::string & inNameHeader,
         const Time & inBaseTime,
-        AsyncCheckInCB_t inCheckInCB = [](float){return false;});
+        AsyncCheckInCB_t inCheckInCB = [](float){return false;},
+        const bool inWriteValue = true);
 
 /// Write logical traces with names to an output stream, which is used when
 /// exporting logical IMU traces and events.

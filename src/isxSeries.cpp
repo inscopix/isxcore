@@ -383,10 +383,27 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
                 }
                 break;
             }
+            case DataSet::Type::IMAGE:
+            {
+                if (childType == DataSet::Type::CELLSET)
+                {
+                    if (!checkSeriesHasSameNumPixels(inSeries))
+                    {
+                        outErrorMessage = "An image can only derive cellsets with the same number of pixels";
+                        return false;
+                    }
+                }
+                else
+                {
+                    outErrorMessage = "An image can only derive cellsets";
+                    return false;
+                }
+                
+                break;
+            }
             case DataSet::Type::BEHAVIOR:
             case DataSet::Type::GPIO:
             case DataSet::Type::IMU:
-            case DataSet::Type::IMAGE:
             case DataSet::Type::EVENTS:
             default:
             {
@@ -415,9 +432,9 @@ Series::isASuitableParent(std::string & outErrorMessage) const
         return false;
     }
     const DataSet::Type type = getType();
-    if (!(type == DataSet::Type::MOVIE || type == DataSet::Type::CELLSET))
+    if (!(type == DataSet::Type::MOVIE || type == DataSet::Type::CELLSET || type == DataSet::Type::IMAGE))
     {
-        outErrorMessage = "Only movies and cellsets can derive other datasets.";
+        outErrorMessage = "Only movies, cellsets, and images can derive other datasets.";
         return false;
     }
     return true;

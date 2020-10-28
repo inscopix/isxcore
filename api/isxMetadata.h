@@ -253,6 +253,13 @@ namespace isx
         return !extraProps["idps"]["pre_mc"].is_null();
     }
 
+    inline bool hasDualColorMetadata(std::string inExtraProperties)
+    {
+        using json = nlohmann::json;
+        json extraProps = json::parse(inExtraProperties);
+        return !extraProps["microscope"]["dualColor"].is_null();
+    }
+
 } // namespace isx
 
 #endif // ISX_METADATA_H
