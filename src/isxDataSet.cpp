@@ -713,15 +713,15 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
         }
 
         const auto microscope = extraProps.find("microscope");
-        const bool isDualColor = hasDualColorMetadata(inExtraPropsStr);
+        const bool isMulticolor = hasMulticolorMetadata(inExtraPropsStr);
         if (microscope != extraProps.end())
         {
             acqInfo["Microscope Focus"] = microscope->at("focus");
             acqInfo["Microscope Gain"] = microscope->at("gain");
 
             const auto microscopeLed = microscope->find("led");
-            const std::string led1Name = isDualColor ? "EX LED 1" : "EX LED";
-            const std::string led2Name = isDualColor ? "EX LED 2" : "OG LED";
+            const std::string led1Name = isMulticolor ? "EX LED 1" : "EX LED";
+            const std::string led2Name = isMulticolor ? "EX LED 2" : "OG LED";
             acqInfo["Microscope " + led1Name + " Power (mw/mm^2)"] = microscopeLed->at("exPower");
             acqInfo["Microscope " + led2Name + " Power (mw/mm^2)"] = microscopeLed->at("ogPower");
 
