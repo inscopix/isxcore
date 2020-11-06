@@ -290,6 +290,18 @@ namespace isx
         return defaultChannelName;
     }
 
+    template <typename T>
+    bool isMulticolorMultiplexingData(const T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["microscope"]["dualColor"]["mode"].is_null())
+        {
+            return extraProps["microscope"]["dualColor"]["mode"].get<std::string>() == "multiplexing";
+        }
+        return false;
+    }
+
 } // namespace isx
 
 #endif // ISX_METADATA_H
