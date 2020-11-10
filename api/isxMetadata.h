@@ -253,11 +253,53 @@ namespace isx
         return !extraProps["idps"]["pre_mc"].is_null();
     }
 
-    inline bool hasDualColorMetadata(std::string inExtraProperties)
+    // Multicolor metadata
+    inline bool hasMulticolorMetadata(std::string inExtraProperties)
     {
         using json = nlohmann::json;
         json extraProps = json::parse(inExtraProperties);
         return !extraProps["microscope"]["dualColor"].is_null();
+    }
+
+    template <typename T>
+    inline bool hasMulticolorMetadata(const T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        return !extraProps["microscope"]["dualColor"].is_null();
+    }
+
+    template <typename T>
+    inline std::string getMulticolorChannelName(const T & inData, const std::string defaultChannelName)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        // IDPS metadata
+        if (!extraProps["idps"]["channel"].is_null())
+        {
+            return extraProps["idps"]["channel"].get<std::string>();
+        }
+
+        // IDAS metadata
+        if (!extraProps["microscope"]["dualColor"]["enabled"].is_null() && extraProps["microscope"]["dualColor"]["mode"].get<std::string>()=="single")
+        {
+            return extraProps["microscope"]["dualColor"]["single"]["channel"].get<std::string>();
+        }
+
+        return defaultChannelName;
+    }
+
+    template <typename T>
+    bool isMulticolorMultiplexingData(const T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["microscope"]["dualColor"]["mode"].is_null())
+        {
+            return extraProps["microscope"]["dualColor"]["mode"].get<std::string>() == "multiplexing";
+        }
+        return false;
     }
 
 } // namespace isx
