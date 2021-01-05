@@ -775,6 +775,22 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             {
                 acqInfo["channel"] = channel->get<std::string>();
             }
+
+            const auto cellset = idps->find("cellset");
+            if (cellset != idps->end())
+            {
+                const auto cellIdentificationMethod = cellset->find("method");
+                if (cellIdentificationMethod != cellset->end())
+                {
+                    acqInfo["Cell Identification Method"] = cellIdentificationMethod->get<std::string>();
+                }
+
+                const auto cellSetUnits = cellset->find("units");
+                if (cellSetUnits != cellset->end())
+                {
+                    acqInfo["Trace Units"] = cellSetUnits->get<std::string>();
+                }
+            }
         }
     }
 
