@@ -29,6 +29,19 @@ namespace isx
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Method used for generating a cell set
+    enum class CellSetUnits_t
+    {
+        UNAVAILABLE = 0,
+        RAW,           // manual ROI and applied contours (average of raw pixel values within ROI)
+        DF_OVER_F,     // PCA-ICA (DF/F)
+        DF,            // CNMFe (estimate of the “true” dF, i.e. temporal traces which are on the same scale of pixel intensity as the raw movie, calculated as the scaled dF divided by the average pixel intensity of the nth percentile of brightest pixels in the spatial footprint)
+        SCALED_DF,     // CNMFe (average fluorescence activity of all pixels in the neuron - this is how the dF data is scaled by different pixels in the ROI)
+        DF_OVER_NOISE  // CNMFe (trace divided by its estimate noise level)
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
     /// Struct for cell-set-specific metadata
     struct CellSetMetadata
     {
@@ -40,14 +53,17 @@ namespace isx
         /// fully specified constructor
         CellSetMetadata(
             const CellSetMethod_t method,
-            const CellSetType_t type)
+            const CellSetType_t type,
+            const CellSetUnits_t units)
         : m_method(method)
         , m_type(type)
+        , m_units(units)
         {
         }
 
         CellSetMethod_t  m_method = CellSetMethod_t::UNAVAILABLE;  ///< method used to generate the cell set
         CellSetType_t  m_type = CellSetType_t::UNAVAILABLE;        ///< type of footprints in the cell set
+        CellSetUnits_t  m_units = CellSetUnits_t::UNAVAILABLE;     ///< units of the traces in the cell set
     };
 
     /// Struct for holding pre-motion-correction metadata
@@ -124,6 +140,27 @@ namespace isx
         }
     }
 
+    inline std::string getCellSetUnitsString(CellSetUnits_t cellSetUnits)
+    {
+        switch(cellSetUnits)
+        {
+            case CellSetUnits_t::RAW:
+                return "raw";
+            case CellSetUnits_t::DF_OVER_F:
+                return "dF over F";
+            case CellSetUnits_t::DF:
+                return "dF";
+            case CellSetUnits_t::SCALED_DF:
+                return "scaled dF";
+            case CellSetUnits_t::DF_OVER_NOISE:
+                return "dF over noise";
+            case CellSetUnits_t::UNAVAILABLE:
+                return "";
+            default:
+                return "";
+        }
+    }
+
     template <class T>
     CellSetMethod_t getCellSetMethod(T & inData)
     {
@@ -152,6 +189,23 @@ namespace isx
             if (method == "binary") return CellSetType_t::BINARY;
         }
         return CellSetType_t::UNAVAILABLE;
+    }
+
+    template <class T>
+    CellSetUnits_t getCellSetUnits(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["cellset"]["units"].is_null())
+        {
+            std::string method = extraProps["idps"]["cellset"]["units"].get<std::string>();
+            if (method == "raw") return CellSetUnits_t::RAW;
+            if (method == "dF over F") return CellSetUnits_t::DF_OVER_F;
+            if (method == "dF") return CellSetUnits_t::DF;
+            if (method == "scaled dF") return CellSetUnits_t::SCALED_DF;
+            if (method == "dF over noise") return CellSetUnits_t::DF_OVER_NOISE;
+        }
+        return CellSetUnits_t::UNAVAILABLE;
     }
 
     template <class T>
@@ -192,10 +246,21 @@ namespace isx
     }
 
     template <typename T>
+    void setCellSetUnits(T & inData, CellSetUnits_t cellSetUnits)
+    {
+        if (cellSetUnits == CellSetUnits_t::UNAVAILABLE) return;
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["cellset"]["units"] = getCellSetUnitsString(cellSetUnits);
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
     void setCellSetMetadata(T & inData, CellSetMetadata cellSetMetadata)
     {
         setCellSetMethod(inData, cellSetMetadata.m_method);
         setCellSetType(inData, cellSetMetadata.m_type);
+        setCellSetUnits(inData, cellSetMetadata.m_units);
     }
 
     template <typename T>
@@ -225,6 +290,11 @@ namespace isx
         if (cellSetMetadata.m_type != CellSetType_t::UNAVAILABLE)
         {
             extraProps["idps"]["cellset"]["type"] = getCellSetTypeString(cellSetMetadata.m_type);
+        }
+
+        if (cellSetMetadata.m_units != CellSetUnits_t::UNAVAILABLE)
+        {
+            extraProps["idps"]["cellset"]["units"] = getCellSetUnitsString(cellSetMetadata.m_units);
         }
 
         return extraProps.dump();
