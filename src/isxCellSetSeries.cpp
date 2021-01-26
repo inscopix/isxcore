@@ -365,7 +365,7 @@ namespace isx
     std::vector<uint16_t>
     CellSetSeries::getEfocusValues ()
     {
-        ISX_ASSERT(m_cellSets.size() == 1);
+        // ISX_ASSERT(m_cellSets.size() == 1);
         return m_cellSets[0]->getEfocusValues();
     }
 
