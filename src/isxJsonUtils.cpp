@@ -307,7 +307,9 @@ writeJson(
         ISX_THROW(isx::ExceptionFileIO, "Failed to write JSON.");
     }
 }
-    
+
+/////*** Cell Data ***///////
+
 json
 convertCellNamesToJson(const CellNames_t & inCellNames)
 {
@@ -346,7 +348,6 @@ convertJsonToCellStatuses(const json & inJson)
     }
     return cellStatuses;
 }
-
 
 json
 convertCellColorsToJson(const CellColors_t & inCellColors)
@@ -387,6 +388,89 @@ convertJsonToCellActivities(const json & inJson)
 {
     return inJson.get<CellActivities_t>();
 }
+
+/////*** Vessel Data ***///////
+
+json
+convertVesselNamesToJson(const VesselNames_t & inVesselNames)
+{
+    return inVesselNames;
+}
+
+VesselNames_t
+convertJsonToVesselNames(const json & inJson)
+{
+    return inJson.get<VesselNames_t>();
+}
+
+json
+convertVesselStatusesToJson(const VesselStatuses_t & inVesselStatuses)
+{
+    std::vector<int> intVesselStatuses(inVesselStatuses.size());
+    isize_t i = 0;
+    for (auto & s : inVesselStatuses)
+    {
+        intVesselStatuses[i] = (int)s;
+        ++i;
+    }
+    return intVesselStatuses;
+}
+
+VesselStatuses_t
+convertJsonToVesselStatuses(const json & inJson)
+{
+    std::vector<int> intVesselStatuses = inJson.get<std::vector<int>>();
+    VesselStatuses_t vesselStatuses(intVesselStatuses.size());
+    isize_t i = 0;
+    for (auto & s : intVesselStatuses)
+    {
+        vesselStatuses[i] = (VesselSet::VesselStatus)s;
+        ++i;
+    }
+    return vesselStatuses;
+}
+
+json
+convertVesselColorsToJson(const VesselColors_t & inVesselColors)
+{
+    std::vector<Rgba> uintVesselColors(inVesselColors.size());
+    isize_t i = 0;
+    for (auto & c : inVesselColors)
+    {
+        uintVesselColors[i] = c.m_rgba;
+        ++i;
+    }
+    return uintVesselColors;
+}
+
+VesselColors_t
+convertJsonToVesselColors(const json & inJson)
+{
+    std::vector<Rgba> intVesselColors = inJson.get<std::vector<Rgba>>();
+    VesselColors_t vesselColors(intVesselColors.size());
+
+    isize_t i = 0;
+    for (auto & c : intVesselColors)
+    {
+        vesselColors[i] = Color(c);
+        ++i;
+    }
+    return vesselColors;
+}
+
+json
+convertVesselActivitiesToJson(const VesselActivities_t & inVesselActivities)
+{
+    return inVesselActivities;
+}
+
+VesselActivities_t
+convertJsonToVesselActivities(const json & inJson)
+{
+    return inJson.get<VesselActivities_t>();
+}
+
+/////*** Cell Metrics ***///////
 
 json
 convertImageMetricsToJson(const ImageMetrics & inMetrics) 

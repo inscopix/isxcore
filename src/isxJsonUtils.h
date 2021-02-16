@@ -7,6 +7,7 @@
 #include "isxDataSet.h"
 #include "isxCellSet.h"
 #include "isxEvents.h"
+#include "isxVesselSet.h"
 
 #include "json.hpp"
 
@@ -16,12 +17,19 @@ namespace isx
 // for convenience
 using json = nlohmann::json;
 
+// cell data
 using CellNames_t = std::vector<std::string>;
 using CellStatuses_t = std::vector<CellSet::CellStatus>;
 using CellColors_t = std::vector<Color>;
 using CellActivities_t = std::vector<bool>;
 using CellMetrics_t = std::vector<SpImageMetrics_t>;
 using EventMetrics_t = std::vector<SpTraceMetrics_t>;
+
+// vessel data
+using VesselNames_t = std::vector<std::string>;
+using VesselStatuses_t = std::vector<VesselSet::VesselStatus>;
+using VesselColors_t = std::vector<Color>;
+using VesselActivities_t = std::vector<bool>;
 
 json convertRatioToJson(const Ratio & inRatio);
 Ratio convertJsonToRatio(const json & j);
@@ -83,6 +91,8 @@ writeJson(
     const json & inJsonObject,
     std::ostream & inStream);
 
+
+/////*** Cell Data ***///////
 json
 convertCellNamesToJson(const CellNames_t & inCellNames);
 
@@ -106,6 +116,31 @@ convertCellActivitiesToJson(const CellActivities_t & inCellActivities);
 
 CellActivities_t
 convertJsonToCellActivities(const json & inJson);
+
+/////*** Vessel Data ***///////
+json
+convertVesselNamesToJson(const VesselNames_t & inVesselNames);
+
+VesselNames_t
+convertJsonToVesselNames(const json & inJson);
+
+json
+convertVesselStatusesToJson(const VesselStatuses_t & inVesselStatuses);
+
+VesselStatuses_t
+convertJsonToVesselStatuses(const json & inJson);
+
+json
+convertVesselColorsToJson(const VesselColors_t & inVesselColors);
+
+VesselColors_t
+convertJsonToVesselColors(const json & inJson);
+
+json
+convertVesselActivitiesToJson(const VesselActivities_t & inVesselActivities);
+
+VesselActivities_t
+convertJsonToVesselActivities(const json & inJson);
 
 /////*** Cell Metrics ***///////
 json
