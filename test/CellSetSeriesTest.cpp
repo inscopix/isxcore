@@ -255,15 +255,11 @@ TEST_CASE("CellSetSeries", "[core-internal]")
             
         }
     }
-    
-
 
     for (const auto & fn: filenames)
     {
         std::remove(fn.c_str());
     }
 
-
     isx::CoreShutdown();
-
 }
