@@ -23,13 +23,12 @@ VesselSetSimple::VesselSetSimple(const std::string & inFileName, bool enableWrit
 VesselSetSimple::VesselSetSimple(
         const std::string & inFileName,
         const TimingInfo & inTimingInfo,
-        const SpacingInfo & inSpacingInfo,
-        const bool inIsRoiSet)
+        const SpacingInfo & inSpacingInfo)
     : m_valid(false)
     , m_traceIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_imageIoTaskTracker(new IoTaskTracker<Image>())
 {
-    m_file = std::make_shared<VesselSetFile>(inFileName, inTimingInfo, inSpacingInfo, inIsRoiSet);
+    m_file = std::make_shared<VesselSetFile>(inFileName, inTimingInfo, inSpacingInfo);
     m_valid = true;
 }
 
@@ -266,12 +265,6 @@ VesselSetSimple::cancelPendingReads()
     m_traceIoTaskTracker->cancelPendingTasks();
 }
 
-bool
-VesselSetSimple::isRoiSet() const
-{
-    return m_file->isRoiSet();
-}
-
 isize_t
 VesselSetSimple::getSizeGlobalVS()
 {
@@ -282,18 +275,6 @@ void
 VesselSetSimple::setSizeGlobalVS(const isize_t inSizeGlobalVS)
 {
     m_file->setSizeGlobalVS(inSizeGlobalVS);
-}
-
-std::vector<int16_t>
-VesselSetSimple::getMatches()
-{
-    return m_file->getMatches();
-}
-
-void
-VesselSetSimple::setMatches(const std::vector<int16_t> & inMatches)
-{
-    m_file->setMatches(inMatches);
 }
 
 std::vector<uint16_t>
@@ -307,48 +288,6 @@ VesselSetSimple::setEfocusValues (const std::vector<uint16_t> &inEfocus)
 {
     m_file->setEfocusValues(inEfocus);
 };
-
-std::vector<double>
-VesselSetSimple::getPairScores()
-{
-    return m_file->getPairScores();
-}
-
-void
-VesselSetSimple::setPairScores(const std::vector<double> & inPairScores)
-{
-    m_file->setPairScores(inPairScores);
-}
-
-std::vector<double>
-VesselSetSimple::getCentroidDistances()
-{
-    return m_file->getCentroidDistances();
-}
-
-void
-VesselSetSimple::setCentroidDistances(const std::vector<double> & inCentroidDistances)
-{
-    m_file->setCentroidDistances(inCentroidDistances);
-}
-
-//bool
-//VesselSetSimple::hasMetrics() const
-//{
-//    return m_file->hasMetrics();
-//}
-//
-//SpImageMetrics_t
-//VesselSetSimple::getImageMetrics(isize_t inIndex) const
-//{
-//    return m_file->getImageMetrics(inIndex);
-//}
-//
-//void
-//VesselSetSimple::setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics)
-//{
-//    m_file->setImageMetrics(inIndex, inMetrics);
-//}
 
 std::string
 VesselSetSimple::getExtraProperties() const

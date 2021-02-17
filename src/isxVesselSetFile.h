@@ -44,14 +44,12 @@ public:
     /// \param  inFileName      The name of the vessel set file.
     /// \param  inTimingInfo    The timing information of the vessel set.
     /// \param  inSpacingInfo   The spacing information of the vessel set.
-    /// \param  inIsRoiSet      True if this came from drawing ROIs, false otherwise.
     ///
     /// \throw  isx::ExceptionFileIO    If writing the vessel set file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the vessel set data fails.
     VesselSetFile(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
-                const SpacingInfo & inSpacingInfo,
-                const bool inIsRoiSet = false);
+                const SpacingInfo & inSpacingInfo);
 
     /// Destructor.
     ///
@@ -158,10 +156,6 @@ public:
     /// \param inActive whether the vessel is active or not
     void setVesselActive(isize_t inVesselId, bool inActive);
 
-    /// \return     True if this came from drawing ROIs, false otherwise.
-    ///
-    bool isRoiSet() const;
-
     /// get size of global vessel set
     /// \return  size of global vessel set
     isize_t getSizeGlobalVS();
@@ -170,14 +164,6 @@ public:
     /// \param inSizeGlobalVS size of global vessel set
     void setSizeGlobalVS(const isize_t inSizeGlobalVS);
 
-    /// get the vessel set matches
-    /// \return  vessel set matches
-    std::vector<int16_t> getMatches();
-
-    /// set the vessel set matches
-    /// \param inVsMatches vessel set matches
-    void setMatches(const std::vector<int16_t> & inVsMatches);
-
     /// get the efocus values
     /// \return  efocus values
     std::vector<uint16_t> getEfocusValues();
@@ -185,31 +171,6 @@ public:
     /// set the efocus values
     /// \param inEfocus efocus values
     void setEfocusValues(const std::vector<uint16_t> & inEfocus);
-
-    /// get vessel set pair scores
-    /// \return  vessel set pair scores
-    std::vector<double> getPairScores();
-
-    /// set vessel set pair scores
-    /// \param inPairScores vessel set pair scores
-    void setPairScores(const std::vector<double> & inPairScores);
-
-    /// get the vessel set centroid distances
-    /// \return  vessel set centroid distances
-    std::vector<double> getCentroidDistances();
-
-    /// set the vessel set centroid distances
-    /// \param inCentroidDistances vessel set centroid distances
-    void setCentroidDistances(const std::vector<double> & inCentroidDistances);
-
-//    bool
-//    hasMetrics() const;
-//
-//    SpImageMetrics_t
-//    getImageMetrics(isize_t inIndex) const;
-//
-//    void
-//    setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics);
 
     std::string
     getExtraProperties() const;
@@ -265,23 +226,8 @@ private:
 
     const static size_t s_version = 5;
 
-    /// True if this came from drawing ROIs, false otherwise.
-    bool m_isRoiSet = false;
-
     /// Size of global vessel set
     isize_t m_sizeGlobalVS = 0;
-
-    /// Matches of this vessel set to global vs
-    std::vector<int16_t> m_matches;
-
-    /// Scores of the matches (see above)
-    std::vector<double> m_pairScores;
-
-    /// Centroid distances of the matches (see above)
-    std::vector<double> m_centroidDistances;
-
-    // TODO: add VesselMetrics_t in VesselSet
-    // VesselMetrics_t m_vesselImageMetrics;
 
     /// The extra properties to write in the JSON footer.
     json m_extraProperties = nullptr;

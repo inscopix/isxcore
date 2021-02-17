@@ -315,20 +315,6 @@ namespace isx
         }
     }
 
-    bool
-    VesselSetSeries::isRoiSet() const
-    {
-        for (const auto & vs : m_vesselSets)
-        {
-            if (!vs->isRoiSet())
-            {
-                return false;
-            }
-        }
-        return m_vesselSets.size() > 0;
-    }
-
-
     isize_t
     VesselSetSeries::getSizeGlobalVS()
     {
@@ -340,22 +326,6 @@ namespace isx
 
     void
     VesselSetSeries::setSizeGlobalVS(const isize_t inSizeGlobalVS)
-    {
-        ISX_ASSERT(false);
-        // placeholder
-    }
-
-    std::vector<int16_t>
-    VesselSetSeries::getMatches()
-    {
-        ISX_ASSERT(false);
-        // placeholder
-        std::vector<int16_t> retVal;
-        return retVal;
-    }
-
-    void
-    VesselSetSeries::setMatches(const std::vector<int16_t> & inMatches)
     {
         ISX_ASSERT(false);
         // placeholder
@@ -374,61 +344,6 @@ namespace isx
         ISX_ASSERT(false);
         // placeholder
     };
-
-    std::vector<double>
-    VesselSetSeries::getPairScores()
-    {
-        ISX_ASSERT(false);
-        // placeholder
-        std::vector<double> retVal;
-        return retVal;
-    }
-
-    void
-    VesselSetSeries::setPairScores(const std::vector<double> & inPairScores)
-    {
-        ISX_ASSERT(false);
-        // placeholder
-    }
-
-    std::vector<double>
-    VesselSetSeries::getCentroidDistances()
-    {
-        ISX_ASSERT(false);
-        // placeholder
-        std::vector<double> retVal;
-        return retVal;
-    }
-
-    void
-    VesselSetSeries::setCentroidDistances(const std::vector<double> & inCentroidDistances)
-    {
-        ISX_ASSERT(false);
-        // placeholder
-    }
-
-//    bool
-//    VesselSetSeries::hasMetrics() const
-//    {
-//        return m_vesselSets.front()->hasMetrics();
-//    }
-//
-//    SpImageMetrics_t
-//    VesselSetSeries::getImageMetrics(isize_t inIndex) const
-//    {
-//        // note: all images in a series are the same, so returning the metrics from the
-//        // first vessel set should suffice.
-//        return m_vesselSets.front()->getImageMetrics(inIndex);
-//    }
-//
-//    void
-//    VesselSetSeries::setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics)
-//    {
-//        for (const auto & vs : m_vesselSets)
-//        {
-//            vs->setImageMetrics(inIndex, inMetrics);
-//        }
-//    }
 
     std::string
     VesselSetSeries::getExtraProperties() const

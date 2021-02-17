@@ -25,7 +25,7 @@ using GetTraceCB_t = std::function<SpFTrace_t()>;
 using VesselSetGetTraceCB_t = std::function<void(AsyncTaskResult<SpFTrace_t>)>;
 /// The type of callback that reads an image from disk
 using GetImageCB_t = std::function<SpImage_t()>;
-/// The type of callback for getting a vessel ROI image asynchronously
+/// The type of callback for getting a vessel image asynchronously
 using VesselSetGetImageCB_t = std::function<void(AsyncTaskResult<SpImage_t>)>;
 
 /// The vessel statuses
@@ -236,12 +236,6 @@ virtual
 void
 cancelPendingReads() = 0;
 
-/// \return     True if this came from drawing ROIs, false otherwise.
-///
-virtual
-bool
-isRoiSet() const = 0;
-
 /// get size of global vessel set
 /// \return  size of global vessel set
 virtual
@@ -254,18 +248,6 @@ virtual
 void
 setSizeGlobalVS(const isize_t inSizeGlobalVS) = 0;
 
-/// get the vessel set matches
-/// \return  vessel set matches
-virtual
-std::vector<int16_t>
-getMatches() = 0;
-
-/// set the vessel set matches
-/// \param inMatches vessel set matches
-virtual
-void
-setMatches(const std::vector<int16_t> & inMatches) = 0;
-
 /// get the efocus values
 /// \return  efocus values
 virtual
@@ -277,50 +259,6 @@ getEfocusValues() = 0;
 virtual
 void
 setEfocusValues(const std::vector<uint16_t> & inEfocus) = 0;
-
-/// get vessel set pair scores
-/// \return  vessel set pair scores
-virtual
-std::vector<double>
-getPairScores() = 0;
-
-/// set vessel set pair scores
-/// \param inPairScores vessel set pair scores
-virtual
-void
-setPairScores(const std::vector<double> & inPairScores) = 0;
-
-/// get the vessel set centroid distances
-/// \return  vessel set centroid distances
-virtual
-std::vector<double>
-getCentroidDistances() = 0;
-
-/// set the vessel set centroid distances
-/// \param inCentroidDistances vessel set centroid distances
-virtual
-void
-setCentroidDistances(const std::vector<double> & inCentroidDistances) = 0;
-
-
-///// \return true if the vessel set contains image metrics
-/////
-//virtual
-//bool
-//hasMetrics() const = 0;
-//
-///// Get all the quality assessment metrics for a given vessel image
-///// \param inIndex the vessel index
-//virtual
-//SpImageMetrics_t
-//getImageMetrics(isize_t inIndex) const = 0;
-//
-///// Set the quality assessment metrics for a vessel image
-///// \param inIndex the vessel index
-///// \param inMetrics the metrics structure
-//virtual
-//void
-//setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics) = 0;
 
 /// \return     The extra properties of this which might include things
 ///             from nVista 3. The string is in JSON format.

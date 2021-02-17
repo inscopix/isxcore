@@ -36,12 +36,10 @@ namespace isx
 
     VesselSetFile::VesselSetFile(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
-                const SpacingInfo & inSpacingInfo,
-                const bool inIsRoiSet)
+                const SpacingInfo & inSpacingInfo)
                 : m_fileName(inFileName)
                 , m_timingInfo(inTimingInfo)
                 , m_spacingInfo(inSpacingInfo)
-                , m_isRoiSet(inIsRoiSet)
     {
         m_openmode = std::ios::binary | std::ios_base::in | std::ios_base::out | std::ios::trunc;
         m_file.open(m_fileName, m_openmode);
@@ -208,11 +206,6 @@ namespace isx
             m_vesselStatuses.push_back(VesselSet::VesselStatus::UNDECIDED);
             m_vesselColors.push_back(Color());
             m_vesselActivity.push_back(true);
-//            if (hasMetrics())
-//            {
-//                m_vesselImageMetrics.push_back(SpImageMetrics_t());
-//            }
-
             ++m_numVessels;
         }
         else if (inVesselId < m_numVessels)
@@ -224,10 +217,6 @@ namespace isx
             m_vesselStatuses.at(inVesselId) = VesselSet::VesselStatus::UNDECIDED;
             m_vesselColors.at(inVesselId) = Color();
             m_vesselActivity.at(inVesselId) = true;
-//            if (hasMetrics())
-//            {
-//                m_vesselImageMetrics.at(inVesselId) = SpImageMetrics_t();
-//            }
         }
         else
         {
@@ -358,13 +347,6 @@ namespace isx
         m_vesselActivity.at(inVesselId) = inActive;
     }
 
-
-    bool
-    VesselSetFile::isRoiSet() const
-    {
-        return m_isRoiSet;
-    }
-
     isize_t
     VesselSetFile::getSizeGlobalVS()
     {
@@ -372,21 +354,9 @@ namespace isx
     }
 
     void
-    VesselSetFile::setSizeGlobalVS(const isize_t inSizeGlobalCS)
+    VesselSetFile::setSizeGlobalVS(const isize_t inSizeGlobalVS)
     {
-        m_sizeGlobalVS = inSizeGlobalCS;
-    }
-
-    std::vector<int16_t>
-    VesselSetFile::getMatches()
-    {
-        return m_matches;
-    }
-
-    void
-    VesselSetFile::setMatches(const std::vector<int16_t> & inMatches)
-    {
-        m_matches = inMatches;
+        m_sizeGlobalVS = inSizeGlobalVS;
     }
 
     std::vector<uint16_t>
@@ -399,31 +369,6 @@ namespace isx
     VesselSetFile::setEfocusValues(const std::vector<uint16_t> & inEfocus)
     {
         m_efocusValues = inEfocus;
-    }
-
-
-    std::vector<double>
-    VesselSetFile::getPairScores()
-    {
-        return m_pairScores;
-    }
-
-    void
-    VesselSetFile::setPairScores(const std::vector<double> & inPairScores)
-    {
-        m_pairScores = inPairScores;
-    }
-
-    std::vector<double>
-    VesselSetFile::getCentroidDistances()
-    {
-        return m_centroidDistances;
-    }
-
-    void
-    VesselSetFile::setCentroidDistances(const std::vector<double> & inCentroidDistances)
-    {
-        m_centroidDistances = inCentroidDistances;
     }
 
     void
@@ -446,7 +391,6 @@ namespace isx
             m_spacingInfo = convertJsonToSpacingInfo(j["spacingInfo"]);
             m_vesselNames = convertJsonToVesselNames(j["VesselNames"]);
             m_vesselStatuses = convertJsonToVesselStatuses(j["VesselStatuses"]);
-            m_isRoiSet = j["isRoiSet"];
 
             if (version >= 1)
             {
@@ -457,19 +401,6 @@ namespace isx
             {
                 m_vesselColors = convertJsonToVesselColors(j["VesselColors"]);
             }
-
-            if (version >= 3)
-            {
-                m_sizeGlobalVS = j["SizeGlobalCS"];
-                m_matches = j["Matches"].get<std::vector<int16_t>>();
-                m_pairScores = j["PairScores"].get<std::vector<double>>();
-                m_centroidDistances = j["CentroidDistances"].get<std::vector<double>>();
-            }
-
-//            if (version >= 4)
-//            {
-//                m_vesselImageMetrics = convertJsonToVesselMetrics(j["vesselMetrics"]);
-//            }
 
             if ((version >= 5) && j.find("extraProperties") != j.end())
             {
@@ -534,13 +465,8 @@ namespace isx
             j["VesselColors"] = convertVesselColorsToJson(m_vesselColors);
             j["producer"] = getProducerAsJson();
             j["fileVersion"] = s_version;
-            j["isRoiSet"] = m_isRoiSet;
             j["VesselActivity"] = convertVesselActivitiesToJson(m_vesselActivity);
-            j["SizeGlobalCS"] = m_sizeGlobalVS;
-            j["Matches"] = m_matches;
-            j["PairScores"] = m_pairScores;
-            j["CentroidDistances"] = m_centroidDistances;
-//            j["vesselMetrics"] = convertVesselMetricsToJson(m_vesselImageMetrics);
+            j["SizeGlobalVS"] = m_sizeGlobalVS;
             j["extraProperties"] = m_extraProperties;
             j["efocusValues"] = m_efocusValues;
         }
@@ -633,38 +559,6 @@ namespace isx
             }
         }
     }
-
-//    bool
-//    VesselSetFile::hasMetrics() const
-//    {
-//        return !m_vesselImageMetrics.empty();
-//    }
-//
-//    SpImageMetrics_t
-//    VesselSetFile::getImageMetrics(isize_t inIndex) const
-//    {
-//        if (m_vesselImageMetrics.size() > inIndex)
-//        {
-//            return m_vesselImageMetrics.at(inIndex);
-//        }
-//        return SpImageMetrics_t();
-//    }
-//
-//    void
-//    VesselSetFile::setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics)
-//    {
-//        if (m_fileClosedForWriting)
-//        {
-//            ISX_THROW(isx::ExceptionFileIO,
-//                      "Writing data after file was closed for writing.", m_fileName);
-//        }
-//
-//        if (!hasMetrics())
-//        {
-//            m_vesselImageMetrics = VesselMetrics_t(m_vesselNames.size(), SpImageMetrics_t());
-//        }
-//        m_vesselImageMetrics.at(inIndex) = inMetrics;
-//    }
 
     std::string
     VesselSetFile::getExtraProperties() const

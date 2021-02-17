@@ -16,15 +16,13 @@ namespace isx
 /// \param  inFileName      The name of the vessel set file.
 /// \param  inTimingInfo    The timing information of the vessel set.
 /// \param  inSpacingInfo   The spacing information of the vessel set.
-/// \param  inIsRoiSet      True if this came from drawing ROIs, false otherwise.
 /// \return                 The vessel set created.
 ///
 /// \throw  isx::ExceptionFileIO    If writing the vessel set file fails.
 SpVesselSet_t writeVesselSet(
         const std::string & inFileName,
         const TimingInfo & inTimingInfo,
-        const SpacingInfo & inSpacingInfo,
-        const bool inIsRoiSet = false);
+        const SpacingInfo & inSpacingInfo);
 
 /// Read an existing vessel set from a file.
 ///

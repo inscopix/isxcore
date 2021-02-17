@@ -50,13 +50,11 @@ public:
     /// \param  inFileName      The name of the vessel set file to write.
     /// \param  inTimingInfo    The timing information of the vessel set.
     /// \param  inSpacingInfo   The spacing information of the vessel set.
-    /// \param  inIsRoiSet      True if this came from drawing ROIs, false otherwise.
     /// \throw  isx::ExceptionFileIO    If writing the vessel set file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the vessel set data fails.
     VesselSetSimple(const std::string & inFileName,
             const TimingInfo & inTimingInfo,
-            const SpacingInfo & inSpacingInfo,
-            const bool inIsRoiSet = false);
+            const SpacingInfo & inSpacingInfo);
 
     /// Destructor.
     ///
@@ -136,47 +134,17 @@ public:
     void
     cancelPendingReads() override;
 
-    bool
-    isRoiSet() const override;
-
     isize_t
     getSizeGlobalVS() override;
 
     void
     setSizeGlobalVS(const isize_t inSizeGlobalVS) override;
 
-    std::vector<int16_t>
-    getMatches() override;
-
-    void
-    setMatches(const std::vector<int16_t> & inMatches) override;
-
     std::vector<uint16_t>
     getEfocusValues() override;
 
     void
     setEfocusValues(const std::vector<uint16_t> & inEfocus) override;
-
-    std::vector<double>
-    getPairScores() override;
-
-    void
-    setPairScores(const std::vector<double> & inPairScores) override;
-
-    std::vector<double>
-    getCentroidDistances() override;
-
-    void
-    setCentroidDistances(const std::vector<double> & inCentroidDistances) override;
-
-//    bool
-//    hasMetrics() const override;
-//
-//    SpImageMetrics_t
-//    getImageMetrics(isize_t inIndex) const override;
-//
-//    void
-//    setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics) override;
 
     std::string
     getExtraProperties() const override;
