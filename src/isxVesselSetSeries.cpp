@@ -1,0 +1,455 @@
+#include "isxVesselSetFactory.h"
+#include "isxVesselSetSeries.h"
+#include "isxAsync.h"
+#include "isxAsyncTaskHandle.h"
+#include "isxDispatchQueue.h"
+#include "isxSeries.h"
+#include "isxSeriesUtils.h"
+
+#include <algorithm>
+#include <cstring>
+#include <cmath>
+
+namespace isx
+{
+    VesselSetSeries::VesselSetSeries()
+    {
+
+    }
+
+    VesselSetSeries::VesselSetSeries(const std::vector<std::string> & inFileNames, bool enableWrite)
+        : m_valid(false)
+    {
+        ISX_ASSERT(inFileNames.size() > 0);
+        if (inFileNames.size() == 0)
+        {
+            return;
+        }
+
+        for(const auto &fn : inFileNames)
+        {
+            m_vesselSets.emplace_back(readVesselSet(fn, enableWrite));
+        }
+
+        std::sort(m_vesselSets.begin(), m_vesselSets.end(), [](SpVesselSet_t a, SpVesselSet_t b)
+        {
+            return a->getTimingInfo().getStart() < b->getTimingInfo().getStart();
+        });
+
+        // vessel sets are sorted by start time now, check if they meet requirements
+        std::string errorMessage;
+        for (isize_t i = 1; i < m_vesselSets.size(); ++i)
+        {
+            if (!checkNewMemberOfSeries({m_vesselSets[i - 1]}, m_vesselSets[i], errorMessage))
+            {
+                ISX_THROW(ExceptionSeries, errorMessage);
+            }
+        }
+
+        m_gaplessTimingInfo = makeGaplessTimingInfo(getTimingInfosForSeries());
+        m_valid = true;
+    }
+
+    VesselSetSeries::~VesselSetSeries()
+    {
+
+    }
+
+    bool
+    VesselSetSeries::isValid() const
+    {
+        return m_valid;
+    }
+
+    void
+    VesselSetSeries::closeForWriting()
+    {
+        for (auto & v: m_vesselSets)
+        {
+            v->closeForWriting();
+        }
+    }
+
+    std::string
+    VesselSetSeries::getFileName() const
+    {
+        std::vector<std::string> filePaths;
+        for (const auto & vs : m_vesselSets)
+        {
+            filePaths.push_back(vs->getFileName());
+        }
+        return makeSeriesFilePathString("VesselSetSeries", filePaths);
+    }
+
+    const isize_t
+    VesselSetSeries::getNumVessels()
+    {
+        return m_vesselSets[0]->getNumVessels();
+    }
+
+    isx::TimingInfo
+    VesselSetSeries::getTimingInfo() const
+    {
+        return m_gaplessTimingInfo;
+    }
+
+    isx::TimingInfos_t
+    VesselSetSeries::getTimingInfosForSeries() const
+    {
+        TimingInfos_t tis;
+        for(const auto &vs : m_vesselSets)
+        {
+            tis.emplace_back(vs->getTimingInfo());
+        }
+        return tis;
+    }
+
+    isx::SpacingInfo
+    VesselSetSeries::getSpacingInfo() const
+    {
+        return m_vesselSets[0]->getSpacingInfo();
+    }
+
+    SpFTrace_t
+    VesselSetSeries::getTrace(isize_t inIndex)
+    {
+        SpFTrace_t trace = std::make_shared<FTrace_t>(m_gaplessTimingInfo);
+        float * v = trace->getValues();
+
+        for (const auto &vs : m_vesselSets)
+        {
+            SpFTrace_t partialTrace = vs->getTrace(inIndex);
+            float * vPartial = partialTrace->getValues();
+            isize_t numSamples = partialTrace->getTimingInfo().getNumTimes();
+            memcpy((char *)v, (char *)vPartial, sizeof(float)*numSamples);
+            v += numSamples;
+        }
+        return trace;
+    }
+
+    void
+    VesselSetSeries::getTraceAsync(isize_t inIndex, VesselSetGetTraceCB_t inCallback)
+    {
+        std::weak_ptr<VesselSet> weakThis = shared_from_this();
+
+        AsyncTaskResult<SpFTrace_t> asyncTaskResult;
+        asyncTaskResult.setValue(std::make_shared<FTrace_t>(m_gaplessTimingInfo));
+
+        isize_t counter = 0;
+        bool isLast = false;
+        isize_t offset = 0;
+
+        for (const auto &vs : m_vesselSets)
+        {
+            isLast = (counter == (m_vesselSets.size() - 1));
+
+            VesselSetGetTraceCB_t finishedCB =
+                [weakThis, &asyncTaskResult, offset, isLast, inCallback] (AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
+            {
+                auto sharedThis = weakThis.lock();
+                if (!sharedThis)
+                {
+                    return;
+                }
+
+                if (inAsyncTaskResult.getException())
+                {
+                    asyncTaskResult.setException(inAsyncTaskResult.getException());
+                }
+                else
+                {
+                    // only continue copying if previous segments didn't throw
+                    if (!asyncTaskResult.getException())
+                    {
+                        auto traceSegment = inAsyncTaskResult.get();
+                        auto traceSeries = asyncTaskResult.get();
+                        isize_t numTimes = traceSegment->getTimingInfo().getNumTimes();
+                        isize_t numBytes = numTimes * sizeof(float);
+                        float * vals = traceSeries->getValues();
+                        vals += offset;
+                        memcpy((char *)vals, (char *)traceSegment->getValues(), numBytes);
+                    }
+                }
+
+                if (isLast)
+                {
+                    inCallback(asyncTaskResult);
+                }
+            };
+
+            vs->getTraceAsync(inIndex, finishedCB);
+            isize_t numSamples = vs->getTimingInfo().getNumTimes();
+            offset += numSamples;
+
+            ++counter;
+        }
+
+    }
+
+    SpImage_t
+    VesselSetSeries::getImage(isize_t inIndex)
+    {
+        return m_vesselSets[0]->getImage(inIndex);
+    }
+
+    void
+    VesselSetSeries::getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback)
+    {
+        return m_vesselSets[0]->getImageAsync(inIndex, inCallback);
+    }
+
+    void
+    VesselSetSeries::writeImageAndTrace(
+            isize_t inIndex,
+            const SpImage_t & inImage,
+            SpFTrace_t & inTrace,
+            const std::string & inName)
+    {
+        // Don't do anything. Note: salpert 11/8/16 we need to decide
+        // what operations to allow on a vessel set series (read/write)
+        // and take appropriate actions to limit the API (maybe separate VesselSet
+        // into VesselSet and WritableVesselSet like we did for movies?)
+        // This class will probably require some re-factoring
+        ISX_ASSERT(false);
+    }
+
+    VesselSet::VesselStatus
+    VesselSetSeries::getVesselStatus(isize_t inIndex)
+    {
+        return m_vesselSets[0]->getVesselStatus(inIndex);
+    }
+
+    Color
+    VesselSetSeries::getVesselColor(isize_t inIndex)
+    {
+        return m_vesselSets[0]->getVesselColor(inIndex);
+    }
+
+    std::string
+    VesselSetSeries::getVesselStatusString(isize_t inIndex)
+    {
+        return m_vesselSets[0]->getVesselStatusString(inIndex);
+    }
+
+    void
+    VesselSetSeries::setVesselStatus(isize_t inIndex, VesselSet::VesselStatus inStatus)
+    {
+        for(const auto &vs : m_vesselSets)
+        {
+            vs->setVesselStatus(inIndex, inStatus);
+        }
+    }
+
+    void
+    VesselSetSeries::setVesselColor(isize_t inIndex, const Color& inColor)
+    {
+        for (const auto &vs : m_vesselSets)
+        {
+            vs->setVesselColor(inIndex, inColor);
+        }
+    }
+
+    void
+    VesselSetSeries::setVesselColors(const IdColorPairs &inColors)
+    {
+        for (const auto &vs : m_vesselSets)
+        {
+            vs->setVesselColors(inColors);
+        }
+    }
+
+    std::string
+    VesselSetSeries::getVesselName(isize_t inIndex)
+    {
+        return m_vesselSets[0]->getVesselName(inIndex);
+    }
+
+    void
+    VesselSetSeries::setVesselName(isize_t inIndex, const std::string & inName)
+    {
+        for(const auto &vs : m_vesselSets)
+        {
+            vs->setVesselName(inIndex, inName);
+        }
+    }
+
+    std::vector<bool>
+    VesselSetSeries::getVesselActivity(isize_t inIndex) const
+    {
+        std::vector<bool> activity;
+        for(const auto &vs : m_vesselSets)
+        {
+            std::vector<bool> segment_act = vs->getVesselActivity(inIndex);
+            activity.push_back(segment_act.front());
+        }
+        return activity;
+    }
+
+    void
+    VesselSetSeries::setVesselActive(isize_t inIndex, const std::vector<bool> & inActive)
+    {
+        if (inActive.size() != 1)
+        {
+            ISX_ASSERT(inActive.size() == m_vesselSets.size());
+            for(isize_t i(0); i < m_vesselSets.size(); ++i)
+            {
+                m_vesselSets[i]->setVesselActive(inIndex, {inActive.at(i)});
+            }
+        }
+        else
+        {
+            for(const auto &vs : m_vesselSets)
+            {
+                vs->setVesselActive(inIndex, inActive);
+            }
+        }
+
+    }
+
+    void
+    VesselSetSeries::cancelPendingReads()
+    {
+        for (const auto &vs : m_vesselSets)
+        {
+            vs->cancelPendingReads();
+        }
+    }
+
+    bool
+    VesselSetSeries::isRoiSet() const
+    {
+        for (const auto & vs : m_vesselSets)
+        {
+            if (!vs->isRoiSet())
+            {
+                return false;
+            }
+        }
+        return m_vesselSets.size() > 0;
+    }
+
+
+    isize_t
+    VesselSetSeries::getSizeGlobalVS()
+    {
+        ISX_ASSERT(false);
+        // placeholder
+        isize_t retVal = 0;
+        return retVal;
+    }
+
+    void
+    VesselSetSeries::setSizeGlobalVS(const isize_t inSizeGlobalVS)
+    {
+        ISX_ASSERT(false);
+        // placeholder
+    }
+
+    std::vector<int16_t>
+    VesselSetSeries::getMatches()
+    {
+        ISX_ASSERT(false);
+        // placeholder
+        std::vector<int16_t> retVal;
+        return retVal;
+    }
+
+    void
+    VesselSetSeries::setMatches(const std::vector<int16_t> & inMatches)
+    {
+        ISX_ASSERT(false);
+        // placeholder
+    }
+
+    std::vector<uint16_t>
+    VesselSetSeries::getEfocusValues ()
+    {
+        // ISX_ASSERT(m_vesselSets.size() == 1);
+        return m_vesselSets[0]->getEfocusValues();
+    }
+
+    void
+    VesselSetSeries::setEfocusValues (const std::vector<uint16_t> &inEfocus)
+    {
+        ISX_ASSERT(false);
+        // placeholder
+    };
+
+    std::vector<double>
+    VesselSetSeries::getPairScores()
+    {
+        ISX_ASSERT(false);
+        // placeholder
+        std::vector<double> retVal;
+        return retVal;
+    }
+
+    void
+    VesselSetSeries::setPairScores(const std::vector<double> & inPairScores)
+    {
+        ISX_ASSERT(false);
+        // placeholder
+    }
+
+    std::vector<double>
+    VesselSetSeries::getCentroidDistances()
+    {
+        ISX_ASSERT(false);
+        // placeholder
+        std::vector<double> retVal;
+        return retVal;
+    }
+
+    void
+    VesselSetSeries::setCentroidDistances(const std::vector<double> & inCentroidDistances)
+    {
+        ISX_ASSERT(false);
+        // placeholder
+    }
+
+//    bool
+//    VesselSetSeries::hasMetrics() const
+//    {
+//        return m_vesselSets.front()->hasMetrics();
+//    }
+//
+//    SpImageMetrics_t
+//    VesselSetSeries::getImageMetrics(isize_t inIndex) const
+//    {
+//        // note: all images in a series are the same, so returning the metrics from the
+//        // first vessel set should suffice.
+//        return m_vesselSets.front()->getImageMetrics(inIndex);
+//    }
+//
+//    void
+//    VesselSetSeries::setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics)
+//    {
+//        for (const auto & vs : m_vesselSets)
+//        {
+//            vs->setImageMetrics(inIndex, inMetrics);
+//        }
+//    }
+
+    std::string
+    VesselSetSeries::getExtraProperties() const
+    {
+        // TODO : Series does not check extra properties being consistent
+        return m_vesselSets.front()->getExtraProperties();
+    }
+
+    void
+    VesselSetSeries::setExtraProperties(const std::string & inProperties)
+    {
+        for (auto & vs : m_vesselSets)
+        {
+            vs->setExtraProperties(inProperties);
+        }
+    }
+
+    SpacingInfo
+    VesselSetSeries::getOriginalSpacingInfo() const
+    {
+        return m_vesselSets.front()->getOriginalSpacingInfo();
+    }
+
+} // namespace isx

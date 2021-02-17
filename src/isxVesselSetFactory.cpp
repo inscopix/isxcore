@@ -1,6 +1,6 @@
 #include "isxVesselSetFactory.h"
 #include "isxVesselSetSimple.h"
-//#include "isxVesselSetSeries.h"
+#include "isxVesselSetSeries.h"
 #include <memory>
 
 
@@ -17,18 +17,16 @@ SpVesselSet_t writeVesselSet(
     return vs;
 }
 
-
 SpVesselSet_t readVesselSet(const std::string & inFileName, bool enableWrite)
 {
     SpVesselSet_t vs = std::make_shared<VesselSetSimple>(inFileName, enableWrite);
     return vs;
 }
 
-
-//SpVesselSet_t readVesselSetSeries(const std::vector<std::string> & inFileNames, bool enableWrite)
-//{
-//    SpVesselSet_t vs = std::make_shared<VesselSetSeries>(inFileNames, enableWrite);
-//    return vs;
-//}
+SpVesselSet_t readVesselSetSeries(const std::vector<std::string> & inFileNames, bool enableWrite)
+{
+    SpVesselSet_t vs = std::make_shared<VesselSetSeries>(inFileNames, enableWrite);
+    return vs;
+}
 
 }
