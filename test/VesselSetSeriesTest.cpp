@@ -1,19 +1,19 @@
 #include "isxCore.h"
-#include "isxCellSetFactory.h"
-#include "isxCellSetSeries.h"
+#include "isxVesselSetFactory.h"
+#include "isxVesselSetSeries.h"
 #include "catch.hpp"
 #include "isxTest.h"
 #include <algorithm>
 #include <array>
 #include <cstring>
 
-TEST_CASE("CellSetSeries", "[core-internal]")
+TEST_CASE("VesselSetSeries", "[core-internal]")
 {
     std::array<const char *, 3> names = 
     { {
-        "seriesCellSet0.isxd",
-        "seriesCellSet1.isxd",
-        "seriesCellSet2.isxd"
+        "seriesVesselSet0.isxd",
+        "seriesVesselSet1.isxd",
+        "seriesVesselSet2.isxd"
     } };
     std::vector<std::string> filenames;
 
@@ -34,65 +34,65 @@ TEST_CASE("CellSetSeries", "[core-internal]")
     isx::PointInMicrons_t topLeft(0, 0);
     isx::SpacingInfo spacingInfo(sizePixels, pixelSize, topLeft);
 
-    isx::SpImage_t cellImage = std::make_shared<isx::Image>(spacingInfo, spacingInfo.getNumColumns()*sizeof(float), 1, isx::DataType::F32);
-    float* v = cellImage->getPixelsAsF32();
-    float cellImageData[] = {       
+    isx::SpImage_t vesselImage = std::make_shared<isx::Image>(spacingInfo, spacingInfo.getNumColumns()*sizeof(float), 1, isx::DataType::F32);
+    float* v = vesselImage->getPixelsAsF32();
+    float vesselImageData[] = {       
         1.f, 0.f, 1.f, 
         0.f, 0.f, 0.f, 
         0.f, 0.f, 0.f, 
         1.f, 0.f, 1.f};
 
-    std::memcpy((char *)v, (char *)cellImageData, spacingInfo.getTotalNumPixels()*sizeof(float));
-
+    std::memcpy((char *)v, (char *)vesselImageData, spacingInfo.getTotalNumPixels()*sizeof(float));
+    
     isx::CoreInitialize();
-
+    
     SECTION("Empty constructor")
     {
-        auto cs = std::make_shared<isx::CellSetSeries>();
-        REQUIRE(!cs->isValid());
+        auto vs = std::make_shared<isx::VesselSetSeries>();
+        REQUIRE(!vs->isValid());
     }
 
-    SECTION("Compatible set of cellsets")
+    SECTION("Compatible set of vesselsets")
     {        
-        // Write simple cell sets
+        // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], timingInfos[i], spacingInfo);
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo);
             cs->closeForWriting();
         }
 
-        isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
+        isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
 
         isx::TimingInfo expectedTimingInfo(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 12);
         REQUIRE(css->isValid());
         REQUIRE(css->getSpacingInfo() == spacingInfo);
         REQUIRE(css->getTimingInfo() == expectedTimingInfo);
-        REQUIRE(css->getNumCells() == 0);
+        REQUIRE(css->getNumVessels() == 0);
     }
 
-    SECTION("Compatible set of cellsets - not sequential in time ")
+    SECTION("Compatible set of vesselsets - not sequential in time ")
     {
         std::vector<isx::TimingInfo> tis(timingInfos.begin(), timingInfos.end());
         std::swap(tis[1], tis[2]);
 
-        // Write simple cell sets
+        // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], tis[i], spacingInfo);
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], tis[i], spacingInfo);
             cs->closeForWriting();
         }
 
-        isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
+        isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
 
         isx::TimingInfo expectedTimingInfo(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 12);
         REQUIRE(css->isValid());
         REQUIRE(css->getSpacingInfo() == spacingInfo);
         REQUIRE(css->getTimingInfo() == expectedTimingInfo);
-        REQUIRE(css->getNumCells() == 0);
+        REQUIRE(css->getNumVessels() == 0);
 
     }
 
-    SECTION("Non-compatible set of cellsets - spacing info")
+    SECTION("Non-compatible set of vesselsets - spacing info")
     {
         isx::SizeInPixels_t incompatibleSizePixels(3, 4);
         std::array<isx::SpacingInfo, 3> spacingInfos =
@@ -102,25 +102,25 @@ TEST_CASE("CellSetSeries", "[core-internal]")
             spacingInfo
         } };
 
-        // Write simple cell sets
+        // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], timingInfos[i], spacingInfos[i]);
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfos[i]);
             cs->closeForWriting();
         }
 
         ISX_REQUIRE_EXCEPTION(
-            isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
+            isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames),
             isx::ExceptionSeries,
             "The new data set has different spacing information than the rest of the series. Spacing information must be equal among series' components.");
     }
 
-    SECTION("Non-compatible set of cellsets - number of cells")
+    SECTION("Non-compatible set of vesselsets - number of vessels")
     {
-        // Write simple cell sets
+        // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], timingInfos[i], spacingInfo); 
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo); 
 
             if( i == 2)
             {
@@ -128,36 +128,36 @@ TEST_CASE("CellSetSeries", "[core-internal]")
                 float * values = trace->getValues();
                 std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
                 trace->setValue(i, float(i));                
-                cs->writeImageAndTrace(0, cellImage, trace);
+                cs->writeImageAndTrace(0, vesselImage, trace);
             }           
             cs->closeForWriting();
         }
 
         ISX_REQUIRE_EXCEPTION(
-            isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
+            isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames),
             isx::ExceptionSeries,
-            "CellSet series member with mismatching number of cells.");
+            "VesselSet series member with mismatching number of vessels.");
     }
 
-    SECTION("Non-compatible set of cellsets - non-overlapping time windows")
+    SECTION("Non-compatible set of vesselsets - non-overlapping time windows")
     {
         std::vector<isx::TimingInfo> tis(timingInfos.begin(), timingInfos.end());
         tis[1] = tis[2];
 
-        // Write simple cell sets
+        // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], tis[i], spacingInfo);            
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], tis[i], spacingInfo);            
             cs->closeForWriting();
         }
 
         ISX_REQUIRE_EXCEPTION(
-            isx::SpCellSet_t css = isx::readCellSetSeries(filenames),
+            isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames),
             isx::ExceptionSeries,
             "Unable to insert data that temporally overlaps with other parts of the series. Data sets in a series must all be non-overlapping.");
     }
 
-    SECTION("Compatible set of cellsets with different framerates")
+    SECTION("Compatible set of vesselsets with different framerates")
     {
         std::array<isx::TimingInfo, 3> tis =
         { {
@@ -166,36 +166,36 @@ TEST_CASE("CellSetSeries", "[core-internal]")
             { isx::Time(2222, 4, 1, 3, 2, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 40), 5 }
         } };
 
-        // Write simple cell sets
+        // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], tis[i], spacingInfo);            
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], tis[i], spacingInfo);            
             cs->closeForWriting();
         }
 
-        const isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
+        const isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
         const isx::TimingInfo expectedTi(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 12);
         REQUIRE(css->isValid());
         REQUIRE(css->getSpacingInfo() == spacingInfo);
         REQUIRE(css->getTimingInfo() == expectedTi);
-        REQUIRE(css->getNumCells() == 0);
+        REQUIRE(css->getNumVessels() == 0);
     }
 
     SECTION("Get image")
     {
-        // Write simple cell sets
+        // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], timingInfos[i], spacingInfo);
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo);
             isx::SpFTrace_t trace = std::make_shared<isx::Trace<float>>(timingInfos[i]);
             float * values = trace->getValues();
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
             trace->setValue(i, float(i));                
-            cs->writeImageAndTrace(0, cellImage, trace);
+            cs->writeImageAndTrace(0, vesselImage, trace);
             cs->closeForWriting();
         }
 
-        isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
+        isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
 
         isx::SpImage_t seriesImage = css->getImage(0);
         float * imVals = seriesImage->getPixelsAsF32();
@@ -212,20 +212,20 @@ TEST_CASE("CellSetSeries", "[core-internal]")
     {
         isx::isize_t totalNumSamples = 0;
 
-        // Write simple cell sets
+        // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpCellSet_t cs = isx::writeCellSet(filenames[i], timingInfos[i], spacingInfo);
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo);
             isx::SpFTrace_t trace = std::make_shared<isx::Trace<float>>(timingInfos[i]);
             float * values = trace->getValues();
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
             totalNumSamples += timingInfos[i].getNumTimes();
             trace->setValue(i, float(i));                
-            cs->writeImageAndTrace(0, cellImage, trace);
+            cs->writeImageAndTrace(0, vesselImage, trace);
             cs->closeForWriting();
         }
 
-        isx::SpCellSet_t css = isx::readCellSetSeries(filenames);
+        isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
 
         isx::SpFTrace_t trace = css->getTrace(0);
 

@@ -91,13 +91,13 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
         REQUIRE(file.numberOfVessels() == 0);        
 
         // Write to file
-        /// Cell trace with default name
+        /// Vessel trace with default name
         file.writeVesselData(0, originalImage, originalTrace);
         REQUIRE(file.numberOfVessels() == 1);
         REQUIRE(file.getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
         REQUIRE(file.getVesselName(0).compare("") == 0);
 
-        /// Cell trace with given name
+        /// Vessel trace with given name
         file.writeVesselData(1, originalImage, originalTrace, "testName");
         REQUIRE(file.numberOfVessels() == 2);
         REQUIRE(file.getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
@@ -246,7 +246,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
             "Writing data after file was closed for writing." + fileName);
     }
 
-    SECTION("Modify cell validity after calling closeForWriting")
+    SECTION("Modify vessel validity after calling closeForWriting")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo);
         file.writeVesselData(0, originalImage, originalTrace);
@@ -258,7 +258,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
             "Writing data after file was closed for writing." + fileName);
     }
 
-    SECTION("Modify cell name after calling closeForWriting")
+    SECTION("Modify vessel name after calling closeForWriting")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo);
         file.writeVesselData(0, originalImage, originalTrace);
@@ -269,7 +269,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
             "Writing data after file was closed for writing." + fileName);
     }
 
-    SECTION("Check default names for 1 cell")
+    SECTION("Check default names for 1 vessel")
     {
         writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, originalTrace, 1);
 
@@ -277,37 +277,37 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
         REQUIRE(file.getVesselName(0) == "V0");
     }
 
-    SECTION("Check default names for 9 cells")
+    SECTION("Check default names for 9 vessels")
     {
-        const size_t numCells = 9;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numCells);
+        const size_t numVessels = 9;
+        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numVessels);
 
         isx::VesselSetFile file(fileName);
-        for (size_t i = 0; i < numCells; ++i)
+        for (size_t i = 0; i < numVessels; ++i)
         {
             REQUIRE(file.getVesselName(i) == "V" + std::to_string(i));
         }
     }
 
-    SECTION("Check default names for 10 cells")
+    SECTION("Check default names for 10 vessels")
     {
-        const size_t numCells = 10;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numCells);
+        const size_t numVessels = 10;
+        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numVessels);
 
         isx::VesselSetFile file(fileName);
-        for (size_t i = 0; i < numCells; ++i)
+        for (size_t i = 0; i < numVessels; ++i)
         {
             REQUIRE(file.getVesselName(i) == "V" + std::to_string(i));
         }
     }
 
-    SECTION("Check default names for 11 cells")
+    SECTION("Check default names for 11 vessels")
     {
-        const size_t numCells = 11;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numCells);
+        const size_t numVessels = 11;
+        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numVessels);
 
         isx::VesselSetFile file(fileName);
-        for (size_t i = 0; i < numCells; ++i)
+        for (size_t i = 0; i < numVessels; ++i)
         {
             if (i < 10)
             {
@@ -320,13 +320,13 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
         }
     }
 
-    SECTION("Check default names for 100 cells")
+    SECTION("Check default names for 100 vessels")
     {
-        const size_t numCells = 100;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numCells);
+        const size_t numVessels = 100;
+        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numVessels);
 
         isx::VesselSetFile file(fileName);
-        for (size_t i = 0; i < numCells; ++i)
+        for (size_t i = 0; i < numVessels; ++i)
         {
             if (i < 10)
             {
@@ -339,13 +339,13 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
         }
     }
 
-    SECTION("Check default names for 101 cells")
+    SECTION("Check default names for 101 vessels")
     {
-        const size_t numCells = 101;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numCells);
+        const size_t numVessels = 101;
+        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, originalTrace, numVessels);
 
         isx::VesselSetFile file(fileName);
-        for (size_t i = 0; i < numCells; ++i)
+        for (size_t i = 0; i < numVessels; ++i)
         {
             if (i < 10)
             {
