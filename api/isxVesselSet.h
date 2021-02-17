@@ -303,24 +303,24 @@ void
 setCentroidDistances(const std::vector<double> & inCentroidDistances) = 0;
 
 
-/// \return true if the vessel set contains image metrics
-///
-virtual
-bool
-hasMetrics() const = 0;
-
-/// Get all the quality assessment metrics for a given vessel image
-/// \param inIndex the vessel index
-virtual
-SpImageMetrics_t
-getImageMetrics(isize_t inIndex) const = 0;
-
-/// Set the quality assessment metrics for a vessel image
-/// \param inIndex the vessel index
-/// \param inMetrics the metrics structure
-virtual
-void
-setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics) = 0;
+///// \return true if the vessel set contains image metrics
+/////
+//virtual
+//bool
+//hasMetrics() const = 0;
+//
+///// Get all the quality assessment metrics for a given vessel image
+///// \param inIndex the vessel index
+//virtual
+//SpImageMetrics_t
+//getImageMetrics(isize_t inIndex) const = 0;
+//
+///// Set the quality assessment metrics for a vessel image
+///// \param inIndex the vessel index
+///// \param inMetrics the metrics structure
+//virtual
+//void
+//setImageMetrics(isize_t inIndex, const SpImageMetrics_t & inMetrics) = 0;
 
 /// \return     The extra properties of this which might include things
 ///             from nVista 3. The string is in JSON format.
