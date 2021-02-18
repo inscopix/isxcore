@@ -8,6 +8,7 @@
 #include "isxGpio.h"
 #include "isxCellSet.h"
 #include "isxEvents.h"
+#include "isxVesselSet.h"
 
 #include <cmath>
 
@@ -126,6 +127,32 @@ checkNewMemberOfSeries(
         if (e->getNumCells() != newNumCells)
         {
             outMessage = "CellSet series member with mismatching number of cells.";
+            return false;
+        }
+
+        if (!checkSeriesSpacingInfo(e->getSpacingInfo(), newSi, outMessage) ||
+            !checkSeriesTimingInfo(e->getTimingInfo(), newTi, outMessage))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool
+checkNewMemberOfSeries(
+        const std::vector<SpVesselSet_t> & inExisting,
+        const SpVesselSet_t & inNew,
+        std::string & outMessage)
+{
+    const isize_t newNumVessels = inNew->getNumVessels();
+    const SpacingInfo & newSi = inNew->getSpacingInfo();
+    const TimingInfo & newTi = inNew->getTimingInfo();
+    for (const auto & e : inExisting)
+    {
+        if (e->getNumVessels() != newNumVessels)
+        {
+            outMessage = "VesselSet series member with mismatching number of vessels.";
             return false;
         }
 

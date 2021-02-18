@@ -40,7 +40,8 @@ public:
 		IMAGE,
         EVENTS,
         METRICS,
-        IMU
+        IMU,
+        VESSELSET
     };
 
     // Property names as used in the property map

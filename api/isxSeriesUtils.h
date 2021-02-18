@@ -82,6 +82,15 @@ bool checkNewMemberOfSeries(
         const SpCellSet_t & inNew,
         std::string & outMessage);
 
+/// \param  inExisting  The existing vesselsets in the series sorted by time.
+/// \param  inNew       The new vesselset to add to the series.
+/// \param  outMessage  The reason why the new vesselset cannot be added to the series.
+/// \return             True if the new vesselset can be added to the series, false otherwise.
+bool checkNewMemberOfSeries(
+    const std::vector<SpVesselSet_t> & inExisting,
+    const SpVesselSet_t & inNew,
+    std::string & outMessage);
+
 /// \param  inExisting  The existing gpios in the series sorted by time.
 /// \param  inNew       The new gpio to add to the series.
 /// \param  outMessage  The reason why the new gpio cannot be added to the series.
