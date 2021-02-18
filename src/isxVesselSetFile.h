@@ -156,14 +156,6 @@ public:
     /// \param inActive whether the vessel is active or not
     void setVesselActive(isize_t inVesselId, bool inActive);
 
-    /// get size of global vessel set
-    /// \return  size of global vessel set
-    isize_t getSizeGlobalVS();
-
-    /// set size of global vessel set
-    /// \param inSizeGlobalVS size of global vessel set
-    void setSizeGlobalVS(const isize_t inSizeGlobalVS);
-
     /// get the efocus values
     /// \return  efocus values
     std::vector<uint16_t> getEfocusValues();

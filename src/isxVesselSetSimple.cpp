@@ -265,18 +265,6 @@ VesselSetSimple::cancelPendingReads()
     m_traceIoTaskTracker->cancelPendingTasks();
 }
 
-isize_t
-VesselSetSimple::getSizeGlobalVS()
-{
-    return m_file->getSizeGlobalVS();
-}
-
-void
-VesselSetSimple::setSizeGlobalVS(const isize_t inSizeGlobalVS)
-{
-    m_file->setSizeGlobalVS(inSizeGlobalVS);
-}
-
 std::vector<uint16_t>
 VesselSetSimple::getEfocusValues ()
 {

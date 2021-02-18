@@ -116,12 +116,6 @@ public:
     void
     cancelPendingReads() override;
 
-    isize_t
-    getSizeGlobalVS() override;
-
-    void
-    setSizeGlobalVS(const isize_t inSizeGlobalVS) override;
-
     std::vector<uint16_t>
     getEfocusValues() override;
 

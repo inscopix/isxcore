@@ -315,22 +315,6 @@ namespace isx
         }
     }
 
-    isize_t
-    VesselSetSeries::getSizeGlobalVS()
-    {
-        ISX_ASSERT(false);
-        // placeholder
-        isize_t retVal = 0;
-        return retVal;
-    }
-
-    void
-    VesselSetSeries::setSizeGlobalVS(const isize_t inSizeGlobalVS)
-    {
-        ISX_ASSERT(false);
-        // placeholder
-    }
-
     std::vector<uint16_t>
     VesselSetSeries::getEfocusValues ()
     {

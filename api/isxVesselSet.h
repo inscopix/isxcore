@@ -236,18 +236,6 @@ virtual
 void
 cancelPendingReads() = 0;
 
-/// get size of global vessel set
-/// \return  size of global vessel set
-virtual
-isize_t
-getSizeGlobalVS() = 0;
-
-/// set size of global vessel set
-/// \param inSizeGlobalVS size of global vessel set
-virtual
-void
-setSizeGlobalVS(const isize_t inSizeGlobalVS) = 0;
-
 /// get the efocus values
 /// \return  efocus values
 virtual

@@ -347,18 +347,6 @@ namespace isx
         m_vesselActivity.at(inVesselId) = inActive;
     }
 
-    isize_t
-    VesselSetFile::getSizeGlobalVS()
-    {
-        return m_sizeGlobalVS;
-    }
-
-    void
-    VesselSetFile::setSizeGlobalVS(const isize_t inSizeGlobalVS)
-    {
-        m_sizeGlobalVS = inSizeGlobalVS;
-    }
-
     std::vector<uint16_t>
     VesselSetFile::getEfocusValues ()
     {
