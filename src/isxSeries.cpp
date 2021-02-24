@@ -9,6 +9,7 @@
 #include "isxSeriesIdentifier.h"
 #include "isxSeriesUtils.h"
 #include "isxCellSetFactory.h"
+#include "isxVesselSetFactory.h"
 #include "isxGpio.h"
 #include "isxEvents.h"
 #include "isxProject.h"
@@ -602,6 +603,20 @@ Series::checkNewMember(DataSet * inDataSet, std::string & outMessage)
             }
             const SpCellSet_t newCellSet = readCellSet(inDataSet->getFileName());
             if (!checkNewMemberOfSeries(existingCellSets, newCellSet, outMessage))
+            {
+                return false;
+            }
+            break;
+        }
+        case DataSet::Type::VESSELSET:
+        {
+            std::vector<SpVesselSet_t> existingVesselSets;
+            for (const auto & ds : getDataSets())
+            {
+                existingVesselSets.push_back(readVesselSet(ds->getFileName()));
+            }
+            const SpVesselSet_t newVesselSet = readVesselSet(inDataSet->getFileName());
+            if (!checkNewMemberOfSeries(existingVesselSets, newVesselSet, outMessage))
             {
                 return false;
             }
