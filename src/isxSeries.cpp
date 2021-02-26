@@ -360,9 +360,23 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
                         return false;
                     }
                 }
+                else if (childType == DataSet::Type::VESSELSET)
+                {
+                    if (!checkSeriesHasSameNumPixels(inSeries))
+                    {
+                        outErrorMessage = "A movie can only derive vesselsets with the same number of pixels.";
+                        return false;
+                    }
+
+                    if (!checkSeriesIsTemporallyContained(inSeries))
+                    {
+                        outErrorMessage = "A movie can only derive vesselsets that are within its time span.";
+                        return false;
+                    }
+                }
                 else
                 {
-                    outErrorMessage = "A movie can only derive movies, images and cellsets.";
+                    outErrorMessage = "A movie can only derive movies, images, cellsets, and vesselsets.";
                     return false;
                 }
                 break;
