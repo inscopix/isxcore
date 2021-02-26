@@ -420,6 +420,7 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
             case DataSet::Type::GPIO:
             case DataSet::Type::IMU:
             case DataSet::Type::EVENTS:
+            case DataSet::Type::VESSELSET:
             default:
             {
                 if (!isASuitableParent(outErrorMessage))
