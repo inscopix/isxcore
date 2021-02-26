@@ -4,6 +4,7 @@
 #include "isxJsonUtils.h"
 #include "isxMovieFactory.h"
 #include "isxCellSetFactory.h"
+#include "isxVesselSetFactory.h"
 #include "isxPathUtils.h"
 #include "isxNVistaHdf5Movie.h"
 #include "isxReportUtils.h"
@@ -385,7 +386,7 @@ DataSet::getMetadata()
 
     // Spacing Info
     if (m_type == DataSet::Type::MOVIE || m_type == DataSet::Type::BEHAVIOR
-            || m_type == DataSet::Type::IMAGE || m_type == DataSet::Type::CELLSET)
+            || m_type == DataSet::Type::IMAGE || m_type == DataSet::Type::CELLSET || m_type == DataSet::Type::VESSELSET)
     {
         ss << m_spacingInfo.getNumPixels();
         metadata.push_back(std::pair<std::string, std::string>("Number of Pixels", ss.str()));
@@ -511,6 +512,8 @@ DataSet::getTypeString(Type inType)
         return std::string("Movie");
     case Type::CELLSET:
         return std::string("Cell Set");
+    case Type::VESSELSET:
+        return std::string("Vessel Set");
     case Type::BEHAVIOR:
         return std::string("Behavioral Movie");
     case Type::GPIO:
@@ -625,6 +628,15 @@ DataSet::readMetaData()
         m_spacingInfo = cellSet->getSpacingInfo();
         m_dataType = isx::DataType::F32;
         m_extraProps = cellSet->getExtraProperties();
+        m_hasMetaData = true;
+    }
+    else if (m_type == Type::VESSELSET)
+    {
+        const SpVesselSet_t vesselSet = readVesselSet(m_fileName);
+        m_timingInfo = vesselSet->getTimingInfo();
+        m_spacingInfo = vesselSet->getSpacingInfo();
+        m_dataType = isx::DataType::F32;
+        m_extraProps = vesselSet->getExtraProperties();
         m_hasMetaData = true;
     }
     else if (m_type == Type::BEHAVIOR)
