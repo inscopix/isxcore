@@ -152,17 +152,18 @@ VesselSetSimple::getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback
             SpImage_t im;
             if (sharedThis)
             {
-                im = m_file->readSegmentationImage(inIndex);
+//                im = m_file->readSegmentationImage(inIndex);
+                im = m_file->readProjectionImage();
             }
             return im;
         };
     m_imageIoTaskTracker->schedule(getImageCB, inCallback);
 }
-
 void
-VesselSetSimple::writeImageAndTrace(
+VesselSetSimple::writeImageAndLineAndTrace(
         isize_t inIndex,
-        const SpImage_t & inImage,
+        const SpImage_t & inProjectionImage,
+        const std::pair<PointInPixels_t, PointInPixels_t> & inLineEndpoints,
         SpFTrace_t & inTrace,
         const std::string & inName)
 {
@@ -170,11 +171,11 @@ VesselSetSimple::writeImageAndTrace(
     std::shared_ptr<VesselSetFile> file = m_file;
     Mutex mutex;
     ConditionVariable cv;
-    mutex.lock("VesselSetSimple::writeImageAndTrace");
+    mutex.lock("VesselSetSimple::writeImageAndLineAndTrace");
     auto writeIoTask = std::make_shared<IoTask>(
-        [file, inIndex, inImage, inTrace, inName]()
+        [file, inIndex, inProjectionImage, inLineEndpoints, inTrace, inName]()
         {
-            file->writeVesselData(inIndex, *inImage, *inTrace, inName);
+            file->writeVesselData(inIndex, *inProjectionImage, inLineEndpoints, *inTrace, inName);
         },
         [&cv, &mutex](AsyncTaskStatus inStatus)
         {
@@ -183,7 +184,7 @@ VesselSetSimple::writeImageAndTrace(
                 ISX_LOG_ERROR("An error occurred while writing image and trace data to a VesselSet.");
             }
             // will only be able to take lock when client reaches cv.wait
-            mutex.lock("VesselSetwriteImageAndTrace finished");
+            mutex.lock("VesselSetwriteImageAndLineAndTrace finished");
             mutex.unlock();
             cv.notifyOne();
         });

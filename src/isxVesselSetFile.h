@@ -88,21 +88,38 @@ public:
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or reading fails.
     SpFTrace_t readTrace(isize_t inVesselId);
 
-    /// \return a shared pointer to the segmentation image for the input vessel
-    /// \param inVesselId the vessel of interest
+//    /// \return a shared pointer to the segmentation image for the input vessel
+//    /// \param inVesselId the vessel of interest
+//    /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or reading fails.
+//    SpImage_t readSegmentationImage(isize_t inVesselId);
+
+    /// \return a shared pointer to the projection image for the input vessel
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or reading fails.
-    SpImage_t readSegmentationImage(isize_t inVesselId);
+    SpImage_t readProjectionImage();
+
+//    /// Write vessel data
+//    /// \param inVesselId the vessel of interest
+//    /// \param inSegmentationImage the image to write
+//    /// \param inData the trace to write
+//    /// \param inName the vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the vessel id
+//    /// If vessel ID already exists, it will overwrite its data. Otherwise, it will be appended
+//    /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
+//    /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
+//    /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+//    void writeVesselData(isize_t inVesselId, const Image & inSegmentationImage, Trace<float> & inData, const std::string & inName = std::string());
 
     /// Write vessel data
     /// \param inVesselId the vessel of interest
-    /// \param inSegmentationImage the image to write
+    /// \param inProjectionImage the projection image to write
+    /// \param inLineEndpoints the endpoints of the line to write
     /// \param inData the trace to write
     /// \param inName the vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the vessel id
     /// If vessel ID already exists, it will overwrite its data. Otherwise, it will be appended
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
     /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
-    void writeVesselData(isize_t inVesselId, const Image & inSegmentationImage, Trace<float> & inData, const std::string & inName = std::string());
+    void writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const std::pair<PointInPixels_t, PointInPixels_t> & inLineEndpoints,
+                         Trace<float> & inData, const std::string & inName = std::string());
 
     /// \return the status of the vessel
     /// \param inVesselId the vessel of interest
@@ -236,14 +253,36 @@ private:
     /// \throw  isx::ExceptionDataIO    If formatting the vessel set data fails.
     void writeHeader();
 
-    /// Seek to a specific vessel in the file
+//    /// Seek to a specific vessel in the file
+//    /// \param inVesselId the vessel ID
+//    /// \throw  isx::ExceptionFileIO    If seeking to a nonexistent vessel or reading fails.
+//    void seekToVessel(isize_t inVesselId);
+
+    /// Seek to a specific vessel in the file for a read operation
     /// \param inVesselId the vessel ID
     /// \throw  isx::ExceptionFileIO    If seeking to a nonexistent vessel or reading fails.
-    void seekToVessel(isize_t inVesselId);
+    void seekToVesselForRead(isize_t inVesselId);
+
+    /// Seek to a specific vessel in the file for a write operation
+    /// \param inVesselId the vessel ID
+    /// \throw  isx::ExceptionFileIO    If seeking to a nonexistent vessel or reading fails.
+    void seekToVesselForWrite(isize_t inVesselId);
+
+    /// Seek to the projection image in the file for a read operation
+    /// \throw  isx::ExceptionFileIO    If reading fails.
+    void seekToProjectionImageForRead();
 
     /// \return the size of the segmentation image in bytes (in the vessel header)
     ///
     isize_t segmentationImageSizeInBytes();
+
+    /// \return the size of the projection image in bytes
+    ///
+    isize_t projectionImageSizeInBytes();
+
+    /// \return the size of the line endpoints in bytes
+    ///
+    isize_t lineEndpointsSizeInBytes();
 
     /// \return the size of the trace in bytes (in the vessel header)
     ///

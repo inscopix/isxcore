@@ -126,7 +126,30 @@ virtual
 void
 getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback) = 0;
 
-/// Write the image and trace data for a vessel.
+///// Write the image and trace data for a vessel.
+/////
+///// If the vessel already exists, it will overwrite its data.
+///// Otherwise, it will be appended.
+/////
+///// This write is performed on the IoQueue, but this function waits
+///// until it is complete.
+/////
+///// \param  inIndex     The index of the vessel.
+///// \param  inImage     The vessel image data to write.
+///// \param  inTrace     The vessel trace data to write.
+///// \param  inName      The vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the given index
+///// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
+///// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
+///// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+//virtual
+//void
+//writeImageAndTrace(
+//        isize_t inIndex,
+//        const SpImage_t & inImage,
+//        SpFTrace_t & inTrace,
+//        const std::string & inName = std::string()) = 0;
+
+/// Write the projection image, line endpoints, and trace data for a vessel.
 ///
 /// If the vessel already exists, it will overwrite its data.
 /// Otherwise, it will be appended.
@@ -134,8 +157,9 @@ getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback) = 0;
 /// This write is performed on the IoQueue, but this function waits
 /// until it is complete.
 ///
-/// \param  inIndex     The index of the vessel.
-/// \param  inImage     The vessel image data to write.
+/// \param  inIndex             The index of the vessel.
+/// \param  inProjectionImage   The projection image data to write.
+/// \param  inLineEndpoints     The vessel line endpoints to write.
 /// \param  inTrace     The vessel trace data to write.
 /// \param  inName      The vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the given index
 /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
@@ -143,11 +167,12 @@ getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback) = 0;
 /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
 virtual
 void
-writeImageAndTrace(
-        isize_t inIndex,
-        const SpImage_t & inImage,
-        SpFTrace_t & inTrace,
-        const std::string & inName = std::string()) = 0;
+writeImageAndLineAndTrace(
+    isize_t inIndex,
+    const SpImage_t & inProjectionImage,
+    const std::pair<PointInPixels_t, PointInPixels_t> & inLineEndpoints,
+    SpFTrace_t & inTrace,
+    const std::string & inName= std::string()) = 0;
 
 /// \return             The current status of the vessel
 /// \param  inIndex     The index of the vessel.

@@ -301,19 +301,19 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
         isx::CellSetFile file(fileName, timingInfo, spacingInfo);
         file.writeCellData(0, originalImage, originalTrace);
         file.closeForWriting();
-        
+
         ISX_REQUIRE_EXCEPTION(
             file.writeCellData(0, originalImage, originalTrace),
             isx::ExceptionFileIO,
             "Writing data after file was closed for writing." + fileName);
     }
-    
+
     SECTION("Modify cell validity after calling closeForWriting")
     {
         isx::CellSetFile file(fileName, timingInfo, spacingInfo);
         file.writeCellData(0, originalImage, originalTrace);
         file.closeForWriting();
-        
+
         ISX_REQUIRE_EXCEPTION(
             file.setCellStatus(0, isx::CellSet::CellStatus::ACCEPTED),
             isx::ExceptionFileIO,
@@ -423,5 +423,4 @@ TEST_CASE("CellSetFileTest", "[core-internal]")
             }
         }
     }
-
 }

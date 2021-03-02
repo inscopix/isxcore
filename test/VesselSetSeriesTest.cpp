@@ -43,7 +43,11 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
         1.f, 0.f, 1.f};
 
     std::memcpy((char *)v, (char *)vesselImageData, spacingInfo.getTotalNumPixels()*sizeof(float));
-    
+
+    // line endpoints
+    const std::pair<isx::PointInPixels_t, isx::PointInPixels_t> lineEndpoints = std::make_pair(
+        isx::PointInPixels_t(0,0), isx::PointInPixels_t(1,1));
+
     isx::CoreInitialize();
     
     SECTION("Empty constructor")
@@ -128,7 +132,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
                 float * values = trace->getValues();
                 std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
                 trace->setValue(i, float(i));                
-                cs->writeImageAndTrace(0, vesselImage, trace);
+                cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace);
             }           
             cs->closeForWriting();
         }
@@ -190,8 +194,8 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
             isx::SpFTrace_t trace = std::make_shared<isx::Trace<float>>(timingInfos[i]);
             float * values = trace->getValues();
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
-            trace->setValue(i, float(i));                
-            cs->writeImageAndTrace(0, vesselImage, trace);
+            trace->setValue(i, float(i));
+            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace);
             cs->closeForWriting();
         }
 
@@ -220,8 +224,8 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
             float * values = trace->getValues();
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
             totalNumSamples += timingInfos[i].getNumTimes();
-            trace->setValue(i, float(i));                
-            cs->writeImageAndTrace(0, vesselImage, trace);
+            trace->setValue(i, float(i));
+            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace);
             cs->closeForWriting();
         }
 
