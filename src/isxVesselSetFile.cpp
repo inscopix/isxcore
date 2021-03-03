@@ -165,7 +165,7 @@ namespace isx
         return image;
     }
 
-    std::pair<PointInPixels_t, PointInPixels_t>
+    SpVesselLine_t
     VesselSetFile::readLineEndpoints(isize_t inVesselId)
     {
         seekToVesselForRead(inVesselId, false);
@@ -181,8 +181,9 @@ namespace isx
         m_file.read(reinterpret_cast<char*>(&x2), sizeof(int64_t));
         m_file.read(reinterpret_cast<char*>(&y2), sizeof(int64_t));
 
-        std::pair<isx::PointInPixels_t, isx::PointInPixels_t> lineEndpoints = std::make_pair(
-            isx::PointInPixels_t(x1, y1), isx::PointInPixels_t(x2, y2));
+        SpVesselLine_t lineEndpoints = std::make_shared<VesselLine>();
+        lineEndpoints->m_p1 = isx::PointInPixels_t(x1, y1);
+        lineEndpoints->m_p2 = isx::PointInPixels_t(x2, y2);
 
         if (!m_file.good())
         {
@@ -193,7 +194,7 @@ namespace isx
     }
 
     void
-    VesselSetFile::writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const std::pair<PointInPixels_t, PointInPixels_t> & inLineEndpoints,
+    VesselSetFile::writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const SpVesselLine_t & inLineEndpoints,
                                    Trace<float> & inData, const std::string & inName)
     {
         if (m_fileClosedForWriting)
@@ -250,10 +251,10 @@ namespace isx
         }
 
         // write line endpoints (x1, y1, x2, y2)
-        int64_t x1 = inLineEndpoints.first.getX();
-        int64_t y1 = inLineEndpoints.first.getY();
-        int64_t x2 = inLineEndpoints.second.getX();
-        int64_t y2 = inLineEndpoints.second.getY();
+        int64_t x1 = inLineEndpoints->m_p1.getX();
+        int64_t y1 = inLineEndpoints->m_p1.getY();
+        int64_t x2 = inLineEndpoints->m_p2.getX();
+        int64_t y2 = inLineEndpoints->m_p2.getY();
         m_file.write(reinterpret_cast<const char*>(&x1), sizeof(int64_t));
         m_file.write(reinterpret_cast<const char*>(&y1), sizeof(int64_t));
         m_file.write(reinterpret_cast<const char*>(&x2), sizeof(int64_t));

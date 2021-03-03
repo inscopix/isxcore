@@ -14,6 +14,18 @@
 
 namespace isx
 {
+/// A structure for holding the information relevant to a Vessel line, i.e. a line drawn across a blood vessel.
+struct VesselLine
+{
+    /// Default constructor
+    VesselLine() {}
+
+    PointInPixels_t m_p1 = PointInPixels_t(0, 0);  ///< The first endpoint of the vessel line
+    PointInPixels_t m_p2 = PointInPixels_t(0, 0);  ///< The first endpoint of the vessel line
+};
+
+using SpVesselLine_t = std::shared_ptr<VesselLine>;
+
 /// Interface for vessel sets
 ///
 class VesselSet
@@ -28,9 +40,9 @@ using GetImageCB_t = std::function<SpImage_t()>;
 /// The type of callback for getting a vessel image asynchronously
 using VesselSetGetImageCB_t = std::function<void(AsyncTaskResult<SpImage_t>)>;
 /// The type of callback for reading a vessel's line endpoints from disk
-using GetLineEndpointsCB_t = std::function<std::shared_ptr<std::pair<PointInPixels_t, PointInPixels_t>()>>;
+using GetLineEndpointsCB_t = std::function<SpVesselLine_t()>;
 /// The type of callback for getting a vessel line endpoints asynchronously
-using VesselSetGetLineEndpointsCB_t = std::function<void(AsyncTaskResult<std::pair<PointInPixels_t, PointInPixels_t>>)>;
+using VesselSetGetLineEndpointsCB_t = std::function<void(AsyncTaskResult<SpVesselLine_t>)>;
 
 /// The vessel statuses
 ///
@@ -139,7 +151,7 @@ getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback) = 0;
 /// \return             A shared pointer to the trace data of the indexed vessel.
 /// \throw  isx::ExceptionFileIO    If vessel does not exist or reading fails.
 virtual
-std::pair<PointInPixels_t, PointInPixels_t>
+SpVesselLine_t
 getLineEndpoints(isize_t inIndex) = 0;
 
 /// Get the line endpoints of a vessel asynchronously.
@@ -173,7 +185,7 @@ void
 writeImageAndLineAndTrace(
     isize_t inIndex,
     const SpImage_t & inProjectionImage,
-    const std::pair<PointInPixels_t, PointInPixels_t> & inLineEndpoints,
+    const SpVesselLine_t & inLineEndpoints,
     SpFTrace_t & inTrace,
     const std::string & inName= std::string()) = 0;
 

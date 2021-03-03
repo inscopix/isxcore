@@ -10,7 +10,7 @@ writeDefaultVessels(
         const isx::TimingInfo & inTimingInfo,
         const isx::SpacingInfo & inSpacingInfo,
         isx::Image & inImage,
-        const std::pair<isx::PointInPixels_t, isx::PointInPixels_t> & inLineEndpoints,
+        const isx::SpVesselLine_t & inLineEndpoints,
         isx::Trace<float> & inTrace,
         const size_t inNumVessels)
 {
@@ -58,8 +58,9 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     }
 
     // set line endpoints
-    const std::pair<isx::PointInPixels_t, isx::PointInPixels_t> lineEndpoints = std::make_pair(
-        isx::PointInPixels_t(0,1), isx::PointInPixels_t(2,3));
+    isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>();
+    lineEndpoints->m_p1 = isx::PointInPixels_t(0,0);
+    lineEndpoints->m_p2 = isx::PointInPixels_t(1,1);
 
     SECTION("Empty constructor")
     {
@@ -178,9 +179,9 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
         REQUIRE(file.numberOfVessels() == 1);
         file.closeForWriting();
 
-        std::pair<isx::PointInPixels_t, isx::PointInPixels_t> vesselLineEndpoints = file.readLineEndpoints(0);
-        REQUIRE(vesselLineEndpoints.first == lineEndpoints.first);
-        REQUIRE(vesselLineEndpoints.second == lineEndpoints.second);
+        isx::SpVesselLine_t vesselLineEndpoints = file.readLineEndpoints(0);
+        REQUIRE(vesselLineEndpoints->m_p1 == lineEndpoints->m_p1);
+        REQUIRE(vesselLineEndpoints->m_p2 == lineEndpoints->m_p2);
     }
 
     SECTION("Validate/Invalidate vessel")
@@ -250,9 +251,9 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
                 REQUIRE(pixels[i] == originalPixels[i]);
             }
 
-            std::pair<isx::PointInPixels_t, isx::PointInPixels_t> vesselLineEndpoints = file.readLineEndpoints(i);
-            REQUIRE(vesselLineEndpoints.first == lineEndpoints.first);
-            REQUIRE(vesselLineEndpoints.second == lineEndpoints.second);
+            isx::SpVesselLine_t vesselLineEndpoints = file.readLineEndpoints(i);
+            REQUIRE(vesselLineEndpoints->m_p1 == lineEndpoints->m_p1);
+            REQUIRE(vesselLineEndpoints->m_p2 == lineEndpoints->m_p2);
         }
     }
 

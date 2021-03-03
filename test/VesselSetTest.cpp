@@ -43,9 +43,9 @@ TEST_CASE("VesselSetTest", "[core]")
     }
 
     // line endpoints
-    const std::pair<isx::PointInPixels_t, isx::PointInPixels_t> lineEndpoints = std::make_pair(
-        isx::PointInPixels_t(0,0), isx::PointInPixels_t(1,1));
-
+    isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>();
+    lineEndpoints->m_p1 = isx::PointInPixels_t(0,0);
+    lineEndpoints->m_p2 = isx::PointInPixels_t(1,1);
 
     isx::CoreInitialize();
 
@@ -181,8 +181,7 @@ TEST_CASE("VesselSetTest", "[core]")
         {
             requireEqualImages(vesselSet->getImage(i), originalImage);
             requireEqualTraces(vesselSet->getTrace(i), originalTrace);
-            // TODO: the following line halts execution for some reason
-            // requireEqualLineEndpoints(vesselSet->getLineEndpoints(i), lineEndpoints);
+            requireEqualLineEndpoints(vesselSet->getLineEndpoints(i), lineEndpoints);
         }
     }
 
@@ -211,8 +210,7 @@ TEST_CASE("VesselSetTest", "[core]")
         {
             requireEqualImages(vesselSet->getImage(i), originalImage);
             requireEqualTraces(vesselSet->getTrace(i), originalTrace);
-            // TODO: the following line halts execution for some reason
-            // requireEqualLineEndpoints(vesselSet->getLineEndpoints(i), lineEndpoints);
+             requireEqualLineEndpoints(vesselSet->getLineEndpoints(i), lineEndpoints);
         }
     }
 

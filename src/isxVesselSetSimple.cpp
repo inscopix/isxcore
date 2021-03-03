@@ -15,6 +15,7 @@ VesselSetSimple::VesselSetSimple(const std::string & inFileName, bool enableWrit
     : m_valid(false)
     , m_traceIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_imageIoTaskTracker(new IoTaskTracker<Image>())
+    , m_lineEndpointsIoTaskTracker(new IoTaskTracker<VesselLine>())
 {
     m_file = std::make_shared<VesselSetFile>(inFileName, enableWrite);
     m_valid = true;
@@ -27,6 +28,7 @@ VesselSetSimple::VesselSetSimple(
     : m_valid(false)
     , m_traceIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_imageIoTaskTracker(new IoTaskTracker<Image>())
+    , m_lineEndpointsIoTaskTracker(new IoTaskTracker<VesselLine>())
 {
     m_file = std::make_shared<VesselSetFile>(inFileName, inTimingInfo, inSpacingInfo);
     m_valid = true;
@@ -159,15 +161,15 @@ VesselSetSimple::getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback
     m_imageIoTaskTracker->schedule(getImageCB, inCallback);
 }
 
-std::pair<PointInPixels_t, PointInPixels_t>
+SpVesselLine_t
 VesselSetSimple::getLineEndpoints(isize_t inIndex)
 {
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("getLineEndpoints");
-    AsyncTaskResult<std::pair<PointInPixels_t, PointInPixels_t>> asyncTaskResult;
+    AsyncTaskResult<SpVesselLine_t> asyncTaskResult;
     getLineEndpointsAsync(inIndex,
-      [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<std::pair<PointInPixels_t, PointInPixels_t>> inAsyncTaskResult)
+      [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVesselLine_t> inAsyncTaskResult)
       {
           mutex.lock("getLineEndpoints async");
           asyncTaskResult = inAsyncTaskResult;
@@ -184,26 +186,27 @@ VesselSetSimple::getLineEndpoints(isize_t inIndex)
 void
 VesselSetSimple::getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback)
 {
-//    // Only get a weak pointer to this, so that we don't bother reading
-//    // if this has been deleted when the read gets executed.
-//    std::weak_ptr<VesselSetSimple> weakThis = shared_from_this();
-//    GetLineEndpointsCB_t getLineEndpointsCB = [weakThis, this, inIndex]()
-//    {
-//        auto sharedThis = weakThis.lock();
-//        if (sharedThis)
-//        {
-//            return m_file->readLineEndpoints(inIndex);
-//        }
-//        return std::pair<PointInPixels_t, PointInPixels_t>();
-//    };
-//    m_lineEndpointsIoTaskTracker->schedule(getLineEndpointsCB, inCallback);
+    // Only get a weak pointer to this, so that we don't bother reading
+    // if this has been deleted when the read gets executed.
+    std::weak_ptr<VesselSetSimple> weakThis = shared_from_this();
+    GetLineEndpointsCB_t getLineEndpointsCB = [weakThis, this, inIndex]()
+    {
+        auto sharedThis = weakThis.lock();
+        SpVesselLine_t vl;
+        if (sharedThis)
+        {
+            vl = m_file->readLineEndpoints(inIndex);
+        }
+        return vl;
+    };
+    m_lineEndpointsIoTaskTracker->schedule(getLineEndpointsCB, inCallback);
 }
 
 void
 VesselSetSimple::writeImageAndLineAndTrace(
         isize_t inIndex,
         const SpImage_t & inProjectionImage,
-        const std::pair<PointInPixels_t, PointInPixels_t> & inLineEndpoints,
+        const SpVesselLine_t & inLineEndpoints,
         SpFTrace_t & inTrace,
         const std::string & inName)
 {
@@ -304,6 +307,7 @@ VesselSetSimple::cancelPendingReads()
 {
     m_imageIoTaskTracker->cancelPendingTasks();
     m_traceIoTaskTracker->cancelPendingTasks();
+    m_lineEndpointsIoTaskTracker->cancelPendingTasks();
 }
 
 std::vector<uint16_t>

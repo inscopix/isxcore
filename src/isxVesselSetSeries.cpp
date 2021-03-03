@@ -198,7 +198,7 @@ namespace isx
         return m_vesselSets[0]->getImageAsync(inIndex, inCallback);
     }
 
-    std::pair<PointInPixels_t, PointInPixels_t>
+    SpVesselLine_t
     VesselSetSeries::getLineEndpoints(isize_t inIndex)
     {
         return m_vesselSets[0]->getLineEndpoints(inIndex);
@@ -214,7 +214,7 @@ namespace isx
     VesselSetSeries::writeImageAndLineAndTrace(
         isize_t inIndex,
         const SpImage_t & inProjectionImage,
-        const std::pair<PointInPixels_t, PointInPixels_t> & inLineEndpoints,
+        const SpVesselLine_t & inLineEndpoints,
         SpFTrace_t & inTrace,
         const std::string & inName)
     {

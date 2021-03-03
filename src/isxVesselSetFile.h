@@ -94,7 +94,7 @@ public:
 
     /// \return the line endpoints for the input vessel
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or reading fails.
-    std::pair<PointInPixels_t, PointInPixels_t> readLineEndpoints(isize_t inVesselId);
+    SpVesselLine_t readLineEndpoints(isize_t inVesselId);
 
     /// Write vessel data
     /// \param inVesselId the vessel of interest
@@ -106,7 +106,7 @@ public:
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
     /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
-    void writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const std::pair<PointInPixels_t, PointInPixels_t> & inLineEndpoints,
+    void writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const SpVesselLine_t & inLineEndpoints,
                          Trace<float> & inData, const std::string & inName = std::string());
 
     /// \return the status of the vessel
