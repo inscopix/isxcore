@@ -21,7 +21,7 @@ struct VesselLine
     VesselLine() {}
 
     PointInPixels_t m_p1 = PointInPixels_t(0, 0);  ///< The first endpoint of the vessel line
-    PointInPixels_t m_p2 = PointInPixels_t(0, 0);  ///< The first endpoint of the vessel line
+    PointInPixels_t m_p2 = PointInPixels_t(0, 0);  ///< The second endpoint of the vessel line
 };
 
 using SpVesselLine_t = std::shared_ptr<VesselLine>;
