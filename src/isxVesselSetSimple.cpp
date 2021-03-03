@@ -152,13 +152,53 @@ VesselSetSimple::getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback
             SpImage_t im;
             if (sharedThis)
             {
-//                im = m_file->readSegmentationImage(inIndex);
                 im = m_file->readProjectionImage();
             }
             return im;
         };
     m_imageIoTaskTracker->schedule(getImageCB, inCallback);
 }
+
+std::pair<PointInPixels_t, PointInPixels_t>
+VesselSetSimple::getLineEndpoints(isize_t inIndex)
+{
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("getLineEndpoints");
+    AsyncTaskResult<std::pair<PointInPixels_t, PointInPixels_t>> asyncTaskResult;
+    getLineEndpointsAsync(inIndex,
+      [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<std::pair<PointInPixels_t, PointInPixels_t>> inAsyncTaskResult)
+      {
+          mutex.lock("getLineEndpoints async");
+          asyncTaskResult = inAsyncTaskResult;
+          mutex.unlock();
+          cv.notifyOne();
+      }
+    );
+    cv.wait(mutex);
+    mutex.unlock();
+
+    return asyncTaskResult.get();   // throws if asyncTaskResults contains an exception
+}
+
+void
+VesselSetSimple::getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback)
+{
+//    // Only get a weak pointer to this, so that we don't bother reading
+//    // if this has been deleted when the read gets executed.
+//    std::weak_ptr<VesselSetSimple> weakThis = shared_from_this();
+//    GetLineEndpointsCB_t getLineEndpointsCB = [weakThis, this, inIndex]()
+//    {
+//        auto sharedThis = weakThis.lock();
+//        if (sharedThis)
+//        {
+//            return m_file->readLineEndpoints(inIndex);
+//        }
+//        return std::pair<PointInPixels_t, PointInPixels_t>();
+//    };
+//    m_lineEndpointsIoTaskTracker->schedule(getLineEndpointsCB, inCallback);
+}
+
 void
 VesselSetSimple::writeImageAndLineAndTrace(
         isize_t inIndex,

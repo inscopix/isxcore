@@ -198,20 +198,17 @@ namespace isx
         return m_vesselSets[0]->getImageAsync(inIndex, inCallback);
     }
 
-//    void
-//    VesselSetSeries::writeImageAndTrace(
-//            isize_t inIndex,
-//            const SpImage_t & inImage,
-//            SpFTrace_t & inTrace,
-//            const std::string & inName)
-//    {
-//        // Don't do anything. Note: salpert 11/8/16 we need to decide
-//        // what operations to allow on a vessel set series (read/write)
-//        // and take appropriate actions to limit the API (maybe separate VesselSet
-//        // into VesselSet and WritableVesselSet like we did for movies?)
-//        // This class will probably require some re-factoring
-//        ISX_ASSERT(false);
-//    }
+    std::pair<PointInPixels_t, PointInPixels_t>
+    VesselSetSeries::getLineEndpoints(isize_t inIndex)
+    {
+        return m_vesselSets[0]->getLineEndpoints(inIndex);
+    }
+
+    void
+    VesselSetSeries::getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback)
+    {
+        return m_vesselSets[0]->getLineEndpointsAsync(inIndex, inCallback);
+    }
 
     void
     VesselSetSeries::writeImageAndLineAndTrace(

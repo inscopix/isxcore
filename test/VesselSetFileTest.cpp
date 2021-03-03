@@ -59,7 +59,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
 
     // set line endpoints
     const std::pair<isx::PointInPixels_t, isx::PointInPixels_t> lineEndpoints = std::make_pair(
-        isx::PointInPixels_t(0,0), isx::PointInPixels_t(1,1));
+        isx::PointInPixels_t(0,1), isx::PointInPixels_t(2,3));
 
     SECTION("Empty constructor")
     {
@@ -170,6 +170,19 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
         REQUIRE(valsAreEqual);
     }
 
+    SECTION("Read line endpoints")
+    {
+        isx::VesselSetFile file(fileName, timingInfo, spacingInfo);
+        REQUIRE(file.isValid());
+        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace);
+        REQUIRE(file.numberOfVessels() == 1);
+        file.closeForWriting();
+
+        std::pair<isx::PointInPixels_t, isx::PointInPixels_t> vesselLineEndpoints = file.readLineEndpoints(0);
+        REQUIRE(vesselLineEndpoints.first == lineEndpoints.first);
+        REQUIRE(vesselLineEndpoints.second == lineEndpoints.second);
+    }
+
     SECTION("Validate/Invalidate vessel")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo);
@@ -236,6 +249,10 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
             {
                 REQUIRE(pixels[i] == originalPixels[i]);
             }
+
+            std::pair<isx::PointInPixels_t, isx::PointInPixels_t> vesselLineEndpoints = file.readLineEndpoints(i);
+            REQUIRE(vesselLineEndpoints.first == lineEndpoints.first);
+            REQUIRE(vesselLineEndpoints.second == lineEndpoints.second);
         }
     }
 

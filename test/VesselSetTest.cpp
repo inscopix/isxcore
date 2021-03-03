@@ -181,6 +181,8 @@ TEST_CASE("VesselSetTest", "[core]")
         {
             requireEqualImages(vesselSet->getImage(i), originalImage);
             requireEqualTraces(vesselSet->getTrace(i), originalTrace);
+            // TODO: the following line halts execution for some reason
+            // requireEqualLineEndpoints(vesselSet->getLineEndpoints(i), lineEndpoints);
         }
     }
 
@@ -209,6 +211,8 @@ TEST_CASE("VesselSetTest", "[core]")
         {
             requireEqualImages(vesselSet->getImage(i), originalImage);
             requireEqualTraces(vesselSet->getTrace(i), originalTrace);
+            // TODO: the following line halts execution for some reason
+            // requireEqualLineEndpoints(vesselSet->getLineEndpoints(i), lineEndpoints);
         }
     }
 
@@ -282,6 +286,11 @@ TEST_CASE("VesselSetTest", "[core]")
             std::this_thread::sleep_for(d);
         }
         REQUIRE(doneCount == int(numVessels));
+    }
+
+    SECTION("Read line endpoints data for 3 vessels asynchronously")
+    {
+        // TO BE COMPLETED
     }
 
     isx::CoreShutdown();

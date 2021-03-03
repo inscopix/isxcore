@@ -94,6 +94,12 @@ public:
     void
     getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback) override;
 
+    std::pair<PointInPixels_t, PointInPixels_t>
+    getLineEndpoints(isize_t inIndex) override;
+
+    void
+    getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback) override;
+
     void
     writeImageAndLineAndTrace(
         isize_t inIndex,

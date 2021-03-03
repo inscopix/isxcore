@@ -75,12 +75,11 @@ public:
     void
     getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback) override;
 
-//    void
-//    writeImageAndTrace(
-//            isize_t inIndex,
-//            const SpImage_t & inImage,
-//            SpFTrace_t & inTrace,
-//            const std::string & inName = std::string()) override;
+    std::pair<PointInPixels_t, PointInPixels_t>
+    getLineEndpoints(isize_t inIndex) override;
+
+    void
+    getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback) override;
 
     void
     writeImageAndLineAndTrace(
