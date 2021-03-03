@@ -275,8 +275,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
 
         isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
         isx::SpVesselLine_t vesselLineEndpoints = css->getLineEndpoints(0);
-        REQUIRE(vesselLineEndpoints->m_p1 == lineEndpoints->m_p1);
-        REQUIRE(vesselLineEndpoints->m_p2 == lineEndpoints->m_p2);
+        requireEqualLineEndpoints(vesselLineEndpoints, lineEndpoints);
     }
 
     for (const auto & fn: filenames)

@@ -180,8 +180,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
         file.closeForWriting();
 
         isx::SpVesselLine_t vesselLineEndpoints = file.readLineEndpoints(0);
-        REQUIRE(vesselLineEndpoints->m_p1 == lineEndpoints->m_p1);
-        REQUIRE(vesselLineEndpoints->m_p2 == lineEndpoints->m_p2);
+        requireEqualLineEndpoints(vesselLineEndpoints, lineEndpoints);
     }
 
     SECTION("Validate/Invalidate vessel")
@@ -252,8 +251,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
             }
 
             isx::SpVesselLine_t vesselLineEndpoints = file.readLineEndpoints(i);
-            REQUIRE(vesselLineEndpoints->m_p1 == lineEndpoints->m_p1);
-            REQUIRE(vesselLineEndpoints->m_p2 == lineEndpoints->m_p2);
+            requireEqualLineEndpoints(vesselLineEndpoints, lineEndpoints);
         }
     }
 

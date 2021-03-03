@@ -288,7 +288,38 @@ TEST_CASE("VesselSetTest", "[core]")
 
     SECTION("Read line endpoints data for 3 vessels asynchronously")
     {
-        // TO BE COMPLETED
+        std::atomic_int doneCount(0);
+        size_t numVessels = 3;
+
+        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(
+            fileName, timingInfo, spacingInfo);
+        for (size_t i = 0; i < 3; ++i)
+        {
+            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
+        }
+        vesselSet->closeForWriting();
+
+        isx::VesselSet::VesselSetGetLineEndpointsCB_t callBack = [lineEndpoints, &doneCount](isx::AsyncTaskResult<isx::SpVesselLine_t> inAsyncTaskResult)
+        {
+            REQUIRE(!inAsyncTaskResult.getException());
+            requireEqualLineEndpoints(inAsyncTaskResult.get(), lineEndpoints);
+            ++doneCount;
+        };
+        for (size_t i = 0; i < 3; ++i)
+        {
+            vesselSet->getLineEndpointsAsync(i, callBack);
+        }
+
+        for (int i = 0; i < 250; ++i)
+        {
+            if (doneCount == int(numVessels))
+            {
+                break;
+            }
+            std::chrono::milliseconds d(2);
+            std::this_thread::sleep_for(d);
+        }
+        REQUIRE(doneCount == int(numVessels));
     }
 
     isx::CoreShutdown();
