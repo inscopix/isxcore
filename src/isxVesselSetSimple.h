@@ -94,12 +94,19 @@ public:
     void
     getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback) override;
 
+    SpVesselLine_t
+    getLineEndpoints(isize_t inIndex) override;
+
     void
-    writeImageAndTrace(
-            isize_t inIndex,
-            const SpImage_t & inImage,
-            SpFTrace_t & inTrace,
-            const std::string & inName = std::string()) override;
+    getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback) override;
+
+    void
+    writeImageAndLineAndTrace(
+        isize_t inIndex,
+        const SpImage_t & inProjectionImage,
+        const SpVesselLine_t & inLineEndpoints,
+        SpFTrace_t & inTrace,
+        const std::string & inName= std::string()) override;
 
     VesselSet::VesselStatus
     getVesselStatus(isize_t inIndex) override;
@@ -158,6 +165,7 @@ private:
     std::shared_ptr<VesselSetFile>              m_file;
     std::shared_ptr<IoTaskTracker<FTrace_t>>    m_traceIoTaskTracker;
     std::shared_ptr<IoTaskTracker<Image>>       m_imageIoTaskTracker;
+    std::shared_ptr<IoTaskTracker<VesselLine>>  m_lineEndpointsIoTaskTracker;
 };
 
 }

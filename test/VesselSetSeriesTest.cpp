@@ -43,7 +43,12 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
         1.f, 0.f, 1.f};
 
     std::memcpy((char *)v, (char *)vesselImageData, spacingInfo.getTotalNumPixels()*sizeof(float));
-    
+
+    // line endpoints
+    isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>();
+    lineEndpoints->m_p1 = isx::PointInPixels_t(0,0);
+    lineEndpoints->m_p2 = isx::PointInPixels_t(1,1);
+
     isx::CoreInitialize();
     
     SECTION("Empty constructor")
@@ -128,7 +133,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
                 float * values = trace->getValues();
                 std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
                 trace->setValue(i, float(i));                
-                cs->writeImageAndTrace(0, vesselImage, trace);
+                cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace);
             }           
             cs->closeForWriting();
         }
@@ -190,8 +195,8 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
             isx::SpFTrace_t trace = std::make_shared<isx::Trace<float>>(timingInfos[i]);
             float * values = trace->getValues();
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
-            trace->setValue(i, float(i));                
-            cs->writeImageAndTrace(0, vesselImage, trace);
+            trace->setValue(i, float(i));
+            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace);
             cs->closeForWriting();
         }
 
@@ -220,8 +225,8 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
             float * values = trace->getValues();
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
             totalNumSamples += timingInfos[i].getNumTimes();
-            trace->setValue(i, float(i));                
-            cs->writeImageAndTrace(0, vesselImage, trace);
+            trace->setValue(i, float(i));
+            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace);
             cs->closeForWriting();
         }
 
@@ -248,8 +253,29 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
             }
 
             traceVals++;
-            
         }
+    }
+
+    SECTION("Get line endpoints")
+    {
+        isx::isize_t totalNumSamples = 0;
+
+        // Write simple vessel sets
+        for(isx::isize_t i(0); i < filenames.size(); ++i)
+        {
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo);
+            isx::SpFTrace_t trace = std::make_shared<isx::Trace<float>>(timingInfos[i]);
+            float * values = trace->getValues();
+            std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
+            totalNumSamples += timingInfos[i].getNumTimes();
+            trace->setValue(i, float(i));
+            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace);
+            cs->closeForWriting();
+        }
+
+        isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
+        isx::SpVesselLine_t vesselLineEndpoints = css->getLineEndpoints(0);
+        requireEqualLineEndpoints(vesselLineEndpoints, lineEndpoints);
     }
 
     for (const auto & fn: filenames)

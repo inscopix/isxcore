@@ -122,12 +122,8 @@ namespace isx
     SpFTrace_t
     VesselSetFile::readTrace(isize_t inVesselId)
     {
-        seekToVessel(inVesselId);
+        seekToVesselForRead(inVesselId, true);
 
-        // Calculate bytes till beginning of vessel data
-        isize_t offsetInBytes = segmentationImageSizeInBytes();
-
-        m_file.seekg(offsetInBytes, std::ios_base::cur);
         if (!m_file.good())
         {
             ISX_THROW(isx::ExceptionFileIO, "Error seeking to vessel trace for read.");
@@ -140,42 +136,66 @@ namespace isx
         {
             ISX_THROW(isx::ExceptionFileIO, "Error reading vessel trace.");
         }
-        return trace;
 
+        return trace;
     }
 
     SpImage_t
-    VesselSetFile::readSegmentationImage(isize_t inVesselId)
+    VesselSetFile::readProjectionImage()
     {
+        seekToProjectionImageForRead();
 
-        seekToVessel(inVesselId);
-
-        // "Calculate" bytes till beginning of the segmentation image
-        isize_t offsetInBytes = 0;
-
-        m_file.seekg(offsetInBytes, std::ios_base::cur);
         if (!m_file.good())
         {
-            ISX_THROW(isx::ExceptionFileIO, "Error seeking to vessel segmentation image.");
+            ISX_THROW(isx::ExceptionFileIO, "Error seeking to vessel projection image.");
         }
 
         SpImage_t image = std::make_shared<Image>(
-                m_spacingInfo,
-                sizeof(float) * m_spacingInfo.getNumColumns(),
-                1,
-                DataType::F32);
+            m_spacingInfo,
+            sizeof(float) * m_spacingInfo.getNumColumns(),
+            1,
+            DataType::F32);
         m_file.read(image->getPixels(), image->getImageSizeInBytes());
 
         if (!m_file.good())
         {
-            ISX_THROW(isx::ExceptionFileIO, "Error reading vessel segmentation image.");
+            ISX_THROW(isx::ExceptionFileIO, "Error reading vessel projection image.");
         }
 
         return image;
     }
 
+    SpVesselLine_t
+    VesselSetFile::readLineEndpoints(isize_t inVesselId)
+    {
+        seekToVesselForRead(inVesselId, false);
+
+        if (!m_file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error seeking to vessel line endpoints for read.");
+        }
+
+        int64_t x1, y1, x2, y2;
+        m_file.read(reinterpret_cast<char*>(&x1), sizeof(int64_t));
+        m_file.read(reinterpret_cast<char*>(&y1), sizeof(int64_t));
+        m_file.read(reinterpret_cast<char*>(&x2), sizeof(int64_t));
+        m_file.read(reinterpret_cast<char*>(&y2), sizeof(int64_t));
+
+        SpVesselLine_t lineEndpoints = std::make_shared<VesselLine>();
+        lineEndpoints->m_p1 = isx::PointInPixels_t(x1, y1);
+        lineEndpoints->m_p2 = isx::PointInPixels_t(x2, y2);
+
+        if (!m_file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error reading vessel line endpoints.");
+        }
+
+        return lineEndpoints;
+    }
+
     void
-    VesselSetFile::writeVesselData(isize_t inVesselId, const Image & inSegmentationImage, Trace<float> & inData, const std::string & inName)
+    VesselSetFile::writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const SpVesselLine_t & inLineEndpoints,
+                                   Trace<float> & inData, const std::string & inName)
     {
         if (m_fileClosedForWriting)
         {
@@ -183,19 +203,20 @@ namespace isx
                       "Writing data after file was closed for writing.", m_fileName);
         }
 
-        // Check that image is F32
-        const DataType dataType = inSegmentationImage.getDataType();
+        // ensure projection image is of type F32
+        const DataType dataType = inProjectionImage.getDataType();
         if (dataType != DataType::F32)
         {
             ISX_THROW(isx::ExceptionDataIO,
-                    "Expected F32 data type, instead got: ", dataType);
+                      "Expected F32 data type for the projection image, instead got: ", dataType);
         }
 
-        // Input validity
-        isize_t inImageSizeInBytes = inSegmentationImage.getImageSizeInBytes();
-        isize_t fImageSizeInBytes = segmentationImageSizeInBytes();
+        // validate size of the projection image
+        isize_t inImageSizeInBytes = inProjectionImage.getImageSizeInBytes();
+        isize_t fImageSizeInBytes = projectionImageSizeInBytes();
         ISX_ASSERT(inImageSizeInBytes == fImageSizeInBytes);
 
+        // validate trace length
         isize_t inSamples = inData.getTimingInfo().getNumTimes();
         isize_t fSamples = m_timingInfo.getNumTimes();
         ISX_ASSERT(inSamples == fSamples);
@@ -211,8 +232,7 @@ namespace isx
         else if (inVesselId < m_numVessels)
         {
             // Overwrite existing vessel
-            seekToVessel(inVesselId);
-
+            seekToVesselForWrite(inVesselId);
             m_vesselNames.at(inVesselId) = inName;
             m_vesselStatuses.at(inVesselId) = VesselSet::VesselStatus::UNDECIDED;
             m_vesselColors.at(inVesselId) = Color();
@@ -224,12 +244,29 @@ namespace isx
                       "Writing vessel indexes out of order is unsupported.");
         }
 
-        m_file.write(inSegmentationImage.getPixels(), inImageSizeInBytes);
+        // write projection image only if writing first vessel, otherwise skip ahead
+        if (inVesselId == 0)
+        {
+            m_file.write(inProjectionImage.getPixels(), inImageSizeInBytes);
+        }
+
+        // write line endpoints (x1, y1, x2, y2)
+        int64_t x1 = inLineEndpoints->m_p1.getX();
+        int64_t y1 = inLineEndpoints->m_p1.getY();
+        int64_t x2 = inLineEndpoints->m_p2.getX();
+        int64_t y2 = inLineEndpoints->m_p2.getY();
+        m_file.write(reinterpret_cast<const char*>(&x1), sizeof(int64_t));
+        m_file.write(reinterpret_cast<const char*>(&y1), sizeof(int64_t));
+        m_file.write(reinterpret_cast<const char*>(&x2), sizeof(int64_t));
+        m_file.write(reinterpret_cast<const char*>(&y2), sizeof(int64_t));
+
+        // write trace
         m_file.write(reinterpret_cast<char*>(inData.getValues()), traceSizeInBytes());
+
         if (!m_file.good())
         {
             ISX_THROW(isx::ExceptionFileIO,
-                "Failed to write vessel data to file: ", m_fileName);
+                      "Failed to write vessel data to file: ", m_fileName);
         }
         m_headerOffset = m_file.tellp();
         flush();
@@ -429,8 +466,16 @@ namespace isx
             ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing vessel set header.");
         }
 
-        const isize_t bytesPerVessel = segmentationImageSizeInBytes() + traceSizeInBytes();
-        m_numVessels = isize_t(m_headerOffset) / bytesPerVessel;
+        const isize_t bytesPerVessel = lineEndpointsSizeInBytes() + traceSizeInBytes();
+        if (isize_t(m_headerOffset) > 0)
+        {
+            m_numVessels = (isize_t(m_headerOffset) - projectionImageSizeInBytes()) / bytesPerVessel;
+        }
+        else
+        {
+            m_numVessels = isize_t(m_headerOffset) / bytesPerVessel;
+        }
+
         if (m_numVessels != m_vesselNames.size() || m_numVessels != m_vesselStatuses.size()  || m_numVessels != m_vesselColors.size() )
         {
             ISX_THROW(isx::ExceptionDataIO, "Number of vessels in header does not match number of vessels in file.");
@@ -471,8 +516,8 @@ namespace isx
 
         if (m_numVessels > 0)
         {
-            seekToVessel(m_numVessels - 1);
-            isize_t vesselSize = segmentationImageSizeInBytes() + traceSizeInBytes();
+            seekToVesselForRead(m_numVessels - 1, true);
+            isize_t vesselSize = lineEndpointsSizeInBytes() + traceSizeInBytes();
             m_file.seekp(vesselSize, std::ios_base::cur);
         }
 
@@ -483,17 +528,76 @@ namespace isx
     }
 
     void
-    VesselSetFile::seekToVessel(isize_t inVesselId)
+    VesselSetFile::seekToProjectionImageForRead()
+    {
+        // projection image is the same for all vessels
+        // it is stored before individual vessel data
+        isize_t pos = 0;
+        m_file.seekg(pos, std::ios_base::beg);
+
+        if (!m_file.good() || pos >= isize_t(m_headerOffset))
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error reading projection image.");
+        }
+
+        if (m_openmode & std::ios_base::out)
+        {
+            m_file.seekp(m_file.tellg(), std::ios_base::beg);   // Make sure write and read pointers are tied together
+        }
+    }
+
+    void
+    VesselSetFile::seekToVesselForRead(isize_t inVesselId, const bool readTrace)
     {
         isize_t pos = 0;
         if (inVesselId >= m_numVessels)
         {
             ISX_THROW(isx::ExceptionFileIO,
-                "Unable to seek to vessel ID ", inVesselId, " in file: ", m_fileName);
+                      "Unable to seek to vessel ID ", inVesselId, " in file: ", m_fileName);
         }
 
-        isize_t vesselSize = segmentationImageSizeInBytes() + traceSizeInBytes();
+        // size of the data for an individual vessel
+        isize_t vesselSize = lineEndpointsSizeInBytes() + traceSizeInBytes();
 
+        // skip the projection image and add offset for vessel position
+        pos += projectionImageSizeInBytes() + (vesselSize * inVesselId);
+        if (readTrace)
+        {
+            pos += lineEndpointsSizeInBytes();
+        }
+
+        m_file.seekg(pos, std::ios_base::beg);
+
+        if (!m_file.good() || pos >= isize_t(m_headerOffset))
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error reading vessel id.");
+        }
+
+        if (m_openmode & std::ios_base::out)
+        {
+            m_file.seekp(m_file.tellg(), std::ios_base::beg);   // Make sure write and read pointers are tied together
+        }
+    }
+
+    void
+    VesselSetFile::seekToVesselForWrite(isize_t inVesselId)
+    {
+        isize_t pos = 0;
+        if (inVesselId >= m_numVessels)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Unable to seek to vessel ID ", inVesselId, " in file: ", m_fileName);
+        }
+
+        // size of the data for an individual vessel
+        isize_t vesselSize = lineEndpointsSizeInBytes() + traceSizeInBytes();
+
+        // update start position
+        // if not writing the first vessel, skip the projection image
+        if (inVesselId > 0)
+        {
+            pos += projectionImageSizeInBytes();
+        }
         pos += vesselSize * inVesselId;
 
         m_file.seekg(pos, std::ios_base::beg);
@@ -510,9 +614,16 @@ namespace isx
     }
 
     isize_t
-    VesselSetFile::segmentationImageSizeInBytes()
+    VesselSetFile::projectionImageSizeInBytes()
     {
         return m_spacingInfo.getTotalNumPixels() * sizeof(float);
+    }
+
+    isize_t
+    VesselSetFile::lineEndpointsSizeInBytes()
+    {
+        // two (x,y) points where x and y are each unsigned 64-bit integers
+        return 4 * sizeof(uint64_t);
     }
 
     isize_t

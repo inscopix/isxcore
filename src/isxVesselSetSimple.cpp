@@ -15,6 +15,7 @@ VesselSetSimple::VesselSetSimple(const std::string & inFileName, bool enableWrit
     : m_valid(false)
     , m_traceIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_imageIoTaskTracker(new IoTaskTracker<Image>())
+    , m_lineEndpointsIoTaskTracker(new IoTaskTracker<VesselLine>())
 {
     m_file = std::make_shared<VesselSetFile>(inFileName, enableWrite);
     m_valid = true;
@@ -27,6 +28,7 @@ VesselSetSimple::VesselSetSimple(
     : m_valid(false)
     , m_traceIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_imageIoTaskTracker(new IoTaskTracker<Image>())
+    , m_lineEndpointsIoTaskTracker(new IoTaskTracker<VesselLine>())
 {
     m_file = std::make_shared<VesselSetFile>(inFileName, inTimingInfo, inSpacingInfo);
     m_valid = true;
@@ -152,17 +154,59 @@ VesselSetSimple::getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback
             SpImage_t im;
             if (sharedThis)
             {
-                im = m_file->readSegmentationImage(inIndex);
+                im = m_file->readProjectionImage();
             }
             return im;
         };
     m_imageIoTaskTracker->schedule(getImageCB, inCallback);
 }
 
+SpVesselLine_t
+VesselSetSimple::getLineEndpoints(isize_t inIndex)
+{
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("getLineEndpoints");
+    AsyncTaskResult<SpVesselLine_t> asyncTaskResult;
+    getLineEndpointsAsync(inIndex,
+      [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVesselLine_t> inAsyncTaskResult)
+      {
+          mutex.lock("getLineEndpoints async");
+          asyncTaskResult = inAsyncTaskResult;
+          mutex.unlock();
+          cv.notifyOne();
+      }
+    );
+    cv.wait(mutex);
+    mutex.unlock();
+
+    return asyncTaskResult.get();   // throws if asyncTaskResults contains an exception
+}
+
 void
-VesselSetSimple::writeImageAndTrace(
+VesselSetSimple::getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback)
+{
+    // Only get a weak pointer to this, so that we don't bother reading
+    // if this has been deleted when the read gets executed.
+    std::weak_ptr<VesselSetSimple> weakThis = shared_from_this();
+    GetLineEndpointsCB_t getLineEndpointsCB = [weakThis, this, inIndex]()
+    {
+        auto sharedThis = weakThis.lock();
+        SpVesselLine_t vl;
+        if (sharedThis)
+        {
+            vl = m_file->readLineEndpoints(inIndex);
+        }
+        return vl;
+    };
+    m_lineEndpointsIoTaskTracker->schedule(getLineEndpointsCB, inCallback);
+}
+
+void
+VesselSetSimple::writeImageAndLineAndTrace(
         isize_t inIndex,
-        const SpImage_t & inImage,
+        const SpImage_t & inProjectionImage,
+        const SpVesselLine_t & inLineEndpoints,
         SpFTrace_t & inTrace,
         const std::string & inName)
 {
@@ -170,11 +214,11 @@ VesselSetSimple::writeImageAndTrace(
     std::shared_ptr<VesselSetFile> file = m_file;
     Mutex mutex;
     ConditionVariable cv;
-    mutex.lock("VesselSetSimple::writeImageAndTrace");
+    mutex.lock("VesselSetSimple::writeImageAndLineAndTrace");
     auto writeIoTask = std::make_shared<IoTask>(
-        [file, inIndex, inImage, inTrace, inName]()
+        [file, inIndex, inProjectionImage, inLineEndpoints, inTrace, inName]()
         {
-            file->writeVesselData(inIndex, *inImage, *inTrace, inName);
+            file->writeVesselData(inIndex, *inProjectionImage, inLineEndpoints, *inTrace, inName);
         },
         [&cv, &mutex](AsyncTaskStatus inStatus)
         {
@@ -183,7 +227,7 @@ VesselSetSimple::writeImageAndTrace(
                 ISX_LOG_ERROR("An error occurred while writing image and trace data to a VesselSet.");
             }
             // will only be able to take lock when client reaches cv.wait
-            mutex.lock("VesselSetwriteImageAndTrace finished");
+            mutex.lock("VesselSetwriteImageAndLineAndTrace finished");
             mutex.unlock();
             cv.notifyOne();
         });
@@ -263,6 +307,7 @@ VesselSetSimple::cancelPendingReads()
 {
     m_imageIoTaskTracker->cancelPendingTasks();
     m_traceIoTaskTracker->cancelPendingTasks();
+    m_lineEndpointsIoTaskTracker->cancelPendingTasks();
 }
 
 std::vector<uint16_t>

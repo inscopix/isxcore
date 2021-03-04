@@ -14,6 +14,18 @@
 
 namespace isx
 {
+/// A structure for holding the information relevant to a Vessel line, i.e. a line drawn across a blood vessel.
+struct VesselLine
+{
+    /// Default constructor
+    VesselLine() {}
+
+    PointInPixels_t m_p1 = PointInPixels_t(0, 0);  ///< The first endpoint of the vessel line
+    PointInPixels_t m_p2 = PointInPixels_t(0, 0);  ///< The second endpoint of the vessel line
+};
+
+using SpVesselLine_t = std::shared_ptr<VesselLine>;
+
 /// Interface for vessel sets
 ///
 class VesselSet
@@ -27,6 +39,10 @@ using VesselSetGetTraceCB_t = std::function<void(AsyncTaskResult<SpFTrace_t>)>;
 using GetImageCB_t = std::function<SpImage_t()>;
 /// The type of callback for getting a vessel image asynchronously
 using VesselSetGetImageCB_t = std::function<void(AsyncTaskResult<SpImage_t>)>;
+/// The type of callback for reading a vessel's line endpoints from disk
+using GetLineEndpointsCB_t = std::function<SpVesselLine_t()>;
+/// The type of callback for getting a vessel line endpoints asynchronously
+using VesselSetGetLineEndpointsCB_t = std::function<void(AsyncTaskResult<SpVesselLine_t>)>;
 
 /// The vessel statuses
 ///
@@ -104,7 +120,7 @@ virtual
 void
 getTraceAsync(isize_t inIndex, VesselSetGetTraceCB_t inCallback) = 0;
 
-/// Get the image of a vessel synchronously.
+/// Get the projection image synchronously.
 ///
 /// This actually calls getImageAsync and will wait for the asynchronous
 /// task to complete.
@@ -116,7 +132,7 @@ virtual
 SpImage_t
 getImage(isize_t inIndex) = 0;
 
-/// Get the image of vessel asynchronously.
+/// Get the projection image asynchronously.
 ///
 /// This dispatches a task to the IoQueue that operates on a image of a vessel.
 ///
@@ -126,7 +142,29 @@ virtual
 void
 getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback) = 0;
 
-/// Write the image and trace data for a vessel.
+/// Get the line endpoints of a vessel synchronously.
+///
+/// This actually calls getTraceAsync and will wait for the asynchronous
+/// task to complete.
+///
+/// \param  inIndex     The index of the vessel
+/// \return             A shared pointer to the trace data of the indexed vessel.
+/// \throw  isx::ExceptionFileIO    If vessel does not exist or reading fails.
+virtual
+SpVesselLine_t
+getLineEndpoints(isize_t inIndex) = 0;
+
+/// Get the line endpoints of a vessel asynchronously.
+///
+/// This dispatches a task to the IoQueue that operates on a trace of a vessel.
+///
+/// \param  inIndex     The index of the vessel
+/// \param  inCallback  The call back that operates on the trace.
+virtual
+void
+getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback) = 0;
+
+/// Write the projection image, line endpoints, and trace data for a vessel.
 ///
 /// If the vessel already exists, it will overwrite its data.
 /// Otherwise, it will be appended.
@@ -134,8 +172,9 @@ getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback) = 0;
 /// This write is performed on the IoQueue, but this function waits
 /// until it is complete.
 ///
-/// \param  inIndex     The index of the vessel.
-/// \param  inImage     The vessel image data to write.
+/// \param  inIndex             The index of the vessel.
+/// \param  inProjectionImage   The projection image data to write.
+/// \param  inLineEndpoints     The vessel line endpoints to write.
 /// \param  inTrace     The vessel trace data to write.
 /// \param  inName      The vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the given index
 /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
@@ -143,11 +182,12 @@ getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback) = 0;
 /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
 virtual
 void
-writeImageAndTrace(
-        isize_t inIndex,
-        const SpImage_t & inImage,
-        SpFTrace_t & inTrace,
-        const std::string & inName = std::string()) = 0;
+writeImageAndLineAndTrace(
+    isize_t inIndex,
+    const SpImage_t & inProjectionImage,
+    const SpVesselLine_t & inLineEndpoints,
+    SpFTrace_t & inTrace,
+    const std::string & inName= std::string()) = 0;
 
 /// \return             The current status of the vessel
 /// \param  inIndex     The index of the vessel.
