@@ -20,6 +20,12 @@ struct VesselLine
     /// Default constructor
     VesselLine() {}
 
+/// Constructor
+///
+/// \param  p1     The first point of the line
+/// \param  p2     The first point of the line
+    VesselLine(PointInPixels_t p1, PointInPixels_t p2) : m_p1(p1), m_p2(p2) {}
+
     PointInPixels_t m_p1 = PointInPixels_t(0, 0);  ///< The first endpoint of the vessel line
     PointInPixels_t m_p2 = PointInPixels_t(0, 0);  ///< The second endpoint of the vessel line
 };
