@@ -42,6 +42,21 @@ namespace isx
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Type of integrated base plate unit used to capture data
+    enum class IntegratedBasePlateType_t
+    {
+        UNAVAILABLE = 0,
+        OPTION_1        // Exact name to be determined
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    const std::map<IntegratedBasePlateType_t, std::string> integratedBasePlateMap =
+    {
+        {IntegratedBasePlateType_t::UNAVAILABLE, "Unavailable"},
+        {IntegratedBasePlateType_t::OPTION_1, "Option1"},
+    };
+
     /// Struct for cell-set-specific metadata
     struct CellSetMetadata
     {
@@ -206,6 +221,19 @@ namespace isx
             if (method == "dF over noise") return CellSetUnits_t::DF_OVER_NOISE;
         }
         return CellSetUnits_t::UNAVAILABLE;
+    }
+
+    template <class T>
+    IntegratedBasePlateType_t getIntegratedBasePlateType(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["integratedBasePlate"].is_null())
+        {
+            std::string ibp = extraProps["integratedBasePlate"].get<std::string>();
+            if (ibp == "Option1") return IntegratedBasePlateType_t::OPTION_1;
+        }
+        return IntegratedBasePlateType_t::UNAVAILABLE;
     }
 
     template <class T>
