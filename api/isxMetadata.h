@@ -54,7 +54,7 @@ namespace isx
     const std::map<IntegratedBasePlateType_t, std::string> integratedBasePlateMap =
     {
         {IntegratedBasePlateType_t::UNAVAILABLE, "Unavailable"},
-        {IntegratedBasePlateType_t::OPTION_1, "Option1"},
+        {IntegratedBasePlateType_t::OPTION_1, "Option 1"},
     };
 
     /// Struct for cell-set-specific metadata
@@ -231,7 +231,7 @@ namespace isx
         if (!extraProps["integratedBasePlate"].is_null())
         {
             std::string ibp = extraProps["integratedBasePlate"].get<std::string>();
-            if (ibp == "Option1") return IntegratedBasePlateType_t::OPTION_1;
+            if (ibp == "Option 1") return IntegratedBasePlateType_t::OPTION_1;
         }
         return IntegratedBasePlateType_t::UNAVAILABLE;
     }
@@ -300,6 +300,15 @@ namespace isx
         extraProps["idps"]["pre_mc"]["topLeft"]["y"] = preMotionCorrMetadata.m_topLeftY;
         extraProps["idps"]["pre_mc"]["width"] = preMotionCorrMetadata.m_width;
         extraProps["idps"]["pre_mc"]["height"] = preMotionCorrMetadata.m_height;
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
+    void setIntegratedBasePlateType(T & inData, IntegratedBasePlateType_t integratedBasePlateType)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["integratedBasePlate"] = integratedBasePlateMap.at(integratedBasePlateType);
         inData->setExtraProperties(extraProps.dump());
     }
 

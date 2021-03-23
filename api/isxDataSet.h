@@ -98,6 +98,10 @@ public:
     /// \param inDataSetProperties new Properties to set
     void setProperties(const std::shared_ptr<Properties> & inDataSetProperties);
 
+    /// Set the extra properties of this DataSet
+    /// \param  inProperties    The extra properties formatted as a JSON string.
+    void setExtraProperties(const std::string & inProperties);
+
     /// Merge Properties into this DataSet's properties.
     /// Will only change those properties that are actually defined in inDataSetProperties.
     /// Will overwrite any existing Properties if they are defined in inDataSetProperties.
@@ -175,6 +179,10 @@ public:
     /// \return all metadata for this dataset in the form of key-value pairs
     ///  
     Metadata getMetadata();
+
+    /// \return the extra properties meta data
+    ///
+    std::string getExtraProperties();
 
     /// \return     True if this is imported, false otherwise.
     ///
