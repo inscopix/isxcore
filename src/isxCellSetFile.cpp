@@ -287,6 +287,17 @@ namespace isx
     }
 
     void
+    CellSetFile::setIntegratedBasePlateType()
+    {
+        if (m_fileClosedForWriting)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Writing data after file was closed for writing.", m_fileName);
+        }
+        writeHeader();
+    }
+
+    void
     CellSetFile::setCellColor(isize_t inCellId, const Color& inColor)
     {
         m_cellColors.at(inCellId) = inColor;

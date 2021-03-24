@@ -130,6 +130,10 @@ public:
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void setCellStatus(isize_t inCellId, CellSet::CellStatus inStatus);
 
+    /// Set a cell in the set to be valid/invalid (used for rejecting or accepting segmented cell)
+    /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+    void setIntegratedBasePlateType();
+
     /// Set a cell color
     /// \param inCellId the cell of interest
     /// \param inColor new color
