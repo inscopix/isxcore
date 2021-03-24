@@ -141,6 +141,11 @@ public:
     virtual
     void
     closeFileStream();
+
+    /// Set the integrated base plate metadata
+    /// \param inIntegratedBasePlate the integrated base plate name
+    virtual
+    void setIntegratedBasePlate(const std::string & inIntegratedBasePlate) = 0;
 };
 
 } // namespace isx

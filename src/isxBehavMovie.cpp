@@ -112,4 +112,10 @@ BehavMovie::serialize(std::ostream & strm) const
     strm << getFileName();
 }
 
+void
+BehavMovie::setIntegratedBasePlate(const std::string & inIntegratedBasePlate)
+{
+    // TODO: TO BE IMPLEMENTED
+}
+
 } // namespace isx

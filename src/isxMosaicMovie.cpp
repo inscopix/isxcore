@@ -208,6 +208,12 @@ MosaicMovie::getOriginalSpacingInfo() const
 }
 
 void
+MosaicMovie::setIntegratedBasePlate(const std::string & inIntegratedBasePlate)
+{
+    m_file->setIntegratedBasePlate(inIntegratedBasePlate);
+}
+
+void
 MosaicMovie::writeAndWait(std::function<void()> inCallback, const std::string & inName)
 {
     Mutex mutex;

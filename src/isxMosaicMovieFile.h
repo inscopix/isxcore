@@ -36,10 +36,11 @@ public:
     /// header.
     ///
     /// \param  inFileName  The name of the movie file.
+    /// \param  enableWrite     Set to true to open in read-write mode
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
-    MosaicMovieFile(const std::string & inFileName);
+    MosaicMovieFile(const std::string & inFileName, bool enableWrite = false);
 
     /// Write constructor.
     ///
@@ -182,6 +183,10 @@ public:
     /// Aggressively close the file stream.
     void closeFileStream();
 
+    /// Set the integrated base plate metadata
+    /// \param inIntegratedBasePlate the integrated base plate name
+    void setIntegratedBasePlate(const std::string & inIntegratedBasePlate);
+
 private:
     /// True if the movie file is valid, false otherwise.
     bool m_valid;
@@ -201,8 +206,14 @@ private:
     /// The data type of the pixel values.
     DataType m_dataType;
 
+    /// The integrated base plate name
+    std::string m_integratedBasePlate;
+
     /// The file stream
     std::fstream m_file;
+
+    /// The stream open mode
+    std::ios_base::openmode m_openmode;
 
     bool m_fileClosedForWriting = false;
 
@@ -224,13 +235,14 @@ private:
     /// The extra properties to write in the JSON footer.
     json m_extraProperties = nullptr;
 
-    /// Initialize for reading.
+    /// Initialize for reading and possibly writing updates.
     ///
     /// \param  inFileName  The name of the movie file.
+    /// \param  enableWrite Set to true to open in read-write mode
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
-    void initialize(const std::string & inFileName);
+    void initialize(const std::string & inFileName, bool enableWrite=false);
 
     /// Initialize for writing.
     ///
