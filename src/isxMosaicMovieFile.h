@@ -206,9 +206,6 @@ private:
     /// The data type of the pixel values.
     DataType m_dataType;
 
-    /// The integrated base plate name
-    std::string m_integratedBasePlate;
-
     /// The file stream
     std::fstream m_file;
 
@@ -234,6 +231,9 @@ private:
 
     /// The extra properties to write in the JSON footer.
     json m_extraProperties = nullptr;
+
+    /// The integrated base plate name
+    std::string m_integratedBasePlate;
 
     /// Initialize for reading and possibly writing updates.
     ///

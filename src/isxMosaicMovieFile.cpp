@@ -73,8 +73,7 @@ MosaicMovieFile::initialize(const std::string & inFileName, bool enableWrite)
     readHeader();
     m_fileClosedForWriting = !enableWrite;
     m_valid = true;
-    // m_readOnly = true;
-    m_readOnly = false; // BRUNO
+    m_readOnly = false;
 
     if (hasFrameTimestamps())
     {
@@ -445,6 +444,7 @@ MosaicMovieFile::writeHeader()
         j["fileVersion"] = s_version;
         j["hasFrameHeaderFooter"] = m_hasFrameHeaderFooter;
         j["extraProperties"] = m_extraProperties;
+        j["integratedBasePlate"] = m_integratedBasePlate;
     }
     catch (const std::exception & error)
     {
