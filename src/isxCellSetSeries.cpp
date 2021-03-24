@@ -242,6 +242,15 @@ namespace isx
     }
 
     void
+    CellSetSeries::setIntegratedBasePlateType()
+    {
+        for(const auto &cs : m_cellSets)
+        {
+            cs->setIntegratedBasePlateType();
+        }
+    }
+
+    void
     CellSetSeries::setCellColor(isize_t inIndex, const Color& inColor)
     {
         for (const auto &cs : m_cellSets)

@@ -133,6 +133,9 @@ public:
     setCellActive(isize_t inIndex, const std::vector<bool> & inActive) override;
 
     void
+    setIntegratedBasePlateType() override;
+
+    void
     cancelPendingReads() override;
 
     bool

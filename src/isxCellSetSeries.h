@@ -93,6 +93,9 @@ public:
     setCellStatus(isize_t inIndex, CellSet::CellStatus inStatus) override;
 
     void
+    setIntegratedBasePlateType() override;
+
+    void
     setCellColor(isize_t inIndex, const Color& inColor) override;
 
     void

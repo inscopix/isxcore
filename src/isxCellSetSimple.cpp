@@ -260,6 +260,12 @@ CellSetSimple::setCellActive(isize_t inIndex, const std::vector<bool> & inActive
 }
 
 void
+CellSetSimple::setIntegratedBasePlateType()
+{
+    m_file->setIntegratedBasePlateType();
+}
+
+void
 CellSetSimple::cancelPendingReads()
 {
     m_imageIoTaskTracker->cancelPendingTasks();
