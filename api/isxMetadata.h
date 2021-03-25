@@ -313,7 +313,6 @@ namespace isx
 
         extraProps["integratedBasePlate"] = integratedBasePlateMap.at(integratedBasePlateType);
 
-
         ISX_LOG_INFO(extraProps.dump());
 
         inData->setExtraProperties(extraProps.dump());

@@ -18,11 +18,11 @@ MosaicMovie::MosaicMovie()
 {
 }
 
-MosaicMovie::MosaicMovie(const std::string & inFileName)
+MosaicMovie::MosaicMovie(const std::string & inFileName, bool enableWrite)
     : m_valid(false)
     , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
-    m_file = std::make_shared<MosaicMovieFile>(inFileName);
+    m_file = std::make_shared<MosaicMovieFile>(inFileName, enableWrite);
     m_valid = true;
 }
 

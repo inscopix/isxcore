@@ -32,10 +32,11 @@ public:
     /// This opens an existing movie from a file.
     ///
     /// \param  inFileName  The name of the movie file.
+    /// \param  enableWrite     Set to true to open in read-write mode
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
-    MosaicMovie(const std::string & inFileName);
+    MosaicMovie(const std::string & inFileName, bool enableWrite = false);
 
     /// Write constructor.
     ///

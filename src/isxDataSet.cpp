@@ -721,11 +721,11 @@ DataSet::setExtraProperties(const std::string & inProperties)
     if (m_type == Type::MOVIE || m_type == Type::IMAGE)
     {
         SpWritableMovie_t movie = std::make_shared<isx::MosaicMovie>(
-                m_fileName, m_timingInfo, m_spacingInfo, m_dataType);
+                m_fileName, true);
 
         ISX_LOG_INFO(movie->getExtraProperties());
 
-        //movie->setExtraProperties(inProperties);
+        movie->setExtraProperties(inProperties);
         movie->closeForWriting();
     }
 
@@ -741,6 +741,19 @@ DataSet::setExtraProperties(const std::string & inProperties)
         cellset->closeForWriting();
     }
 }
+
+void
+DataSet::setIntegratedBasePlate(const std::string & inIntegratedBasePlate) {
+    if (m_type == Type::MOVIE)
+    {
+        SpWritableMovie_t movie = std::make_shared<isx::MosaicMovie>(
+                m_fileName, true);
+
+        movie->setIntegratedBasePlate(inIntegratedBasePlate);
+        movie->closeForWriting();
+    }
+}
+
 
 std::string
 DataSet::getHistory() const
