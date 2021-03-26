@@ -183,10 +183,6 @@ public:
     /// Aggressively close the file stream.
     void closeFileStream();
 
-    /// Set the integrated base plate metadata
-    /// \param inIntegratedBasePlate the integrated base plate name
-    void setIntegratedBasePlate(const std::string & inIntegratedBasePlate);
-
 private:
     /// True if the movie file is valid, false otherwise.
     bool m_valid;

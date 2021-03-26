@@ -102,10 +102,6 @@ public:
     /// \param  inProperties    The extra properties formatted as a JSON string.
     void setExtraProperties(const std::string & inProperties);
 
-    /// Set the integrated Base plate meta data
-    /// \param  inIntegratedBasePlate    The extra properties formatted as a JSON string.
-    void setIntegratedBasePlate(const std::string & inIntegratedBasePlate);
-
     /// Merge Properties into this DataSet's properties.
     /// Will only change those properties that are actually defined in inDataSetProperties.
     /// Will overwrite any existing Properties if they are defined in inDataSetProperties.

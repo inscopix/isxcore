@@ -419,10 +419,4 @@ NVistaHdf5Movie::getMovieIndex(isize_t inFrameNumber)
     return idx;
 }
 
-void
-NVistaHdf5Movie::setIntegratedBasePlate(const std::string & inIntegratedBasePlate)
-{
-    // TODO: TO BE IMPLEMENTED
-}
-
 } // namespace isx

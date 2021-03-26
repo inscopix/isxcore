@@ -102,8 +102,6 @@ public:
 
     std::string getExtraProperties() const override;
 
-    void setIntegratedBasePlate(const std::string & inIntegratedBasePlate) override;
-
 private:
     /// Note that this does not set the type of frame (valid, dropped, etc.)
     /// for performance reasons.

@@ -92,8 +92,6 @@ public:
     void
     serialize(std::ostream& strm) const override;
 
-    void setIntegratedBasePlate(const std::string & inIntegratedBasePlate) override;
-
 private:
 
     /// True if the movie file is valid, false otherwise.

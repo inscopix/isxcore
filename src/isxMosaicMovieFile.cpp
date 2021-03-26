@@ -366,22 +366,6 @@ MosaicMovieFile::getOriginalSpacingInfo() const
     return SpacingInfo::getDefault();
 }
 
-void MosaicMovieFile::setIntegratedBasePlate(const std::string & inIntegratedBasePlate)
-{
-    m_integratedBasePlate = inIntegratedBasePlate;
-    if (m_openmode & std::ios_base::out)
-    {
-        if (m_fileClosedForWriting)
-        {
-            ISX_THROW(ExceptionFileIO, "Writing data after file was closed for writing.", m_fileName);
-        }
-        else
-        {
-            writeHeader();
-        }
-    }
-}
-
 void
 MosaicMovieFile::readHeader()
 {
@@ -446,7 +430,6 @@ MosaicMovieFile::writeHeader()
         j["fileVersion"] = s_version;
         j["hasFrameHeaderFooter"] = m_hasFrameHeaderFooter;
         j["extraProperties"] = m_extraProperties;
-        j["integratedBasePlate"] = m_integratedBasePlate;
     }
     catch (const std::exception & error)
     {

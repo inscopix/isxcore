@@ -269,10 +269,4 @@ NVistaTiffMovie::getMovieIndex(isize_t inFrameNumber)
     return idx;
 }
 
-void
-NVistaTiffMovie::setIntegratedBasePlate(const std::string & inIntegratedBasePlate)
-{
-    // TODO: TO BE IMPLEMENTED
-}
-
 } // namespace isx

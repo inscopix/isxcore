@@ -236,13 +236,4 @@ MovieSeries::getExtraProperties() const
     return m_movies.at(0)->getExtraProperties();
 }
 
-void
-MovieSeries::setIntegratedBasePlate(const std::string &inIntegratedBasePlate)
-{
-    for (const auto &m : m_movies)
-    {
-        m->setIntegratedBasePlate(inIntegratedBasePlate);
-    }
-}
-
 } // namespace isx
