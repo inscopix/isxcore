@@ -36,10 +36,11 @@ public:
     /// header.
     ///
     /// \param  inFileName  The name of the movie file.
+    /// \param  enableWrite     Set to true to open in read-write mode
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
-    MosaicMovieFile(const std::string & inFileName);
+    MosaicMovieFile(const std::string & inFileName, bool enableWrite = false);
 
     /// Write constructor.
     ///
@@ -204,6 +205,9 @@ private:
     /// The file stream
     std::fstream m_file;
 
+    /// The stream open mode
+    std::ios_base::openmode m_openmode;
+
     bool m_fileClosedForWriting = false;
 
     /// The version of this file format.
@@ -224,13 +228,17 @@ private:
     /// The extra properties to write in the JSON footer.
     json m_extraProperties = nullptr;
 
-    /// Initialize for reading.
+    /// The integrated base plate name
+    std::string m_integratedBasePlate;
+
+    /// Initialize for reading and possibly writing updates.
     ///
     /// \param  inFileName  The name of the movie file.
+    /// \param  enableWrite Set to true to open in read-write mode
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
-    void initialize(const std::string & inFileName);
+    void initialize(const std::string & inFileName, bool enableWrite=false);
 
     /// Initialize for writing.
     ///

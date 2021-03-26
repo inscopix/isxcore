@@ -230,8 +230,9 @@ namespace isx
         json extraProps = getExtraPropertiesJSON(inData);
         if (!extraProps["integratedBasePlate"].is_null())
         {
-            std::string ibp = extraProps["integratedBasePlate"].get<std::string>();
-            if (ibp == "Option 1") return IntegratedBasePlateType_t::OPTION_1;
+            int ibp = extraProps["integratedBasePlate"].get<int>();
+
+            if (ibp == 1) return IntegratedBasePlateType_t::OPTION_1;
         }
         return IntegratedBasePlateType_t::UNAVAILABLE;
     }
@@ -308,14 +309,7 @@ namespace isx
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
-
-        ISX_LOG_INFO(extraProps.dump());
-
-        extraProps["integratedBasePlate"] = integratedBasePlateMap.at(integratedBasePlateType);
-
-
-        ISX_LOG_INFO(extraProps.dump());
-
+        extraProps["integratedBasePlate"] = size_t(integratedBasePlateType);
         inData->setExtraProperties(extraProps.dump());
     }
 

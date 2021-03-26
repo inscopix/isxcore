@@ -421,10 +421,8 @@ DataSet::getMetadata()
 std::string
 DataSet::getExtraProperties()
 {
-    if (!m_hasMetaData)
-    {
-        readMetaData();
-    }
+
+    readMetaData();
 
     return m_extraProps;
 }
@@ -705,37 +703,26 @@ DataSet::readMetaData()
 void
 DataSet::setExtraProperties(const std::string & inProperties)
 {
-    ISX_LOG_INFO("DataSet::setExtraProperties");
-
-
     if (!fileExists())
     {
         ISX_LOG_ERROR("Tried to read metadata from dataset with missing file: ", m_fileName);
         return;
     }
 
-    if (!m_hasMetaData) {
-        readMetaData();
-    }
+    readMetaData();
 
     if (m_type == Type::MOVIE || m_type == Type::IMAGE)
     {
         SpWritableMovie_t movie = std::make_shared<isx::MosaicMovie>(
-                m_fileName, m_timingInfo, m_spacingInfo, m_dataType);
+                m_fileName, true);
 
-        ISX_LOG_INFO(movie->getExtraProperties());
-
-        //movie->setExtraProperties(inProperties);
+        movie->setExtraProperties(inProperties);
         movie->closeForWriting();
     }
 
     if (m_type == Type::CELLSET)
     {
-        ISX_LOG_INFO("reading Cellset, filename: ", m_fileName);
-
         SpCellSet_t cellset = isx::readCellSet(m_fileName, true);
-
-        ISX_LOG_INFO("numCells check: ", cellset->getNumCells());
 
         cellset->setExtraProperties(inProperties);
         cellset->closeForWriting();
