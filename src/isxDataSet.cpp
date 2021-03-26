@@ -719,14 +719,6 @@ DataSet::setExtraProperties(const std::string & inProperties)
         movie->setExtraProperties(inProperties);
         movie->closeForWriting();
     }
-
-    if (m_type == Type::CELLSET)
-    {
-        SpCellSet_t cellset = isx::readCellSet(m_fileName, true);
-
-        cellset->setExtraProperties(inProperties);
-        cellset->closeForWriting();
-    }
 }
 
 std::string

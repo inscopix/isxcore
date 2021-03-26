@@ -253,12 +253,6 @@ virtual
 void
 setCellActive(isize_t inIndex, const std::vector<bool> & inActive) = 0;
 
-/// Set the cell activity flags
-/// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
-virtual
-void
-setIntegratedBasePlateType() = 0;
-
 /// Cancel all pending read requests (schedule with getTraceAsync/getImageAsync).
 ///
 virtual
