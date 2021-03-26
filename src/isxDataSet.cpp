@@ -421,9 +421,7 @@ DataSet::getMetadata()
 std::string
 DataSet::getExtraProperties()
 {
-
     readMetaData();
-
     return m_extraProps;
 }
 
