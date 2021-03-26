@@ -532,8 +532,6 @@ namespace isx
     void
     CellSetFile::writeHeader()
     {
-        ISX_LOG_INFO("CellSetFile::writeHeader()");
-
         json j;
         try
         {

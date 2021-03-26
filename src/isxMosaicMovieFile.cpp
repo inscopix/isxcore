@@ -409,8 +409,6 @@ MosaicMovieFile::readHeader()
 void
 MosaicMovieFile::writeHeader()
 {
-    ISX_LOG_INFO("MosaicMovieFile::writeHeader()");
-
     json j;
     try
     {
@@ -446,11 +444,7 @@ MosaicMovieFile::writeHeader()
     // then reading from it and only after reading closing
     // the file (and thus writing the header). flush was
     // causing a segfault
-
-    //m_file.seekp(0, std::ios_base::end);
-
     m_file.seekp(m_headerOffset, std::ios_base::beg);
-    //m_headerOffset = m_file.tellp();
     writeJsonHeaderAtEnd(j, m_file);
     flush();
 }
