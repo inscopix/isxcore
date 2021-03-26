@@ -47,14 +47,34 @@ namespace isx
     enum class IntegratedBasePlateType_t
     {
         UNAVAILABLE = 0,
-        OPTION_1        // Exact name to be determined
+        IBP1,
+        IBP2,
+        IBP3,
+        IBP4,
+        IBP5,
+        IBP6,
+        IBP7,
+        IBP8,
+        IBP9,
+        IBP10,
+        IBP11,
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
     const std::map<IntegratedBasePlateType_t, std::string> integratedBasePlateMap =
     {
         {IntegratedBasePlateType_t::UNAVAILABLE, "Unavailable"},
-        {IntegratedBasePlateType_t::OPTION_1, "Option 1"},
+        {IntegratedBasePlateType_t::IBP1, "0.5mm x 4.0mm"},
+        {IntegratedBasePlateType_t::IBP2, "0.5mm x 6.1mm"},
+        {IntegratedBasePlateType_t::IBP3, "0.5mm x 8.4mm"},
+        {IntegratedBasePlateType_t::IBP4, "0.6mm x 7.3mm"},
+        {IntegratedBasePlateType_t::IBP5, "1.0mm x 4.0mm"},
+        {IntegratedBasePlateType_t::IBP6, "1.0mm x 9.0mm"},
+        {IntegratedBasePlateType_t::IBP7, "1.0mm x 13.7mm"},
+        {IntegratedBasePlateType_t::IBP8, "Prism 1.0mm x 4.3mm"},
+        {IntegratedBasePlateType_t::IBP9, "Prism 1.0mm x 9.1mm"},
+        {IntegratedBasePlateType_t::IBP10, "1.0mm x 4.0mm Mouse Dorsal Striatum Camk2a"},
+        {IntegratedBasePlateType_t::IBP11, "1.0mm x 4.0mm Mouse Dorsal Striatum CAG.Flex"},
     };
 
     /// Struct for cell-set-specific metadata
@@ -231,8 +251,18 @@ namespace isx
         if (!extraProps["integratedBasePlate"].is_null())
         {
             int ibp = extraProps["integratedBasePlate"].get<int>();
-
-            if (ibp == 1) return IntegratedBasePlateType_t::OPTION_1;
+            if (ibp == 1) return IntegratedBasePlateType_t::IBP1;
+            if (ibp == 2) return IntegratedBasePlateType_t::IBP2;
+            if (ibp == 3) return IntegratedBasePlateType_t::IBP3;
+            if (ibp == 4) return IntegratedBasePlateType_t::IBP4;
+            if (ibp == 5) return IntegratedBasePlateType_t::IBP5;
+            if (ibp == 6) return IntegratedBasePlateType_t::IBP6;
+            if (ibp == 7) return IntegratedBasePlateType_t::IBP7;
+            if (ibp == 8) return IntegratedBasePlateType_t::IBP8;
+            if (ibp == 9) return IntegratedBasePlateType_t::IBP9;
+            if (ibp == 10) return IntegratedBasePlateType_t::IBP10;
+            if (ibp == 11) return IntegratedBasePlateType_t::IBP11;
+            return IntegratedBasePlateType_t::UNAVAILABLE;
         }
         return IntegratedBasePlateType_t::UNAVAILABLE;
     }
