@@ -335,12 +335,38 @@ namespace isx
     }
 
     template <typename T>
-    void setIntegratedBasePlateType(T & inData, IntegratedBasePlateType_t integratedBasePlateType)
-    {
+    void setIntegratedBasePlateType(T & inData, IntegratedBasePlateType_t integratedBasePlateType) {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
         extraProps["integratedBasePlate"] = size_t(integratedBasePlateType);
         inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T1, typename T2>
+    void setPreprocessMetadata(T1 & inDataSrc, T2 & inDataDest, isize_t spatialDsFactor, isize_t temporalDsFactor)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inDataSrc);
+
+        if (!extraProps["idps"]["spatialDownsampling"].is_null())
+        {
+            extraProps["idps"]["spatialDownsampling"] = extraProps["idps"]["spatialDownsampling"].get<size_t>() * spatialDsFactor;
+        }
+        else
+        {
+            extraProps["idps"]["spatialDownsampling"] = spatialDsFactor;
+        }
+
+        if (!extraProps["idps"]["temporalDownsampling"].is_null())
+        {
+            extraProps["idps"]["temporalDownsampling"] = extraProps["idps"]["temporalDownsampling"].get<size_t>() * temporalDsFactor;
+        }
+        else
+        {
+            extraProps["idps"]["temporalDownsampling"] = temporalDsFactor;
+        }
+
+        inDataDest->setExtraProperties(extraProps.dump());
     }
 
     // Helper function to deal with string representations of the extra properties
