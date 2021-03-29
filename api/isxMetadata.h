@@ -63,7 +63,7 @@ namespace isx
 
     const std::map<IntegratedBasePlateType_t, std::string> integratedBasePlateMap =
     {
-        {IntegratedBasePlateType_t::UNAVAILABLE, "Unavailable"},
+        {IntegratedBasePlateType_t::UNAVAILABLE, "None"},
         {IntegratedBasePlateType_t::IBP1, "0.5mm x 4.0mm"},
         {IntegratedBasePlateType_t::IBP2, "0.5mm x 6.1mm"},
         {IntegratedBasePlateType_t::IBP3, "0.5mm x 8.4mm"},
