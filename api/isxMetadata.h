@@ -250,19 +250,8 @@ namespace isx
         json extraProps = getExtraPropertiesJSON(inData);
         if (!extraProps["integratedBasePlate"].is_null())
         {
-            int ibp = extraProps["integratedBasePlate"].get<int>();
-            if (ibp == 1) return IntegratedBasePlateType_t::IBP1;
-            if (ibp == 2) return IntegratedBasePlateType_t::IBP2;
-            if (ibp == 3) return IntegratedBasePlateType_t::IBP3;
-            if (ibp == 4) return IntegratedBasePlateType_t::IBP4;
-            if (ibp == 5) return IntegratedBasePlateType_t::IBP5;
-            if (ibp == 6) return IntegratedBasePlateType_t::IBP6;
-            if (ibp == 7) return IntegratedBasePlateType_t::IBP7;
-            if (ibp == 8) return IntegratedBasePlateType_t::IBP8;
-            if (ibp == 9) return IntegratedBasePlateType_t::IBP9;
-            if (ibp == 10) return IntegratedBasePlateType_t::IBP10;
-            if (ibp == 11) return IntegratedBasePlateType_t::IBP11;
-            return IntegratedBasePlateType_t::UNAVAILABLE;
+            std::string ibp = extraProps["integratedBasePlate"].get<std::string>();
+            return static_cast<IntegratedBasePlateType_t>(stoi(ibp));
         }
         return IntegratedBasePlateType_t::UNAVAILABLE;
     }
@@ -338,7 +327,14 @@ namespace isx
     void setIntegratedBasePlateType(T & inData, IntegratedBasePlateType_t integratedBasePlateType) {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
-        extraProps["integratedBasePlate"] = size_t(integratedBasePlateType);
+
+        std::string integratedBasePlateString = std::to_string(size_t(integratedBasePlateType));
+        // Pad to make 2 digits
+        if (integratedBasePlateString.length() == 1)
+        {
+            integratedBasePlateString.insert(0, "0");
+        }
+        extraProps["integratedBasePlate"] = integratedBasePlateString;
         inData->setExtraProperties(extraProps.dump());
     }
 
