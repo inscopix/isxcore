@@ -328,12 +328,13 @@ namespace isx
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
 
-        std::string integratedBasePlateString = std::to_string(size_t(integratedBasePlateType));
-        // Pad to make 2 digits
-        if (integratedBasePlateString.length() == 1)
-        {
-            integratedBasePlateString.insert(0, "0");
-        }
+        size_t index = size_t(integratedBasePlateType);
+        std::string integratedBasePlateString = std::to_string(index);
+
+        // Pad with zeros
+        std::string zeros(std::to_string(integratedBasePlateMap.size() - 1).size() - integratedBasePlateString.size(), '0');
+        integratedBasePlateString.insert(0, zeros);
+
         extraProps["integratedBasePlate"] = integratedBasePlateString;
         inData->setExtraProperties(extraProps.dump());
     }
