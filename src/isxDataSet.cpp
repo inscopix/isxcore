@@ -11,6 +11,7 @@
 #include "isxGpio.h"
 #include "isxEvents.h"
 #include "isxMetadata.h"
+#include "isxMosaicMovie.h"
 
 #include "json.hpp"
 
@@ -417,6 +418,13 @@ DataSet::getMetadata()
     return metadata;
 }
 
+std::string
+DataSet::getExtraProperties()
+{
+    readMetaData();
+    return m_extraProps;
+}
+
 bool
 DataSet::isImported() const
 {
@@ -687,6 +695,27 @@ DataSet::readMetaData()
         m_dataType = isx::DataType::F32;
         m_extraProps = events->getExtraProperties();
         m_hasMetaData = true;
+    }
+}
+
+void
+DataSet::setExtraProperties(const std::string & inProperties)
+{
+    if (!fileExists())
+    {
+        ISX_LOG_ERROR("Tried to read metadata from dataset with missing file: ", m_fileName);
+        return;
+    }
+
+    readMetaData();
+
+    if (m_type == Type::MOVIE || m_type == Type::IMAGE)
+    {
+        SpWritableMovie_t movie = std::make_shared<isx::MosaicMovie>(
+                m_fileName, true);
+
+        movie->setExtraProperties(inProperties);
+        movie->closeForWriting();
     }
 }
 

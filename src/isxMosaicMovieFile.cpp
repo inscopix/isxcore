@@ -22,10 +22,10 @@ MosaicMovieFile::MosaicMovieFile()
 {
 }
 
-MosaicMovieFile::MosaicMovieFile(const std::string & inFileName)
+MosaicMovieFile::MosaicMovieFile(const std::string & inFileName, bool enableWrite)
     : m_valid(false)
 {
-    initialize(inFileName);
+    initialize(inFileName, enableWrite);
 }
 
 MosaicMovieFile::MosaicMovieFile(
@@ -54,23 +54,26 @@ MosaicMovieFile::~MosaicMovieFile()
 }
 
 void
-MosaicMovieFile::initialize(const std::string & inFileName)
+MosaicMovieFile::initialize(const std::string & inFileName, bool enableWrite)
 {
     m_fileName = inFileName;
-    m_file.open(m_fileName, std::ios::binary | std::ios_base::in);
+
+    m_openmode = std::ios::binary | std::ios_base::in;
+    if (enableWrite)
+    {
+        m_openmode |= std::ios_base::out;
+    }
+
+    m_file.open(m_fileName, m_openmode);
     if (!m_file.good() || !m_file.is_open())
     {
         ISX_THROW(isx::ExceptionFileIO,
             "Failed to open movie file for reading: ", m_fileName);
     }
     readHeader();
-    m_fileClosedForWriting = true;
+    m_fileClosedForWriting = !enableWrite;
     m_valid = true;
-    m_readOnly = true;
-
-    // ISX_LOG_DEBUG("old step: NUM=", m_timingInfos[0].getStep().getNum(),
-    //         " DEN=", m_timingInfos[0].getStep().getDen(),
-    //         " double=", m_timingInfos[0].getStep().toDouble());
+    m_readOnly = false;
 
     if (hasFrameTimestamps())
     {
@@ -134,7 +137,8 @@ MosaicMovieFile::initialize(
     m_spacingInfo = inSpacingInfo;
     m_dataType = inDataType;
     m_hasFrameHeaderFooter = inHasFrameHeaderFooter;
-    m_file.open(m_fileName, std::ios::binary | std::ios::trunc | std::ios::in | std::ios::out);
+    m_openmode = std::ios::binary | std::ios::trunc | std::ios::in | std::ios::out;
+    m_file.open(m_fileName, m_openmode);
     if (!m_file.good() || !m_file.is_open())
     {
         ISX_THROW(isx::ExceptionFileIO,
@@ -440,8 +444,7 @@ MosaicMovieFile::writeHeader()
     // then reading from it and only after reading closing
     // the file (and thus writing the header). flush was
     // causing a segfault
-    m_file.seekp(0, std::ios_base::end);
-    m_headerOffset = m_file.tellp();
+    m_file.seekp(m_headerOffset, std::ios_base::beg);
     writeJsonHeaderAtEnd(j, m_file);
     flush();
 }

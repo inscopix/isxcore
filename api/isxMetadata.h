@@ -42,6 +42,41 @@ namespace isx
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Type of integrated base plate unit used to capture data
+    enum class IntegratedBasePlateType_t
+    {
+        UNAVAILABLE = 0,
+        IBP1,
+        IBP2,
+        IBP3,
+        IBP4,
+        IBP5,
+        IBP6,
+        IBP7,
+        IBP8,
+        IBP9,
+        IBP10,
+        IBP11,
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    const std::map<IntegratedBasePlateType_t, std::string> integratedBasePlateMap =
+    {
+        {IntegratedBasePlateType_t::UNAVAILABLE, "None"},
+        {IntegratedBasePlateType_t::IBP1, "0.5mm x 4.0mm"},
+        {IntegratedBasePlateType_t::IBP2, "0.5mm x 6.1mm"},
+        {IntegratedBasePlateType_t::IBP3, "0.5mm x 8.4mm"},
+        {IntegratedBasePlateType_t::IBP4, "0.6mm x 7.3mm"},
+        {IntegratedBasePlateType_t::IBP5, "1.0mm x 4.0mm"},
+        {IntegratedBasePlateType_t::IBP6, "1.0mm x 9.0mm"},
+        {IntegratedBasePlateType_t::IBP7, "1.0mm x 13.7mm"},
+        {IntegratedBasePlateType_t::IBP8, "Prism 1.0mm x 4.3mm"},
+        {IntegratedBasePlateType_t::IBP9, "Prism 1.0mm x 9.1mm"},
+        {IntegratedBasePlateType_t::IBP10, "Mouse Dorsal Striatum Camk2a (1.0mm x 4.0mm)"},
+        {IntegratedBasePlateType_t::IBP11, "Mouse Dorsal Striatum CAG.Flex (1.0mm x 4.0mm )"},
+    };
+
     /// Struct for cell-set-specific metadata
     struct CellSetMetadata
     {
@@ -209,6 +244,19 @@ namespace isx
     }
 
     template <class T>
+    IntegratedBasePlateType_t getIntegratedBasePlateType(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["integratedBasePlate"].is_null())
+        {
+            std::string ibp = extraProps["integratedBasePlate"].get<std::string>();
+            return static_cast<IntegratedBasePlateType_t>(stoi(ibp));
+        }
+        return IntegratedBasePlateType_t::UNAVAILABLE;
+    }
+
+    template <class T>
     PreMotionCorrMetadata getPreMotionCorrMetadata(T & inData)
     {
         PreMotionCorrMetadata preMotionCorrMetadata;
@@ -275,8 +323,24 @@ namespace isx
         inData->setExtraProperties(extraProps.dump());
     }
 
+    template <typename T>
+    void setIntegratedBasePlateType(T & inData, IntegratedBasePlateType_t integratedBasePlateType) {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        size_t index = size_t(integratedBasePlateType);
+        std::string integratedBasePlateString = std::to_string(index);
+
+        // Pad with zeros
+        std::string zeros(std::to_string(integratedBasePlateMap.size() - 1).size() - integratedBasePlateString.size(), '0');
+        integratedBasePlateString.insert(0, zeros);
+
+        extraProps["integratedBasePlate"] = integratedBasePlateString;
+        inData->setExtraProperties(extraProps.dump());
+    }
+
     template <typename T1, typename T2>
-    void setPreprocessMetaData(T1 & inDataSrc, T2 & inDataDest, isize_t spatialDsFactor, isize_t temporalDsFactor)
+    void setPreprocessMetadata(T1 & inDataSrc, T2 & inDataDest, isize_t spatialDsFactor, isize_t temporalDsFactor)
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inDataSrc);

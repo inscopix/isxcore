@@ -7,6 +7,7 @@
 #include "isxImage.h"
 #include "isxTrace.h"
 #include "isxAsyncTaskResult.h"
+#include "isxMetadata.h"
 #include "isxColor.h"
 
 #include <string>
