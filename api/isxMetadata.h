@@ -244,6 +244,27 @@ namespace isx
     }
 
     template <class T>
+    std::pair<isize_t, isize_t> getPreprocessMetadata(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        isize_t spatialDsFactor = 1;
+        isize_t temporalDsFactor = 1;
+
+        if (!extraProps["idps"]["spatialDownsampling"].is_null())
+        {
+            spatialDsFactor = extraProps["idps"]["spatialDownsampling"].get<size_t>();
+        }
+        if (!extraProps["idps"]["temporalDownsampling"].is_null())
+        {
+            temporalDsFactor = extraProps["idps"]["temporalDownsampling"].get<size_t>();
+        }
+
+        return std::make_pair(spatialDsFactor, temporalDsFactor);
+    }
+
+    template <class T>
     IntegratedBasePlateType_t getIntegratedBasePlateType(T & inData)
     {
         using json = nlohmann::json;
