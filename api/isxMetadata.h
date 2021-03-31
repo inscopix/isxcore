@@ -73,8 +73,8 @@ namespace isx
         {IntegratedBasePlateType_t::IBP7, "1.0mm x 13.7mm"},
         {IntegratedBasePlateType_t::IBP8, "Prism 1.0mm x 4.3mm"},
         {IntegratedBasePlateType_t::IBP9, "Prism 1.0mm x 9.1mm"},
-        {IntegratedBasePlateType_t::IBP10, "1.0mm x 4.0mm Mouse Dorsal Striatum Camk2a"},
-        {IntegratedBasePlateType_t::IBP11, "1.0mm x 4.0mm Mouse Dorsal Striatum CAG.Flex"},
+        {IntegratedBasePlateType_t::IBP10, "Mouse Dorsal Striatum Camk2a (1.0mm x 4.0mm)"},
+        {IntegratedBasePlateType_t::IBP11, "Mouse Dorsal Striatum CAG.Flex (1.0mm x 4.0mm )"},
     };
 
     /// Struct for cell-set-specific metadata
