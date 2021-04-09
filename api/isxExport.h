@@ -4,6 +4,7 @@
 #include "isxCoreFwd.h"
 #include "isxAsyncTaskHandle.h"
 #include "isxTrace.h"
+#include "isxDataSet.h"
 
 #include <string>
 #include <map>
@@ -72,6 +73,7 @@ bool writeIMULogicalTraces(
 /// \param  inNames         The names of the traces.
 /// \param  inStatuses      The cell statuses or empty if there are no statuses.
 /// \param  inBaseTime      The 0 time, with which to write relative to.
+/// \param  intType         The data type that the trace belongs to
 /// \param  inCheckInCB     Check-in callback function that is periodically invoked
 ///                         with progress and to tell algo whether to cancel / abort.
 /// \return                 True if cancelled.
@@ -81,6 +83,7 @@ bool writeTraces(
         const std::vector<std::string> & inNames,
         const std::vector<std::string> & inStatuses,
         const Time & inBaseTime,
+        const DataSet::Type intType,
         AsyncCheckInCB_t inCheckInCB = [](float){return false;});
 
 /// Export an image to TIFF

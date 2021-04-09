@@ -231,6 +231,7 @@ bool writeTraces(
         const std::vector<std::string> & inNames,
         const std::vector<std::string> & inStatuses,
         const Time & inBaseTime,
+        const DataSet::Type inType,
         AsyncCheckInCB_t inCheckInCB)
 {
     const size_t numSegments = inTraces.size();
@@ -260,7 +261,15 @@ bool writeTraces(
 
     if (!inStatuses.empty())
     {
-        inStream << "Time(s)/Cell Status";
+        if (inType == DataSet::Type::CELLSET)
+        {
+            inStream << "Time(s)/Cell Status";
+        }
+        else if (inType == DataSet::Type::VESSELSET)
+        {
+            inStream << "Time(s)/Vessel Status";
+        }
+
         for (const auto & status : inStatuses)
         {
             inStream << ", " << status;
