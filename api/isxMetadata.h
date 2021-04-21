@@ -128,6 +128,24 @@ namespace isx
         size_t m_height;         ///< height of the data prior to motion correction
     };
 
+    struct PreprocessMetadata
+    {
+        PreprocessMetadata()
+        {
+        }
+
+        PreprocessMetadata(
+                size_t spatialDs,
+                size_t temporalDs)
+                : m_spatialDs(spatialDs)
+                , m_temporalDs(temporalDs)
+        {
+        }
+
+        size_t m_spatialDs = 1;
+        size_t m_temporalDs = 1;
+    };
+
     template <typename T>
     nlohmann::json getExtraPropertiesJSON(T & inData)
     {
@@ -244,24 +262,24 @@ namespace isx
     }
 
     template <class T>
-    std::pair<isize_t, isize_t> getPreprocessMetadata(T & inData)
+    PreprocessMetadata getPreprocessMetadata(T & inData)
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
 
-        isize_t spatialDsFactor = 1;
-        isize_t temporalDsFactor = 1;
+        PreprocessMetadata preprocessMetadata;
 
         if (!extraProps["idps"]["spatialDownsampling"].is_null())
         {
-            spatialDsFactor = extraProps["idps"]["spatialDownsampling"].get<size_t>();
+
+            preprocessMetadata.m_spatialDs = extraProps["idps"]["spatialDownsampling"].get<size_t>();
         }
         if (!extraProps["idps"]["temporalDownsampling"].is_null())
         {
-            temporalDsFactor = extraProps["idps"]["temporalDownsampling"].get<size_t>();
+            preprocessMetadata.m_temporalDs = extraProps["idps"]["temporalDownsampling"].get<size_t>();
         }
 
-        return std::make_pair(spatialDsFactor, temporalDsFactor);
+        return preprocessMetadata;
     }
 
     template <class T>
