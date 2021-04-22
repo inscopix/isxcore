@@ -492,7 +492,7 @@ namespace isx
         inDataDest->setExtraProperties(extraProps.dump());
     }
 
-    // Helper function to deal with string representations of the extra properties
+    // Helper functions to deal with string representations of the extra properties
     template <typename T>
     std::string addCellSetMetadata(T & inData, CellSetMetadata cellSetMetadata)
     {
@@ -512,6 +512,25 @@ namespace isx
         if (cellSetMetadata.m_units != CellSetUnits_t::UNAVAILABLE)
         {
             extraProps["idps"]["cellset"]["units"] = getCellSetUnitsString(cellSetMetadata.m_units);
+        }
+
+        return extraProps.dump();
+    }
+
+    template <typename T>
+    std::string addVesselSetMetadata(T & inData, VesselSetMetadata vesselSetMetadata)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        if (vesselSetMetadata.m_type != VesselSetType_t::UNAVAILABLE)
+        {
+            extraProps["idps"]["vesselset"]["type"] = getVesselSetTypeString(vesselSetMetadata.m_type);
+        }
+
+        if (vesselSetMetadata.m_units != VesselSetUnits_t::UNAVAILABLE)
+        {
+            extraProps["idps"]["vesselset"]["units"] = getVesselSetUnitsString(vesselSetMetadata.m_units);
         }
 
         return extraProps.dump();
