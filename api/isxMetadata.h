@@ -77,6 +77,22 @@ namespace isx
         {IntegratedBasePlateType_t::IBP11, "1.0mm x 4.0mm Mouse Dorsal Striatum CAG.Flex"},
     };
 
+    const std::map<IntegratedBasePlateType_t, std::pair<double, double>> integratedBasePlateToEfocusScale =
+        {
+                {IntegratedBasePlateType_t::UNAVAILABLE, std::make_pair(0,0)},
+                {IntegratedBasePlateType_t::IBP1, std::make_pair(0.672,0.812)},
+                {IntegratedBasePlateType_t::IBP2, std::make_pair(0.626,0.788)},
+                {IntegratedBasePlateType_t::IBP3, std::make_pair(0.621,0.780)},
+                {IntegratedBasePlateType_t::IBP4, std::make_pair(0.612,0.686)},
+                {IntegratedBasePlateType_t::IBP5, std::make_pair(0.733,0.796)},
+                {IntegratedBasePlateType_t::IBP6, std::make_pair(0.745,0.780)},
+                {IntegratedBasePlateType_t::IBP7, std::make_pair(0.745,0.780)},
+                {IntegratedBasePlateType_t::IBP8, std::make_pair(0.901,0.970)},
+                {IntegratedBasePlateType_t::IBP9, std::make_pair(0.901,0.982)},
+                {IntegratedBasePlateType_t::IBP10, std::make_pair(0.733,0.796)},
+                {IntegratedBasePlateType_t::IBP11, std::make_pair(0.733,0.796)},
+        };
+
     /// Struct for cell-set-specific metadata
     struct CellSetMetadata
     {
@@ -296,6 +312,29 @@ namespace isx
             return static_cast<IntegratedBasePlateType_t>(stoi(ibp));
         }
         return IntegratedBasePlateType_t::UNAVAILABLE;
+    }
+
+    template <class T>
+    double getEfocusScaling(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        uint16_t efocus = 0;
+
+        if (!extraProps["idps"]["efocus"].is_null())
+        {
+            efocus = extraProps["idps"]["efocus"].get<uint16_t>();
+        }
+
+        IntegratedBasePlateType_t integratedBasePlateType = getIntegratedBasePlateType(inData);
+        if (integratedBasePlateType == IntegratedBasePlateType_t::UNAVAILABLE) return 0;
+        std::pair<double, double> efocusData = integratedBasePlateToEfocusScale.at(integratedBasePlateType);
+
+        // Linearly interpolate the efocus scale factor
+        double efocusScaling = ((efocusData.second - efocusData.first) / 200) * (efocus) + efocusData.first;
+
+        return efocusScaling;
     }
 
     template <class T>
