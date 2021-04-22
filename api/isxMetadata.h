@@ -128,12 +128,15 @@ namespace isx
         size_t m_height;         ///< height of the data prior to motion correction
     };
 
+    /// Struct for holding pre-processing metadata
     struct PreprocessMetadata
     {
+        /// empty constructor
         PreprocessMetadata()
         {
         }
 
+        /// fully specified constructor
         PreprocessMetadata(
                 size_t spatialDs,
                 size_t temporalDs)
@@ -142,8 +145,8 @@ namespace isx
         {
         }
 
-        size_t m_spatialDs = 1;
-        size_t m_temporalDs = 1;
+        size_t m_spatialDs = 1;        ///< spatial downsampling factor
+        size_t m_temporalDs = 1;       ///< temportal downsampling factor
     };
 
     template <typename T>
