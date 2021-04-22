@@ -30,7 +30,7 @@ namespace isx
     /// \endcond doxygen chokes on enum class inside of namespace
 
     /// \cond doxygen chokes on enum class inside of namespace
-    /// Method used for generating a cell set
+    /// Units of the traces in a cell set
     enum class CellSetUnits_t
     {
         UNAVAILABLE = 0,
@@ -39,6 +39,26 @@ namespace isx
         DF,            // CNMFe (estimate of the “true” dF, i.e. temporal traces which are on the same scale of pixel intensity as the raw movie, calculated as the scaled dF divided by the average pixel intensity of the nth percentile of brightest pixels in the spatial footprint)
         SCALED_DF,     // CNMFe (average fluorescence activity of all pixels in the neuron - this is how the dF data is scaled by different pixels in the ROI)
         DF_OVER_NOISE  // CNMFe (trace divided by its estimate noise level)
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Type of data stored in a vessel set
+    enum class VesselSetType_t
+    {
+        UNAVAILABLE = 0,
+        VESSEL_DIAMETER,
+        RBC_VELOCITY,
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Units of the traces in a vessel set
+    enum class VesselSetUnits_t
+    {
+        UNAVAILABLE = 0,
+        PIXELS,
+        MICRONS
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -99,6 +119,27 @@ namespace isx
         CellSetMethod_t  m_method = CellSetMethod_t::UNAVAILABLE;  ///< method used to generate the cell set
         CellSetType_t  m_type = CellSetType_t::UNAVAILABLE;        ///< type of footprints in the cell set
         CellSetUnits_t  m_units = CellSetUnits_t::UNAVAILABLE;     ///< units of the traces in the cell set
+    };
+
+    /// Struct for vessel-set-specific metadata
+    struct VesselSetMetadata
+    {
+        /// empty constructor
+        VesselSetMetadata()
+        {
+        }
+
+        /// fully specified constructor
+        VesselSetMetadata(
+            const VesselSetType_t type,
+            const VesselSetUnits_t units)
+            : m_type(type)
+            , m_units(units)
+        {
+        }
+
+        VesselSetType_t  m_type = VesselSetType_t::UNAVAILABLE;       ///< type of data stored in the vessel set
+        VesselSetUnits_t m_units = VesselSetUnits_t::UNAVAILABLE;     ///< units of the traces in the vessel set
     };
 
     /// Struct for holding pre-motion-correction metadata
@@ -196,6 +237,36 @@ namespace isx
         }
     }
 
+    inline std::string getVesselSetTypeString(VesselSetType_t vesselSetType)
+    {
+        switch(vesselSetType)
+        {
+            case VesselSetType_t::VESSEL_DIAMETER:
+                return "vessel diameter";
+            case VesselSetType_t::RBC_VELOCITY:
+                return "red blood cell velocity";
+            case VesselSetType_t::UNAVAILABLE:
+                return "";
+            default:
+                return "";
+        }
+    }
+
+    inline std::string getVesselSetUnitsString(VesselSetUnits_t vesselSetUnits)
+    {
+        switch(vesselSetUnits)
+        {
+            case VesselSetUnits_t::PIXELS:
+                return "pixels";
+            case VesselSetUnits_t::MICRONS:
+                return "microns";
+            case VesselSetUnits_t::UNAVAILABLE:
+                return "";
+            default:
+                return "";
+        }
+    }
+
     template <class T>
     CellSetMethod_t getCellSetMethod(T & inData)
     {
@@ -241,6 +312,34 @@ namespace isx
             if (method == "dF over noise") return CellSetUnits_t::DF_OVER_NOISE;
         }
         return CellSetUnits_t::UNAVAILABLE;
+    }
+
+    template <class T>
+    VesselSetType_t getVesselSetType(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["type"].is_null())
+        {
+            std::string method = extraProps["idps"]["vesselset"]["type"].get<std::string>();
+            if (method == "vessel diameter") return VesselSetType_t::VESSEL_DIAMETER;
+            if (method == "red blood cell velocity") return VesselSetType_t::RBC_VELOCITY;
+        }
+        return VesselSetType_t::UNAVAILABLE;
+    }
+
+    template <class T>
+    VesselSetUnits_t getVesselSetUnits(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["units"].is_null())
+        {
+            std::string method = extraProps["idps"]["vesselset"]["units"].get<std::string>();
+            if (method == "pixels") return VesselSetUnits_t::PIXELS;
+            if (method == "microns") return VesselSetUnits_t::MICRONS;
+        }
+        return VesselSetUnits_t::UNAVAILABLE;
     }
 
     template <class T>
@@ -309,6 +408,33 @@ namespace isx
         setCellSetMethod(inData, cellSetMetadata.m_method);
         setCellSetType(inData, cellSetMetadata.m_type);
         setCellSetUnits(inData, cellSetMetadata.m_units);
+    }
+
+    template <typename T>
+    void setVesselSetType(T & inData, VesselSetType_t vesselSetType)
+    {
+        if (vesselSetType == VesselSetType_t::UNAVAILABLE) return;
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["type"] = getVesselSetTypeString(vesselSetType);
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
+    void setVesselSetUnits(T & inData, VesselSetUnits_t vesselSetUnits)
+    {
+        if (vesselSetUnits == VesselSetUnits_t::UNAVAILABLE) return;
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["units"] = getVesselSetUnitsString(vesselSetUnits);
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
+    void setVesselSetMetadata(T & inData, VesselSetMetadata vesselSetMetadata)
+    {
+        setVesselSetType(inData, vesselSetMetadata.m_type);
+        setVesselSetUnits(inData, vesselSetMetadata.m_units);
     }
 
     template <typename T>
