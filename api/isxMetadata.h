@@ -55,8 +55,12 @@ namespace isx
     /// Units of the traces in a vessel set
     enum class VesselSetUnits_t
     {
+        // units used for vessel diameter
         PIXELS = 0,
-        MICRONS
+        MICRONS,
+        // units used for rbc velocity
+        PIXELS_PER_SECOND,
+        MICRONS_PER_SECOND
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -256,6 +260,10 @@ namespace isx
                 return "pixels";
             case VesselSetUnits_t::MICRONS:
                 return "microns";
+            case VesselSetUnits_t::PIXELS_PER_SECOND:
+                return "pixels per second";
+            case VesselSetUnits_t::MICRONS_PER_SECOND:
+                return "microns per second";
             default:
                 return "";
         }
@@ -342,6 +350,14 @@ namespace isx
             else if (method == "microns")
             {
                 return VesselSetUnits_t::MICRONS;
+            }
+            else if (method == "pixels per second")
+            {
+                return VesselSetUnits_t::PIXELS_PER_SECOND;
+            }
+            else if (method == "microns per second")
+            {
+                return VesselSetUnits_t::MICRONS_PER_SECOND;
             }
         }
     }
