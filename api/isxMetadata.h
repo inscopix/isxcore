@@ -46,8 +46,7 @@ namespace isx
     /// Type of data stored in a vessel set
     enum class VesselSetType_t
     {
-        UNAVAILABLE = 0,
-        VESSEL_DIAMETER,
+        VESSEL_DIAMETER = 0,
         RBC_VELOCITY,
     };
     /// \endcond doxygen chokes on enum class inside of namespace
@@ -56,8 +55,7 @@ namespace isx
     /// Units of the traces in a vessel set
     enum class VesselSetUnits_t
     {
-        UNAVAILABLE = 0,
-        PIXELS,
+        PIXELS = 0,
         MICRONS
     };
     /// \endcond doxygen chokes on enum class inside of namespace
@@ -138,8 +136,8 @@ namespace isx
         {
         }
 
-        VesselSetType_t  m_type = VesselSetType_t::UNAVAILABLE;       ///< type of data stored in the vessel set
-        VesselSetUnits_t m_units = VesselSetUnits_t::UNAVAILABLE;     ///< units of the traces in the vessel set
+        VesselSetType_t  m_type;    ///< type of data stored in the vessel set
+        VesselSetUnits_t m_units;    ///< units of the traces in the vessel set
     };
 
     /// Struct for holding pre-motion-correction metadata
@@ -245,8 +243,6 @@ namespace isx
                 return "vessel diameter";
             case VesselSetType_t::RBC_VELOCITY:
                 return "red blood cell velocity";
-            case VesselSetType_t::UNAVAILABLE:
-                return "";
             default:
                 return "";
         }
@@ -260,8 +256,6 @@ namespace isx
                 return "pixels";
             case VesselSetUnits_t::MICRONS:
                 return "microns";
-            case VesselSetUnits_t::UNAVAILABLE:
-                return "";
             default:
                 return "";
         }
@@ -322,10 +316,15 @@ namespace isx
         if (!extraProps["idps"]["vesselset"]["type"].is_null())
         {
             std::string method = extraProps["idps"]["vesselset"]["type"].get<std::string>();
-            if (method == "vessel diameter") return VesselSetType_t::VESSEL_DIAMETER;
-            if (method == "red blood cell velocity") return VesselSetType_t::RBC_VELOCITY;
+            if (method == "vessel diameter")
+            {
+                return VesselSetType_t::VESSEL_DIAMETER;
+            }
+            else if (method == "red blood cell velocity")
+            {
+                return VesselSetType_t::RBC_VELOCITY;
+            }
         }
-        return VesselSetType_t::UNAVAILABLE;
     }
 
     template <class T>
@@ -336,10 +335,15 @@ namespace isx
         if (!extraProps["idps"]["vesselset"]["units"].is_null())
         {
             std::string method = extraProps["idps"]["vesselset"]["units"].get<std::string>();
-            if (method == "pixels") return VesselSetUnits_t::PIXELS;
-            if (method == "microns") return VesselSetUnits_t::MICRONS;
+            if (method == "pixels")
+            {
+                return VesselSetUnits_t::PIXELS;
+            }
+            else if (method == "microns")
+            {
+                return VesselSetUnits_t::MICRONS;
+            }
         }
-        return VesselSetUnits_t::UNAVAILABLE;
     }
 
     template <class T>
@@ -413,7 +417,6 @@ namespace isx
     template <typename T>
     void setVesselSetType(T & inData, VesselSetType_t vesselSetType)
     {
-        if (vesselSetType == VesselSetType_t::UNAVAILABLE) return;
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
         extraProps["idps"]["vesselset"]["type"] = getVesselSetTypeString(vesselSetType);
@@ -423,7 +426,6 @@ namespace isx
     template <typename T>
     void setVesselSetUnits(T & inData, VesselSetUnits_t vesselSetUnits)
     {
-        if (vesselSetUnits == VesselSetUnits_t::UNAVAILABLE) return;
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
         extraProps["idps"]["vesselset"]["units"] = getVesselSetUnitsString(vesselSetUnits);
@@ -522,17 +524,8 @@ namespace isx
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
-
-        if (vesselSetMetadata.m_type != VesselSetType_t::UNAVAILABLE)
-        {
-            extraProps["idps"]["vesselset"]["type"] = getVesselSetTypeString(vesselSetMetadata.m_type);
-        }
-
-        if (vesselSetMetadata.m_units != VesselSetUnits_t::UNAVAILABLE)
-        {
-            extraProps["idps"]["vesselset"]["units"] = getVesselSetUnitsString(vesselSetMetadata.m_units);
-        }
-
+        extraProps["idps"]["vesselset"]["type"] = getVesselSetTypeString(vesselSetMetadata.m_type);
+        extraProps["idps"]["vesselset"]["units"] = getVesselSetUnitsString(vesselSetMetadata.m_units);
         return extraProps.dump();
     }
 
