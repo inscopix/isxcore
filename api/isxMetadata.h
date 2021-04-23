@@ -77,7 +77,9 @@ namespace isx
         {IntegratedBasePlateType_t::IBP11, "1.0mm x 4.0mm Mouse Dorsal Striatum CAG.Flex"},
     };
 
-    const std::map<IntegratedBasePlateType_t, std::pair<double, double>> integratedBasePlateToEfocusScale =
+    /// Scaling is dependant upon efocus and the integrated base plate type. We store a mapping
+    /// from the integrated base plate type to the microns/pixels scaling ratio at 0 and 200 efocus.
+    const std::map<IntegratedBasePlateType_t, std::pair<double, double>> integratedBasePlateToScaling=
         {
                 {IntegratedBasePlateType_t::UNAVAILABLE, std::make_pair(0,0)},
                 {IntegratedBasePlateType_t::IBP1, std::make_pair(0.672,0.812)},
@@ -329,7 +331,7 @@ namespace isx
 
         IntegratedBasePlateType_t integratedBasePlateType = getIntegratedBasePlateType(inData);
         if (integratedBasePlateType == IntegratedBasePlateType_t::UNAVAILABLE) return 0;
-        std::pair<double, double> efocusData = integratedBasePlateToEfocusScale.at(integratedBasePlateType);
+        std::pair<double, double> efocusData = integratedBasePlateToScaling.at(integratedBasePlateType);
 
         // Linearly interpolate the efocus scale factor
         double efocusScaling = ((efocusData.second - efocusData.first) / 200) * (efocus) + efocusData.first;
