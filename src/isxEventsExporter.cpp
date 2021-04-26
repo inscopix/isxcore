@@ -189,7 +189,7 @@ runEventsExporter(
 
         try
         {
-            cancelled = writeTraces(strm, traces, cellNames, {}, baseTime, tracesCheckInCB);
+            cancelled = writeTraces(strm, traces, cellNames, {}, baseTime, DataSet::Type::EVENTS, tracesCheckInCB);
         }
         catch (...)
         {

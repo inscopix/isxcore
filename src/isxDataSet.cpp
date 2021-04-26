@@ -817,6 +817,7 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                 acqInfo["channel"] = channel->get<std::string>();
             }
 
+            // cell set metadata
             const auto cellset = idps->find("cellset");
             if (cellset != idps->end())
             {
@@ -830,6 +831,23 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                 if (cellSetUnits != cellset->end())
                 {
                     acqInfo["Trace Units"] = cellSetUnits->get<std::string>();
+                }
+            }
+
+            // vessel set metadata
+            const auto vesselset = idps->find("vesselset");
+            if (vesselset != idps->end())
+            {
+                const auto vesselSetType = vesselset->find("type");
+                if (vesselSetType != vesselset->end())
+                {
+                    acqInfo["Vessel Set Type"] = vesselSetType->get<std::string>();
+                }
+
+                const auto vesselSetUnits = vesselset->find("units");
+                if (vesselSetUnits != vesselset->end())
+                {
+                    acqInfo["Trace Units"] = vesselSetUnits->get<std::string>();
                 }
             }
         }
