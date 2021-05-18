@@ -545,6 +545,14 @@ namespace isx
         integratedBasePlateString.insert(0, zeros);
 
         extraProps["integratedBasePlate"] = integratedBasePlateString;
+
+        // prevents the addition of a null idps tag ("idps": null)
+        // which would result in an error when parsing the file metadata
+        if (extraProps["idps"].is_null())
+        {
+            extraProps.erase("idps");
+        }
+
         inData->setExtraProperties(extraProps.dump());
     }
 
