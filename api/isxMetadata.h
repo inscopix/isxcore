@@ -420,6 +420,9 @@ namespace isx
                 return VesselSetType_t::RBC_VELOCITY;
             }
         }
+
+        // default
+        return VesselSetType_t::VESSEL_DIAMETER;
     }
 
     template <class T>
@@ -439,6 +442,9 @@ namespace isx
                 return VesselSetUnits_t::MICRONS;
             }
         }
+
+        // default
+        return VesselSetUnits_t::PIXELS;
     }
 
     template <class T>
@@ -466,6 +472,9 @@ namespace isx
                 return ProjectionType::STANDARD_DEVIATION;
             }
         }
+
+        // default
+        return ProjectionType::STANDARD_DEVIATION;
     }
 
     template <class T>
