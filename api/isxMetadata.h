@@ -61,6 +61,17 @@ namespace isx
     /// \endcond doxygen chokes on enum class inside of namespace
 
     /// \cond doxygen chokes on enum class inside of namespace
+    /// Type of projection image
+    enum class ProjectionType
+    {
+        MEAN = 0,
+        MIN,
+        MAX,
+        STANDARD_DEVIATION
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
     /// Type of integrated base plate unit used to capture data
     enum class IntegratedBasePlateType_t
     {
@@ -148,14 +159,17 @@ namespace isx
         /// fully specified constructor
         VesselSetMetadata(
             const VesselSetType_t type,
-            const VesselSetUnits_t units)
+            const VesselSetUnits_t units,
+            const ProjectionType projectionType)
             : m_type(type)
             , m_units(units)
+            , m_projectionType(projectionType)
         {
         }
 
-        VesselSetType_t  m_type;    ///< type of data stored in the vessel set
-        VesselSetUnits_t m_units;    ///< units of the traces in the vessel set
+        VesselSetType_t  m_type;        ///< type of data stored in the vessel set
+        VesselSetUnits_t m_units;       ///< units of the traces in the vessel set
+        ProjectionType m_projectionType; ///< type of projection stored in the vessel set
     };
 
     /// Struct for holding pre-motion-correction metadata
@@ -300,6 +314,23 @@ namespace isx
         }
     }
 
+    inline std::string getVesselSetProjectionTypeString(ProjectionType projectionType)
+    {
+        switch(projectionType)
+        {
+            case ProjectionType::MEAN:
+                return "mean";
+            case ProjectionType::MAX:
+                return "max";
+            case ProjectionType::MIN:
+                return "min";
+            case ProjectionType::STANDARD_DEVIATION:
+                return "standard deviation";
+            default:
+                return "";
+        }
+    }
+
     template <class T>
     CellSetMethod_t getCellSetMethod(T & inData)
     {
@@ -400,6 +431,33 @@ namespace isx
             else if (method == "microns")
             {
                 return VesselSetUnits_t::MICRONS;
+            }
+        }
+    }
+
+    template <class T>
+    ProjectionType getVesselSetProjectionType(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["projectionType"].is_null())
+        {
+            std::string projectionType = extraProps["idps"]["vesselset"]["projectionType"].get<std::string>();
+            if (projectionType == "mean")
+            {
+                return ProjectionType::MEAN;
+            }
+            else if (projectionType == "max")
+            {
+                return ProjectionType::MAX;
+            }
+            else if (projectionType == "min")
+            {
+                return ProjectionType::MIN;
+            }
+            else if (projectionType == "standard deviation")
+            {
+                return ProjectionType::STANDARD_DEVIATION;
             }
         }
     }
@@ -514,10 +572,20 @@ namespace isx
     }
 
     template <typename T>
+    void setVesselSetProjectionType(T & inData, ProjectionType projectionType)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["projectionType"] = getVesselSetProjectionTypeString(projectionType);
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
     void setVesselSetMetadata(T & inData, VesselSetMetadata vesselSetMetadata)
     {
         setVesselSetType(inData, vesselSetMetadata.m_type);
         setVesselSetUnits(inData, vesselSetMetadata.m_units);
+        setVesselSetProjectionType(inData, vesselSetMetadata.m_projectionType);
     }
 
     template <typename T>
