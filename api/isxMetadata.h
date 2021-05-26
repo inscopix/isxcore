@@ -160,16 +160,22 @@ namespace isx
         VesselSetMetadata(
             const VesselSetType_t type,
             const VesselSetUnits_t units,
-            const ProjectionType projectionType)
+            const ProjectionType projectionType,
+            const uint64_t timeWindow,
+            const uint64_t timeIncrement)
             : m_type(type)
             , m_units(units)
             , m_projectionType(projectionType)
+            , m_timeWindow(timeWindow)
+            , m_timeIncrement(timeIncrement)
         {
         }
 
-        VesselSetType_t  m_type;        ///< type of data stored in the vessel set
-        VesselSetUnits_t m_units;       ///< units of the traces in the vessel set
+        VesselSetType_t  m_type;         ///< type of data stored in the vessel set
+        VesselSetUnits_t m_units;        ///< units of the traces in the vessel set
         ProjectionType m_projectionType; ///< type of projection stored in the vessel set
+        uint64_t m_timeWindow;           ///< the length of the time window in milliseconds
+        uint64_t m_timeIncrement;        ///< the length of the time increment in milliseconds
     };
 
     /// Struct for holding pre-motion-correction metadata
@@ -463,6 +469,30 @@ namespace isx
     }
 
     template <class T>
+    uint64_t getVesselSetTimeWindow(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["timeWindow"].is_null())
+        {
+            return extraProps["idps"]["vesselset"]["timeWindow"].get<uint64_t>();
+        }
+        return 0;
+    }
+
+    template <class T>
+    uint64_t getVesselSetTimeIncrement(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["timeIncrement"].is_null())
+        {
+            return extraProps["idps"]["vesselset"]["timeIncrement"].get<uint64_t>();
+        }
+        return 0;
+    }
+
+    template <class T>
     IntegratedBasePlateType_t getIntegratedBasePlateType(T & inData)
     {
         using json = nlohmann::json;
@@ -581,11 +611,31 @@ namespace isx
     }
 
     template <typename T>
+    void setVesselSetTimeWindow(T & inData, uint64_t timeWindow)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["timeWindow"] = timeWindow;
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
+    void setVesselSetTimeIncrement(T & inData, uint64_t timeIncrement)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["timeIncrement"] = timeIncrement;
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
     void setVesselSetMetadata(T & inData, VesselSetMetadata vesselSetMetadata)
     {
         setVesselSetType(inData, vesselSetMetadata.m_type);
         setVesselSetUnits(inData, vesselSetMetadata.m_units);
         setVesselSetProjectionType(inData, vesselSetMetadata.m_projectionType);
+        setVesselSetTimeWindow(inData, vesselSetMetadata.m_timeWindow);
+        setVesselSetTimeIncrement(inData, vesselSetMetadata.m_timeIncrement);
     }
 
     template <typename T>
