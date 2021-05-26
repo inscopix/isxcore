@@ -733,6 +733,9 @@ namespace isx
         json extraProps = getExtraPropertiesJSON(inData);
         extraProps["idps"]["vesselset"]["type"] = getVesselSetTypeString(vesselSetMetadata.m_type);
         extraProps["idps"]["vesselset"]["units"] = getVesselSetUnitsString(vesselSetMetadata.m_units);
+        extraProps["idps"]["vesselset"]["projectionType"] = getVesselSetProjectionTypeString(vesselSetMetadata.m_projectionType);
+        extraProps["idps"]["vesselset"]["timeWindow"] = vesselSetMetadata.m_timeWindow;
+        extraProps["idps"]["vesselset"]["timeIncrement"] = vesselSetMetadata.m_timeIncrement;
         return extraProps.dump();
     }
 
