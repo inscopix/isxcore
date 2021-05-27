@@ -161,8 +161,8 @@ namespace isx
             const VesselSetType_t type,
             const VesselSetUnits_t units,
             const ProjectionType projectionType,
-            const uint64_t timeWindow,
-            const uint64_t timeIncrement)
+            const double timeWindow,
+            const double timeIncrement)
             : m_type(type)
             , m_units(units)
             , m_projectionType(projectionType)
@@ -174,8 +174,8 @@ namespace isx
         VesselSetType_t  m_type;         ///< type of data stored in the vessel set
         VesselSetUnits_t m_units;        ///< units of the traces in the vessel set
         ProjectionType m_projectionType; ///< type of projection stored in the vessel set
-        uint64_t m_timeWindow;           ///< the length of the time window in milliseconds
-        uint64_t m_timeIncrement;        ///< the length of the time increment in milliseconds
+        double m_timeWindow;             ///< the length of the time window in seconds
+        double m_timeIncrement;          ///< the length of the time increment in seconds
     };
 
     /// Struct for holding pre-motion-correction metadata
@@ -478,25 +478,25 @@ namespace isx
     }
 
     template <class T>
-    uint64_t getVesselSetTimeWindow(T & inData)
+    double getVesselSetTimeWindow(T & inData)
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
         if (!extraProps["idps"]["vesselset"]["timeWindow"].is_null())
         {
-            return extraProps["idps"]["vesselset"]["timeWindow"].get<uint64_t>();
+            return extraProps["idps"]["vesselset"]["timeWindow"].get<double>();
         }
         return 0;
     }
 
     template <class T>
-    uint64_t getVesselSetTimeIncrement(T & inData)
+    double getVesselSetTimeIncrement(T & inData)
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
         if (!extraProps["idps"]["vesselset"]["timeIncrement"].is_null())
         {
-            return extraProps["idps"]["vesselset"]["timeIncrement"].get<uint64_t>();
+            return extraProps["idps"]["vesselset"]["timeIncrement"].get<double>();
         }
         return 0;
     }
