@@ -61,6 +61,17 @@ namespace isx
     /// \endcond doxygen chokes on enum class inside of namespace
 
     /// \cond doxygen chokes on enum class inside of namespace
+    /// Type of projection image
+    enum class ProjectionType
+    {
+        MEAN = 0,
+        MIN,
+        MAX,
+        STANDARD_DEVIATION
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
     /// Type of integrated base plate unit used to capture data
     enum class IntegratedBasePlateType_t
     {
@@ -148,14 +159,23 @@ namespace isx
         /// fully specified constructor
         VesselSetMetadata(
             const VesselSetType_t type,
-            const VesselSetUnits_t units)
+            const VesselSetUnits_t units,
+            const ProjectionType projectionType,
+            const double timeWindow,
+            const double timeIncrement)
             : m_type(type)
             , m_units(units)
+            , m_projectionType(projectionType)
+            , m_timeWindow(timeWindow)
+            , m_timeIncrement(timeIncrement)
         {
         }
 
-        VesselSetType_t  m_type;    ///< type of data stored in the vessel set
-        VesselSetUnits_t m_units;    ///< units of the traces in the vessel set
+        VesselSetType_t  m_type;         ///< type of data stored in the vessel set
+        VesselSetUnits_t m_units;        ///< units of the traces in the vessel set
+        ProjectionType m_projectionType; ///< type of projection stored in the vessel set
+        double m_timeWindow;             ///< the length of the time window in seconds
+        double m_timeIncrement;          ///< the length of the time increment in seconds
     };
 
     /// Struct for holding pre-motion-correction metadata
@@ -300,6 +320,23 @@ namespace isx
         }
     }
 
+    inline std::string getVesselSetProjectionTypeString(ProjectionType projectionType)
+    {
+        switch(projectionType)
+        {
+            case ProjectionType::MEAN:
+                return "mean";
+            case ProjectionType::MAX:
+                return "max";
+            case ProjectionType::MIN:
+                return "min";
+            case ProjectionType::STANDARD_DEVIATION:
+                return "standard deviation";
+            default:
+                return "";
+        }
+    }
+
     template <class T>
     CellSetMethod_t getCellSetMethod(T & inData)
     {
@@ -383,6 +420,9 @@ namespace isx
                 return VesselSetType_t::RBC_VELOCITY;
             }
         }
+
+        // default
+        return VesselSetType_t::VESSEL_DIAMETER;
     }
 
     template <class T>
@@ -402,6 +442,63 @@ namespace isx
                 return VesselSetUnits_t::MICRONS;
             }
         }
+
+        // default
+        return VesselSetUnits_t::PIXELS;
+    }
+
+    template <class T>
+    ProjectionType getVesselSetProjectionType(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["projectionType"].is_null())
+        {
+            std::string projectionType = extraProps["idps"]["vesselset"]["projectionType"].get<std::string>();
+            if (projectionType == "mean")
+            {
+                return ProjectionType::MEAN;
+            }
+            else if (projectionType == "max")
+            {
+                return ProjectionType::MAX;
+            }
+            else if (projectionType == "min")
+            {
+                return ProjectionType::MIN;
+            }
+            else if (projectionType == "standard deviation")
+            {
+                return ProjectionType::STANDARD_DEVIATION;
+            }
+        }
+
+        // default
+        return ProjectionType::STANDARD_DEVIATION;
+    }
+
+    template <class T>
+    double getVesselSetTimeWindow(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["timeWindow"].is_null())
+        {
+            return extraProps["idps"]["vesselset"]["timeWindow"].get<double>();
+        }
+        return 0;
+    }
+
+    template <class T>
+    double getVesselSetTimeIncrement(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["timeIncrement"].is_null())
+        {
+            return extraProps["idps"]["vesselset"]["timeIncrement"].get<double>();
+        }
+        return 0;
     }
 
     template <class T>
@@ -514,10 +611,40 @@ namespace isx
     }
 
     template <typename T>
+    void setVesselSetProjectionType(T & inData, ProjectionType projectionType)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["projectionType"] = getVesselSetProjectionTypeString(projectionType);
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
+    void setVesselSetTimeWindow(T & inData, uint64_t timeWindow)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["timeWindow"] = timeWindow;
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
+    void setVesselSetTimeIncrement(T & inData, uint64_t timeIncrement)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["timeIncrement"] = timeIncrement;
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
     void setVesselSetMetadata(T & inData, VesselSetMetadata vesselSetMetadata)
     {
         setVesselSetType(inData, vesselSetMetadata.m_type);
         setVesselSetUnits(inData, vesselSetMetadata.m_units);
+        setVesselSetProjectionType(inData, vesselSetMetadata.m_projectionType);
+        setVesselSetTimeWindow(inData, vesselSetMetadata.m_timeWindow);
+        setVesselSetTimeIncrement(inData, vesselSetMetadata.m_timeIncrement);
     }
 
     template <typename T>
@@ -615,6 +742,9 @@ namespace isx
         json extraProps = getExtraPropertiesJSON(inData);
         extraProps["idps"]["vesselset"]["type"] = getVesselSetTypeString(vesselSetMetadata.m_type);
         extraProps["idps"]["vesselset"]["units"] = getVesselSetUnitsString(vesselSetMetadata.m_units);
+        extraProps["idps"]["vesselset"]["projectionType"] = getVesselSetProjectionTypeString(vesselSetMetadata.m_projectionType);
+        extraProps["idps"]["vesselset"]["timeWindow"] = vesselSetMetadata.m_timeWindow;
+        extraProps["idps"]["vesselset"]["timeIncrement"] = vesselSetMetadata.m_timeIncrement;
         return extraProps.dump();
     }
 
