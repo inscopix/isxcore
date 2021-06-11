@@ -27,7 +27,14 @@ readGpio(const std::string & inFileName, const std::string & inOutputIsxdDir)
     else
     {
         // If input is not an isxd file, must first convert to one.
+
+        #if ISX_OS_WIN32
+        const std::string tmpOutputDir = getDirName(inFileName);
+        const isx::GpioDataParams inputParams(tmpOutputDir, inFileName);
+        #else
         const isx::GpioDataParams inputParams(inOutputIsxdDir, inFileName);
+        #endif
+
         auto outputParams = std::make_shared<isx::GpioDataOutputParams>();
         runGpioDataImporter(inputParams, outputParams, [](float){return false;});
         if (outputParams->filenames.empty())
