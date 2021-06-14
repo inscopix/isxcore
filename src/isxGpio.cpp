@@ -26,8 +26,11 @@ readGpio(const std::string & inFileName, const std::string & inOutputIsxdDir)
     }
     else
     {
-        // If input is not an isxd file, must first convert to one.
+        // If input is not an isxd file, must first convert the gpio file to an isxd file.
 
+        // - The default directory "/tmp" only exists on unix systems (Linux, Mac), but not on Windows.
+        // - If "/tmp" is used and the user OS is Windows, we instead write the isxd file containing
+        //   the gpio traces to the same location as the input gpio file.
         #if ISX_OS_WIN32
         const std::string tmpOutputDir = getDirName(inFileName);
         const isx::GpioDataParams inputParams(tmpOutputDir, inFileName);
