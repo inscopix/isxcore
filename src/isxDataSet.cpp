@@ -761,8 +761,8 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             acqInfo["Microscope Gain"] = microscope->at("gain");
 
             const auto microscopeLed = microscope->find("led");
-            double powerLed1 = microscopeLed->at("exPower");
-            double powerLed2 = microscopeLed->at("ogPower");
+            json powerLed1 = microscopeLed->at("exPower");
+            json powerLed2 = microscopeLed->at("ogPower");
             if (isMulticolor)
             {
                 const auto dualColor = microscope->find("dualColor");
