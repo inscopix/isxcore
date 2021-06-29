@@ -417,17 +417,17 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
             }
             case DataSet::Type::IMAGE:
             {
-                if (childType == DataSet::Type::CELLSET)
+                if (childType == DataSet::Type::CELLSET || childType == DataSet::Type::VESSELSET)
                 {
                     if (!checkSeriesHasSameNumPixels(inSeries))
                     {
-                        outErrorMessage = "An image can only derive cellsets with the same number of pixels";
+                        outErrorMessage = "An image can only derive cellsets or vessel sets with the same number of pixels";
                         return false;
                     }
                 }
                 else
                 {
-                    outErrorMessage = "An image can only derive cellsets";
+                    outErrorMessage = "An image can only derive cellsets or vessel sets";
                     return false;
                 }
                 
