@@ -595,7 +595,8 @@ namespace isx
         }
 
         IntegratedBasePlateType_t integratedBasePlateType = getIntegratedBasePlateType(inData);
-        if (integratedBasePlateType == IntegratedBasePlateType_t::UNAVAILABLE) return 0;
+        if (integratedBasePlateType == IntegratedBasePlateType_t::UNAVAILABLE ||
+            integratedBasePlateType == IntegratedBasePlateType_t::CUSTOM) return 0;
         std::pair<double, double> efocusData = integratedBasePlateToScaling.at(integratedBasePlateType);
 
         // Linearly interpolate the efocus scale factor
