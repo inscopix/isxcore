@@ -541,10 +541,10 @@ namespace isx
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
-        if (!extraProps["integratedBasePlate"].is_null())
+        if (!extraProps["idps"]["integratedBasePlate"].is_null())
         {
             // read IDPS metadata
-            std::string ibp = extraProps["integratedBasePlate"].get<std::string>();
+            std::string ibp = extraProps["idps"]["integratedBasePlate"].get<std::string>();
             return static_cast<IntegratedBasePlateType_t>(stoi(ibp));
         }
         else if (!extraProps["probe"].is_null())
@@ -739,14 +739,7 @@ namespace isx
         std::string zeros(std::to_string(integratedBasePlateMap.size() - 1).size() - integratedBasePlateString.size(), '0');
         integratedBasePlateString.insert(0, zeros);
 
-        extraProps["integratedBasePlate"] = integratedBasePlateString;
-
-        // prevents the addition of a null idps tag ("idps": null)
-        // which would result in an error when parsing the file metadata
-        if (extraProps["idps"].is_null())
-        {
-            extraProps.erase("idps");
-        }
+        extraProps["idps"]["integratedBasePlate"] = integratedBasePlateString;
 
         inData->setExtraProperties(extraProps.dump());
     }
