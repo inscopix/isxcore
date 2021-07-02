@@ -76,6 +76,7 @@ namespace isx
     enum class IntegratedBasePlateType_t
     {
         UNAVAILABLE = 0,
+        CUSTOM,
         IBP1,
         IBP2,
         IBP3,
@@ -87,12 +88,17 @@ namespace isx
         IBP9,
         IBP10,
         IBP11,
+        IBP12,
+        IBP13,
+        IBP14,
+        IBP15
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
     const std::map<IntegratedBasePlateType_t, std::string> integratedBasePlateMap =
     {
         {IntegratedBasePlateType_t::UNAVAILABLE, "None"},
+        {IntegratedBasePlateType_t::CUSTOM, "Custom"},
         {IntegratedBasePlateType_t::IBP1, "0.5mm x 4.0mm"},
         {IntegratedBasePlateType_t::IBP2, "0.5mm x 6.1mm"},
         {IntegratedBasePlateType_t::IBP3, "0.5mm x 8.4mm"},
@@ -104,6 +110,10 @@ namespace isx
         {IntegratedBasePlateType_t::IBP9, "Prism 1.0mm x 9.1mm"},
         {IntegratedBasePlateType_t::IBP10, "Mouse Dorsal Striatum Camk2a (1.0mm x 4.0mm)"},
         {IntegratedBasePlateType_t::IBP11, "Mouse Dorsal Striatum CAG.Flex (1.0mm x 4.0mm )"},
+        {IntegratedBasePlateType_t::IBP12, "0.5mm x 5.6mm"},
+        {IntegratedBasePlateType_t::IBP13, "0.66mmx 7.5mm"},
+        {IntegratedBasePlateType_t::IBP14, "0.75mm x 8.65mm"},
+        {IntegratedBasePlateType_t::IBP15, "1.0mm x 11.7mm"},
     };
 
     /// Scaling is dependant upon efocus and the integrated base plate type. We store a mapping
@@ -111,6 +121,7 @@ namespace isx
     const std::map<IntegratedBasePlateType_t, std::pair<double, double>> integratedBasePlateToScaling=
         {
                 {IntegratedBasePlateType_t::UNAVAILABLE, std::make_pair(0,0)},
+                {IntegratedBasePlateType_t::CUSTOM, std::make_pair(0,0)},
                 {IntegratedBasePlateType_t::IBP1, std::make_pair(0.672,0.812)},
                 {IntegratedBasePlateType_t::IBP2, std::make_pair(0.626,0.788)},
                 {IntegratedBasePlateType_t::IBP3, std::make_pair(0.621,0.780)},
@@ -122,6 +133,30 @@ namespace isx
                 {IntegratedBasePlateType_t::IBP9, std::make_pair(0.901,0.982)},
                 {IntegratedBasePlateType_t::IBP10, std::make_pair(0.733,0.796)},
                 {IntegratedBasePlateType_t::IBP11, std::make_pair(0.733,0.796)},
+                {IntegratedBasePlateType_t::IBP12, std::make_pair(0.788,0.796)},
+                {IntegratedBasePlateType_t::IBP13, std::make_pair(0.804,0.796)},
+                {IntegratedBasePlateType_t::IBP14, std::make_pair(0.804,0.796)}, // use same scaling as 0.66mm x 7.5mm
+                {IntegratedBasePlateType_t::IBP15, std::make_pair(0.812, 0.796)},
+        };
+
+    const std::map<std::string, IntegratedBasePlateType_t> probeIdToIntegratedBasePlate=
+        {
+                {"1050-004417", IntegratedBasePlateType_t::IBP1},
+                {"1050-004415", IntegratedBasePlateType_t::IBP2},
+                {"1050-004414", IntegratedBasePlateType_t::IBP3},
+                {"1050-004413", IntegratedBasePlateType_t::IBP4},
+                {"1050-004637", IntegratedBasePlateType_t::IBP5},
+                {"1050-004416", IntegratedBasePlateType_t::IBP6},
+                {"1050-004418", IntegratedBasePlateType_t::IBP7},
+                {"1050-004419", IntegratedBasePlateType_t::IBP8},
+                {"1050-004420", IntegratedBasePlateType_t::IBP9},
+                {"1050-004474", IntegratedBasePlateType_t::IBP10},
+                {"1050-004724", IntegratedBasePlateType_t::IBP11},
+                {"1050-005441", IntegratedBasePlateType_t::IBP12},
+                {"1050-005442", IntegratedBasePlateType_t::IBP13},
+                {"1050-005443", IntegratedBasePlateType_t::IBP14},
+                {"1050-005473", IntegratedBasePlateType_t::IBP5},
+                {"1050-005475", IntegratedBasePlateType_t::IBP15},
         };
 
     /// Struct for cell-set-specific metadata
@@ -506,10 +541,42 @@ namespace isx
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
-        if (!extraProps["integratedBasePlate"].is_null())
+        if (!extraProps["idps"]["integratedBasePlate"].is_null())
         {
-            std::string ibp = extraProps["integratedBasePlate"].get<std::string>();
+            // read IDPS metadata
+            std::string ibp = extraProps["idps"]["integratedBasePlate"].get<std::string>();
             return static_cast<IntegratedBasePlateType_t>(stoi(ibp));
+        }
+        else if (!extraProps["probe"].is_null())
+        {
+            // read IDAS metadata
+            std::string name = extraProps["probe"]["name"].get<std::string>();
+            ISX_ASSERT(!name.empty());
+
+            IntegratedBasePlateType_t probeType;
+            if (name == "Custom")
+            {
+                probeType = IntegratedBasePlateType_t::CUSTOM;
+            }
+            else if (name == "None")
+            {
+                probeType = IntegratedBasePlateType_t::UNAVAILABLE;
+            }
+            else // Integrated lens
+            {
+                std::string probeId = extraProps["probe"]["id"].get<std::string>();
+                const bool probeMappingExists = probeIdToIntegratedBasePlate.find(probeId) != probeIdToIntegratedBasePlate.end();
+                ISX_ASSERT(probeMappingExists, "Failed to map IDAS probe ID " + probeId + " to an integrated base plate type in IDPS.");
+                if (probeMappingExists)
+                {
+                    probeType = probeIdToIntegratedBasePlate.at(probeId);
+                }
+                else
+                {
+                    probeType = IntegratedBasePlateType_t::UNAVAILABLE;
+                }
+            }
+            return probeType;
         }
         return IntegratedBasePlateType_t::UNAVAILABLE;
     }
@@ -528,7 +595,8 @@ namespace isx
         }
 
         IntegratedBasePlateType_t integratedBasePlateType = getIntegratedBasePlateType(inData);
-        if (integratedBasePlateType == IntegratedBasePlateType_t::UNAVAILABLE) return 0;
+        if (integratedBasePlateType == IntegratedBasePlateType_t::UNAVAILABLE ||
+            integratedBasePlateType == IntegratedBasePlateType_t::CUSTOM) return 0;
         std::pair<double, double> efocusData = integratedBasePlateToScaling.at(integratedBasePlateType);
 
         // Linearly interpolate the efocus scale factor
@@ -671,14 +739,7 @@ namespace isx
         std::string zeros(std::to_string(integratedBasePlateMap.size() - 1).size() - integratedBasePlateString.size(), '0');
         integratedBasePlateString.insert(0, zeros);
 
-        extraProps["integratedBasePlate"] = integratedBasePlateString;
-
-        // prevents the addition of a null idps tag ("idps": null)
-        // which would result in an error when parsing the file metadata
-        if (extraProps["idps"].is_null())
-        {
-            extraProps.erase("idps");
-        }
+        extraProps["idps"]["integratedBasePlate"] = integratedBasePlateString;
 
         inData->setExtraProperties(extraProps.dump());
     }
