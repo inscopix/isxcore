@@ -761,23 +761,28 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             acqInfo["Microscope Gain"] = microscope->at("gain");
 
             const auto microscopeLed = microscope->find("led");
-            json powerLed1 = microscopeLed->at("exPower");
-            json powerLed2 = microscopeLed->at("ogPower");
-            if (isMulticolor)
+            const bool microscopeLedExists = microscopeLed != microscope->end();
+            ISX_ASSERT(microscopeLedExists, "No led section within microscope metadata");
+            if (microscopeLedExists)
             {
-                const auto dualColor = microscope->find("dualColor");
-                const bool dualEnable = dualColor->at("enabled");
-
-                if (dualEnable)
+                json powerLed1 = microscopeLed->at("exPower");
+                json powerLed2 = microscopeLed->at("ogPower");
+                if (isMulticolor)
                 {
-                    powerLed2 = microscopeLed->at("exPower2");
-                }
-            }
+                    const auto dualColor = microscope->find("dualColor");
+                    const bool dualEnable = dualColor->at("enabled");
 
-            const std::string led1Name = isMulticolor ? "EX LED 1" : "EX LED";
-            const std::string led2Name = isMulticolor ? "EX LED 2" : "OG LED";
-            acqInfo["Microscope " + led1Name + " Power (mw/mm^2)"] = powerLed1;
-            acqInfo["Microscope " + led2Name + " Power (mw/mm^2)"] = powerLed2;
+                    if (dualEnable)
+                    {
+                        powerLed2 = microscopeLed->at("exPower2");
+                    }
+                }
+
+                const std::string led1Name = isMulticolor ? "EX LED 1" : "EX LED";
+                const std::string led2Name = isMulticolor ? "EX LED 2" : "OG LED";
+                acqInfo["Microscope " + led1Name + " Power (mw/mm^2)"] = powerLed1;
+                acqInfo["Microscope " + led2Name + " Power (mw/mm^2)"] = powerLed2;
+            }
 
             acqInfo["Microscope Serial Number"] = microscope->at("serial");
             acqInfo["Microscope Type"] = microscope->at("type");
