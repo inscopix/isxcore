@@ -30,7 +30,7 @@ namespace isx
     /// \endcond doxygen chokes on enum class inside of namespace
 
     /// \cond doxygen chokes on enum class inside of namespace
-    /// Method used for generating a cell set
+    /// Units of the traces in a cell set
     enum class CellSetUnits_t
     {
         UNAVAILABLE = 0,
@@ -43,10 +43,40 @@ namespace isx
     /// \endcond doxygen chokes on enum class inside of namespace
 
     /// \cond doxygen chokes on enum class inside of namespace
+    /// Type of data stored in a vessel set
+    enum class VesselSetType_t
+    {
+        VESSEL_DIAMETER = 0,
+        RBC_VELOCITY,
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Units of the traces in a vessel set
+    enum class VesselSetUnits_t
+    {
+        PIXELS = 0,
+        MICRONS
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Type of projection image
+    enum class ProjectionType
+    {
+        MEAN = 0,
+        MIN,
+        MAX,
+        STANDARD_DEVIATION
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
     /// Type of integrated base plate unit used to capture data
     enum class IntegratedBasePlateType_t
     {
         UNAVAILABLE = 0,
+        CUSTOM,
         IBP1,
         IBP2,
         IBP3,
@@ -58,12 +88,17 @@ namespace isx
         IBP9,
         IBP10,
         IBP11,
+        IBP12,
+        IBP13,
+        IBP14,
+        IBP15
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
     const std::map<IntegratedBasePlateType_t, std::string> integratedBasePlateMap =
     {
         {IntegratedBasePlateType_t::UNAVAILABLE, "None"},
+        {IntegratedBasePlateType_t::CUSTOM, "Custom"},
         {IntegratedBasePlateType_t::IBP1, "0.5mm x 4.0mm"},
         {IntegratedBasePlateType_t::IBP2, "0.5mm x 6.1mm"},
         {IntegratedBasePlateType_t::IBP3, "0.5mm x 8.4mm"},
@@ -75,7 +110,54 @@ namespace isx
         {IntegratedBasePlateType_t::IBP9, "Prism 1.0mm x 9.1mm"},
         {IntegratedBasePlateType_t::IBP10, "Mouse Dorsal Striatum Camk2a (1.0mm x 4.0mm)"},
         {IntegratedBasePlateType_t::IBP11, "Mouse Dorsal Striatum CAG.Flex (1.0mm x 4.0mm )"},
+        {IntegratedBasePlateType_t::IBP12, "0.5mm x 5.6mm"},
+        {IntegratedBasePlateType_t::IBP13, "0.66mmx 7.5mm"},
+        {IntegratedBasePlateType_t::IBP14, "0.75mm x 8.65mm"},
+        {IntegratedBasePlateType_t::IBP15, "1.0mm x 11.7mm"},
     };
+
+    /// Scaling is dependant upon efocus and the integrated base plate type. We store a mapping
+    /// from the integrated base plate type to the microns/pixels scaling ratio at 0 and 200 efocus.
+    const std::map<IntegratedBasePlateType_t, std::pair<double, double>> integratedBasePlateToScaling=
+        {
+                {IntegratedBasePlateType_t::UNAVAILABLE, std::make_pair(0,0)},
+                {IntegratedBasePlateType_t::CUSTOM, std::make_pair(0,0)},
+                {IntegratedBasePlateType_t::IBP1, std::make_pair(0.672,0.812)},
+                {IntegratedBasePlateType_t::IBP2, std::make_pair(0.626,0.788)},
+                {IntegratedBasePlateType_t::IBP3, std::make_pair(0.621,0.780)},
+                {IntegratedBasePlateType_t::IBP4, std::make_pair(0.612,0.686)},
+                {IntegratedBasePlateType_t::IBP5, std::make_pair(0.733,0.796)},
+                {IntegratedBasePlateType_t::IBP6, std::make_pair(0.745,0.780)},
+                {IntegratedBasePlateType_t::IBP7, std::make_pair(0.745,0.780)},
+                {IntegratedBasePlateType_t::IBP8, std::make_pair(0.901,0.970)},
+                {IntegratedBasePlateType_t::IBP9, std::make_pair(0.901,0.982)},
+                {IntegratedBasePlateType_t::IBP10, std::make_pair(0.733,0.796)},
+                {IntegratedBasePlateType_t::IBP11, std::make_pair(0.733,0.796)},
+                {IntegratedBasePlateType_t::IBP12, std::make_pair(0.788,0.796)},
+                {IntegratedBasePlateType_t::IBP13, std::make_pair(0.804,0.796)},
+                {IntegratedBasePlateType_t::IBP14, std::make_pair(0.804,0.796)}, // use same scaling as 0.66mm x 7.5mm
+                {IntegratedBasePlateType_t::IBP15, std::make_pair(0.812, 0.796)},
+        };
+
+    const std::map<std::string, IntegratedBasePlateType_t> probeIdToIntegratedBasePlate=
+        {
+                {"1050-004417", IntegratedBasePlateType_t::IBP1},
+                {"1050-004415", IntegratedBasePlateType_t::IBP2},
+                {"1050-004414", IntegratedBasePlateType_t::IBP3},
+                {"1050-004413", IntegratedBasePlateType_t::IBP4},
+                {"1050-004637", IntegratedBasePlateType_t::IBP5},
+                {"1050-004416", IntegratedBasePlateType_t::IBP6},
+                {"1050-004418", IntegratedBasePlateType_t::IBP7},
+                {"1050-004419", IntegratedBasePlateType_t::IBP8},
+                {"1050-004420", IntegratedBasePlateType_t::IBP9},
+                {"1050-004474", IntegratedBasePlateType_t::IBP10},
+                {"1050-004724", IntegratedBasePlateType_t::IBP11},
+                {"1050-005441", IntegratedBasePlateType_t::IBP12},
+                {"1050-005442", IntegratedBasePlateType_t::IBP13},
+                {"1050-005443", IntegratedBasePlateType_t::IBP14},
+                {"1050-005473", IntegratedBasePlateType_t::IBP5},
+                {"1050-005475", IntegratedBasePlateType_t::IBP15},
+        };
 
     /// Struct for cell-set-specific metadata
     struct CellSetMetadata
@@ -99,6 +181,36 @@ namespace isx
         CellSetMethod_t  m_method = CellSetMethod_t::UNAVAILABLE;  ///< method used to generate the cell set
         CellSetType_t  m_type = CellSetType_t::UNAVAILABLE;        ///< type of footprints in the cell set
         CellSetUnits_t  m_units = CellSetUnits_t::UNAVAILABLE;     ///< units of the traces in the cell set
+    };
+
+    /// Struct for vessel-set-specific metadata
+    struct VesselSetMetadata
+    {
+        /// empty constructor
+        VesselSetMetadata()
+        {
+        }
+
+        /// fully specified constructor
+        VesselSetMetadata(
+            const VesselSetType_t type,
+            const VesselSetUnits_t units,
+            const ProjectionType projectionType,
+            const double timeWindow,
+            const double timeIncrement)
+            : m_type(type)
+            , m_units(units)
+            , m_projectionType(projectionType)
+            , m_timeWindow(timeWindow)
+            , m_timeIncrement(timeIncrement)
+        {
+        }
+
+        VesselSetType_t  m_type;         ///< type of data stored in the vessel set
+        VesselSetUnits_t m_units;        ///< units of the traces in the vessel set
+        ProjectionType m_projectionType; ///< type of projection stored in the vessel set
+        double m_timeWindow;             ///< the length of the time window in seconds
+        double m_timeIncrement;          ///< the length of the time increment in seconds
     };
 
     /// Struct for holding pre-motion-correction metadata
@@ -126,6 +238,27 @@ namespace isx
         size_t m_topLeftY = 0;   ///< top left corner y coordinate
         size_t m_width;          ///< width of the data prior to motion correction
         size_t m_height;         ///< height of the data prior to motion correction
+    };
+
+    /// Struct for holding pre-processing metadata
+    struct PreprocessMetadata
+    {
+        /// empty constructor
+        PreprocessMetadata()
+        {
+        }
+
+        /// fully specified constructor
+        PreprocessMetadata(
+                size_t spatialDs,
+                size_t temporalDs)
+                : m_spatialDs(spatialDs)
+                , m_temporalDs(temporalDs)
+        {
+        }
+
+        size_t m_spatialDs = 1;        ///< spatial downsampling factor
+        size_t m_temporalDs = 1;       ///< temportal downsampling factor
     };
 
     template <typename T>
@@ -196,6 +329,49 @@ namespace isx
         }
     }
 
+    inline std::string getVesselSetTypeString(VesselSetType_t vesselSetType)
+    {
+        switch(vesselSetType)
+        {
+            case VesselSetType_t::VESSEL_DIAMETER:
+                return "vessel diameter";
+            case VesselSetType_t::RBC_VELOCITY:
+                return "red blood cell velocity";
+            default:
+                return "";
+        }
+    }
+
+    inline std::string getVesselSetUnitsString(VesselSetUnits_t vesselSetUnits)
+    {
+        switch(vesselSetUnits)
+        {
+            case VesselSetUnits_t::PIXELS:
+                return "pixels";
+            case VesselSetUnits_t::MICRONS:
+                return "microns";
+            default:
+                return "";
+        }
+    }
+
+    inline std::string getVesselSetProjectionTypeString(ProjectionType projectionType)
+    {
+        switch(projectionType)
+        {
+            case ProjectionType::MEAN:
+                return "mean";
+            case ProjectionType::MAX:
+                return "max";
+            case ProjectionType::MIN:
+                return "min";
+            case ProjectionType::STANDARD_DEVIATION:
+                return "standard deviation";
+            default:
+                return "";
+        }
+    }
+
     template <class T>
     CellSetMethod_t getCellSetMethod(T & inData)
     {
@@ -244,16 +420,189 @@ namespace isx
     }
 
     template <class T>
+    PreprocessMetadata getPreprocessMetadata(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        PreprocessMetadata preprocessMetadata;
+
+        if (!extraProps["idps"]["spatialDownsampling"].is_null()) {
+
+            preprocessMetadata.m_spatialDs = extraProps["idps"]["spatialDownsampling"].get<size_t>();
+        }
+        if (!extraProps["idps"]["temporalDownsampling"].is_null()) {
+            preprocessMetadata.m_temporalDs = extraProps["idps"]["temporalDownsampling"].get<size_t>();
+        }
+
+        return preprocessMetadata;
+    }
+
+    template <class T>
+    VesselSetType_t getVesselSetType(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["type"].is_null())
+        {
+            std::string method = extraProps["idps"]["vesselset"]["type"].get<std::string>();
+            if (method == "vessel diameter")
+            {
+                return VesselSetType_t::VESSEL_DIAMETER;
+            }
+            else if (method == "red blood cell velocity")
+            {
+                return VesselSetType_t::RBC_VELOCITY;
+            }
+        }
+
+        // default
+        return VesselSetType_t::VESSEL_DIAMETER;
+    }
+
+    template <class T>
+    VesselSetUnits_t getVesselSetUnits(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["units"].is_null())
+        {
+            std::string method = extraProps["idps"]["vesselset"]["units"].get<std::string>();
+            if (method == "pixels")
+            {
+                return VesselSetUnits_t::PIXELS;
+            }
+            else if (method == "microns")
+            {
+                return VesselSetUnits_t::MICRONS;
+            }
+        }
+
+        // default
+        return VesselSetUnits_t::PIXELS;
+    }
+
+    template <class T>
+    ProjectionType getVesselSetProjectionType(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["projectionType"].is_null())
+        {
+            std::string projectionType = extraProps["idps"]["vesselset"]["projectionType"].get<std::string>();
+            if (projectionType == "mean")
+            {
+                return ProjectionType::MEAN;
+            }
+            else if (projectionType == "max")
+            {
+                return ProjectionType::MAX;
+            }
+            else if (projectionType == "min")
+            {
+                return ProjectionType::MIN;
+            }
+            else if (projectionType == "standard deviation")
+            {
+                return ProjectionType::STANDARD_DEVIATION;
+            }
+        }
+
+        // default
+        return ProjectionType::STANDARD_DEVIATION;
+    }
+
+    template <class T>
+    double getVesselSetTimeWindow(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["timeWindow"].is_null())
+        {
+            return extraProps["idps"]["vesselset"]["timeWindow"].get<double>();
+        }
+        return 0;
+    }
+
+    template <class T>
+    double getVesselSetTimeIncrement(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["vesselset"]["timeIncrement"].is_null())
+        {
+            return extraProps["idps"]["vesselset"]["timeIncrement"].get<double>();
+        }
+        return 0;
+    }
+
+    template <class T>
     IntegratedBasePlateType_t getIntegratedBasePlateType(T & inData)
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
-        if (!extraProps["integratedBasePlate"].is_null())
+        if (!extraProps["idps"]["integratedBasePlate"].is_null())
         {
-            std::string ibp = extraProps["integratedBasePlate"].get<std::string>();
+            // read IDPS metadata
+            std::string ibp = extraProps["idps"]["integratedBasePlate"].get<std::string>();
             return static_cast<IntegratedBasePlateType_t>(stoi(ibp));
         }
+        else if (!extraProps["probe"].is_null())
+        {
+            // read IDAS metadata
+            std::string name = extraProps["probe"]["name"].get<std::string>();
+            ISX_ASSERT(!name.empty());
+
+            IntegratedBasePlateType_t probeType;
+            if (name == "Custom")
+            {
+                probeType = IntegratedBasePlateType_t::CUSTOM;
+            }
+            else if (name == "None")
+            {
+                probeType = IntegratedBasePlateType_t::UNAVAILABLE;
+            }
+            else // Integrated lens
+            {
+                std::string probeId = extraProps["probe"]["id"].get<std::string>();
+                const bool probeMappingExists = probeIdToIntegratedBasePlate.find(probeId) != probeIdToIntegratedBasePlate.end();
+                ISX_ASSERT(probeMappingExists, "Failed to map IDAS probe ID " + probeId + " to an integrated base plate type in IDPS.");
+                if (probeMappingExists)
+                {
+                    probeType = probeIdToIntegratedBasePlate.at(probeId);
+                }
+                else
+                {
+                    probeType = IntegratedBasePlateType_t::UNAVAILABLE;
+                }
+            }
+            return probeType;
+        }
         return IntegratedBasePlateType_t::UNAVAILABLE;
+    }
+
+    template <class T>
+    double getEfocusScaling(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        uint16_t efocus = 0;
+
+        if (!extraProps["idps"]["efocus"].is_null())
+        {
+            efocus = extraProps["idps"]["efocus"].get<uint16_t>();
+        }
+
+        IntegratedBasePlateType_t integratedBasePlateType = getIntegratedBasePlateType(inData);
+        if (integratedBasePlateType == IntegratedBasePlateType_t::UNAVAILABLE ||
+            integratedBasePlateType == IntegratedBasePlateType_t::CUSTOM) return 0;
+        std::pair<double, double> efocusData = integratedBasePlateToScaling.at(integratedBasePlateType);
+
+        // Linearly interpolate the efocus scale factor
+        double efocusScaling = ((efocusData.second - efocusData.first) / 200) * (efocus) + efocusData.first;
+
+        return efocusScaling;
     }
 
     template <class T>
@@ -270,6 +619,29 @@ namespace isx
             preMotionCorrMetadata.m_height = extraProps["idps"]["pre_mc"]["height"].get<size_t>();
         }
         return preMotionCorrMetadata;
+    }
+
+    template <class T>
+    size_t getSpatialDownSamplingFactor(T & inData)
+    {
+        size_t downSamplingFactor = 1;
+
+        // read from IDAS
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (extraProps.find("microscope") != extraProps.end())
+        {
+            if (!extraProps["microscope"]["downSamplingFactor"].is_null())
+            {
+                downSamplingFactor *= extraProps["microscope"]["downSamplingFactor"].get<size_t>();
+            }
+        }        
+
+        // read from IDPS
+        PreprocessMetadata preProcessMetadata = getPreprocessMetadata(inData);
+        downSamplingFactor *= preProcessMetadata.m_spatialDs;
+
+        return downSamplingFactor;
     }
 
     // Setters
@@ -312,6 +684,61 @@ namespace isx
     }
 
     template <typename T>
+    void setVesselSetType(T & inData, VesselSetType_t vesselSetType)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["type"] = getVesselSetTypeString(vesselSetType);
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
+    void setVesselSetUnits(T & inData, VesselSetUnits_t vesselSetUnits)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["units"] = getVesselSetUnitsString(vesselSetUnits);
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
+    void setVesselSetProjectionType(T & inData, ProjectionType projectionType)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["projectionType"] = getVesselSetProjectionTypeString(projectionType);
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
+    void setVesselSetTimeWindow(T & inData, uint64_t timeWindow)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["timeWindow"] = timeWindow;
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
+    void setVesselSetTimeIncrement(T & inData, uint64_t timeIncrement)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["timeIncrement"] = timeIncrement;
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <typename T>
+    void setVesselSetMetadata(T & inData, VesselSetMetadata vesselSetMetadata)
+    {
+        setVesselSetType(inData, vesselSetMetadata.m_type);
+        setVesselSetUnits(inData, vesselSetMetadata.m_units);
+        setVesselSetProjectionType(inData, vesselSetMetadata.m_projectionType);
+        setVesselSetTimeWindow(inData, vesselSetMetadata.m_timeWindow);
+        setVesselSetTimeIncrement(inData, vesselSetMetadata.m_timeIncrement);
+    }
+
+    template <typename T>
     void setPreMotionCorrMetadata(T & inData, PreMotionCorrMetadata preMotionCorrMetadata)
     {
         using json = nlohmann::json;
@@ -335,7 +762,8 @@ namespace isx
         std::string zeros(std::to_string(integratedBasePlateMap.size() - 1).size() - integratedBasePlateString.size(), '0');
         integratedBasePlateString.insert(0, zeros);
 
-        extraProps["integratedBasePlate"] = integratedBasePlateString;
+        extraProps["idps"]["integratedBasePlate"] = integratedBasePlateString;
+
         inData->setExtraProperties(extraProps.dump());
     }
 
@@ -366,7 +794,7 @@ namespace isx
         inDataDest->setExtraProperties(extraProps.dump());
     }
 
-    // Helper function to deal with string representations of the extra properties
+    // Helper functions to deal with string representations of the extra properties
     template <typename T>
     std::string addCellSetMetadata(T & inData, CellSetMetadata cellSetMetadata)
     {
@@ -388,6 +816,19 @@ namespace isx
             extraProps["idps"]["cellset"]["units"] = getCellSetUnitsString(cellSetMetadata.m_units);
         }
 
+        return extraProps.dump();
+    }
+
+    template <typename T>
+    std::string addVesselSetMetadata(T & inData, VesselSetMetadata vesselSetMetadata)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        extraProps["idps"]["vesselset"]["type"] = getVesselSetTypeString(vesselSetMetadata.m_type);
+        extraProps["idps"]["vesselset"]["units"] = getVesselSetUnitsString(vesselSetMetadata.m_units);
+        extraProps["idps"]["vesselset"]["projectionType"] = getVesselSetProjectionTypeString(vesselSetMetadata.m_projectionType);
+        extraProps["idps"]["vesselset"]["timeWindow"] = vesselSetMetadata.m_timeWindow;
+        extraProps["idps"]["vesselset"]["timeIncrement"] = vesselSetMetadata.m_timeIncrement;
         return extraProps.dump();
     }
 

@@ -668,6 +668,7 @@ DataSet::readMetaData()
     {
         const SpGpio_t gpio = readGpio(m_fileName);
         m_timingInfo = gpio->getTimingInfo();
+        m_extraProps = gpio->getExtraProperties();
 
         // Store magnetometer timing info for metadata
         if (m_type == Type::IMU)
@@ -761,10 +762,28 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             acqInfo["Microscope Gain"] = microscope->at("gain");
 
             const auto microscopeLed = microscope->find("led");
-            const std::string led1Name = isMulticolor ? "EX LED 1" : "EX LED";
-            const std::string led2Name = isMulticolor ? "EX LED 2" : "OG LED";
-            acqInfo["Microscope " + led1Name + " Power (mw/mm^2)"] = microscopeLed->at("exPower");
-            acqInfo["Microscope " + led2Name + " Power (mw/mm^2)"] = microscopeLed->at("ogPower");
+            const bool microscopeLedExists = microscopeLed != microscope->end();
+            ISX_ASSERT(microscopeLedExists, "No led section within microscope metadata");
+            if (microscopeLedExists)
+            {
+                json powerLed1 = microscopeLed->at("exPower");
+                json powerLed2 = microscopeLed->at("ogPower");
+                if (isMulticolor)
+                {
+                    const auto dualColor = microscope->find("dualColor");
+                    const bool dualEnable = dualColor->at("enabled");
+
+                    if (dualEnable)
+                    {
+                        powerLed2 = microscopeLed->at("exPower2");
+                    }
+                }
+
+                const std::string led1Name = isMulticolor ? "EX LED 1" : "EX LED";
+                const std::string led2Name = isMulticolor ? "EX LED 2" : "OG LED";
+                acqInfo["Microscope " + led1Name + " Power (mw/mm^2)"] = powerLed1;
+                acqInfo["Microscope " + led2Name + " Power (mw/mm^2)"] = powerLed2;
+            }
 
             acqInfo["Microscope Serial Number"] = microscope->at("serial");
             acqInfo["Microscope Type"] = microscope->at("type");
@@ -817,6 +836,7 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                 acqInfo["channel"] = channel->get<std::string>();
             }
 
+            // cell set metadata
             const auto cellset = idps->find("cellset");
             if (cellset != idps->end())
             {
@@ -830,6 +850,23 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                 if (cellSetUnits != cellset->end())
                 {
                     acqInfo["Trace Units"] = cellSetUnits->get<std::string>();
+                }
+            }
+
+            // vessel set metadata
+            const auto vesselset = idps->find("vesselset");
+            if (vesselset != idps->end())
+            {
+                const auto vesselSetType = vesselset->find("type");
+                if (vesselSetType != vesselset->end())
+                {
+                    acqInfo["Vessel Set Type"] = vesselSetType->get<std::string>();
+                }
+
+                const auto vesselSetUnits = vesselset->find("units");
+                if (vesselSetUnits != vesselset->end())
+                {
+                    acqInfo["Trace Units"] = vesselSetUnits->get<std::string>();
                 }
             }
         }
