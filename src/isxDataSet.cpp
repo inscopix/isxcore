@@ -668,6 +668,7 @@ DataSet::readMetaData()
     {
         const SpGpio_t gpio = readGpio(m_fileName);
         m_timingInfo = gpio->getTimingInfo();
+        m_extraProps = gpio->getExtraProperties();
 
         // Store magnetometer timing info for metadata
         if (m_type == Type::IMU)
