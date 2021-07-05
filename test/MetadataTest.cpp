@@ -143,7 +143,7 @@
 //     isx::CoreShutdown();
 // }
 
-TEST_CASE("IntegratedBasePlate-Set")
+TEST_CASE("IntegratedBasePlate-Set", "[core]")
 {
     isx::CoreInitialize();
 
@@ -201,5 +201,48 @@ TEST_CASE("IntegratedBasePlate-Set")
     }
 
     std::remove(tmpFilePath.c_str());
+    isx::CoreShutdown();
+}
+
+TEST_CASE("SpatialDownSamplingFactor", "[core]")
+{
+    isx::CoreInitialize();
+
+    SECTION("No Downsampling")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/metadata/spatialDownSamplingFactor_none.isxd";
+        const isx::SpMovie_t movie = isx::readMovie(filePath);
+        
+        size_t spatialDs = isx::getSpatialDownSamplingFactor(movie);
+        REQUIRE(spatialDs == 1);
+    }
+
+    SECTION("IDPS Downsampling Factor of 2")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/metadata/spatialDownSamplingFactor_idps2.isxd";
+        const isx::SpMovie_t movie = isx::readMovie(filePath);
+        
+        size_t spatialDs = isx::getSpatialDownSamplingFactor(movie);
+        REQUIRE(spatialDs == 2);
+    }
+
+    SECTION("IDAS Downsampling Factor of 2")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/metadata/spatialDownSamplingFactor_idas2.isxd";
+        const isx::SpMovie_t movie = isx::readMovie(filePath);
+        
+        size_t spatialDs = isx::getSpatialDownSamplingFactor(movie);
+        REQUIRE(spatialDs == 2);
+    }
+
+    SECTION("IDAS and IDPS Downsampling Factors of 2")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/metadata/spatialDownSamplingFactor_idas2_idps2.isxd";
+        const isx::SpMovie_t movie = isx::readMovie(filePath);
+        
+        size_t spatialDs = isx::getSpatialDownSamplingFactor(movie);
+        REQUIRE(spatialDs == 4);
+    }
+
     isx::CoreShutdown();
 }

@@ -621,6 +621,29 @@ namespace isx
         return preMotionCorrMetadata;
     }
 
+    template <class T>
+    size_t getSpatialDownSamplingFactor(T & inData)
+    {
+        size_t downSamplingFactor = 1;
+
+        // read from IDAS
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (extraProps.find("microscope") != extraProps.end())
+        {
+            if (!extraProps["microscope"]["downSamplingFactor"].is_null())
+            {
+                downSamplingFactor *= extraProps["microscope"]["downSamplingFactor"].get<size_t>();
+            }
+        }        
+
+        // read from IDPS
+        PreprocessMetadata preProcessMetadata = getPreprocessMetadata(inData);
+        downSamplingFactor *= preProcessMetadata.m_spatialDs;
+
+        return downSamplingFactor;
+    }
+
     // Setters
     template <typename T>
     void setCellSetMethod(T & inData, CellSetMethod_t cellSetMethod)
