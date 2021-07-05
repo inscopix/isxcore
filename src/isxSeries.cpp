@@ -368,7 +368,24 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
                         return false;
                     }
 
-                    if (!checkSeriesIsTemporallyContained(inSeries))
+                    // Note: A vessel set samples a movie in time windows.
+                    // The data points in a vessel set occur at the mid frame of each time window.
+                    // This causes the first data point of a vessel set to occur after the start of a movie,
+                    // and the last data point of a vessel set to occur before the end of the movie,
+                    // however the duration of the last data point may extend past the end of the movie.
+                    const std::vector<DataSet *> & thisDss = getDataSets();
+                    ISX_ASSERT(thisDss.size() > 0);
+                    const Time thisStart = thisDss.front()->getTimingInfo().getStart();
+                    const Time thisEnd = thisDss.back()->getTimingInfo().getEnd();
+
+                    const std::vector<DataSet *> & childDss = inSeries->getDataSets();
+                    ISX_ASSERT(childDss.size() > 0);
+                    const Time childStart = childDss.front()->getTimingInfo().getStart();
+
+                    // Calculate the start of the last data point and use this as the end time.
+                    const Time childLastFrameStart = childDss.front()->getTimingInfo().getEnd() - childDss.front()->getTimingInfo().getStep();
+
+                    if (!(childStart >= thisStart && childLastFrameStart <= thisEnd))
                     {
                         outErrorMessage = "A movie can only derive vesselsets that are within its time span.";
                         return false;
@@ -400,17 +417,17 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
             }
             case DataSet::Type::IMAGE:
             {
-                if (childType == DataSet::Type::CELLSET)
+                if (childType == DataSet::Type::CELLSET || childType == DataSet::Type::VESSELSET)
                 {
                     if (!checkSeriesHasSameNumPixels(inSeries))
                     {
-                        outErrorMessage = "An image can only derive cellsets with the same number of pixels";
+                        outErrorMessage = "An image can only derive cellsets or vessel sets with the same number of pixels";
                         return false;
                     }
                 }
                 else
                 {
-                    outErrorMessage = "An image can only derive cellsets";
+                    outErrorMessage = "An image can only derive cellsets or vessel sets";
                     return false;
                 }
                 

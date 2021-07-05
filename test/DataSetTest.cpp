@@ -304,5 +304,92 @@ TEST_CASE("DataSet-getMetadata", "[core][dataset]")
         checkDataset1Metadata(convertMetadataToMap(ds.getMetadata()));
     }
 
+    SECTION("nVue movie")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/acquisition_info/2021-06-02-11-24-48_video_multiplexing-channel_red-PP_001-BP-MC-TPC.isxd";
+        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, filePath, isx::HistoricalDetails());
+
+        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+
+        REQUIRE(metaData.at("Start Time") == "2021/06/02-11:24:48.679");
+        REQUIRE(metaData.at("End Time") == "2021/06/02-11:24:53.673");
+        REQUIRE(metaData.at("Duration (s)") == "4.994");
+        REQUIRE(metaData.at("Sample Rate (Hz)") == "20.024");
+        REQUIRE(metaData.at("Exposure Time (ms)") == "25");
+        REQUIRE(metaData.at("Number of Time Samples") == "100");
+        REQUIRE(metaData.at("Number of Dropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Cropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Pixels") == "461 x 398");
+        REQUIRE(metaData.at("Acquisition SW Version") == "1.5.4");
+
+        REQUIRE(metaData.at("Animal Date of Birth") == "");
+        REQUIRE(metaData.at("Animal Description") == "");
+        REQUIRE(metaData.at("Animal ID") == "");
+        REQUIRE(metaData.at("Animal Sex") == "m");
+        REQUIRE(metaData.at("Animal Species") == "");
+        REQUIRE(metaData.at("Animal Weight") == "0");
+        REQUIRE(metaData.at("Experimenter Name") == "");
+        
+        REQUIRE(metaData.at("Microscope EX LED 1 Power (mw/mm^2)") == "0.600");
+        REQUIRE(metaData.at("Microscope EX LED 2 Power (mw/mm^2)") == "0.900");
+        REQUIRE(metaData.at("Microscope Focus") == "345");
+        REQUIRE(metaData.at("Microscope Gain") == "8");
+        REQUIRE(metaData.at("Microscope Serial Number") == "11155602");
+        REQUIRE(metaData.at("Microscope Type") == "Dual Color");
+
+        REQUIRE(metaData.at("Probe Diameter (mm)") == "1");
+        REQUIRE(metaData.at("Probe Flip") == "none");
+        REQUIRE(metaData.at("Probe Length (mm)") == "4");
+        REQUIRE(metaData.at("Probe Pitch") == "0.500");
+        REQUIRE(metaData.at("Probe Rotation (degrees)") == "180");
+        REQUIRE(metaData.at("Probe Type") == "ProView DC Integrated Lens");
+
+        REQUIRE(metaData.at("Session Name") == "BF_DCMStr_IM4_20210602-111152");
+        REQUIRE(metaData.at("channel") == "red");
+        REQUIRE(metaData.at("efocus") == "240");
+    }
+
+    SECTION("nVoke 2 movie")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/acquisition_info/2021-06-28-23-45-49_video_sched_0.isxd";
+        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, filePath, isx::HistoricalDetails());
+
+        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+
+        REQUIRE(metaData.at("Start Time") == "2021/06/28-23:45:50.300");
+        REQUIRE(metaData.at("End Time") == "2021/06/28-23:45:54.155");
+        REQUIRE(metaData.at("Duration (s)") == "3.856");
+        REQUIRE(metaData.at("Sample Rate (Hz)") == "7.002");
+        REQUIRE(metaData.at("Exposure Time (ms)") == "143");
+        REQUIRE(metaData.at("Number of Time Samples") == "27");
+        REQUIRE(metaData.at("Number of Dropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Cropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Pixels") == "1280 x 800");
+        REQUIRE(metaData.at("Acquisition SW Version") == "1.5.2");
+
+        REQUIRE(metaData.at("Animal Date of Birth") == "");
+        REQUIRE(metaData.at("Animal Description") == "");
+        REQUIRE(metaData.at("Animal ID") == "");
+        REQUIRE(metaData.at("Animal Sex") == "m");
+        REQUIRE(metaData.at("Animal Species") == "");
+        REQUIRE(metaData.at("Animal Weight") == "0");
+        REQUIRE(metaData.at("Experimenter Name") == "");
+        
+        REQUIRE(metaData.at("Microscope EX LED 1 Power (mw/mm^2)") == "1.900");
+        REQUIRE(metaData.at("Microscope EX LED 2 Power (mw/mm^2)") == "0.200");
+        REQUIRE(metaData.at("Microscope Focus") == "500");
+        REQUIRE(metaData.at("Microscope Gain") == "4");
+        REQUIRE(metaData.at("Microscope Serial Number") == "11094105");
+        REQUIRE(metaData.at("Microscope Type") == "NVoke2");
+
+        REQUIRE(metaData.at("Probe Diameter (mm)") == "0.800");
+        REQUIRE(metaData.at("Probe Flip") == "h");
+        REQUIRE(metaData.at("Probe Length (mm)") == "3.900");
+        REQUIRE(metaData.at("Probe Pitch") == "0.500");
+        REQUIRE(metaData.at("Probe Rotation (degrees)") == "270");
+        REQUIRE(metaData.at("Probe Type") == "Straight Lens");
+
+        REQUIRE(metaData.at("Session Name") == "Session 20210628-164022");
+    }
     isx::CoreShutdown();
 }
