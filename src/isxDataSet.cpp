@@ -803,6 +803,10 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             acqInfo["Experimenter Name"] = personnel->at("name");
         }
 
+        // Note: Probe properties are not displayed in the metadata view because we are displaying 
+        // the integrated baseplate type at the bottom of the view, and since that 
+        // is a changeable property, seeing these values could confuse users (solves task IDPS-498).
+        // Metadata view checks for these properties by checking that the key name begins with "Probe"
         const auto probe = extraProps.find("probe");
         if (probe != extraProps.end())
         {
