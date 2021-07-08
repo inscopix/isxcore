@@ -15,6 +15,13 @@ Gpio::getExtraProperties() const
     return "null";
 }
 
+isx::DataSet::Type
+Gpio::getEventBasedFileType() const
+{
+    // Default return GPIO file type for not-implemented GPIO class
+    return isx::DataSet::Type::GPIO;
+}
+
 SpGpio_t
 readGpio(const std::string & inFileName, const std::string & inOutputIsxdDir)
 {

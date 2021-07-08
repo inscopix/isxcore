@@ -3,6 +3,7 @@
 
 #include "isxGpio.h"
 #include "isxFileTypes.h"
+#include "isxDataSet.h"
 
 #include <memory>
 
@@ -80,6 +81,9 @@ public:
 
     std::string
     getExtraProperties() const override;
+
+    DataSet::Type
+    getEventBasedFileType() const override;
 
 private:
     FileType                                          m_type;

@@ -239,4 +239,34 @@ MosaicGpio::getExtraProperties() const
     return m_file->getExtraProperties();
 }
 
+DataSet::Type
+MosaicGpio::getEventBasedFileType() const
+{
+    switch (m_type)
+    {
+        case FileType::V2:
+        {
+            return std::static_pointer_cast<isx::EventBasedFileV2>(m_file)->getDataType();
+            break;
+        }
+
+        case FileType::V1:
+        {
+            switch(std::static_pointer_cast<isx::EventBasedFileV1>(m_file)->getDataType())
+            {
+                case EventBasedFileV1::StoredData::GPIO:
+                    return DataSet::Type::GPIO;
+                    break;
+                case EventBasedFileV1::StoredData::EVENTS:
+                    return DataSet::Type::EVENTS;
+                    break;
+            }
+            break;
+        }
+    }
+
+    // If there are new implementations, default to GPIO
+    return DataSet::Type::GPIO;
+}
+
 } // namespace isx
