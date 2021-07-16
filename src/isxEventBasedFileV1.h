@@ -171,6 +171,8 @@ public:
 
     void setExtraProperties(const std::string & inProperties) override;
 
+    StoredData getDataType() const;
+
 private:
 
     /// Reads the file footer and initializes this object with that information

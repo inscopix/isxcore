@@ -437,4 +437,10 @@ EventBasedFileV1::setExtraProperties(const std::string & inProperties)
     ISX_ASSERT("Cannot set extra properties of V1 events file.");
 }
 
+EventBasedFileV1::StoredData
+EventBasedFileV1::getDataType() const
+{
+    return m_dataType;
+}
+
 } // namespace isx

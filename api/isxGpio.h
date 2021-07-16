@@ -6,6 +6,7 @@
 #include "isxTrace.h"
 #include "isxLogicalTrace.h"
 #include "isxAsyncTaskResult.h"
+#include "isxDataSet.h"
 
 #include <string>
 #include <functional>
@@ -133,6 +134,12 @@ public:
     virtual
     std::string
     getExtraProperties() const;
+
+    /// \return     Gets the data type of the event based file stored in the class.
+    ///             This is generally only useful for derived MosaicGpio classes.
+    virtual
+    DataSet::Type
+    getEventBasedFileType() const;
 
 }; // class Gpio
 

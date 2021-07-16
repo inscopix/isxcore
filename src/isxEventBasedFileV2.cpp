@@ -473,4 +473,10 @@ EventBasedFileV2::setSmallStep(bool smallStep)
     m_smallStep = smallStep;
 }
 
+DataSet::Type
+EventBasedFileV2::getDataType() const
+{
+    return m_dataType;
+}
+
 } // namespace isx

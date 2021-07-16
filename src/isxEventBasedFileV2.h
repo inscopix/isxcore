@@ -122,6 +122,8 @@ public:
 
     void setSmallStep(bool smallStep);
 
+    DataSet::Type getDataType() const;
+
 private:
 
     /// Reads the file footer and initializes this object with that information
