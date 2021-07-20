@@ -399,8 +399,8 @@ TEST_CASE("DataSet-getMetadata", "[core][dataset]")
 
         const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
 
-        REQUIRE(metaData.at("Time Increment") == "1");
-        REQUIRE(metaData.at("Time Window") == "2");
+        REQUIRE(metaData.at("Time Increment (s)") == "1");
+        REQUIRE(metaData.at("Time Window (s)") == "2");
         REQUIRE(metaData.at("Trace Units") == "pixels");
         REQUIRE(metaData.at("Vessel Set Type") == "vessel diameter");
 
