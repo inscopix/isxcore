@@ -391,5 +391,19 @@ TEST_CASE("DataSet-getMetadata", "[core][dataset]")
 
         REQUIRE(metaData.at("Session Name") == "Session 20210628-164022");
     }
+
+    SECTION("Vessel Set Acquisition Info")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/bloodflow/blood_flow_movie_1-VD_window2s_increment1s.isxd";
+        isx::DataSet ds("vesselset", isx::DataSet::Type::VESSELSET, filePath, isx::HistoricalDetails());
+
+        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+
+        REQUIRE(metaData.at("Time Increment (s)") == "1");
+        REQUIRE(metaData.at("Time Window (s)") == "2");
+        REQUIRE(metaData.at("Trace Units") == "pixels");
+        REQUIRE(metaData.at("Vessel Set Type") == "vessel diameter");
+
+    }
     isx::CoreShutdown();
 }

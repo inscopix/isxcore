@@ -872,6 +872,18 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                 {
                     acqInfo["Trace Units"] = vesselSetUnits->get<std::string>();
                 }
+                
+                const auto vesselSetTimeIncrement = vesselset->find("timeIncrement");
+                if (vesselSetTimeIncrement != vesselset->end())
+                {
+                    acqInfo["Time Increment (s)"] = vesselSetTimeIncrement->get<double>();
+                }
+
+                const auto vesselSetTimeWindow = vesselset->find("timeWindow");
+                if (vesselSetTimeWindow != vesselset->end())
+                {
+                    acqInfo["Time Window (s)"] = vesselSetTimeWindow->get<double>();
+                }
             }
         }
     }
