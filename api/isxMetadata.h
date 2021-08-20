@@ -598,18 +598,55 @@ namespace isx
     }
 
     template <class T>
+    uint16_t getEfocus(const T & inData)
+    {
+        /*
+        * Read efocus value. If not from a multiplane movie,
+        *  get focus value from microscope key
+        */
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        auto idps = extraProps.find("idps");
+        if (idps != extraProps.end())
+        {
+            auto efocus = idps->find("efocus");
+            if (efocus != idps->end())
+            {
+                return *efocus;
+            }
+        }
+
+        auto microscope = extraProps.find("microscope");
+        if (microscope != extraProps.end())
+        {
+            auto efocus = microscope->find("focus");
+            if (efocus != microscope->end())
+            {
+                return *efocus;
+            }
+        }
+
+        return 0;
+    }
+
+    template<class T>
+    std::vector<uint16_t> getEfocusSeries(const std::vector<T> & inDataSeries)
+    {
+        std::vector<uint16_t> efocusSeries;
+        for (auto & data : inDataSeries)
+        {
+            efocusSeries.push_back(getEfocus(data));
+        }
+        return efocusSeries;
+    }
+
+    template <class T>
     double getEfocusScaling(T & inData)
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
 
-        uint16_t efocus = 0;
-
-        if (!extraProps["idps"]["efocus"].is_null())
-        {
-            efocus = extraProps["idps"]["efocus"].get<uint16_t>();
-        }
-
+        uint16_t efocus = getEfocus(inData);
         IntegratedBasePlateType_t integratedBasePlateType = getIntegratedBasePlateType(inData);
         if (integratedBasePlateType == IntegratedBasePlateType_t::UNAVAILABLE ||
             integratedBasePlateType == IntegratedBasePlateType_t::CUSTOM) return 0;

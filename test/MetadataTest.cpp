@@ -246,3 +246,53 @@ TEST_CASE("SpatialDownSamplingFactor", "[core]")
 
     isx::CoreShutdown();
 }
+
+TEST_CASE("getEfocus", "[core]")
+{
+    using json = nlohmann::json;
+    isx::CoreInitialize();
+
+    SECTION("Movie with no metadata")
+    {
+        const std::string inputFilename = g_resources["unitTestDataPath"] + "/baseplate/blood_flow_movie.isxd";
+        const isx::SpMovie_t movie = isx::readMovie(inputFilename);
+
+        json expectedExtraProps;
+        expectedExtraProps["idps"] = nullptr;
+        json extraProps = isx::getExtraPropertiesJSON(movie);
+        REQUIRE(extraProps == expectedExtraProps);
+
+        uint16_t expectedEfocus = 0;
+        uint16_t efocus = isx::getEfocus(movie);
+        REQUIRE(efocus == expectedEfocus);
+    }
+
+    SECTION("Movie with idps metadata")
+    {
+        const std::string inputFilename = g_resources["unitTestDataPath"] + "/baseplate/video-efocus_0500-Part1.isxd";
+        const isx::SpMovie_t movie = isx::readMovie(inputFilename);
+
+        uint16_t expectedEfocus = 500;
+        json extraProps = isx::getExtraPropertiesJSON(movie);
+        REQUIRE(extraProps["idps"]["efocus"].get<uint16_t>() == expectedEfocus);
+
+        uint16_t efocus = isx::getEfocus(movie);
+        REQUIRE(efocus == expectedEfocus);
+    }
+
+    SECTION("Movie with idas metadata")
+    {
+        const std::string inputFilename = g_resources["unitTestDataPath"] + "/baseplate/2021-06-28-23-34-09_video_sched_0_probe_none.isxd";
+        const isx::SpMovie_t movie = isx::readMovie(inputFilename);
+
+        uint16_t expectedEfocus = 760;
+        json extraProps = isx::getExtraPropertiesJSON(movie);
+        REQUIRE(extraProps["idps"] == nullptr);
+        REQUIRE(extraProps["microscope"]["focus"].get<uint16_t>() == expectedEfocus);
+
+        uint16_t efocus = isx::getEfocus(movie);
+        REQUIRE(efocus == expectedEfocus);
+    }
+
+    isx::CoreShutdown();
+}
