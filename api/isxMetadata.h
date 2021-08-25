@@ -36,8 +36,7 @@ namespace isx
         UNAVAILABLE = 0,
         RAW,           // manual ROI and applied contours (average of raw pixel values within ROI)
         DF_OVER_F,     // PCA-ICA (DF/F)
-        DF,            // CNMFe (estimate of the “true” dF, i.e. temporal traces which are on the same scale of pixel intensity as the raw movie, calculated as the scaled dF divided by the average pixel intensity of the nth percentile of brightest pixels in the spatial footprint)
-        SCALED_DF,     // CNMFe (average fluorescence activity of all pixels in the neuron - this is how the dF data is scaled by different pixels in the ROI)
+        DF,            // CNMFe (estimate of the “true” dF, i.e. temporal traces which are on the same scale of pixel intensity as the raw movie)
         DF_OVER_NOISE  // CNMFe (trace divided by its estimate noise level)
     };
     /// \endcond doxygen chokes on enum class inside of namespace
@@ -322,8 +321,6 @@ namespace isx
                 return "dF over F";
             case CellSetUnits_t::DF:
                 return "dF";
-            case CellSetUnits_t::SCALED_DF:
-                return "scaled dF";
             case CellSetUnits_t::DF_OVER_NOISE:
                 return "dF over noise";
             case CellSetUnits_t::UNAVAILABLE:
@@ -421,7 +418,6 @@ namespace isx
             if (method == "raw") return CellSetUnits_t::RAW;
             if (method == "dF over F") return CellSetUnits_t::DF_OVER_F;
             if (method == "dF") return CellSetUnits_t::DF;
-            if (method == "scaled dF") return CellSetUnits_t::SCALED_DF;
             if (method == "dF over noise") return CellSetUnits_t::DF_OVER_NOISE;
         }
         return CellSetUnits_t::UNAVAILABLE;
