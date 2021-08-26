@@ -94,7 +94,8 @@ namespace isx
         IBP12,
         IBP13,
         IBP14,
-        IBP15
+        IBP15,
+        CRANIAL_WINDOW
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -117,6 +118,7 @@ namespace isx
         {IntegratedBasePlateType_t::IBP13, "0.66mmx 7.5mm"},
         {IntegratedBasePlateType_t::IBP14, "0.75mm x 8.65mm"},
         {IntegratedBasePlateType_t::IBP15, "1.0mm x 11.7mm"},
+        {IntegratedBasePlateType_t::CRANIAL_WINDOW, "Cranial Window"}
     };
 
     /// Scaling is dependant upon efocus and the integrated base plate type. We store a mapping
@@ -140,6 +142,7 @@ namespace isx
                 {IntegratedBasePlateType_t::IBP13, std::make_pair(0.804,0.796)},
                 {IntegratedBasePlateType_t::IBP14, std::make_pair(0.804,0.796)}, // use same scaling as 0.66mm x 7.5mm
                 {IntegratedBasePlateType_t::IBP15, std::make_pair(0.812, 0.796)},
+                {IntegratedBasePlateType_t::CRANIAL_WINDOW, std::make_pair(0.820, 0.796)},
         };
 
     const std::map<std::string, IntegratedBasePlateType_t> probeIdToIntegratedBasePlate=
@@ -161,6 +164,31 @@ namespace isx
                 {"1050-005473", IntegratedBasePlateType_t::IBP5},
                 {"1050-005475", IntegratedBasePlateType_t::IBP15},
         };
+
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Vector specifying the order the baseplates should be listed in the metadata view
+    const std::vector<IntegratedBasePlateType_t> integratedBasePlateOrder =
+    {
+        IntegratedBasePlateType_t::UNAVAILABLE,
+        IntegratedBasePlateType_t::CUSTOM,
+        IntegratedBasePlateType_t::CRANIAL_WINDOW,
+        IntegratedBasePlateType_t::IBP1,
+        IntegratedBasePlateType_t::IBP2,
+        IntegratedBasePlateType_t::IBP3,
+        IntegratedBasePlateType_t::IBP4,
+        IntegratedBasePlateType_t::IBP5,
+        IntegratedBasePlateType_t::IBP6,
+        IntegratedBasePlateType_t::IBP7,
+        IntegratedBasePlateType_t::IBP8,
+        IntegratedBasePlateType_t::IBP9,
+        IntegratedBasePlateType_t::IBP10,
+        IntegratedBasePlateType_t::IBP11,
+        IntegratedBasePlateType_t::IBP12,
+        IntegratedBasePlateType_t::IBP13,
+        IntegratedBasePlateType_t::IBP14,
+        IntegratedBasePlateType_t::IBP15,
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
 
     /// Struct for cell-set-specific metadata
     struct CellSetMetadata
@@ -573,6 +601,10 @@ namespace isx
             else if (name == "None")
             {
                 probeType = IntegratedBasePlateType_t::UNAVAILABLE;
+            }
+            else if (name == "Cranial Window")
+            {
+                probeType = IntegratedBasePlateType_t::CRANIAL_WINDOW;
             }
             else // Integrated lens
             {
