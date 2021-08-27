@@ -118,7 +118,7 @@ namespace isx
         {IntegratedBasePlateType_t::IBP13, "0.66mmx 7.5mm"},
         {IntegratedBasePlateType_t::IBP14, "0.75mm x 8.65mm"},
         {IntegratedBasePlateType_t::IBP15, "1.0mm x 11.7mm"},
-        {IntegratedBasePlateType_t::CRANIAL_WINDOW, "Cranial Window"}
+        {IntegratedBasePlateType_t::CRANIAL_WINDOW, "Cranial Window or No Lens"}
     };
 
     /// Scaling is dependant upon efocus and the integrated base plate type. We store a mapping
