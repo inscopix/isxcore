@@ -602,7 +602,7 @@ namespace isx
             {
                 probeType = IntegratedBasePlateType_t::UNAVAILABLE;
             }
-            else if (name == "Cranial Window")
+            else if (name == "Cranial Window or No Lens")
             {
                 probeType = IntegratedBasePlateType_t::CRANIAL_WINDOW;
             }
