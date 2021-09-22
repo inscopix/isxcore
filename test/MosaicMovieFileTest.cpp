@@ -375,3 +375,49 @@ TEST_CASE("MosaicMovieFileTimingInfo[MOS-1838]", "[core-internal][mosaic_movie_f
         REQUIRE(modStep == isx::DurationInSeconds::fromMicroseconds(39959));
     }
 }
+
+TEST_CASE("MosaicMovieFileFrameHeaderMetadata", "[core-internal][mosaic_movie_file]")
+{
+    isx::CoreInitialize();
+
+    SECTION("uint16 dual-color movie")
+    {
+        std::string u16MovieFileName = g_resources["unitTestDataPath"] + "/dual_color/DualColorMultiplexingMovie.isxd";
+        isx::MosaicMovieFile movie(u16MovieFileName);
+        REQUIRE(movie.isValid());
+        REQUIRE(movie.getDataType() == isx::DataType::U16);
+
+        std::unordered_map<std::string, uint64_t> actualFirstFrameMetadata = movie.readFrameHeaderMetadata(0);
+        const std::unordered_map<std::string, uint64_t> expectedFirstFrameMetadata({
+            {"led2VF", 99},
+            {"led2Power", 0},
+            {"frame_count", 8015257},
+            {"write_enable", 173},
+            {"led1VF", 15632},
+            {"efocus", 470},
+            {"led1Power", 2},
+            {"tsc", 258308031709},
+            {"color_id", 7}
+        });
+        REQUIRE(expectedFirstFrameMetadata == actualFirstFrameMetadata);
+
+        std::unordered_map<std::string, uint64_t> actualSecondFrameMetadata = movie.readFrameHeaderMetadata(1);
+        const std::unordered_map<std::string, uint64_t> expectedSecondFrameMetadata({
+            {"led2VF", 17393},
+            {"led2Power", 16},
+            {"frame_count", 8015258},
+            {"write_enable", 173},
+            {"led1VF", 12947},
+            {"efocus", 575},
+            {"led1Power", 0},
+            {"tsc", 258308048343},
+            {"color_id", 7}
+        });
+        REQUIRE(expectedSecondFrameMetadata == actualSecondFrameMetadata);
+
+        REQUIRE((actualSecondFrameMetadata.at("frame_count") - actualFirstFrameMetadata.at("frame_count")) == 1);
+        REQUIRE(actualSecondFrameMetadata.at("tsc") > actualFirstFrameMetadata.at("tsc"));
+    }
+
+    isx::CoreShutdown();
+}

@@ -10,6 +10,7 @@
 
 #include <ios>
 #include <fstream>
+#include <unordered_map>
 
 namespace isx
 {
@@ -90,6 +91,10 @@ public:
     /// \param  inFrameNumber   The index of the frame.
     /// \return                 The frame header.
     std::vector<uint16_t> readFrameHeader(const isize_t inFrameNumber);
+
+    /// \param  inFrameNumber   The index of the frame.
+    /// \return                 The frame header metadata.
+    std::unordered_map<std::string, uint64_t> readFrameHeaderMetadata(const isize_t inFrameNumber);
 
     /// \param  inFrameNumber   The index of the frame.
     /// \return                 The frame footer.
@@ -230,6 +235,22 @@ private:
 
     /// The integrated base plate name
     std::string m_integratedBasePlate;
+
+    /// The length of metadata strings
+    static constexpr size_t metadataStringLength = 4u;
+
+    /// Metadata encoded in an individual movie frame
+    enum FRAME_METADATA_MAPPING {
+        FRAME_META_COLOR_ID = 1256, // Color identifier (1 pixel)
+        FRAME_META_WE = 1257,       // Write enable (1 pixel)
+        FRAME_META_FC = 1258,       // Frame count (4 pixels)
+        FRAME_META_LED1_PWR = 1262, // LED1 power (2 pixels)
+        FRAME_META_LED1_VF = 1264,  // LED forward voltage (2 pixels)
+        FRAME_META_LED2_PWR = 1266, // LED2 power (2 pixels)
+        FRAME_META_LED2_VF = 1268,  // LED forward voltage (2 pixels)
+        FRAME_META_EFOCUS = 1270,   // Electronic focus (2 pixels)
+        FRAME_META_TSC = 1272,      // Time stamp counter (8 pixels)
+    };
 
     /// Initialize for reading and possibly writing updates.
     ///

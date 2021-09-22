@@ -89,6 +89,12 @@ MosaicMovie::getFrameHeader(const size_t inFrameNumber)
     return m_file->readFrameHeader(inFrameNumber);
 }
 
+std::unordered_map<std::string, uint64_t>
+MosaicMovie::getFrameHeaderMetadata(const size_t inFrameNumber)
+{
+    return m_file->readFrameHeaderMetadata(inFrameNumber);
+}
+
 std::vector<uint16_t>
 MosaicMovie::getFrameFooter(const size_t inFrameNumber)
 {

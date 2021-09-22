@@ -239,6 +239,60 @@ MosaicMovieFile::readFrameHeader(const isize_t inFrameNumber)
     return header;
 }
 
+std::unordered_map<std::string, uint64_t>
+MosaicMovieFile::readFrameHeaderMetadata(const isize_t inFrameNumber)
+{
+    std::unordered_map<std::string, uint64_t> headerMetadata;
+    const std::vector<uint16_t> header = readFrameHeader(inFrameNumber);
+    if (!header.empty())
+    {
+        uint16_t colorID = header[FRAME_META_COLOR_ID] >> metadataStringLength;
+
+        uint16_t writeEnable = header[FRAME_META_WE] >> metadataStringLength;
+
+        uint32_t frameCount =
+            ((header[FRAME_META_FC]     >> metadataStringLength) << 0)
+            | ((header[FRAME_META_FC+1] >> metadataStringLength) << 8)
+            | ((header[FRAME_META_FC+2] >> metadataStringLength) << 16)
+            | ((header[FRAME_META_FC+3] >> metadataStringLength) << 24);
+
+        uint16_t led1Power =
+            ((header[FRAME_META_LED1_PWR]       >> metadataStringLength) << 0)
+            | ((header[FRAME_META_LED1_PWR + 1] >> metadataStringLength) << 8);
+
+        uint16_t led1VF =
+            ((header[FRAME_META_LED1_VF]       >> metadataStringLength) << 0)
+            | ((header[FRAME_META_LED1_VF + 1] >> metadataStringLength) << 8);
+
+        uint16_t led2Power =
+            ((header[FRAME_META_LED2_PWR]       >> metadataStringLength) << 0)
+            | ((header[FRAME_META_LED2_PWR + 1] >> metadataStringLength) << 8);
+
+        uint16_t led2VF =
+            ((header[FRAME_META_LED2_VF]       >> metadataStringLength) << 0)
+            | ((header[FRAME_META_LED2_VF + 1] >> metadataStringLength) << 8);
+
+        uint16_t efocus =
+            ((header[FRAME_META_EFOCUS]       >> metadataStringLength) << 0)
+            | ((header[FRAME_META_EFOCUS + 1] >> metadataStringLength) << 8);
+
+        uint64_t tsc = readFrameTimestamp(inFrameNumber);
+
+        headerMetadata.insert({
+            {"color_id", colorID},
+            {"write_enable", writeEnable},
+            {"frame_count", frameCount},
+            {"led1Power", led1Power},
+            {"led1VF", led1VF},
+            {"led2Power", led2Power},
+            {"led2VF", led2VF},
+            {"efocus", efocus},
+            {"tsc", tsc}
+        });
+    }
+    return headerMetadata;
+}
+
 std::vector<uint16_t>
 MosaicMovieFile::readFrameFooter(const isize_t inFrameNumber)
 {

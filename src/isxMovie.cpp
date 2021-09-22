@@ -9,6 +9,12 @@ Movie::getFrameHeader(const size_t inFrameNumber)
     return std::vector<uint16_t>();
 }
 
+std::unordered_map<std::string, uint64_t>
+Movie::getFrameHeaderMetadata(const size_t inFrameNumber)
+{
+    return std::unordered_map<std::string, uint64_t>();
+}
+
 std::vector<uint16_t>
 Movie::getFrameFooter(const size_t inFrameNumber)
 {
