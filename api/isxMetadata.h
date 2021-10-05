@@ -669,7 +669,7 @@ namespace isx
     }
 
     template <class T>
-    double getEfocusScaling(T & inData)
+    double getMicronsPerPixel(T & inData)
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
@@ -681,9 +681,17 @@ namespace isx
         std::pair<double, double> efocusData = integratedBasePlateToScaling.at(integratedBasePlateType);
 
         // Linearly interpolate the efocus scale factor
-        double efocusScaling = ((efocusData.second - efocusData.first) / 200) * (efocus) + efocusData.first;
+        double micronsPerPixel = ((efocusData.second - efocusData.first) / 200) * (efocus) + efocusData.first;
 
-        return efocusScaling;
+        // Ratio must not be zero
+        if (micronsPerPixel == 0)
+        {
+            ISX_THROW(isx::Exception, "Unit ratio of microns per pixel is zero. Unable to convert between units");
+        }
+
+        // Account for spatial downsampling factor in conversion ratio
+        micronsPerPixel *= getSpatialDownSamplingFactor(inData);
+        return micronsPerPixel;
     }
 
     template <class T>
