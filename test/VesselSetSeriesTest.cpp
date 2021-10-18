@@ -45,9 +45,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
     std::memcpy((char *)v, (char *)vesselImageData, spacingInfo.getTotalNumPixels()*sizeof(float));
 
     // line endpoints
-    isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>();
-    lineEndpoints->m_p1 = isx::PointInPixels_t(0,0);
-    lineEndpoints->m_p2 = isx::PointInPixels_t(1,1);
+    isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>(isx::Contour_t{isx::PointInPixels_t(0,0), isx::PointInPixels_t(1,1)});
 
     isx::CoreInitialize();
     
@@ -275,7 +273,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
 
         isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
         isx::SpVesselLine_t vesselLineEndpoints = css->getLineEndpoints(0);
-        requireEqualLineEndpoints(vesselLineEndpoints, lineEndpoints);
+        requireEqualVesselLines(vesselLineEndpoints, lineEndpoints);
     }
 
     for (const auto & fn: filenames)

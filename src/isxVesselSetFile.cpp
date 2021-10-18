@@ -175,15 +175,15 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO, "Error seeking to vessel line endpoints for read.");
         }
 
-        int64_t x1, y1, x2, y2;
-        m_file.read(reinterpret_cast<char*>(&x1), sizeof(int64_t));
-        m_file.read(reinterpret_cast<char*>(&y1), sizeof(int64_t));
-        m_file.read(reinterpret_cast<char*>(&x2), sizeof(int64_t));
-        m_file.read(reinterpret_cast<char*>(&y2), sizeof(int64_t));
-
         SpVesselLine_t lineEndpoints = std::make_shared<VesselLine>();
-        lineEndpoints->m_p1 = isx::PointInPixels_t(x1, y1);
-        lineEndpoints->m_p2 = isx::PointInPixels_t(x2, y2);
+        size_t numPoints = 2;
+        for (size_t i = 0; i < numPoints; i++)
+        {
+            int64_t x, y;
+            m_file.read(reinterpret_cast<char*>(&x), sizeof(int64_t));
+            m_file.read(reinterpret_cast<char*>(&y), sizeof(int64_t));
+            lineEndpoints->m_contour.push_back(isx::PointInPixels_t(x, y));
+        }
 
         if (!m_file.good())
         {
@@ -251,14 +251,14 @@ namespace isx
         }
 
         // write line endpoints (x1, y1, x2, y2)
-        int64_t x1 = inLineEndpoints->m_p1.getX();
-        int64_t y1 = inLineEndpoints->m_p1.getY();
-        int64_t x2 = inLineEndpoints->m_p2.getX();
-        int64_t y2 = inLineEndpoints->m_p2.getY();
-        m_file.write(reinterpret_cast<const char*>(&x1), sizeof(int64_t));
-        m_file.write(reinterpret_cast<const char*>(&y1), sizeof(int64_t));
-        m_file.write(reinterpret_cast<const char*>(&x2), sizeof(int64_t));
-        m_file.write(reinterpret_cast<const char*>(&y2), sizeof(int64_t));
+        ISX_ASSERT(inLineEndpoints->m_contour.size() == 2);
+        for (size_t i = 0; i < inLineEndpoints->m_contour.size(); i++)
+        {
+            int64_t x = inLineEndpoints->m_contour[i].getX();
+            int64_t y = inLineEndpoints->m_contour[i].getY();
+            m_file.write(reinterpret_cast<const char*>(&x), sizeof(int64_t));
+            m_file.write(reinterpret_cast<const char*>(&y), sizeof(int64_t));
+        }
 
         // write trace
         m_file.write(reinterpret_cast<char*>(inData.getValues()), traceSizeInBytes());

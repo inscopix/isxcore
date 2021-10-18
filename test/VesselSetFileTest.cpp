@@ -58,9 +58,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     }
 
     // set line endpoints
-    isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>();
-    lineEndpoints->m_p1 = isx::PointInPixels_t(0,0);
-    lineEndpoints->m_p2 = isx::PointInPixels_t(1,1);
+    isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>(isx::Contour_t{isx::PointInPixels_t(0,0), isx::PointInPixels_t(1,1)});
 
     SECTION("Empty constructor")
     {
@@ -180,7 +178,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
         file.closeForWriting();
 
         isx::SpVesselLine_t vesselLineEndpoints = file.readLineEndpoints(0);
-        requireEqualLineEndpoints(vesselLineEndpoints, lineEndpoints);
+        requireEqualVesselLines(vesselLineEndpoints, lineEndpoints);
     }
 
     SECTION("Validate/Invalidate vessel")
@@ -251,7 +249,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
             }
 
             isx::SpVesselLine_t vesselLineEndpoints = file.readLineEndpoints(i);
-            requireEqualLineEndpoints(vesselLineEndpoints, lineEndpoints);
+            requireEqualVesselLines(vesselLineEndpoints, lineEndpoints);
         }
     }
 

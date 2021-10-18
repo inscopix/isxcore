@@ -22,12 +22,12 @@ struct VesselLine
 
 /// Constructor
 ///
-/// \param  p1     The first point of the line
-/// \param  p2     The first point of the line
-    VesselLine(PointInPixels_t p1, PointInPixels_t p2) : m_p1(p1), m_p2(p2) {}
+/// \param  contour     The points of the vessel line
+    VesselLine(Contour_t contour) : m_contour(contour) {
+        ISX_ASSERT(contour.size() == 2 || contour.size() == 4);
+    }
 
-    PointInPixels_t m_p1 = PointInPixels_t(0, 0);  ///< The first endpoint of the vessel line
-    PointInPixels_t m_p2 = PointInPixels_t(0, 0);  ///< The second endpoint of the vessel line
+    Contour_t m_contour = Contour_t();  ///< The points of the vessel line
 };
 
 using SpVesselLine_t = std::shared_ptr<VesselLine>;

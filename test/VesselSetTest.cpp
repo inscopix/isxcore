@@ -43,9 +43,7 @@ TEST_CASE("VesselSetTest", "[core]")
     }
 
     // line endpoints
-    isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>();
-    lineEndpoints->m_p1 = isx::PointInPixels_t(0,0);
-    lineEndpoints->m_p2 = isx::PointInPixels_t(1,1);
+    isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>(isx::Contour_t{isx::PointInPixels_t(0,0), isx::PointInPixels_t(1,1)});
 
     isx::CoreInitialize();
 
@@ -181,7 +179,7 @@ TEST_CASE("VesselSetTest", "[core]")
         {
             requireEqualImages(vesselSet->getImage(i), originalImage);
             requireEqualTraces(vesselSet->getTrace(i), originalTrace);
-            requireEqualLineEndpoints(vesselSet->getLineEndpoints(i), lineEndpoints);
+            requireEqualVesselLines(vesselSet->getLineEndpoints(i), lineEndpoints);
         }
     }
 
@@ -210,7 +208,7 @@ TEST_CASE("VesselSetTest", "[core]")
         {
             requireEqualImages(vesselSet->getImage(i), originalImage);
             requireEqualTraces(vesselSet->getTrace(i), originalTrace);
-             requireEqualLineEndpoints(vesselSet->getLineEndpoints(i), lineEndpoints);
+             requireEqualVesselLines(vesselSet->getLineEndpoints(i), lineEndpoints);
         }
     }
 
@@ -302,7 +300,7 @@ TEST_CASE("VesselSetTest", "[core]")
         isx::VesselSet::VesselSetGetLineEndpointsCB_t callBack = [lineEndpoints, &doneCount](isx::AsyncTaskResult<isx::SpVesselLine_t> inAsyncTaskResult)
         {
             REQUIRE(!inAsyncTaskResult.getException());
-            requireEqualLineEndpoints(inAsyncTaskResult.get(), lineEndpoints);
+            requireEqualVesselLines(inAsyncTaskResult.get(), lineEndpoints);
             ++doneCount;
         };
         for (size_t i = 0; i < 3; ++i)
