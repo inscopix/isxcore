@@ -24,13 +24,14 @@ VesselSetSimple::VesselSetSimple(const std::string & inFileName, bool enableWrit
 VesselSetSimple::VesselSetSimple(
         const std::string & inFileName,
         const TimingInfo & inTimingInfo,
-        const SpacingInfo & inSpacingInfo)
+        const SpacingInfo & inSpacingInfo,
+        const VesselSetType_t inVesselSetType)
     : m_valid(false)
     , m_traceIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_imageIoTaskTracker(new IoTaskTracker<Image>())
     , m_lineEndpointsIoTaskTracker(new IoTaskTracker<VesselLine>())
 {
-    m_file = std::make_shared<VesselSetFile>(inFileName, inTimingInfo, inSpacingInfo);
+    m_file = std::make_shared<VesselSetFile>(inFileName, inTimingInfo, inSpacingInfo, inVesselSetType);
     m_valid = true;
 }
 
@@ -338,6 +339,12 @@ SpacingInfo
 VesselSetSimple::getOriginalSpacingInfo() const
 {
     return m_file->getOriginalSpacingInfo();
+}
+
+VesselSetType_t
+VesselSetSimple::getVesselSetType() const
+{
+    return m_file->getVesselSetType();
 }
 
 } // namespace isx

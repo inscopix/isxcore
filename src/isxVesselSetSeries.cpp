@@ -360,4 +360,10 @@ namespace isx
         return m_vesselSets.front()->getOriginalSpacingInfo();
     }
 
+    VesselSetType_t
+    VesselSetSeries::getVesselSetType() const
+    {
+        return m_vesselSets.front()->getVesselSetType();
+    }
+
 } // namespace isx

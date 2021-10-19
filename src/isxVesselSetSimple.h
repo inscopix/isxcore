@@ -50,11 +50,13 @@ public:
     /// \param  inFileName      The name of the vessel set file to write.
     /// \param  inTimingInfo    The timing information of the vessel set.
     /// \param  inSpacingInfo   The spacing information of the vessel set.
+    /// \param  inVesselSetType The type of vessel set (vessel diameter or rbc velocity).
     /// \throw  isx::ExceptionFileIO    If writing the vessel set file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the vessel set data fails.
     VesselSetSimple(const std::string & inFileName,
             const TimingInfo & inTimingInfo,
-            const SpacingInfo & inSpacingInfo);
+            const SpacingInfo & inSpacingInfo,
+            const VesselSetType_t inVesselSetType);
 
     /// Destructor.
     ///
@@ -155,6 +157,9 @@ public:
 
     SpacingInfo
     getOriginalSpacingInfo() const override;
+
+    VesselSetType_t
+    getVesselSetType() const override;
 
 private:
 

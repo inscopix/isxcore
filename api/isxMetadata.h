@@ -224,20 +224,17 @@ namespace isx
 
         /// fully specified constructor
         VesselSetMetadata(
-            const VesselSetType_t type,
             const VesselSetUnits_t units,
             const ProjectionType projectionType,
             const double timeWindow,
             const double timeIncrement)
-            : m_type(type)
-            , m_units(units)
+            : m_units(units)
             , m_projectionType(projectionType)
             , m_timeWindow(timeWindow)
             , m_timeIncrement(timeIncrement)
         {
         }
 
-        VesselSetType_t  m_type;         ///< type of data stored in the vessel set
         VesselSetUnits_t m_units;        ///< units of the traces in the vessel set
         ProjectionType m_projectionType; ///< type of projection stored in the vessel set
         double m_timeWindow;             ///< the length of the time window in seconds
@@ -772,60 +769,6 @@ namespace isx
         setCellSetUnits(inData, cellSetMetadata.m_units);
     }
 
-    template <typename T>
-    void setVesselSetType(T & inData, VesselSetType_t vesselSetType)
-    {
-        using json = nlohmann::json;
-        json extraProps = getExtraPropertiesJSON(inData);
-        extraProps["idps"]["vesselset"]["type"] = getVesselSetTypeString(vesselSetType);
-        inData->setExtraProperties(extraProps.dump());
-    }
-
-    template <typename T>
-    void setVesselSetUnits(T & inData, VesselSetUnits_t vesselSetUnits)
-    {
-        using json = nlohmann::json;
-        json extraProps = getExtraPropertiesJSON(inData);
-        extraProps["idps"]["vesselset"]["units"] = getVesselSetUnitsString(vesselSetUnits);
-        inData->setExtraProperties(extraProps.dump());
-    }
-
-    template <typename T>
-    void setVesselSetProjectionType(T & inData, ProjectionType projectionType)
-    {
-        using json = nlohmann::json;
-        json extraProps = getExtraPropertiesJSON(inData);
-        extraProps["idps"]["vesselset"]["projectionType"] = getVesselSetProjectionTypeString(projectionType);
-        inData->setExtraProperties(extraProps.dump());
-    }
-
-    template <typename T>
-    void setVesselSetTimeWindow(T & inData, uint64_t timeWindow)
-    {
-        using json = nlohmann::json;
-        json extraProps = getExtraPropertiesJSON(inData);
-        extraProps["idps"]["vesselset"]["timeWindow"] = timeWindow;
-        inData->setExtraProperties(extraProps.dump());
-    }
-
-    template <typename T>
-    void setVesselSetTimeIncrement(T & inData, uint64_t timeIncrement)
-    {
-        using json = nlohmann::json;
-        json extraProps = getExtraPropertiesJSON(inData);
-        extraProps["idps"]["vesselset"]["timeIncrement"] = timeIncrement;
-        inData->setExtraProperties(extraProps.dump());
-    }
-
-    template <typename T>
-    void setVesselSetMetadata(T & inData, VesselSetMetadata vesselSetMetadata)
-    {
-        setVesselSetType(inData, vesselSetMetadata.m_type);
-        setVesselSetUnits(inData, vesselSetMetadata.m_units);
-        setVesselSetProjectionType(inData, vesselSetMetadata.m_projectionType);
-        setVesselSetTimeWindow(inData, vesselSetMetadata.m_timeWindow);
-        setVesselSetTimeIncrement(inData, vesselSetMetadata.m_timeIncrement);
-    }
 
     template <typename T>
     void setPreMotionCorrMetadata(T & inData, PreMotionCorrMetadata preMotionCorrMetadata)
@@ -909,11 +852,10 @@ namespace isx
     }
 
     template <typename T>
-    std::string addVesselSetMetadata(T & inData, VesselSetMetadata vesselSetMetadata)
+    std::string setVesselSetMetadata(T & inData, VesselSetMetadata vesselSetMetadata)
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
-        extraProps["idps"]["vesselset"]["type"] = getVesselSetTypeString(vesselSetMetadata.m_type);
         extraProps["idps"]["vesselset"]["units"] = getVesselSetUnitsString(vesselSetMetadata.m_units);
         extraProps["idps"]["vesselset"]["projectionType"] = getVesselSetProjectionTypeString(vesselSetMetadata.m_projectionType);
         extraProps["idps"]["vesselset"]["timeWindow"] = vesselSetMetadata.m_timeWindow;

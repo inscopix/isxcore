@@ -60,7 +60,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
         // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo);
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
             cs->closeForWriting();
         }
 
@@ -81,7 +81,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
         // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], tis[i], spacingInfo);
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], tis[i], spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
             cs->closeForWriting();
         }
 
@@ -108,7 +108,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
         // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfos[i]);
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfos[i], isx::VesselSetType_t::VESSEL_DIAMETER); 
             cs->closeForWriting();
         }
 
@@ -123,7 +123,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
         // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo); 
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER); 
 
             if( i == 2)
             {
@@ -150,7 +150,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
         // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], tis[i], spacingInfo);            
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], tis[i], spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);            
             cs->closeForWriting();
         }
 
@@ -172,7 +172,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
         // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], tis[i], spacingInfo);            
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], tis[i], spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);            
             cs->closeForWriting();
         }
 
@@ -189,7 +189,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
         // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo);
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
             isx::SpFTrace_t trace = std::make_shared<isx::Trace<float>>(timingInfos[i]);
             float * values = trace->getValues();
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
@@ -218,7 +218,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
         // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo);
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
             isx::SpFTrace_t trace = std::make_shared<isx::Trace<float>>(timingInfos[i]);
             float * values = trace->getValues();
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
@@ -261,7 +261,7 @@ TEST_CASE("VesselSetSeries", "[core-internal]")
         // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
-            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo);
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
             isx::SpFTrace_t trace = std::make_shared<isx::Trace<float>>(timingInfos[i]);
             float * values = trace->getValues();
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());

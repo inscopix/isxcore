@@ -10,9 +10,10 @@ namespace isx
 SpVesselSet_t writeVesselSet(
         const std::string & inFileName,
         const TimingInfo & inTimingInfo,
-        const SpacingInfo & inSpacingInfo)
+        const SpacingInfo & inSpacingInfo,
+        const VesselSetType_t inVesselSetType)
 {
-    SpVesselSet_t vs = std::make_shared<VesselSetSimple>(inFileName, inTimingInfo, inSpacingInfo);
+    SpVesselSet_t vs = std::make_shared<VesselSetSimple>(inFileName, inTimingInfo, inSpacingInfo, inVesselSetType);
     return vs;
 }
 

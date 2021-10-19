@@ -36,10 +36,12 @@ namespace isx
 
     VesselSetFile::VesselSetFile(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
-                const SpacingInfo & inSpacingInfo)
+                const SpacingInfo & inSpacingInfo,
+                const VesselSetType_t inVesselSetType)
                 : m_fileName(inFileName)
                 , m_timingInfo(inTimingInfo)
                 , m_spacingInfo(inSpacingInfo)
+                , m_vesselSetType(inVesselSetType)
     {
         m_openmode = std::ios::binary | std::ios_base::in | std::ios_base::out | std::ios::trunc;
         m_file.open(m_fileName, m_openmode);
@@ -432,19 +434,16 @@ namespace isx
                 m_extraProperties = j["extraProperties"];
             }
 
+            m_vesselSetType = (m_extraProperties["idps"]["vesselset"]["type"].get<std::string>() == "red blood cell velocity") ? 
+                                    VesselSetType_t::RBC_VELOCITY : VesselSetType_t::VESSEL_DIAMETER;
+
             if (j.find("efocusValues") != j.end())
             {
                 m_efocusValues = j["efocusValues"].get<std::vector<uint16_t>>();
             }
-            else if (m_extraProperties.find("idps") != m_extraProperties.end())
+            else if (m_extraProperties["idps"].find("efocus") != m_extraProperties["idps"].end())
             {
-                json idps = m_extraProperties["idps"];
-                ISX_LOG_DEBUG(idps.dump());
-                if (idps.find("efocus") != idps.end())
-                {
-                    ISX_LOG_DEBUG(idps["efocus"].get<uint16_t>());
-                    m_efocusValues = {idps["efocus"].get<uint16_t>()};
-                }
+                m_efocusValues = {m_extraProperties["idps"]["efocus"].get<uint16_t>()};
             }
 
             if (m_vesselActivity.empty())
@@ -500,6 +499,7 @@ namespace isx
             j["fileVersion"] = s_version;
             j["VesselActivity"] = convertVesselActivitiesToJson(m_vesselActivity);
             j["SizeGlobalVS"] = m_sizeGlobalVS;
+            saveVesselSetType();
             j["extraProperties"] = m_extraProperties;
             j["efocusValues"] = m_efocusValues;
         }
@@ -659,6 +659,12 @@ namespace isx
         }
     }
 
+    void
+    VesselSetFile::saveVesselSetType()
+    {
+        m_extraProperties["idps"]["vesselset"]["type"] = getVesselSetTypeString(m_vesselSetType);
+    }
+
     std::string
     VesselSetFile::getExtraProperties() const
     {
@@ -686,6 +692,12 @@ namespace isx
             return SpacingInfo::getDefaultForNVista3();
         }
         return SpacingInfo::getDefault();
+    }
+
+    VesselSetType_t
+    VesselSetFile::getVesselSetType() const
+    {
+        return m_vesselSetType;
     }
 
 } // namespace isx

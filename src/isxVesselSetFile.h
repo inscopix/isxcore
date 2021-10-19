@@ -44,12 +44,14 @@ public:
     /// \param  inFileName      The name of the vessel set file.
     /// \param  inTimingInfo    The timing information of the vessel set.
     /// \param  inSpacingInfo   The spacing information of the vessel set.
+    /// \param  inVesselSetType The type of the vessel set (vessel diameter or rbc velocity).
     ///
     /// \throw  isx::ExceptionFileIO    If writing the vessel set file fails.
     /// \throw  isx::ExceptionDataIO    If formatting the vessel set data fails.
     VesselSetFile(const std::string & inFileName,
                 const TimingInfo & inTimingInfo,
-                const SpacingInfo & inSpacingInfo);
+                const SpacingInfo & inSpacingInfo,
+                const VesselSetType_t inVesselSetType);
 
     /// Destructor.
     ///
@@ -178,6 +180,9 @@ public:
     SpacingInfo
     getOriginalSpacingInfo() const;
 
+    VesselSetType_t
+    getVesselSetType() const;
+
 private:
 
     /// True if the vessel set file is valid, false otherwise.
@@ -209,6 +214,8 @@ private:
 
     /// Flag indicating whether a vessel is active in this file
     VesselActivities_t m_vesselActivity;
+
+    VesselSetType_t m_vesselSetType = VesselSetType_t::VESSEL_DIAMETER;
 
     /// Efocus values for each vessel, used by Multiplane registration
     std::vector<uint16_t> m_efocusValues = {0};
@@ -276,6 +283,9 @@ private:
     /// X is the width of the number string and is automatically determined by
     /// the number of vessels.
     void replaceEmptyNames();
+
+    /// Saves the vessel set type to the metadata extra properties
+    void saveVesselSetType();
 };
 
 } // namespace isx

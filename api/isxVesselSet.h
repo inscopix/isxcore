@@ -8,6 +8,7 @@
 #include "isxTrace.h"
 #include "isxAsyncTaskResult.h"
 #include "isxColor.h"
+#include "isxMetadata.h"
 
 #include <string>
 #include <functional>
@@ -312,6 +313,11 @@ setExtraProperties(const std::string & inProperties) = 0;
 virtual
 SpacingInfo
 getOriginalSpacingInfo() const = 0;
+
+/// \return     The type of the vessel set (rbc velocity or vessel diameter)
+virtual
+VesselSetType_t
+getVesselSetType() const = 0;
 
 };
 

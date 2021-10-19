@@ -55,7 +55,7 @@ TEST_CASE("VesselSetTest", "[core]")
 
     SECTION("Write constructor")
     {
-        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo);
+        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
 
         REQUIRE(vesselSet->isValid());
         REQUIRE(vesselSet->getFileName() == fileName);
@@ -68,7 +68,7 @@ TEST_CASE("VesselSetTest", "[core]")
 
     SECTION("Write nVista 3 vessel set")
     {
-        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo);
+        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
 
         vesselSet->setExtraProperties("{\"microscope\":\"nVista3\"}");
         REQUIRE(vesselSet->getSpacingInfo() == spacingInfo);
@@ -79,8 +79,7 @@ TEST_CASE("VesselSetTest", "[core]")
     SECTION("Read constructor")
     {
         {
-            isx::SpVesselSet_t vesselSet = isx::writeVesselSet(
-                    fileName, timingInfo, spacingInfo);
+            isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
             vesselSet->closeForWriting();
         }
         isx::SpVesselSet_t vesselSet = isx::readVesselSet(fileName);
@@ -88,22 +87,25 @@ TEST_CASE("VesselSetTest", "[core]")
         REQUIRE(vesselSet->isValid());
         REQUIRE(vesselSet->getFileName() == fileName);
         REQUIRE(vesselSet->getTimingInfo() == timingInfo);
-        REQUIRE(vesselSet->getExtraProperties() == "null");
+        REQUIRE(vesselSet->getExtraProperties() == "{\"idps\":{\"vesselset\":{\"type\":\"vessel diameter\"}}}");
         REQUIRE(vesselSet->getSpacingInfo() == spacingInfo);
         REQUIRE(vesselSet->getNumVessels() == 0);
     }
 
     SECTION("Read nVista 3 extra properties")
     {
-        const std::string extraProperties = "{\"microscope\":\"nVista3\"}";
+        std::string extraProperties = "{\"microscope\":\"nVista3\"}";
 
         {
-            isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo);
+            isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
             vesselSet->setExtraProperties(extraProperties);
             vesselSet->closeForWriting();
         }
 
         isx::SpVesselSet_t vesselSet = isx::readVesselSet(fileName);
+
+        // vessel set type is saved to metadata on closeForWriting
+        extraProperties = "{\"idps\":{\"vesselset\":{\"type\":\"vessel diameter\"}},\"microscope\":\"nVista3\"}";
 
         REQUIRE(vesselSet->isValid());
         REQUIRE(vesselSet->getFileName() == fileName);
@@ -113,10 +115,31 @@ TEST_CASE("VesselSetTest", "[core]")
         REQUIRE(vesselSet->getNumVessels() == 0);
     }
 
+    SECTION("Get vessel set type - vessel diameter")
+    {
+        {
+            isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
+            vesselSet->closeForWriting();
+        }
+
+        isx::SpVesselSet_t vesselSet = isx::readVesselSet(fileName);
+        REQUIRE(vesselSet->getVesselSetType() == isx::VesselSetType_t::VESSEL_DIAMETER);
+    }
+
+    SECTION("Get vessel set type - rbc velocity")
+    {
+        {
+            isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+            vesselSet->closeForWriting();
+        }
+
+        isx::SpVesselSet_t vesselSet = isx::readVesselSet(fileName);
+        REQUIRE(vesselSet->getVesselSetType() == isx::VesselSetType_t::RBC_VELOCITY);
+    }
+
     SECTION("Set data for one vessel and check values are correct")
     {
-        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(
-                fileName, timingInfo, spacingInfo);
+        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
         vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace);
         vesselSet->closeForWriting();
 
@@ -129,8 +152,7 @@ TEST_CASE("VesselSetTest", "[core]")
     SECTION("Set data for one vessel and check read values are correct")
     {
         {
-            isx::SpVesselSet_t vesselSet = isx::writeVesselSet(
-                    fileName, timingInfo, spacingInfo);
+            isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
             vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace, "myvessel");
             vesselSet->closeForWriting();
         }
@@ -145,8 +167,7 @@ TEST_CASE("VesselSetTest", "[core]")
 
     SECTION("Set/Get vessel name")
     {
-        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(
-                    fileName, timingInfo, spacingInfo);
+        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
         vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace);
         REQUIRE(vesselSet->getNumVessels() == 1);
         REQUIRE(vesselSet->getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
@@ -159,8 +180,7 @@ TEST_CASE("VesselSetTest", "[core]")
 
     SECTION("Set data for 3 vessels and check values are correct")
     {
-        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(
-                fileName, timingInfo, spacingInfo);
+        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
         for (size_t i = 0; i < 3; ++i)
         {
             vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
@@ -186,8 +206,7 @@ TEST_CASE("VesselSetTest", "[core]")
     SECTION("Set data for 3 vessels and check read values are correct")
     {
         {
-            isx::SpVesselSet_t vesselSet = isx::writeVesselSet(
-                    fileName, timingInfo, spacingInfo);
+            isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
             for (size_t i = 0; i < 3; ++i)
             {
                 vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
@@ -216,8 +235,7 @@ TEST_CASE("VesselSetTest", "[core]")
     {
         std::atomic_int doneCount(0);
         size_t numVessels = 3;
-        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(
-                fileName, timingInfo, spacingInfo);
+        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
         for (size_t i = 0; i < 3; ++i)
         {
             vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
@@ -253,8 +271,7 @@ TEST_CASE("VesselSetTest", "[core]")
         std::atomic_int doneCount(0);
         size_t numVessels = 3;
 
-        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(
-                fileName, timingInfo, spacingInfo);
+        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
         for (size_t i = 0; i < 3; ++i)
         {
             vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
@@ -289,8 +306,7 @@ TEST_CASE("VesselSetTest", "[core]")
         std::atomic_int doneCount(0);
         size_t numVessels = 3;
 
-        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(
-            fileName, timingInfo, spacingInfo);
+        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
         for (size_t i = 0; i < 3; ++i)
         {
             vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);

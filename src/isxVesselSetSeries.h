@@ -137,6 +137,9 @@ public:
     SpacingInfo
     getOriginalSpacingInfo() const override;
 
+    VesselSetType_t
+    getVesselSetType() const override;
+
 private:
 
     /// True if the vessel set is valid, false otherwise.

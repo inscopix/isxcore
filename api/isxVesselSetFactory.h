@@ -16,13 +16,15 @@ namespace isx
 /// \param  inFileName      The name of the vessel set file.
 /// \param  inTimingInfo    The timing information of the vessel set.
 /// \param  inSpacingInfo   The spacing information of the vessel set.
+/// \param  inVesselSetType The type of vessel set (vessel diameter or rbc velocity).
 /// \return                 The vessel set created.
 ///
 /// \throw  isx::ExceptionFileIO    If writing the vessel set file fails.
 SpVesselSet_t writeVesselSet(
         const std::string & inFileName,
         const TimingInfo & inTimingInfo,
-        const SpacingInfo & inSpacingInfo);
+        const SpacingInfo & inSpacingInfo,
+        const VesselSetType_t inVesselSetType);
 
 /// Read an existing vessel set from a file.
 ///
