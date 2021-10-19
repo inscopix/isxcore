@@ -178,7 +178,7 @@ namespace isx
         }
 
         SpVesselLine_t lineEndpoints = std::make_shared<VesselLine>();
-        size_t numPoints = 2;
+        size_t numPoints = (m_vesselSetType == VesselSetType_t::RBC_VELOCITY) ? 4 : 2;
         for (size_t i = 0; i < numPoints; i++)
         {
             int64_t x, y;
@@ -252,8 +252,15 @@ namespace isx
             m_file.write(inProjectionImage.getPixels(), inImageSizeInBytes);
         }
 
-        // write line endpoints (x1, y1, x2, y2)
-        ISX_ASSERT(inLineEndpoints->m_contour.size() == 2);
+        // write line endpoints
+        if (m_vesselSetType == VesselSetType_t::RBC_VELOCITY)
+        {
+            ISX_ASSERT(inLineEndpoints->m_contour.size() == 4);
+        }
+        else
+        {
+            ISX_ASSERT(inLineEndpoints->m_contour.size() == 2);
+        }
         for (size_t i = 0; i < inLineEndpoints->m_contour.size(); i++)
         {
             int64_t x = inLineEndpoints->m_contour[i].getX();
@@ -622,8 +629,15 @@ namespace isx
     isize_t
     VesselSetFile::lineEndpointsSizeInBytes()
     {
-        // two (x,y) points where x and y are each unsigned 64-bit integers
-        return 4 * sizeof(uint64_t);
+        // two or four (x,y) points where x and y are each unsigned 64-bit integers
+        if (m_vesselSetType == VesselSetType_t::RBC_VELOCITY)
+        {
+            return 8 * sizeof(uint64_t);
+        }
+        else
+        {
+            return 4 * sizeof(uint64_t);
+        }
     }
 
     isize_t
