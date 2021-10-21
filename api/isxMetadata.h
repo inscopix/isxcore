@@ -823,6 +823,7 @@ namespace isx
             extraProps["idps"]["temporalDownsampling"] = temporalDsFactor;
         }
         extraProps["idps"]["planesDeinterleaved"] = true;
+        extraProps["idps"]["channelsDeinterleaved"] = true;
 
         inDataDest->setExtraProperties(extraProps.dump());
     }
