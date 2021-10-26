@@ -730,6 +730,18 @@ namespace isx
         return downSamplingFactor;
     }
 
+    template <class T>
+    bool getMotionCorrPadding(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["pre_mc"].is_null()) {
+            return extraProps["idps"]["mc_padding"].get<bool>();
+        }
+
+        ISX_THROW(isx::Exception, "Metadata for motion correction padding not found.");
+    }
+
     // Setters
     template <typename T>
     void setCellSetMethod(T & inData, CellSetMethod_t cellSetMethod)
@@ -878,6 +890,15 @@ namespace isx
             src->getSpacingInfo().getNumPixels().getWidth(),
             src->getSpacingInfo().getNumPixels().getHeight());
         setPreMotionCorrMetadata(dst, preMotionCorrMetadata);
+    }
+
+    template <typename Dst>
+    void setMotionCorrPadding(Dst & dst, const bool value)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(dst);
+        extraProps["idps"]["mc_padding"] = value;
+        dst->setExtraProperties(extraProps.dump());
     }
 
     template <typename T>
