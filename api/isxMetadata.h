@@ -901,14 +901,6 @@ namespace isx
         dst->setExtraProperties(extraProps.dump());
     }
 
-    template <typename T>
-    bool hasPreMotionCorrMetadata(const T & inData)
-    {
-        using json = nlohmann::json;
-        json extraProps = getExtraPropertiesJSON(inData);
-        return !extraProps["idps"]["pre_mc"].is_null();
-    }
-
     // Multicolor metadata
     inline bool hasMulticolorMetadata(std::string inExtraProperties)
     {
@@ -956,6 +948,19 @@ namespace isx
             return extraProps["microscope"]["dualColor"]["mode"].get<std::string>() == "multiplexing";
         }
         return false;
+    }
+
+    template <typename T>
+    bool requiresResizingAfterMotionCorr(const T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        bool hasPreMotionCorrMetadata = !extraProps["idps"]["pre_mc"].is_null();
+        bool hasMotionCorrPaddingMetadata = !extraProps["idps"]["mc_padding"].is_null();
+
+        return (!hasMotionCorrPaddingMetadata && hasPreMotionCorrMetadata) 
+            || (hasMotionCorrPaddingMetadata && !getMotionCorrPadding(inData));
     }
 
 } // namespace isx
