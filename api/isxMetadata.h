@@ -8,6 +8,16 @@
 namespace isx
 {
     /// \cond doxygen chokes on enum class inside of namespace
+    /// Multicolor channels
+    enum class MulticolorChannel_t
+    {
+        INVALID = 0,
+        GREEN,
+        RED,
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
     /// Method used for generating a cell set
     enum class CellSetMethod_t
     {
@@ -963,6 +973,34 @@ namespace isx
             || (hasMotionCorrPaddingMetadata && !getMotionCorrPadding(inData));
     }
 
+    template <typename T>
+    std::vector<std::pair<MulticolorChannel_t, size_t>> getMulticolorMuxRatio(const T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        if (!extraProps["microscope"]["dualColor"]["muxRatio"].is_null())
+        {
+            MulticolorChannel_t startChannel = (extraProps["microscope"]["dualColor"]["startChannel"].get<std::string>() == "green") ? MulticolorChannel_t::GREEN : MulticolorChannel_t::RED;
+            if (startChannel == MulticolorChannel_t::GREEN)
+            {
+                return {
+                    {MulticolorChannel_t::GREEN, extraProps["microscope"]["dualColor"]["muxRatio"]["led1"].get<size_t>()},
+                    {MulticolorChannel_t::RED, extraProps["microscope"]["dualColor"]["muxRatio"]["led2"].get<size_t>()}
+                };
+            }
+            else
+            {
+                return {
+                    {MulticolorChannel_t::RED, extraProps["microscope"]["dualColor"]["muxRatio"]["led2"].get<size_t>()},
+                    {MulticolorChannel_t::GREEN, extraProps["microscope"]["dualColor"]["muxRatio"]["led1"].get<size_t>()}
+                };
+            }
+        }
+
+        // assume default 1:1 mux ratio for movies from older versions of IDAS
+        return {{MulticolorChannel_t::GREEN, 1}, {MulticolorChannel_t::RED, 1}};;
+    }
 } // namespace isx
 
 #endif // ISX_METADATA_H
