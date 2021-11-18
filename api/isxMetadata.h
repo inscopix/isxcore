@@ -232,12 +232,13 @@ namespace isx
         {
         }
 
-        /// fully specified constructor
+        /// constructor without clippedVessels
         VesselSetMetadata(
             const VesselSetUnits_t units,
             const ProjectionType projectionType,
             const double timeWindow,
-            const double timeIncrement)
+            const double timeIncrement
+            )
             : m_units(units)
             , m_projectionType(projectionType)
             , m_timeWindow(timeWindow)
@@ -245,10 +246,27 @@ namespace isx
         {
         }
 
+        /// fully specified constructor
+        VesselSetMetadata(
+            const VesselSetUnits_t units,
+            const ProjectionType projectionType,
+            const double timeWindow,
+            const double timeIncrement,
+            const std::map<std::string, std::vector<int>> clippedVessels
+            )
+            : m_units(units)
+            , m_projectionType(projectionType)
+            , m_timeWindow(timeWindow)
+            , m_timeIncrement(timeIncrement)
+            , m_clippedVessels(clippedVessels)
+        {
+        }
+
         VesselSetUnits_t m_units;        ///< units of the traces in the vessel set
         ProjectionType m_projectionType; ///< type of projection stored in the vessel set
         double m_timeWindow;             ///< the length of the time window in seconds
         double m_timeIncrement;          ///< the length of the time increment in seconds
+        std::map<std::string, std::vector<int>> m_clippedVessels; ///< the clipped vessels with frame # in the vessel set
     };
 
     /// Struct for holding pre-motion-correction metadata
@@ -583,6 +601,27 @@ namespace isx
         return 0;
     }
 
+    inline std::string getClippedVesselsString(std::map<std::string, std::vector<int>> inData)
+    {
+        std::string val = "{";
+        std::string converted = "";
+        for (auto it = inData.cbegin(); it != inData.cend(); it++) {
+            std::vector<int> vals = it->second;
+            for (size_t i = 0; i < vals.size(); i++) {
+                converted += std::to_string(vals.at(i));
+                if (i < vals.size() -1 ) {
+                    converted += ",";
+                }
+            }
+            val += (it->first) + ":[" + converted + "], ";
+            converted = "";
+        }
+
+        val += "}";
+        
+        return val;
+    }
+
     template <class T>
     IntegratedBasePlateType_t getIntegratedBasePlateType(T & inData)
     {
@@ -884,6 +923,7 @@ namespace isx
         extraProps["idps"]["vesselset"]["projectionType"] = getVesselSetProjectionTypeString(vesselSetMetadata.m_projectionType);
         extraProps["idps"]["vesselset"]["timeWindow"] = vesselSetMetadata.m_timeWindow;
         extraProps["idps"]["vesselset"]["timeIncrement"] = vesselSetMetadata.m_timeIncrement;
+        extraProps["idps"]["vesselset"]["clippedVessels"] = getClippedVesselsString(vesselSetMetadata.m_clippedVessels);
         return extraProps.dump();
     }
 

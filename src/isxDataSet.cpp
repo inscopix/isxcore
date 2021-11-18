@@ -890,6 +890,12 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                 {
                     acqInfo["Time Window (s)"] = vesselSetTimeWindow->get<double>();
                 }
+
+                const auto vesselSetClippedVessels = vesselset->find("clippedVessels");
+                if (vesselSetClippedVessels != vesselset->end())
+                {
+                    acqInfo["Clipped Vessels"] = vesselSetClippedVessels->get<std::string>();
+                }
             }
         }
     }
