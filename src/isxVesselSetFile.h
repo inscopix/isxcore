@@ -98,18 +98,24 @@ public:
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or reading fails.
     SpVesselLine_t readLineEndpoints(isize_t inVesselId);
 
+    /// \return the direction trace for the input vessel
+    /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or reading fails.
+    SpVesselDirectionTrace_t readDirection(isize_t inVesselId);
+
     /// Write vessel data
     /// \param inVesselId the vessel of interest
     /// \param inProjectionImage the projection image to write
     /// \param inLineEndpoints the endpoints of the line to write
     /// \param inData the trace to write
     /// \param inName the vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the vessel id
+    /// \param  inDirectionTrace    The direction of velocity if the vessel set is an rbc velocity type
     /// If vessel ID already exists, it will overwrite its data. Otherwise, it will be appended
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
     /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const SpVesselLine_t & inLineEndpoints,
-                         Trace<float> & inData, const std::string & inName = std::string());
+                         Trace<float> & inData, const std::string & inName = std::string(),
+                         const SpVesselDirectionTrace_t & inDirectionTrace = nullptr);
 
     /// \return the status of the vessel
     /// \param inVesselId the vessel of interest
@@ -217,6 +223,9 @@ private:
 
     VesselSetType_t m_vesselSetType = VesselSetType_t::VESSEL_DIAMETER;
 
+    /// Flag indicating whether direction was saved to vessel set file
+    bool m_directionSaved = false;
+
     /// Efocus values for each vessel, used by Multiplane registration
     std::vector<uint16_t> m_efocusValues = {0};
 
@@ -274,6 +283,14 @@ private:
     /// \return the size of the trace in bytes (in the vessel header)
     ///
     isize_t traceSizeInBytes();
+
+    /// \return the size of the direction trace in bytes
+    ///
+    isize_t directionSizeInBytes();
+
+    /// \return the size of a vessel in bytes
+    ///
+    isize_t vesselDataSizeInBytes();
 
     /// Flush the stream
     ///

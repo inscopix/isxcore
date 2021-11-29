@@ -210,13 +210,96 @@ namespace isx
         return m_vesselSets[0]->getLineEndpointsAsync(inIndex, inCallback);
     }
 
+    SpVesselDirectionTrace_t
+    VesselSetSeries::getDirection(isize_t inIndex)
+    {
+        SpVesselDirectionTrace_t direction = std::make_shared<VesselDirectionTrace>(m_gaplessTimingInfo);
+        float * x = direction->m_x->getValues();
+        float * y = direction->m_y->getValues();
+
+        for (const auto &vs : m_vesselSets)
+        {
+            SpVesselDirectionTrace_t partialDirection = vs->getDirection(inIndex);
+            float * xPartial = partialDirection->m_x->getValues();
+            float * yPartial = partialDirection->m_y->getValues();
+            isize_t numSamples = partialDirection->m_x->getTimingInfo().getNumTimes();
+            memcpy((char *)x, (char *)xPartial, sizeof(float)*numSamples);
+            memcpy((char *)y, (char *)yPartial, sizeof(float)*numSamples);
+            x += numSamples;
+            y += numSamples;
+        }
+        return direction;
+    }
+
+    void
+    VesselSetSeries::getDirectionAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback)
+    {
+        std::weak_ptr<VesselSet> weakThis = shared_from_this();
+
+        AsyncTaskResult<SpVesselDirectionTrace_t> asyncTaskResult;
+        asyncTaskResult.setValue(std::make_shared<VesselDirectionTrace>(m_gaplessTimingInfo));
+
+        isize_t counter = 0;
+        bool isLast = false;
+        isize_t offset = 0;
+
+        for (const auto &vs : m_vesselSets)
+        {
+            isLast = (counter == (m_vesselSets.size() - 1));
+
+            VesselSetGetDirectionTraceCB_t finishedCB =
+                [weakThis, &asyncTaskResult, offset, isLast, inCallback] (AsyncTaskResult<SpVesselDirectionTrace_t> inAsyncTaskResult)
+            {
+                auto sharedThis = weakThis.lock();
+                if (!sharedThis)
+                {
+                    return;
+                }
+
+                if (inAsyncTaskResult.getException())
+                {
+                    asyncTaskResult.setException(inAsyncTaskResult.getException());
+                }
+                else
+                {
+                    // only continue copying if previous segments didn't throw
+                    if (!asyncTaskResult.getException())
+                    {
+                        auto directionSegment = inAsyncTaskResult.get();
+                        auto directionSeries = asyncTaskResult.get();
+                        isize_t numTimes = directionSegment->m_x->getTimingInfo().getNumTimes();
+                        isize_t numBytes = numTimes * sizeof(float);
+                        float * x = directionSeries->m_x->getValues();
+                        float * y = directionSeries->m_y->getValues();
+                        x += offset;
+                        y += offset;
+                        memcpy((char *)x, (char *)directionSegment->m_x->getValues(), numBytes);
+                        memcpy((char *)y, (char *)directionSegment->m_y->getValues(), numBytes);
+                    }
+                }
+
+                if (isLast)
+                {
+                    inCallback(asyncTaskResult);
+                }
+            };
+
+            vs->getDirectionAsync(inIndex, finishedCB);
+            isize_t numSamples = vs->getTimingInfo().getNumTimes();
+            offset += numSamples;
+
+            ++counter;
+        }
+    }
+
     void
     VesselSetSeries::writeImageAndLineAndTrace(
         isize_t inIndex,
         const SpImage_t & inProjectionImage,
         const SpVesselLine_t & inLineEndpoints,
         SpFTrace_t & inTrace,
-        const std::string & inName)
+        const std::string & inName,
+        const SpVesselDirectionTrace_t & inDirectionTrace)
     {
         // see comment above for VesselSetSeries::writeImageAndTrace
         ISX_ASSERT(false);

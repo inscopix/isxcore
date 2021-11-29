@@ -367,6 +367,19 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         isx::PointInPixels_t(0,0), isx::PointInPixels_t(1,1), isx::PointInPixels_t(2,2), isx::PointInPixels_t(3,3)
     });
 
+    isx::SpVesselDirectionTrace_t originalDirection = std::make_shared<isx::VesselDirectionTrace>(timingInfo);
+    float * originalX = originalDirection->m_x->getValues();
+    float * originalY = originalDirection->m_y->getValues();
+    float x = 0.0f;
+    float y = 0.0f;
+    for (isx::isize_t i(0); i < timingInfo.getNumTimes(); ++i)
+    {
+        originalX[i] = x;
+        originalY[i] = y;
+        x += 0.001f;
+        y += 0.002f;
+    }
+
     isx::CoreInitialize();
 
     SECTION("Write constructor")
@@ -445,7 +458,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
     SECTION("Set data for one vessel and check values are correct")
     {
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
-        vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace);
+        vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
         vesselSet->closeForWriting();
 
         REQUIRE(vesselSet->getNumVessels() == 1);
@@ -458,7 +471,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
     {
         {
             isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
-            vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace, "myvessel");
+            vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace, "myvessel", originalDirection);
             vesselSet->closeForWriting();
         }
         isx::SpVesselSet_t vesselSet = isx::readVesselSet(fileName);
@@ -468,12 +481,14 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         REQUIRE(vesselSet->getVesselName(0).compare("myvessel") == 0);
         requireEqualImages(vesselSet->getImage(0), originalImage);
         requireEqualTraces(vesselSet->getTrace(0), originalTrace);
+        requireEqualVesselLines(vesselSet->getLineEndpoints(0), lineEndpoints);
+        requireEqualVesselDirections(vesselSet->getDirection(0), originalDirection);
     }
 
     SECTION("Set/Get vessel name")
     {
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
-        vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace);
+        vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
         REQUIRE(vesselSet->getNumVessels() == 1);
         REQUIRE(vesselSet->getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
         REQUIRE(vesselSet->getVesselName(0).compare("") == 0);
@@ -488,7 +503,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
+            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
         }
         vesselSet->setVesselStatus(0, isx::VesselSet::VesselStatus::ACCEPTED);
         vesselSet->setVesselStatus(1, isx::VesselSet::VesselStatus::UNDECIDED);
@@ -505,6 +520,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
             requireEqualImages(vesselSet->getImage(i), originalImage);
             requireEqualTraces(vesselSet->getTrace(i), originalTrace);
             requireEqualVesselLines(vesselSet->getLineEndpoints(i), lineEndpoints);
+            requireEqualVesselDirections(vesselSet->getDirection(i), originalDirection);
         }
     }
 
@@ -514,7 +530,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
             isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
             for (size_t i = 0; i < 3; ++i)
             {
-                vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
+                vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
             }
             vesselSet->setVesselStatus(0, isx::VesselSet::VesselStatus::ACCEPTED);
             vesselSet->setVesselStatus(1, isx::VesselSet::VesselStatus::UNDECIDED);
@@ -532,7 +548,8 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         {
             requireEqualImages(vesselSet->getImage(i), originalImage);
             requireEqualTraces(vesselSet->getTrace(i), originalTrace);
-             requireEqualVesselLines(vesselSet->getLineEndpoints(i), lineEndpoints);
+            requireEqualVesselLines(vesselSet->getLineEndpoints(i), lineEndpoints);
+            requireEqualVesselDirections(vesselSet->getDirection(i), originalDirection);
         }
     }
 
@@ -543,7 +560,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
+            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
         }
         vesselSet->closeForWriting();
 
@@ -579,7 +596,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
+            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
         }
         vesselSet->closeForWriting();
 
@@ -614,7 +631,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
+            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
         }
         vesselSet->closeForWriting();
 
@@ -627,6 +644,41 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         for (size_t i = 0; i < 3; ++i)
         {
             vesselSet->getLineEndpointsAsync(i, callBack);
+        }
+
+        for (int i = 0; i < 250; ++i)
+        {
+            if (doneCount == int(numVessels))
+            {
+                break;
+            }
+            std::chrono::milliseconds d(2);
+            std::this_thread::sleep_for(d);
+        }
+        REQUIRE(doneCount == int(numVessels));
+    }
+
+    SECTION("Read direction data for 3 vessels asynchronously")
+    {
+        std::atomic_int doneCount(0);
+        size_t numVessels = 3;
+
+        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+        for (size_t i = 0; i < 3; ++i)
+        {
+            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        }
+        vesselSet->closeForWriting();
+
+        isx::VesselSet::VesselSetGetDirectionTraceCB_t callBack = [originalDirection, &doneCount](isx::AsyncTaskResult<isx::SpVesselDirectionTrace_t> inAsyncTaskResult)
+        {
+            REQUIRE(!inAsyncTaskResult.getException());
+            requireEqualVesselDirections(inAsyncTaskResult.get(), originalDirection);
+            ++doneCount;
+        };
+        for (size_t i = 0; i < 3; ++i)
+        {
+            vesselSet->getDirectionAsync(i, callBack);
         }
 
         for (int i = 0; i < 250; ++i)

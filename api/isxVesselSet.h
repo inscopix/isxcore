@@ -33,6 +33,25 @@ struct VesselLine
 
 using SpVesselLine_t = std::shared_ptr<VesselLine>;
 
+/// A structure for holding the information relevant to vessel velocity direction
+struct VesselDirectionTrace
+{
+    /// Default constructor
+    VesselDirectionTrace() {}
+
+    /// Constructor
+    /// \param timingInfo   The timing info of the traces
+    VesselDirectionTrace(const TimingInfo timingInfo)
+    {
+        m_x.reset(new FTrace_t(timingInfo));
+        m_y.reset(new FTrace_t(timingInfo));
+    }
+
+    std::unique_ptr<FTrace_t> m_x = nullptr;    ///< The x-axis component of direction
+    std::unique_ptr<FTrace_t> m_y = nullptr;    ///< The y-axis component of direction
+};
+using SpVesselDirectionTrace_t = std::shared_ptr<VesselDirectionTrace>;
+
 /// Interface for vessel sets
 ///
 class VesselSet
@@ -50,6 +69,10 @@ using VesselSetGetImageCB_t = std::function<void(AsyncTaskResult<SpImage_t>)>;
 using GetLineEndpointsCB_t = std::function<SpVesselLine_t()>;
 /// The type of callback for getting a vessel line endpoints asynchronously
 using VesselSetGetLineEndpointsCB_t = std::function<void(AsyncTaskResult<SpVesselLine_t>)>;
+/// The type of callback for reading a vessel's direction trace from disk
+using GetDirectionTraceCB_t = std::function<SpVesselDirectionTrace_t()>;
+/// The type of callback for getting a vessel direction trace asynchronously
+using VesselSetGetDirectionTraceCB_t = std::function<void(AsyncTaskResult<SpVesselDirectionTrace_t>)>;
 
 /// The vessel statuses
 ///
@@ -171,6 +194,28 @@ virtual
 void
 getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback) = 0;
 
+/// Get the direction trace of a vessel synchronously.
+///
+/// This actually calls getDirectionAsync and will wait for the asynchronous
+/// task to complete.
+///
+/// \param  inIndex     The index of the vessel
+/// \return             A shared pointer to the direction data of the indexed vessel.
+/// \throw  isx::ExceptionFileIO    If vessel does not exist or reading fails.
+virtual
+SpVesselDirectionTrace_t
+getDirection(isize_t inIndex) = 0;
+
+/// Get the direction trace of a vessel asynchronously.
+///
+/// This dispatches a task to the IoQueue that operates on a direction of a vessel.
+///
+/// \param  inIndex     The index of the vessel
+/// \param  inCallback  The call back that operates on the direction
+virtual
+void
+getDirectionAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback) = 0;
+
 /// Write the projection image, line endpoints, and trace data for a vessel.
 ///
 /// If the vessel already exists, it will overwrite its data.
@@ -182,8 +227,9 @@ getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback)
 /// \param  inIndex             The index of the vessel.
 /// \param  inProjectionImage   The projection image data to write.
 /// \param  inLineEndpoints     The vessel line endpoints to write.
-/// \param  inTrace     The vessel trace data to write.
-/// \param  inName      The vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the given index
+/// \param  inTrace             The vessel trace data to write.
+/// \param  inName              The vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the given index
+/// \param  inDirectionTrace    The direction of velocity if the vessel set is an rbc velocity type
 /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
 /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
 /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
@@ -194,7 +240,8 @@ writeImageAndLineAndTrace(
     const SpImage_t & inProjectionImage,
     const SpVesselLine_t & inLineEndpoints,
     SpFTrace_t & inTrace,
-    const std::string & inName= std::string()) = 0;
+    const std::string & inName= std::string(),
+    const SpVesselDirectionTrace_t & inDirectionTrace = nullptr) = 0;
 
 /// \return             The current status of the vessel
 /// \param  inIndex     The index of the vessel.

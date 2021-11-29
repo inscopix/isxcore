@@ -403,8 +403,9 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
                 isx::SpFTrace_t trace = std::make_shared<isx::Trace<float>>(timingInfos[i]);
                 float * values = trace->getValues();
                 std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
-                trace->setValue(i, float(i));                
-                cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace);
+                trace->setValue(i, float(i)); 
+                isx::SpVesselDirectionTrace_t direction = std::make_shared<isx::VesselDirectionTrace>(timingInfos[i]);
+                cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace, "", direction);
             }           
             cs->closeForWriting();
         }
@@ -467,7 +468,8 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
             float * values = trace->getValues();
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
             trace->setValue(i, float(i));
-            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace);
+            isx::SpVesselDirectionTrace_t direction = std::make_shared<isx::VesselDirectionTrace>(timingInfos[i]);
+            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace, "", direction);
             cs->closeForWriting();
         }
 
@@ -497,7 +499,8 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
             totalNumSamples += timingInfos[i].getNumTimes();
             trace->setValue(i, float(i));
-            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace);
+            isx::SpVesselDirectionTrace_t direction = std::make_shared<isx::VesselDirectionTrace>(timingInfos[i]);
+            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace, "", direction);
             cs->closeForWriting();
         }
 
@@ -540,13 +543,67 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
             totalNumSamples += timingInfos[i].getNumTimes();
             trace->setValue(i, float(i));
-            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace);
+            isx::SpVesselDirectionTrace_t direction = std::make_shared<isx::VesselDirectionTrace>(timingInfos[i]);
+            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace, "", direction);
             cs->closeForWriting();
         }
 
         isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
         isx::SpVesselLine_t vesselLineEndpoints = css->getLineEndpoints(0);
         requireEqualVesselLines(vesselLineEndpoints, lineEndpoints);
+    }
+
+    SECTION("Get direction")
+    {
+        isx::isize_t totalNumSamples = 0;
+
+        // Write simple vessel sets
+        for(isx::isize_t i(0); i < filenames.size(); ++i)
+        {
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+            isx::SpFTrace_t trace = std::make_shared<isx::Trace<float>>(timingInfos[i]);
+            float * values = trace->getValues();
+            std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
+            totalNumSamples += timingInfos[i].getNumTimes();
+            trace->setValue(i, float(i));
+            
+            isx::SpVesselDirectionTrace_t direction = std::make_shared<isx::VesselDirectionTrace>(timingInfos[i]);
+            direction->m_x->setValue(i, float(i / 100));
+            direction->m_y->setValue(i, float(i / 1000));
+            
+            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace, "", direction);
+            cs->closeForWriting();
+        }
+
+        isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
+
+        isx::SpVesselDirectionTrace_t direction = css->getDirection(0);
+
+        float * x = direction->m_x->getValues();
+        float * y = direction->m_y->getValues();
+
+        for (isx::isize_t i(0); i < totalNumSamples; ++i)
+        {
+            
+            if (i == 4) 
+            {
+                REQUIRE(*x == float(1 / 100));
+                REQUIRE(*y == float(1 / 1000));
+            }
+            else if (i == 9)
+            {
+                REQUIRE(*x == float(2 / 100));
+                REQUIRE(*y == float(2 / 1000));
+            }
+            else 
+            {
+                REQUIRE(*x == 0.0f);
+                REQUIRE(*y == 0.0f);
+            }
+
+            x++;
+            y++;
+        }
     }
 
     for (const auto & fn: filenames)

@@ -195,9 +195,37 @@ namespace isx
         return lineEndpoints;
     }
 
+    SpVesselDirectionTrace_t
+    VesselSetFile::readDirection(isize_t inVesselId)
+    {
+        ISX_ASSERT(m_vesselSetType == VesselSetType_t::RBC_VELOCITY, "Reading direction for diameter vessel set");
+
+        seekToVesselForRead(inVesselId, true);
+
+        // Calculate bytes till beginning of vessel data
+        isize_t offsetInBytes = traceSizeInBytes();
+        m_file.seekg(offsetInBytes, std::ios_base::cur);
+
+        if (!m_file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error seeking to vessel direction trace for read.");
+        }
+
+        SpVesselDirectionTrace_t direction = std::make_shared<VesselDirectionTrace>(m_timingInfo);
+        m_file.read(reinterpret_cast<char*>(direction->m_x->getValues()), directionSizeInBytes() / 2);
+        m_file.read(reinterpret_cast<char*>(direction->m_y->getValues()), directionSizeInBytes() / 2);
+
+        if (!m_file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error reading vessel direction trace.");
+        }
+
+        return direction;
+    }
+
     void
     VesselSetFile::writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const SpVesselLine_t & inLineEndpoints,
-                                   Trace<float> & inData, const std::string & inName)
+                                   Trace<float> & inData, const std::string & inName, const SpVesselDirectionTrace_t & inDirectionTrace)
     {
         if (m_fileClosedForWriting)
         {
@@ -211,6 +239,11 @@ namespace isx
         {
             ISX_THROW(isx::ExceptionDataIO,
                       "Expected F32 data type for the projection image, instead got: ", dataType);
+        }
+
+        if (inDirectionTrace && !m_directionSaved)
+        {
+            m_directionSaved = true;
         }
 
         // validate size of the projection image
@@ -271,6 +304,18 @@ namespace isx
 
         // write trace
         m_file.write(reinterpret_cast<char*>(inData.getValues()), traceSizeInBytes());
+
+        if (m_vesselSetType == VesselSetType_t::RBC_VELOCITY)
+        {
+            ISX_ASSERT(inDirectionTrace != nullptr);
+
+            m_file.write(reinterpret_cast<char*>(inDirectionTrace->m_x->getValues()), directionSizeInBytes() / 2);
+            m_file.write(reinterpret_cast<char*>(inDirectionTrace->m_y->getValues()), directionSizeInBytes() / 2);
+        }
+        else
+        {
+            ISX_ASSERT(inDirectionTrace == nullptr);
+        }
 
         if (!m_file.good())
         {
@@ -444,6 +489,11 @@ namespace isx
             m_vesselSetType = (m_extraProperties["idps"]["vesselset"]["type"].get<std::string>() == "red blood cell velocity") ? 
                                     VesselSetType_t::RBC_VELOCITY : VesselSetType_t::VESSEL_DIAMETER;
 
+            if (j.find("VesselDirectionSaved") != j.end())
+            {
+                m_directionSaved = true;
+            }
+
             if (j.find("efocusValues") != j.end())
             {
                 m_efocusValues = j["efocusValues"].get<std::vector<uint16_t>>();
@@ -472,7 +522,7 @@ namespace isx
             ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing vessel set header.");
         }
 
-        const isize_t bytesPerVessel = lineEndpointsSizeInBytes() + traceSizeInBytes();
+        const isize_t bytesPerVessel = vesselDataSizeInBytes();
         if (isize_t(m_headerOffset) > 0)
         {
             m_numVessels = (isize_t(m_headerOffset) - projectionImageSizeInBytes()) / bytesPerVessel;
@@ -509,6 +559,7 @@ namespace isx
             saveVesselSetType();
             j["extraProperties"] = m_extraProperties;
             j["efocusValues"] = m_efocusValues;
+            if (m_directionSaved) j["VesselDirectionSaved"];
         }
         catch (const std::exception & error)
         {
@@ -524,7 +575,7 @@ namespace isx
         if (m_numVessels > 0)
         {
             seekToVesselForRead(m_numVessels - 1, true);
-            isize_t vesselSize = lineEndpointsSizeInBytes() + traceSizeInBytes();
+            isize_t vesselSize = vesselDataSizeInBytes();
             m_file.seekp(vesselSize, std::ios_base::cur);
         }
 
@@ -564,7 +615,7 @@ namespace isx
         }
 
         // size of the data for an individual vessel
-        isize_t vesselSize = lineEndpointsSizeInBytes() + traceSizeInBytes();
+        isize_t vesselSize = vesselDataSizeInBytes();
 
         // skip the projection image and add offset for vessel position
         pos += projectionImageSizeInBytes() + (vesselSize * inVesselId);
@@ -597,7 +648,7 @@ namespace isx
         }
 
         // size of the data for an individual vessel
-        isize_t vesselSize = lineEndpointsSizeInBytes() + traceSizeInBytes();
+        isize_t vesselSize = vesselDataSizeInBytes();
 
         // update start position
         // if not writing the first vessel, skip the projection image
@@ -644,6 +695,33 @@ namespace isx
     VesselSetFile::traceSizeInBytes()
     {
         return m_timingInfo.getNumTimes() * sizeof(float);
+    }
+
+    isize_t
+    VesselSetFile::directionSizeInBytes()
+    {
+        return m_timingInfo.getNumTimes() * 2 * sizeof(float);
+    }
+
+    isize_t
+    VesselSetFile::vesselDataSizeInBytes()
+    {
+        if (m_vesselSetType == VesselSetType_t::RBC_VELOCITY)
+        {
+            if (m_directionSaved)
+            {
+                return lineEndpointsSizeInBytes() + traceSizeInBytes() + directionSizeInBytes();
+            }
+            else
+            {
+                return lineEndpointsSizeInBytes() + traceSizeInBytes();
+            }
+            
+        }
+        else
+        {
+            return lineEndpointsSizeInBytes() + traceSizeInBytes();
+        }
     }
 
     void VesselSetFile::flush()
