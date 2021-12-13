@@ -17,6 +17,7 @@ VesselSetSimple::VesselSetSimple(const std::string & inFileName, bool enableWrit
     , m_imageIoTaskTracker(new IoTaskTracker<Image>())
     , m_lineEndpointsIoTaskTracker(new IoTaskTracker<VesselLine>())
     , m_directionIoTaskTracker(new IoTaskTracker<VesselDirectionTrace>())
+    , m_corrIoTaskTracker(new IoTaskTracker<VesselCorrelations>())
 {
     m_file = std::make_shared<VesselSetFile>(inFileName, enableWrite);
     m_valid = true;
@@ -32,6 +33,7 @@ VesselSetSimple::VesselSetSimple(
     , m_imageIoTaskTracker(new IoTaskTracker<Image>())
     , m_lineEndpointsIoTaskTracker(new IoTaskTracker<VesselLine>())
     , m_directionIoTaskTracker(new IoTaskTracker<VesselDirectionTrace>())
+    , m_corrIoTaskTracker(new IoTaskTracker<VesselCorrelations>())
 {
     m_file = std::make_shared<VesselSetFile>(inFileName, inTimingInfo, inSpacingInfo, inVesselSetType);
     m_valid = true;
@@ -206,16 +208,16 @@ VesselSetSimple::getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpoint
 }
 
 SpVesselDirectionTrace_t
-VesselSetSimple::getDirection(isize_t inIndex)
+VesselSetSimple::getDirectionTrace(isize_t inIndex)
 {
     Mutex mutex;
     ConditionVariable cv;
-    mutex.lock("getDirection");
+    mutex.lock("getDirectionTrace");
     AsyncTaskResult<SpVesselDirectionTrace_t> asyncTaskResult;
-    getDirectionAsync(inIndex,
+    getDirectionTraceAsync(inIndex,
       [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVesselDirectionTrace_t> inAsyncTaskResult)
       {
-          mutex.lock("getDirection async");
+          mutex.lock("getDirectionTrace async");
           asyncTaskResult = inAsyncTaskResult;
           mutex.unlock();
           cv.notifyOne();
@@ -228,22 +230,63 @@ VesselSetSimple::getDirection(isize_t inIndex)
 }
 
 void
-VesselSetSimple::getDirectionAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback)
+VesselSetSimple::getDirectionTraceAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback)
 {
     // Only get a weak pointer to this, so that we don't bother reading
     // if this has been deleted when the read gets executed.
     std::weak_ptr<VesselSetSimple> weakThis = shared_from_this();
-    GetDirectionTraceCB_t getDirectionCB = [weakThis, this, inIndex]()
+    GetDirectionTraceCB_t getDirectionTraceCB = [weakThis, this, inIndex]()
     {
         auto sharedThis = weakThis.lock();
         SpVesselDirectionTrace_t vl;
         if (sharedThis)
         {
-            vl = m_file->readDirection(inIndex);
+            vl = m_file->readDirectionTrace(inIndex);
         }
         return vl;
     };
-    m_directionIoTaskTracker->schedule(getDirectionCB, inCallback);
+    m_directionIoTaskTracker->schedule(getDirectionTraceCB, inCallback);
+}
+
+SpVesselCorrelations_t
+VesselSetSimple::getCorrelations(isize_t inIndex, isize_t inFrameNumber)
+{
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("getCorrelations");
+    AsyncTaskResult<SpVesselCorrelations_t> asyncTaskResult;
+    getCorrelationsAsync(inIndex, inFrameNumber,
+      [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVesselCorrelations_t> inAsyncTaskResult)
+      {
+          mutex.lock("getCorrelations async");
+          asyncTaskResult = inAsyncTaskResult;
+          mutex.unlock();
+          cv.notifyOne();
+      }
+    );
+    cv.wait(mutex);
+    mutex.unlock();
+
+    return asyncTaskResult.get();   // throws if asyncTaskResults contains an exception
+}
+
+void
+VesselSetSimple::getCorrelationsAsync(isize_t inIndex, isize_t inFrameNumber, VesselSetGetCorrelationsCB_t inCallback)
+{
+    // Only get a weak pointer to this, so that we don't bother reading
+    // if this has been deleted when the read gets executed.
+    std::weak_ptr<VesselSetSimple> weakThis = shared_from_this();
+    GetCorrelationsCB_t getCorrelationsCB = [weakThis, this, inIndex, inFrameNumber]()
+    {
+        auto sharedThis = weakThis.lock();
+        SpVesselCorrelations_t vl;
+        if (sharedThis)
+        {
+            vl = m_file->readCorrelations(inIndex, inFrameNumber);
+        }
+        return vl;
+    };
+    m_corrIoTaskTracker->schedule(getCorrelationsCB, inCallback);
 }
 
 void
@@ -253,7 +296,8 @@ VesselSetSimple::writeImageAndLineAndTrace(
         const SpVesselLine_t & inLineEndpoints,
         SpFTrace_t & inTrace,
         const std::string & inName,
-        const SpVesselDirectionTrace_t & inDirectionTrace)
+        const SpVesselDirectionTrace_t & inDirectionTrace,
+        const SpVesselCorrelationsTrace_t & inCorrTrace)
 {
     // Get a new shared pointer to the file, so we can guarantee the write.
     std::shared_ptr<VesselSetFile> file = m_file;
@@ -261,9 +305,9 @@ VesselSetSimple::writeImageAndLineAndTrace(
     ConditionVariable cv;
     mutex.lock("VesselSetSimple::writeImageAndLineAndTrace");
     auto writeIoTask = std::make_shared<IoTask>(
-        [file, inIndex, inProjectionImage, inLineEndpoints, inTrace, inName, inDirectionTrace]()
+        [file, inIndex, inProjectionImage, inLineEndpoints, inTrace, inName, inDirectionTrace, inCorrTrace]()
         {
-            file->writeVesselData(inIndex, *inProjectionImage, inLineEndpoints, *inTrace, inName, inDirectionTrace);
+            file->writeVesselData(inIndex, *inProjectionImage, inLineEndpoints, *inTrace, inName, inDirectionTrace, inCorrTrace);
         },
         [&cv, &mutex](AsyncTaskStatus inStatus)
         {
@@ -354,6 +398,7 @@ VesselSetSimple::cancelPendingReads()
     m_traceIoTaskTracker->cancelPendingTasks();
     m_lineEndpointsIoTaskTracker->cancelPendingTasks();
     m_directionIoTaskTracker->cancelPendingTasks();
+    m_corrIoTaskTracker->cancelPendingTasks();
 }
 
 std::vector<uint16_t>
@@ -390,6 +435,12 @@ VesselSetType_t
 VesselSetSimple::getVesselSetType() const
 {
     return m_file->getVesselSetType();
+}
+
+SizeInPixels_t
+VesselSetSimple::getCorrelationSize(size_t inIndex) const
+{
+    return m_file->getCorrelationSize(inIndex);
 }
 
 } // namespace isx

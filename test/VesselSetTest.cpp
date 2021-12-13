@@ -380,6 +380,22 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         y += 0.002f;
     }
 
+    isx::SizeInPixels_t correlationSize(10, 20);
+    size_t corrNumPixels = correlationSize.getWidth() * correlationSize.getHeight();
+    isx::SpVesselCorrelationsTrace_t originalCorrTriptychs = std::make_shared<isx::VesselCorrelationsTrace>(timingInfo, correlationSize);
+    for (size_t i = 0; i < timingInfo.getNumTimes(); i++)
+    {
+        isx::SpVesselCorrelations_t triptych = originalCorrTriptychs->getValue(i);
+        for (int offset = -1; offset <= 1; offset++)
+        {
+            float * data = triptych->getValues(offset);
+            for (size_t j = 0; j < corrNumPixels; j++)
+            {
+                data[j] = float(i + j) / float(offset + 2);
+            }
+        }
+    }
+
     isx::CoreInitialize();
 
     SECTION("Write constructor")
@@ -471,7 +487,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
     {
         {
             isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
-            vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace, "myvessel", originalDirection);
+            vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace, "myvessel", originalDirection, originalCorrTriptychs);
             vesselSet->closeForWriting();
         }
         isx::SpVesselSet_t vesselSet = isx::readVesselSet(fileName);
@@ -482,7 +498,11 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         requireEqualImages(vesselSet->getImage(0), originalImage);
         requireEqualTraces(vesselSet->getTrace(0), originalTrace);
         requireEqualVesselLines(vesselSet->getLineEndpoints(0), lineEndpoints);
-        requireEqualVesselDirections(vesselSet->getDirection(0), originalDirection);
+        requireEqualVesselDirections(vesselSet->getDirectionTrace(0), originalDirection);
+        for (size_t t = 0; t < timingInfo.getNumTimes(); t++)
+        {
+            requireEqualVesselCorrelations(vesselSet->getCorrelations(0, t), originalCorrTriptychs->getValue(t));
+        }
     }
 
     SECTION("Set/Get vessel name")
@@ -503,7 +523,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection, originalCorrTriptychs);
         }
         vesselSet->setVesselStatus(0, isx::VesselSet::VesselStatus::ACCEPTED);
         vesselSet->setVesselStatus(1, isx::VesselSet::VesselStatus::UNDECIDED);
@@ -520,7 +540,11 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
             requireEqualImages(vesselSet->getImage(i), originalImage);
             requireEqualTraces(vesselSet->getTrace(i), originalTrace);
             requireEqualVesselLines(vesselSet->getLineEndpoints(i), lineEndpoints);
-            requireEqualVesselDirections(vesselSet->getDirection(i), originalDirection);
+            requireEqualVesselDirections(vesselSet->getDirectionTrace(i), originalDirection);
+            for (size_t t = 0; t < timingInfo.getNumTimes(); t++)
+            {
+                requireEqualVesselCorrelations(vesselSet->getCorrelations(i, t), originalCorrTriptychs->getValue(t));
+            }
         }
     }
 
@@ -530,7 +554,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
             isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
             for (size_t i = 0; i < 3; ++i)
             {
-                vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+                vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection, originalCorrTriptychs);
             }
             vesselSet->setVesselStatus(0, isx::VesselSet::VesselStatus::ACCEPTED);
             vesselSet->setVesselStatus(1, isx::VesselSet::VesselStatus::UNDECIDED);
@@ -549,7 +573,11 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
             requireEqualImages(vesselSet->getImage(i), originalImage);
             requireEqualTraces(vesselSet->getTrace(i), originalTrace);
             requireEqualVesselLines(vesselSet->getLineEndpoints(i), lineEndpoints);
-            requireEqualVesselDirections(vesselSet->getDirection(i), originalDirection);
+            requireEqualVesselDirections(vesselSet->getDirectionTrace(i), originalDirection);
+            for (size_t t = 0; t < timingInfo.getNumTimes(); t++)
+            {
+                requireEqualVesselCorrelations(vesselSet->getCorrelations(i, t), originalCorrTriptychs->getValue(t));
+            }
         }
     }
 
@@ -678,7 +706,43 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         };
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->getDirectionAsync(i, callBack);
+            vesselSet->getDirectionTraceAsync(i, callBack);
+        }
+
+        for (int i = 0; i < 250; ++i)
+        {
+            if (doneCount == int(numVessels))
+            {
+                break;
+            }
+            std::chrono::milliseconds d(2);
+            std::this_thread::sleep_for(d);
+        }
+        REQUIRE(doneCount == int(numVessels));
+    }
+
+    SECTION("Read correlation triptych data for 3 vessels asynchronously")
+    {
+        std::atomic_int doneCount(0);
+        size_t numVessels = 3;
+
+        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+        for (size_t i = 0; i < 3; ++i)
+        {
+            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection, originalCorrTriptychs);
+        }
+        vesselSet->closeForWriting();
+
+        size_t frameIndex = 0;
+        isx::VesselSet::VesselSetGetCorrelationsCB_t callBack = [originalCorrTriptychs, &doneCount, frameIndex](isx::AsyncTaskResult<isx::SpVesselCorrelations_t> inAsyncTaskResult)
+        {
+            REQUIRE(!inAsyncTaskResult.getException());
+            requireEqualVesselCorrelations(inAsyncTaskResult.get(), originalCorrTriptychs->getValue(frameIndex));
+            ++doneCount;
+        };
+        for (size_t i = 0; i < 3; ++i)
+        {
+            vesselSet->getCorrelationsAsync(i, frameIndex, callBack);
         }
 
         for (int i = 0; i < 250; ++i)

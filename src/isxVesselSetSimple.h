@@ -103,10 +103,16 @@ public:
     getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback) override;
 
     SpVesselDirectionTrace_t
-    getDirection(isize_t inIndex) override;
+    getDirectionTrace(isize_t inIndex) override;
 
     void
-    getDirectionAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback) override;
+    getDirectionTraceAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback) override;
+
+    SpVesselCorrelations_t
+    getCorrelations(isize_t inIndex, isize_t inFrameNumber) override;
+
+    void
+    getCorrelationsAsync(isize_t inIndex, isize_t inFrameNumber, VesselSetGetCorrelationsCB_t inCallback) override;
 
     void
     writeImageAndLineAndTrace(
@@ -115,7 +121,8 @@ public:
         const SpVesselLine_t & inLineEndpoints,
         SpFTrace_t & inTrace,
         const std::string & inName= std::string(),
-        const SpVesselDirectionTrace_t & inDirectionTrace = nullptr) override;
+        const SpVesselDirectionTrace_t & inDirectionTrace = nullptr,
+        const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr) override;
 
     VesselSet::VesselStatus
     getVesselStatus(isize_t inIndex) override;
@@ -168,6 +175,9 @@ public:
     VesselSetType_t
     getVesselSetType() const override;
 
+    SizeInPixels_t
+    getCorrelationSize(size_t inIndex) const override;
+
 private:
 
     /// True if the vessel set is valid, false otherwise.
@@ -179,6 +189,7 @@ private:
     std::shared_ptr<IoTaskTracker<Image>>       m_imageIoTaskTracker;
     std::shared_ptr<IoTaskTracker<VesselLine>>  m_lineEndpointsIoTaskTracker;
     std::shared_ptr<IoTaskTracker<VesselDirectionTrace>>  m_directionIoTaskTracker;
+    std::shared_ptr<IoTaskTracker<VesselCorrelations>>  m_corrIoTaskTracker;
 };
 
 }

@@ -52,6 +52,116 @@ struct VesselDirectionTrace
 };
 using SpVesselDirectionTrace_t = std::shared_ptr<VesselDirectionTrace>;
 
+/// Correlation heatmap triptychs for single velocity measurement
+class VesselCorrelations
+{
+    public:
+        /// Default constructor
+        ///
+        VesselCorrelations() {}
+
+        /// Constructor
+        /// \param inSizeInPixels   Size of heatmap in pixels
+        ///
+        VesselCorrelations(const SizeInPixels_t inSizeInPixels)
+            : m_sizeInPixels(inSizeInPixels)
+        {
+            size_t numPixels = getTotalNumPixels() * 3;
+            m_values.reset(new float[numPixels]);  
+            std::memset(m_values.get(), 0, sizeof(float)*numPixels);     
+        }
+
+        /// \return The number of pixels.
+        ///
+        const SizeInPixels_t & getNumPixels() const
+        {
+            return m_sizeInPixels;
+        }
+
+        /// \return The total number of pixels.
+        ///
+        size_t getTotalNumPixels() const
+        {
+            return m_sizeInPixels.getWidth() * m_sizeInPixels.getHeight();
+        }
+
+        /// \return a raw pointer to the first sample in memory
+        ///
+        float *
+        getValues()
+        {
+            if (m_values)
+            {
+                return &m_values[0];
+            }
+            return 0;
+        }
+
+        /// \return a raw pointer to the first sample in memory of a specified correlation heatmap
+        /// \param inOffset     The temporal offset of the correlation heatmap (-1, 0, +1)
+        ///
+        float *
+        getValues(const int inOffset)
+        {
+            float * data = getValues();
+            if (data)
+            {
+                size_t offset = (inOffset + 1) * getTotalNumPixels();
+                data += offset;
+                return data;
+            }
+            return 0;
+        }
+
+        /// Sets heatmap data for a specified temporal offset
+        /// \param inOffset     The temporal offset of the correlation heatmap (-1, 0, +1)
+        /// \param inData       The image data for the correlation heatmap
+        ///
+        void setValues(const int inOffset, const float * inData)
+        {
+            float * data = getValues(inOffset);
+            std::memcpy(data, inData, getTotalNumPixels() * sizeof(float));
+        }
+
+        /// Get the heatmap image for a specified temporal offset
+        /// \param inOffset     The temporal offset of the correlation heatmap (-1, 0, +1)
+        /// \return the heatmap image
+        ///
+        SpImage_t getHeatmap(const int inOffset)
+        {
+            const float * data = getValues(inOffset);
+            SpImage_t image(new Image(SpacingInfo(m_sizeInPixels), m_sizeInPixels.getWidth() * sizeof(float), 1, DataType::F32));
+            std::memcpy(image->getPixelsAsF32(), data, getTotalNumPixels() * sizeof(float));
+            return image;
+        }
+
+    private:
+        std::unique_ptr<float[]> m_values = 0;          ///< The correlation values serialized
+        SizeInPixels_t m_sizeInPixels;                  ///< The size of a single correlation heatmap
+};
+using SpVesselCorrelations_t = std::shared_ptr<VesselCorrelations>;
+
+/// Trace of correlation heatmap triptychs for trace of velocity measurements
+/// Note: use setValue instead of memcpy to ensure shared pointers are updated correctly
+class VesselCorrelationsTrace : public Trace<SpVesselCorrelations_t>
+{
+    public:
+        /// Constructor
+        /// \param inTimingInfo     Timing info of the trace
+        /// \param inSizeInPixels   Size of heatmap in pixels
+        VesselCorrelationsTrace(
+            const TimingInfo & inTimingInfo,
+            SizeInPixels_t inSizeInPixels)
+            : Trace<SpVesselCorrelations_t>(inTimingInfo)
+        {
+            for (size_t i = 0; i < inTimingInfo.getNumTimes(); i++)
+            {
+                setValue(i, std::make_shared<VesselCorrelations>(inSizeInPixels));
+            }
+        }
+};
+using SpVesselCorrelationsTrace_t = std::shared_ptr<VesselCorrelationsTrace>;
+
 /// Interface for vessel sets
 ///
 class VesselSet
@@ -73,6 +183,10 @@ using VesselSetGetLineEndpointsCB_t = std::function<void(AsyncTaskResult<SpVesse
 using GetDirectionTraceCB_t = std::function<SpVesselDirectionTrace_t()>;
 /// The type of callback for getting a vessel direction trace asynchronously
 using VesselSetGetDirectionTraceCB_t = std::function<void(AsyncTaskResult<SpVesselDirectionTrace_t>)>;
+/// The type of callback for reading a vessel's correlation from disk
+using GetCorrelationsCB_t = std::function<SpVesselCorrelations_t()>;
+/// The type of callback for getting a vessel's correlation asynchronously
+using VesselSetGetCorrelationsCB_t = std::function<void(AsyncTaskResult<SpVesselCorrelations_t>)>;
 
 /// The vessel statuses
 ///
@@ -196,7 +310,7 @@ getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback)
 
 /// Get the direction trace of a vessel synchronously.
 ///
-/// This actually calls getDirectionAsync and will wait for the asynchronous
+/// This actually calls getDirectionTraceAsync and will wait for the asynchronous
 /// task to complete.
 ///
 /// \param  inIndex     The index of the vessel
@@ -204,7 +318,7 @@ getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback)
 /// \throw  isx::ExceptionFileIO    If vessel does not exist or reading fails.
 virtual
 SpVesselDirectionTrace_t
-getDirection(isize_t inIndex) = 0;
+getDirectionTrace(isize_t inIndex) = 0;
 
 /// Get the direction trace of a vessel asynchronously.
 ///
@@ -214,7 +328,31 @@ getDirection(isize_t inIndex) = 0;
 /// \param  inCallback  The call back that operates on the direction
 virtual
 void
-getDirectionAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback) = 0;
+getDirectionTraceAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback) = 0;
+
+/// Get the correlation triptych for a particular velocity measurement of a vessel synchronously.
+///
+/// This actually calls getCorrelationsAsync and will wait for the asynchronous
+/// task to complete.
+///
+/// \param  inIndex         The index of the vessel
+/// \param  inFrameNumber   The index of the velocity measurement
+/// \return             A shared pointer to the correlation triptych data of the indexed vessel.
+/// \throw  isx::ExceptionFileIO    If vessel does not exist or reading fails.
+virtual
+SpVesselCorrelations_t
+getCorrelations(isize_t inIndex, isize_t inFrameNumber) = 0;
+
+/// Get the correlation triptych for a particular velocity measurement of a vessel asynchronously.
+///
+/// This dispatches a task to the IoQueue that operates on a correlation triptychs of a vessel.
+///
+/// \param  inIndex     The index of the vessel
+/// \param  inFrameNumber   The index of the velocity measurement
+/// \param  inCallback  The call back that operates on the correlation triptychs
+virtual
+void
+getCorrelationsAsync(isize_t inIndex, isize_t inFrameNumber, VesselSetGetCorrelationsCB_t inCallback) = 0;
 
 /// Write the projection image, line endpoints, and trace data for a vessel.
 ///
@@ -230,6 +368,7 @@ getDirectionAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback) = 
 /// \param  inTrace             The vessel trace data to write.
 /// \param  inName              The vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the given index
 /// \param  inDirectionTrace    The direction of velocity if the vessel set is an rbc velocity type
+/// \param  inCorrTrace         The correlation triptychs used to estimate velocity if the vessel set is an rbc velocity type
 /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
 /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
 /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
@@ -241,7 +380,8 @@ writeImageAndLineAndTrace(
     const SpVesselLine_t & inLineEndpoints,
     SpFTrace_t & inTrace,
     const std::string & inName= std::string(),
-    const SpVesselDirectionTrace_t & inDirectionTrace = nullptr) = 0;
+    const SpVesselDirectionTrace_t & inDirectionTrace = nullptr,
+    const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr) = 0;
 
 /// \return             The current status of the vessel
 /// \param  inIndex     The index of the vessel.
@@ -365,6 +505,12 @@ getOriginalSpacingInfo() const = 0;
 virtual
 VesselSetType_t
 getVesselSetType() const = 0;
+
+/// \param  inIndex    The id of the vessel
+/// \return     The size of correlation heatmaps for the vessel
+virtual
+SizeInPixels_t
+getCorrelationSize(size_t inIndex) const = 0;
 
 };
 

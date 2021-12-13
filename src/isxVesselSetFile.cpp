@@ -196,7 +196,7 @@ namespace isx
     }
 
     SpVesselDirectionTrace_t
-    VesselSetFile::readDirection(isize_t inVesselId)
+    VesselSetFile::readDirectionTrace(isize_t inVesselId)
     {
         ISX_ASSERT(m_vesselSetType == VesselSetType_t::RBC_VELOCITY, "Reading direction for diameter vessel set");
 
@@ -223,9 +223,45 @@ namespace isx
         return direction;
     }
 
+    SpVesselCorrelations_t
+    VesselSetFile::readCorrelations(isize_t inVesselId, isize_t inFrameNumber)
+    {
+        ISX_ASSERT(m_vesselSetType == VesselSetType_t::RBC_VELOCITY, "Reading correlation triptychs for diameter vessel set");
+        if (!correlationSaved())
+        {
+            return nullptr;
+        }
+
+        seekToVesselForRead(inVesselId, true);
+
+        // Calculate bytes till beginning of vessel data
+        isize_t offsetInBytes = traceSizeInBytes() + directionSizeInBytes();
+        isize_t correlationBytes = correlationSizeInBytes(inVesselId);
+        offsetInBytes += (correlationBytes * 3) * inFrameNumber;
+
+        m_file.seekg(offsetInBytes, std::ios_base::cur);
+
+        if (!m_file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error seeking to vessel correlation triptych for read.");
+        }
+
+        SpVesselCorrelations_t correlations = std::make_shared<VesselCorrelations>(m_correlationSizes[inVesselId]);
+        for (int offset = -1; offset <= 1; offset++)
+        {
+            m_file.read(reinterpret_cast<char*>(correlations->getValues(offset)), correlationBytes);
+        }
+        if (!m_file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error reading vessel correlation triptych.");
+        }
+        return correlations;
+    }
+
     void
     VesselSetFile::writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const SpVesselLine_t & inLineEndpoints,
-                                   Trace<float> & inData, const std::string & inName, const SpVesselDirectionTrace_t & inDirectionTrace)
+                                   Trace<float> & inData, const std::string & inName, const SpVesselDirectionTrace_t & inDirectionTrace,
+                                   const SpVesselCorrelationsTrace_t & inCorrTrace)
     {
         if (m_fileClosedForWriting)
         {
@@ -241,6 +277,18 @@ namespace isx
                       "Expected F32 data type for the projection image, instead got: ", dataType);
         }
 
+        if (inCorrTrace)
+        {
+            if (inVesselId == m_numVessels)
+            {
+                m_correlationSizes.push_back(SizeInPixels_t());
+            }
+            ISX_ASSERT(m_correlationSizes.size() == m_numVessels + 1);
+
+            SpVesselCorrelations_t triptych  = inCorrTrace->getValue(0);
+            m_correlationSizes[inVesselId] = triptych->getNumPixels();
+        }
+        
         if (inDirectionTrace && !m_directionSaved)
         {
             m_directionSaved = true;
@@ -311,10 +359,25 @@ namespace isx
 
             m_file.write(reinterpret_cast<char*>(inDirectionTrace->m_x->getValues()), directionSizeInBytes() / 2);
             m_file.write(reinterpret_cast<char*>(inDirectionTrace->m_y->getValues()), directionSizeInBytes() / 2);
+
+            if (inCorrTrace)
+            {
+                size_t numSamples = inCorrTrace->getTimingInfo().getNumTimes();
+                size_t correlationSize = correlationSizeInBytes(inVesselId);
+                for (size_t i = 0; i < numSamples; i++)
+                {
+                    SpVesselCorrelations_t triptych  = inCorrTrace->getValue(i);
+                    for (int offset = -1; offset <= 1; offset++)
+                    {
+                        m_file.write(reinterpret_cast<char*>(triptych->getValues(offset)), correlationSize);
+                    }
+                }
+            }
         }
         else
         {
             ISX_ASSERT(inDirectionTrace == nullptr);
+            ISX_ASSERT(inCorrTrace == nullptr);
         }
 
         if (!m_file.good())
@@ -503,6 +566,17 @@ namespace isx
                 m_efocusValues = {m_extraProperties["idps"]["efocus"].get<uint16_t>()};
             }
 
+            if (j.find("VesselCorrelationSizes") != j.end())
+            {
+                for (auto & el : j["VesselCorrelationSizes"])
+                {
+                    m_correlationSizes.push_back(SizeInPixels_t(
+                        el[0].get<size_t>(),
+                        el[1].get<size_t>()
+                    ));
+                }
+            }
+
             if (m_vesselActivity.empty())
             {
                 m_vesselActivity = std::vector<bool>(m_vesselNames.size(), true);
@@ -522,20 +596,19 @@ namespace isx
             ISX_THROW(isx::ExceptionDataIO, "Unknown error while parsing vessel set header.");
         }
 
-        const isize_t bytesPerVessel = vesselDataSizeInBytes();
-        if (isize_t(m_headerOffset) > 0)
+        size_t vesselsSize = 0;
+        for (size_t i = 0; i < m_vesselNames.size(); i++)
         {
-            m_numVessels = (isize_t(m_headerOffset) - projectionImageSizeInBytes()) / bytesPerVessel;
-        }
-        else
-        {
-            m_numVessels = isize_t(m_headerOffset) / bytesPerVessel;
+            if (i == 0) vesselsSize += projectionImageSizeInBytes();
+            vesselsSize += vesselDataSizeInBytes(i);
+            if (i == m_vesselNames.size() - 1) vesselsSize += lineEndpointsSizeInBytes(); // see note in writeHeader()
         }
 
-        if (m_numVessels != m_vesselNames.size() || m_numVessels != m_vesselStatuses.size()  || m_numVessels != m_vesselColors.size() )
+        if (size_t(m_headerOffset) != vesselsSize)
         {
             ISX_THROW(isx::ExceptionDataIO, "Number of vessels in header does not match number of vessels in file.");
         }
+        m_numVessels = m_vesselNames.size();
     }
 
     void
@@ -559,7 +632,8 @@ namespace isx
             saveVesselSetType();
             j["extraProperties"] = m_extraProperties;
             j["efocusValues"] = m_efocusValues;
-            if (m_directionSaved) j["VesselDirectionSaved"];
+            if (correlationSaved()) j["VesselCorrelationSizes"] = convertVesselSetCorrelationSizesToJson();
+            if (m_directionSaved) j["VesselDirectionSaved"] = true;
         }
         catch (const std::exception & error)
         {
@@ -574,8 +648,12 @@ namespace isx
 
         if (m_numVessels > 0)
         {
+            // Note: This overshoots the end of the vessel by lineEndpointsSizeInBytes()
+            // It should actually be seekToVesselForRead(m_numVessels - 1, false);
+            // But it doesn't prevent the file from being read from and written to correctly
+            // And by this point alpha testers have created vessel sets so leaving this in for backwards compatability
             seekToVesselForRead(m_numVessels - 1, true);
-            isize_t vesselSize = vesselDataSizeInBytes();
+            isize_t vesselSize = vesselDataSizeInBytes(m_numVessels - 1);
             m_file.seekp(vesselSize, std::ios_base::cur);
         }
 
@@ -614,11 +692,7 @@ namespace isx
                       "Unable to seek to vessel ID ", inVesselId, " in file: ", m_fileName);
         }
 
-        // size of the data for an individual vessel
-        isize_t vesselSize = vesselDataSizeInBytes();
-
-        // skip the projection image and add offset for vessel position
-        pos += projectionImageSizeInBytes() + (vesselSize * inVesselId);
+        pos = vesselOffsetInBytes(inVesselId);
         if (readTrace)
         {
             pos += lineEndpointsSizeInBytes();
@@ -647,16 +721,14 @@ namespace isx
                       "Unable to seek to vessel ID ", inVesselId, " in file: ", m_fileName);
         }
 
-        // size of the data for an individual vessel
-        isize_t vesselSize = vesselDataSizeInBytes();
+        pos = vesselOffsetInBytes(inVesselId);
 
         // update start position
         // if not writing the first vessel, skip the projection image
-        if (inVesselId > 0)
+        if (inVesselId == 0)
         {
-            pos += projectionImageSizeInBytes();
+            pos -= projectionImageSizeInBytes();
         }
-        pos += vesselSize * inVesselId;
 
         m_file.seekg(pos, std::ios_base::beg);
 
@@ -704,24 +776,44 @@ namespace isx
     }
 
     isize_t
-    VesselSetFile::vesselDataSizeInBytes()
+    VesselSetFile::correlationSizeInBytes(isize_t inVesselId)
     {
+        return m_correlationSizes[inVesselId].getWidth() * m_correlationSizes[inVesselId].getHeight() * sizeof(float);
+    }
+
+    isize_t
+    VesselSetFile::correlationTraceSizeInBytes(isize_t inVesselId)
+    {
+        return 3 * correlationSizeInBytes(inVesselId) * m_timingInfo.getNumTimes();
+    }
+
+    isize_t
+    VesselSetFile::vesselDataSizeInBytes(isize_t inVesselId)
+    {
+        size_t size = lineEndpointsSizeInBytes() + traceSizeInBytes();
         if (m_vesselSetType == VesselSetType_t::RBC_VELOCITY)
         {
             if (m_directionSaved)
             {
-                return lineEndpointsSizeInBytes() + traceSizeInBytes() + directionSizeInBytes();
+                size += directionSizeInBytes();
             }
-            else
+            if (correlationSaved())
             {
-                return lineEndpointsSizeInBytes() + traceSizeInBytes();
+                size += correlationTraceSizeInBytes(inVesselId);
             }
-            
         }
-        else
+        return size;
+    }
+
+    isize_t
+    VesselSetFile::vesselOffsetInBytes(isize_t inVesselId)
+    {
+        size_t offset = projectionImageSizeInBytes();
+        for (size_t i = 0; i < inVesselId; i++)
         {
-            return lineEndpointsSizeInBytes() + traceSizeInBytes();
+            offset += vesselDataSizeInBytes(i);        
         }
+        return offset;
     }
 
     void VesselSetFile::flush()
@@ -757,6 +849,18 @@ namespace isx
         m_extraProperties["idps"]["vesselset"]["type"] = getVesselSetTypeString(m_vesselSetType);
     }
 
+    json
+    VesselSetFile::convertVesselSetCorrelationSizesToJson()
+    {
+        ISX_ASSERT(m_correlationSizes.size() == m_numVessels);
+        json j = json::array();
+        for (size_t i = 0; i < m_numVessels; i++)
+        {
+            j.push_back({m_correlationSizes[i].getWidth(), m_correlationSizes[i].getHeight()});
+        }
+        return j;
+    }
+
     std::string
     VesselSetFile::getExtraProperties() const
     {
@@ -790,6 +894,18 @@ namespace isx
     VesselSetFile::getVesselSetType() const
     {
         return m_vesselSetType;
+    }
+
+    SizeInPixels_t
+    VesselSetFile::getCorrelationSize(isize_t inVesselId) const
+    {
+        return m_correlationSizes[inVesselId];
+    }
+
+    bool
+    VesselSetFile::correlationSaved() const
+    {
+        return !m_correlationSizes.empty();
     }
 
 } // namespace isx

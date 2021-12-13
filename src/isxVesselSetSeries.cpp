@@ -211,7 +211,7 @@ namespace isx
     }
 
     SpVesselDirectionTrace_t
-    VesselSetSeries::getDirection(isize_t inIndex)
+    VesselSetSeries::getDirectionTrace(isize_t inIndex)
     {
         SpVesselDirectionTrace_t direction = std::make_shared<VesselDirectionTrace>(m_gaplessTimingInfo);
         float * x = direction->m_x->getValues();
@@ -219,7 +219,7 @@ namespace isx
 
         for (const auto &vs : m_vesselSets)
         {
-            SpVesselDirectionTrace_t partialDirection = vs->getDirection(inIndex);
+            SpVesselDirectionTrace_t partialDirection = vs->getDirectionTrace(inIndex);
             float * xPartial = partialDirection->m_x->getValues();
             float * yPartial = partialDirection->m_y->getValues();
             isize_t numSamples = partialDirection->m_x->getTimingInfo().getNumTimes();
@@ -232,7 +232,7 @@ namespace isx
     }
 
     void
-    VesselSetSeries::getDirectionAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback)
+    VesselSetSeries::getDirectionTraceAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback)
     {
         std::weak_ptr<VesselSet> weakThis = shared_from_this();
 
@@ -284,12 +284,70 @@ namespace isx
                 }
             };
 
-            vs->getDirectionAsync(inIndex, finishedCB);
+            vs->getDirectionTraceAsync(inIndex, finishedCB);
             isize_t numSamples = vs->getTimingInfo().getNumTimes();
             offset += numSamples;
 
             ++counter;
         }
+    }
+
+    SpVesselCorrelations_t
+    VesselSetSeries::getCorrelations(isize_t inIndex, isize_t inFrameNumber)
+    {
+        if (inFrameNumber >= m_gaplessTimingInfo.getNumTimes())
+        {
+            ISX_THROW(ExceptionDataIO, "The index of the frame (", inFrameNumber,
+                    ") is out of range (0-", m_gaplessTimingInfo.getNumTimes(), ").");
+        }
+
+        size_t vesselSetIndex = 0;
+        size_t frameIndex = 0;
+        std::tie(vesselSetIndex, frameIndex) = getSegmentAndLocalIndex(getTimingInfosForSeries(), inFrameNumber);
+
+        SpVesselCorrelations_t correlations = m_vesselSets[vesselSetIndex]->getCorrelations(inIndex, frameIndex);
+        return correlations;
+    }
+
+    void
+    VesselSetSeries::getCorrelationsAsync(isize_t inIndex, isize_t inFrameNumber, VesselSetGetCorrelationsCB_t inCallback)
+    {
+        if (inFrameNumber >= m_gaplessTimingInfo.getNumTimes())
+        {
+            ISX_THROW(ExceptionDataIO, "The index of the frame (", inFrameNumber,
+                    ") is out of range (0-", m_gaplessTimingInfo.getNumTimes(), ").");
+        }
+
+        size_t vesselSetIndex = 0;
+        size_t frameIndex = 0;
+        std::tie(vesselSetIndex, frameIndex) = getSegmentAndLocalIndex(getTimingInfosForSeries(), inFrameNumber);
+
+        std::weak_ptr<VesselSet> weakThis = shared_from_this();
+
+        AsyncTaskResult<SpVesselCorrelations_t> asyncTaskResult;
+        asyncTaskResult.setValue(std::make_shared<VesselCorrelations>(getCorrelationSize(inIndex)));
+
+        m_vesselSets[vesselSetIndex]->getCorrelationsAsync(inIndex, frameIndex, [weakThis, &asyncTaskResult, inCallback](AsyncTaskResult<SpVesselCorrelations_t> inAsyncTaskResult)
+            {
+                auto sharedThis = weakThis.lock();
+                if (!sharedThis)
+                {
+                    return;
+                }
+
+                if (inAsyncTaskResult.getException())
+                {
+                    asyncTaskResult.setException(inAsyncTaskResult.getException());
+                }
+                else
+                {
+                    auto simpleCorrelations = inAsyncTaskResult.get();
+                    auto seriesCorrelations = asyncTaskResult.get();
+                    size_t numBytes = simpleCorrelations->getTotalNumPixels() * 3 * sizeof(float);
+                    std::memcpy(reinterpret_cast<char*>(seriesCorrelations->getValues()), reinterpret_cast<char*>(simpleCorrelations->getValues()), numBytes);
+                    inCallback(asyncTaskResult);
+                }
+            });
     }
 
     void
@@ -299,7 +357,8 @@ namespace isx
         const SpVesselLine_t & inLineEndpoints,
         SpFTrace_t & inTrace,
         const std::string & inName,
-        const SpVesselDirectionTrace_t & inDirectionTrace)
+        const SpVesselDirectionTrace_t & inDirectionTrace,
+        const SpVesselCorrelationsTrace_t & inCorrTrace)
     {
         // see comment above for VesselSetSeries::writeImageAndTrace
         ISX_ASSERT(false);
@@ -447,6 +506,12 @@ namespace isx
     VesselSetSeries::getVesselSetType() const
     {
         return m_vesselSets.front()->getVesselSetType();
+    }
+
+    SizeInPixels_t
+    VesselSetSeries::getCorrelationSize(size_t inIndex) const
+    {
+        return m_vesselSets.front()->getCorrelationSize(inIndex);
     }
 
 } // namespace isx

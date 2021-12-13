@@ -437,6 +437,22 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
         y += 0.002f;
     }
 
+    isx::SizeInPixels_t correlationSize(10, 20);
+    size_t corrNumPixels = correlationSize.getWidth() * correlationSize.getHeight();
+    isx::SpVesselCorrelationsTrace_t originalCorrTriptychs = std::make_shared<isx::VesselCorrelationsTrace>(timingInfo, correlationSize);
+    for (size_t i = 0; i < timingInfo.getNumTimes(); i++)
+    {
+        isx::SpVesselCorrelations_t triptych = originalCorrTriptychs->getValue(i);
+        for (int offset = -1; offset <= 1; offset++)
+        {
+            float * data = triptych->getValues(offset);
+            for (size_t j = 0; j < corrNumPixels; j++)
+            {
+                data[j] = float(i + j) / float(offset + 2);
+            }
+        }
+    }
+
     SECTION("Constructor for new file")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
@@ -560,8 +576,22 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
         REQUIRE(file.numberOfVessels() == 1);
         file.closeForWriting();
 
-        isx::SpVesselDirectionTrace_t vesselDirection = file.readDirection(0);
+        isx::SpVesselDirectionTrace_t vesselDirection = file.readDirectionTrace(0);
         requireEqualVesselDirections(vesselDirection, originalDirection);
+    }
+
+    SECTION("Read correlation triptychs")
+    {
+        isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+        REQUIRE(file.isValid());
+        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace, "", originalDirection, originalCorrTriptychs);
+        REQUIRE(file.numberOfVessels() == 1);
+        file.closeForWriting();
+
+        for (size_t t = 0; t < timingInfo.getNumTimes(); t++)
+        {
+            requireEqualVesselCorrelations(file.readCorrelations(0, t), originalCorrTriptychs->getValue(t));
+        }
     }
 
     SECTION("Validate/Invalidate vessel")
@@ -598,7 +628,7 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
             isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
             for (size_t i = 0; i < 10; ++i)
             {
-                file.writeVesselData(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+                file.writeVesselData(i, originalImage, lineEndpoints, originalTrace, "", originalDirection, originalCorrTriptychs);
             }
             file.closeForWriting();
         }
@@ -621,21 +651,26 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
             isx::SpImage_t image = file.readProjectionImage();
             float * pixels = image->getPixelsAsF32();
 
-            for (isx::isize_t i = 0; i < trace->getTimingInfo().getNumTimes(); ++i)
+            for (isx::isize_t j = 0; j < trace->getTimingInfo().getNumTimes(); ++j)
             {
-                REQUIRE(values[i] == originalValues[i]);
+                REQUIRE(values[j] == originalValues[j]);
             }
 
-            for (isx::isize_t i = 0; i < spacingInfo.getTotalNumPixels(); ++i)
+            for (isx::isize_t j = 0; j < spacingInfo.getTotalNumPixels(); ++j)
             {
-                REQUIRE(pixels[i] == originalPixels[i]);
+                REQUIRE(pixels[j] == originalPixels[j]);
             }
 
             isx::SpVesselLine_t vesselLineEndpoints = file.readLineEndpoints(i);
             requireEqualVesselLines(vesselLineEndpoints, lineEndpoints);
 
-            isx::SpVesselDirectionTrace_t vesselDirection = file.readDirection(i);
+            isx::SpVesselDirectionTrace_t vesselDirection = file.readDirectionTrace(i);
             requireEqualVesselDirections(vesselDirection, originalDirection);
+
+            for (size_t t = 0; t < timingInfo.getNumTimes(); t++)
+            {
+                requireEqualVesselCorrelations(file.readCorrelations(0, t), originalCorrTriptychs->getValue(t));
+            }
         }
     }
 

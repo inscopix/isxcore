@@ -100,7 +100,11 @@ public:
 
     /// \return the direction trace for the input vessel
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or reading fails.
-    SpVesselDirectionTrace_t readDirection(isize_t inVesselId);
+    SpVesselDirectionTrace_t readDirectionTrace(isize_t inVesselId);
+
+    /// \return the correlation triptych for a particular velocity measurement of a vessel
+    /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or reading fails.
+    SpVesselCorrelations_t readCorrelations(isize_t inVesselId, isize_t inFrameNumber);
 
     /// Write vessel data
     /// \param inVesselId the vessel of interest
@@ -109,13 +113,15 @@ public:
     /// \param inData the trace to write
     /// \param inName the vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the vessel id
     /// \param  inDirectionTrace    The direction of velocity if the vessel set is an rbc velocity type
+    /// \param  inCorrTrace         The correlation triptychs used to estimate velocity if the vessel set is an rbc velocity type
     /// If vessel ID already exists, it will overwrite its data. Otherwise, it will be appended
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
     /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const SpVesselLine_t & inLineEndpoints,
                          Trace<float> & inData, const std::string & inName = std::string(),
-                         const SpVesselDirectionTrace_t & inDirectionTrace = nullptr);
+                         const SpVesselDirectionTrace_t & inDirectionTrace = nullptr,
+                         const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr);
 
     /// \return the status of the vessel
     /// \param inVesselId the vessel of interest
@@ -189,6 +195,9 @@ public:
     VesselSetType_t
     getVesselSetType() const;
 
+    SizeInPixels_t
+    getCorrelationSize(isize_t inVesselId) const;
+
 private:
 
     /// True if the vessel set file is valid, false otherwise.
@@ -221,10 +230,14 @@ private:
     /// Flag indicating whether a vessel is active in this file
     VesselActivities_t m_vesselActivity;
 
+    /// The type of vessel set (rbc velocity or vessel diameter)
     VesselSetType_t m_vesselSetType = VesselSetType_t::VESSEL_DIAMETER;
-
+    
     /// Flag indicating whether direction was saved to vessel set file
     bool m_directionSaved = false;
+
+    /// Size of correlation heatmaps for rbc velocity vessel set
+    std::vector<SizeInPixels_t> m_correlationSizes;
 
     /// Efocus values for each vessel, used by Multiplane registration
     std::vector<uint16_t> m_efocusValues = {0};
@@ -288,9 +301,22 @@ private:
     ///
     isize_t directionSizeInBytes();
 
+    /// \return the size of the correlation heatmap for a vessel in bytes
+    /// \param inVesselId the vessel ID
+    ///
+    isize_t correlationSizeInBytes(isize_t inVesselId);
+
+    /// \return the size of the correlation tritych trace for a vessel in bytes
+    ///
+    isize_t correlationTraceSizeInBytes(isize_t inVesselId);
+
     /// \return the size of a vessel in bytes
     ///
-    isize_t vesselDataSizeInBytes();
+    isize_t vesselDataSizeInBytes(isize_t inVesselId);
+
+    /// \return the offset of a vessel in bytes
+    ///
+    isize_t vesselOffsetInBytes(isize_t inVesselId);
 
     /// Flush the stream
     ///
@@ -303,6 +329,16 @@ private:
 
     /// Saves the vessel set type to the metadata extra properties
     void saveVesselSetType();
+
+    /// \return list correlation sizes as json
+    ///
+    json convertVesselSetCorrelationSizesToJson();
+
+    /// \return flag indicating whether correlation heatmaps were saved to disk
+    ///
+    bool
+    correlationSaved() const;
+
 };
 
 } // namespace isx
