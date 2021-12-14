@@ -81,11 +81,11 @@ public:
     void
     getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback) override;
 
-    SpVesselDirectionTrace_t
+    SpFTrace_t
     getDirectionTrace(isize_t inIndex) override;
 
     void
-    getDirectionTraceAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback) override;
+    getDirectionTraceAsync(isize_t inIndex, VesselSetGetTraceCB_t inCallback) override;
 
     SpVesselCorrelations_t
     getCorrelations(isize_t inIndex, isize_t inFrameNumber) override;
@@ -100,7 +100,7 @@ public:
         const SpVesselLine_t & inLineEndpoints,
         SpFTrace_t & inTrace,
         const std::string & inName= std::string(),
-        const SpVesselDirectionTrace_t & inDirectionTrace = nullptr,
+        const SpFTrace_t & inDirectionTrace = nullptr,
         const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr) override;
 
     VesselSet::VesselStatus

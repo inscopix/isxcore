@@ -195,10 +195,18 @@ namespace isx
         return lineEndpoints;
     }
 
-    SpVesselDirectionTrace_t
+    SpFTrace_t
     VesselSetFile::readDirectionTrace(isize_t inVesselId)
     {
-        ISX_ASSERT(m_vesselSetType == VesselSetType_t::RBC_VELOCITY, "Reading direction for diameter vessel set");
+        if (m_vesselSetType != VesselSetType_t::RBC_VELOCITY)
+        {
+            ISX_THROW(isx::ExceptionUserInput, "Reading direction for diameter vessel set");
+        }
+
+        if (!m_directionSaved)
+        {
+            return nullptr;
+        }
 
         seekToVesselForRead(inVesselId, true);
 
@@ -211,9 +219,8 @@ namespace isx
             ISX_THROW(isx::ExceptionFileIO, "Error seeking to vessel direction trace for read.");
         }
 
-        SpVesselDirectionTrace_t direction = std::make_shared<VesselDirectionTrace>(m_timingInfo);
-        m_file.read(reinterpret_cast<char*>(direction->m_x->getValues()), directionSizeInBytes() / 2);
-        m_file.read(reinterpret_cast<char*>(direction->m_y->getValues()), directionSizeInBytes() / 2);
+        SpFTrace_t direction = std::make_shared<Trace<float>>(m_timingInfo);
+        m_file.read(reinterpret_cast<char*>(direction->getValues()), directionSizeInBytes());
 
         if (!m_file.good())
         {
@@ -226,7 +233,11 @@ namespace isx
     SpVesselCorrelations_t
     VesselSetFile::readCorrelations(isize_t inVesselId, isize_t inFrameNumber)
     {
-        ISX_ASSERT(m_vesselSetType == VesselSetType_t::RBC_VELOCITY, "Reading correlation triptychs for diameter vessel set");
+        if (m_vesselSetType != VesselSetType_t::RBC_VELOCITY)
+        {
+            ISX_THROW(isx::ExceptionUserInput, "Reading correlation triptychs for diameter vessel set");
+        }
+
         if (!correlationSaved())
         {
             return nullptr;
@@ -260,7 +271,7 @@ namespace isx
 
     void
     VesselSetFile::writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const SpVesselLine_t & inLineEndpoints,
-                                   Trace<float> & inData, const std::string & inName, const SpVesselDirectionTrace_t & inDirectionTrace,
+                                   Trace<float> & inData, const std::string & inName, const SpFTrace_t & inDirectionTrace,
                                    const SpVesselCorrelationsTrace_t & inCorrTrace)
     {
         if (m_fileClosedForWriting)
@@ -356,9 +367,7 @@ namespace isx
         if (m_vesselSetType == VesselSetType_t::RBC_VELOCITY)
         {
             ISX_ASSERT(inDirectionTrace != nullptr);
-
-            m_file.write(reinterpret_cast<char*>(inDirectionTrace->m_x->getValues()), directionSizeInBytes() / 2);
-            m_file.write(reinterpret_cast<char*>(inDirectionTrace->m_y->getValues()), directionSizeInBytes() / 2);
+            m_file.write(reinterpret_cast<char*>(inDirectionTrace->getValues()), directionSizeInBytes());
 
             if (inCorrTrace)
             {
@@ -772,7 +781,7 @@ namespace isx
     isize_t
     VesselSetFile::directionSizeInBytes()
     {
-        return m_timingInfo.getNumTimes() * 2 * sizeof(float);
+        return m_timingInfo.getNumTimes() * sizeof(float);
     }
 
     isize_t

@@ -404,7 +404,7 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
                 float * values = trace->getValues();
                 std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
                 trace->setValue(i, float(i)); 
-                isx::SpVesselDirectionTrace_t direction = std::make_shared<isx::VesselDirectionTrace>(timingInfos[i]);
+                isx::SpFTrace_t direction = std::make_shared<isx::Trace<float>>(timingInfos[i]);
                 isx::SizeInPixels_t correlationSize(10, 20);
                 isx::SpVesselCorrelationsTrace_t correlations = std::make_shared<isx::VesselCorrelationsTrace>(timingInfos[i], correlationSize);
                 cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace, "", direction, correlations);
@@ -470,7 +470,7 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
             float * values = trace->getValues();
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
             trace->setValue(i, float(i));
-            isx::SpVesselDirectionTrace_t direction = std::make_shared<isx::VesselDirectionTrace>(timingInfos[i]);
+            isx::SpFTrace_t direction = std::make_shared<isx::Trace<float>>(timingInfos[i]);
             isx::SizeInPixels_t correlationSize(10, 20);
             isx::SpVesselCorrelationsTrace_t correlations = std::make_shared<isx::VesselCorrelationsTrace>(timingInfos[i], correlationSize);
             cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace, "", direction, correlations);
@@ -503,7 +503,7 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
             totalNumSamples += timingInfos[i].getNumTimes();
             trace->setValue(i, float(i));
-            isx::SpVesselDirectionTrace_t direction = std::make_shared<isx::VesselDirectionTrace>(timingInfos[i]);
+            isx::SpFTrace_t direction = std::make_shared<isx::Trace<float>>(timingInfos[i]);
             isx::SizeInPixels_t correlationSize(10, 20);
             isx::SpVesselCorrelationsTrace_t correlations = std::make_shared<isx::VesselCorrelationsTrace>(timingInfos[i], correlationSize);
             cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace, "", direction, correlations);
@@ -549,7 +549,7 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
             totalNumSamples += timingInfos[i].getNumTimes();
             trace->setValue(i, float(i));
-            isx::SpVesselDirectionTrace_t direction = std::make_shared<isx::VesselDirectionTrace>(timingInfos[i]);
+            isx::SpFTrace_t direction = std::make_shared<isx::Trace<float>>(timingInfos[i]);
             isx::SizeInPixels_t correlationSize(10, 20);
             isx::SpVesselCorrelationsTrace_t correlations = std::make_shared<isx::VesselCorrelationsTrace>(timingInfos[i], correlationSize);
             cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace, "", direction, correlations);
@@ -575,9 +575,8 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
             totalNumSamples += timingInfos[i].getNumTimes();
             trace->setValue(i, float(i));
             
-            isx::SpVesselDirectionTrace_t direction = std::make_shared<isx::VesselDirectionTrace>(timingInfos[i]);
-            direction->m_x->setValue(i, float(i) / 100);
-            direction->m_y->setValue(i, float(i) / 1000);
+            isx::SpFTrace_t direction = std::make_shared<isx::Trace<float>>(timingInfos[i]);
+            direction->setValue(i, float(i) / 100);
             
             isx::SizeInPixels_t correlationSize(10, 20);
             isx::SpVesselCorrelationsTrace_t correlations = std::make_shared<isx::VesselCorrelationsTrace>(timingInfos[i], correlationSize);
@@ -588,31 +587,26 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
 
         isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
 
-        isx::SpVesselDirectionTrace_t direction = css->getDirectionTrace(0);
+        isx::SpFTrace_t direction = css->getDirectionTrace(0);
 
-        float * x = direction->m_x->getValues();
-        float * y = direction->m_y->getValues();
+        float * d = direction->getValues();
 
         for (isx::isize_t i(0); i < totalNumSamples; ++i)
         {
             if (i == 4) 
             {
-                REQUIRE(*x == 1e-2f);
-                REQUIRE(*y == 1e-3f);
+                REQUIRE(*d == 1e-2f);
             }
             else if (i == 9)
             {
-                REQUIRE(*x == 2e-2f);
-                REQUIRE(*y == 2e-3f);
+                REQUIRE(*d == 2e-2f);
             }
             else 
             {
-                REQUIRE(*x == 0.0f);
-                REQUIRE(*y == 0.0f);
+                REQUIRE(*d == 0.0f);
             }
 
-            x++;
-            y++;
+            d++;
         }
     }
 
@@ -630,7 +624,7 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
             std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
             totalNumSamples += timingInfos[i].getNumTimes();
             trace->setValue(i, float(i));
-            isx::SpVesselDirectionTrace_t direction = std::make_shared<isx::VesselDirectionTrace>(timingInfos[i]);
+            isx::SpFTrace_t direction = std::make_shared<isx::Trace<float>>(timingInfos[i]);
 
             isx::SpVesselCorrelationsTrace_t correlations = std::make_shared<isx::VesselCorrelationsTrace>(timingInfos[i], correlationSize);
             for (size_t j = 0; j <  timingInfos[i].getNumTimes(); j++)

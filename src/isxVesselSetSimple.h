@@ -102,11 +102,11 @@ public:
     void
     getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback) override;
 
-    SpVesselDirectionTrace_t
+    SpFTrace_t
     getDirectionTrace(isize_t inIndex) override;
 
     void
-    getDirectionTraceAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback) override;
+    getDirectionTraceAsync(isize_t inIndex, VesselSetGetTraceCB_t inCallback) override;
 
     SpVesselCorrelations_t
     getCorrelations(isize_t inIndex, isize_t inFrameNumber) override;
@@ -121,7 +121,7 @@ public:
         const SpVesselLine_t & inLineEndpoints,
         SpFTrace_t & inTrace,
         const std::string & inName= std::string(),
-        const SpVesselDirectionTrace_t & inDirectionTrace = nullptr,
+        const SpFTrace_t & inDirectionTrace = nullptr,
         const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr) override;
 
     VesselSet::VesselStatus
@@ -188,7 +188,7 @@ private:
     std::shared_ptr<IoTaskTracker<FTrace_t>>    m_traceIoTaskTracker;
     std::shared_ptr<IoTaskTracker<Image>>       m_imageIoTaskTracker;
     std::shared_ptr<IoTaskTracker<VesselLine>>  m_lineEndpointsIoTaskTracker;
-    std::shared_ptr<IoTaskTracker<VesselDirectionTrace>>  m_directionIoTaskTracker;
+    std::shared_ptr<IoTaskTracker<Trace<float>>>  m_directionIoTaskTracker;
     std::shared_ptr<IoTaskTracker<VesselCorrelations>>  m_corrIoTaskTracker;
 };
 

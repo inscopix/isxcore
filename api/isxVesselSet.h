@@ -33,25 +33,6 @@ struct VesselLine
 
 using SpVesselLine_t = std::shared_ptr<VesselLine>;
 
-/// A structure for holding the information relevant to vessel velocity direction
-struct VesselDirectionTrace
-{
-    /// Default constructor
-    VesselDirectionTrace() {}
-
-    /// Constructor
-    /// \param timingInfo   The timing info of the traces
-    VesselDirectionTrace(const TimingInfo timingInfo)
-    {
-        m_x.reset(new FTrace_t(timingInfo));
-        m_y.reset(new FTrace_t(timingInfo));
-    }
-
-    std::unique_ptr<FTrace_t> m_x = nullptr;    ///< The x-axis component of direction
-    std::unique_ptr<FTrace_t> m_y = nullptr;    ///< The y-axis component of direction
-};
-using SpVesselDirectionTrace_t = std::shared_ptr<VesselDirectionTrace>;
-
 /// Correlation heatmap triptychs for single velocity measurement
 class VesselCorrelations
 {
@@ -179,10 +160,6 @@ using VesselSetGetImageCB_t = std::function<void(AsyncTaskResult<SpImage_t>)>;
 using GetLineEndpointsCB_t = std::function<SpVesselLine_t()>;
 /// The type of callback for getting a vessel line endpoints asynchronously
 using VesselSetGetLineEndpointsCB_t = std::function<void(AsyncTaskResult<SpVesselLine_t>)>;
-/// The type of callback for reading a vessel's direction trace from disk
-using GetDirectionTraceCB_t = std::function<SpVesselDirectionTrace_t()>;
-/// The type of callback for getting a vessel direction trace asynchronously
-using VesselSetGetDirectionTraceCB_t = std::function<void(AsyncTaskResult<SpVesselDirectionTrace_t>)>;
 /// The type of callback for reading a vessel's correlation from disk
 using GetCorrelationsCB_t = std::function<SpVesselCorrelations_t()>;
 /// The type of callback for getting a vessel's correlation asynchronously
@@ -317,7 +294,7 @@ getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpointsCB_t inCallback)
 /// \return             A shared pointer to the direction data of the indexed vessel.
 /// \throw  isx::ExceptionFileIO    If vessel does not exist or reading fails.
 virtual
-SpVesselDirectionTrace_t
+SpFTrace_t
 getDirectionTrace(isize_t inIndex) = 0;
 
 /// Get the direction trace of a vessel asynchronously.
@@ -328,7 +305,7 @@ getDirectionTrace(isize_t inIndex) = 0;
 /// \param  inCallback  The call back that operates on the direction
 virtual
 void
-getDirectionTraceAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback) = 0;
+getDirectionTraceAsync(isize_t inIndex, VesselSetGetTraceCB_t inCallback) = 0;
 
 /// Get the correlation triptych for a particular velocity measurement of a vessel synchronously.
 ///
@@ -380,7 +357,7 @@ writeImageAndLineAndTrace(
     const SpVesselLine_t & inLineEndpoints,
     SpFTrace_t & inTrace,
     const std::string & inName= std::string(),
-    const SpVesselDirectionTrace_t & inDirectionTrace = nullptr,
+    const SpFTrace_t & inDirectionTrace = nullptr,
     const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr) = 0;
 
 /// \return             The current status of the vessel

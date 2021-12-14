@@ -16,7 +16,7 @@ VesselSetSimple::VesselSetSimple(const std::string & inFileName, bool enableWrit
     , m_traceIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_imageIoTaskTracker(new IoTaskTracker<Image>())
     , m_lineEndpointsIoTaskTracker(new IoTaskTracker<VesselLine>())
-    , m_directionIoTaskTracker(new IoTaskTracker<VesselDirectionTrace>())
+    , m_directionIoTaskTracker(new IoTaskTracker<Trace<float>>())
     , m_corrIoTaskTracker(new IoTaskTracker<VesselCorrelations>())
 {
     m_file = std::make_shared<VesselSetFile>(inFileName, enableWrite);
@@ -32,7 +32,7 @@ VesselSetSimple::VesselSetSimple(
     , m_traceIoTaskTracker(new IoTaskTracker<FTrace_t>())
     , m_imageIoTaskTracker(new IoTaskTracker<Image>())
     , m_lineEndpointsIoTaskTracker(new IoTaskTracker<VesselLine>())
-    , m_directionIoTaskTracker(new IoTaskTracker<VesselDirectionTrace>())
+    , m_directionIoTaskTracker(new IoTaskTracker<Trace<float>>())
     , m_corrIoTaskTracker(new IoTaskTracker<VesselCorrelations>())
 {
     m_file = std::make_shared<VesselSetFile>(inFileName, inTimingInfo, inSpacingInfo, inVesselSetType);
@@ -207,15 +207,15 @@ VesselSetSimple::getLineEndpointsAsync(isize_t inIndex, VesselSetGetLineEndpoint
     m_lineEndpointsIoTaskTracker->schedule(getLineEndpointsCB, inCallback);
 }
 
-SpVesselDirectionTrace_t
+SpFTrace_t
 VesselSetSimple::getDirectionTrace(isize_t inIndex)
 {
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("getDirectionTrace");
-    AsyncTaskResult<SpVesselDirectionTrace_t> asyncTaskResult;
+    AsyncTaskResult<SpFTrace_t> asyncTaskResult;
     getDirectionTraceAsync(inIndex,
-      [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVesselDirectionTrace_t> inAsyncTaskResult)
+      [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
       {
           mutex.lock("getDirectionTrace async");
           asyncTaskResult = inAsyncTaskResult;
@@ -230,15 +230,15 @@ VesselSetSimple::getDirectionTrace(isize_t inIndex)
 }
 
 void
-VesselSetSimple::getDirectionTraceAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback)
+VesselSetSimple::getDirectionTraceAsync(isize_t inIndex, VesselSetGetTraceCB_t inCallback)
 {
     // Only get a weak pointer to this, so that we don't bother reading
     // if this has been deleted when the read gets executed.
     std::weak_ptr<VesselSetSimple> weakThis = shared_from_this();
-    GetDirectionTraceCB_t getDirectionTraceCB = [weakThis, this, inIndex]()
+    GetTraceCB_t getDirectionTraceCB = [weakThis, this, inIndex]()
     {
         auto sharedThis = weakThis.lock();
-        SpVesselDirectionTrace_t vl;
+        SpFTrace_t vl;
         if (sharedThis)
         {
             vl = m_file->readDirectionTrace(inIndex);
@@ -296,7 +296,7 @@ VesselSetSimple::writeImageAndLineAndTrace(
         const SpVesselLine_t & inLineEndpoints,
         SpFTrace_t & inTrace,
         const std::string & inName,
-        const SpVesselDirectionTrace_t & inDirectionTrace,
+        const SpFTrace_t & inDirectionTrace,
         const SpVesselCorrelationsTrace_t & inCorrTrace)
 {
     // Get a new shared pointer to the file, so we can guarantee the write.

@@ -210,34 +210,42 @@ namespace isx
         return m_vesselSets[0]->getLineEndpointsAsync(inIndex, inCallback);
     }
 
-    SpVesselDirectionTrace_t
+    SpFTrace_t
     VesselSetSeries::getDirectionTrace(isize_t inIndex)
     {
-        SpVesselDirectionTrace_t direction = std::make_shared<VesselDirectionTrace>(m_gaplessTimingInfo);
-        float * x = direction->m_x->getValues();
-        float * y = direction->m_y->getValues();
+        if (m_vesselSets[0]->getDirectionTrace(0) == nullptr)
+        {
+            return nullptr;
+        }
+        
+        SpFTrace_t direction = std::make_shared<Trace<float>>(m_gaplessTimingInfo);
+        float * v = direction->getValues();
 
         for (const auto &vs : m_vesselSets)
         {
-            SpVesselDirectionTrace_t partialDirection = vs->getDirectionTrace(inIndex);
-            float * xPartial = partialDirection->m_x->getValues();
-            float * yPartial = partialDirection->m_y->getValues();
-            isize_t numSamples = partialDirection->m_x->getTimingInfo().getNumTimes();
-            memcpy((char *)x, (char *)xPartial, sizeof(float)*numSamples);
-            memcpy((char *)y, (char *)yPartial, sizeof(float)*numSamples);
-            x += numSamples;
-            y += numSamples;
+            SpFTrace_t partialDirection = vs->getDirectionTrace(inIndex);
+            float * vPartial = partialDirection->getValues();
+            isize_t numSamples = partialDirection->getTimingInfo().getNumTimes();
+            memcpy((char *)v, (char *)vPartial, sizeof(float)*numSamples);
+            v += numSamples;
         }
         return direction;
     }
 
     void
-    VesselSetSeries::getDirectionTraceAsync(isize_t inIndex, VesselSetGetDirectionTraceCB_t inCallback)
+    VesselSetSeries::getDirectionTraceAsync(isize_t inIndex, VesselSetGetTraceCB_t inCallback)
     {
         std::weak_ptr<VesselSet> weakThis = shared_from_this();
 
-        AsyncTaskResult<SpVesselDirectionTrace_t> asyncTaskResult;
-        asyncTaskResult.setValue(std::make_shared<VesselDirectionTrace>(m_gaplessTimingInfo));
+        AsyncTaskResult<SpFTrace_t> asyncTaskResult;
+        if (m_vesselSets[0]->getDirectionTrace(0) == nullptr)
+        {
+            asyncTaskResult.setValue(nullptr);
+            inCallback(asyncTaskResult);
+            return;
+        }
+        
+        asyncTaskResult.setValue(std::make_shared<Trace<float>>(m_gaplessTimingInfo));
 
         isize_t counter = 0;
         bool isLast = false;
@@ -247,8 +255,8 @@ namespace isx
         {
             isLast = (counter == (m_vesselSets.size() - 1));
 
-            VesselSetGetDirectionTraceCB_t finishedCB =
-                [weakThis, &asyncTaskResult, offset, isLast, inCallback] (AsyncTaskResult<SpVesselDirectionTrace_t> inAsyncTaskResult)
+            VesselSetGetTraceCB_t finishedCB =
+                [weakThis, &asyncTaskResult, offset, isLast, inCallback] (AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
             {
                 auto sharedThis = weakThis.lock();
                 if (!sharedThis)
@@ -267,14 +275,11 @@ namespace isx
                     {
                         auto directionSegment = inAsyncTaskResult.get();
                         auto directionSeries = asyncTaskResult.get();
-                        isize_t numTimes = directionSegment->m_x->getTimingInfo().getNumTimes();
+                        isize_t numTimes = directionSegment->getTimingInfo().getNumTimes();
                         isize_t numBytes = numTimes * sizeof(float);
-                        float * x = directionSeries->m_x->getValues();
-                        float * y = directionSeries->m_y->getValues();
-                        x += offset;
-                        y += offset;
-                        memcpy((char *)x, (char *)directionSegment->m_x->getValues(), numBytes);
-                        memcpy((char *)y, (char *)directionSegment->m_y->getValues(), numBytes);
+                        float * vals = directionSeries->getValues();
+                        vals += offset;
+                        memcpy((char *)vals, (char *)directionSegment->getValues(), numBytes);
                     }
                 }
 
@@ -357,7 +362,7 @@ namespace isx
         const SpVesselLine_t & inLineEndpoints,
         SpFTrace_t & inTrace,
         const std::string & inName,
-        const SpVesselDirectionTrace_t & inDirectionTrace,
+        const SpFTrace_t & inDirectionTrace,
         const SpVesselCorrelationsTrace_t & inCorrTrace)
     {
         // see comment above for VesselSetSeries::writeImageAndTrace

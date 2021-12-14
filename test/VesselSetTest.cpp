@@ -367,17 +367,13 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         isx::PointInPixels_t(0,0), isx::PointInPixels_t(1,1), isx::PointInPixels_t(2,2), isx::PointInPixels_t(3,3)
     });
 
-    isx::SpVesselDirectionTrace_t originalDirection = std::make_shared<isx::VesselDirectionTrace>(timingInfo);
-    float * originalX = originalDirection->m_x->getValues();
-    float * originalY = originalDirection->m_y->getValues();
-    float x = 0.0f;
-    float y = 0.0f;
+    isx::SpFTrace_t originalDirection = std::make_shared<isx::Trace<float>>(timingInfo);
+    float * direction = originalDirection->getValues();
+    float d = 0.0f;
     for (isx::isize_t i(0); i < timingInfo.getNumTimes(); ++i)
     {
-        originalX[i] = x;
-        originalY[i] = y;
-        x += 0.001f;
-        y += 0.002f;
+        direction[i] = d;
+        d += 0.001f;
     }
 
     isx::SizeInPixels_t correlationSize(10, 20);
@@ -498,7 +494,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         requireEqualImages(vesselSet->getImage(0), originalImage);
         requireEqualTraces(vesselSet->getTrace(0), originalTrace);
         requireEqualVesselLines(vesselSet->getLineEndpoints(0), lineEndpoints);
-        requireEqualVesselDirections(vesselSet->getDirectionTrace(0), originalDirection);
+        requireEqualTraces(vesselSet->getDirectionTrace(0), originalDirection);
         for (size_t t = 0; t < timingInfo.getNumTimes(); t++)
         {
             requireEqualVesselCorrelations(vesselSet->getCorrelations(0, t), originalCorrTriptychs->getValue(t));
@@ -540,7 +536,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
             requireEqualImages(vesselSet->getImage(i), originalImage);
             requireEqualTraces(vesselSet->getTrace(i), originalTrace);
             requireEqualVesselLines(vesselSet->getLineEndpoints(i), lineEndpoints);
-            requireEqualVesselDirections(vesselSet->getDirectionTrace(i), originalDirection);
+            requireEqualTraces(vesselSet->getDirectionTrace(i), originalDirection);
             for (size_t t = 0; t < timingInfo.getNumTimes(); t++)
             {
                 requireEqualVesselCorrelations(vesselSet->getCorrelations(i, t), originalCorrTriptychs->getValue(t));
@@ -573,7 +569,7 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
             requireEqualImages(vesselSet->getImage(i), originalImage);
             requireEqualTraces(vesselSet->getTrace(i), originalTrace);
             requireEqualVesselLines(vesselSet->getLineEndpoints(i), lineEndpoints);
-            requireEqualVesselDirections(vesselSet->getDirectionTrace(i), originalDirection);
+            requireEqualTraces(vesselSet->getDirectionTrace(i), originalDirection);
             for (size_t t = 0; t < timingInfo.getNumTimes(); t++)
             {
                 requireEqualVesselCorrelations(vesselSet->getCorrelations(i, t), originalCorrTriptychs->getValue(t));
@@ -698,10 +694,10 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         }
         vesselSet->closeForWriting();
 
-        isx::VesselSet::VesselSetGetDirectionTraceCB_t callBack = [originalDirection, &doneCount](isx::AsyncTaskResult<isx::SpVesselDirectionTrace_t> inAsyncTaskResult)
+        isx::VesselSet::VesselSetGetTraceCB_t callBack = [originalDirection, &doneCount](isx::AsyncTaskResult<isx::SpFTrace_t> inAsyncTaskResult)
         {
             REQUIRE(!inAsyncTaskResult.getException());
-            requireEqualVesselDirections(inAsyncTaskResult.get(), originalDirection);
+            requireEqualTraces(inAsyncTaskResult.get(), originalDirection);
             ++doneCount;
         };
         for (size_t i = 0; i < 3; ++i)

@@ -396,18 +396,18 @@ namespace isx
         }
     }
 
-    inline std::string getVesselSetUnitsString(VesselSetUnits_t vesselSetUnits)
+    inline std::string getVesselSetUnitsString(VesselSetUnits_t vesselSetUnits, const bool inShorthand = false)
     {
         switch(vesselSetUnits)
         {
             case VesselSetUnits_t::PIXELS:
-                return "pixels";
+                return inShorthand ? "px" : "pixels";
             case VesselSetUnits_t::MICRONS:
-                return "microns";
+                return inShorthand ? "um" : "microns";
             case VesselSetUnits_t::PIXELS_PER_SECOND:
-                return "pixels per second";
+                return inShorthand ? "px/s" : "pixels per second";
             case VesselSetUnits_t::MICRONS_PER_SECOND:
-                return "microns per second";
+                return inShorthand ? "um/s" : "microns per second";
             default:
                 return "";
         }

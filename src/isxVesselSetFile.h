@@ -100,7 +100,7 @@ public:
 
     /// \return the direction trace for the input vessel
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or reading fails.
-    SpVesselDirectionTrace_t readDirectionTrace(isize_t inVesselId);
+    SpFTrace_t readDirectionTrace(isize_t inVesselId);
 
     /// \return the correlation triptych for a particular velocity measurement of a vessel
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or reading fails.
@@ -120,7 +120,7 @@ public:
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
     void writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const SpVesselLine_t & inLineEndpoints,
                          Trace<float> & inData, const std::string & inName = std::string(),
-                         const SpVesselDirectionTrace_t & inDirectionTrace = nullptr,
+                         const SpFTrace_t & inDirectionTrace = nullptr,
                          const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr);
 
     /// \return the status of the vessel

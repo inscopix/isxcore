@@ -14,7 +14,7 @@ writeDefaultVessels(
         isx::Trace<float> & inTrace,
         const size_t inNumVessels,
         const isx::VesselSetType_t inVesselSetType,
-        const isx::SpVesselDirectionTrace_t inDirectionTrace = nullptr)
+        const isx::SpFTrace_t inDirectionTrace = nullptr)
 {
     isx::VesselSetFile file(inFileName, inTimingInfo, inSpacingInfo, inVesselSetType);
     for (size_t i = 0; i < inNumVessels; ++i)
@@ -424,17 +424,13 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
         isx::PointInPixels_t(0,0), isx::PointInPixels_t(1,1), isx::PointInPixels_t(2,2), isx::PointInPixels_t(3,3)
     });
 
-    isx::SpVesselDirectionTrace_t originalDirection = std::make_shared<isx::VesselDirectionTrace>(timingInfo);
-    float * originalX = originalDirection->m_x->getValues();
-    float * originalY = originalDirection->m_y->getValues();
-    float x = 0.0f;
-    float y = 0.0f;
+    isx::SpFTrace_t originalDirection = std::make_shared<isx::Trace<float>>(timingInfo);
+    float * direction = originalDirection->getValues();
+    float d = 0.0f;
     for (isx::isize_t i(0); i < timingInfo.getNumTimes(); ++i)
     {
-        originalX[i] = x;
-        originalY[i] = y;
-        x += 0.001f;
-        y += 0.002f;
+        direction[i] = d;
+        d += 0.001f;
     }
 
     isx::SizeInPixels_t correlationSize(10, 20);
@@ -576,8 +572,8 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
         REQUIRE(file.numberOfVessels() == 1);
         file.closeForWriting();
 
-        isx::SpVesselDirectionTrace_t vesselDirection = file.readDirectionTrace(0);
-        requireEqualVesselDirections(vesselDirection, originalDirection);
+        isx::SpFTrace_t vesselDirection = file.readDirectionTrace(0);
+        requireEqualTraces(vesselDirection, originalDirection);
     }
 
     SECTION("Read correlation triptychs")
@@ -664,8 +660,8 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
             isx::SpVesselLine_t vesselLineEndpoints = file.readLineEndpoints(i);
             requireEqualVesselLines(vesselLineEndpoints, lineEndpoints);
 
-            isx::SpVesselDirectionTrace_t vesselDirection = file.readDirectionTrace(i);
-            requireEqualVesselDirections(vesselDirection, originalDirection);
+            isx::SpFTrace_t vesselDirection = file.readDirectionTrace(i);
+            requireEqualTraces(vesselDirection, originalDirection);
 
             for (size_t t = 0; t < timingInfo.getNumTimes(); t++)
             {
