@@ -28,6 +28,36 @@ struct VesselLine
         ISX_ASSERT(contour.size() == 2 || contour.size() == 4);
     }
 
+    /// Compute the maximum limit on velocity for a given vessel line in a movie
+    /// \param fps                  The frame rate of the movie
+    float computeMaxVelocity(const float fps)
+    {
+        // This algorithm assumes that adjacent points are stored next to each other in the contour
+        // Determine the maximum length of the velocity bounding box edges
+        float maxLength = 0.0f;
+        for (size_t i = 0; i < 4; ++i)
+        {
+            float sideLength = getLineLength(m_contour[i], m_contour[(i + 1) % 4]);
+            if (sideLength > maxLength)
+            {
+                maxLength = sideLength;
+            }
+        }
+        // Calculate the max velocity by dividing the max length by 2 to account for the 3 time offsets
+        // then multiply by the frame rate
+        return maxLength > 0 ? maxLength / 2.0f * fps : std::numeric_limits<float>::quiet_NaN();
+    }
+
+    /// Compute the euclidean distance of the line between two points
+    /// \param p1                   The first point defining the line
+    /// \param p2                   The second point definind the line
+    float getLineLength(const isx::PointInPixels_t p1, const isx::PointInPixels_t p2)
+    {
+        float dx = (float)(p1.getX()) - (float)(p2.getX());
+        float dy = (float)(p1.getY()) - (float)(p2.getY());
+        return std::sqrt(dx * dx + dy * dy);
+    }
+
     Contour_t m_contour = Contour_t();  ///< The points of the vessel line
 };
 

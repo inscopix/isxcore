@@ -755,3 +755,48 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
 
     isx::CoreShutdown();
 }
+
+TEST_CASE("computeMaxVelocity", "[core]")
+{
+    isx::CoreInitialize();
+
+    SECTION("Simple upright rectangle bounding box")
+    {
+
+        const isx::Contour_t contour = {
+            isx::PointInPixels_t(0, 0),
+            isx::PointInPixels_t(0, 4),
+            isx::PointInPixels_t(4, 4),
+            isx::PointInPixels_t(4, 0),
+        };
+        isx::VesselLine vesselRoi(contour);
+        const float fps = 100.0f;
+
+        float maxVelocity = vesselRoi.computeMaxVelocity(fps);
+        const float expMaxVelocity = 4.0f / 2.0f * 100.0f;
+
+        REQUIRE(maxVelocity == expMaxVelocity);
+    }
+
+    SECTION("Diagonal rectangle bounding box")
+    {
+        const isx::Contour_t contour = {
+            isx::PointInPixels_t(4, 0),
+            isx::PointInPixels_t(0, 4),
+            isx::PointInPixels_t(2, 6),
+            isx::PointInPixels_t(6, 2),
+        };
+        const size_t numRows = 7;
+        const size_t numCols = 7;
+        const float fps = 100.0f;
+        isx::VesselLine vesselRoi(contour);
+
+        float maxVelocity = vesselRoi.computeMaxVelocity(fps);
+
+        const float expMaxVelocity = sqrt(32.0f) / 2.0f * 100.0f;
+
+        REQUIRE(maxVelocity == expMaxVelocity);
+    }
+
+    isx::CoreShutdown();
+}
