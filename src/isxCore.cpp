@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 
 extern "C"
 {
@@ -123,6 +124,23 @@ namespace isx
         ss.fill('0');
         ss << inNumber;
         return ss.str();
+    }
+    
+    size_t
+    calculateWidthOfPaddedName(const size_t inNumElems)
+    {
+        size_t width = 1;
+        if (inNumElems > 10)
+        {
+            width = size_t(std::floor(std::log10(inNumElems - 1)) + 1);
+        }
+        return width;
+    }
+
+    std::string
+    createNumberPaddedName(const std::string inPrefix, const size_t inNumber, const size_t inWidth)
+    {
+        return inPrefix + convertNumberToPaddedString(inNumber, inWidth);
     }
 
     void CoreInitialize(const std::string & inLogFileName)

@@ -232,33 +232,21 @@ namespace isx
         {
         }
 
-        /// constructor without clippedVessels
-        VesselSetMetadata(
-            const VesselSetUnits_t units,
-            const ProjectionType projectionType,
-            const double timeWindow,
-            const double timeIncrement
-            )
-            : m_units(units)
-            , m_projectionType(projectionType)
-            , m_timeWindow(timeWindow)
-            , m_timeIncrement(timeIncrement)
-        {
-        }
-
         /// fully specified constructor
         VesselSetMetadata(
             const VesselSetUnits_t units,
             const ProjectionType projectionType,
             const double timeWindow,
             const double timeIncrement,
-            const std::map<std::string, std::vector<int>> clippedVessels
+            const std::map<std::string, std::vector<int>> clippedVessels = {},
+            const std::map<std::string, std::vector<int>> noSignificantVessels = {}
             )
             : m_units(units)
             , m_projectionType(projectionType)
             , m_timeWindow(timeWindow)
             , m_timeIncrement(timeIncrement)
             , m_clippedVessels(clippedVessels)
+            , m_noSignificantVessels(noSignificantVessels)
         {
         }
 
@@ -266,7 +254,8 @@ namespace isx
         ProjectionType m_projectionType; ///< type of projection stored in the vessel set
         double m_timeWindow;             ///< the length of the time window in seconds
         double m_timeIncrement;          ///< the length of the time increment in seconds
-        std::map<std::string, std::vector<int>> m_clippedVessels; ///< the clipped vessels with frame # in the vessel set
+        std::map<std::string, std::vector<int>> m_clippedVessels; ///< map of vessel to timepoints where clipping occurred in the rbc algo
+        std::map<std::string, std::vector<int>> m_noSignificantVessels; ///< map of vessel to timepoints where no signficant pixels were detected in the rbc algo
     };
 
     /// Struct for holding pre-motion-correction metadata
@@ -601,25 +590,16 @@ namespace isx
         return 0;
     }
 
-    inline std::string getClippedVesselsString(std::map<std::string, std::vector<int>> inData)
+    inline std::string getVesselTimepointsString(std::map<std::string, std::vector<int>> inData)
     {
-        std::string val = "{";
-        std::string converted = "";
-        for (auto it = inData.cbegin(); it != inData.cend(); it++) {
-            std::vector<int> vals = it->second;
-            for (size_t i = 0; i < vals.size(); i++) {
-                converted += std::to_string(vals.at(i));
-                if (i < vals.size() -1 ) {
-                    converted += ",";
-                }
-            }
-            val += (it->first) + ":[" + converted + "], ";
-            converted = "";
-        }
+        using json = nlohmann::json;
+        json j;
 
-        val += "}";
+        for (auto it = inData.cbegin(); it != inData.cend(); it++) {
+            j[it->first] = it->second;
+        }
+        return j.dump();
         
-        return val;
     }
 
     template <class T>
@@ -921,7 +901,14 @@ namespace isx
         extraProps["idps"]["vesselset"]["projectionType"] = getVesselSetProjectionTypeString(vesselSetMetadata.m_projectionType);
         extraProps["idps"]["vesselset"]["timeWindow"] = vesselSetMetadata.m_timeWindow;
         extraProps["idps"]["vesselset"]["timeIncrement"] = vesselSetMetadata.m_timeIncrement;
-        extraProps["idps"]["vesselset"]["clippedVessels"] = getClippedVesselsString(vesselSetMetadata.m_clippedVessels);
+        if (!vesselSetMetadata.m_clippedVessels.empty())
+        {
+            extraProps["idps"]["vesselset"]["clippedVessels"] = getVesselTimepointsString(vesselSetMetadata.m_clippedVessels);
+        }
+        if (!vesselSetMetadata.m_noSignificantVessels.empty())
+        {
+            extraProps["idps"]["vesselset"]["noSignificantVessels"] = getVesselTimepointsString(vesselSetMetadata.m_noSignificantVessels);
+        }
         return extraProps.dump();
     }
 

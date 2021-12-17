@@ -52,6 +52,22 @@ namespace isx
             const size_t inNumber,
             const size_t inWidth);
 
+    /// Calculates the minimum number of digits needed to represent numbers as a string.
+    ///
+    /// \param  inNumElems  The maximum value a number can equal.
+    /// \return             The resulting minimum number of digits.
+    size_t
+    calculateWidthOfPaddedName(const size_t inNumElems);
+
+    /// Creates a number padded identifier.
+    ///
+    /// \param  inPrefix    The prefix for the identifier.
+    /// \param  inNumber    The index to use for the indentifier.
+    /// \param  inWidth     The minimum width of the string.
+    /// \return             The resulting string.
+    std::string
+    createNumberPaddedName(const std::string inPrefix, const size_t inNumber, const size_t inWidth);
+
     void CoreInitialize(const std::string & inLogFileName = std::string());
     bool CoreIsInitialized();
     void CoreShutdown();

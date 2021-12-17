@@ -4,8 +4,6 @@
 #include "isxAssert.h"
 #include "isxPathUtils.h"
 
-#include <cmath>
-
 namespace isx
 {
     CellSetFile::CellSetFile()
@@ -620,16 +618,12 @@ namespace isx
     void
     CellSetFile::replaceEmptyNames()
     {
-        size_t width = 1;
-        if (m_numCells > 10)
-        {
-            width = size_t(std::floor(std::log10(m_numCells - 1)) + 1);
-        }
+        const size_t width = calculateWidthOfPaddedName(m_cellNames.size());
         for (isize_t i = 0; i < m_numCells; ++i)
         {
             if (m_cellNames[i].empty())
             {
-                m_cellNames[i] = "C" + convertNumberToPaddedString(i, width);
+                m_cellNames[i] = createNumberPaddedName("C", i, width);
             }
         }
     }

@@ -4,8 +4,6 @@
 #include "isxAssert.h"
 #include "isxPathUtils.h"
 
-#include <cmath>
-
 namespace isx
 {
     VesselSetFile::VesselSetFile()
@@ -838,16 +836,12 @@ namespace isx
     void
     VesselSetFile::replaceEmptyNames()
     {
-        size_t width = 1;
-        if (m_numVessels > 10)
-        {
-            width = size_t(std::floor(std::log10(m_numVessels - 1)) + 1);
-        }
+        const size_t width = calculateWidthOfPaddedName(m_vesselNames.size());
         for (isize_t i = 0; i < m_numVessels; ++i)
         {
             if (m_vesselNames[i].empty())
             {
-                m_vesselNames[i] = "V" + convertNumberToPaddedString(i, width);
+                m_vesselNames[i] = createNumberPaddedName("V", i, width);
             }
         }
     }

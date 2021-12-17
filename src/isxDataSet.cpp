@@ -896,6 +896,12 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                 {
                     acqInfo["Clipped Vessels"] = vesselSetClippedVessels->get<std::string>();
                 }
+
+                const auto vesselSetNoSignificantVessels = vesselset->find("noSignificantVessels");
+                if (vesselSetNoSignificantVessels != vesselset->end())
+                {
+                    acqInfo["No Significant Pixel Vessels"] = vesselSetNoSignificantVessels->get<std::string>();
+                }
             }
         }
     }
