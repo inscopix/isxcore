@@ -85,118 +85,204 @@ namespace isx
     /// \endcond doxygen chokes on enum class inside of namespace
 
     /// \cond doxygen chokes on enum class inside of namespace
-    /// Type of integrated base plate unit used to capture data
-    enum class IntegratedBasePlateType_t
+    /// Type of base plate unit used to capture data
+    /// Enum values are set in order to maintain backwards compatibility with IDPS 1.7
+    enum class BasePlateType_t
     {
         UNAVAILABLE = 0,
-        CUSTOM,
-        IBP1,
-        IBP2,
-        IBP3,
-        IBP4,
-        IBP5,
-        IBP6,
-        IBP7,
-        IBP8,
-        IBP9,
-        IBP10,
-        IBP11,
-        IBP12,
-        IBP13,
-        IBP14,
-        IBP15,
-        CRANIAL_WINDOW
+        CUSTOM = 1,
+        CRANIAL_WINDOW = 17,
+
+        BP1 = 19,
+        BP2 = 20,
+        BP3 = 21,
+        BP4 = 22,
+        BP5 = 23,
+        BP6 = 24,
+
+        BP7 = 2,
+        BP8 = 3,
+        BP9 = 4,
+        BP10 = 5,
+        BP11 = 6,
+        BP12 = 7,
+        BP13 = 8,
+        BP14 = 9,
+        BP15 = 10,
+
+        BP16 = 25,
+        BP17 = 26,
+        BP18 = 27,
+        BP19 = 28,
+        BP20 = 29,
+        BP21 = 30,
+        BP22 = 31,
+        BP23 = 32,
+        BP24 = 33,
+        BP25 = 34,
+        BP26 = 35,
+        BP27 = 36,
+
+        BP28 = 13,
+        BP29 = 14,
+        BP30 = 15,
+        BP31 = 18,
+        BP32 = 16,
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
-    const std::map<IntegratedBasePlateType_t, std::string> integratedBasePlateMap =
+    const std::map<BasePlateType_t, std::string> basePlateMap =
     {
-        {IntegratedBasePlateType_t::UNAVAILABLE, "None"},
-        {IntegratedBasePlateType_t::CUSTOM, "Custom"},
-        {IntegratedBasePlateType_t::IBP1, "0.5mm x 4.0mm"},
-        {IntegratedBasePlateType_t::IBP2, "0.5mm x 6.1mm"},
-        {IntegratedBasePlateType_t::IBP3, "0.5mm x 8.4mm"},
-        {IntegratedBasePlateType_t::IBP4, "0.6mm x 7.3mm"},
-        {IntegratedBasePlateType_t::IBP5, "1.0mm x 4.0mm"},
-        {IntegratedBasePlateType_t::IBP6, "1.0mm x 9.0mm"},
-        {IntegratedBasePlateType_t::IBP7, "1.0mm x 13.7mm"},
-        {IntegratedBasePlateType_t::IBP8, "Prism 1.0mm x 4.3mm"},
-        {IntegratedBasePlateType_t::IBP9, "Prism 1.0mm x 9.1mm"},
-        {IntegratedBasePlateType_t::IBP10, "Mouse Dorsal Striatum Camk2a (1.0mm x 4.0mm)"},
-        {IntegratedBasePlateType_t::IBP11, "Mouse Dorsal Striatum CAG.Flex (1.0mm x 4.0mm )"},
-        {IntegratedBasePlateType_t::IBP12, "0.5mm x 5.6mm"},
-        {IntegratedBasePlateType_t::IBP13, "0.66mmx 7.5mm"},
-        {IntegratedBasePlateType_t::IBP14, "0.75mm x 8.65mm"},
-        {IntegratedBasePlateType_t::IBP15, "1.0mm x 11.7mm"},
-        {IntegratedBasePlateType_t::CRANIAL_WINDOW, "Cranial Window or No Lens"}
+        {BasePlateType_t::UNAVAILABLE, "None"},
+        {BasePlateType_t::CUSTOM, "Custom"},
+        {BasePlateType_t::CRANIAL_WINDOW, "Cranial Window or No Lens"},
+        {BasePlateType_t::BP1, "ProView Lens Probe 0.5 mm x 4.0 mm"},
+        {BasePlateType_t::BP2, "Lens Probe 1.0 mm x 4.2 mm"},
+        {BasePlateType_t::BP3, "Lens Probe 1.0 mm x 9.0 mm"},
+        {BasePlateType_t::BP4, "Prism Probe 0.85 mm x 3.3 mm"},
+        {BasePlateType_t::BP5, "Prism Probe 1.0 mm x 4.3 mm"},
+        {BasePlateType_t::BP6, "Prism Probe 1.0 mm x 9.1 mm"},
+        {BasePlateType_t::BP7, "ProView Integrated Lens 0.5 mm x 4.0 mm"},
+        {BasePlateType_t::BP8, "ProView Integrated Lens 0.5 mm x 6.1 mm"},
+        {BasePlateType_t::BP9, "ProView Integrated Lens 0.5 mm x 8.4 mm"},
+        {BasePlateType_t::BP10, "ProView Integrated Lens 0.6 mm x 7.3 mm"},
+        {BasePlateType_t::BP11, "ProView Integrated Lens 1.0 mm x 4.2 mm"},
+        {BasePlateType_t::BP12, "ProView Integrated Lens 1.0 mm x 9.0 mm"},
+        {BasePlateType_t::BP13, "ProView Integrated Lens 1.0 mm x 13.7 mm"},
+        {BasePlateType_t::BP14, "ProView Prism Integrated Lens 1.0 mm x 4.3 mm"},
+        {BasePlateType_t::BP15, "ProView Prism Integrated Lens 1.0 mm x 9.1 mm"},
+        {BasePlateType_t::BP16, "Lens Probe 0.5 mm x 4.0 mm"},
+        {BasePlateType_t::BP17, "Lens Probe 0.5 mm x 6.1 mm"},
+        {BasePlateType_t::BP18, "Lens Probe 0.5 mm x 8.4 mm"},
+        {BasePlateType_t::BP19, "Lens Probe 0.6 mm x 7.3 mm"},
+        {BasePlateType_t::BP20, "ProView Lens Probe 0.5 mm x 6.1 mm"},
+        {BasePlateType_t::BP21, "ProView Lens Probe 0.5 mm x 8.4 mm"},
+        {BasePlateType_t::BP22, "ProView Lens Probe 0.6 mm x 7.3 mm"},
+        {BasePlateType_t::BP23, "ProView Lens Probe 1.0 mm x 4.2 mm"},
+        {BasePlateType_t::BP24, "ProView Lens Probe 1.0 mm x 9.0 mm"},
+        {BasePlateType_t::BP25, "ProView Prism Probe 0.85 mm x 3.3 mm"},
+        {BasePlateType_t::BP26, "ProView Prism Probe 1.0 mm x 4.3 mm"},
+        {BasePlateType_t::BP27, "ProView Prism Probe 1.0 mm x 9.1 mm"},
+        {BasePlateType_t::BP28, "ProView DC Integrated Lens 0.5 mm x 5.6 mm Li"},
+        {BasePlateType_t::BP29, "ProView DC Integrated Lens 0.66 mm x 7.5 mm Li"},
+        {BasePlateType_t::BP30, "ProView DC Integrated Lens 0.75 mm x 8.6 mm Li"},
+        {BasePlateType_t::BP31, "ProView DC Integrated Lens 1.0 mm x 4.2 mm"},
+        {BasePlateType_t::BP32, "ProView DC Integrated Lens 1.0 mm x 11.7 mm Li"},
     };
 
     /// Scaling is dependant upon efocus and the integrated base plate type. We store a mapping
     /// from the integrated base plate type to the microns/pixels scaling ratio at 0 and 200 efocus.
-    const std::map<IntegratedBasePlateType_t, std::pair<double, double>> integratedBasePlateToScaling=
+    /// Note: pixel scaling is only available for intergrated base plates
+    const std::map<BasePlateType_t, std::pair<double, double>> integratedBasePlateToScaling=
         {
-                {IntegratedBasePlateType_t::UNAVAILABLE, std::make_pair(0,0)},
-                {IntegratedBasePlateType_t::CUSTOM, std::make_pair(0,0)},
-                {IntegratedBasePlateType_t::IBP1, std::make_pair(0.672,0.812)},
-                {IntegratedBasePlateType_t::IBP2, std::make_pair(0.626,0.788)},
-                {IntegratedBasePlateType_t::IBP3, std::make_pair(0.621,0.780)},
-                {IntegratedBasePlateType_t::IBP4, std::make_pair(0.612,0.686)},
-                {IntegratedBasePlateType_t::IBP5, std::make_pair(0.733,0.796)},
-                {IntegratedBasePlateType_t::IBP6, std::make_pair(0.745,0.780)},
-                {IntegratedBasePlateType_t::IBP7, std::make_pair(0.745,0.780)},
-                {IntegratedBasePlateType_t::IBP8, std::make_pair(0.901,0.970)},
-                {IntegratedBasePlateType_t::IBP9, std::make_pair(0.901,0.982)},
-                {IntegratedBasePlateType_t::IBP10, std::make_pair(0.733,0.796)},
-                {IntegratedBasePlateType_t::IBP11, std::make_pair(0.733,0.796)},
-                {IntegratedBasePlateType_t::IBP12, std::make_pair(0.788,0.796)},
-                {IntegratedBasePlateType_t::IBP13, std::make_pair(0.804,0.796)},
-                {IntegratedBasePlateType_t::IBP14, std::make_pair(0.804,0.796)}, // use same scaling as 0.66mm x 7.5mm
-                {IntegratedBasePlateType_t::IBP15, std::make_pair(0.812, 0.796)},
-                {IntegratedBasePlateType_t::CRANIAL_WINDOW, std::make_pair(0.820, 0.796)},
+                {BasePlateType_t::CRANIAL_WINDOW, std::make_pair(0.82, 0.80)},
+
+                {BasePlateType_t::BP1, std::make_pair(0.67,0.81)},
+
+                {BasePlateType_t::BP7, std::make_pair(0.67,0.81)},
+                {BasePlateType_t::BP8, std::make_pair(0.63,0.79)},
+                {BasePlateType_t::BP9, std::make_pair(0.62,0.78)},
+                {BasePlateType_t::BP10, std::make_pair(0.61,0.69)},
+                {BasePlateType_t::BP11, std::make_pair(0.77,0.80)},
+                {BasePlateType_t::BP12, std::make_pair(0.75,0.78)},
+                {BasePlateType_t::BP13, std::make_pair(0.76,0.78)},
+                {BasePlateType_t::BP14, std::make_pair(0.90,0.97)},
+                {BasePlateType_t::BP15, std::make_pair(0.90,0.98)},
+
+                {BasePlateType_t::BP20, std::make_pair(0.63,0.79)},
+                {BasePlateType_t::BP21, std::make_pair(0.62,0.78)},
+                {BasePlateType_t::BP22, std::make_pair(0.61,0.69)},
+                {BasePlateType_t::BP23, std::make_pair(0.77,0.80)},
+                {BasePlateType_t::BP24, std::make_pair(0.75,0.78)},
+                {BasePlateType_t::BP25, std::make_pair(0.91,1.02)},
+                {BasePlateType_t::BP26, std::make_pair(0.90,0.97)},
+                {BasePlateType_t::BP27, std::make_pair(0.90,0.98)},
+
+                {BasePlateType_t::BP28, std::make_pair(0.79,0.80)},
+                {BasePlateType_t::BP29, std::make_pair(0.80,0.80)},
+                {BasePlateType_t::BP30, std::make_pair(0.80,0.80)},
+                {BasePlateType_t::BP31, std::make_pair(0.77, 0.80)},
+                {BasePlateType_t::BP32, std::make_pair(0.81, 0.80)},
         };
 
-    const std::map<std::string, IntegratedBasePlateType_t> probeIdToIntegratedBasePlate=
+    const std::map<std::string, BasePlateType_t> probeIdToBasePlate=
         {
-                {"1050-004417", IntegratedBasePlateType_t::IBP1},
-                {"1050-004415", IntegratedBasePlateType_t::IBP2},
-                {"1050-004414", IntegratedBasePlateType_t::IBP3},
-                {"1050-004413", IntegratedBasePlateType_t::IBP4},
-                {"1050-004637", IntegratedBasePlateType_t::IBP5},
-                {"1050-004416", IntegratedBasePlateType_t::IBP6},
-                {"1050-004418", IntegratedBasePlateType_t::IBP7},
-                {"1050-004419", IntegratedBasePlateType_t::IBP8},
-                {"1050-004420", IntegratedBasePlateType_t::IBP9},
-                {"1050-004474", IntegratedBasePlateType_t::IBP10},
-                {"1050-004724", IntegratedBasePlateType_t::IBP11},
-                {"1050-005441", IntegratedBasePlateType_t::IBP12},
-                {"1050-005442", IntegratedBasePlateType_t::IBP13},
-                {"1050-005443", IntegratedBasePlateType_t::IBP14},
-                {"1050-005473", IntegratedBasePlateType_t::IBP5},
-                {"1050-005475", IntegratedBasePlateType_t::IBP15},
+            {"100-002172", BasePlateType_t::BP1},
+            {"130-000143", BasePlateType_t::BP2},
+            {"130-000304", BasePlateType_t::BP3},
+            {"130-000248", BasePlateType_t::BP4},
+            {"130-000247", BasePlateType_t::BP5},
+            {"130-000444", BasePlateType_t::BP6},
+
+            {"1050-004417", BasePlateType_t::BP7},
+            {"1050-004415", BasePlateType_t::BP8},
+            {"1050-004414", BasePlateType_t::BP9},
+            {"1050-004413", BasePlateType_t::BP10},
+            {"1050-004637", BasePlateType_t::BP11},
+            {"1050-004416", BasePlateType_t::BP12},
+            {"1050-004418", BasePlateType_t::BP13},
+            {"1050-004419", BasePlateType_t::BP14},
+            {"1050-004420", BasePlateType_t::BP15},
+
+            {"1050-002181", BasePlateType_t::BP16},
+            {"1050-002182", BasePlateType_t::BP17},
+            {"1050-002183", BasePlateType_t::BP18},
+            {"1050-002179", BasePlateType_t::BP19},
+            {"1050-002211", BasePlateType_t::BP20},
+            {"1050-002212", BasePlateType_t::BP21},
+            {"1050-002208", BasePlateType_t::BP22},
+            {"1050-002202", BasePlateType_t::BP23},
+            {"1050-002214", BasePlateType_t::BP24},
+            {"1050-002204", BasePlateType_t::BP25},
+            {"1050-002203", BasePlateType_t::BP26},
+            {"1050-002213", BasePlateType_t::BP27},
+
+            {"1050-005441", BasePlateType_t::BP28},
+            {"1050-005442", BasePlateType_t::BP29},
+            {"1050-005443", BasePlateType_t::BP30},
+            {"1050-005473", BasePlateType_t::BP31},
+            {"1050-005475", BasePlateType_t::BP32},
         };
 
     /// \cond doxygen chokes on enum class inside of namespace
     /// Vector specifying the order the baseplates should be listed in the metadata view
-    const std::vector<IntegratedBasePlateType_t> integratedBasePlateOrder =
+    const std::vector<BasePlateType_t> basePlateOrder =
     {
-        IntegratedBasePlateType_t::UNAVAILABLE,
-        IntegratedBasePlateType_t::CUSTOM,
-        IntegratedBasePlateType_t::CRANIAL_WINDOW,
-        IntegratedBasePlateType_t::IBP1,
-        IntegratedBasePlateType_t::IBP2,
-        IntegratedBasePlateType_t::IBP3,
-        IntegratedBasePlateType_t::IBP4,
-        IntegratedBasePlateType_t::IBP5,
-        IntegratedBasePlateType_t::IBP6,
-        IntegratedBasePlateType_t::IBP7,
-        IntegratedBasePlateType_t::IBP8,
-        IntegratedBasePlateType_t::IBP9,
-        IntegratedBasePlateType_t::IBP10,
-        IntegratedBasePlateType_t::IBP11,
-        IntegratedBasePlateType_t::IBP12,
-        IntegratedBasePlateType_t::IBP13,
-        IntegratedBasePlateType_t::IBP14,
-        IntegratedBasePlateType_t::IBP15,
+        BasePlateType_t::UNAVAILABLE,
+        BasePlateType_t::CUSTOM,
+        BasePlateType_t::CRANIAL_WINDOW,
+        BasePlateType_t::BP1,
+        BasePlateType_t::BP2,
+        BasePlateType_t::BP3,
+        BasePlateType_t::BP4,
+        BasePlateType_t::BP5,
+        BasePlateType_t::BP6,
+        BasePlateType_t::BP7,
+        BasePlateType_t::BP8,
+        BasePlateType_t::BP9,
+        BasePlateType_t::BP10,
+        BasePlateType_t::BP11,
+        BasePlateType_t::BP12,
+        BasePlateType_t::BP13,
+        BasePlateType_t::BP14,
+        BasePlateType_t::BP15,
+        BasePlateType_t::BP16,
+        BasePlateType_t::BP17,
+        BasePlateType_t::BP18,
+        BasePlateType_t::BP19,
+        BasePlateType_t::BP20,
+        BasePlateType_t::BP21,
+        BasePlateType_t::BP22,
+        BasePlateType_t::BP23,
+        BasePlateType_t::BP24,
+        BasePlateType_t::BP25,
+        BasePlateType_t::BP26,
+        BasePlateType_t::BP27,
+        BasePlateType_t::BP28,
+        BasePlateType_t::BP29,
+        BasePlateType_t::BP30,
+        BasePlateType_t::BP31,
+        BasePlateType_t::BP32,
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -603,7 +689,7 @@ namespace isx
     }
 
     template <class T>
-    IntegratedBasePlateType_t getIntegratedBasePlateType(T & inData)
+    BasePlateType_t getBasePlateType(T & inData)
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
@@ -611,7 +697,7 @@ namespace isx
         {
             // read IDPS metadata
             std::string ibp = extraProps["idps"]["integratedBasePlate"].get<std::string>();
-            return static_cast<IntegratedBasePlateType_t>(stoi(ibp));
+            return static_cast<BasePlateType_t>(stoi(ibp));
         }
         else if (!extraProps["probe"].is_null())
         {
@@ -619,36 +705,36 @@ namespace isx
             std::string name = extraProps["probe"]["name"].get<std::string>();
             ISX_ASSERT(!name.empty());
 
-            IntegratedBasePlateType_t probeType;
+            BasePlateType_t probeType;
             if (name == "Custom")
             {
-                probeType = IntegratedBasePlateType_t::CUSTOM;
+                probeType = BasePlateType_t::CUSTOM;
             }
             else if (name == "None")
             {
-                probeType = IntegratedBasePlateType_t::UNAVAILABLE;
+                probeType = BasePlateType_t::UNAVAILABLE;
             }
             else if (name == "Cranial Window or No Lens")
             {
-                probeType = IntegratedBasePlateType_t::CRANIAL_WINDOW;
+                probeType = BasePlateType_t::CRANIAL_WINDOW;
             }
             else // Integrated lens
             {
                 std::string probeId = extraProps["probe"]["id"].get<std::string>();
-                const bool probeMappingExists = probeIdToIntegratedBasePlate.find(probeId) != probeIdToIntegratedBasePlate.end();
-                ISX_ASSERT(probeMappingExists, "Failed to map IDAS probe ID " + probeId + " to an integrated base plate type in IDPS.");
+                const bool probeMappingExists = probeIdToBasePlate.find(probeId) != probeIdToBasePlate.end();
+                ISX_ASSERT(probeMappingExists, "Failed to map IDAS probe ID " + probeId + " to a base plate type in IDPS.");
                 if (probeMappingExists)
                 {
-                    probeType = probeIdToIntegratedBasePlate.at(probeId);
+                    probeType = probeIdToBasePlate.at(probeId);
                 }
                 else
                 {
-                    probeType = IntegratedBasePlateType_t::UNAVAILABLE;
+                    probeType = BasePlateType_t::UNAVAILABLE;
                 }
             }
             return probeType;
         }
-        return IntegratedBasePlateType_t::UNAVAILABLE;
+        return BasePlateType_t::UNAVAILABLE;
     }
 
     template <class T>
@@ -694,6 +780,16 @@ namespace isx
         return efocusSeries;
     }
 
+    template<class T>
+    bool hasPixelScaling(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        BasePlateType_t basePlateType = getBasePlateType(inData);
+        return integratedBasePlateToScaling.find(basePlateType) != integratedBasePlateToScaling.end();
+    }
+
     template <class T>
     double getMicronsPerPixel(T & inData)
     {
@@ -701,10 +797,13 @@ namespace isx
         json extraProps = getExtraPropertiesJSON(inData);
 
         uint16_t efocus = getEfocus(inData);
-        IntegratedBasePlateType_t integratedBasePlateType = getIntegratedBasePlateType(inData);
-        if (integratedBasePlateType == IntegratedBasePlateType_t::UNAVAILABLE ||
-            integratedBasePlateType == IntegratedBasePlateType_t::CUSTOM) return 0;
-        std::pair<double, double> efocusData = integratedBasePlateToScaling.at(integratedBasePlateType);
+        BasePlateType_t basePlateType = getBasePlateType(inData);
+        if (integratedBasePlateToScaling.find(basePlateType) == integratedBasePlateToScaling.end())
+        {
+            ISX_THROW(isx::ExceptionUserInput, "No pixel scaling for non-integrated base plate");
+        }
+
+        std::pair<double, double> efocusData = integratedBasePlateToScaling.at(basePlateType);
 
         // Linearly interpolate the efocus scale factor
         double micronsPerPixel = ((efocusData.second - efocusData.first) / 200) * (efocus) + efocusData.first;
@@ -824,18 +923,18 @@ namespace isx
     }
 
     template <typename T>
-    void setIntegratedBasePlateType(T & inData, IntegratedBasePlateType_t integratedBasePlateType) {
+    void setBasePlateType(T & inData, BasePlateType_t basePlateType) {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
 
-        size_t index = size_t(integratedBasePlateType);
-        std::string integratedBasePlateString = std::to_string(index);
+        size_t index = size_t(basePlateType);
+        std::string basePlateString = std::to_string(index);
 
         // Pad with zeros
-        std::string zeros(std::to_string(integratedBasePlateMap.size() - 1).size() - integratedBasePlateString.size(), '0');
-        integratedBasePlateString.insert(0, zeros);
+        std::string zeros(std::to_string(basePlateMap.size() - 1).size() - basePlateString.size(), '0');
+        basePlateString.insert(0, zeros);
 
-        extraProps["idps"]["integratedBasePlate"] = integratedBasePlateString;
+        extraProps["idps"]["integratedBasePlate"] = basePlateString;
 
         inData->setExtraProperties(extraProps.dump());
     }

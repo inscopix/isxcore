@@ -14,9 +14,9 @@ TEST_CASE("IntegratedBasePlate-Get", "[core]")
     {
         const std::string filePath = g_resources["unitTestDataPath"] + "/baseplate/2021-06-14-13-30-29_video_green.isxd";
         isx::SpMovie_t movie = isx::readMovie(filePath);
-        isx::IntegratedBasePlateType_t probeType = isx::getIntegratedBasePlateType(movie);
+        isx::BasePlateType_t probeType = isx::getBasePlateType(movie);
 
-        isx::IntegratedBasePlateType_t expectedProbeType = isx::IntegratedBasePlateType_t::IBP5;
+        isx::BasePlateType_t expectedProbeType = isx::BasePlateType_t::BP31;
         REQUIRE(probeType == expectedProbeType);
     }
 
@@ -24,9 +24,9 @@ TEST_CASE("IntegratedBasePlate-Get", "[core]")
     {
         const std::string filePath = g_resources["unitTestDataPath"] + "/baseplate/2021-06-28-23-45-49_video_sched_0_probe_custom.isxd";
         isx::SpMovie_t movie = isx::readMovie(filePath);
-        isx::IntegratedBasePlateType_t probeType = isx::getIntegratedBasePlateType(movie);
+        isx::BasePlateType_t probeType = isx::getBasePlateType(movie);
 
-        isx::IntegratedBasePlateType_t expectedProbeType = isx::IntegratedBasePlateType_t::CUSTOM;
+        isx::BasePlateType_t expectedProbeType = isx::BasePlateType_t::CUSTOM;
         REQUIRE(probeType == expectedProbeType);
     }
 
@@ -34,9 +34,9 @@ TEST_CASE("IntegratedBasePlate-Get", "[core]")
     {
         const std::string filePath = g_resources["unitTestDataPath"] + "/baseplate/2021-06-28-23-34-09_video_sched_0_probe_none.isxd";
         isx::SpMovie_t movie = isx::readMovie(filePath);
-        isx::IntegratedBasePlateType_t probeType = isx::getIntegratedBasePlateType(movie);
+        isx::BasePlateType_t probeType = isx::getBasePlateType(movie);
 
-        isx::IntegratedBasePlateType_t expectedProbeType = isx::IntegratedBasePlateType_t::UNAVAILABLE;
+        isx::BasePlateType_t expectedProbeType = isx::BasePlateType_t::UNAVAILABLE;
         REQUIRE(probeType == expectedProbeType);
     }   
 
@@ -44,19 +44,19 @@ TEST_CASE("IntegratedBasePlate-Get", "[core]")
     {
         const std::string filePath = g_resources["unitTestDataPath"] + "/baseplate/movie_plate_cranial.isxd";
         isx::SpMovie_t movie = isx::readMovie(filePath);
-        isx::IntegratedBasePlateType_t probeType = isx::getIntegratedBasePlateType(movie);
+        isx::BasePlateType_t probeType = isx::getBasePlateType(movie);
 
-        isx::IntegratedBasePlateType_t expectedProbeType = isx::IntegratedBasePlateType_t::CRANIAL_WINDOW;
+        isx::BasePlateType_t expectedProbeType = isx::BasePlateType_t::CRANIAL_WINDOW;
         REQUIRE(probeType == expectedProbeType);
     }
 
     SECTION("IDAS metadata - Unrecognizable base plate")
     {
-        const std::string filePath = g_resources["unitTestDataPath"] + "/baseplate/video-efocus_0500-Part1.isxd";
+        const std::string filePath = g_resources["unitTestDataPath"] + "/baseplate/movie_plate_unknown.isxd";
         isx::SpMovie_t movie = isx::readMovie(filePath);
-        isx::IntegratedBasePlateType_t probeType = isx::getIntegratedBasePlateType(movie);
+        isx::BasePlateType_t probeType = isx::getBasePlateType(movie);
 
-        isx::IntegratedBasePlateType_t expectedProbeType = isx::IntegratedBasePlateType_t::UNAVAILABLE;
+        isx::BasePlateType_t expectedProbeType = isx::BasePlateType_t::UNAVAILABLE;
         REQUIRE(probeType == expectedProbeType);
     }
 
@@ -64,19 +64,19 @@ TEST_CASE("IntegratedBasePlate-Get", "[core]")
     {
         const std::string filePath = g_resources["unitTestDataPath"] + "/baseplate/2021-06-14-13-30-29_video_green_probe_change_idps.isxd";
         isx::SpMovie_t movie = isx::readMovie(filePath);
-        isx::IntegratedBasePlateType_t probeType = isx::getIntegratedBasePlateType(movie);
+        isx::BasePlateType_t probeType = isx::getBasePlateType(movie);
 
-        isx::IntegratedBasePlateType_t expectedProbeType = isx::IntegratedBasePlateType_t::IBP15;
+        isx::BasePlateType_t expectedProbeType = isx::BasePlateType_t::BP32;
         REQUIRE(probeType == expectedProbeType);
     }
 
     SECTION("No metadata from IDPS or IDAS")
     {
-        const std::string filePath = g_resources["unitTestDataPath"] + "/baseplate/blood_flow_movie.isxd";
+        const std::string filePath = g_resources["unitTestDataPath"] + "/bloodflow/bloodflow_movie_1.isxd";
         isx::SpMovie_t movie = isx::readMovie(filePath);
-        isx::IntegratedBasePlateType_t probeType = isx::getIntegratedBasePlateType(movie);
+        isx::BasePlateType_t probeType = isx::getBasePlateType(movie);
 
-        isx::IntegratedBasePlateType_t expectedProbeType = isx::IntegratedBasePlateType_t::UNAVAILABLE;
+        isx::BasePlateType_t expectedProbeType = isx::BasePlateType_t::UNAVAILABLE;
         REQUIRE(probeType == expectedProbeType);
     }
 
@@ -96,12 +96,12 @@ TEST_CASE("IntegratedBasePlate-Set", "[core]")
 
         isx::DataSet* ds = new isx::DataSet("movie", isx::DataSet::Type::MOVIE, tmpFilePath, isx::HistoricalDetails());
         
-        isx::IntegratedBasePlateType_t probeTypeInitial = isx::getIntegratedBasePlateType(ds);
-        REQUIRE(probeTypeInitial == isx::IntegratedBasePlateType_t::IBP5);
+        isx::BasePlateType_t probeTypeInitial = isx::getBasePlateType(ds);
+        REQUIRE(probeTypeInitial == isx::BasePlateType_t::BP31);
 
-        isx::setIntegratedBasePlateType(ds, isx::IntegratedBasePlateType_t::IBP12);
-        isx::IntegratedBasePlateType_t probeTypeFinal = isx::getIntegratedBasePlateType(ds);
-        REQUIRE(probeTypeFinal == isx::IntegratedBasePlateType_t::IBP12);
+        isx::setBasePlateType(ds, isx::BasePlateType_t::BP12);
+        isx::BasePlateType_t probeTypeFinal = isx::getBasePlateType(ds);
+        REQUIRE(probeTypeFinal == isx::BasePlateType_t::BP12);
 
         delete ds;
     }
@@ -113,29 +113,29 @@ TEST_CASE("IntegratedBasePlate-Set", "[core]")
 
         isx::DataSet* ds = new isx::DataSet("movie", isx::DataSet::Type::MOVIE, tmpFilePath, isx::HistoricalDetails());
         
-        isx::IntegratedBasePlateType_t probeTypeInitial = isx::getIntegratedBasePlateType(ds);
-        REQUIRE(probeTypeInitial == isx::IntegratedBasePlateType_t::IBP15);
+        isx::BasePlateType_t probeTypeInitial = isx::getBasePlateType(ds);
+        REQUIRE(probeTypeInitial == isx::BasePlateType_t::BP32);
 
-        isx::setIntegratedBasePlateType(ds, isx::IntegratedBasePlateType_t::IBP14);
-        isx::IntegratedBasePlateType_t probeTypeFinal = isx::getIntegratedBasePlateType(ds);
-        REQUIRE(probeTypeFinal == isx::IntegratedBasePlateType_t::IBP14);
+        isx::setBasePlateType(ds, isx::BasePlateType_t::BP14);
+        isx::BasePlateType_t probeTypeFinal = isx::getBasePlateType(ds);
+        REQUIRE(probeTypeFinal == isx::BasePlateType_t::BP14);
 
         delete ds;
     }
     
     SECTION("No initial metadata from IDPS or IDAS")
     {
-        const std::string filePath = g_resources["unitTestDataPath"] + "/baseplate/blood_flow_movie.isxd";
+        const std::string filePath = g_resources["unitTestDataPath"] + "/bloodflow/bloodflow_movie_1.isxd";
         REQUIRE(isx::copyFile(filePath, tmpFilePath));
 
         isx::DataSet* ds = new isx::DataSet("movie", isx::DataSet::Type::MOVIE, tmpFilePath, isx::HistoricalDetails());
         
-        isx::IntegratedBasePlateType_t probeTypeInitial = isx::getIntegratedBasePlateType(ds);
-        REQUIRE(probeTypeInitial == isx::IntegratedBasePlateType_t::UNAVAILABLE);
+        isx::BasePlateType_t probeTypeInitial = isx::getBasePlateType(ds);
+        REQUIRE(probeTypeInitial == isx::BasePlateType_t::UNAVAILABLE);
 
-        isx::setIntegratedBasePlateType(ds, isx::IntegratedBasePlateType_t::IBP11);
-        isx::IntegratedBasePlateType_t probeTypeFinal = isx::getIntegratedBasePlateType(ds);
-        REQUIRE(probeTypeFinal == isx::IntegratedBasePlateType_t::IBP11);
+        isx::setBasePlateType(ds, isx::BasePlateType_t::BP11);
+        isx::BasePlateType_t probeTypeFinal = isx::getBasePlateType(ds);
+        REQUIRE(probeTypeFinal == isx::BasePlateType_t::BP11);
 
         delete ds;
     }
@@ -194,7 +194,7 @@ TEST_CASE("getEfocus", "[core]")
 
     SECTION("Movie with no metadata")
     {
-        const std::string inputFilename = g_resources["unitTestDataPath"] + "/baseplate/blood_flow_movie.isxd";
+        const std::string inputFilename = g_resources["unitTestDataPath"] + "/bloodflow/bloodflow_movie_1.isxd";
         const isx::SpMovie_t movie = isx::readMovie(inputFilename);
 
         json expectedExtraProps;
