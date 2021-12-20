@@ -72,7 +72,7 @@ TEST_CASE("IntegratedBasePlate-Get", "[core]")
 
     SECTION("No metadata from IDPS or IDAS")
     {
-        const std::string filePath = g_resources["unitTestDataPath"] + "/bloodflow/bloodflow_movie_1.isxd";
+        const std::string filePath = g_resources["unitTestDataPath"] + "/cnmfe-cpp/movie_128x128x1000.isxd";
         isx::SpMovie_t movie = isx::readMovie(filePath);
         isx::BasePlateType_t probeType = isx::getBasePlateType(movie);
 
@@ -125,7 +125,7 @@ TEST_CASE("IntegratedBasePlate-Set", "[core]")
     
     SECTION("No initial metadata from IDPS or IDAS")
     {
-        const std::string filePath = g_resources["unitTestDataPath"] + "/bloodflow/bloodflow_movie_1.isxd";
+        const std::string filePath = g_resources["unitTestDataPath"] + "/cnmfe-cpp/movie_128x128x1000.isxd";
         REQUIRE(isx::copyFile(filePath, tmpFilePath));
 
         isx::DataSet* ds = new isx::DataSet("movie", isx::DataSet::Type::MOVIE, tmpFilePath, isx::HistoricalDetails());
@@ -194,7 +194,7 @@ TEST_CASE("getEfocus", "[core]")
 
     SECTION("Movie with no metadata")
     {
-        const std::string inputFilename = g_resources["unitTestDataPath"] + "/bloodflow/bloodflow_movie_1.isxd";
+        const std::string inputFilename = g_resources["unitTestDataPath"] + "/cnmfe-cpp/movie_128x128x1000.isxd";
         const isx::SpMovie_t movie = isx::readMovie(inputFilename);
 
         json expectedExtraProps;
