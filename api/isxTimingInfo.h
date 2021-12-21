@@ -36,12 +36,14 @@ public:
     /// \param numTimes         The number of samples.
     /// \param droppedFrames    A vector containing frame numbers that were dropped
     /// \param cropped          A vector containing index ranges that have been cropped.
+    /// \param blankFrames      A vector containing frame numbers that were blank
     TimingInfo(
             const Time & start,
             const DurationInSeconds & step,
             isize_t numTimes,
             const std::vector<isize_t> & droppedFrames = std::vector<isize_t>(),
-            const IndexRanges_t & cropped = {});
+            const IndexRanges_t & cropped = {},
+            const std::vector<isize_t> & blankFrames = std::vector<isize_t>());
 
     /// Get the start time of the samples.
     ///
@@ -167,6 +169,18 @@ public:
     /// \param inIndex  The time sample index to check.
     bool isCropped(isize_t inIndex) const;
 
+    /// \return the vector of blank frame numbers
+    ///
+    const std::vector<isize_t> & getBlankFrames() const;
+
+    /// \return the number of blank frames
+    ///
+    isize_t getBlankCount() const;
+
+    /// \return whether a time index corresponds to a blank data point
+    /// \param inIndex the time sample index ranging from [0- (getNumTimes()-1)]
+    bool isBlank(isize_t inIndex) const;
+
     /// \return         True if the frame/time index is valid (e.g. not dropped or cropped), false otherwise.
     /// \param  inIndex The index of the frame/time to check.
     bool isIndexValid(const isize_t inIndex) const;
@@ -211,6 +225,14 @@ private:
 
     /// The cropped index ranges.
     IndexRanges_t m_cropped;
+
+    /// A vector of frame numbers indicating blank frames
+    std::vector<isize_t> m_blankFrames;
+
+    /// Sets blank frames, but also crops them (according to the current cropped
+    /// frames) and sorts them.
+    /// \param  inBlankFrames     The desired blank frames.
+    void cropSortAndSetBlankFrames(const std::vector<isize_t> & inBlankFrames);
 
     /// Sets dropped frames, but also crops them (according to the current cropped
     /// frames) and sorts them.

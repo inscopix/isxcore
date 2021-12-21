@@ -114,7 +114,8 @@ MosaicMovieFile::initialize(const std::string & inFileName, bool enableWrite)
                         DurationInSeconds::fromMicroseconds(stepInMicroSec),
                         m_timingInfos[0].getNumTimes(),
                         m_timingInfos[0].getDroppedFrames(),
-                        m_timingInfos[0].getCropped()
+                        m_timingInfos[0].getCropped(),
+                        m_timingInfos[0].getBlankFrames()
                         );
             }
             // ISX_LOG_DEBUG("new step: NUM=", m_timingInfos[0].getStep().getNum(),
@@ -211,6 +212,12 @@ MosaicMovieFile::readFrame(isize_t inFrameNumber)
     {
         std::memset(outFrame->getPixels(), 0, outFrame->getImageSizeInBytes());
         outFrame->setFrameType(VideoFrame::Type::DROPPED);
+        return outFrame;
+    }
+    else if (ti.isBlank(inFrameNumber))
+    {
+        std::memset(outFrame->getPixels(), 0, outFrame->getImageSizeInBytes());
+        outFrame->setFrameType(VideoFrame::Type::BLANK);
         return outFrame;
     }
 

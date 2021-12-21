@@ -82,6 +82,8 @@ convertTimingInfoToJson(const TimingInfo & inTimingInfo)
     std::vector<isize_t> droppedFrames = inTimingInfo.getDroppedFrames();
     j["dropped"] = droppedFrames;
     j["cropped"] = convertIndexRangesToJson(inTimingInfo.getCropped());
+    std::vector<isize_t> blankFrames = inTimingInfo.getBlankFrames();
+    j["blank"] = blankFrames;
     return j;
 }
 
@@ -101,7 +103,12 @@ convertJsonToTimingInfo(const json & j)
     {
         cropped = convertJsonToIndexRanges(j.at("cropped"));
     }
-    return TimingInfo(start, step, numTimes, droppedFrames, cropped);
+    std::vector<isize_t> blankFrames;
+    if (j.count("blank") > 0)
+    {
+        blankFrames = j.at("blank").get<std::vector<isize_t>>();
+    }
+    return TimingInfo(start, step, numTimes, droppedFrames, cropped, blankFrames);
 }
 
 json

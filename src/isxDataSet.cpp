@@ -383,6 +383,21 @@ DataSet::getMetadata()
             metadata.push_back(std::pair<std::string, std::string>("Cropped Samples", ss.str()));
             ss.str("");
         }
+
+        ss << m_timingInfo.getBlankCount();
+        metadata.push_back(std::pair<std::string, std::string>("Number of Blank Samples", ss.str()));
+        ss.str("");
+
+        if (m_timingInfo.getBlankCount() > 0)
+        {
+            const std::vector<isize_t> blankFrames = m_timingInfo.getBlankFrames();
+            for ( auto & df : blankFrames)
+            {
+                ss << df << " ";
+            }
+            metadata.push_back(std::pair<std::string, std::string>("Blank Samples", ss.str()));
+            ss.str("");
+        }
     }
 
     // Spacing Info

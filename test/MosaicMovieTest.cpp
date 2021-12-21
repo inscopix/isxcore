@@ -458,6 +458,78 @@ TEST_CASE("MosaicMovie-croppedFrames", "[core][mosaic_movie]")
     isx::CoreShutdown();
 }
 
+TEST_CASE("MosaicMovie-blankFrames", "[core][mosaic_movie]")
+{
+    isx::CoreInitialize();
+
+    const std::string fileName = g_resources["unitTestDataPath"] + "/movie.isxd";
+    std::remove(fileName.c_str());
+
+    const isx::SpacingInfo si(isx::SizeInPixels_t(4, 3));
+    const isx::DataType dataType = isx::DataType::U16;
+
+    const isx::Time start(1970, 1, 1, 0, 0, 0);
+    const isx::DurationInSeconds step(50, 1000);
+    const isx::isize_t numTimes = 10;
+
+    isx::TimingInfo ti(start, step, numTimes);
+
+    SECTION("Single blank frame")
+    {
+        const std::vector<isx::isize_t> indices = {2};
+        ti = isx::TimingInfo(start, step, numTimes, {}, {}, indices);
+    }
+
+    SECTION("Three blank frames")
+    {
+        const std::vector<isx::isize_t> indices = {2, 3, 7};
+        ti = isx::TimingInfo(start, step, numTimes, {}, {}, indices);
+    }
+
+    auto movie = std::make_shared<isx::MosaicMovie>(fileName, ti, si, dataType);
+
+    const isx::isize_t numPixels = si.getTotalNumPixels();
+    for (isx::isize_t t = 0; t < numTimes; ++t)
+    {
+        if (ti.isBlank(t))
+        {
+            continue;
+        }
+        auto frame = movie->makeVideoFrame(t);
+        uint16_t * pixels = frame->getPixelsAsU16();
+        std::fill(pixels, pixels + numPixels, uint16_t(t));
+        movie->writeFrame(frame);
+    }
+    movie->closeForWriting();
+
+    for (isx::isize_t t = 0; t < numTimes; ++t)
+    {
+        isx::SpVideoFrame_t frame = movie->getFrame(t);
+        if (ti.isBlank(t))
+        {
+            REQUIRE(frame->getFrameType() == isx::VideoFrame::Type::BLANK);
+        }
+        else
+        {
+            REQUIRE(frame->getFrameType() == isx::VideoFrame::Type::VALID);
+        }
+        uint16_t * frameBuf = frame->getPixelsAsU16();
+        for (isx::isize_t p = 0; p < numPixels; ++p)
+        {
+            if (ti.isBlank(t))
+            {
+                REQUIRE(frameBuf[p] == 0);
+            }
+            else
+            {
+                REQUIRE(frameBuf[p] == t);
+            }
+        }
+    }
+
+    isx::CoreShutdown();
+}
+
 TEST_CASE("MosaicMovie-RGB888", "[core-internal][mosaic_movie]")
 {
     isx::CoreInitialize();

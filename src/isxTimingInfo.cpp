@@ -19,13 +19,15 @@ TimingInfo::TimingInfo(
         const DurationInSeconds & step,
         isize_t numTimes,
         const std::vector<isize_t> & droppedFrames,
-        const IndexRanges_t & cropped)
+        const IndexRanges_t & cropped,
+        const std::vector<isize_t> & blankFrames)
 : m_start(start)
 , m_step(step)
 , m_numTimes(numTimes)
 {
     // NOTE sweet : the order here is important because we want to crop dropped frames.
     m_cropped = sortAndCompactIndexRanges(cropped);
+    cropSortAndSetBlankFrames(blankFrames);
     cropSortAndSetDroppedFrames(droppedFrames);
     m_isValid = true;
 }
@@ -151,7 +153,8 @@ TimingInfo::operator ==(const TimingInfo& other) const
         && (m_step == other.m_step)
         && (m_numTimes == other.m_numTimes)
         && (m_droppedFrames == other.m_droppedFrames)
-        && (m_cropped == other.m_cropped);
+        && (m_cropped == other.m_cropped)
+        && (m_blankFrames == other.m_blankFrames);
 }
 
 void
@@ -232,17 +235,36 @@ TimingInfo::isCropped(isize_t inIndex) const
     return false;
 }
 
+const std::vector<isize_t> &
+TimingInfo::getBlankFrames() const
+{
+    return m_blankFrames;
+}
+
+isize_t
+TimingInfo::getBlankCount() const
+{
+    return m_blankFrames.size();
+}
+
+bool
+TimingInfo::isBlank(isize_t inIndex) const
+{
+    auto & df = m_blankFrames;
+    return std::binary_search(df.begin(), df.end(), inIndex);
+}
+
 bool
 TimingInfo::isIndexValid(const isize_t inIndex) const
 {
-    return !(isCropped(inIndex) || isDropped(inIndex));
+    return !(isCropped(inIndex) || isDropped(inIndex) || isBlank(inIndex));
 }
 
 isize_t
 TimingInfo::getNumValidTimes() const
 {
-    ISX_ASSERT((int64_t(m_numTimes) - int64_t(getDroppedCount()) - int64_t(getCroppedCount())) >= 0);
-    return m_numTimes - getDroppedCount() - getCroppedCount();
+    ISX_ASSERT((int64_t(m_numTimes) - int64_t(getDroppedCount()) - int64_t(getCroppedCount()) - int64_t(getBlankCount())) >= 0);
+    return m_numTimes - getDroppedCount() - getCroppedCount() - getBlankCount();
 }
 
 isize_t
@@ -258,6 +280,7 @@ TimingInfo::timeIdxToRecordedIdx(isize_t inIndex) const
             return index > inIndex;
         }
     );
+    isize_t numDroppedBefore = it - m_droppedFrames.begin();
 
     // This count depends on the cropped frames being sorted in ascending order
     // and also depends on inIndex not being a cropped frame.
@@ -273,9 +296,20 @@ TimingInfo::timeIdxToRecordedIdx(isize_t inIndex) const
         numCroppedBefore += r.getSize();
     }
 
-    isize_t numDroppedBefore = it - m_droppedFrames.begin();
-    ISX_ASSERT(inIndex >= (numDroppedBefore + numCroppedBefore));
-    isize_t recordedIdx = inIndex - numDroppedBefore - numCroppedBefore;
+    // Note that this internally asserts that the input index is not blank.
+    it = std::find_if(
+        m_blankFrames.begin(),
+        m_blankFrames.end(),
+        [&inIndex](const isize_t &index)
+        {
+            ISX_ASSERT(index != inIndex);
+            return index > inIndex;
+        }
+    );
+    isize_t numBlankBefore = it - m_blankFrames.begin();
+
+    ISX_ASSERT(inIndex >= (numDroppedBefore + numCroppedBefore + numBlankBefore));
+    isize_t recordedIdx = inIndex - numDroppedBefore - numCroppedBefore - numBlankBefore;
 
     return recordedIdx;
 }
@@ -289,12 +323,26 @@ TimingInfo::getDefault(isize_t inFrames, const std::vector<isize_t> & inDroppedF
 }
 
 void
+TimingInfo::cropSortAndSetBlankFrames(const std::vector<isize_t> & inBlankFrames)
+{
+    m_blankFrames.clear();
+    for (const auto df : inBlankFrames)
+    {
+        if (!isCropped(df))
+        {
+            m_blankFrames.push_back(df);
+        }
+    }
+    std::sort(m_blankFrames.begin(), m_blankFrames.end());
+}
+
+void
 TimingInfo::cropSortAndSetDroppedFrames(const std::vector<isize_t> & inDroppedFrames)
 {
     m_droppedFrames.clear();
     for (const auto df : inDroppedFrames)
     {
-        if (!isCropped(df))
+        if (!isCropped(df) && !isBlank(df))
         {
             m_droppedFrames.push_back(df);
         }

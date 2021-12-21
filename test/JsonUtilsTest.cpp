@@ -14,19 +14,14 @@ TEST_CASE("JsonUtilsTest", "[core-internal]")
         isx::DurationInSeconds step(50, 1000);
         isx::isize_t numTimes = 20;
         std::vector<isx::isize_t> droppedFrames{4, 7};
+        const isx::IndexRanges_t croppedFrames = {isx::IndexRange(9, 12)};
+        std::vector<isx::isize_t> blankFrames{1, 17};
         isx::TimingInfo timingInfo(start, step, numTimes, droppedFrames);
 
         isx::json jsonObject = isx::convertTimingInfoToJson(timingInfo);
+        isx::TimingInfo actualTimingInfo = isx::convertJsonToTimingInfo(jsonObject);
 
-        isx::isize_t jsonNumTimes = jsonObject["numTimes"];
-        isx::DurationInSeconds jsonStep = isx::convertJsonToRatio(jsonObject["period"]);
-        isx::Time jsonStart = isx::convertJsonToTime(jsonObject["start"]);
-        std::vector<isx::isize_t> jsonDroppedFrames = jsonObject["dropped"].get<std::vector<isx::isize_t>>();
-
-        REQUIRE(jsonNumTimes == numTimes);
-        REQUIRE(jsonStep == step);
-        REQUIRE(jsonStart == start);
-        REQUIRE(jsonDroppedFrames == droppedFrames);
+        REQUIRE(actualTimingInfo == timingInfo);
     }
 
 }

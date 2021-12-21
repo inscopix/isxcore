@@ -406,15 +406,106 @@ TEST_CASE("TimingInfo-cropped", "[core]")
 
 }
 
+TEST_CASE("TimingInfo-blank", "[core]")
+{
+    const isx::Time start(1970, 1, 1, 0, 0, 0);
+    const isx::DurationInSeconds step(50, 1000);
+    const isx::isize_t numTimes = 10;
+
+    SECTION("Empty blank indices")
+    {
+        const std::vector<isx::isize_t> indices;
+        const isx::TimingInfo ti(start, step, numTimes, {}, {}, indices);
+
+        REQUIRE(ti.getBlankFrames().empty());
+        REQUIRE(ti.getBlankCount() == 0);
+
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            const isx::isize_t storedIndex = ti.timeIdxToRecordedIdx(t);
+            if (storedIndex != t)
+            {
+                FAIL("Converted frame " << t << " to stored index " << storedIndex);
+            }
+        }
+    }
+
+    SECTION("Single blank index")
+    {
+        const std::vector<isx::isize_t> indices = {2};
+        const isx::TimingInfo ti(start, step, numTimes, {}, {}, indices);
+
+        REQUIRE(indices == ti.getBlankFrames());
+        REQUIRE(ti.getBlankCount() == 1);
+        isx::isize_t offset = 0;
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            if (t == 2)
+            {
+                if (!ti.isBlank(t))
+                {
+                    FAIL("Frame " << t << " should be blank, but isBlank returns false.");
+                }
+                ++offset;
+            }
+            else
+            {
+                if (ti.isBlank(t))
+                {
+                    FAIL("Frame " << t << " should be not blank, but isBlank returns true.");
+                }
+                const isx::isize_t storedIndex = ti.timeIdxToRecordedIdx(t);
+                if (storedIndex != (t - offset))
+                {
+                    FAIL("Converted frame " << t << " to stored index " << storedIndex);
+                }
+            }
+        }
+    }
+
+    SECTION("Three blank indices")
+    {
+        const std::vector<isx::isize_t> indices = {2, 7, 9};
+        const isx::TimingInfo ti(start, step, numTimes, {}, isx::IndexRanges_t(), indices);
+
+        REQUIRE(indices == ti.getBlankFrames());
+        REQUIRE(ti.getBlankCount() == 3);
+        isx::isize_t offset = 0;
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            if (t == 2 || t == 7 || t == 9)
+            {
+                if (!ti.isBlank(t))
+                {
+                    FAIL("Frame " << t << " should be blank, but isBlank returns false.");
+                }
+                ++offset;
+            }
+            else
+            {
+                if (ti.isBlank(t))
+                {
+                    FAIL("Frame " << t << " should be not blank, but isBlank returns true.");
+                }
+                const isx::isize_t storedIndex = ti.timeIdxToRecordedIdx(t);
+                if (storedIndex != (t - offset))
+                {
+                    FAIL("Converted frame " << t << " to stored index " << storedIndex);
+                }
+            }
+        }
+    }
+}
+
 TEST_CASE("TimingInfo-validIndices", "[core]")
 {
     const isx::Time start(1970, 1, 1, 0, 0, 0);
     const isx::DurationInSeconds step(50, 1000);
     const isx::isize_t numTimes = 10;
 
-    SECTION("No dropped or cropped frames")
+    SECTION("No dropped, cropped, or blank frames")
     {
-        const isx::TimingInfo ti(start, step, numTimes, {}, {});
+        const isx::TimingInfo ti(start, step, numTimes, {}, {}, {});
 
         REQUIRE(ti.getNumValidTimes() == 10);
         for (isx::isize_t t = 0; t < numTimes; ++t)
@@ -474,9 +565,33 @@ TEST_CASE("TimingInfo-validIndices", "[core]")
         }
     }
 
-    SECTION("Some dropped and cropped frames")
+    SECTION("Some blank frames")
     {
-        const isx::TimingInfo ti(start, step, numTimes, {2}, {isx::IndexRange(4, 7)});
+        const isx::TimingInfo ti(start, step, numTimes, {}, {}, {4, 8});
+
+        REQUIRE(ti.getNumValidTimes() == 8);
+        for (isx::isize_t t = 0; t < numTimes; ++t)
+        {
+            if (ti.isBlank(t))
+            {
+                if (ti.isIndexValid(t))
+                {
+                    FAIL("Index " << t << " should not be valid.");
+                }
+            }
+            else
+            {
+                if (!ti.isIndexValid(t))
+                {
+                    FAIL("Index " << t << " should be valid.");
+                }
+            }
+        }
+    }
+
+    SECTION("Some dropped, cropped, and blank frames")
+    {
+        const isx::TimingInfo ti(start, step, numTimes, {2}, {isx::IndexRange(4, 6), {8}});
 
         REQUIRE(ti.getNumValidTimes() == 5);
         for (isx::isize_t t = 0; t < numTimes; ++t)
