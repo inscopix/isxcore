@@ -178,6 +178,9 @@ public:
     SizeInPixels_t
     getCorrelationSize(size_t inIndex) const override;
 
+    float
+    getMaxVelocity(size_t inIndex) override;
+
 private:
 
     /// True if the vessel set is valid, false otherwise.

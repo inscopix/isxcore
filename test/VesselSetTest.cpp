@@ -753,16 +753,42 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         REQUIRE(doneCount == int(numVessels));
     }
 
+    SECTION("Get max velocity")
+    {
+        size_t numVessels = 3;
+        const isx::Contour_t contour = {
+            isx::PointInPixels_t(0, 0),
+            isx::PointInPixels_t(0, 4),
+            isx::PointInPixels_t(4, 4),
+            isx::PointInPixels_t(4, 0),
+        };
+        isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>(contour);
+
+        isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+        for (size_t i = 0; i < 3; ++i)
+        {
+            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        }
+        vesselSet->closeForWriting();
+
+        for (size_t i = 0; i < 3; ++i)
+        {
+            float maxVelocity = vesselSet->getMaxVelocity(i);
+            const float fps = static_cast<float>(timingInfo.getStep().getInverse().toDouble());
+
+            const float expMaxVelocity = 4.0f / 2.0f * fps;
+            REQUIRE(maxVelocity == expMaxVelocity);
+        }
+    }
+
     isx::CoreShutdown();
 }
 
-TEST_CASE("computeMaxVelocity", "[core]")
+TEST_CASE("VesselLineTest-computeMaxVelocity", "[core]")
 {
     isx::CoreInitialize();
-
     SECTION("Simple upright rectangle bounding box")
     {
-
         const isx::Contour_t contour = {
             isx::PointInPixels_t(0, 0),
             isx::PointInPixels_t(0, 4),
@@ -796,6 +822,26 @@ TEST_CASE("computeMaxVelocity", "[core]")
         const float expMaxVelocity = sqrt(32.0f) / 2.0f * 100.0f;
 
         REQUIRE(maxVelocity == expMaxVelocity);
+    }
+
+    SECTION("Line length of 0")
+    {
+        const isx::Contour_t contour = {
+            isx::PointInPixels_t(0, 0),
+            isx::PointInPixels_t(0, 0),
+            isx::PointInPixels_t(0, 0),
+            isx::PointInPixels_t(0, 0),
+        };
+        const size_t numRows = 7;
+        const size_t numCols = 7;
+        const float fps = 100.0f;
+        isx::VesselLine vesselRoi(contour);
+
+        float maxVelocity = vesselRoi.computeMaxVelocity(fps);
+
+        const float expMaxVelocity = std::numeric_limits<float>::quiet_NaN();
+
+        REQUIRE(std::isnan(maxVelocity) == std::isnan(expMaxVelocity));
     }
 
     isx::CoreShutdown();

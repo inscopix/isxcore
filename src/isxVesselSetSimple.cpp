@@ -443,4 +443,21 @@ VesselSetSimple::getCorrelationSize(size_t inIndex) const
     return m_file->getCorrelationSize(inIndex);
 }
 
+float
+VesselSetSimple::getMaxVelocity(size_t inIndex)
+{
+    SpVesselLine_t vesselLine = getLineEndpoints(inIndex);
+    TimingInfo timingInfo = getTimingInfo();
+    const float fps = static_cast<float>(timingInfo.getStep().getInverse().toDouble());
+    auto maxVelocity = vesselLine->computeMaxVelocity(fps);
+
+    auto units = isx::getVesselSetUnits(m_file);
+    if (units == isx::VesselSetUnits_t::MICRONS_PER_SECOND)
+    {
+        maxVelocity *= static_cast<float>(isx::getMicronsPerPixel(m_file));
+    }
+
+    return maxVelocity;
+}
+
 } // namespace isx

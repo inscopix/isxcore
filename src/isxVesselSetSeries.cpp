@@ -519,4 +519,9 @@ namespace isx
         return m_vesselSets.front()->getCorrelationSize(inIndex);
     }
 
+    float
+    VesselSetSeries::getMaxVelocity(size_t inIndex)
+    {
+        return m_vesselSets.front()->getMaxVelocity(inIndex);
+    }
 } // namespace isx

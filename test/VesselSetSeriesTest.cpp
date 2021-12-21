@@ -672,6 +672,42 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
         }
     }
 
+    SECTION("Get max velocity")
+    {
+        isx::isize_t totalNumSamples = 0;
+        const isx::Contour_t contour = {
+            isx::PointInPixels_t(0, 0),
+            isx::PointInPixels_t(0, 4),
+            isx::PointInPixels_t(4, 4),
+            isx::PointInPixels_t(4, 0),
+        };
+        isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>(contour);
+
+        // Write simple vessel sets
+        for(isx::isize_t i(0); i < filenames.size(); ++i)
+        {
+            isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+            isx::SpFTrace_t trace = std::make_shared<isx::Trace<float>>(timingInfos[i]);
+            float * values = trace->getValues();
+            std::memset(values, 0, sizeof(float)*timingInfos[i].getNumTimes());
+            totalNumSamples += timingInfos[i].getNumTimes();
+            trace->setValue(i, float(i));
+            isx::SpFTrace_t direction = std::make_shared<isx::Trace<float>>(timingInfos[i]);
+            isx::SizeInPixels_t correlationSize(10, 20);
+            isx::SpVesselCorrelationsTrace_t correlations = std::make_shared<isx::VesselCorrelationsTrace>(timingInfos[i], correlationSize);
+            cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace, "", direction, correlations);
+            cs->closeForWriting();
+        }
+
+        isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
+        float maxVelocity = css->getMaxVelocity(0);
+        isx::TimingInfo timingInfo = css->getTimingInfo();
+        const float fps = static_cast<float>(timingInfo.getStep().getInverse().toDouble());
+
+        const float expMaxVelocity = 4.0f / 2.0f * fps;
+        REQUIRE(maxVelocity == expMaxVelocity);
+    }
+
     for (const auto & fn: filenames)
     {
         std::remove(fn.c_str());

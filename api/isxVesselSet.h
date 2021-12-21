@@ -32,6 +32,11 @@ struct VesselLine
     /// \param fps                  The frame rate of the movie
     float computeMaxVelocity(const float fps)
     {
+        if (m_contour.size() != 4)
+        {
+            ISX_THROW(ExceptionUserInput, "Cannot compute max velocity for contour without 4 points");
+        }
+
         // This algorithm assumes that adjacent points are stored next to each other in the contour
         // Determine the maximum length of the velocity bounding box edges
         float maxLength = 0.0f;
@@ -519,6 +524,11 @@ virtual
 SizeInPixels_t
 getCorrelationSize(size_t inIndex) const = 0;
 
+/// \param inIndex the id of the vessel
+/// \return the maximum possible velocity for the vessel
+virtual
+float
+getMaxVelocity(size_t inIndex) = 0;
 };
 
 } // namespace isx
