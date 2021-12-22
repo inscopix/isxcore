@@ -456,7 +456,6 @@ VesselSetSimple::getMaxVelocity(size_t inIndex)
     {
         maxVelocity *= static_cast<float>(isx::getMicronsPerPixel(m_file));
     }
-
     return maxVelocity;
 }
 
