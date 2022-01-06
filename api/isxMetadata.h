@@ -326,7 +326,8 @@ namespace isx
             const double timeIncrement,
             const double inputMovieFps = 0.0,
             const std::map<std::string, std::vector<int>> clippedVessels = {},
-            const std::map<std::string, std::vector<int>> noSignificantVessels = {}
+            const std::map<std::string, std::vector<int>> noSignificantVessels = {},
+            const std::map<std::string, std::vector<int>> directionChangedVessels = {}
             )
             : m_units(units)
             , m_projectionType(projectionType)
@@ -335,6 +336,7 @@ namespace isx
             , m_inputMovieFps(inputMovieFps)
             , m_clippedVessels(clippedVessels)
             , m_noSignificantVessels(noSignificantVessels)
+            , m_directionChangedVessels(directionChangedVessels)
         {
         }
 
@@ -345,6 +347,7 @@ namespace isx
         double m_inputMovieFps;          ///< the fps of the input movie
         std::map<std::string, std::vector<int>> m_clippedVessels; ///< map of vessel to timepoints where clipping occurred in the rbc algo
         std::map<std::string, std::vector<int>> m_noSignificantVessels; ///< map of vessel to timepoints where no signficant pixels were detected in the rbc algo
+        std::map<std::string, std::vector<int>> m_directionChangedVessels; ///< map of vessel to timepoints where direction travelled significant changed between offsets
     };
 
     /// Struct for holding pre-motion-correction metadata
@@ -1027,6 +1030,10 @@ namespace isx
         if (!vesselSetMetadata.m_noSignificantVessels.empty())
         {
             extraProps["idps"]["vesselset"]["noSignificantVessels"] = getVesselTimepointsString(vesselSetMetadata.m_noSignificantVessels);
+        }
+        if (!vesselSetMetadata.m_directionChangedVessels.empty())
+        {
+            extraProps["idps"]["vesselset"]["directionChangedVessels"] = getVesselTimepointsString(vesselSetMetadata.m_directionChangedVessels);
         }
         return extraProps.dump();
     }

@@ -917,6 +917,12 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                 {
                     acqInfo["No Significant Pixel Vessels"] = vesselSetNoSignificantVessels->get<std::string>();
                 }
+
+                const auto vesselSetDirectionChangedVessels = vesselset->find("directionChangedVessels");
+                if (vesselSetDirectionChangedVessels != vesselset->end())
+                {
+                    acqInfo["Direction Changed Vessels"] = vesselSetDirectionChangedVessels->get<std::string>();
+                }
             }
         }
     }
