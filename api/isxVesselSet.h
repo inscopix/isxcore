@@ -9,6 +9,7 @@
 #include "isxAsyncTaskResult.h"
 #include "isxColor.h"
 #include "isxMetadata.h"
+#include "json.hpp"
 
 #include <string>
 #include <functional>
@@ -36,6 +37,10 @@ struct VesselLine
         {
             ISX_THROW(ExceptionUserInput, "Cannot compute max velocity for contour without 4 points");
         }
+        if (std::isnan(fps))
+        {
+            ISX_THROW(ExceptionDataIO, "Can't compute max velocity for NaN frame rate");
+        }
 
         // This algorithm assumes that adjacent points are stored next to each other in the contour
         // Determine the maximum length of the velocity bounding box edges
@@ -50,7 +55,7 @@ struct VesselLine
         }
         // Calculate the max velocity by dividing the max length by 2 to account for the 3 time offsets
         // then multiply by the frame rate
-        return maxLength > 0 ? maxLength / 2.0f * fps : std::numeric_limits<float>::quiet_NaN();
+        return maxLength > 0 ? (maxLength / 2.0f) * fps : std::numeric_limits<float>::quiet_NaN();
     }
 
     /// Compute the euclidean distance of the line between two points

@@ -5,6 +5,7 @@
 #include "isxException.h"
 #include "isxMovieFactory.h"
 #include "isxProject.h"
+#include "json.hpp"
 #include <cstring>
 #include <atomic>
 
@@ -769,14 +770,20 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         {
             vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
         }
+
+        using json = nlohmann::json;
+        json extraProps;
+        extraProps["idps"] = json::object();
+        extraProps["idps"]["vesselset"]["inputMovieFps"] = 100.0f;
+        std::string extraProperties = extraProps.dump();
+        vesselSet->setExtraProperties(extraProperties);
+
         vesselSet->closeForWriting();
 
         for (size_t i = 0; i < 3; ++i)
         {
-            float maxVelocity = vesselSet->getMaxVelocity(i);
-            const float fps = static_cast<float>(timingInfo.getStep().getInverse().toDouble());
-
-            const float expMaxVelocity = 4.0f / 2.0f * fps;
+            const float maxVelocity = vesselSet->getMaxVelocity(i);
+            const float expMaxVelocity = 4.0f / 2.0f * 100.0f;
             REQUIRE(maxVelocity == expMaxVelocity);
         }
     }

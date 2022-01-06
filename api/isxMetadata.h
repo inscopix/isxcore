@@ -324,6 +324,7 @@ namespace isx
             const ProjectionType projectionType,
             const double timeWindow,
             const double timeIncrement,
+            const double inputMovieFps = 0.0,
             const std::map<std::string, std::vector<int>> clippedVessels = {},
             const std::map<std::string, std::vector<int>> noSignificantVessels = {}
             )
@@ -331,6 +332,7 @@ namespace isx
             , m_projectionType(projectionType)
             , m_timeWindow(timeWindow)
             , m_timeIncrement(timeIncrement)
+            , m_inputMovieFps(inputMovieFps)
             , m_clippedVessels(clippedVessels)
             , m_noSignificantVessels(noSignificantVessels)
         {
@@ -340,6 +342,7 @@ namespace isx
         ProjectionType m_projectionType; ///< type of projection stored in the vessel set
         double m_timeWindow;             ///< the length of the time window in seconds
         double m_timeIncrement;          ///< the length of the time increment in seconds
+        double m_inputMovieFps;          ///< the fps of the input movie
         std::map<std::string, std::vector<int>> m_clippedVessels; ///< map of vessel to timepoints where clipping occurred in the rbc algo
         std::map<std::string, std::vector<int>> m_noSignificantVessels; ///< map of vessel to timepoints where no signficant pixels were detected in the rbc algo
     };
@@ -657,11 +660,12 @@ namespace isx
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
-        if (!extraProps["idps"]["vesselset"]["timeWindow"].is_null())
+        if (extraProps["idps"]["vesselset"]["timeWindow"].is_null())
         {
-            return extraProps["idps"]["vesselset"]["timeWindow"].get<double>();
+            ISX_THROW(ExceptionUserInput, "No time window in vessel set metadata");
         }
-        return 0;
+        return extraProps["idps"]["vesselset"]["timeWindow"].get<double>();
+        
     }
 
     template <class T>
@@ -669,11 +673,23 @@ namespace isx
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
-        if (!extraProps["idps"]["vesselset"]["timeIncrement"].is_null())
+        if (extraProps["idps"]["vesselset"]["timeIncrement"].is_null())
         {
-            return extraProps["idps"]["vesselset"]["timeIncrement"].get<double>();
+            ISX_THROW(ExceptionUserInput, "No time increment in vessel set metadata");
         }
-        return 0;
+        return extraProps["idps"]["vesselset"]["timeIncrement"].get<double>();
+    }
+
+    template <class T>
+    double getVesselSetInputMovieFps(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (extraProps["idps"]["vesselset"]["inputMovieFps"].is_null())
+        {
+            ISX_THROW(ExceptionUserInput, "No input movie fps in vessel set metadata");
+        }
+        return extraProps["idps"]["vesselset"]["inputMovieFps"].get<double>();
     }
 
     inline std::string getVesselTimepointsString(std::map<std::string, std::vector<int>> inData)
@@ -1000,6 +1016,10 @@ namespace isx
         extraProps["idps"]["vesselset"]["projectionType"] = getVesselSetProjectionTypeString(vesselSetMetadata.m_projectionType);
         extraProps["idps"]["vesselset"]["timeWindow"] = vesselSetMetadata.m_timeWindow;
         extraProps["idps"]["vesselset"]["timeIncrement"] = vesselSetMetadata.m_timeIncrement;
+        if (vesselSetMetadata.m_inputMovieFps > 0.0)
+        {
+            extraProps["idps"]["vesselset"]["inputMovieFps"] = vesselSetMetadata.m_inputMovieFps;
+        }
         if (!vesselSetMetadata.m_clippedVessels.empty())
         {
             extraProps["idps"]["vesselset"]["clippedVessels"] = getVesselTimepointsString(vesselSetMetadata.m_clippedVessels);

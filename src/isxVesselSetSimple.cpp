@@ -446,9 +446,9 @@ VesselSetSimple::getCorrelationSize(size_t inIndex) const
 float
 VesselSetSimple::getMaxVelocity(size_t inIndex)
 {
+    auto fps = static_cast<float>(isx::getVesselSetInputMovieFps(m_file));
+
     SpVesselLine_t vesselLine = getLineEndpoints(inIndex);
-    TimingInfo timingInfo = getTimingInfo();
-    const float fps = static_cast<float>(timingInfo.getStep().getInverse().toDouble());
     auto maxVelocity = vesselLine->computeMaxVelocity(fps);
 
     auto units = isx::getVesselSetUnits(m_file);

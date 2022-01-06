@@ -3,6 +3,7 @@
 #include "isxVesselSetSeries.h"
 #include "catch.hpp"
 #include "isxTest.h"
+#include "json.hpp"
 #include <algorithm>
 #include <array>
 #include <cstring>
@@ -683,9 +684,16 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
         };
         isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>(contour);
 
+        using json = nlohmann::json;
+        json extraProps;
+        extraProps["idps"] = json::object();
+        extraProps["idps"]["vesselset"]["inputMovieFps"] = 100.0f;
+
         // Write simple vessel sets
         for(isx::isize_t i(0); i < filenames.size(); ++i)
         {
+            std::string extraProperties = extraProps.dump();
+
             isx::SpVesselSet_t cs = isx::writeVesselSet(filenames[i], timingInfos[i], spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
             isx::SpFTrace_t trace = std::make_shared<isx::Trace<float>>(timingInfos[i]);
             float * values = trace->getValues();
@@ -696,15 +704,14 @@ TEST_CASE("VesselSetSeries-RbcVelocity", "[core-internal]")
             isx::SizeInPixels_t correlationSize(10, 20);
             isx::SpVesselCorrelationsTrace_t correlations = std::make_shared<isx::VesselCorrelationsTrace>(timingInfos[i], correlationSize);
             cs->writeImageAndLineAndTrace(0, vesselImage, lineEndpoints, trace, "", direction, correlations);
+            cs->setExtraProperties(extraProperties);
             cs->closeForWriting();
         }
 
         isx::SpVesselSet_t css = isx::readVesselSetSeries(filenames);
         float maxVelocity = css->getMaxVelocity(0);
-        isx::TimingInfo timingInfo = css->getTimingInfo();
-        const float fps = static_cast<float>(timingInfo.getStep().getInverse().toDouble());
 
-        const float expMaxVelocity = 4.0f / 2.0f * fps;
+        const float expMaxVelocity = 4.0f / 2.0f * 100.0f;
         REQUIRE(maxVelocity == expMaxVelocity);
     }
 
