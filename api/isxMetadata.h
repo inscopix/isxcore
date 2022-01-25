@@ -131,6 +131,8 @@ namespace isx
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Mapping from base plate identifier to base plate name
     const std::map<BasePlateType_t, std::string> basePlateMap =
     {
         {BasePlateType_t::UNAVAILABLE, "None"},
@@ -169,84 +171,85 @@ namespace isx
         {BasePlateType_t::BP31, "ProView DC Integrated Lens 1.0 mm x 4.2 mm"},
         {BasePlateType_t::BP32, "ProView DC Integrated Lens 1.0 mm x 11.7 mm Li"},
     };
+    /// \endcond doxygen chokes on enum class inside of namespace
 
     /// Scaling is dependant upon efocus and the integrated base plate type. We store a mapping
     /// from the integrated base plate type to the microns/pixels scaling ratio at 0 and 200 efocus.
     /// Note: pixel scaling is only available for intergrated base plates
-    const std::map<BasePlateType_t, std::pair<double, double>> integratedBasePlateToScaling=
-        {
-                {BasePlateType_t::CRANIAL_WINDOW, std::make_pair(0.82, 0.80)},
+    const std::map<BasePlateType_t, std::pair<double, double>> integratedBasePlateToScaling =
+    {
+        {BasePlateType_t::CRANIAL_WINDOW, std::make_pair(0.82, 0.80)},
 
-                {BasePlateType_t::BP1, std::make_pair(0.67,0.81)},
+        {BasePlateType_t::BP1, std::make_pair(0.67,0.81)},
 
-                {BasePlateType_t::BP7, std::make_pair(0.67,0.81)},
-                {BasePlateType_t::BP8, std::make_pair(0.63,0.79)},
-                {BasePlateType_t::BP9, std::make_pair(0.62,0.78)},
-                {BasePlateType_t::BP10, std::make_pair(0.61,0.69)},
-                {BasePlateType_t::BP11, std::make_pair(0.77,0.80)},
-                {BasePlateType_t::BP12, std::make_pair(0.75,0.78)},
-                {BasePlateType_t::BP13, std::make_pair(0.76,0.78)},
-                {BasePlateType_t::BP14, std::make_pair(0.90,0.97)},
-                {BasePlateType_t::BP15, std::make_pair(0.90,0.98)},
+        {BasePlateType_t::BP7, std::make_pair(0.67,0.81)},
+        {BasePlateType_t::BP8, std::make_pair(0.63,0.79)},
+        {BasePlateType_t::BP9, std::make_pair(0.62,0.78)},
+        {BasePlateType_t::BP10, std::make_pair(0.61,0.69)},
+        {BasePlateType_t::BP11, std::make_pair(0.77,0.80)},
+        {BasePlateType_t::BP12, std::make_pair(0.75,0.78)},
+        {BasePlateType_t::BP13, std::make_pair(0.76,0.78)},
+        {BasePlateType_t::BP14, std::make_pair(0.90,0.97)},
+        {BasePlateType_t::BP15, std::make_pair(0.90,0.98)},
 
-                {BasePlateType_t::BP20, std::make_pair(0.63,0.79)},
-                {BasePlateType_t::BP21, std::make_pair(0.62,0.78)},
-                {BasePlateType_t::BP22, std::make_pair(0.61,0.69)},
-                {BasePlateType_t::BP23, std::make_pair(0.77,0.80)},
-                {BasePlateType_t::BP24, std::make_pair(0.75,0.78)},
-                {BasePlateType_t::BP25, std::make_pair(0.91,1.02)},
-                {BasePlateType_t::BP26, std::make_pair(0.90,0.97)},
-                {BasePlateType_t::BP27, std::make_pair(0.90,0.98)},
+        {BasePlateType_t::BP20, std::make_pair(0.63,0.79)},
+        {BasePlateType_t::BP21, std::make_pair(0.62,0.78)},
+        {BasePlateType_t::BP22, std::make_pair(0.61,0.69)},
+        {BasePlateType_t::BP23, std::make_pair(0.77,0.80)},
+        {BasePlateType_t::BP24, std::make_pair(0.75,0.78)},
+        {BasePlateType_t::BP25, std::make_pair(0.91,1.02)},
+        {BasePlateType_t::BP26, std::make_pair(0.90,0.97)},
+        {BasePlateType_t::BP27, std::make_pair(0.90,0.98)},
 
-                {BasePlateType_t::BP28, std::make_pair(0.79,0.80)},
-                {BasePlateType_t::BP29, std::make_pair(0.80,0.80)},
-                {BasePlateType_t::BP30, std::make_pair(0.80,0.80)},
-                {BasePlateType_t::BP31, std::make_pair(0.77, 0.80)},
-                {BasePlateType_t::BP32, std::make_pair(0.81, 0.80)},
-        };
+        {BasePlateType_t::BP28, std::make_pair(0.79,0.80)},
+        {BasePlateType_t::BP29, std::make_pair(0.80,0.80)},
+        {BasePlateType_t::BP30, std::make_pair(0.80,0.80)},
+        {BasePlateType_t::BP31, std::make_pair(0.77, 0.80)},
+        {BasePlateType_t::BP32, std::make_pair(0.81, 0.80)},
+    };
 
-    const std::map<std::string, BasePlateType_t> probeIdToBasePlate=
-        {
-            {"100-002172", BasePlateType_t::BP1},
-            {"130-000143", BasePlateType_t::BP2},
-            {"130-000304", BasePlateType_t::BP3},
-            {"130-000248", BasePlateType_t::BP4},
-            {"130-000247", BasePlateType_t::BP5},
-            {"130-000444", BasePlateType_t::BP6},
+    const std::map<std::string, BasePlateType_t> probeIdToBasePlate =
+    {
+        {"100-002172", BasePlateType_t::BP1},
+        {"130-000143", BasePlateType_t::BP2},
+        {"130-000304", BasePlateType_t::BP3},
+        {"130-000248", BasePlateType_t::BP4},
+        {"130-000247", BasePlateType_t::BP5},
+        {"130-000444", BasePlateType_t::BP6},
 
-            {"1050-004417", BasePlateType_t::BP7},
-            {"1050-004415", BasePlateType_t::BP8},
-            {"1050-004414", BasePlateType_t::BP9},
-            {"1050-004413", BasePlateType_t::BP10},
-            {"1050-004637", BasePlateType_t::BP11},
-            {"1050-004416", BasePlateType_t::BP12},
-            {"1050-004418", BasePlateType_t::BP13},
-            {"1050-004419", BasePlateType_t::BP14},
-            {"1050-004420", BasePlateType_t::BP15},
+        {"1050-004417", BasePlateType_t::BP7},
+        {"1050-004415", BasePlateType_t::BP8},
+        {"1050-004414", BasePlateType_t::BP9},
+        {"1050-004413", BasePlateType_t::BP10},
+        {"1050-004637", BasePlateType_t::BP11},
+        {"1050-004416", BasePlateType_t::BP12},
+        {"1050-004418", BasePlateType_t::BP13},
+        {"1050-004419", BasePlateType_t::BP14},
+        {"1050-004420", BasePlateType_t::BP15},
 
-            {"1050-002181", BasePlateType_t::BP16},
-            {"1050-002182", BasePlateType_t::BP17},
-            {"1050-002183", BasePlateType_t::BP18},
-            {"1050-002179", BasePlateType_t::BP19},
-            {"1050-002211", BasePlateType_t::BP20},
-            {"1050-002212", BasePlateType_t::BP21},
-            {"1050-002208", BasePlateType_t::BP22},
-            {"1050-002202", BasePlateType_t::BP23},
-            {"1050-002214", BasePlateType_t::BP24},
-            {"1050-002204", BasePlateType_t::BP25},
-            {"1050-002203", BasePlateType_t::BP26},
-            {"1050-002213", BasePlateType_t::BP27},
+        {"1050-002181", BasePlateType_t::BP16},
+        {"1050-002182", BasePlateType_t::BP17},
+        {"1050-002183", BasePlateType_t::BP18},
+        {"1050-002179", BasePlateType_t::BP19},
+        {"1050-002211", BasePlateType_t::BP20},
+        {"1050-002212", BasePlateType_t::BP21},
+        {"1050-002208", BasePlateType_t::BP22},
+        {"1050-002202", BasePlateType_t::BP23},
+        {"1050-002214", BasePlateType_t::BP24},
+        {"1050-002204", BasePlateType_t::BP25},
+        {"1050-002203", BasePlateType_t::BP26},
+        {"1050-002213", BasePlateType_t::BP27},
 
-            {"1050-005441", BasePlateType_t::BP28},
-            {"1050-005442", BasePlateType_t::BP29},
-            {"1050-005443", BasePlateType_t::BP30},
-            {"1050-005473", BasePlateType_t::BP31},
-            {"1050-005475", BasePlateType_t::BP32},
-        };
+        {"1050-005441", BasePlateType_t::BP28},
+        {"1050-005442", BasePlateType_t::BP29},
+        {"1050-005443", BasePlateType_t::BP30},
+        {"1050-005473", BasePlateType_t::BP31},
+        {"1050-005475", BasePlateType_t::BP32},
+    };
 
     /// \cond doxygen chokes on enum class inside of namespace
-    /// Vector specifying the order the baseplates should be listed in the metadata view
-    const std::vector<BasePlateType_t> basePlateOrder =
+    /// Vector specifying the default base plate order to display in the metadata view
+    const std::vector<BasePlateType_t> basePlateOrderDefault =
     {
         BasePlateType_t::UNAVAILABLE,
         BasePlateType_t::CUSTOM,
@@ -283,6 +286,69 @@ namespace isx
         BasePlateType_t::BP30,
         BasePlateType_t::BP31,
         BasePlateType_t::BP32,
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Vector specifying the base plate order to display in the metadata view
+    /// for nVista and nVoke miniscopes
+    const std::vector<BasePlateType_t> basePlateOrderNVistaNVoke =
+    {
+        BasePlateType_t::UNAVAILABLE,
+        BasePlateType_t::CUSTOM,
+        BasePlateType_t::CRANIAL_WINDOW,
+        BasePlateType_t::BP7,
+        BasePlateType_t::BP8,
+        BasePlateType_t::BP9,
+        BasePlateType_t::BP10,
+        BasePlateType_t::BP11,
+        BasePlateType_t::BP12,
+        BasePlateType_t::BP13,
+        BasePlateType_t::BP14,
+        BasePlateType_t::BP15,
+        BasePlateType_t::BP16,
+        BasePlateType_t::BP17,
+        BasePlateType_t::BP18,
+        BasePlateType_t::BP19,
+        BasePlateType_t::BP2,
+        BasePlateType_t::BP3,
+        BasePlateType_t::BP4,
+        BasePlateType_t::BP5,
+        BasePlateType_t::BP6,
+        BasePlateType_t::BP1,
+        BasePlateType_t::BP20,
+        BasePlateType_t::BP21,
+        BasePlateType_t::BP22,
+        BasePlateType_t::BP23,
+        BasePlateType_t::BP24,
+        BasePlateType_t::BP25,
+        BasePlateType_t::BP26,
+        BasePlateType_t::BP27
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Vector specifying the base plate order to display in the metadata view
+    /// for nVue miniscopes
+    const std::vector<BasePlateType_t> basePlateOrderNVue =
+    {
+        BasePlateType_t::UNAVAILABLE,
+        BasePlateType_t::CUSTOM,
+        BasePlateType_t::CRANIAL_WINDOW,
+        BasePlateType_t::BP28,
+        BasePlateType_t::BP29,
+        BasePlateType_t::BP30,
+        BasePlateType_t::BP31,
+        BasePlateType_t::BP32,
+        BasePlateType_t::BP7,
+        BasePlateType_t::BP8,
+        BasePlateType_t::BP9,
+        BasePlateType_t::BP10,
+        BasePlateType_t::BP11,
+        BasePlateType_t::BP12,
+        BasePlateType_t::BP13,
+        BasePlateType_t::BP14,
+        BasePlateType_t::BP15
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -1176,6 +1242,29 @@ namespace isx
         // assume default 1:1 mux ratio for movies from older versions of IDAS
         return {{MulticolorChannel_t::GREEN, 1}, {MulticolorChannel_t::RED, 1}};;
     }
+
+    template <class T>
+    std::vector<BasePlateType_t> getMicroscopeBasePlateList(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["microscope"]["type"].is_null())
+        {
+            std::string microscope = isx::toLower(extraProps["microscope"]["type"].get<std::string>());
+            if (microscope.find("nvista") != std::string::npos || microscope.find("nvoke") != std::string::npos)
+            {
+                // nVista, NVista3, NVoke2, ...
+                return basePlateOrderNVistaNVoke;
+            }
+            else if (microscope.find("dual color") != std::string::npos || microscope.find("nvue") != std::string::npos)
+            {
+                // Dual Color, nVue
+                return basePlateOrderNVue;
+            }
+        }
+        return basePlateOrderDefault;
+    }
+
 } // namespace isx
 
 #endif // ISX_METADATA_H
