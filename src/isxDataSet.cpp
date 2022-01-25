@@ -855,6 +855,17 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                 acqInfo["channel"] = channel->get<std::string>();
             }
 
+            const auto interpolatedFrames = idps->find("interpolatedFrames");
+            if (interpolatedFrames != idps->end())
+            {
+                std::stringstream ss;
+                for (auto f : interpolatedFrames->get<std::vector<size_t>>())
+                {
+                    ss << f << " ";
+                }
+                acqInfo["Interpolated Samples"] = ss.str();
+            }
+
             const auto motionCorrection = idps->find("mc_padding");
             if (motionCorrection != idps->end())
             {

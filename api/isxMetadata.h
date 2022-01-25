@@ -576,6 +576,19 @@ namespace isx
         return preprocessMetadata;
     }
 
+    template <typename T>
+    std::vector<size_t> getInterpolatedFrames(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        if (extraProps["idps"]["interpolatedFrames"].is_null())
+        {
+            ISX_THROW(ExceptionUserInput, "No interpolated frames in metadata");
+        }
+        return extraProps["idps"]["interpolatedFrames"].get<std::vector<size_t>>();
+    }
+
     template <class T>
     VesselSetType_t getVesselSetType(T & inData)
     {
@@ -983,6 +996,17 @@ namespace isx
         }
 
         inDataDest->setExtraProperties(extraProps.dump());
+    }
+
+
+    template <typename T>
+    std::string setInterpolatedFrames(T & inData, std::vector<isx::isize_t> interpolatedFrames)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        extraProps["idps"]["interpolatedFrames"] = interpolatedFrames;
+        return extraProps.dump();
     }
 
     // Helper functions to deal with string representations of the extra properties
