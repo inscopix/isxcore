@@ -236,7 +236,7 @@ namespace isx
             ISX_THROW(isx::ExceptionUserInput, "Reading correlation triptychs for diameter vessel set");
         }
 
-        if (!correlationSaved())
+        if (!isCorrelationSaved())
         {
             return nullptr;
         }
@@ -639,7 +639,7 @@ namespace isx
             saveVesselSetType();
             j["extraProperties"] = m_extraProperties;
             j["efocusValues"] = m_efocusValues;
-            if (correlationSaved()) j["VesselCorrelationSizes"] = convertVesselSetCorrelationSizesToJson();
+            if (isCorrelationSaved()) j["VesselCorrelationSizes"] = convertVesselSetCorrelationSizesToJson();
             if (m_directionSaved) j["VesselDirectionSaved"] = true;
         }
         catch (const std::exception & error)
@@ -804,7 +804,7 @@ namespace isx
             {
                 size += directionSizeInBytes();
             }
-            if (correlationSaved())
+            if (isCorrelationSaved())
             {
                 size += correlationTraceSizeInBytes(inVesselId);
             }
@@ -906,7 +906,7 @@ namespace isx
     }
 
     bool
-    VesselSetFile::correlationSaved() const
+    VesselSetFile::isCorrelationSaved() const
     {
         return !m_correlationSizes.empty();
     }

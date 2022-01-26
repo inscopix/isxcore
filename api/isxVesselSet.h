@@ -39,7 +39,7 @@ struct VesselLine
         }
         if (std::isnan(fps))
         {
-            ISX_THROW(ExceptionDataIO, "Can't compute max velocity for NaN frame rate");
+            return std::numeric_limits<float>::quiet_NaN();
         }
 
         // This algorithm assumes that adjacent points are stored next to each other in the contour
@@ -534,6 +534,11 @@ getCorrelationSize(size_t inIndex) const = 0;
 virtual
 float
 getMaxVelocity(size_t inIndex) = 0;
+
+/// \return     Flag indicating whether correlation heatmaps are saved to disk
+virtual
+bool
+isCorrelationSaved() const = 0;
 };
 
 } // namespace isx

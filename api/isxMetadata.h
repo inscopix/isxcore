@@ -767,11 +767,11 @@ namespace isx
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
-        if (extraProps["idps"]["vesselset"]["inputMovieFps"].is_null())
+        if (!extraProps["idps"]["vesselset"]["inputMovieFps"].is_null())
         {
-            ISX_THROW(ExceptionUserInput, "No input movie fps in vessel set metadata");
+            return extraProps["idps"]["vesselset"]["inputMovieFps"].get<double>();
         }
-        return extraProps["idps"]["vesselset"]["inputMovieFps"].get<double>();
+        return std::numeric_limits<double>::quiet_NaN();
     }
 
     inline std::string getVesselTimepointsString(std::map<std::string, std::vector<int>> inData)

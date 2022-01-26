@@ -459,4 +459,10 @@ VesselSetSimple::getMaxVelocity(size_t inIndex)
     return maxVelocity;
 }
 
+bool
+VesselSetSimple::isCorrelationSaved() const
+{
+    return m_file->isCorrelationSaved();   
+}
+
 } // namespace isx

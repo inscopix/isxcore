@@ -198,6 +198,11 @@ public:
     SizeInPixels_t
     getCorrelationSize(isize_t inVesselId) const;
 
+    /// \return flag indicating whether correlation heatmaps were saved to disk
+    ///
+    bool
+    isCorrelationSaved() const;
+    
 private:
 
     /// True if the vessel set file is valid, false otherwise.
@@ -333,11 +338,6 @@ private:
     /// \return list correlation sizes as json
     ///
     json convertVesselSetCorrelationSizesToJson();
-
-    /// \return flag indicating whether correlation heatmaps were saved to disk
-    ///
-    bool
-    correlationSaved() const;
 
 };
 

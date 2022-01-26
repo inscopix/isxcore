@@ -15,6 +15,8 @@
 #include <limits>
 #include <cmath>
 
+#include <tiffio.h>
+
 namespace isx {
 
 uint16_t
@@ -49,6 +51,7 @@ TiffExporter::toTiffOut(const Image * inImage, const bool inZeroImage)
     uint16_t sampleFormat = getTiffSampleFormat(inImage->getDataType());
     uint16_t bitsPerSample = uint16_t(getDataTypeSizeInBytes(inImage->getDataType()) * 8);
 
+    TIFF * out = static_cast<TIFF*>(tiffOut);
     TIFFSetField(out, TIFFTAG_IMAGEWIDTH, width);                             // set the width of the image
     TIFFSetField(out, TIFFTAG_IMAGELENGTH, height);                           // set the height of the image
     TIFFSetField(out, TIFFTAG_SAMPLESPERPIXEL, inImage->getNumChannels());    // set number of channels per pixel
@@ -89,7 +92,11 @@ TiffExporter::toTiffOut(const Image * inImage, const bool inZeroImage)
 TiffExporter::TiffExporter(const std::string & inFileName, const bool inBigTiff)
 {
     const char * mode = inBigTiff ? "w8" : "w";
-    out = TIFFOpen(inFileName.c_str(), mode);
+    TIFF * out = TIFFOpen(inFileName.c_str(), mode);
+    tiffOut = static_cast<void*>(out);
+    
+    uint64 * dir = new uint64(0);
+    lastOffDir = static_cast<void*>(dir);
 
     if (!out)
     {
@@ -99,13 +106,16 @@ TiffExporter::TiffExporter(const std::string & inFileName, const bool inBigTiff)
 
 TiffExporter::~TiffExporter()
 {
+    TIFF * out = static_cast<TIFF*>(tiffOut);
     TIFFClose(out);
 }
 
 void
 TiffExporter::nextTiffDir()
 {
-    TIFFWriteDirectoryFast(out, lastOffDir, &lastOffDir);
+    TIFF * out = static_cast<TIFF*>(tiffOut);
+    uint64 * dir = static_cast<uint64*>(lastOffDir);
+    TIFFWriteDirectoryFast(out, *dir, dir);
     TIFFFlush(out);
 }
 

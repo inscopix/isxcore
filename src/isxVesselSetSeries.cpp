@@ -524,4 +524,10 @@ namespace isx
     {
         return m_vesselSets.front()->getMaxVelocity(inIndex);
     }
+
+    bool
+    VesselSetSeries::isCorrelationSaved() const
+    {
+        return m_vesselSets.front()->isCorrelationSaved();   
+    }
 } // namespace isx

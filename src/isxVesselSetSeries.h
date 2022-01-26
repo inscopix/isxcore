@@ -160,6 +160,9 @@ public:
     float
     getMaxVelocity(size_t inIndex) override;
 
+    bool
+    isCorrelationSaved() const override;
+
 private:
 
     /// True if the vessel set is valid, false otherwise.

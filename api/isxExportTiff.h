@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 
-#include <tiffio.h>
 
 namespace isx
 {
@@ -38,11 +37,11 @@ public:
     void nextTiffDir();
 private:
     /// The opaque TIFF directory struct used by libtiff.
-    TIFF * out;
+    void * tiffOut;
     /// The offset of the last TIFF directory written.
     /// Note that uint64 is a typedef defined by libtiff and
     /// comes from including tiffio.
-    uint64 lastOffDir = 0;
+    void * lastOffDir;
 };
 
 } // namespace isx
