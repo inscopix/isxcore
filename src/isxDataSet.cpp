@@ -415,6 +415,7 @@ DataSet::getMetadata()
         Variant::MetaType type = p.second.getType();
         ISX_ASSERT(type == Variant::MetaType::STRING);
         metadata.push_back(std::pair<std::string, std::string>(p.first, p.second.value<std::string>()));
+        ss.str("");
     }
 
     // Extra properties (from nVista 3).
@@ -422,6 +423,18 @@ DataSet::getMetadata()
     {
         try
         {
+            // Use metadata util function to check if dataset has metadata 
+            // about pixel scaling and calculate the conversion ratio
+            // Note: cannot do this in addMetadataFromExtraProps since it's a static function
+            // and the metadata utils require passing in an object with a getExtraProperties function
+            auto dataSet = this;
+            if (isx::hasPixelScaling(dataSet))
+            {
+                ss << isx::getMicronsPerPixel(dataSet);
+                metadata.push_back(std::pair<std::string, std::string>("Microns per Pixel", ss.str()));
+                ss.str("");
+            }
+
             addMetadataFromExtraProps(metadata, ss, m_extraProps);
         }
         catch (const std::exception & inError)
