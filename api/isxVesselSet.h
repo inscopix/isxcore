@@ -9,8 +9,9 @@
 #include "isxAsyncTaskResult.h"
 #include "isxColor.h"
 #include "isxMetadata.h"
-#include "json.hpp"
+#include "isxVesselCorrelations.h"
 
+#include <json.hpp>
 #include <string>
 #include <functional>
 
@@ -72,116 +73,6 @@ struct VesselLine
 };
 
 using SpVesselLine_t = std::shared_ptr<VesselLine>;
-
-/// Correlation heatmap triptychs for single velocity measurement
-class VesselCorrelations
-{
-    public:
-        /// Default constructor
-        ///
-        VesselCorrelations() {}
-
-        /// Constructor
-        /// \param inSizeInPixels   Size of heatmap in pixels
-        ///
-        VesselCorrelations(const SizeInPixels_t inSizeInPixels)
-            : m_sizeInPixels(inSizeInPixels)
-        {
-            size_t numPixels = getTotalNumPixels() * 3;
-            m_values.reset(new float[numPixels]);  
-            std::memset(m_values.get(), 0, sizeof(float)*numPixels);     
-        }
-
-        /// \return The number of pixels.
-        ///
-        const SizeInPixels_t & getNumPixels() const
-        {
-            return m_sizeInPixels;
-        }
-
-        /// \return The total number of pixels.
-        ///
-        size_t getTotalNumPixels() const
-        {
-            return m_sizeInPixels.getWidth() * m_sizeInPixels.getHeight();
-        }
-
-        /// \return a raw pointer to the first sample in memory
-        ///
-        float *
-        getValues()
-        {
-            if (m_values)
-            {
-                return &m_values[0];
-            }
-            return 0;
-        }
-
-        /// \return a raw pointer to the first sample in memory of a specified correlation heatmap
-        /// \param inOffset     The temporal offset of the correlation heatmap (-1, 0, +1)
-        ///
-        float *
-        getValues(const int inOffset)
-        {
-            float * data = getValues();
-            if (data)
-            {
-                size_t offset = (inOffset + 1) * getTotalNumPixels();
-                data += offset;
-                return data;
-            }
-            return 0;
-        }
-
-        /// Sets heatmap data for a specified temporal offset
-        /// \param inOffset     The temporal offset of the correlation heatmap (-1, 0, +1)
-        /// \param inData       The image data for the correlation heatmap
-        ///
-        void setValues(const int inOffset, const float * inData)
-        {
-            float * data = getValues(inOffset);
-            std::memcpy(data, inData, getTotalNumPixels() * sizeof(float));
-        }
-
-        /// Get the heatmap image for a specified temporal offset
-        /// \param inOffset     The temporal offset of the correlation heatmap (-1, 0, +1)
-        /// \return the heatmap image
-        ///
-        SpImage_t getHeatmap(const int inOffset)
-        {
-            const float * data = getValues(inOffset);
-            SpImage_t image(new Image(SpacingInfo(m_sizeInPixels), m_sizeInPixels.getWidth() * sizeof(float), 1, DataType::F32));
-            std::memcpy(image->getPixelsAsF32(), data, getTotalNumPixels() * sizeof(float));
-            return image;
-        }
-
-    private:
-        std::unique_ptr<float[]> m_values = 0;          ///< The correlation values serialized
-        SizeInPixels_t m_sizeInPixels;                  ///< The size of a single correlation heatmap
-};
-using SpVesselCorrelations_t = std::shared_ptr<VesselCorrelations>;
-
-/// Trace of correlation heatmap triptychs for trace of velocity measurements
-/// Note: use setValue instead of memcpy to ensure shared pointers are updated correctly
-class VesselCorrelationsTrace : public Trace<SpVesselCorrelations_t>
-{
-    public:
-        /// Constructor
-        /// \param inTimingInfo     Timing info of the trace
-        /// \param inSizeInPixels   Size of heatmap in pixels
-        VesselCorrelationsTrace(
-            const TimingInfo & inTimingInfo,
-            SizeInPixels_t inSizeInPixels)
-            : Trace<SpVesselCorrelations_t>(inTimingInfo)
-        {
-            for (size_t i = 0; i < inTimingInfo.getNumTimes(); i++)
-            {
-                setValue(i, std::make_shared<VesselCorrelations>(inSizeInPixels));
-            }
-        }
-};
-using SpVesselCorrelationsTrace_t = std::shared_ptr<VesselCorrelationsTrace>;
 
 /// Interface for vessel sets
 ///

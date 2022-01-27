@@ -329,10 +329,7 @@ namespace isx
 
         std::weak_ptr<VesselSet> weakThis = shared_from_this();
 
-        AsyncTaskResult<SpVesselCorrelations_t> asyncTaskResult;
-        asyncTaskResult.setValue(std::make_shared<VesselCorrelations>(getCorrelationSize(inIndex)));
-
-        m_vesselSets[vesselSetIndex]->getCorrelationsAsync(inIndex, frameIndex, [weakThis, &asyncTaskResult, inCallback](AsyncTaskResult<SpVesselCorrelations_t> inAsyncTaskResult)
+        m_vesselSets[vesselSetIndex]->getCorrelationsAsync(inIndex, frameIndex, [weakThis, inIndex, inCallback](AsyncTaskResult<SpVesselCorrelations_t> inAsyncTaskResult)
             {
                 auto sharedThis = weakThis.lock();
                 if (!sharedThis)
@@ -340,6 +337,7 @@ namespace isx
                     return;
                 }
 
+                AsyncTaskResult<SpVesselCorrelations_t> asyncTaskResult;
                 if (inAsyncTaskResult.getException())
                 {
                     asyncTaskResult.setException(inAsyncTaskResult.getException());
@@ -347,11 +345,9 @@ namespace isx
                 else
                 {
                     auto simpleCorrelations = inAsyncTaskResult.get();
-                    auto seriesCorrelations = asyncTaskResult.get();
-                    size_t numBytes = simpleCorrelations->getTotalNumPixels() * 3 * sizeof(float);
-                    std::memcpy(reinterpret_cast<char*>(seriesCorrelations->getValues()), reinterpret_cast<char*>(simpleCorrelations->getValues()), numBytes);
-                    inCallback(asyncTaskResult);
+                    asyncTaskResult.setValue(simpleCorrelations);
                 }
+                inCallback(asyncTaskResult);
             });
     }
 
