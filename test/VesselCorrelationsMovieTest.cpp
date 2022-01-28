@@ -35,13 +35,13 @@ TEST_CASE("VesselCorrelationsMovieTest", "[core]")
 
         SECTION("num times - gapless")
         {
-            const size_t expectedNumTimes = 3;
+            const size_t expectedNumTimes = 13;
             REQUIRE(movie->getTimingInfo().getNumTimes() == expectedNumTimes);
         }
 
         SECTION("num times - individual")
         {
-            const std::vector<size_t> expectedNumTimes = {2, 1};
+            const std::vector<size_t> expectedNumTimes = {7, 6};
             for (size_t i = 0; i < 2; i++)
             {
                 REQUIRE(movie->getTimingInfosForSeries()[i].getNumTimes() == expectedNumTimes[i]);
