@@ -213,7 +213,7 @@ namespace isx
     SpFTrace_t
     VesselSetSeries::getDirectionTrace(isize_t inIndex)
     {
-        if (m_vesselSets[0]->getDirectionTrace(0) == nullptr)
+        if (!isDirectionSaved())
         {
             return nullptr;
         }
@@ -238,7 +238,7 @@ namespace isx
         std::weak_ptr<VesselSet> weakThis = shared_from_this();
 
         AsyncTaskResult<SpFTrace_t> asyncTaskResult;
-        if (m_vesselSets[0]->getDirectionTrace(0) == nullptr)
+        if (!isDirectionSaved())
         {
             asyncTaskResult.setValue(nullptr);
             inCallback(asyncTaskResult);
@@ -351,17 +351,124 @@ namespace isx
             });
     }
 
-    void
-    VesselSetSeries::writeImageAndLineAndTrace(
-        isize_t inIndex,
-        const SpImage_t & inProjectionImage,
-        const SpVesselLine_t & inLineEndpoints,
-        SpFTrace_t & inTrace,
-        const std::string & inName,
-        const SpFTrace_t & inDirectionTrace,
-        const SpVesselCorrelationsTrace_t & inCorrTrace)
+    SpFTrace_t
+    VesselSetSeries::getCenterTrace(isize_t inIndex)
     {
-        // see comment above for VesselSetSeries::writeImageAndTrace
+        if (!isCenterSaved())
+        {
+            return nullptr;
+        }
+
+        SpFTrace_t trace = std::make_shared<FTrace_t>(m_gaplessTimingInfo);
+        float * v = trace->getValues();
+
+        for (const auto &vs : m_vesselSets)
+        {
+            const SpFTrace_t partialTrace = vs->getCenterTrace(inIndex);
+            const float * vPartial = partialTrace->getValues();
+            const isize_t numSamples = partialTrace->getTimingInfo().getNumTimes();
+            memcpy((char *)v, (char *)vPartial, sizeof(float)*numSamples);
+            v += numSamples;
+        }
+        return trace;
+    }
+
+    void
+    VesselSetSeries::getCenterTraceAsync(isize_t inIndex, VesselSetGetTraceCB_t inCallback)
+    {
+        std::weak_ptr<VesselSet> weakThis = shared_from_this();
+
+        AsyncTaskResult<SpFTrace_t> asyncTaskResult;
+        if (!isCenterSaved())
+        {
+            asyncTaskResult.setValue(nullptr);
+            inCallback(asyncTaskResult);
+            return;
+        }
+
+        asyncTaskResult.setValue(std::make_shared<FTrace_t>(m_gaplessTimingInfo));
+
+        isize_t counter = 0;
+        bool isLast = false;
+        isize_t offset = 0;
+
+        for (const auto &vs : m_vesselSets)
+        {
+            isLast = (counter == (m_vesselSets.size() - 1));
+
+            VesselSetGetTraceCB_t finishedCB =
+                [weakThis, &asyncTaskResult, offset, isLast, inCallback] (AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
+            {
+                auto sharedThis = weakThis.lock();
+                if (!sharedThis)
+                {
+                    return;
+                }
+
+                if (inAsyncTaskResult.getException())
+                {
+                    asyncTaskResult.setException(inAsyncTaskResult.getException());
+                }
+                else
+                {
+                    // only continue copying if previous segments didn't throw
+                    if (!asyncTaskResult.getException())
+                    {
+                        const auto traceSegment = inAsyncTaskResult.get();
+                        auto traceSeries = asyncTaskResult.get();
+                        const isize_t numTimes = traceSegment->getTimingInfo().getNumTimes();
+                        const isize_t numBytes = numTimes * sizeof(float);
+                        float * vals = traceSeries->getValues();
+                        vals += offset;
+                        memcpy((char *)vals, (char *)traceSegment->getValues(), numBytes);
+                    }
+                }
+
+                if (isLast)
+                {
+                    inCallback(asyncTaskResult);
+                }
+            };
+
+            vs->getCenterTraceAsync(inIndex, finishedCB);
+            isize_t numSamples = vs->getTimingInfo().getNumTimes();
+            offset += numSamples;
+
+            ++counter;
+        }
+
+    }
+
+    void
+    VesselSetSeries::writeImage(
+        const SpImage_t & inProjectionImage)
+    {
+        // unused for series data
+        ISX_ASSERT(false);
+    }
+
+    void
+    VesselSetSeries::writeVesselDiameterData(
+        const isize_t inIndex,
+        const SpVesselLine_t & inLineEndpoints,
+        const SpFTrace_t & inDiameterTrace,
+        const SpFTrace_t & inCenterTrace,
+        const std::string & inName)
+    {
+        // unused for series data
+        ISX_ASSERT(false);
+    }
+
+    void
+    VesselSetSeries::writeVesselVelocityData(
+        const isize_t inIndex,
+        const SpVesselLine_t & inLineEndpoints,
+        const SpFTrace_t & inVelocityTrace,
+        const SpFTrace_t & inDirectionTrace,
+        const SpVesselCorrelationsTrace_t & inCorrTrace,
+        const std::string & inName)
+    {
+        // unused for series data
         ISX_ASSERT(false);
     }
 
@@ -525,5 +632,17 @@ namespace isx
     VesselSetSeries::isCorrelationSaved() const
     {
         return m_vesselSets.front()->isCorrelationSaved();   
+    }
+
+    bool
+    VesselSetSeries::isDirectionSaved() const
+    {
+        return m_vesselSets.front()->isDirectionSaved();   
+    }
+
+    bool
+    VesselSetSeries::isCenterSaved() const
+    {
+        return m_vesselSets.front()->isCenterSaved();   
     }
 } // namespace isx

@@ -106,22 +106,50 @@ public:
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or reading fails.
     SpVesselCorrelations_t readCorrelations(isize_t inVesselId, isize_t inFrameNumber);
 
-    /// Write vessel data
-    /// \param inVesselId the vessel of interest
+    /// \return the center trace for the input vessel
+    /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or reading fails.
+    SpFTrace_t readCenterTrace(const isize_t inVesselId);
+
+    /// Write projection image of input movie
     /// \param inProjectionImage the projection image to write
-    /// \param inLineEndpoints the endpoints of the line to write
-    /// \param inData the trace to write
-    /// \param inName the vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the vessel id
-    /// \param  inDirectionTrace    The direction of velocity if the vessel set is an rbc velocity type
-    /// \param  inCorrTrace         The correlation triptychs used to estimate velocity if the vessel set is an rbc velocity type
-    /// If vessel ID already exists, it will overwrite its data. Otherwise, it will be appended
-    /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
     /// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
-    void writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const SpVesselLine_t & inLineEndpoints,
-                         Trace<float> & inData, const std::string & inName = std::string(),
-                         const SpFTrace_t & inDirectionTrace = nullptr,
-                         const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr);
+    void
+    writeImage(const SpImage_t & inProjectionImage);
+
+    /// Write vessel diameter data
+    /// \param inVesselId           The vessel of interest
+    /// \param inLineEndpoints      The endpoints of the line to write
+    /// \param inDiamterTrace       The diameter trace
+    /// \param inCenterTrace        The trace of the center of the diameter fit
+    /// \param inName               The vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the vessel id
+    /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
+    /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+    void
+    writeVesselDiameterData(
+        const isize_t inVesselId,
+        const SpVesselLine_t & inLineEndpoints,
+        const SpFTrace_t & inDiameterTrace,
+        const SpFTrace_t & inCenterTrace,
+        const std::string & inName = std::string());
+
+    /// Write vessel velocity data
+    /// \param inVesselId           The vessel of interest
+    /// \param inLineEndpoints      The endpoints of the line to write
+    /// \param inVelocityTrace      The velocity trace to write
+    /// \param inDirectionTrace     The direction of velocity trace
+    /// \param inCorrTrace          The correlation triptychs used to estimate velocity
+    /// \param inName               The vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the vessel id
+    /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
+    /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+    void
+    writeVesselVelocityData(
+        const isize_t inVesselId,
+        const SpVesselLine_t & inLineEndpoints,
+        const SpFTrace_t & inVelocityTrace,
+        const SpFTrace_t & inDirectionTrace,
+        const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr,
+        const std::string & inName = std::string());
 
     /// \return the status of the vessel
     /// \param inVesselId the vessel of interest
@@ -202,6 +230,18 @@ public:
     ///
     bool
     isCorrelationSaved() const;
+
+    /// \return flag indicating whether direction trace was saved to disk
+    /// this is primarily meant to maintain backwards compatibility with vessel sets generated in IDPS 1.7
+    ///
+    bool
+    isDirectionSaved() const;
+
+    /// \return flag indicating whether center trace was saved to disk
+    /// this is primarily meant to maintain backwards compatibility with vessel sets generated in IDPS 1.7
+    ///
+    bool
+    isCenterSaved() const;
     
 private:
 
@@ -241,6 +281,9 @@ private:
     /// Flag indicating whether direction was saved to vessel set file
     bool m_directionSaved = false;
 
+    /// Flag indicating whether center of diameter fit was saved to vessel set file
+    bool m_centerSaved = false;
+
     /// Size of correlation heatmaps for rbc velocity vessel set
     std::vector<SizeInPixels_t> m_correlationSizes;
 
@@ -275,20 +318,16 @@ private:
     /// \throw  isx::ExceptionDataIO    If formatting the vessel set data fails.
     void writeHeader();
 
-    /// Seek to a specific vessel in the file for a read operation
-    /// \param inVesselId the vessel ID
-    /// \param readTrace if true position to read trace, if false position to read line endpoints
-    /// \throw  isx::ExceptionFileIO    If seeking to a nonexistent vessel or reading fails.
-    void seekToVesselForRead(isize_t inVesselId, const bool readTrace);
-
-    /// Seek to a specific vessel in the file for a write operation
+    /// Seek to a specific vessel in the file
     /// \param inVesselId the vessel ID
     /// \throw  isx::ExceptionFileIO    If seeking to a nonexistent vessel or reading fails.
-    void seekToVesselForWrite(isize_t inVesselId);
+    void seekToVessel(const isize_t inVesselId);
 
-    /// Seek to the projection image in the file for a read operation
-    /// \throw  isx::ExceptionFileIO    If reading fails.
-    void seekToProjectionImageForRead();
+    /// Prepares vessel for write
+    /// Updates vessel metadata and file read/write location
+    /// \param inVesselId the vessel ID
+    /// \param inName the vessel name
+    void prepareVesselForWrite(const isize_t inVesselId, const std::string & inName);
 
     /// \return the size of the projection image in bytes
     ///

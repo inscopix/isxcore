@@ -5,21 +5,41 @@
 #include <cstring>
 
 void
-writeDefaultVessels(
+writeDefaultDiameterVessels(
         const std::string & inFileName,
         const isx::TimingInfo & inTimingInfo,
         const isx::SpacingInfo & inSpacingInfo,
-        isx::Image & inImage,
+        const isx::SpImage_t & inImage,
         const isx::SpVesselLine_t & inLineEndpoints,
-        isx::Trace<float> & inTrace,
-        const size_t inNumVessels,
-        const isx::VesselSetType_t inVesselSetType,
-        const isx::SpFTrace_t inDirectionTrace = nullptr)
+        const isx::SpFTrace_t & inTrace,
+        const isx::SpFTrace_t inCenterTrace,
+        const size_t inNumVessels)
 {
-    isx::VesselSetFile file(inFileName, inTimingInfo, inSpacingInfo, inVesselSetType);
+    isx::VesselSetFile file(inFileName, inTimingInfo, inSpacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
+    file.writeImage(inImage);
     for (size_t i = 0; i < inNumVessels; ++i)
     {
-        file.writeVesselData(i, inImage, inLineEndpoints, inTrace, "", inDirectionTrace);
+        file.writeVesselDiameterData(i, inLineEndpoints, inTrace, inCenterTrace, "");
+    }
+    file.closeForWriting();
+}
+
+void
+writeDefaultVelocityVessels(
+        const std::string & inFileName,
+        const isx::TimingInfo & inTimingInfo,
+        const isx::SpacingInfo & inSpacingInfo,
+        const isx::SpImage_t & inImage,
+        const isx::SpVesselLine_t & inLineEndpoints,
+        const isx::SpFTrace_t & inTrace,
+        const isx::SpFTrace_t inDirectionTrace,
+        const size_t inNumVessels)
+{
+    isx::VesselSetFile file(inFileName, inTimingInfo, inSpacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+    file.writeImage(inImage);
+    for (size_t i = 0; i < inNumVessels; ++i)
+    {
+        file.writeVesselVelocityData(i, inLineEndpoints, inTrace, inDirectionTrace, nullptr, "");
     }
     file.closeForWriting();
 }
@@ -39,23 +59,28 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
     // Set image
-    isx::Image originalImage(
+    isx::SpImage_t originalImage = std::make_shared<isx::Image>(
             spacingInfo,
             sizeof(float) * spacingInfo.getNumColumns(),
             1,
             isx::DataType::F32);
-    float * originalPixels = originalImage.getPixelsAsF32();
-    std::memset(originalPixels, 0, sizeof(float) * originalImage.getSpacingInfo().getTotalNumPixels());
+    float * originalPixels = originalImage->getPixelsAsF32();
+    std::memset(originalPixels, 0, sizeof(float) * originalImage->getSpacingInfo().getTotalNumPixels());
     originalPixels[0] = 1.0f;
     originalPixels[1] = 2.5f;
 
     // Set data
-    isx::Trace<float> originalTrace(timingInfo);
-    float * originalValues = originalTrace.getValues();
+    isx::SpFTrace_t originalTrace = std::make_shared<isx::FTrace_t>(timingInfo);
+    float * originalValues = originalTrace->getValues();
+
+    isx::SpFTrace_t originalCenterTrace = std::make_shared<isx::FTrace_t>(timingInfo);
+    float * originalCenterValues = originalTrace->getValues();
+
     float val = 0.0f;
     for (isx::isize_t i(0); i < timingInfo.getNumTimes(); ++i)
     {
         originalValues[i] = val;
+        originalCenterValues[i] = val * 10.0f;
         val += 0.01f;
     }
 
@@ -98,13 +123,14 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
 
         // Write to file
         /// Vessel trace with default name
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace);
+        file.writeImage(originalImage);
+        file.writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace);
         REQUIRE(file.numberOfVessels() == 1);
         REQUIRE(file.getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
         REQUIRE(file.getVesselName(0).compare("") == 0);
 
         /// Vessel trace with given name
-        file.writeVesselData(1, originalImage, lineEndpoints, originalTrace, "testName");
+        file.writeVesselDiameterData(1, lineEndpoints, originalTrace, originalCenterTrace, "testName");
         REQUIRE(file.numberOfVessels() == 2);
         REQUIRE(file.getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
         REQUIRE(file.getVesselName(1).compare("testName") == 0);
@@ -115,7 +141,8 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
         REQUIRE(file.isValid());
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace);
+        file.writeImage(originalImage);
+        file.writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace);
         REQUIRE(file.numberOfVessels() == 1);
         file.closeForWriting();
 
@@ -123,7 +150,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
         bool pixelsAreEqual = false;
         float * pixels = im->getPixelsAsF32();
 
-        REQUIRE(im->getSpacingInfo().getTotalNumPixels() == originalImage.getSpacingInfo().getTotalNumPixels());
+        REQUIRE(im->getSpacingInfo().getTotalNumPixels() == originalImage->getSpacingInfo().getTotalNumPixels());
 
         for (isx::isize_t j(0); j < im->getSpacingInfo().getTotalNumPixels(); ++j)
         {
@@ -144,14 +171,15 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
         REQUIRE(file.isValid());
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace);
+        file.writeImage(originalImage);
+        file.writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace);
         REQUIRE(file.numberOfVessels() == 1);
         file.closeForWriting();
 
         isx::SpFTrace_t trace = file.readTrace(0);
         float * values = trace->getValues();
 
-        REQUIRE(trace->getTimingInfo().getNumTimes() == originalTrace.getTimingInfo().getNumTimes());
+        REQUIRE(trace->getTimingInfo().getNumTimes() == originalTrace->getTimingInfo().getNumTimes());
 
         bool valsAreEqual = false;
 
@@ -175,7 +203,8 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
         REQUIRE(file.isValid());
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace);
+        file.writeImage(originalImage);
+        file.writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace);
         REQUIRE(file.numberOfVessels() == 1);
         file.closeForWriting();
 
@@ -187,7 +216,8 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
         REQUIRE(file.isValid());
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace);
+        file.writeImage(originalImage);
+        file.writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace);
         REQUIRE(file.numberOfVessels() == 1);
         REQUIRE(file.getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
         file.setVesselStatus(0, isx::VesselSet::VesselStatus::REJECTED);
@@ -201,8 +231,8 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
         REQUIRE(file.isValid());
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace);
-        REQUIRE(file.numberOfVessels() == 1);
+        file.writeImage(originalImage);
+        file.writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace);
         REQUIRE(file.getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
         REQUIRE(file.getVesselName(0).compare("") == 0);
 
@@ -215,9 +245,10 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     {
         {
             isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
+            file.writeImage(originalImage);
             for (size_t i = 0; i < 10; ++i)
             {
-                file.writeVesselData(i, originalImage, lineEndpoints, originalTrace);
+                file.writeVesselDiameterData(i, lineEndpoints, originalTrace, originalCenterTrace);
             }
             file.closeForWriting();
         }
@@ -258,11 +289,12 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     SECTION("Modify image / vessel data after calling closeForWriting")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace);
+        file.writeImage(originalImage);
+        file.writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace);
         file.closeForWriting();
 
         ISX_REQUIRE_EXCEPTION(
-            file.writeVesselData(0, originalImage, lineEndpoints, originalTrace),
+            file.writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace);,
             isx::ExceptionFileIO,
             "Writing data after file was closed for writing." + fileName);
     }
@@ -270,7 +302,8 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     SECTION("Modify vessel validity after calling closeForWriting")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace);
+        file.writeImage(originalImage);
+        file.writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace);
         file.closeForWriting();
 
         ISX_REQUIRE_EXCEPTION(
@@ -282,7 +315,8 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     SECTION("Modify vessel name after calling closeForWriting")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace);
+        file.writeImage(originalImage);
+        file.writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace);
         file.closeForWriting();
         ISX_REQUIRE_EXCEPTION(
             file.setVesselName(0, "newName"),
@@ -292,7 +326,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
 
     SECTION("Check default names for 1 vessel")
     {
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, 1, isx::VesselSetType_t::VESSEL_DIAMETER);
+        writeDefaultDiameterVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, originalCenterTrace, 1);
 
         isx::VesselSetFile file(fileName);
         REQUIRE(file.getVesselName(0) == "V0");
@@ -301,7 +335,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     SECTION("Check default names for 9 vessels")
     {
         const size_t numVessels = 9;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, numVessels, isx::VesselSetType_t::VESSEL_DIAMETER);
+        writeDefaultDiameterVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, originalCenterTrace, numVessels);
 
         isx::VesselSetFile file(fileName);
         for (size_t i = 0; i < numVessels; ++i)
@@ -313,7 +347,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     SECTION("Check default names for 10 vessels")
     {
         const size_t numVessels = 10;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, numVessels, isx::VesselSetType_t::VESSEL_DIAMETER);
+        writeDefaultDiameterVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, originalCenterTrace, numVessels);
 
         isx::VesselSetFile file(fileName);
         for (size_t i = 0; i < numVessels; ++i)
@@ -325,7 +359,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     SECTION("Check default names for 11 vessels")
     {
         const size_t numVessels = 11;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, numVessels, isx::VesselSetType_t::VESSEL_DIAMETER);
+        writeDefaultDiameterVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, originalCenterTrace, numVessels);
 
         isx::VesselSetFile file(fileName);
         for (size_t i = 0; i < numVessels; ++i)
@@ -344,7 +378,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     SECTION("Check default names for 100 vessels")
     {
         const size_t numVessels = 100;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, numVessels, isx::VesselSetType_t::VESSEL_DIAMETER);
+        writeDefaultDiameterVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, originalCenterTrace, numVessels);
 
         isx::VesselSetFile file(fileName);
         for (size_t i = 0; i < numVessels; ++i)
@@ -363,7 +397,7 @@ TEST_CASE("VesselSetFileTest", "[core-internal]")
     SECTION("Check default names for 101 vessels")
     {
         const size_t numVessels = 101;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, numVessels, isx::VesselSetType_t::VESSEL_DIAMETER);
+        writeDefaultDiameterVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, originalCenterTrace, numVessels);
 
         isx::VesselSetFile file(fileName);
         for (size_t i = 0; i < numVessels; ++i)
@@ -399,19 +433,19 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     isx::SpacingInfo spacingInfo(numPixels, pixelSize, topLeft);
 
     // Set image
-    isx::Image originalImage(
+    isx::SpImage_t originalImage = std::make_shared<isx::Image>(
             spacingInfo,
             sizeof(float) * spacingInfo.getNumColumns(),
             1,
             isx::DataType::F32);
-    float * originalPixels = originalImage.getPixelsAsF32();
-    std::memset(originalPixels, 0, sizeof(float) * originalImage.getSpacingInfo().getTotalNumPixels());
+    float * originalPixels = originalImage->getPixelsAsF32();
+    std::memset(originalPixels, 0, sizeof(float) * originalImage->getSpacingInfo().getTotalNumPixels());
     originalPixels[0] = 1.0f;
     originalPixels[1] = 2.5f;
 
     // Set data
-    isx::Trace<float> originalTrace(timingInfo);
-    float * originalValues = originalTrace.getValues();
+    isx::SpFTrace_t originalTrace = std::make_shared<isx::FTrace_t>(timingInfo);
+    float * originalValues = originalTrace->getValues();
     float val = 0.0f;
     for (isx::isize_t i(0); i < timingInfo.getNumTimes(); ++i)
     {
@@ -424,7 +458,7 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
         isx::PointInPixels_t(0,0), isx::PointInPixels_t(1,1), isx::PointInPixels_t(2,2), isx::PointInPixels_t(3,3)
     });
 
-    isx::SpFTrace_t originalDirection = std::make_shared<isx::Trace<float>>(timingInfo);
+    isx::SpFTrace_t originalDirection = std::make_shared<isx::FTrace_t>(timingInfo);
     float * direction = originalDirection->getValues();
     float d = 0.0f;
     for (isx::isize_t i(0); i < timingInfo.getNumTimes(); ++i)
@@ -479,13 +513,14 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
 
         // Write to file
         /// Vessel trace with default name
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        file.writeImage(originalImage);
+        file.writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection);
         REQUIRE(file.numberOfVessels() == 1);
         REQUIRE(file.getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
         REQUIRE(file.getVesselName(0).compare("") == 0);
 
         /// Vessel trace with given name
-        file.writeVesselData(1, originalImage, lineEndpoints, originalTrace, "testName", originalDirection);
+        file.writeVesselVelocityData(1, lineEndpoints, originalTrace, originalDirection, nullptr, "testName");
         REQUIRE(file.numberOfVessels() == 2);
         REQUIRE(file.getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
         REQUIRE(file.getVesselName(1).compare("testName") == 0);
@@ -496,7 +531,8 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
         REQUIRE(file.isValid());
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        file.writeImage(originalImage);
+        file.writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection);
         REQUIRE(file.numberOfVessels() == 1);
         file.closeForWriting();
 
@@ -504,7 +540,7 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
         bool pixelsAreEqual = false;
         float * pixels = im->getPixelsAsF32();
 
-        REQUIRE(im->getSpacingInfo().getTotalNumPixels() == originalImage.getSpacingInfo().getTotalNumPixels());
+        REQUIRE(im->getSpacingInfo().getTotalNumPixels() == originalImage->getSpacingInfo().getTotalNumPixels());
 
         for (isx::isize_t j(0); j < im->getSpacingInfo().getTotalNumPixels(); ++j)
         {
@@ -525,14 +561,15 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
         REQUIRE(file.isValid());
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        file.writeImage(originalImage);
+        file.writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection);
         REQUIRE(file.numberOfVessels() == 1);
         file.closeForWriting();
 
         isx::SpFTrace_t trace = file.readTrace(0);
         float * values = trace->getValues();
 
-        REQUIRE(trace->getTimingInfo().getNumTimes() == originalTrace.getTimingInfo().getNumTimes());
+        REQUIRE(trace->getTimingInfo().getNumTimes() == originalTrace->getTimingInfo().getNumTimes());
 
         bool valsAreEqual = false;
 
@@ -556,7 +593,8 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
         REQUIRE(file.isValid());
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        file.writeImage(originalImage);
+        file.writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection);
         REQUIRE(file.numberOfVessels() == 1);
         file.closeForWriting();
 
@@ -568,7 +606,8 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
         REQUIRE(file.isValid());
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        file.writeImage(originalImage);
+        file.writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection);
         REQUIRE(file.numberOfVessels() == 1);
         file.closeForWriting();
 
@@ -580,7 +619,8 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
         REQUIRE(file.isValid());
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace, "", originalDirection, originalCorrTriptychs);
+        file.writeImage(originalImage);
+        file.writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection, originalCorrTriptychs);
         REQUIRE(file.numberOfVessels() == 1);
         file.closeForWriting();
 
@@ -594,7 +634,8 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
         REQUIRE(file.isValid());
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        file.writeImage(originalImage);
+        file.writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection);
         REQUIRE(file.numberOfVessels() == 1);
         REQUIRE(file.getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
         file.setVesselStatus(0, isx::VesselSet::VesselStatus::REJECTED);
@@ -608,7 +649,8 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
         REQUIRE(file.isValid());
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        file.writeImage(originalImage);
+        file.writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection);
         REQUIRE(file.numberOfVessels() == 1);
         REQUIRE(file.getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
         REQUIRE(file.getVesselName(0).compare("") == 0);
@@ -622,9 +664,10 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     {
         {
             isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+            file.writeImage(originalImage);
             for (size_t i = 0; i < 10; ++i)
             {
-                file.writeVesselData(i, originalImage, lineEndpoints, originalTrace, "", originalDirection, originalCorrTriptychs);
+                file.writeVesselVelocityData(i, lineEndpoints, originalTrace, originalDirection, originalCorrTriptychs);
             }
             file.closeForWriting();
         }
@@ -673,11 +716,12 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     SECTION("Modify image / vessel data after calling closeForWriting")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        file.writeImage(originalImage);
+        file.writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection);
         file.closeForWriting();
 
         ISX_REQUIRE_EXCEPTION(
-            file.writeVesselData(0, originalImage, lineEndpoints, originalTrace),
+            file.writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection),
             isx::ExceptionFileIO,
             "Writing data after file was closed for writing." + fileName);
     }
@@ -685,7 +729,8 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     SECTION("Modify vessel validity after calling closeForWriting")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        file.writeImage(originalImage);
+        file.writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection);
         file.closeForWriting();
 
         ISX_REQUIRE_EXCEPTION(
@@ -697,7 +742,8 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     SECTION("Modify vessel name after calling closeForWriting")
     {
         isx::VesselSetFile file(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
-        file.writeVesselData(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        file.writeImage(originalImage);
+        file.writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection);
         file.closeForWriting();
         ISX_REQUIRE_EXCEPTION(
             file.setVesselName(0, "newName"),
@@ -707,7 +753,7 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
 
     SECTION("Check default names for 1 vessel")
     {
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, 1, isx::VesselSetType_t::RBC_VELOCITY, originalDirection);
+        writeDefaultVelocityVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, originalDirection, 1);
 
         isx::VesselSetFile file(fileName);
         REQUIRE(file.getVesselName(0) == "V0");
@@ -716,7 +762,7 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     SECTION("Check default names for 9 vessels")
     {
         const size_t numVessels = 9;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, numVessels, isx::VesselSetType_t::RBC_VELOCITY, originalDirection);
+        writeDefaultVelocityVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, originalDirection, numVessels);
 
         isx::VesselSetFile file(fileName);
         for (size_t i = 0; i < numVessels; ++i)
@@ -728,7 +774,7 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     SECTION("Check default names for 10 vessels")
     {
         const size_t numVessels = 10;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, numVessels, isx::VesselSetType_t::RBC_VELOCITY, originalDirection);
+        writeDefaultVelocityVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, originalDirection, numVessels);
 
         isx::VesselSetFile file(fileName);
         for (size_t i = 0; i < numVessels; ++i)
@@ -740,7 +786,7 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     SECTION("Check default names for 11 vessels")
     {
         const size_t numVessels = 11;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, numVessels, isx::VesselSetType_t::RBC_VELOCITY, originalDirection);
+        writeDefaultVelocityVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, originalDirection, numVessels);
 
         isx::VesselSetFile file(fileName);
         for (size_t i = 0; i < numVessels; ++i)
@@ -759,7 +805,7 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     SECTION("Check default names for 100 vessels")
     {
         const size_t numVessels = 100;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, numVessels, isx::VesselSetType_t::RBC_VELOCITY, originalDirection);
+        writeDefaultVelocityVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, originalDirection, numVessels);
 
         isx::VesselSetFile file(fileName);
         for (size_t i = 0; i < numVessels; ++i)
@@ -778,7 +824,7 @@ TEST_CASE("VesselSetFileTest-RbcVelocity", "[core-internal]")
     SECTION("Check default names for 101 vessels")
     {
         const size_t numVessels = 101;
-        writeDefaultVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, numVessels, isx::VesselSetType_t::RBC_VELOCITY, originalDirection);
+        writeDefaultVelocityVessels(fileName, timingInfo, spacingInfo, originalImage, lineEndpoints, originalTrace, originalDirection, numVessels);
 
         isx::VesselSetFile file(fileName);
         for (size_t i = 0; i < numVessels; ++i)

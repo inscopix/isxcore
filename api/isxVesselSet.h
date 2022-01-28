@@ -251,7 +251,7 @@ virtual
 SpVesselCorrelations_t
 getCorrelations(isize_t inIndex, isize_t inFrameNumber) = 0;
 
-/// Get the correlation triptych for a particular velocity measurement of a vessel asynchronously.
+/// Get the correlation triptych for a particular velocity measurement of a vessel from velocity set asynchronously.
 ///
 /// This dispatches a task to the IoQueue that operates on a correlation triptychs of a vessel.
 ///
@@ -262,8 +262,41 @@ virtual
 void
 getCorrelationsAsync(isize_t inIndex, isize_t inFrameNumber, VesselSetGetCorrelationsCB_t inCallback) = 0;
 
-/// Write the projection image, line endpoints, and trace data for a vessel.
+/// Get the center trace of a vessel from a diameter set synchronously
+/// Each value in the trace represents the position on the user drawn line of the model peak center for each mesurement
 ///
+/// This actually calls getCenterTraceAsync and will wait for the asynchronous
+/// task to complete.
+///
+/// \param  inIndex     The index of the vessel
+/// \return             A shared pointer to the center trace data of the indexed vessel.
+/// \throw  isx::ExceptionFileIO    If vessel does not exist or reading fails.
+virtual
+SpFTrace_t
+getCenterTrace(isize_t inIndex) = 0;
+
+/// Get the center trace of a vessel from a diameter set asynchronously.
+/// Each value in the trace represents the pixel position of the diameter model fit peak center
+/// This pixel position represents a point on the user drawn line
+///
+/// This dispatches a task to the IoQueue that operates on a center trace of a vessel.
+///
+/// \param  inIndex     The index of the vessel
+/// \param  inCallback  The call back that operates on the center trace
+virtual
+void
+getCenterTraceAsync(isize_t inIndex, VesselSetGetTraceCB_t inCallback) = 0;
+
+/// Writes the projection image of the input movie
+/// \param inProjectionImage    The projection image data to write.
+/// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
+/// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+virtual
+void
+writeImage(
+    const SpImage_t & inProjectionImage) = 0;
+
+/// Write the line endpoints, and diameter trace data for a vessel
 /// If the vessel already exists, it will overwrite its data.
 /// Otherwise, it will be appended.
 ///
@@ -271,25 +304,46 @@ getCorrelationsAsync(isize_t inIndex, isize_t inFrameNumber, VesselSetGetCorrela
 /// until it is complete.
 ///
 /// \param  inIndex             The index of the vessel.
-/// \param  inProjectionImage   The projection image data to write.
 /// \param  inLineEndpoints     The vessel line endpoints to write.
-/// \param  inTrace             The vessel trace data to write.
+/// \param  inDiameterTrace     The vessel diameter trace to write.
+/// \param  inCenterTrace       The position on the user drawn line of the model peak center for each mesurement
 /// \param  inName              The vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the given index
-/// \param  inDirectionTrace    The direction of velocity if the vessel set is an rbc velocity type
-/// \param  inCorrTrace         The correlation triptychs used to estimate velocity if the vessel set is an rbc velocity type
 /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
-/// \throw  isx::ExceptionDataIO    If image data is of an unexpected data type.
 /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
 virtual
 void
-writeImageAndLineAndTrace(
-    isize_t inIndex,
-    const SpImage_t & inProjectionImage,
+writeVesselDiameterData(
+    const isize_t inIndex,
     const SpVesselLine_t & inLineEndpoints,
-    SpFTrace_t & inTrace,
-    const std::string & inName= std::string(),
-    const SpFTrace_t & inDirectionTrace = nullptr,
-    const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr) = 0;
+    const SpFTrace_t & inDiameterTrace,
+    const SpFTrace_t & inCenterTrace,
+    const std::string & inName = std::string()) = 0;
+
+/// Write the line endpoints, and velocity trace data for a vessel
+/// If the vessel already exists, it will overwrite its data.
+/// Otherwise, it will be appended.
+///
+/// This write is performed on the IoQueue, but this function waits
+/// until it is complete.
+///
+/// \param  inIndex             The index of the vessel.
+/// \param  inLineEndpoints     The vessel line endpoints to write.
+/// \param  inVelocityTrace     The vessel velocity magnitude trace to write.
+/// \param  inDirectionTrace    The vessel direction trace to write.
+/// \param  inCorrTrace         The correlation triptychs used to estimate velocity.
+/// \param  inName              The vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the given index
+/// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
+/// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
+virtual
+void
+writeVesselVelocityData(
+    const isize_t inIndex,
+    const SpVesselLine_t & inLineEndpoints,
+    const SpFTrace_t & inVelocityTrace,
+    const SpFTrace_t & inDirectionTrace,
+    const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr,
+    const std::string & inName = std::string()) = 0;
+
 
 /// \return             The current status of the vessel
 /// \param  inIndex     The index of the vessel.
@@ -430,6 +484,20 @@ getMaxVelocity(size_t inIndex) = 0;
 virtual
 bool
 isCorrelationSaved() const = 0;
+
+/// \return Flag indicating whether direction trace was saved to disk
+/// This is primarily meant to maintain backwards compatibility with vessel sets generated in IDPS 1.7
+///
+virtual
+bool
+isDirectionSaved() const = 0;
+
+/// \return Flag indicating whether center trace was saved to disk
+/// This is primarily meant to maintain backwards compatibility with vessel sets generated in IDPS 1.7
+///
+virtual
+bool
+isCenterSaved() const = 0;
 };
 
 } // namespace isx

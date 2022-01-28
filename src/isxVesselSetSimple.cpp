@@ -289,34 +289,146 @@ VesselSetSimple::getCorrelationsAsync(isize_t inIndex, isize_t inFrameNumber, Ve
     m_corrIoTaskTracker->schedule(getCorrelationsCB, inCallback);
 }
 
+SpFTrace_t
+VesselSetSimple::getCenterTrace(isize_t inIndex)
+{
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("getCenterTrace");
+    AsyncTaskResult<SpFTrace_t> asyncTaskResult;
+    getCenterTraceAsync(inIndex, [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpFTrace_t> inAsyncTaskResult)
+        {
+            mutex.lock("getCenterTrace async");
+            asyncTaskResult = inAsyncTaskResult;
+            mutex.unlock();
+            cv.notifyOne();
+        }
+    );
+    cv.wait(mutex);
+    mutex.unlock();
+
+    return asyncTaskResult.get();   // throws is asyncTaskResult contains an exception
+}
+
 void
-VesselSetSimple::writeImageAndLineAndTrace(
-        isize_t inIndex,
-        const SpImage_t & inProjectionImage,
-        const SpVesselLine_t & inLineEndpoints,
-        SpFTrace_t & inTrace,
-        const std::string & inName,
-        const SpFTrace_t & inDirectionTrace,
-        const SpVesselCorrelationsTrace_t & inCorrTrace)
+VesselSetSimple::getCenterTraceAsync(isize_t inIndex, VesselSetGetTraceCB_t inCallback)
+{
+    // Only get a weak pointer to this, so that we don't bother reading
+    // if this has been deleted when the read gets executed.
+    std::weak_ptr<VesselSetSimple> weakThis = shared_from_this();
+    GetTraceCB_t getTraceCB = [weakThis, this, inIndex]()
+        {
+            auto sharedThis = weakThis.lock();
+            if (sharedThis)
+            {
+                return m_file->readCenterTrace(inIndex);
+            }
+            return SpFTrace_t();
+        };
+    m_traceIoTaskTracker->schedule(getTraceCB, inCallback);
+}
+
+void
+VesselSetSimple::writeImage(
+    const SpImage_t & inProjectionImage)
 {
     // Get a new shared pointer to the file, so we can guarantee the write.
     std::shared_ptr<VesselSetFile> file = m_file;
     Mutex mutex;
     ConditionVariable cv;
-    mutex.lock("VesselSetSimple::writeImageAndLineAndTrace");
+    mutex.lock("VesselSetSimple::writeImage");
     auto writeIoTask = std::make_shared<IoTask>(
-        [file, inIndex, inProjectionImage, inLineEndpoints, inTrace, inName, inDirectionTrace, inCorrTrace]()
+        [file, inProjectionImage]()
         {
-            file->writeVesselData(inIndex, *inProjectionImage, inLineEndpoints, *inTrace, inName, inDirectionTrace, inCorrTrace);
+            file->writeImage(inProjectionImage);
         },
         [&cv, &mutex](AsyncTaskStatus inStatus)
         {
             if (inStatus != AsyncTaskStatus::COMPLETE)
             {
-                ISX_LOG_ERROR("An error occurred while writing image and trace data to a VesselSet.");
+                ISX_LOG_ERROR("An error occurred while writing image data to a VesselSet.");
             }
             // will only be able to take lock when client reaches cv.wait
-            mutex.lock("VesselSetwriteImageAndLineAndTrace finished");
+            mutex.lock("VesselSet::writeImage finished");
+            mutex.unlock();
+            cv.notifyOne();
+        });
+    writeIoTask->schedule();
+    cv.wait(mutex);
+    mutex.unlock();
+
+    if(writeIoTask->getTaskStatus() == AsyncTaskStatus::ERROR_EXCEPTION)
+    {
+        std::rethrow_exception(writeIoTask->getExceptionPtr());
+    }
+}
+
+void
+VesselSetSimple::writeVesselDiameterData(
+        const isize_t inIndex,
+        const SpVesselLine_t & inLineEndpoints,
+        const SpFTrace_t & inDiameterTrace,
+        const SpFTrace_t & inCenterTrace,
+        const std::string & inName)
+{
+    // Get a new shared pointer to the file, so we can guarantee the write.
+    std::shared_ptr<VesselSetFile> file = m_file;
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("VesselSetSimple::writeVesselDiameterData");
+    auto writeIoTask = std::make_shared<IoTask>(
+        [file, inIndex, inLineEndpoints, inDiameterTrace, inCenterTrace, inName]()
+        {
+            file->writeVesselDiameterData(inIndex, inLineEndpoints, inDiameterTrace, inCenterTrace, inName);
+        },
+        [&cv, &mutex](AsyncTaskStatus inStatus)
+        {
+            if (inStatus != AsyncTaskStatus::COMPLETE)
+            {
+                ISX_LOG_ERROR("An error occurred while writing trace data to a VesselSet.");
+            }
+            // will only be able to take lock when client reaches cv.wait
+            mutex.lock("VesselSet::writeVesselDiameterData finished");
+            mutex.unlock();
+            cv.notifyOne();
+        });
+    writeIoTask->schedule();
+    cv.wait(mutex);
+    mutex.unlock();
+
+    if(writeIoTask->getTaskStatus() == AsyncTaskStatus::ERROR_EXCEPTION)
+    {
+        std::rethrow_exception(writeIoTask->getExceptionPtr());
+    }
+}
+
+void
+VesselSetSimple::writeVesselVelocityData(
+        const isize_t inIndex,
+        const SpVesselLine_t & inLineEndpoints,
+        const SpFTrace_t & inVelocityTrace,
+        const SpFTrace_t & inDirectionTrace,
+        const SpVesselCorrelationsTrace_t & inCorrTrace,
+        const std::string & inName)
+{
+    // Get a new shared pointer to the file, so we can guarantee the write.
+    std::shared_ptr<VesselSetFile> file = m_file;
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock("VesselSetSimple::writeVesselVelocityData");
+    auto writeIoTask = std::make_shared<IoTask>(
+        [file, inIndex, inLineEndpoints, inVelocityTrace, inDirectionTrace, inCorrTrace, inName]()
+        {
+            file->writeVesselVelocityData(inIndex, inLineEndpoints, inVelocityTrace, inDirectionTrace, inCorrTrace, inName);
+        },
+        [&cv, &mutex](AsyncTaskStatus inStatus)
+        {
+            if (inStatus != AsyncTaskStatus::COMPLETE)
+            {
+                ISX_LOG_ERROR("An error occurred while writing trace data to a VesselSet.");
+            }
+            // will only be able to take lock when client reaches cv.wait
+            mutex.lock("VesselSet::writeVesselVelocityData finished");
             mutex.unlock();
             cv.notifyOne();
         });
@@ -463,6 +575,18 @@ bool
 VesselSetSimple::isCorrelationSaved() const
 {
     return m_file->isCorrelationSaved();   
+}
+
+bool
+VesselSetSimple::isDirectionSaved() const
+{
+    return m_file->isDirectionSaved();   
+}
+
+bool
+VesselSetSimple::isCenterSaved() const
+{
+    return m_file->isCenterSaved();   
 }
 
 } // namespace isx

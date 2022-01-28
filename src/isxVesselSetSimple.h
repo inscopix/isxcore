@@ -114,15 +114,32 @@ public:
     void
     getCorrelationsAsync(isize_t inIndex, isize_t inFrameNumber, VesselSetGetCorrelationsCB_t inCallback) override;
 
+    SpFTrace_t
+    getCenterTrace(isize_t inIndex) override;
+
     void
-    writeImageAndLineAndTrace(
-        isize_t inIndex,
-        const SpImage_t & inProjectionImage,
+    getCenterTraceAsync(isize_t inIndex, VesselSetGetTraceCB_t inCallback) override;
+
+    void
+    writeImage(
+        const SpImage_t & inProjectionImage) override;
+
+    void
+    writeVesselDiameterData(
+        const isize_t inIndex,
         const SpVesselLine_t & inLineEndpoints,
-        SpFTrace_t & inTrace,
-        const std::string & inName= std::string(),
-        const SpFTrace_t & inDirectionTrace = nullptr,
-        const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr) override;
+        const SpFTrace_t & inDiameterTrace,
+        const SpFTrace_t & inCenterTrace,
+        const std::string & inName = std::string()) override;
+
+    void
+    writeVesselVelocityData(
+        const isize_t inIndex,
+        const SpVesselLine_t & inLineEndpoints,
+        const SpFTrace_t & inVelocityTrace,
+        const SpFTrace_t & inDirectionTrace,
+        const SpVesselCorrelationsTrace_t & inCorrTrace = nullptr,
+        const std::string & inName = std::string()) override;
 
     VesselSet::VesselStatus
     getVesselStatus(isize_t inIndex) override;
@@ -183,6 +200,12 @@ public:
 
     bool
     isCorrelationSaved() const override;
+
+    bool
+    isDirectionSaved() const override;
+
+    bool
+    isCenterSaved() const override;
 
 private:
 

@@ -122,8 +122,11 @@ namespace isx
     SpFTrace_t
     VesselSetFile::readTrace(isize_t inVesselId)
     {
-        seekToVesselForRead(inVesselId, true);
+        seekToVessel(inVesselId);
 
+        const isize_t offsetInBytes = lineEndpointsSizeInBytes();
+        m_file.seekg(offsetInBytes, std::ios_base::cur);
+        
         if (!m_file.good())
         {
             ISX_THROW(isx::ExceptionFileIO, "Error seeking to vessel trace for read.");
@@ -143,7 +146,10 @@ namespace isx
     SpImage_t
     VesselSetFile::readProjectionImage()
     {
-        seekToProjectionImageForRead();
+        // projection image is the same for all vessels
+        // it is stored before individual vessel data
+        const isize_t pos = 0;
+        m_file.seekg(pos, std::ios_base::beg);
 
         if (!m_file.good())
         {
@@ -168,7 +174,7 @@ namespace isx
     SpVesselLine_t
     VesselSetFile::readLineEndpoints(isize_t inVesselId)
     {
-        seekToVesselForRead(inVesselId, false);
+        seekToVessel(inVesselId);
 
         if (!m_file.good())
         {
@@ -176,7 +182,7 @@ namespace isx
         }
 
         SpVesselLine_t lineEndpoints = std::make_shared<VesselLine>();
-        size_t numPoints = (m_vesselSetType == VesselSetType_t::RBC_VELOCITY) ? 4 : 2;
+        const size_t numPoints = (m_vesselSetType == VesselSetType_t::RBC_VELOCITY) ? 4 : 2;
         for (size_t i = 0; i < numPoints; i++)
         {
             int64_t x, y;
@@ -206,10 +212,10 @@ namespace isx
             return nullptr;
         }
 
-        seekToVesselForRead(inVesselId, true);
+        seekToVessel(inVesselId);
 
         // Calculate bytes till beginning of vessel data
-        isize_t offsetInBytes = traceSizeInBytes();
+        const isize_t offsetInBytes = lineEndpointsSizeInBytes() + traceSizeInBytes();
         m_file.seekg(offsetInBytes, std::ios_base::cur);
 
         if (!m_file.good())
@@ -233,7 +239,7 @@ namespace isx
     {
         if (m_vesselSetType != VesselSetType_t::RBC_VELOCITY)
         {
-            ISX_THROW(isx::ExceptionUserInput, "Reading correlation triptychs for diameter vessel set");
+            ISX_THROW(isx::ExceptionUserInput, "Correlation triptychs can only be read from rbc velocity set but this is a vessel diameter set");
         }
 
         if (!isCorrelationSaved())
@@ -241,12 +247,12 @@ namespace isx
             return nullptr;
         }
 
-        seekToVesselForRead(inVesselId, true);
+        seekToVessel(inVesselId);
 
         // Calculate bytes till beginning of vessel data
-        isize_t offsetInBytes = traceSizeInBytes() + directionSizeInBytes();
-        isize_t correlationBytes = correlationSizeInBytes(inVesselId);
-        offsetInBytes += (correlationBytes * 3) * inFrameNumber;
+        const isize_t correlationBytes = correlationSizeInBytes(inVesselId);
+        const isize_t offsetInBytes = lineEndpointsSizeInBytes() + traceSizeInBytes() + directionSizeInBytes()
+                                      + (correlationBytes * 3) * inFrameNumber;
 
         m_file.seekg(offsetInBytes, std::ios_base::cur);
 
@@ -267,10 +273,44 @@ namespace isx
         return correlations;
     }
 
+    SpFTrace_t
+    VesselSetFile::readCenterTrace(const isize_t inVesselId)
+    {
+        if (m_vesselSetType != VesselSetType_t::VESSEL_DIAMETER)
+        {
+            ISX_THROW(isx::ExceptionUserInput, "Model center can only be read from vessel diameter set but this is a rbc velocity set");
+        }
+
+        if (!m_centerSaved)
+        {
+            return nullptr;
+        }
+
+        seekToVessel(inVesselId);
+
+        // Calculate bytes till beginning of vessel data
+        const isize_t offsetInBytes = lineEndpointsSizeInBytes() + traceSizeInBytes();
+        m_file.seekg(offsetInBytes, std::ios_base::cur);
+
+        if (!m_file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error seeking to vessel center trace for read.");
+        }
+
+
+        SpFTrace_t centerPointTrace = std::make_shared<Trace<float>>(m_timingInfo);
+        m_file.read(reinterpret_cast<char*>(centerPointTrace->getValues()), traceSizeInBytes());
+
+        if (!m_file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO, "Error reading vessel center trace.");
+        }
+
+        return centerPointTrace;
+    }
+
     void
-    VesselSetFile::writeVesselData(isize_t inVesselId, const Image & inProjectionImage, const SpVesselLine_t & inLineEndpoints,
-                                   Trace<float> & inData, const std::string & inName, const SpFTrace_t & inDirectionTrace,
-                                   const SpVesselCorrelationsTrace_t & inCorrTrace)
+    VesselSetFile::writeImage(const SpImage_t & inProjectionImage)
     {
         if (m_fileClosedForWriting)
         {
@@ -279,40 +319,35 @@ namespace isx
         }
 
         // ensure projection image is of type F32
-        const DataType dataType = inProjectionImage.getDataType();
+        const DataType dataType = inProjectionImage->getDataType();
         if (dataType != DataType::F32)
         {
             ISX_THROW(isx::ExceptionDataIO,
                       "Expected F32 data type for the projection image, instead got: ", dataType);
         }
 
-        if (inCorrTrace)
-        {
-            if (inVesselId == m_numVessels)
-            {
-                m_correlationSizes.push_back(SizeInPixels_t());
-            }
-            ISX_ASSERT(m_correlationSizes.size() == m_numVessels + 1);
-
-            SpVesselCorrelations_t triptych  = inCorrTrace->getValue(0);
-            m_correlationSizes[inVesselId] = triptych->getNumPixels();
-        }
-        
-        if (inDirectionTrace && !m_directionSaved)
-        {
-            m_directionSaved = true;
-        }
-
         // validate size of the projection image
-        isize_t inImageSizeInBytes = inProjectionImage.getImageSizeInBytes();
+        isize_t inImageSizeInBytes = inProjectionImage->getImageSizeInBytes();
         isize_t fImageSizeInBytes = projectionImageSizeInBytes();
         ISX_ASSERT(inImageSizeInBytes == fImageSizeInBytes);
 
-        // validate trace length
-        isize_t inSamples = inData.getTimingInfo().getNumTimes();
-        isize_t fSamples = m_timingInfo.getNumTimes();
-        ISX_ASSERT(inSamples == fSamples);
+        isize_t pos = 0;
+        m_file.seekp(pos, std::ios_base::beg);
+        m_file.write(inProjectionImage->getPixels(), inImageSizeInBytes);
 
+        if (!m_file.good())
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Failed to write vessel data to file: ", m_fileName);
+        }
+
+        m_headerOffset = m_file.tellp();
+        flush();
+    }
+
+    void
+    VesselSetFile::prepareVesselForWrite(const isize_t inVesselId, const std::string & inName)
+    {
         if (inVesselId == m_numVessels)
         {
             m_vesselNames.push_back(inName);
@@ -324,7 +359,7 @@ namespace isx
         else if (inVesselId < m_numVessels)
         {
             // Overwrite existing vessel
-            seekToVesselForWrite(inVesselId);
+            seekToVessel(inVesselId);
             m_vesselNames.at(inVesselId) = inName;
             m_vesselStatuses.at(inVesselId) = VesselSet::VesselStatus::UNDECIDED;
             m_vesselColors.at(inVesselId) = Color();
@@ -335,56 +370,119 @@ namespace isx
             ISX_THROW(isx::ExceptionDataIO,
                       "Writing vessel indexes out of order is unsupported.");
         }
+    }
 
-        // write projection image only if writing first vessel, otherwise skip ahead
-        if (inVesselId == 0)
+    void
+    VesselSetFile::writeVesselDiameterData(
+        const isize_t inVesselId,
+        const SpVesselLine_t & inLineEndpoints,
+        const SpFTrace_t & inDiameterTrace,
+        const SpFTrace_t & inCenterTrace,
+        const std::string & inName)
+    {
+        if (m_fileClosedForWriting)
         {
-            m_file.write(inProjectionImage.getPixels(), inImageSizeInBytes);
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Writing data after file was closed for writing.", m_fileName);
         }
+
+        ISX_ASSERT(inLineEndpoints->m_contour.size() == 2);
+        ISX_ASSERT(inDiameterTrace->getTimingInfo().getNumTimes() == m_timingInfo.getNumTimes());
+
+        m_centerSaved = true;
+
+        prepareVesselForWrite(inVesselId, inName);
 
         // write line endpoints
-        if (m_vesselSetType == VesselSetType_t::RBC_VELOCITY)
+        for (size_t i = 0; i < 2; i++)
         {
-            ISX_ASSERT(inLineEndpoints->m_contour.size() == 4);
-        }
-        else
-        {
-            ISX_ASSERT(inLineEndpoints->m_contour.size() == 2);
-        }
-        for (size_t i = 0; i < inLineEndpoints->m_contour.size(); i++)
-        {
-            int64_t x = inLineEndpoints->m_contour[i].getX();
-            int64_t y = inLineEndpoints->m_contour[i].getY();
+            const int64_t x = inLineEndpoints->m_contour[i].getX();
+            const int64_t y = inLineEndpoints->m_contour[i].getY();
             m_file.write(reinterpret_cast<const char*>(&x), sizeof(int64_t));
             m_file.write(reinterpret_cast<const char*>(&y), sizeof(int64_t));
         }
 
         // write trace
-        m_file.write(reinterpret_cast<char*>(inData.getValues()), traceSizeInBytes());
+        m_file.write(reinterpret_cast<char*>(inDiameterTrace->getValues()), traceSizeInBytes());
 
-        if (m_vesselSetType == VesselSetType_t::RBC_VELOCITY)
+        // write center trace
+        m_file.write(reinterpret_cast<char*>(inCenterTrace->getValues()), traceSizeInBytes());
+
+        if (!m_file.good())
         {
-            ISX_ASSERT(inDirectionTrace != nullptr);
-            m_file.write(reinterpret_cast<char*>(inDirectionTrace->getValues()), directionSizeInBytes());
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Failed to write vessel data to file: ", m_fileName);
+        }
+        m_headerOffset = m_file.tellp();
+        flush();
+    }
 
-            if (inCorrTrace)
+    void
+    VesselSetFile::writeVesselVelocityData(
+        const isize_t inVesselId,
+        const SpVesselLine_t & inLineEndpoints,
+        const SpFTrace_t & inVelocityTrace,
+        const SpFTrace_t & inDirectionTrace,
+        const SpVesselCorrelationsTrace_t & inCorrTrace,
+        const std::string & inName)
+    {
+        if (m_fileClosedForWriting)
+        {
+            ISX_THROW(isx::ExceptionFileIO,
+                      "Writing data after file was closed for writing.", m_fileName);
+        }
+
+        ISX_ASSERT(inLineEndpoints->m_contour.size() == 4);
+        ISX_ASSERT(inVelocityTrace->getTimingInfo().getNumTimes() == m_timingInfo.getNumTimes());
+        ISX_ASSERT(inDirectionTrace->getTimingInfo().getNumTimes() == m_timingInfo.getNumTimes());
+
+        if (inCorrTrace)
+        {
+            ISX_ASSERT(inCorrTrace->getTimingInfo().getNumTimes() == m_timingInfo.getNumTimes());
+
+            if (inVesselId == m_numVessels)
             {
-                size_t numSamples = inCorrTrace->getTimingInfo().getNumTimes();
-                size_t correlationSize = correlationSizeInBytes(inVesselId);
-                for (size_t i = 0; i < numSamples; i++)
+                m_correlationSizes.push_back(SizeInPixels_t());
+            }
+            ISX_ASSERT(m_correlationSizes.size() == m_numVessels + 1);
+
+            const SpVesselCorrelations_t triptych  = inCorrTrace->getValue(0);
+            m_correlationSizes[inVesselId] = triptych->getNumPixels();
+        }
+        
+        // flag indicating if direction is saved to disk, for backwards compatibility
+        m_directionSaved = true;
+
+        prepareVesselForWrite(inVesselId, inName);
+
+        // write line endpoints
+        for (size_t i = 0; i < 4; i++)
+        {
+            const int64_t x = inLineEndpoints->m_contour[i].getX();
+            const int64_t y = inLineEndpoints->m_contour[i].getY();
+            m_file.write(reinterpret_cast<const char*>(&x), sizeof(int64_t));
+            m_file.write(reinterpret_cast<const char*>(&y), sizeof(int64_t));
+        }
+
+        // write trace
+        m_file.write(reinterpret_cast<char*>(inVelocityTrace->getValues()), traceSizeInBytes());
+
+        // write direction trace
+        m_file.write(reinterpret_cast<char*>(inDirectionTrace->getValues()), directionSizeInBytes());
+
+        // write correlation trace
+        if (inCorrTrace)
+        {
+            const size_t numSamples = inCorrTrace->getTimingInfo().getNumTimes();
+            const size_t correlationSize = correlationSizeInBytes(inVesselId);
+            for (size_t i = 0; i < numSamples; i++)
+            {
+                const SpVesselCorrelations_t triptych  = inCorrTrace->getValue(i);
+                for (int offset = -1; offset <= 1; offset++)
                 {
-                    SpVesselCorrelations_t triptych  = inCorrTrace->getValue(i);
-                    for (int offset = -1; offset <= 1; offset++)
-                    {
-                        m_file.write(reinterpret_cast<char*>(triptych->getValues(offset)), correlationSize);
-                    }
+                    m_file.write(reinterpret_cast<char*>(triptych->getValues(offset)), correlationSize);
                 }
             }
-        }
-        else
-        {
-            ISX_ASSERT(inDirectionTrace == nullptr);
-            ISX_ASSERT(inCorrTrace == nullptr);
         }
 
         if (!m_file.good())
@@ -564,6 +662,11 @@ namespace isx
                 m_directionSaved = true;
             }
 
+            if (j.find("VesselCenterSaved") != j.end())
+            {
+                m_centerSaved = true;
+            }
+
             if (j.find("efocusValues") != j.end())
             {
                 m_efocusValues = j["efocusValues"].get<std::vector<uint16_t>>();
@@ -641,6 +744,7 @@ namespace isx
             j["efocusValues"] = m_efocusValues;
             if (isCorrelationSaved()) j["VesselCorrelationSizes"] = convertVesselSetCorrelationSizesToJson();
             if (m_directionSaved) j["VesselDirectionSaved"] = true;
+            if (m_centerSaved) j["VesselCenterSaved"] = true;
         }
         catch (const std::exception & error)
         {
@@ -656,11 +760,11 @@ namespace isx
         if (m_numVessels > 0)
         {
             // Note: This overshoots the end of the vessel by lineEndpointsSizeInBytes()
-            // It should actually be seekToVesselForRead(m_numVessels - 1, false);
+            // It should actually be vesselSize = vesselDataSizeInBytes(m_numVessels - 1);
             // But it doesn't prevent the file from being read from and written to correctly
             // And by this point alpha testers have created vessel sets so leaving this in for backwards compatability
-            seekToVesselForRead(m_numVessels - 1, true);
-            isize_t vesselSize = vesselDataSizeInBytes(m_numVessels - 1);
+            seekToVessel(m_numVessels - 1);    
+            isize_t vesselSize = lineEndpointsSizeInBytes() + vesselDataSizeInBytes(m_numVessels - 1);
             m_file.seekp(vesselSize, std::ios_base::cur);
         }
 
@@ -671,72 +775,15 @@ namespace isx
     }
 
     void
-    VesselSetFile::seekToProjectionImageForRead()
+    VesselSetFile::seekToVessel(const isize_t inVesselId)
     {
-        // projection image is the same for all vessels
-        // it is stored before individual vessel data
-        isize_t pos = 0;
-        m_file.seekg(pos, std::ios_base::beg);
-
-        if (!m_file.good() || pos >= isize_t(m_headerOffset))
-        {
-            ISX_THROW(isx::ExceptionFileIO, "Error reading projection image.");
-        }
-
-        if (m_openmode & std::ios_base::out)
-        {
-            m_file.seekp(m_file.tellg(), std::ios_base::beg);   // Make sure write and read pointers are tied together
-        }
-    }
-
-    void
-    VesselSetFile::seekToVesselForRead(isize_t inVesselId, const bool readTrace)
-    {
-        isize_t pos = 0;
         if (inVesselId >= m_numVessels)
         {
             ISX_THROW(isx::ExceptionFileIO,
                       "Unable to seek to vessel ID ", inVesselId, " in file: ", m_fileName);
         }
 
-        pos = vesselOffsetInBytes(inVesselId);
-        if (readTrace)
-        {
-            pos += lineEndpointsSizeInBytes();
-        }
-
-        m_file.seekg(pos, std::ios_base::beg);
-
-        if (!m_file.good() || pos >= isize_t(m_headerOffset))
-        {
-            ISX_THROW(isx::ExceptionFileIO, "Error reading vessel id.");
-        }
-
-        if (m_openmode & std::ios_base::out)
-        {
-            m_file.seekp(m_file.tellg(), std::ios_base::beg);   // Make sure write and read pointers are tied together
-        }
-    }
-
-    void
-    VesselSetFile::seekToVesselForWrite(isize_t inVesselId)
-    {
-        isize_t pos = 0;
-        if (inVesselId >= m_numVessels)
-        {
-            ISX_THROW(isx::ExceptionFileIO,
-                      "Unable to seek to vessel ID ", inVesselId, " in file: ", m_fileName);
-        }
-
-        pos = vesselOffsetInBytes(inVesselId);
-
-        // update start position
-        // if not writing the first vessel, skip the projection image
-        if (inVesselId == 0)
-        {
-            pos -= projectionImageSizeInBytes();
-        }
-
+        const size_t pos = vesselOffsetInBytes(inVesselId);
         m_file.seekg(pos, std::ios_base::beg);
 
         if (!m_file.good() || pos >= isize_t(m_headerOffset))
@@ -808,6 +855,10 @@ namespace isx
             {
                 size += correlationTraceSizeInBytes(inVesselId);
             }
+        }
+        else if (m_centerSaved)
+        {
+            size += traceSizeInBytes();
         }
         return size;
     }
@@ -909,6 +960,18 @@ namespace isx
     VesselSetFile::isCorrelationSaved() const
     {
         return !m_correlationSizes.empty();
+    }
+
+    bool
+    VesselSetFile::isDirectionSaved() const
+    {
+        return m_directionSaved;
+    }
+
+    bool
+    VesselSetFile::isCenterSaved() const
+    {
+        return m_centerSaved;
     }
 
 } // namespace isx

@@ -36,10 +36,16 @@ TEST_CASE("VesselSetTest", "[core]")
 
     isx::SpFTrace_t originalTrace = std::make_shared<isx::Trace<float>>(timingInfo);
     float * originalValues = originalTrace->getValues();
+
+    isx::SpFTrace_t originalCenterTrace = std::make_shared<isx::FTrace_t>(timingInfo);
+    float * originalCenterValues = originalTrace->getValues();
+
+
     float val = 0.0f;
     for (isx::isize_t i(0); i < timingInfo.getNumTimes(); ++i)
     {
         originalValues[i] = val;
+        originalCenterValues[i] = val * 10.0f;
         val += 0.01f;
     }
 
@@ -130,7 +136,8 @@ TEST_CASE("VesselSetTest", "[core]")
     SECTION("Set data for one vessel and check values are correct")
     {
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
-        vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace);
+        vesselSet->writeImage(originalImage);
+        vesselSet->writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace);
         vesselSet->closeForWriting();
 
         REQUIRE(vesselSet->getNumVessels() == 1);
@@ -143,7 +150,8 @@ TEST_CASE("VesselSetTest", "[core]")
     {
         {
             isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
-            vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace, "myvessel");
+            vesselSet->writeImage(originalImage);
+            vesselSet->writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace, "myvessel");
             vesselSet->closeForWriting();
         }
         isx::SpVesselSet_t vesselSet = isx::readVesselSet(fileName);
@@ -158,7 +166,8 @@ TEST_CASE("VesselSetTest", "[core]")
     SECTION("Set/Get vessel name")
     {
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
-        vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace);
+        vesselSet->writeImage(originalImage);
+        vesselSet->writeVesselDiameterData(0, lineEndpoints, originalTrace, originalCenterTrace);
         REQUIRE(vesselSet->getNumVessels() == 1);
         REQUIRE(vesselSet->getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
         REQUIRE(vesselSet->getVesselName(0).compare("") == 0);
@@ -171,9 +180,10 @@ TEST_CASE("VesselSetTest", "[core]")
     SECTION("Set data for 3 vessels and check values are correct")
     {
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
+        vesselSet->writeImage(originalImage);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
+            vesselSet->writeVesselDiameterData(i, lineEndpoints, originalTrace, originalCenterTrace);
         }
         vesselSet->setVesselStatus(0, isx::VesselSet::VesselStatus::ACCEPTED);
         vesselSet->setVesselStatus(1, isx::VesselSet::VesselStatus::UNDECIDED);
@@ -197,9 +207,10 @@ TEST_CASE("VesselSetTest", "[core]")
     {
         {
             isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
+            vesselSet->writeImage(originalImage);
             for (size_t i = 0; i < 3; ++i)
             {
-                vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
+                vesselSet->writeVesselDiameterData(i, lineEndpoints, originalTrace, originalCenterTrace);
             }
             vesselSet->setVesselStatus(0, isx::VesselSet::VesselStatus::ACCEPTED);
             vesselSet->setVesselStatus(1, isx::VesselSet::VesselStatus::UNDECIDED);
@@ -226,9 +237,10 @@ TEST_CASE("VesselSetTest", "[core]")
         std::atomic_int doneCount(0);
         size_t numVessels = 3;
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
+        vesselSet->writeImage(originalImage);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
+            vesselSet->writeVesselDiameterData(i, lineEndpoints, originalTrace, originalCenterTrace);
         }
         vesselSet->closeForWriting();
 
@@ -262,9 +274,10 @@ TEST_CASE("VesselSetTest", "[core]")
         size_t numVessels = 3;
 
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
+        vesselSet->writeImage(originalImage);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
+            vesselSet->writeVesselDiameterData(i, lineEndpoints, originalTrace, originalCenterTrace);
         }
         vesselSet->closeForWriting();
 
@@ -297,9 +310,10 @@ TEST_CASE("VesselSetTest", "[core]")
         size_t numVessels = 3;
 
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::VESSEL_DIAMETER);
+        vesselSet->writeImage(originalImage);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace);
+            vesselSet->writeVesselDiameterData(i, lineEndpoints, originalTrace, originalCenterTrace);
         }
         vesselSet->closeForWriting();
 
@@ -471,7 +485,8 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
     SECTION("Set data for one vessel and check values are correct")
     {
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
-        vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        vesselSet->writeImage(originalImage);
+        vesselSet->writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection);
         vesselSet->closeForWriting();
 
         REQUIRE(vesselSet->getNumVessels() == 1);
@@ -484,7 +499,8 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
     {
         {
             isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
-            vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace, "myvessel", originalDirection, originalCorrTriptychs);
+            vesselSet->writeImage(originalImage);
+            vesselSet->writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection, originalCorrTriptychs, "myvessel");
             vesselSet->closeForWriting();
         }
         isx::SpVesselSet_t vesselSet = isx::readVesselSet(fileName);
@@ -505,7 +521,8 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
     SECTION("Set/Get vessel name")
     {
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
-        vesselSet->writeImageAndLineAndTrace(0, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+        vesselSet->writeImage(originalImage);
+        vesselSet->writeVesselVelocityData(0, lineEndpoints, originalTrace, originalDirection);
         REQUIRE(vesselSet->getNumVessels() == 1);
         REQUIRE(vesselSet->getVesselStatus(0) == isx::VesselSet::VesselStatus::UNDECIDED);
         REQUIRE(vesselSet->getVesselName(0).compare("") == 0);
@@ -518,9 +535,10 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
     SECTION("Set data for 3 vessels and check values are correct")
     {
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+        vesselSet->writeImage(originalImage);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection, originalCorrTriptychs);
+            vesselSet->writeVesselVelocityData(i, lineEndpoints, originalTrace, originalDirection, originalCorrTriptychs);
         }
         vesselSet->setVesselStatus(0, isx::VesselSet::VesselStatus::ACCEPTED);
         vesselSet->setVesselStatus(1, isx::VesselSet::VesselStatus::UNDECIDED);
@@ -549,9 +567,10 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
     {
         {
             isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+            vesselSet->writeImage(originalImage);
             for (size_t i = 0; i < 3; ++i)
             {
-                vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection, originalCorrTriptychs);
+                vesselSet->writeVesselVelocityData(i, lineEndpoints, originalTrace, originalDirection, originalCorrTriptychs);
             }
             vesselSet->setVesselStatus(0, isx::VesselSet::VesselStatus::ACCEPTED);
             vesselSet->setVesselStatus(1, isx::VesselSet::VesselStatus::UNDECIDED);
@@ -583,9 +602,10 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         std::atomic_int doneCount(0);
         size_t numVessels = 3;
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+        vesselSet->writeImage(originalImage);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+            vesselSet->writeVesselVelocityData(i, lineEndpoints, originalTrace, originalDirection);
         }
         vesselSet->closeForWriting();
 
@@ -619,9 +639,10 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         size_t numVessels = 3;
 
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+        vesselSet->writeImage(originalImage);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+            vesselSet->writeVesselVelocityData(i, lineEndpoints, originalTrace, originalDirection);
         }
         vesselSet->closeForWriting();
 
@@ -654,9 +675,10 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         size_t numVessels = 3;
 
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+        vesselSet->writeImage(originalImage);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+            vesselSet->writeVesselVelocityData(i, lineEndpoints, originalTrace, originalDirection);
         }
         vesselSet->closeForWriting();
 
@@ -689,9 +711,10 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         size_t numVessels = 3;
 
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+        vesselSet->writeImage(originalImage);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+            vesselSet->writeVesselVelocityData(i, lineEndpoints, originalTrace, originalDirection);
         }
         vesselSet->closeForWriting();
 
@@ -724,9 +747,10 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         size_t numVessels = 3;
 
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+        vesselSet->writeImage(originalImage);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection, originalCorrTriptychs);
+            vesselSet->writeVesselVelocityData(i, lineEndpoints, originalTrace, originalDirection, originalCorrTriptychs);
         }
         vesselSet->closeForWriting();
 
@@ -766,9 +790,10 @@ TEST_CASE("VesselSetTest-RbcVelocity", "[core]")
         isx::SpVesselLine_t lineEndpoints = std::make_shared<isx::VesselLine>(contour);
 
         isx::SpVesselSet_t vesselSet = isx::writeVesselSet(fileName, timingInfo, spacingInfo, isx::VesselSetType_t::RBC_VELOCITY);
+        vesselSet->writeImage(originalImage);
         for (size_t i = 0; i < 3; ++i)
         {
-            vesselSet->writeImageAndLineAndTrace(i, originalImage, lineEndpoints, originalTrace, "", originalDirection);
+            vesselSet->writeVesselVelocityData(i, lineEndpoints, originalTrace, originalDirection);
         }
 
         using json = nlohmann::json;
