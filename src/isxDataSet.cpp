@@ -882,7 +882,7 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             const auto motionCorrection = idps->find("mc_padding");
             if (motionCorrection != idps->end())
             {
-                acqInfo["Motion Correction - Input Dimensions Restored"] = motionCorrection->get<bool>();
+                acqInfo["Motion correction padding"] = motionCorrection->get<bool>();
             }
 
             // cell set metadata
