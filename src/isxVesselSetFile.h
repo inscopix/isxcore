@@ -121,7 +121,7 @@ public:
     /// \param inVesselId           The vessel of interest
     /// \param inLineEndpoints      The endpoints of the line to write
     /// \param inDiamterTrace       The diameter trace
-    /// \param inCenterTrace        The trace of the center of the diameter fit
+    /// \param inCenterTrace        The trace of the center of the diameter estimate
     /// \param inName               The vessel name (will be truncated to 15 characters, if longer). If no name is provided, a default will be created using the vessel id
     /// \throw  isx::ExceptionFileIO    If trying to access nonexistent vessel or writing fails.
     /// \throw  isx::ExceptionFileIO    If called after calling closeForWriting().
@@ -281,7 +281,7 @@ private:
     /// Flag indicating whether direction was saved to vessel set file
     bool m_directionSaved = false;
 
-    /// Flag indicating whether center of diameter fit was saved to vessel set file
+    /// Flag indicating whether center of diameter estimate was saved to vessel set file
     bool m_centerSaved = false;
 
     /// Size of correlation heatmaps for rbc velocity vessel set

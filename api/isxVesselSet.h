@@ -104,6 +104,14 @@ enum class VesselStatus {
     REJECTED = 2                    ///< Rejected
 };
 
+/// The type of visualization for vessel contours
+enum class DisplayType
+{
+    ALL = 0,                        ///< All vessels in a vessel set
+    VELOCITY_CORR,                  ///< The correlation heatmaps from rbc velocity vessel sets
+    DIAMETER_ESTIMATE               ///< The model fits from vessel diameter vessel sets
+};
+
 /// \return whether this is a valid vessel set object.
 ///
 virtual
