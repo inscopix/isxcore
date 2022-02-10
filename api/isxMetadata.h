@@ -165,11 +165,11 @@ namespace isx
         {BasePlateType_t::BP25, "ProView Prism Probe 0.85 mm x 3.3 mm"},
         {BasePlateType_t::BP26, "ProView Prism Probe 1.0 mm x 4.3 mm"},
         {BasePlateType_t::BP27, "ProView Prism Probe 1.0 mm x 9.1 mm"},
-        {BasePlateType_t::BP28, "ProView DC Integrated Lens 0.5 mm x 5.6 mm Li"},
-        {BasePlateType_t::BP29, "ProView DC Integrated Lens 0.66 mm x 7.5 mm Li"},
-        {BasePlateType_t::BP30, "ProView DC Integrated Lens 0.75 mm x 8.6 mm Li"},
+        {BasePlateType_t::BP28, "ProView DC Integrated Lens 0.5 mm x 5.6 mm"},
+        {BasePlateType_t::BP29, "ProView DC Integrated Lens 0.66 mm x 7.5 mm"},
+        {BasePlateType_t::BP30, "ProView DC Integrated Lens 0.75 mm x 8.6 mm"},
         {BasePlateType_t::BP31, "ProView DC Integrated Lens 1.0 mm x 4.2 mm"},
-        {BasePlateType_t::BP32, "ProView DC Integrated Lens 1.0 mm x 11.7 mm Li"},
+        {BasePlateType_t::BP32, "ProView DC Integrated Lens 1.0 mm x 11.7 mm"},
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
