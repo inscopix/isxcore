@@ -860,7 +860,23 @@ namespace isx
             auto efocus = microscope->find("focus");
             if (efocus != microscope->end())
             {
-                return *efocus;
+                auto rawEfocus = *efocus;
+
+                if (rawEfocus.is_string())
+                {
+                    int efocusInteger = std::stoi(rawEfocus.get<std::string>());
+                    uint16_t efocusUint16Integer = static_cast<uint16_t>(efocusInteger);
+                    return efocusUint16Integer;
+                }
+                else if (rawEfocus.is_number())
+                {
+                    uint16_t efocusUint16Integer = static_cast<uint16_t>(*efocus);
+                    return efocusUint16Integer;
+                }
+                else if (rawEfocus.is_null())
+                {
+                    return 0;
+                }
             }
         }
 
