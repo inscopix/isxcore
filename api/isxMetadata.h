@@ -180,8 +180,6 @@ namespace isx
     {
         {BasePlateType_t::CRANIAL_WINDOW, std::make_pair(0.82, 0.80)},
 
-        {BasePlateType_t::BP1, std::make_pair(0.67,0.81)},
-
         {BasePlateType_t::BP7, std::make_pair(0.67,0.81)},
         {BasePlateType_t::BP8, std::make_pair(0.63,0.79)},
         {BasePlateType_t::BP9, std::make_pair(0.62,0.78)},
@@ -191,15 +189,6 @@ namespace isx
         {BasePlateType_t::BP13, std::make_pair(0.76,0.78)},
         {BasePlateType_t::BP14, std::make_pair(0.90,0.97)},
         {BasePlateType_t::BP15, std::make_pair(0.90,0.98)},
-
-        {BasePlateType_t::BP20, std::make_pair(0.63,0.79)},
-        {BasePlateType_t::BP21, std::make_pair(0.62,0.78)},
-        {BasePlateType_t::BP22, std::make_pair(0.61,0.69)},
-        {BasePlateType_t::BP23, std::make_pair(0.77,0.80)},
-        {BasePlateType_t::BP24, std::make_pair(0.75,0.78)},
-        {BasePlateType_t::BP25, std::make_pair(0.91,1.02)},
-        {BasePlateType_t::BP26, std::make_pair(0.90,0.97)},
-        {BasePlateType_t::BP27, std::make_pair(0.90,0.98)},
 
         {BasePlateType_t::BP28, std::make_pair(0.79,0.80)},
         {BasePlateType_t::BP29, std::make_pair(0.80,0.80)},
