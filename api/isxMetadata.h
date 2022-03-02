@@ -776,6 +776,26 @@ namespace isx
     }
 
     template <class T>
+    std::map<std::string, std::vector<int>> getVesselTimepointMap(T & inData, const std::string & key)
+    {
+        std::map<std::string, std::vector<int>> map;
+
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        if (extraProps["idps"]["vesselset"].find(key) != extraProps["idps"]["vesselset"].end())
+        {
+            json vessels = json::parse(extraProps["idps"]["vesselset"][key].get<std::string>());
+            for (auto it = vessels.begin(); it != vessels.end(); it++)
+            {
+                map[it.key()] = it.value().get<std::vector<int>>();
+            }
+        }
+
+        return map;
+    }
+
+    template <class T>
     BasePlateType_t getBasePlateType(T & inData)
     {
         using json = nlohmann::json;
