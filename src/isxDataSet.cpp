@@ -930,23 +930,25 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                     acqInfo["Time Window (s)"] = vesselSetTimeWindow->get<double>();
                 }
 
-                const auto vesselSetClippedVessels = vesselset->find("clippedVessels");
-                if (vesselSetClippedVessels != vesselset->end())
+                const auto vesselSetInvalidWindows = vesselset->find("invalidWindows");
+                if (vesselSetInvalidWindows != vesselset->end())
                 {
-                    acqInfo["Clipped Vessels"] = vesselSetClippedVessels->get<std::string>();
+                    std::stringstream ss;
+                    for (auto f : vesselSetInvalidWindows->get<std::vector<int>>())
+                    {
+                        ss << f << " ";
+                    }
+                    acqInfo["Windows with Invalid Frame Error"] = ss.str();
                 }
+
+                const auto vesselSetClippedVessels = vesselset->find("clippedVessels");
+                acqInfo["Vessels with Clipping Error"] = (vesselSetClippedVessels != vesselset->end()) ? vesselSetClippedVessels->get<std::string>() : "{}";
 
                 const auto vesselSetNoSignificantVessels = vesselset->find("noSignificantVessels");
-                if (vesselSetNoSignificantVessels != vesselset->end())
-                {
-                    acqInfo["No Significant Pixel Vessels"] = vesselSetNoSignificantVessels->get<std::string>();
-                }
+                acqInfo["Vessels with No Significant Pixels Error"] = (vesselSetNoSignificantVessels != vesselset->end()) ? vesselSetNoSignificantVessels->get<std::string>() : "{}";
 
                 const auto vesselSetDirectionChangedVessels = vesselset->find("directionChangedVessels");
-                if (vesselSetDirectionChangedVessels != vesselset->end())
-                {
-                    acqInfo["Direction Changed Vessels"] = vesselSetDirectionChangedVessels->get<std::string>();
-                }
+                acqInfo["Vessels with Direction Change Error"] = (vesselSetDirectionChangedVessels != vesselset->end()) ? vesselSetDirectionChangedVessels->get<std::string>() : "{}";
             }
         }
     }
