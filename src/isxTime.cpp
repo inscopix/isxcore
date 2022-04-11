@@ -76,7 +76,7 @@ Time::Time( uint16_t year,
     ISX_ASSERT(date.isValid());
 
     QTime time(hour, mins, secs);
-    QTimeZone timeZone(utcOffset);
+    QTimeZone timeZone(0);
     QDateTime dateTime(date, time, timeZone);
 
     int64_t secsSinceEpoch = std::floor(dateTime.toMSecsSinceEpoch() / 1000);
@@ -94,7 +94,7 @@ Time::getSecsSinceEpoch() const
 Time
 Time::operator +(const DurationInSeconds & duration) const
 {
-    return Time(m_secsSinceEpoch + duration);
+    return Time(m_secsSinceEpoch + duration, m_utcOffset);
 }
 
 Time &
@@ -107,7 +107,7 @@ Time::operator +=(const DurationInSeconds & duration)
 Time
 Time::operator -(const DurationInSeconds & duration) const
 {
-    return Time(m_secsSinceEpoch - duration);
+    return Time(m_secsSinceEpoch - duration, m_utcOffset);
 }
 
 Time &

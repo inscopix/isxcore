@@ -151,3 +151,121 @@ TEST_CASE("TimeTest", "[core]") {
     }
 
 }
+
+TEST_CASE("TimeTest-UtcOffset", "[core]") {
+
+    SECTION("equality")
+    {
+        // two times with the same epoch but different utc offsets
+        const isx::Time withUtc(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000), 7 * 60 * 60);
+        const isx::Time withoutUtc(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000));
+        REQUIRE(withUtc == withoutUtc);
+    }
+
+    SECTION("inequality")
+    {
+        // two times with different epoch but the same local time
+        const isx::Time withUtc(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000), 7 * 60 * 60);
+        const isx::Time withoutUtc(2022, 4, 1, 14, 27, 6, isx::DurationInSeconds(332, 1000));
+        REQUIRE(withUtc != withoutUtc);
+    }
+
+    SECTION("less than")
+    {
+        // two times with and without a utc offset
+        const isx::Time withUtc(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000), 7 * 60 * 60);
+        const isx::Time withoutUtc(2022, 4, 1, 14, 24, 6, isx::DurationInSeconds(332, 1000));
+        REQUIRE(withUtc < withoutUtc);
+    }
+
+    SECTION("less than or equal")
+    {
+        // two times with and without a utc offset
+        const isx::Time withUtc(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000), 7 * 60 * 60);
+        const isx::Time withoutUtc(2022, 4, 1, 14, 24, 6, isx::DurationInSeconds(332, 1000));
+        REQUIRE(withUtc <= withoutUtc);
+    }
+
+    SECTION("greater than")
+    {
+        // two times with and without a utc offset
+        const isx::Time withUtc(2022, 4, 1, 7, 30, 6, isx::DurationInSeconds(332, 1000), 7 * 60 * 60);
+        const isx::Time withoutUtc(2022, 4, 1, 14, 27, 6, isx::DurationInSeconds(332, 1000));
+        REQUIRE(withoutUtc > withUtc);
+    }
+
+    SECTION("greater than or equal")
+    {
+        // two times with and without a utc offset
+        const isx::Time withUtc(2022, 4, 1, 7, 30, 6, isx::DurationInSeconds(332, 1000), 7 * 60 * 60);
+        const isx::Time withoutUtc(2022, 4, 1, 14, 27, 6, isx::DurationInSeconds(332, 1000));
+        REQUIRE(withoutUtc >= withUtc);
+    }
+
+    SECTION("addition")
+    {
+        // add 1 hour to a time with a utc offset
+        isx::Time start(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000), 7 * 60 * 60);
+        const isx::DurationInSeconds duration(60 * 60);
+
+        const isx::Time end(2022, 4, 1, 8, 27, 6, isx::DurationInSeconds(332, 1000));
+        REQUIRE((start + duration) == end);
+
+        start += duration;
+        REQUIRE(start == end);
+    }
+
+    SECTION("subtraction")
+    {
+        // subtract 1 hour to a time with a utc offset
+        isx::Time start(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000), 7 * 60 * 60);
+        const isx::DurationInSeconds duration(60 * 60);
+
+        const isx::Time end(2022, 4, 1, 6, 27, 6, isx::DurationInSeconds(332, 1000));
+        REQUIRE((start - duration) == end);
+
+        start -= duration;
+        REQUIRE(start == end);
+    }
+
+    SECTION("subtract equal times")
+    {
+        // two equal times with and without a utc offset
+        const isx::Time withUtc(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000), 7 * 60 * 60);
+        const isx::Time withoutUtc(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000));
+        const isx::DurationInSeconds expDiff(0);
+
+        REQUIRE((withUtc - withoutUtc) == expDiff);
+    }
+
+    SECTION("subtract unequal times")
+    {
+        // two times one hour apart with and without a utc offset
+        const isx::Time withUtc(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000), 7 * 60 * 60);
+        const isx::Time withoutUtc(2022, 4, 1, 6, 27, 6, isx::DurationInSeconds(332, 1000));
+        const isx::DurationInSeconds expDiff(60 * 60);
+
+        REQUIRE((withUtc - withoutUtc) == expDiff);
+    }
+
+    SECTION("subtract equal times with different utc offsets")
+    {
+        // two equal times with different utc offsets
+        const isx::Time t1(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000), 7 * 60 * 60); // 7 hour utc offset
+        const isx::Time t2(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000), - 3 * 60 * 60); // -3 hour utc offset
+        const isx::DurationInSeconds expDiff(0);
+
+        REQUIRE((t1 - t2) == expDiff);
+    }
+
+    SECTION("subtract unequal times with different utc offsets")
+    {
+        // two times one hour apart with different utc offsets
+        const isx::Time t1(2022, 4, 1, 7, 27, 6, isx::DurationInSeconds(332, 1000), 7 * 60 * 60); // 7 hour utc offset
+        const isx::Time t2(2022, 4, 1, 6, 27, 6, isx::DurationInSeconds(332, 1000), - 3 * 60 * 60); // -3 hour utc offset
+        const isx::DurationInSeconds expDiff(60 * 60);
+
+        REQUIRE((t1 - t2) == expDiff);
+    }
+}
+
