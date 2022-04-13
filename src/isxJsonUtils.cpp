@@ -685,4 +685,13 @@ writeJsonHeaderAtEnd(
     
 }
 
+void verifyJsonKey(
+    const json & inJson,
+    const std::string key)
+{
+    if (inJson.find(key) == inJson.end())
+    {
+        ISX_THROW(isx::ExceptionDataIO, "Error while parsing JSON object: No key (", key, ") in JSON object.");
+    }
+}
 } // namespace isx

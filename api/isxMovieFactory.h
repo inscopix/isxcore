@@ -99,6 +99,14 @@ SpMovie_t readMovieSeries(const std::vector<std::string> & inFileNames, const st
 /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
 SpMovie_t readMosaicMovie(const std::string & inFileName);
 
+/// Read an existing nVision movie from a file.
+///
+/// \param  inFileName      The name of the nVision movie file to read.
+///
+/// \throw  isx::ExceptionFileIO    If reading the movie file fails.
+/// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
+SpMovie_t readNVisionMovie(const std::string & inFileName);
+
 /// Read an existing nVista HDF5 movie from a file.
 ///
 /// \param  inFileName      The name of the nVista movie file to read.
@@ -138,6 +146,12 @@ bool isNVistaImagingFileExtension(const std::string & inFileName);
 /// \param  inFileName      The filename to check.
 /// \return                 True if filename has a TIF extension.
 bool isTiffFileExtension(const std::string & inFileName);
+
+/// Determine if a file is an nVision movie file by its extension
+///
+/// \param  inFileName      The filename to check.
+/// \return                 True if filename has an nVision movie file extension.
+bool isNVisionMovieFileExtension(const std::string & inFileName);
 
 } // namespace isx
 

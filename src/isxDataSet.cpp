@@ -243,7 +243,7 @@ readDataSetType(const std::string & inFileName, const DataSet::Properties & inPr
             ISX_THROW(ExceptionDataIO, "Unknown error while parsing data file header.");
         }
     }
-    else if (isBehavioralMovieFileExtension(inFileName))
+    else if (isBehavioralMovieFileExtension(inFileName) || extension == "isxb")
     {
         return DataSet::Type::BEHAVIOR;
     }
@@ -683,12 +683,24 @@ DataSet::readMetaData()
         && getPropertyValue(PROP_BEHAV_GOP_SIZE, v)
         && getPropertyValue(PROP_BEHAV_NUM_FRAMES, v);
 
-        if (hasAllMetaData)
+        const std::string ext = getExtension(m_fileName);
+
+        if (hasAllMetaData || ext == "isxb")
         {
-            const SpMovie_t movie = readBehavioralMovie(m_fileName, getProperties());
+            SpMovie_t movie;
+            if (ext == "isxb")
+            {
+                movie = readNVisionMovie(m_fileName);
+            }
+            else
+            {
+                movie = readBehavioralMovie(m_fileName, getProperties());
+            }
+            
             m_timingInfo = movie->getTimingInfo();
             m_spacingInfo = movie->getSpacingInfo();
             m_dataType = movie->getDataType();
+            m_extraProps = movie->getExtraProperties();
             m_hasMetaData = true;
         }
     }

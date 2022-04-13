@@ -2,6 +2,7 @@
 #include "isxMosaicMovie.h"
 #include "isxNVistaHdf5Movie.h"
 #include "isxBehavMovie.h"
+#include "isxNVisionMovie.h"
 #include "isxMovieSeries.h"
 #include "isxRecording.h"
 #include "isxPathUtils.h"
@@ -45,6 +46,10 @@ readMovie(const std::string & inFileName, const DataSet::Properties & inProperti
     {
         return readMosaicMovie(inFileName);
     }
+    else if (ext == "isxb")
+    {
+        return readNVisionMovie(inFileName);
+    }
     else if (isNVistaImagingFileExtension(inFileName))
     {
         return readInscopixMovie(inFileName, inProperties);
@@ -65,6 +70,13 @@ SpMovie_t
 readMosaicMovie(const std::string & inFileName)
 {
     SpMovie_t movie = std::make_shared<MosaicMovie>(inFileName);
+    return movie;
+}
+
+SpMovie_t
+readNVisionMovie(const std::string & inFileName)
+{
+    SpMovie_t movie = std::make_shared<NVisionMovie>(inFileName);
     return movie;
 }
 
@@ -105,6 +117,12 @@ isTiffFileExtension(const std::string & inFileName)
     auto e = isx::getExtension(inFileName);
     std::transform(e.begin(), e.end(), e.begin(), ::tolower);
     return (e == "tif") || (e == "tiff");
+}
+
+bool isNVisionMovieFileExtension(const std::string & inFileName)
+{
+    auto e = isx::getExtension(inFileName);
+    return e == "isxb";
 }
 
 } // namespace isx

@@ -182,6 +182,12 @@ writeJsonHeaderAtEnd(
     const json & inJsonObject,
     std::ostream & inStream);
 
+/// Verifies that a key exists in a json object
+/// Throws an exception if the input key does not exist in the object. 
+void verifyJsonKey(
+    const json & inJson,
+    const std::string key);
+
 } // namespace isx
 
 #endif // ISX_JSON_UTILS_H
