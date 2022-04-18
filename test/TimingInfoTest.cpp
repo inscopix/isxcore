@@ -664,3 +664,35 @@ TEST_CASE("TimingInfo-droppedAndCroppedBench", "[core][!hide]")
                 "The maximum duration was ", maxDurationInMs, " ms for frame ", maxIndex);
     }
 }
+
+// IDPS-857: The purpose of this test case is to verify the functionality of the timing info
+// when the step size is composed of large numbers in order to maintain full precision.
+// Previously, using large numbers in the step size led to issues with integer overflow in downstream calculations.
+// This problem was solved by increasing the number of bits used to represent the numerator & denominator of a Ratio.
+TEST_CASE("TimingInfo-largeNumStep", "[core]")
+{
+    SECTION("calculate end time without int overflow")
+    {
+        const isx::Time start(2022, 3, 22, 14, 35, 41, isx::DurationInSeconds::fromMilliseconds(300));
+        const isx::DurationInSeconds step(isx::Ratio(3547428992, 356173000000));
+        const uint64_t numSamples = 356174;
+        const isx::TimingInfo ti(start, step, numSamples);
+
+        REQUIRE(ti.getEnd() > ti.getStart());
+    }
+
+    SECTION("index -> time -> index")
+    {
+        const isx::Time start(2022, 3, 22, 14, 35, 41, isx::DurationInSeconds::fromMilliseconds(300));
+        const isx::DurationInSeconds step(isx::Ratio(3547428992, 356173000000));
+        const uint64_t numSamples = 356174;
+        const isx::TimingInfo ti(start, step, numSamples);
+
+        for (size_t i = 0; i < 10; i++)
+        {
+            const auto time = ti.convertIndexToStartTime(i);
+            const auto i_prime = ti.convertTimeToIndex(time);
+            REQUIRE(i == i_prime);
+        }
+    }
+}

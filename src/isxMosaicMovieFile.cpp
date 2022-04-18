@@ -107,20 +107,16 @@ MosaicMovieFile::initialize(const std::string & inFileName, bool enableWrite)
             // implementation which uses the timing info from the json metadata.
             if (startTsc < endTsc) {
                 uint64_t durationInMicroSec = endTsc - startTsc;
-                uint64_t stepInMicroSec = durationInMicroSec / numFrameWithin;
 
                 m_timingInfos[0] = TimingInfo(
                         m_timingInfos[0].getStart(),
-                        DurationInSeconds::fromMicroseconds(stepInMicroSec),
+                        DurationInSeconds(durationInMicroSec, static_cast<isize_t>(numFrameWithin * 1e6)),
                         m_timingInfos[0].getNumTimes(),
                         m_timingInfos[0].getDroppedFrames(),
                         m_timingInfos[0].getCropped(),
                         m_timingInfos[0].getBlankFrames()
                         );
             }
-            // ISX_LOG_DEBUG("new step: NUM=", m_timingInfos[0].getStep().getNum(),
-            //         " DEN=", m_timingInfos[0].getStep().getDen(),
-            //         " double=", m_timingInfos[0].getStep().toDouble());
         }
     }
 }

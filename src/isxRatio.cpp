@@ -14,9 +14,9 @@ namespace
 /// \param x First integer.
 /// \param y Second integer.
 /// \return  The greatest common divisor of x and y.
-int64_t getGreatestCommonDivisor(int64_t x, int64_t y)
+isx::Ratio::intBig_t getGreatestCommonDivisor(isx::Ratio::intBig_t x, isx::Ratio::intBig_t y)
 {
-    int64_t z;
+    isx::Ratio::intBig_t z;
     while (y != 0)
     {
         z = y;
@@ -29,26 +29,26 @@ int64_t getGreatestCommonDivisor(int64_t x, int64_t y)
 /// \param x First integer.
 /// \param y Second integer.
 /// \return  The least common multiple of x and y.
-int64_t getLeastCommonMultiple(int64_t x, int64_t y)
+isx::Ratio::intBig_t getLeastCommonMultiple(isx::Ratio::intBig_t x, isx::Ratio::intBig_t y)
 {
-    const int64_t gcd = ::getGreatestCommonDivisor(x, y);
+    const isx::Ratio::intBig_t gcd = ::getGreatestCommonDivisor(x, y);
     return x * (y / gcd);
 }
 
 /// \param x First integer.
 /// \param y Second integer.
 /// \return  Whether the multiplication will overflow.
-bool isMultiplicationOverflow(int64_t x, int64_t y)
+bool isMultiplicationOverflow(isx::Ratio::intBig_t x, isx::Ratio::intBig_t y)
 {
-    int64_t z = x * y;
+    isx::Ratio::intBig_t z = x * y;
     return z != 0 && z / x != y;
 }
 
 /// declaration
-bool lessThanOrEqualFraction(int64_t first_num, int64_t first_den, int64_t second_num, int64_t second_den);
+bool lessThanOrEqualFraction(isx::Ratio::intBig_t first_num, isx::Ratio::intBig_t first_den, isx::Ratio::intBig_t second_num, isx::Ratio::intBig_t second_den);
 
 /// Compare fractions by comparing quotients. If they are the same, compare remainders
-bool lessThanFraction(int64_t first_num, int64_t first_den, int64_t second_num, int64_t second_den)
+bool lessThanFraction(isx::Ratio::intBig_t first_num, isx::Ratio::intBig_t first_den, isx::Ratio::intBig_t second_num, isx::Ratio::intBig_t second_den)
 {
     if (second_den == 0)
     {
@@ -70,7 +70,7 @@ bool lessThanFraction(int64_t first_num, int64_t first_den, int64_t second_num, 
 }
 
 /// Compare fractions by comparing quotients. If they are the same, compare remainders
-bool lessThanOrEqualFraction(int64_t first_num, int64_t first_den, int64_t second_num, int64_t second_den)
+bool lessThanOrEqualFraction(isx::Ratio::intBig_t first_num, isx::Ratio::intBig_t first_den, isx::Ratio::intBig_t second_num, isx::Ratio::intBig_t second_den)
 {
     if (first_den == 0)
     {
@@ -101,7 +101,23 @@ Ratio::Ratio(int64_t inNum, int64_t inDen, bool inSimplify)
     ISX_ASSERT(inDen != 0);
     if (inSimplify)
     {
-        const int64_t gcd = getGreatestCommonDivisor(inNum, inDen);
+        const intBig_t gcd = getGreatestCommonDivisor(inNum, inDen);
+        m_num = intBig_t(inNum) / gcd;
+        m_den = intBig_t(inDen) / gcd;
+    }
+    else
+    {
+        m_num = intBig_t(inNum);
+        m_den = intBig_t(inDen);
+    }
+}
+
+Ratio::Ratio(const intBig_t inNum, const intBig_t inDen, bool inSimplify)
+{
+    ISX_ASSERT(inDen != 0);
+    if (inSimplify)
+    {
+        const intBig_t gcd = getGreatestCommonDivisor(inNum, inDen);
         m_num = inNum / gcd;
         m_den = inDen / gcd;
     }
@@ -112,13 +128,13 @@ Ratio::Ratio(int64_t inNum, int64_t inDen, bool inSimplify)
     }
 }
 
-int64_t
+Ratio::intBig_t
 Ratio::getNum() const
 {
     return m_num;
 }
 
-int64_t
+Ratio::intBig_t
 Ratio::getDen() const
 {
     return m_den;
@@ -153,8 +169,8 @@ Ratio::operator +(const Ratio & other) const
     {
         return Ratio(m_num + other.m_num, m_den);
     }
-    const int64_t den = ::getLeastCommonMultiple(m_den, other.m_den);
-    const int64_t num = (m_num * (den / m_den)) + (other.m_num * (den / other.m_den));
+    const intBig_t den = ::getLeastCommonMultiple(m_den, other.m_den);
+    const intBig_t num = (m_num * (den / m_den)) + (other.m_num * (den / other.m_den));
     return Ratio(num, den);
 }
 
@@ -172,8 +188,8 @@ Ratio::operator -(const Ratio & other) const
     {
         return Ratio(m_num - other.m_num, m_den);
     }
-    const int64_t den = ::getLeastCommonMultiple(m_den, other.m_den);
-    const int64_t num = (m_num * (den / m_den)) - (other.m_num * (den / other.m_den));
+    const intBig_t den = ::getLeastCommonMultiple(m_den, other.m_den);
+    const intBig_t num = (m_num * (den / m_den)) - (other.m_num * (den / other.m_den));
     return Ratio(num, den);
 }
 
@@ -201,7 +217,7 @@ Ratio::operator *(const Ratio & other) const
     || isMultiplicationOverflow(thisSim.m_den, otherSim.m_den))
     {
         return Ratio::fromDouble(
-                (thisSim.m_num / (double) thisSim.m_den) * (otherSim.m_num / (double) otherSim.m_den));
+                (double(thisSim.m_num) / double(thisSim.m_den)) * (double(otherSim.m_num) / double(otherSim.m_den)));
     }
 
     return Ratio(thisSim.m_num * otherSim.m_num, thisSim.m_den * otherSim.m_den);
@@ -277,8 +293,8 @@ Ratio
 Ratio::floorToDenomOf(const Ratio & other) const
 {
     double tv = toDouble();
-    int64_t od = other.getDen();
-    return Ratio(int64_t(std::floor(tv * double(od))), od);
+    intBig_t od = other.getDen();
+    return Ratio(intBig_t(std::floor(tv * double(od))), od);
 }
 
 Ratio

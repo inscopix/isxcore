@@ -236,11 +236,11 @@ namespace isx
         DurationInSeconds timeSecs = time.getSecsSinceEpoch();
         DurationInSeconds step = timingInfo.getStep();
         sTimingInfo_t t;
-        t.timeSecsNum = timeSecs.getNum();
-        t.timeSecsDen = timeSecs.getDen();
+        t.timeSecsNum = int64_t(timeSecs.getNum());
+        t.timeSecsDen = int64_t(timeSecs.getDen());
         t.timeOffset = time.getUtcOffset();
-        t.stepNum = step.getNum();
-        t.stepDen = step.getDen();
+        t.stepNum = int64_t(step.getNum());
+        t.stepDen = int64_t(step.getDen());
         t.numTimes = timingInfo.getNumTimes();
 
         /*

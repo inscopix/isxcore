@@ -372,7 +372,7 @@ TEST_CASE("MosaicMovieFileTimingInfo[MOS-1838]", "[core-internal][mosaic_movie_f
 
         isx::MosaicMovieFile movie(fileName);
         isx::DurationInSeconds modStep = movie.getTimingInfo().getStep();
-        REQUIRE(modStep == isx::DurationInSeconds::fromMicroseconds(39959));
+        REQUIRE(modStep == isx::DurationInSeconds(1957997, 49000000));
     }
 }
 

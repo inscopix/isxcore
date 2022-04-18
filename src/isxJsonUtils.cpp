@@ -25,8 +25,8 @@ json
 convertRatioToJson(const Ratio & inRatio)
 {
     json j;
-    j["num"] = inRatio.getNum();
-    j["den"] = inRatio.getDen();
+    j["num"] = int64_t(inRatio.getNum());
+    j["den"] = int64_t(inRatio.getDen());
     return j;
 }
 

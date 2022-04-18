@@ -4,10 +4,12 @@
 #include <cstdint>
 #include "isxObject.h"
 
+#include <boost/multiprecision/cpp_int.hpp>
+
 namespace isx
 {
 
-/// A rational number with unsigned 64-bit numerators and denominators.
+/// A rational number with signed 128-bit numerators and denominators.
 ///
 /// The constructor defaults to creating 0/1 and thus also allows you to
 /// only specify one integer to represent integral rational numbers.
@@ -15,6 +17,10 @@ class Ratio : public Object
 {
 
 public:
+    /// Represent numerator & denominator with signed 128 bit integer using the boost library
+    /// This enables the representation of highly precise sampling rates in isx::TimingInfo
+    /// without experiencing integer overflow when performing operations on the ratio (see IDPS-857)
+    typedef boost::multiprecision::int128_t intBig_t;
 
     /// Fully specified constructor.
     ///
@@ -25,15 +31,24 @@ public:
     ///                     Otherwise, store them as given.
     Ratio(int64_t inNum = 0, int64_t inDen = 1, bool inSimplify = false);
 
+    /// Fully specified constructor.
+    ///
+    /// \param  inNum       The numerator of the rational number.
+    /// \param  inDen       The denominator of the rational number.
+    /// \param  inSimplify  If true, simplify the rational number by finding the
+    ///                     greatest common divisor of the numerator and denominator.
+    ///                     Otherwise, store them as given.
+    Ratio(const intBig_t inNum, const intBig_t inDen, bool inSimplify = false);
+
     /// Return the numerator.
     ///
     /// \return         The numerator.
-    int64_t getNum() const;
+    intBig_t getNum() const;
 
     /// Return the denominator.
     ///
     /// \return         The denominator.
-    int64_t getDen() const;
+    intBig_t getDen() const;
 
     /// \return     The inverse of this.
     ///
@@ -139,11 +154,10 @@ public:
 private:
 
     /// The numerator of the fraction storing the number of seconds since the Unix epoch.
-    int64_t m_num;
+    intBig_t m_num;
 
     /// The denominator of the fraction storing the number of seconds since the Unix epoch.
-    int64_t m_den;
-
+    intBig_t m_den;
 }; // class
 
 } // namespace
