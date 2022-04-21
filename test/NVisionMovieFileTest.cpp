@@ -2,6 +2,7 @@
 #include "isxCoreFwd.h"
 #include "isxNVisionMovieFile.h"
 #include "isxTest.h"
+#include "isxArmaUtils.h"
 
 #include "catch.hpp"
 // #include <vector>
@@ -50,13 +51,24 @@ TEST_CASE("NVisionMovieFile", "[core]")
 
     SECTION("Frames")
     {
-        // TODO: verify decompressed video data
-        const size_t numFrames = 10;
+        // Verify movie data by computing sum of entire movie
+        const size_t numFrames = file.getTimingInfo().getNumTimes();
+        // Results of codec are slightly different between windows and linux/mac,
+        // but image look similar
+#if ISX_OS_WIN32
+        const size_t expSum = 9250722;
+#else
+        const size_t expSum = 9235061;
+#endif
+        size_t sum = 0;
         for (size_t i = 0; i < numFrames; i++)
         {
             const auto frame = file.readFrame(i);
-            REQUIRE(frame != nullptr);
+            isx::ColumnUInt16_t frameCol;
+            isx::copyFrameToColumn(frame, frameCol);
+            sum += arma::sum(frameCol);
         }
+        REQUIRE(sum == expSum);   
     }
 
     // SECTION("Acquisition info")

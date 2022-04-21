@@ -7,6 +7,11 @@
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
 
+// ffmpeg forwards
+struct AVFormatContext;
+struct AVCodecContext;
+struct AVPacket;
+
 namespace isx
 {
 
@@ -34,6 +39,10 @@ public:
     ///
     NVisionMovieFile(const std::string & inFileName);
 
+    /// Destructor
+    ///
+    ~NVisionMovieFile();
+
     /// \return True if the movie file is valid, false otherwise.
     ///
     bool
@@ -46,6 +55,7 @@ public:
     ///
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If inFrameNumber is out of range.
+    ///
     SpVideoFrame_t
     readFrame(isize_t inFrameNumber);
 
@@ -80,6 +90,7 @@ public:
     getDataType() const;
 
     /// Struct representing file header contents
+    ///
     struct Header {
         uint64_t m_fileVersion; /// File format version.
         uint64_t m_headerSize; /// Header size.
@@ -101,6 +112,10 @@ public:
     };
 
 private:
+    /// Initializes the codec to be used for decoding compressed video data from the file.
+    ///
+    void initializeCodec();
+
     /// Initialize the file stream which reads metadata segments from the file.
     ///
     void initializeFileStream();
@@ -118,8 +133,20 @@ private:
     /// This initialize the spacing info of the movie.
     void readSessionSegment();    
 
+    /// Decodes current packet in order to get decompressed video frame
+    ///
+    /// \param inFrameNumber    The index of the frame used to set the timing info of the output video frame.
+    /// \return                 A pointer to the video frame containing the decoded data
+    ///
+    SpVideoFrame_t
+    decodePacket(size_t inFrameNumber, AVPacket * m_pPacket);
+
     /// Return black frame compatible with current video stream's dimensions and with
     /// timing info set according to inFrameNumber.
+    ///
+    /// \param inFrameNumber    The index of the frame used to set the timing info of the output video frame.
+    /// \return                 A pointer to the black video frame
+    ///
     SpVideoFrame_t
     getBlackFrame(isize_t inFrameNumber);
 
@@ -146,6 +173,15 @@ private:
     
     /// Size of the file header in bytes.
     const static size_t s_headerSizeInBytes = 96;
+
+    /// Stores header information about the format of the video container
+    AVFormatContext *           m_formatCtx = nullptr;
+
+    /// Stores information about the codec to use for decoding compressed video data
+    AVCodecContext *            m_videoCodecCtx  = nullptr;
+
+    /// Index of the first video stream in the container
+    int                         m_videoStreamIndex = 0;
 };
 
 } // namespace isx

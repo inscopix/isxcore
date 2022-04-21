@@ -2,6 +2,7 @@
 #include "isxCoreFwd.h"
 #include "isxNVisionMovie.h"
 #include "isxTest.h"
+#include "isxArmaUtils.h"
 
 #include "catch.hpp"
 #include <atomic>
@@ -51,29 +52,47 @@ TEST_CASE("NVisionMovie", "[core]")
 
     SECTION("Frames")
     {
-        // TODO: verify decompressed video data
+        // Verify some movie data by computing sum of first ten frames
         const size_t numFrames = 10;
+        // Results of codec are slightly different between windows and linux/mac,
+        // but image look similar
+#if ISX_OS_WIN32
+        const size_t expSum = 403115;
+#else
+        const size_t expSum = 402551;
+#endif
+        size_t sum = 0;
         for (size_t i = 0; i < numFrames; i++)
         {
             const auto frame = movie->getFrame(i);
-            REQUIRE(frame != nullptr);
+            isx::ColumnUInt16_t frameCol;
+            isx::copyFrameToColumn(frame, frameCol);
+            sum += arma::sum(frameCol);
         }
+        REQUIRE(sum == expSum);
     }
 
     SECTION("Async frames")
     {
-        // TODO: verify decompressed video data
         std::atomic_int doneCount(0);
+        std::atomic_int sum(0);
 
         isx::MovieGetFrameCB_t cb = [&](isx::AsyncTaskResult<isx::SpVideoFrame_t> inAsyncTaskResult)
         {
             REQUIRE(!inAsyncTaskResult.getException());
             const isx::SpVideoFrame_t frame = inAsyncTaskResult.get();
-            REQUIRE(frame != nullptr);
+            isx::ColumnUInt16_t frameCol;
+            isx::copyFrameToColumn(frame, frameCol);
+            sum += arma::sum(frameCol);
             ++doneCount;
         };
 
         const size_t numFrames = 10;
+#if ISX_OS_WIN32
+        const size_t expSum = 403115;
+#else
+        const size_t expSum = 402551;
+#endif
         for (size_t i = 0; i < numFrames; i++)
         {
             movie->getFrameAsync(i, cb);
@@ -89,6 +108,7 @@ TEST_CASE("NVisionMovie", "[core]")
             std::this_thread::sleep_for(d);
         }
         REQUIRE(doneCount == numFrames);
+        REQUIRE(sum == expSum);
     }
 
     isx::CoreShutdown();
