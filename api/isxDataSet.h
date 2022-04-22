@@ -41,7 +41,8 @@ public:
         EVENTS,
         METRICS,
         IMU,
-        VESSELSET
+        VESSELSET,
+        NVISION_MOVIE
     };
 
     // Property names as used in the property map

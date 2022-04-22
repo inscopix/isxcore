@@ -434,6 +434,7 @@ Series::addChildWithCompatibilityCheck(SpSeries_t inSeries, std::string & outErr
                 break;
             }
             case DataSet::Type::BEHAVIOR:
+            case DataSet::Type::NVISION_MOVIE:
             case DataSet::Type::GPIO:
             case DataSet::Type::IMU:
             case DataSet::Type::EVENTS:
@@ -604,6 +605,21 @@ Series::checkNewMember(DataSet * inDataSet, std::string & outMessage)
                 existingMovies.push_back(readBehavioralMovie(ds->getFileName(), ds->getProperties()));
             }
             const SpMovie_t newMovie = readBehavioralMovie(inDataSet->getFileName(), inDataSet->getProperties());
+            if (!checkNewMemberOfSeries(existingMovies, newMovie, outMessage))
+            {
+                return false;
+            }
+            break;
+        }
+
+        case DataSet::Type::NVISION_MOVIE:
+        {
+            std::vector<SpMovie_t> existingMovies;
+            for (const auto & ds : getDataSets())
+            {
+                existingMovies.push_back(readNVisionMovie(ds->getFileName()));
+            }
+            const SpMovie_t newMovie = readNVisionMovie(inDataSet->getFileName());
             if (!checkNewMemberOfSeries(existingMovies, newMovie, outMessage))
             {
                 return false;

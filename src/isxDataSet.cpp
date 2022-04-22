@@ -243,7 +243,11 @@ readDataSetType(const std::string & inFileName, const DataSet::Properties & inPr
             ISX_THROW(ExceptionDataIO, "Unknown error while parsing data file header.");
         }
     }
-    else if (isBehavioralMovieFileExtension(inFileName) || extension == "isxb")
+    else if (isNVisionMovieFileExtension(inFileName))
+    {
+        return DataSet::Type::NVISION_MOVIE;
+    }
+    else if (isBehavioralMovieFileExtension(inFileName))
     {
         return DataSet::Type::BEHAVIOR;
     }
@@ -401,7 +405,7 @@ DataSet::getMetadata()
     }
 
     // Spacing Info
-    if (m_type == DataSet::Type::MOVIE || m_type == DataSet::Type::BEHAVIOR
+    if (m_type == DataSet::Type::MOVIE || m_type == DataSet::Type::BEHAVIOR || m_type == DataSet::Type::NVISION_MOVIE
             || m_type == DataSet::Type::IMAGE || m_type == DataSet::Type::CELLSET || m_type == DataSet::Type::VESSELSET)
     {
         ss << m_spacingInfo.getNumPixels();
@@ -552,6 +556,8 @@ DataSet::getTypeString(Type inType)
         return std::string("Vessel Set");
     case Type::BEHAVIOR:
         return std::string("Behavioral Movie");
+    case Type::NVISION_MOVIE:
+        return std::string("nVision Movie");
     case Type::GPIO:
         return std::string("GPIO");
     case Type::EVENTS:
@@ -685,24 +691,24 @@ DataSet::readMetaData()
 
         const std::string ext = getExtension(m_fileName);
 
-        if (hasAllMetaData || ext == "isxb")
+        if (hasAllMetaData)
         {
-            SpMovie_t movie;
-            if (ext == "isxb")
-            {
-                movie = readNVisionMovie(m_fileName);
-            }
-            else
-            {
-                movie = readBehavioralMovie(m_fileName, getProperties());
-            }
-            
+            SpMovie_t movie = readBehavioralMovie(m_fileName, getProperties());
             m_timingInfo = movie->getTimingInfo();
             m_spacingInfo = movie->getSpacingInfo();
             m_dataType = movie->getDataType();
             m_extraProps = movie->getExtraProperties();
             m_hasMetaData = true;
         }
+    }
+    else if (m_type == Type::NVISION_MOVIE)
+    {
+        SpMovie_t movie = readNVisionMovie(m_fileName);
+        m_timingInfo = movie->getTimingInfo();
+        m_spacingInfo = movie->getSpacingInfo();
+        m_dataType = movie->getDataType();
+        m_extraProps = movie->getExtraProperties();
+        m_hasMetaData = true;
     }
     else if (m_type == Type::GPIO || m_type == Type::IMU)
     {
