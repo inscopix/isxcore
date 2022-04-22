@@ -141,14 +141,14 @@ private:
     SpVideoFrame_t
     decodePacket(size_t inFrameNumber, AVPacket * m_pPacket);
 
-    /// Return black frame compatible with current video stream's dimensions and with
-    /// timing info set according to inFrameNumber.
+    /// Return a video frame compatible with current video stream's dimensions and
+    /// with timing info set according to the input frame number.
     ///
-    /// \param inFrameNumber    The index of the frame used to set the timing info of the output video frame.
+    /// \param inIndex    The index of the frame used to set the timing info of the output video frame.
     /// \return                 A pointer to the black video frame
     ///
     SpVideoFrame_t
-    getBlackFrame(isize_t inFrameNumber);
+    makeVideoFrame(const isize_t inIndex) const;
 
     /// True if the movie file is valid, false otherwise.
     bool m_valid = false;

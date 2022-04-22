@@ -225,10 +225,17 @@ NVisionMovieFile::readMetadataSegment()
 	const uint64_t numSamplesWithin = metadata["samples"][m_header.m_numFrames - 1]["fc"].get<uint64_t>() - metadata["samples"][0]["fc"].get<uint64_t>();
 	const uint64_t numSamples = m_header.m_numFrames + m_header.m_numDrops;
 
+	std::vector<size_t> droppedFrames;
+	if (metadata.find("droppedFrames") != metadata.end())
+	{
+		droppedFrames = metadata["droppedFrames"].get<std::vector<size_t>>();
+	}
+
 	m_timingInfos = {TimingInfo(
 		Time(DurationInSeconds::fromMilliseconds(m_header.m_epochMs), static_cast<int32_t>(m_header.m_utcOffset) * 60),
 		DurationInSeconds(durationUs, static_cast<size_t>(numSamplesWithin * 1e6)),
-		numSamples
+		numSamples,
+		droppedFrames
 	)};
 
 	ISX_NVISION_MOVIE_LOG_DEBUG("nVision movie timing info: ", m_timingInfos[0]);
@@ -273,8 +280,20 @@ NVisionMovieFile::isValid() const
 SpVideoFrame_t
 NVisionMovieFile::readFrame(isize_t inFrameNumber)
 {
-	// TODO: handle dropped frames
-	const int64_t seekPts = frameToPts(m_formatCtx->streams[m_videoStreamIndex], inFrameNumber);
+	const TimingInfo & ti = getTimingInfo();
+	
+	if (ti.isDropped(inFrameNumber))
+	{
+		SpVideoFrame_t frame = makeVideoFrame(inFrameNumber);
+		std::memset(frame->getPixels(), 0, frame->getImageSizeInBytes());
+		frame->setFrameType(VideoFrame::Type::DROPPED);
+		return frame;
+	}
+
+	const size_t frameNumber = ti.timeIdxToRecordedIdx(inFrameNumber);
+	ISX_NVISION_MOVIE_LOG_DEBUG("Input frame number, actual frame number on disk: ", inFrameNumber, " ", frameNumber);
+
+	const int64_t seekPts = frameToPts(m_formatCtx->streams[m_videoStreamIndex], frameNumber);
 	ISX_NVISION_MOVIE_LOG_DEBUG("Seek pts: ", seekPts);
 
 	int avRetCode = av_seek_frame(m_formatCtx, m_videoStreamIndex, seekPts, AVSEEK_FLAG_ANY);
@@ -336,7 +355,7 @@ NVisionMovieFile::decodePacket(size_t inFrameNumber, AVPacket * pPacket)
 	}
 	else
 	{
-		ISX_NVISION_MOVIE_LOG_DEBUG("Decoded frame(type=", av_get_picture_type_char(pFrame->pict_type), " size=", pFrame->pkt_size, " format=", pFrame->format, ")");
+		ISX_NVISION_MOVIE_LOG_DEBUG("Decoded frame(type=", av_get_picture_type_char(pFrame->pict_type), " size=", pFrame->pkt_size, " format=", pFrame->format, ")\n");
 
 		// Check if the frame is a planar YUV 4:2:0.
 		switch(pFrame->format)
@@ -373,22 +392,23 @@ NVisionMovieFile::decodePacket(size_t inFrameNumber, AVPacket * pPacket)
 		// Images are stored in YUV color format. The Y channel is the luminance (i.e., brightness) of the image
 		// The U and V channels are the color components which can be used to convert the image to RGB
 		const Time t = getTimingInfo().convertIndexToStartTime(inFrameNumber);
-		auto ret = std::make_shared<VideoFrame>(
-			m_spacingInfo, width, 1, DataType::U8, t, inFrameNumber);
-		std::memcpy(ret->getPixels(), pFrame->data[0], width * height);
+		SpVideoFrame_t frame = makeVideoFrame(inFrameNumber);
+		std::memcpy(frame->getPixels(), pFrame->data[0], width * height);
 		av_frame_free(&pFrame);
-		return ret;
+		return frame;
 	}
 }
 
 SpVideoFrame_t
-NVisionMovieFile::getBlackFrame(isize_t inFrameNumber)
+NVisionMovieFile::makeVideoFrame(const isize_t inIndex) const
 {
-	Time t = getTimingInfo().convertIndexToStartTime(inFrameNumber);
-	auto ret = std::make_shared<VideoFrame>(
-		m_spacingInfo, m_spacingInfo.getNumPixels().getWidth(), 1, DataType::U8, t, inFrameNumber);
-	std::memset(ret->getPixels(), 0, ret->getImageSizeInBytes());
-	return ret;
+    return std::make_shared<VideoFrame>(
+            getSpacingInfo(),
+            m_spacingInfo.getNumPixels().getWidth() * getDataTypeSizeInBytes(m_dataType),
+            1,
+            getDataType(),
+            getTimingInfo().convertIndexToStartTime(inIndex),
+            inIndex);
 }
 
 const std::string &
