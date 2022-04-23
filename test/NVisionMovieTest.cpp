@@ -230,13 +230,3 @@ TEST_CASE("NVisionMovie-Dropped", "[core]")
     
     isx::CoreShutdown();   
 }
-
-// // TODO: handle series
-// TEST_CASE("NVisionMovie-Series", "[core]")
-// {
-//     isx::CoreInitialize();
-
-//     ...
-
-//     isx::CoreShutdown();   
-// }
