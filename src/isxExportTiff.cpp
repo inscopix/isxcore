@@ -107,7 +107,9 @@ TiffExporter::TiffExporter(const std::string & inFileName, const bool inBigTiff)
 TiffExporter::~TiffExporter()
 {
     TIFF * out = static_cast<TIFF*>(tiffOut);
+    uint64 * dir = static_cast<uint64*>(lastOffDir);
     TIFFClose(out);
+    delete dir;
 }
 
 void
