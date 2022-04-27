@@ -112,6 +112,12 @@ public:
     uint8_t *
     getPixelsAsU8();
 
+    /// const version of above
+    ///
+    const
+    uint8_t *
+    getPixelsAsU8() const;
+
     /// Get the address of the first pixel of image data as uint16_t.
     ///
     /// This will fail if the underlying data type is not uint16_t.

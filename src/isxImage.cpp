@@ -111,16 +111,22 @@ Image::getPixels() const
     }
     return 0;
 }
-    
 uint8_t *
 Image::getPixelsAsU8()
+{
+    return const_cast<uint8_t *>(const_cast<const Image *>(this)->getPixelsAsU8());
+}
+
+const
+uint8_t *
+Image::getPixelsAsU8() const
 {
     if (m_dataType != DataType::U8)
     {
         ISX_THROW(isx::ExceptionDataIO,
-                "U8 pixels requested, but underlying data type is ", m_dataType);
+                "U16 pixels requested, but underlying data type is ", m_dataType);
     }
-    return reinterpret_cast<uint8_t *>(getPixels());
+    return reinterpret_cast<const uint8_t *>(getPixels());
 }
 
 uint16_t *

@@ -50,26 +50,70 @@ allocateAVFrame(enum AVPixelFormat pixelFormat, int width, int height)
     return avf;
 }
 
+template<typename T>
 void
-populatePixels(AVFrame *avf, int tIndex, int width, int height, isx::Image *inImg, const float inMinVal, const float inMaxVal)
+populatePixels(AVFrame *avf, int tIndex, int width, int height, const T * pixels, const bool inNormalize, const float inMinVal, const float inMaxVal)
 {
     const bool rescaleDynamicRange = !(inMinVal == -1 && inMaxVal == -1);
-
-    // Y
+    int index = 0;
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            if (rescaleDynamicRange)
+            uint8_t pixelValue;
+            if (inNormalize)
             {
-                std::vector<float> val = inImg->getPixelValuesAsF32(isx::isize_t(y), isx::isize_t(x));
-                avf->data[0][y * avf->linesize[0] + x] = uint8_t(255 * ((val[0] - inMinVal) / (inMaxVal - inMinVal)));
+                if (rescaleDynamicRange)
+                {
+                    pixelValue = uint8_t(255 * ((pixels[index] - inMinVal) / (inMaxVal - inMinVal)));
+                }
+                else
+                {
+                    pixelValue = uint8_t(255 * pixels[index]);
+                }
             }
             else
             {
-                std::vector<float> val = inImg->getPixelValuesAsF32(isx::isize_t(y), isx::isize_t(x));
-                avf->data[0][y * avf->linesize[0] + x] = uint8_t(255 * val[0]);
+                pixelValue = uint8_t(pixels[index]);
             }
+            
+            avf->data[0][y * avf->linesize[0] + x] = pixelValue;
+            index++;
+        }
+    }
+}
+
+void
+populatePixels(AVFrame *avf, int tIndex, int width, int height, isx::Image *inImg, const float inMinVal, const float inMaxVal)
+{
+    // Y
+    const isx::DataType dataType = inImg->getDataType();
+    switch(dataType)
+    {
+        case isx::DataType::U8:
+        {
+            const uint8_t * pixels = inImg->getPixelsAsU8();
+            const bool normalize = false;
+            populatePixels(avf, tIndex, width, height, pixels, normalize, inMinVal, inMaxVal);
+            break;
+        }
+        case isx::DataType::F32:
+        {
+            const float * pixels = inImg->getPixelsAsF32();
+            const bool normalize = true;
+            populatePixels(avf, tIndex, width, height, pixels, normalize, inMinVal, inMaxVal);
+            break;
+        }
+        case isx::DataType::U16:
+        {
+            const uint16_t * pixels = inImg->getPixelsAsU16();
+            const bool normalize = true;
+            populatePixels(avf, tIndex, width, height, pixels, normalize, inMinVal, inMaxVal);
+            break;
+        }
+        default:
+        {
+            ISX_THROW(isx::Exception, "Unsupported data type.");
         }
     }
     // Cb and Cr
@@ -162,8 +206,10 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
     avcc->bit_rate = bitRate;
 
     // The MPEG4 codec only supports frame period denominators of up to 2^16 - 1.
-    const int framePeriodDen = 65535;
-    const int framePeriodNum = int(std::round(framePeriod.toDouble() * framePeriodDen));
+    // Use libav util function to reduce the frampPeriod ratio so that both components are less than 2^16 - 1
+    // while still maintaining high enough precision with the average sampling rate stored in the exported file.
+    int framePeriodNum, framePeriodDen;
+    av_reduce(&framePeriodNum, &framePeriodDen, int64_t(framePeriod.getNum()), int64_t(framePeriod.getDen()), 65535);
     avcc->time_base.num = framePeriodNum;
     avcc->time_base.den = framePeriodDen;
     avcc->framerate.num = framePeriodDen;

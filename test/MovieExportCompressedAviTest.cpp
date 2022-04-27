@@ -6,6 +6,8 @@
 #include "isxTiffMovie.h"
 #include "isxPathUtils.h"
 #include "isxCore.h"
+#include "isxBehavMovieFile.h"
+#include "isxArmaUtils.h"
 
 #if ISX_ARCH_ARM == 0
 #include "isxTemporalCrop.h"
@@ -277,6 +279,59 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
     {
         std::remove(fn.c_str());
     }
+}
+
+TEST_CASE("MovieCompressedAviExportU8Test", "[core][export_mp4]")
+{
+    const std::vector<std::string> inputFileNames = {
+        g_resources["unitTestDataPath"] + "/nVision/20220401-022845-KTM-RQEHB_10_secs.isxb"
+    };
+
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.mp4";
+
+    isx::CoreInitialize();
+
+    isx::SpMovie_t inputMovie = isx::readMovie(inputFileNames[0]);
+
+    const double bitRateFraction = 0.1;
+    isx::MovieCompressedAviExporterParams params(
+        {inputMovie},
+        exportedCompressedAviFileName,
+        bitRateFraction);
+    isx::runMovieCompressedAviExporter(params);
+    
+    SECTION("Verify exported data")
+    {
+        isx::DataSet::Properties props = {};
+        props[isx::DataSet::PROP_MOVIE_FRAME_RATE] = isx::Variant(20.f);
+        props[isx::DataSet::PROP_MOVIE_START_TIME] = isx::Variant(isx::Time());
+        isx::BehavMovieFile::getBehavMovieProperties(exportedCompressedAviFileName, props);
+        isx::SpMovie_t exportedMovie = isx::readBehavioralMovie(exportedCompressedAviFileName, props);
+
+        REQUIRE(exportedMovie->getTimingInfo().getNumTimes() == inputMovie->getTimingInfo().getNumTimes());
+
+        // Verify some movie data by computing sum of entire movie
+        const size_t numFrames = inputMovie->getTimingInfo().getNumTimes();
+        // Results of codec are slightly different between windows and linux/mac, but images look similar
+#if ISX_OS_WIN32
+        const size_t expSum = 9720275;
+#else
+        const size_t expSum = 9752141;
+#endif
+        size_t sum = 0;
+        for (size_t i = 0; i < numFrames; i++)
+        {
+            const auto frame = exportedMovie->getFrame(i);
+            isx::ColumnUInt16_t frameCol;
+            isx::copyFrameToColumn(frame, frameCol);
+            sum += arma::sum(frameCol);
+        }
+        REQUIRE(sum == expSum);
+    }
+
+    isx::CoreShutdown();
+
+    std::remove(exportedCompressedAviFileName.c_str());
 }
 
 TEST_CASE("MovieCompressedAviExportBitrateTest", "[core][export_mp4]")

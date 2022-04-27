@@ -669,11 +669,27 @@ BehavMovieFile::initializeFromStream(const Time & inStartTime, int64_t inGopSize
 
             m_timeBase = Ratio(m_videoStream->time_base.num, m_videoStream->time_base.den);
 
-            Ratio avDuration = Ratio(m_videoStream->duration, 1);
-            auto durationInSeconds = (avDuration * m_timeBase).toDouble();
-            Ratio inverseDuration(1000, int64_t(durationInSeconds * 1000.0));
-            Ratio numFrames(inNumFrames);
-            Ratio frameRate = numFrames * inverseDuration;
+            // Calculate frame rate.
+            // If the denominator of the real frame rate is not equal to one and the timebase is an exact multiple of the frame rate numerator,
+            // then this indicates the frame rate was set when the file was encoded.
+            // This occurs when exporting movies to mp4 format in IDPS (see isxMovieCompressedAviExporter.cpp).
+            // Generally this value is not set and rather estimated by the codec based on the timebase and number of ticks per frame,
+            // which results in a frame rate with a denominator of one.
+            Ratio frameRate;
+            if ((m_videoStream->r_frame_rate.den != 1) && ((m_videoStream->time_base.den % m_videoStream->r_frame_rate.num) == 0))
+            {
+                // Using the real frame rate allows us to play movies exported from IDPS at the same frame rate as the input movie.
+                frameRate = Ratio(m_videoStream->r_frame_rate.num, m_videoStream->r_frame_rate.den);
+            }
+            else
+            {
+                Ratio avDuration = Ratio(m_videoStream->duration, 1);
+                auto durationInSeconds = (avDuration * m_timeBase).toDouble();
+                Ratio inverseDuration(1000, int64_t(durationInSeconds * 1000.0));
+                Ratio numFrames(inNumFrames);
+                frameRate = numFrames * inverseDuration;
+            }
+
             m_timingInfos = TimingInfos_t{TimingInfo(inStartTime, frameRate.getInverse(), inNumFrames)};
             m_gopSize = inGopSize;
             m_videoPtsFrameDelta = getTimingInfo().getStep() / m_timeBase;

@@ -3,6 +3,7 @@
 
 #include "isxCore.h"
 #include "isxAsyncTaskHandle.h"
+#include "isxException.h"
 
 #include <memory>
 
@@ -20,6 +21,27 @@ struct MovieExporterParams
         TIFF,       ///< TIFF
         MP4         ///< MP4
     };
+
+    /// \return The type of export based on a string representing the type
+    static isx::MovieExporterParams::Type convertStringToType(const std::string inStr)
+    {
+        if (inStr == "NWB")
+        {
+            return isx::MovieExporterParams::Type::NWB;
+        }
+        else if (inStr == "TIFF")
+        {
+            return isx::MovieExporterParams::Type::TIFF;
+        }
+        else if (inStr == "MP4")
+        {
+            return isx::MovieExporterParams::Type::MP4;
+        }
+        else
+        {
+            ISX_THROW(isx::Exception, "Unsupported movie export type: ", inStr);
+        }
+    }
 
     /// \return export operation name to display to user
     virtual
