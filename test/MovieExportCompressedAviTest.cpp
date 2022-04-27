@@ -314,9 +314,9 @@ TEST_CASE("MovieCompressedAviExportU8Test", "[core][export_mp4]")
         const size_t numFrames = inputMovie->getTimingInfo().getNumTimes();
         // Results of codec are slightly different between windows and linux/mac, but images look similar
 #if ISX_OS_WIN32
-        const size_t expSum = 9720275;
+        const size_t expSum = 9690024;
 #else
-        const size_t expSum = 9752141;
+        const size_t expSum = 9718137;
 #endif
         size_t sum = 0;
         for (size_t i = 0; i < numFrames; i++)
