@@ -93,6 +93,7 @@ struct MovieCompressedAviExporterParams : MovieExporterParams
     std::string             m_filename;                     ///< name of output file
     isize_t                 m_bitRate = 0;                  ///< bitrate in bps
     double                  m_bitRateFraction = s_defaultBitRateFraction;   ///< bitrate as fraction of theoretical uncompressed
+    bool                    m_writeInvalidFrames = false;                           ///< substitute zero-frames with dropped and cropped
 };
 
 /// Movie exporter output parameters 

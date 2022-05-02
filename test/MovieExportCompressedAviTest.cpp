@@ -187,9 +187,39 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
         
         // verify exported data
         {
-            // TODO: CompressedAviMovie not implemented yet
-            //isx::CompressedAviMovie compressedAviMovie(exportedCompressedAviFileName); // TODO: import is not implemented yet
+            isx::DataSet::Properties props = {};
+            props[isx::DataSet::PROP_MOVIE_FRAME_RATE] = isx::Variant(20.f);
+            props[isx::DataSet::PROP_MOVIE_START_TIME] = isx::Variant(isx::Time());
+            isx::BehavMovieFile::getBehavMovieProperties(exportedCompressedAviFileName, props);
+            isx::SpMovie_t exportedMovie = isx::readBehavioralMovie(exportedCompressedAviFileName, props);
 
+            // Dropped frame results in one less frame in exported movie
+            const size_t expNumTimes = 11;
+            REQUIRE(exportedMovie->getTimingInfo().getNumTimes() == expNumTimes);
+
+            // MPEG-4 requires dimensions of video to be even numbers, so the 3 pixel height is downsized to 2 pixels
+            const isx::SizeInPixels_t expSizeInPixels = isx::SizeInPixels_t(4, 2);
+            REQUIRE(exportedMovie->getSpacingInfo().getNumPixels() == expSizeInPixels);
+
+            const isx::DataType expDataType = isx::DataType::U8;
+            REQUIRE(exportedMovie->getDataType() == expDataType);
+
+            // Verify some movie data by computing sum of entire movie
+            // Results of codec are slightly different between windows and linux/mac, but images look similar
+#if ISX_OS_WIN32
+            const size_t expSum = 328271;
+#else
+            const size_t expSum = 328284;
+#endif
+            size_t sum = 0;
+            for (size_t i = 0; i < expNumTimes; i++)
+            {
+                const auto frame = exportedMovie->getFrame(i);
+                isx::ColumnUInt16_t frameCol;
+                isx::copyFrameToColumn(frame, frameCol);
+                sum += arma::sum(frameCol);
+            }
+            REQUIRE(sum == expSum);
         }
 
     }
@@ -265,12 +295,39 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
 
         // verify exported data
         {
-            // TODO: CompressedAviMovie not implemented yet
-            // isx::CompressedAviMovie compressedAviMovie(exportedCompressedAviFileName);
-            // REQUIRE(compressedAviMovie.getFrameHeight() == sizePixels.getHeight());
-            // REQUIRE(compressedAviMovie.getFrameWidth() == sizePixels.getWidth());
-            // REQUIRE(compressedAviMovie.getDataType() == isx::DataType::U16);
-            // REQUIRE(compressedAviMovie.getNumFrames() == 11);
+            isx::DataSet::Properties props = {};
+            props[isx::DataSet::PROP_MOVIE_FRAME_RATE] = isx::Variant(20.f);
+            props[isx::DataSet::PROP_MOVIE_START_TIME] = isx::Variant(isx::Time());
+            isx::BehavMovieFile::getBehavMovieProperties(exportedCompressedAviFileName, props);
+            isx::SpMovie_t exportedMovie = isx::readBehavioralMovie(exportedCompressedAviFileName, props);
+
+            // Dropped frame results in one less frame in exported movie
+            const size_t expNumTimes = 11;
+            REQUIRE(exportedMovie->getTimingInfo().getNumTimes() == expNumTimes);
+
+            // MPEG-4 requires dimensions of video to be even numbers, so the 3 pixel height is downsized to 2 pixels
+            const isx::SizeInPixels_t expSizeInPixels = isx::SizeInPixels_t(4, 2);
+            REQUIRE(exportedMovie->getSpacingInfo().getNumPixels() == expSizeInPixels);
+
+            const isx::DataType expDataType = isx::DataType::U8;
+            REQUIRE(exportedMovie->getDataType() == expDataType);
+
+            // Verify some movie data by computing sum of entire movie
+            // Results of codec are slightly different between windows and linux/mac, but images look similar
+#if ISX_OS_WIN32
+            const size_t expSum = 328271;
+#else
+            const size_t expSum = 328284;
+#endif
+            size_t sum = 0;
+            for (size_t i = 0; i < expNumTimes; i++)
+            {
+                const auto frame = exportedMovie->getFrame(i);
+                isx::ColumnUInt16_t frameCol;
+                isx::copyFrameToColumn(frame, frameCol);
+                sum += arma::sum(frameCol);
+            }
+            REQUIRE(sum == expSum);
         }
 
     }
@@ -308,7 +365,14 @@ TEST_CASE("MovieCompressedAviExportU8Test", "[core][export_mp4]")
         isx::BehavMovieFile::getBehavMovieProperties(exportedCompressedAviFileName, props);
         isx::SpMovie_t exportedMovie = isx::readBehavioralMovie(exportedCompressedAviFileName, props);
 
-        REQUIRE(exportedMovie->getTimingInfo().getNumTimes() == inputMovie->getTimingInfo().getNumTimes());
+        const size_t expNumTimes = inputMovie->getTimingInfo().getNumTimes();
+        REQUIRE(exportedMovie->getTimingInfo().getNumTimes() == expNumTimes);
+
+        const isx::SizeInPixels_t expSizeInPixels = inputMovie->getSpacingInfo().getNumPixels();
+        REQUIRE(exportedMovie->getSpacingInfo().getNumPixels() == expSizeInPixels);
+
+        const isx::DataType expDataType = isx::DataType::U8;
+        REQUIRE(exportedMovie->getDataType() == expDataType);
 
         // Verify some movie data by computing sum of entire movie
         const size_t numFrames = inputMovie->getTimingInfo().getNumTimes();

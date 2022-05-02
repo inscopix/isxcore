@@ -52,63 +52,58 @@ allocateAVFrame(enum AVPixelFormat pixelFormat, int width, int height)
 
 template<typename T>
 void
-populatePixels(AVFrame *avf, int tIndex, int width, int height, const T * pixels, const bool inNormalize, const float inMinVal, const float inMaxVal)
+normalizeAndPopulatePixels(AVFrame *avf, int tIndex, int width, int height, int imageLineSize, const T * pixels, const float inMinVal, const float inMaxVal, const bool isValid)
 {
-    const bool rescaleDynamicRange = !(inMinVal == -1 && inMaxVal == -1);
-    int index = 0;
+    if (inMinVal == -1 && inMaxVal == -1)
+    {
+        ISX_THROW(isx::ExceptionDataIO, "Cannot rescale pixels to range 0-255. No min and max found.");
+    }
+
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            uint8_t pixelValue;
-            if (inNormalize)
+            uint8_t pixelValue = 0;
+            if (isValid)
             {
-                if (rescaleDynamicRange)
-                {
-                    pixelValue = uint8_t(255 * ((pixels[index] - inMinVal) / (inMaxVal - inMinVal)));
-                }
-                else
-                {
-                    pixelValue = uint8_t(255 * pixels[index]);
-                }
+                pixelValue = uint8_t(255 * ((pixels[y * imageLineSize + x] - inMinVal) / (inMaxVal - inMinVal)));
             }
-            else
-            {
-                pixelValue = uint8_t(pixels[index]);
-            }
-            
             avf->data[0][y * avf->linesize[0] + x] = pixelValue;
-            index++;
         }
     }
 }
 
 void
-populatePixels(AVFrame *avf, int tIndex, int width, int height, isx::Image *inImg, const float inMinVal, const float inMaxVal)
+populatePixels(AVFrame *avf, int tIndex, int width, int height, isx::Image *inImg, const float inMinVal, const float inMaxVal, const bool isValid)
 {
     // Y
     const isx::DataType dataType = inImg->getDataType();
+    const int imageLineSize = static_cast<int>(inImg->getRowBytes() / inImg->getPixelSizeInBytes());
     switch(dataType)
     {
         case isx::DataType::U8:
         {
+            // populate pixels directly to buffer
             const uint8_t * pixels = inImg->getPixelsAsU8();
-            const bool normalize = false;
-            populatePixels(avf, tIndex, width, height, pixels, normalize, inMinVal, inMaxVal);
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    avf->data[0][y * avf->linesize[0] + x] = pixels[y * imageLineSize + x];
+                }
+            }
             break;
         }
         case isx::DataType::F32:
         {
             const float * pixels = inImg->getPixelsAsF32();
-            const bool normalize = true;
-            populatePixels(avf, tIndex, width, height, pixels, normalize, inMinVal, inMaxVal);
+            normalizeAndPopulatePixels(avf, tIndex, width, height, imageLineSize, pixels, inMinVal, inMaxVal, isValid);
             break;
         }
         case isx::DataType::U16:
         {
             const uint16_t * pixels = inImg->getPixelsAsU16();
-            const bool normalize = true;
-            populatePixels(avf, tIndex, width, height, pixels, normalize, inMinVal, inMaxVal);
+            normalizeAndPopulatePixels(avf, tIndex, width, height, imageLineSize, pixels, inMinVal, inMaxVal, isValid);
             break;
         }
         default:
@@ -302,7 +297,7 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
 }
 
 bool
-withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, const float inMinVal, const float inMaxVal)
+withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, const float inMinVal, const float inMaxVal, const bool isValid)
 {
     AVFrame *avf = NULL;
     AVCodecContext *avcc = vOut->avcc;
@@ -315,7 +310,7 @@ withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, con
     {
         ISX_THROW(isx::ExceptionFileIO, "Unexpected pixel format.");
     }
-    populatePixels(vOut->avf, int(vOut->pts), vOut->avcc->width, vOut->avcc->height, inImg, inMinVal, inMaxVal);
+    populatePixels(vOut->avf, int(vOut->pts), vOut->avcc->width, vOut->avcc->height, inImg, inMinVal, inMaxVal, isValid);
     vOut->avf->pts = vOut->pts++;
     avf = vOut->avf;
 
@@ -392,7 +387,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<isx::S
 }
 
 bool
-compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, float progressBarStart, float progressBarEnd, const isx::isize_t inBitRate)
+compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, float progressBarStart, float progressBarEnd, const isx::isize_t inBitRate, const bool inWriteInvalidFrames)
 {
     int tInd = 0;
     bool cancelled = false;
@@ -424,7 +419,8 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
     {
         for (isx::isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
         {
-            if (m->getTimingInfo().isIndexValid(i))
+            const bool isValid = m->getTimingInfo().isIndexValid(i);
+            if (inWriteInvalidFrames || isValid)
             {
                 auto f = m->getFrame(i);
                 auto& img = f->getImage();
@@ -436,7 +432,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
                         return true;
                     }
                 }
-                if (withinLoop(avFmtCnxt, &vOut, &img, inMinVal, inMaxVal))
+                if (withinLoop(avFmtCnxt, &vOut, &img, inMinVal, inMaxVal, isValid))
                 {
                     return true;
                 }                
@@ -463,16 +459,21 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
 }
 
 bool
-toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, const isx::isize_t inBitRate)
+toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, const isx::isize_t inBitRate, const bool inWriteInvalidFrames)
 {
     bool cancelled;
     float minVal = -1;
     float maxVal = -1;
+    float progress = 0.0f;
 
-    cancelled = compressedAVIFindMinMax(inFileName, inMovies, inCheckInCB, minVal, maxVal, 0.0f, 0.1f);
-    if (cancelled) return true;
+    if (inMovies.front()->getDataType() != isx::DataType::U8)
+    {
+        cancelled = compressedAVIFindMinMax(inFileName, inMovies, inCheckInCB, minVal, maxVal, 0.0f, 0.1f);
+        if (cancelled) return true;
+        progress += 0.1f;
+    }
 
-    cancelled = compressedAVIOutputMovie(inFileName, inMovies, inCheckInCB, minVal, maxVal, 0.1f, 1.0f, inBitRate);
+    cancelled = compressedAVIOutputMovie(inFileName, inMovies, inCheckInCB, minVal, maxVal, progress, 1.0f, inBitRate, inWriteInvalidFrames);
     if (cancelled) return true;
     
     return false;
@@ -559,7 +560,7 @@ MovieCompressedAviExporterParams::setAdditionalInfo(
 void
 MovieCompressedAviExporterParams::setWriteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
 {
-    // Do nothing - currently MP4 cannot contains these details
+    m_writeInvalidFrames = inWriteDroppedAndCropped;
 }
 
 std::vector<std::string>
@@ -624,7 +625,7 @@ runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::sh
 
     try
     {
-        cancelled = toCompressedAVI(inParams.m_filename, inParams.m_srcs, inCheckInCB, inParams.getBitRate());
+        cancelled = toCompressedAVI(inParams.m_filename, inParams.m_srcs, inCheckInCB, inParams.getBitRate(), inParams.m_writeInvalidFrames);
     }
     catch (...)
     {
