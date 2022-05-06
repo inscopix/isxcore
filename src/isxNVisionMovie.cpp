@@ -112,4 +112,17 @@ NVisionMovie::serialize(std::ostream & strm) const
     strm << getFileName();
 }
 
+
+bool
+NVisionMovie::hasFrameTimestamps() const
+{
+    return m_file->hasFrameTimestamps();
+}
+
+uint64_t
+NVisionMovie::getFrameTimestamp(const isize_t inIndex)
+{
+    return m_file->readFrameTimestamp(inIndex);
+}
+
 } // namespace isx

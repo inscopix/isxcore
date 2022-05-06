@@ -59,6 +59,17 @@ public:
     SpVideoFrame_t
     readFrame(isize_t inFrameNumber);
 
+    /// \return     True if the movie has specific timestamp (e.g. TSC) for each frame,
+    ///             false otherwise.
+    bool hasFrameTimestamps() const;
+    
+    /// Read the timestamp associated with a frame on the calling thread.
+    ///
+    /// \param  inIndex     The index of a frame in this movie.
+    /// \return             The timestamp associated with the given frame,
+    ///                     or 0 if it does not have one.
+    uint64_t readFrameTimestamp(const isize_t inFrameNumber);
+
     /// \return     The name of the file.
     ///
     const
@@ -182,6 +193,8 @@ private:
 
     /// Index of the first video stream in the container
     int                         m_videoStreamIndex = 0;
+
+    std::vector<uint64_t> m_frameTimestamps;
 };
 
 } // namespace isx

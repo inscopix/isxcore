@@ -219,6 +219,18 @@ NVisionMovieFile::readMetadataSegment()
 	verifyJsonKey(metadata["samples"][0], "fc");
 	verifyJsonKey(metadata["samples"][m_header.m_numFrames - 1], "fc");
 
+	if (metadata["samples"].size() != m_header.m_numFrames)
+	{
+		ISX_THROW(isx::ExceptionFileIO,
+			"Number of frame timestamps in metadata (", metadata["samples"].size(), ") does not match number of frames in movie (", m_header.m_numFrames, ").");
+	}
+
+	m_frameTimestamps.clear();
+	for (size_t i = 0; i < m_header.m_numFrames; i++)
+	{
+		m_frameTimestamps.push_back(metadata["samples"][i]["tsc"].get<uint64_t>());
+	}
+
 	const uint64_t startTsc = metadata["samples"][0]["tsc"];
 	const uint64_t endTsc = metadata["samples"][m_header.m_numFrames - 1]["tsc"];
 	const uint64_t durationUs = endTsc - startTsc;
@@ -326,6 +338,25 @@ NVisionMovieFile::readFrame(isize_t inFrameNumber)
 	}
 
 	return frame;
+}
+
+bool
+NVisionMovieFile::hasFrameTimestamps() const
+{
+	return (m_frameTimestamps.size() > 0) && (m_frameTimestamps.size() == m_header.m_numFrames);
+}
+
+uint64_t
+NVisionMovieFile::readFrameTimestamp(const isize_t inFrameNumber)
+{
+	const TimingInfo & ti = getTimingInfo();
+
+	if (ti.isIndexValid(inFrameNumber))
+	{
+		return m_frameTimestamps[ti.timeIdxToRecordedIdx(inFrameNumber)];
+	}
+
+	return 0;
 }
 
 SpVideoFrame_t

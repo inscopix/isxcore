@@ -49,6 +49,10 @@ public:
 
     void serialize(std::ostream & strm) const override;
 
+    bool hasFrameTimestamps() const override;
+
+    uint64_t getFrameTimestamp(const isize_t inIndex) override;
+
 private:
     /// True if the movie file is valid, false otherwise.
     bool m_valid;

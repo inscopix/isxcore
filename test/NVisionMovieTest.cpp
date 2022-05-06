@@ -111,6 +111,18 @@ TEST_CASE("NVisionMovie", "[core]")
         REQUIRE(sum == expSum);
     }
 
+    SECTION("Frame timestamps")
+    {
+        const uint64_t startTsc = movie->getFrameTimestamp(0);
+        const uint64_t endTsc = movie->getFrameTimestamp(movie->getTimingInfo().getNumTimes() - 1);
+
+        const uint64_t expStartTsc = 215738669569;
+        const uint64_t expEndTsc = 215748637583;
+
+        REQUIRE(startTsc == expStartTsc);
+        REQUIRE(endTsc == expEndTsc);
+    }
+
     isx::CoreShutdown();
 }
 
@@ -226,6 +238,23 @@ TEST_CASE("NVisionMovie-Dropped", "[core]")
         }
         REQUIRE(doneCount == numFrames);
         REQUIRE(sum == expSum);
+    }
+
+    SECTION("Frame timestamps")
+    {
+        const uint64_t startTsc = movie->getFrameTimestamp(0);
+        const uint64_t endTsc = movie->getFrameTimestamp(movie->getTimingInfo().getNumTimes() - 1);
+
+        const uint64_t expStartTsc = 38971101006;
+        const uint64_t expEndTsc = 39008813010;
+
+        REQUIRE(startTsc == expStartTsc);
+        REQUIRE(endTsc == expEndTsc);
+
+        for (const auto & i : movie->getTimingInfo().getDroppedFrames())
+        {
+            REQUIRE(movie->getFrameTimestamp(i) == 0);
+        }
     }
     
     isx::CoreShutdown();   

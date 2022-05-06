@@ -70,6 +70,18 @@ TEST_CASE("NVisionMovieFile", "[core]")
         REQUIRE(sum == expSum);   
     }
 
+    SECTION("Frame timestamps")
+    {
+        const uint64_t startTsc = file.readFrameTimestamp(0);
+        const uint64_t endTsc = file.readFrameTimestamp(file.getTimingInfo().getNumTimes() - 1);
+
+        const uint64_t expStartTsc = 215738669569;
+        const uint64_t expEndTsc = 215748637583;
+
+        REQUIRE(startTsc == expStartTsc);
+        REQUIRE(endTsc == expEndTsc);
+    }
+
     // SECTION("Acquisition info")
     // {
     //     // TODO: expose json session metadata from IDAS
@@ -146,6 +158,23 @@ TEST_CASE("NVisionMovieFile-Dropped", "[core]")
         }
         REQUIRE(sumWithDropped == expSum);
         REQUIRE(sumWithoutDropped == expSum);
+    }
+
+    SECTION("Frame timestamps")
+    {
+        const uint64_t startTsc = file.readFrameTimestamp(0);
+        const uint64_t endTsc = file.readFrameTimestamp(file.getTimingInfo().getNumTimes() - 1);
+
+        const uint64_t expStartTsc = 38971101006;
+        const uint64_t expEndTsc = 39008813010;
+
+        REQUIRE(startTsc == expStartTsc);
+        REQUIRE(endTsc == expEndTsc);
+
+        for (const auto & i : file.getTimingInfo().getDroppedFrames())
+        {
+            REQUIRE(file.readFrameTimestamp(i) == 0);
+        }
     }
     
     isx::CoreShutdown();   
