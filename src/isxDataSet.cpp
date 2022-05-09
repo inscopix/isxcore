@@ -29,9 +29,11 @@ void
 addMetadataFromExtraProps(
         isx::DataSet::Metadata & inMetadata,
         std::stringstream & inStream,
-        const std::string & inExtraPropsStr)
+        const std::string & inExtraPropsStr,
+        const isx::DataSet::Type inType)
 {
-    const std::string acqInfoStr = isx::getAcquisitionInfoFromExtraProps(inExtraPropsStr);
+    const std::string acqInfoStr = (inType == isx::DataSet::Type::NVISION_MOVIE) ?
+        isx::getNVisionAcquisitionInfoFromExtraProps(inExtraPropsStr) : isx::getAcquisitionInfoFromExtraProps(inExtraPropsStr);
     const json acqInfo = json::parse(acqInfoStr);
 
     for (json::const_iterator it = acqInfo.cbegin(); it != acqInfo.cend(); ++it)
@@ -369,38 +371,41 @@ DataSet::getMetadata()
             ss.str("");
         }
 
-        ss << m_timingInfo.getCroppedCount();
-        metadata.push_back(std::pair<std::string, std::string>("Number of Cropped Samples", ss.str()));
-        ss.str("");
-
-        if (m_timingInfo.getCroppedCount() > 0)
+        if (m_type != Type::NVISION_MOVIE) // isxb movies currently cannot have cropped or blank samples
         {
-            const IndexRanges_t croppedFrames = m_timingInfo.getCropped();
-            for (size_t c = 0; c < croppedFrames.size(); ++c)
+            ss << m_timingInfo.getCroppedCount();
+            metadata.push_back(std::pair<std::string, std::string>("Number of Cropped Samples", ss.str()));
+            ss.str("");
+
+            if (m_timingInfo.getCroppedCount() > 0)
             {
-                ss << croppedFrames[c];
-                if (c < (croppedFrames.size() - 1))
+                const IndexRanges_t croppedFrames = m_timingInfo.getCropped();
+                for (size_t c = 0; c < croppedFrames.size(); ++c)
                 {
-                    ss << ", ";
+                    ss << croppedFrames[c];
+                    if (c < (croppedFrames.size() - 1))
+                    {
+                        ss << ", ";
+                    }
                 }
+                metadata.push_back(std::pair<std::string, std::string>("Cropped Samples", ss.str()));
+                ss.str("");
             }
-            metadata.push_back(std::pair<std::string, std::string>("Cropped Samples", ss.str()));
+
+            ss << m_timingInfo.getBlankCount();
+            metadata.push_back(std::pair<std::string, std::string>("Number of Blank Samples", ss.str()));
             ss.str("");
-        }
 
-        ss << m_timingInfo.getBlankCount();
-        metadata.push_back(std::pair<std::string, std::string>("Number of Blank Samples", ss.str()));
-        ss.str("");
-
-        if (m_timingInfo.getBlankCount() > 0)
-        {
-            const std::vector<isize_t> blankFrames = m_timingInfo.getBlankFrames();
-            for ( auto & df : blankFrames)
+            if (m_timingInfo.getBlankCount() > 0)
             {
-                ss << df << " ";
+                const std::vector<isize_t> blankFrames = m_timingInfo.getBlankFrames();
+                for ( auto & df : blankFrames)
+                {
+                    ss << df << " ";
+                }
+                metadata.push_back(std::pair<std::string, std::string>("Blank Samples", ss.str()));
+                ss.str("");
             }
-            metadata.push_back(std::pair<std::string, std::string>("Blank Samples", ss.str()));
-            ss.str("");
         }
     }
 
@@ -439,7 +444,7 @@ DataSet::getMetadata()
                 ss.str("");
             }
 
-            addMetadataFromExtraProps(metadata, ss, m_extraProps);
+            addMetadataFromExtraProps(metadata, ss, m_extraProps, m_type);
         }
         catch (const std::exception & inError)
         {
@@ -971,6 +976,108 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
         }
     }
 
+    return acqInfo.dump();
+}
+
+std::string
+getNVisionAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
+{
+    json acqInfo;
+    const json extraProps = json::parse(inExtraPropsStr);
+
+    if (extraProps != nullptr)
+    {
+        verifyJsonKey(extraProps, "cameraName");
+        const auto cameraName = extraProps.at("cameraName").get<std::string>();
+
+        const auto userInterface = extraProps.find("userInterface");
+        if (userInterface != extraProps.end())
+        {
+            const auto animal = userInterface->find("animal");
+            if (animal != userInterface->end() && !animal->empty())
+            {
+                acqInfo["Animal Sex"] = animal->at("sex");
+                acqInfo["Animal Date of Birth"] = animal->at("dob");
+                acqInfo["Animal ID"] = animal->at("id");
+                acqInfo["Animal Species"] = animal->at("species");
+                acqInfo["Animal Weight"] = animal->at("weight");
+                acqInfo["Animal Description"] = animal->at("description");
+            }
+        }
+
+        const auto processingInterface = extraProps.find("processingInterface");
+        if (processingInterface != extraProps.end())
+        {
+            const auto system = processingInterface->find("system");
+            if (system != processingInterface->end())
+            {
+                bool paired = false;
+                const auto behavior = system->find("behavior");
+                if (behavior != system->end())
+                {
+                    paired = behavior->at("paired").get<bool>();
+
+                    const auto behaviorSystem = behavior->find("system");
+                    if (behaviorSystem != behavior->end())
+                    {
+                        acqInfo["Behavior Session Name"] = behaviorSystem->at("sessionName");
+                    }
+
+                    const auto behaviorSoftware = behavior->find("software");
+                    if (behaviorSoftware != behavior->end())
+                    {
+                        acqInfo["Behavior Acquisition SW Version"] = behaviorSoftware->at("behaviorIdas");
+                    }
+                }
+
+                acqInfo["Miniscope Paired"] = paired;
+                if (paired)
+                {
+                    acqInfo["Miniscope Synced"] = behavior->at("synced");
+
+                    const auto miniscope = system->find("miniscope");
+                    if (miniscope != system->end())
+                    {
+                        const auto miniscopeSystem = miniscope->find("system");
+                        if (miniscopeSystem != miniscope->end())
+                        {
+                            acqInfo["Miniscope Session Name"] = miniscopeSystem->at("sessionName");
+                            acqInfo["Miniscope Serial Number"] = miniscopeSystem->at("systemSerial");
+                        }
+
+                        const auto miniscopeSoftware = miniscope->find("software");
+                        if (miniscopeSoftware != miniscope->end())
+                        {
+                            acqInfo["Miniscope Acquisition SW Version"] = miniscopeSoftware->at("miniscopeIdas");
+                        }
+                    }
+                }
+            }
+            
+            const auto camera = processingInterface->find(cameraName);
+            if (camera != processingInterface->end())
+            {
+                acqInfo["Camera Name"] = camera->at("cameraAlias");
+                acqInfo["Camera Serial Number"] = camera->at("cameraSerial");
+
+                const auto sensorParams = camera->find("sensorParams");
+                if (sensorParams != camera->end())
+                {
+                    acqInfo["Camera Brightness"] = sensorParams->at("brightness");
+                    acqInfo["Camera Contrast"] = sensorParams->at("contrast");
+                    acqInfo["Camera Saturation"] = sensorParams->at("saturation");
+                    acqInfo["Camera Gain"] = sensorParams->at("gain");
+                }
+
+                const auto exposure = sensorParams->find("exposure");
+                if (exposure != sensorParams->end() && exposure->at("type") == "manual")
+                {
+                    acqInfo["Camera Exposure Time (ms)"] = exposure->at("value");
+                }
+            }
+        }
+    }
+    
     return acqInfo.dump();
 }
 

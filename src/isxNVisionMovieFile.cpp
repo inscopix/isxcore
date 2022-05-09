@@ -256,10 +256,10 @@ NVisionMovieFile::readMetadataSegment()
 void
 NVisionMovieFile::readSessionSegment()
 {
-	std::string metadataStr;
+	m_extraProperties.clear();
 	m_file.seekg(m_header.m_sessionOffset, std::ios_base::beg);
-	std::getline(m_file, metadataStr, '\0');
-	json metadata = json::parse(metadataStr);
+	std::getline(m_file, m_extraProperties, '\0');
+	json metadata = json::parse(m_extraProperties);
 
 	// verify format of json metadata
 	verifyJsonKey(metadata, "cameraName");
@@ -470,6 +470,12 @@ DataType
 NVisionMovieFile::getDataType() const
 {
 	return m_dataType;
+}
+
+std::string
+NVisionMovieFile::getExtraProperties() const
+{
+	return m_extraProperties;
 }
 
 } // namespace isx

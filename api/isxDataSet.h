@@ -288,6 +288,13 @@ using SpDataSetProperties_t = std::shared_ptr<DataSet::Properties>;
 std::string
 getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr);
 
+/// Get nVision acquisition information from extra properties.
+///
+/// \param  inExtraPropsStr The extra properties JSON string.
+/// \return                 The acquisition info JSON string.
+std::string
+getNVisionAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr);
+
 } // namespace isx
 
 #endif // ISX_DATA_SET_H

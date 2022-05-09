@@ -125,4 +125,10 @@ NVisionMovie::getFrameTimestamp(const isize_t inIndex)
     return m_file->readFrameTimestamp(inIndex);
 }
 
+std::string
+NVisionMovie::getExtraProperties() const
+{
+    return m_file->getExtraProperties();
+}
+
 } // namespace isx

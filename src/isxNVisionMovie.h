@@ -52,6 +52,8 @@ public:
     bool hasFrameTimestamps() const override;
 
     uint64_t getFrameTimestamp(const isize_t inIndex) override;
+    
+    std::string getExtraProperties() const override;
 
 private:
     /// True if the movie file is valid, false otherwise.

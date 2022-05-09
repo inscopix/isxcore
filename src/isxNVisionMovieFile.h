@@ -100,6 +100,11 @@ public:
     DataType
     getDataType() const;
 
+    /// \return The extra properties formatted as a JSON string.
+    ///
+    std::string
+    getExtraProperties() const;
+
     /// Struct representing file header contents
     ///
     struct Header {
@@ -175,6 +180,9 @@ private:
 
     /// The data type of the pixel values.
     DataType m_dataType = DataType::U8;
+
+    /// The extra properties from the session segment.
+    std::string m_extraProperties;
 
     /// The file stream
     std::fstream m_file;
