@@ -207,15 +207,15 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
             // Verify some movie data by computing sum of entire movie
             // Results of codec are slightly different between windows and linux/mac, but images look similar
 #if ISX_OS_WIN32
-            const size_t expSum = 328271;
+            const uint64_t expSum = 10831;
 #else
-            const size_t expSum = 328284;
+            const uint64_t expSum = 10844;
 #endif
-            size_t sum = 0;
+            uint64_t sum = 0;
             for (size_t i = 0; i < expNumTimes; i++)
             {
                 const auto frame = exportedMovie->getFrame(i);
-                isx::ColumnUInt16_t frameCol;
+                arma::Col<uint64_t> frameCol;
                 isx::copyFrameToColumn(frame, frameCol);
                 sum += arma::sum(frameCol);
             }
@@ -315,15 +315,15 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
             // Verify some movie data by computing sum of entire movie
             // Results of codec are slightly different between windows and linux/mac, but images look similar
 #if ISX_OS_WIN32
-            const size_t expSum = 328271;
+            const uint64_t expSum = 10831;
 #else
-            const size_t expSum = 328284;
+            const uint64_t expSum = 10844;
 #endif
-            size_t sum = 0;
+            uint64_t sum = 0;
             for (size_t i = 0; i < expNumTimes; i++)
             {
                 const auto frame = exportedMovie->getFrame(i);
-                isx::ColumnUInt16_t frameCol;
+                arma::Col<uint64_t> frameCol;
                 isx::copyFrameToColumn(frame, frameCol);
                 sum += arma::sum(frameCol);
             }
@@ -378,15 +378,15 @@ TEST_CASE("MovieCompressedAviExportU8Test", "[core][export_mp4]")
         const size_t numFrames = inputMovie->getTimingInfo().getNumTimes();
         // Results of codec are slightly different between windows and linux/mac, but images look similar
 #if ISX_OS_WIN32
-        const size_t expSum = 9690024;
+        const uint64_t expSum = 11685404584;
 #else
-        const size_t expSum = 9718137;
+        const uint64_t expSum = 11685363833;
 #endif
-        size_t sum = 0;
+        uint64_t sum = 0;
         for (size_t i = 0; i < numFrames; i++)
         {
             const auto frame = exportedMovie->getFrame(i);
-            isx::ColumnUInt16_t frameCol;
+            arma::Col<uint64_t> frameCol;
             isx::copyFrameToColumn(frame, frameCol);
             sum += arma::sum(frameCol);
         }

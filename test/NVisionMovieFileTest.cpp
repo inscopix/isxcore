@@ -54,15 +54,15 @@ TEST_CASE("NVisionMovieFile", "[core]")
         const size_t numFrames = file.getTimingInfo().getNumTimes();
         // Results of codec are slightly different between windows and linux/mac, but images look very similar
 #if ISX_OS_WIN32
-        const size_t expSum = 9250722;
+        const uint64_t expSum = 11687268770;
 #else
-        const size_t expSum = 9235061;
+        const uint64_t expSum = 11687253109;
 #endif
-        size_t sum = 0;
+        uint64_t sum = 0;
         for (size_t i = 0; i < numFrames; i++)
         {
             const auto frame = file.readFrame(i);
-            isx::ColumnUInt16_t frameCol;
+            arma::Col<uint64_t> frameCol;
             isx::copyFrameToColumn(frame, frameCol);
             sum += arma::sum(frameCol);
         }
@@ -176,16 +176,16 @@ TEST_CASE("NVisionMovieFile-Dropped", "[core]")
         const size_t numFrames = ti.getNumTimes();
         // Results of codec are slightly different between windows and linux/mac, but images look very similar
 #if ISX_OS_WIN32
-        const size_t expSum = 27293446;
+        const uint64_t expSum = 138002733830;
 #else
-        const size_t expSum = 27386866;
+        const uint64_t expSum = 138002696178;
 #endif
-        size_t sumWithDropped = 0;
-        size_t sumWithoutDropped = 0;
+        uint64_t sumWithDropped = 0;
+        uint64_t sumWithoutDropped = 0;
         for (size_t i = 0; i < numFrames; i++)
         {
             const auto frame = file.readFrame(i);
-            isx::ColumnUInt16_t frameCol;
+            arma::Col<uint64_t> frameCol;
             isx::copyFrameToColumn(frame, frameCol);
             const size_t sum = arma::sum(frameCol); 
             sumWithDropped += sum;

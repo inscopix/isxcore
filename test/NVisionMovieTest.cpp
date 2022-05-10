@@ -101,15 +101,15 @@ TEST_CASE("NVisionMovie", "[core]")
         const size_t numFrames = 10;
         // Results of codec are slightly different between windows and linux/mac, but images look similar
 #if ISX_OS_WIN32
-        const size_t expSum = 403115;
+        const uint64_t expSum = 389351595;
 #else
-        const size_t expSum = 402551;
+        const uint64_t expSum = 389351031;
 #endif
-        size_t sum = 0;
+        uint64_t sum = 0;
         for (size_t i = 0; i < numFrames; i++)
         {
             const auto frame = movie->getFrame(i);
-            isx::ColumnUInt16_t frameCol;
+            arma::Col<uint64_t> frameCol;
             isx::copyFrameToColumn(frame, frameCol);
             sum += arma::sum(frameCol);
         }
@@ -119,13 +119,13 @@ TEST_CASE("NVisionMovie", "[core]")
     SECTION("Async frames")
     {
         std::atomic_int doneCount(0);
-        std::atomic_int sum(0);
+        std::atomic<uint64_t> sum(0);
 
         isx::MovieGetFrameCB_t cb = [&](isx::AsyncTaskResult<isx::SpVideoFrame_t> inAsyncTaskResult)
         {
             REQUIRE(!inAsyncTaskResult.getException());
             const isx::SpVideoFrame_t frame = inAsyncTaskResult.get();
-            isx::ColumnUInt16_t frameCol;
+            arma::Col<uint64_t> frameCol;
             isx::copyFrameToColumn(frame, frameCol);
             sum += arma::sum(frameCol);
             ++doneCount;
@@ -134,9 +134,9 @@ TEST_CASE("NVisionMovie", "[core]")
         const size_t numFrames = 10;
         // Results of codec are slightly different between windows and linux/mac, but images look very similar
 #if ISX_OS_WIN32
-        const size_t expSum = 403115;
+        const uint64_t expSum = 389351595;
 #else
-        const size_t expSum = 402551;
+        const uint64_t expSum = 389351031;
 #endif
         for (size_t i = 0; i < numFrames; i++)
         {
@@ -218,19 +218,19 @@ TEST_CASE("NVisionMovie-Dropped", "[core]")
         const size_t numFrames = 10;
         // Results of codec are slightly different between windows and linux/mac, but images look very similar
 #if ISX_OS_WIN32
-        const size_t expSum = 132126;
+        const uint64_t expSum = 1100566302;
 #else
-        const size_t expSum = 131826;
+        const uint64_t expSum = 1100566002;
 #endif
-        size_t sumWithDropped = 0;
-        size_t sumWithoutDropped = 0;
+        uint64_t sumWithDropped = 0;
+        uint64_t sumWithoutDropped = 0;
         for (size_t i = 0; i < numFrames; i++)
         {
             const size_t index = 180 + i;
             const auto frame = movie->getFrame(index);
-            isx::ColumnUInt16_t frameCol;
+            arma::Col<uint64_t> frameCol;
             isx::copyFrameToColumn(frame, frameCol);
-            const size_t sum = arma::sum(frameCol); 
+            const auto sum = arma::sum(frameCol);
             sumWithDropped += sum;
             
             if (!ti.isDropped(index))
@@ -246,13 +246,13 @@ TEST_CASE("NVisionMovie-Dropped", "[core]")
     SECTION("Async frames")
     {
         std::atomic_int doneCount(0);
-        std::atomic_int sum(0);
+        std::atomic<uint64_t> sum(0);
 
         isx::MovieGetFrameCB_t cb = [&](isx::AsyncTaskResult<isx::SpVideoFrame_t> inAsyncTaskResult)
         {
             REQUIRE(!inAsyncTaskResult.getException());
             const isx::SpVideoFrame_t frame = inAsyncTaskResult.get();
-            isx::ColumnUInt16_t frameCol;
+            arma::Col<uint64_t> frameCol;
             isx::copyFrameToColumn(frame, frameCol);
             sum += arma::sum(frameCol);
             ++doneCount;
@@ -262,9 +262,9 @@ TEST_CASE("NVisionMovie-Dropped", "[core]")
         const size_t numFrames = 10;
         // Results of codec are slightly different between windows and linux/mac, but images look very similar
 #if ISX_OS_WIN32
-        const size_t expSum = 132126;
+        const uint64_t expSum = 1100566302;
 #else
-        const size_t expSum = 131826;
+        const uint64_t expSum = 1100566002;
 #endif
         for (size_t i = 0; i < numFrames; i++)
         {

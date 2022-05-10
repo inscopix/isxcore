@@ -111,6 +111,12 @@ VideoFrame::getPixelsAsF32()
     return m_image.getPixelsAsF32();
 }
 
+uint8_t *
+VideoFrame::getPixelsAsU8()
+{
+    return m_image.getPixelsAsU8();
+}
+
 void
 VideoFrame::moveFrameContent(SpVideoFrame_t inFrame)
 {

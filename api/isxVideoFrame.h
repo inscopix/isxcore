@@ -140,6 +140,17 @@ public:
     float *
     getPixelsAsF32();
 
+    /// Get the address of the first pixel of image data as uint8_t.
+    ///
+    /// This will fail if the underlying data type is not uint8_t.
+    ///
+    /// \return     The address of the first pixel of image data.
+    ///
+    /// \throw  isx::ExceptionDataIO    If the underlying data type is
+    ///                                 not uint8_t.
+    uint8_t *
+    getPixelsAsU8();
+
     /// Move the image of a compatible frame into this and also use
     /// its frame type.
     /// Will fail if the new image does not match the old image's
