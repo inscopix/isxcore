@@ -136,7 +136,7 @@ convertFrameToPacket(AVCodecContext *avcc, AVFrame *avf, AVFormatContext *avFmtC
     av_init_packet(&pkt);
     if (avcodec_receive_packet(avcc, &pkt) < 0)
     {
-        ISX_LOG_INFO("No more encoded packets.");
+        ISX_LOG_DEBUG("No more encoded packets.");
         return 1;
     }
     got_packet = 1;
