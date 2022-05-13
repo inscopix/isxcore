@@ -4,6 +4,7 @@
 #include "isxCellSetFactory.h"
 #include "json.hpp"
 #include <string>
+#include <map>
 
 namespace isx
 {
@@ -1179,6 +1180,30 @@ namespace isx
         json extraProps = getExtraPropertiesJSON(dst);
         extraProps["idps"]["mc_padding"] = value;
         dst->setExtraProperties(extraProps.dump());
+    }
+
+    // Add PCA-ICA auto-estimated parameters to the extra properties metadata
+    inline std::string addPcaIcaMetadata(const std::string extraProperties, const std::map<std::string, int32_t> inEstimatedParams)
+    {
+        using json = nlohmann::json;
+        json extraProps = json::parse(extraProperties);
+        for (auto const& estimatedParam : inEstimatedParams)
+        {
+            extraProps["idps"]["pcaica"]["estimated"][estimatedParam.first] = estimatedParam.second;
+        }
+        return extraProps.dump();
+    }
+
+    // Add CNMFe auto-estimated parameters to the extra properties metadata
+    inline std::string addCnmfeMetadata(const std::string extraProperties, const std::map<std::string, int32_t> inEstimatedParams)
+    {
+        using json = nlohmann::json;
+        json extraProps = json::parse(extraProperties);
+        for (auto const& estimatedParam : inEstimatedParams)
+        {
+            extraProps["idps"]["cnmfe"]["estimated"][estimatedParam.first] = estimatedParam.second;
+        }
+        return extraProps.dump();
     }
 
     // Multicolor metadata
