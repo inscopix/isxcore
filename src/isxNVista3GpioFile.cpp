@@ -544,6 +544,11 @@ NVista3GpioFile::parse()
             m_file.seekg(sessionDataOffset, m_file.beg);
             json extraProps;
             m_file >> extraProps;
+
+            // save first tsc value in metadata, which can be used
+            // for synchronization purposes in downstream analysis
+            extraProps["firstTsc"] = firstTime; 
+            
             extraPropsStr = extraProps.dump();
             adClockInHz = getAdClockInHz(extraProps);
 
