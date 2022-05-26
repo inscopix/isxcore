@@ -106,9 +106,13 @@ struct MovieCompressedAviExporterOutputParams : MovieExporterOutputParams
 /// \param inParams parameters for this Movie CompressedAvi export
 /// \param inOutputParams a shared pointer for output parameters
 /// \param inCheckInCB check-in callback function that is periodically invoked with progress and to tell algo whether to cancel / abort
+/// \param inProgressAllocation amount of progress to allocate for this operation
+/// \param inProgressStart amount of progress to start with for this operation 
 AsyncTaskStatus runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, 
                                               std::shared_ptr<MovieCompressedAviExporterOutputParams> inOutputParams = nullptr, 
-                                              AsyncCheckInCB_t inCheckInCB = [](float) {return false; });
+                                              AsyncCheckInCB_t inCheckInCB = [](float) {return false; },
+                                              const float inProgressAllocation = 1.0f,
+                                              const float inProgressStart = 0.0f);
 
 } // namespace isx
 

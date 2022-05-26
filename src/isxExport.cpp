@@ -327,7 +327,7 @@ bool writeTraces(
 }
 
 bool 
-toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const bool inWriteInvalidFrames, const isize_t inMaxFrameIndex, AsyncCheckInCB_t & inCheckInCB)
+toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, const bool inWriteInvalidFrames, const isize_t inMaxFrameIndex, AsyncCheckInCB_t & inCheckInCB, const float inProgressAllocation, const float inProgressStart)
 {
     const std::string dirname = getDirName(inFileName);
     const std::string basename = getBaseName(inFileName);
@@ -372,7 +372,7 @@ toTiff(const std::string & inFileName, const std::vector<SpMovie_t> & inMovies, 
                 frameIndex++;
             }
 
-            cancelled = inCheckInCB(float(++writtenFrames) / float(numFrames));
+            cancelled = inCheckInCB((inProgressStart + float(++writtenFrames) / float(numFrames)) * inProgressAllocation);
             if (cancelled)
             {
                 break;

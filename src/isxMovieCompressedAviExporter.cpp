@@ -343,7 +343,7 @@ postLoop(AVFormatContext *avFmtCnxt, VideoOutput & vOut)
 }
 
 bool
-compressedAVIFindMinMax(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & outMinVal, float & outMaxVal, float progressBarStart, float progressBarEnd)
+compressedAVIFindMinMax(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & outMinVal, float & outMaxVal, const float inProgressAllocation, const float inProgressStart)
 {
     outMinVal = std::numeric_limits<float>::max();
     outMaxVal = -std::numeric_limits<float>::max();
@@ -372,7 +372,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<isx::S
                 outMaxVal = std::max(outMaxVal, maxValLocal);
             }
 
-            cancelled = inCheckInCB(progressBarStart + (progressBarEnd - progressBarStart)*float(++writtenFrames) / float(numFrames));
+            cancelled = inCheckInCB(inProgressStart + (float(++writtenFrames) / float(numFrames)) * inProgressAllocation);
             if (cancelled)
             {
                 break;
@@ -387,7 +387,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<isx::S
 }
 
 bool
-compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, float progressBarStart, float progressBarEnd, const isx::isize_t inBitRate, const bool inWriteInvalidFrames)
+compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, const float inProgressAllocation, const float inProgressStart, const isx::isize_t inBitRate, const bool inWriteInvalidFrames)
 {
     int tInd = 0;
     bool cancelled = false;
@@ -439,7 +439,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
                 tInd++;
             }
 
-            cancelled = inCheckInCB(progressBarStart + (progressBarEnd - progressBarStart)*float(++writtenFrames) / float(numFrames));
+            cancelled = inCheckInCB(inProgressStart + (float(++writtenFrames) / float(numFrames)) * inProgressAllocation);
             if (cancelled)
             {
                 break;
@@ -459,21 +459,26 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
 }
 
 bool
-toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, const isx::isize_t inBitRate, const bool inWriteInvalidFrames)
+toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, const isx::isize_t inBitRate, const bool inWriteInvalidFrames, const float inProgressAllocation, const float inProgressStart)
 {
     bool cancelled;
     float minVal = -1;
     float maxVal = -1;
-    float progress = 0.0f;
+    float progressStart = inProgressStart;
+    float progressAllocation = inProgressAllocation;
 
     if (inMovies.front()->getDataType() != isx::DataType::U8)
     {
-        cancelled = compressedAVIFindMinMax(inFileName, inMovies, inCheckInCB, minVal, maxVal, 0.0f, 0.1f);
+        // allocate 10% of this operation to finding the min/max
+        progressAllocation = inProgressAllocation * 0.1f;
+        cancelled = compressedAVIFindMinMax(inFileName, inMovies, inCheckInCB, minVal, maxVal, progressAllocation, progressStart);
         if (cancelled) return true;
-        progress += 0.1f;
+
+        progressStart += progressAllocation;
+        progressAllocation = inProgressAllocation * 0.9f;
     }
 
-    cancelled = compressedAVIOutputMovie(inFileName, inMovies, inCheckInCB, minVal, maxVal, progress, 1.0f, inBitRate, inWriteInvalidFrames);
+    cancelled = compressedAVIOutputMovie(inFileName, inMovies, inCheckInCB, minVal, maxVal, progressAllocation, progressStart, inBitRate, inWriteInvalidFrames);
     if (cancelled) return true;
     
     return false;
@@ -593,7 +598,7 @@ MovieCompressedAviExporterParams::getBitRateFraction() const
 }
 
 AsyncTaskStatus 
-runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::shared_ptr<MovieCompressedAviExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
+runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::shared_ptr<MovieCompressedAviExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB, const float inProgressAllocation, const float inProgressStart)
 {
     if (inParams.m_filename.empty())
     {
@@ -606,7 +611,7 @@ runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::sh
     // validate inputs
     if (srcs.empty())
     {
-        inCheckInCB(1.f);
+        inCheckInCB(inProgressStart + inProgressAllocation);
         return AsyncTaskStatus::COMPLETE;
     }
 
@@ -625,7 +630,7 @@ runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::sh
 
     try
     {
-        cancelled = toCompressedAVI(inParams.m_filename, inParams.m_srcs, inCheckInCB, inParams.getBitRate(), inParams.m_writeInvalidFrames);
+        cancelled = toCompressedAVI(inParams.m_filename, inParams.m_srcs, inCheckInCB, inParams.getBitRate(), inParams.m_writeInvalidFrames, inProgressAllocation, inProgressStart);
     }
     catch (...)
     {
@@ -643,7 +648,7 @@ runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::sh
         return AsyncTaskStatus::CANCELLED;
     }
 
-    inCheckInCB(1.f);
+    inCheckInCB(inProgressStart + inProgressAllocation);
     return AsyncTaskStatus::COMPLETE;
 }
 

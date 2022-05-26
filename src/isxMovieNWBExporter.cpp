@@ -297,7 +297,7 @@ namespace
     }
 
     bool
-    writeMovieData(H5::Group & inImageSeriesGroup, SpMovie_t & inMovie, double inStartTimeD, AsyncCheckInCB_t & inCheckInCB, isize_t inTotalNumFrames, isize_t & inOutExportedNumFrames)
+    writeMovieData(H5::Group & inImageSeriesGroup, SpMovie_t & inMovie, double inStartTimeD, AsyncCheckInCB_t & inCheckInCB, isize_t inTotalNumFrames, isize_t & inOutExportedNumFrames, const float inProgressAllocation, const float inProgressStart)
     {
         auto cancelled = false;
         auto & is = inImageSeriesGroup;
@@ -379,7 +379,7 @@ namespace
                 ++framesWritten;
             }
             ++inOutExportedNumFrames;
-            cancelled = inCheckInCB(float(inOutExportedNumFrames) / float(inTotalNumFrames));
+            cancelled = inCheckInCB(inProgressStart + (float(inOutExportedNumFrames) / float(inTotalNumFrames)) * inProgressAllocation);
             if (cancelled)
             {
                 break;
@@ -394,7 +394,7 @@ namespace
     }
         
     bool
-    writeAnalysisImageSeries(H5::H5File & inH5File, MovieNWBExporterParams & inParams, AsyncCheckInCB_t & inCheckInCB)
+    writeAnalysisImageSeries(H5::H5File & inH5File, MovieNWBExporterParams & inParams, AsyncCheckInCB_t & inCheckInCB, const float inProgressAllocation, const float inProgressStart)
     {
         auto cancelled = false;
 
@@ -459,7 +459,7 @@ namespace
             writeH5Attribute(is, S_comments, inParams.m_comments.c_str());
             writeH5Attribute(is, S_description, inParams.m_description.c_str());
 
-            cancelled = writeMovieData(is, m, startTimeD, inCheckInCB, totalNumFrames, exportedNumFrames);
+            cancelled = writeMovieData(is, m, startTimeD, inCheckInCB, totalNumFrames, exportedNumFrames, inProgressAllocation, inProgressStart);
             if (cancelled)
             {
                 break;
@@ -471,7 +471,7 @@ namespace
 } // namespace
 
 AsyncTaskStatus 
-runMovieNWBExporter(MovieNWBExporterParams inParams, std::shared_ptr<MovieNWBExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
+runMovieNWBExporter(MovieNWBExporterParams inParams, std::shared_ptr<MovieNWBExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB, const float inProgressAllocation, const float inProgressStart)
 {
     bool cancelled = false;
     auto & srcs = inParams.m_srcs;
@@ -479,7 +479,7 @@ runMovieNWBExporter(MovieNWBExporterParams inParams, std::shared_ptr<MovieNWBExp
     // validate inputs
     if (srcs.empty())
     {
-        inCheckInCB(1.f);
+        inCheckInCB(inProgressStart + inProgressAllocation);
         return AsyncTaskStatus::COMPLETE;
     }
 
@@ -500,7 +500,7 @@ runMovieNWBExporter(MovieNWBExporterParams inParams, std::shared_ptr<MovieNWBExp
 
             writeTopLevelGroups(h5File, inParams);
             writeTopLevelDataSets(h5File, inParams);
-            cancelled = writeAnalysisImageSeries(h5File, inParams, inCheckInCB);
+            cancelled = writeAnalysisImageSeries(h5File, inParams, inCheckInCB, inProgressAllocation, inProgressStart);
             
             h5File.close();
         }
@@ -521,7 +521,7 @@ runMovieNWBExporter(MovieNWBExporterParams inParams, std::shared_ptr<MovieNWBExp
         return AsyncTaskStatus::CANCELLED;
     }
 
-    inCheckInCB(1.f);
+    inCheckInCB(inProgressStart + inProgressAllocation);
     return AsyncTaskStatus::COMPLETE;
 }
 

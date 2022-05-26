@@ -89,7 +89,7 @@ MovieTiffExporterParams::getOutputFilePaths() const
 }
 
 AsyncTaskStatus 
-runMovieTiffExporter(MovieTiffExporterParams inParams, std::shared_ptr<MovieTiffExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
+runMovieTiffExporter(MovieTiffExporterParams inParams, std::shared_ptr<MovieTiffExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB, const float inProgressAllocation, const float inProgressStart)
 {
     bool cancelled = false;
     auto & srcs = inParams.m_srcs;
@@ -97,7 +97,7 @@ runMovieTiffExporter(MovieTiffExporterParams inParams, std::shared_ptr<MovieTiff
     // validate inputs
     if (srcs.empty())
     {
-        inCheckInCB(1.f);
+        inCheckInCB(inProgressStart + inProgressAllocation);
         return AsyncTaskStatus::COMPLETE;
     }
 
@@ -123,7 +123,7 @@ runMovieTiffExporter(MovieTiffExporterParams inParams, std::shared_ptr<MovieTiff
             }
             else
             {
-                cancelled = toTiff(inParams.m_filename, inParams.m_srcs, inParams.m_writeInvalidFrames, inParams.m_numFramesInMovie, inCheckInCB);
+                cancelled = toTiff(inParams.m_filename, inParams.m_srcs, inParams.m_writeInvalidFrames, inParams.m_numFramesInMovie, inCheckInCB, inProgressAllocation, inProgressStart);
             }
         }
         catch (...)
@@ -143,7 +143,7 @@ runMovieTiffExporter(MovieTiffExporterParams inParams, std::shared_ptr<MovieTiff
         return AsyncTaskStatus::CANCELLED;
     }
 
-    inCheckInCB(1.f);
+    inCheckInCB(inProgressStart + inProgressAllocation);
     return AsyncTaskStatus::COMPLETE;
 }
 

@@ -109,12 +109,16 @@ void toTiff(
 /// \param inWriteInvalidFrames Flag to replace dropped frames with zero-frames.
 /// \param inMaxFrameIndex  The frames number in one movie part.
 /// \param inCheckInCB      check-in callback function that is periodically invoked with progress and to tell algo whether to cancel / abort.
+/// \param inProgressAllocation amount of progress to allocate for this operation
+/// \param inProgressStart amount of progress to start with for this operation 
 bool toTiff(
         const std::string & inFileName,
         const std::vector<SpMovie_t> & inMovies,
         const bool inWriteInvalidFrames,
         const isize_t inMaxFrameIndex,
-        AsyncCheckInCB_t & inCheckInCB);
+        AsyncCheckInCB_t & inCheckInCB,
+        const float inProgressAllocation = 1.0f,
+        const float inProgressStart = 0.0f);
 
 /// Export an image to PNG.
 /// \param inFileName   The filename for the output file.
