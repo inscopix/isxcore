@@ -4,6 +4,7 @@
 #include "isxCore.h"
 #include "isxAsyncTaskHandle.h"
 #include "isxException.h"
+#include "isxExport.h"
 
 #include <memory>
 
@@ -117,59 +118,73 @@ struct MovieExporterParams
     constexpr static double s_defaultBitRateFraction = 0.1;
 };
 
+/// struct that defines MovieTimestampExporterParams's input data, output data and input parameters
+struct MovieTimestampExporterParams
+{
+    /// convenience constructor to fill struct members in one shot
+    /// \param inOutputFilename       filename for csv output file
+    /// \param inFormat               format of timestamps
+    MovieTimestampExporterParams(
+        const std::string & inOutputFilename,
+        const WriteTimeRelativeTo inFormat)
+    : m_outputFilename(inOutputFilename)
+    , m_format(inFormat)
+    {}
+
+    /// \param inSources the input movies to be exported
+    void 
+    setSources(const std::vector<SpMovie_t> & inSources);
+
+    /// \return     A string representation of these parameters.
+    ///
+    std::string
+    toString() const;
+
+    /// \return The input file paths.
+    ///
+    std::vector<std::string> getInputFilePaths() const;
+
+    /// \return The output file paths.
+    ///
+    std::vector<std::string> getOutputFilePaths() const;
+
+    std::vector<SpMovie_t> m_srcs;                          ///< input movies
+    std::string              m_outputFilename;              ///< name of csv output file for timestamps
+    WriteTimeRelativeTo              m_format;       ///< export format for timestamps
+};
+
 /// Wrapper for movie export params.
 /// Needed for triggering export through the AsyncProcessor 
 struct MovieExporterParamsWrapper
 {
-    /// A pointer to the parameters
+    /// A pointer to the mpvie frame export parameters
     std::shared_ptr<MovieExporterParams> m_params;
 
+    /// A pointer to the movie timestamp export parameters
+    std::shared_ptr<MovieTimestampExporterParams> m_timestampParams;
+
     /// \return export operation name to display to user
-    inline
-    std::string getOpName()
-    {
-        return m_params->getOpName();
-    }
+    std::string getOpName();
 
     /// \return The string representation of these parameters.
-    inline
-    std::string toString() const
-    {
-        return m_params->toString();
-    }
+    std::string toString() const;
 
     /// \param inFileName the name of the output file for the export operation
-    inline
     void
-    setOutputFileName(const std::string & inFileName)
-    {
-        m_params->setOutputFileName(inFileName);
-    }
+    setOutputFileName(const std::string & inFileName);
 
     /// \param inSources the input movies to be exported
-    inline
     void 
-    setSources(const std::vector<SpMovie_t> & inSources)
-    {
-        m_params->setSources(inSources);
-    }
+    setSources(const std::vector<SpMovie_t> & inSources);
 
     /// \param inWriteDroppedAndCropped the flag specifies whether invalid frames should be written as zero-frames or not
-    inline
     void
-    setWriteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped)
-    {
-        m_params->setWriteDroppedAndCroppedParameter(inWriteDroppedAndCropped);
-    }
+    setWriteDroppedAndCroppedParameter(const bool inWriteDroppedAndCropped);
 
     /// \param  inBitRateFraction    The compression quality in (0, 1]. This will only be used with
     ///                                 exporters that allow lossy compression.
-    inline
     void
-    setBitRateFraction(const double inBitRateFraction)
-    {
-        m_params->setBitRateFraction(inBitRateFraction);
-    }
+    setBitRateFraction(const double inBitRateFraction);
 
     /// Set additional information to be saved in the output file
     /// \param inIdentifierBase         identifer base used for creating a unique ID (eg. concatenated lab name, experimentalist, or a hash of
@@ -182,7 +197,6 @@ struct MovieExporterParamsWrapper
     /// \param inInstitution            Institution(s) where experiment was performed
     /// \param inLab                    Lab where experiment was performed
     /// \param inSessionId              Lab-specific ID for the session.
-    inline
     void
     setAdditionalInfo(
         const std::string & inIdentifierBase,
@@ -193,33 +207,15 @@ struct MovieExporterParamsWrapper
         const std::string & inExperimenter = std::string(),
         const std::string & inInstitution = std::string(),
         const std::string & inLab = std::string(),
-        const std::string & inSessionId = std::string())
-    {
-        m_params->setAdditionalInfo(
-            inIdentifierBase, 
-            inSessionDescription, 
-            inComments, 
-            inDescription, 
-            inExperimentDescription, 
-            inExperimenter,
-            inInstitution,
-            inLab, 
-            inSessionId);
-    }
+        const std::string & inSessionId = std::string());
 
     /// \return The input file paths.
     ///
-    std::vector<std::string> getInputFilePaths() const
-    {
-        return m_params->getInputFilePaths();
-    }
+    std::vector<std::string> getInputFilePaths() const;
 
     /// \return The output file paths.
     ///
-    std::vector<std::string> getOutputFilePaths() const
-    {
-        return m_params->getOutputFilePaths();
-    }
+    std::vector<std::string> getOutputFilePaths() const;
 };
 
 /// Factory method for export parameters
@@ -233,6 +229,18 @@ struct MovieExporterOutputParams
 {
     MovieExporterParams::Type m_type;   ///< The type of file that was exported.
 };
+
+
+/// Runs MovieTimestampExport
+/// \param inParams parameters for this Movie timestamp export
+/// \param inCheckInCB check-in callback function that is periodically invoked with progress and to tell algo whether to cancel / abort
+/// \param inProgressAllocation amount of progress to allocate for this operation
+/// \param inProgressStart amount of progress to start with for this operation 
+AsyncTaskStatus
+runMovieTimestampExport(const MovieTimestampExporterParams inParams,
+                        AsyncCheckInCB_t inCheckInCB = [](float) {return false; },
+                        const float inProgressAllocation = 1.0f,
+                        const float inProgressStart = 0.0f);
 
 /// Runs MovieExport
 /// \param inParams parameters for this Movie export

@@ -446,3 +446,192 @@ TEST_CASE("MovieExportTest", "[core]")
         std::remove(fn.c_str());
     }
 }
+
+TEST_CASE("MovieTimestampExportTest", "[core]")
+{
+    isx::CoreInitialize();
+
+    const std::string outputFilename = g_resources["unitTestDataPath"] + "/test.csv";
+
+    SECTION("isxd movie with no frame timestamps")
+    {
+        const std::string movieFilename = g_resources["unitTestDataPath"] + "/cnmfe-cpp/movie_128x128x1000.isxd";
+        const isx::WriteTimeRelativeTo format = isx::WriteTimeRelativeTo::TSC;
+        isx::MovieTimestampExporterParams params(outputFilename, format);
+        params.m_srcs = {isx::readMovie(movieFilename)};
+
+        ISX_REQUIRE_EXCEPTION(
+            isx::runMovieTimestampExport(params),
+            isx::ExceptionUserInput, "Input movie does not have frame timestamps stored in file.");
+    }
+
+    SECTION("invalid isxd movie series")
+    {
+        const std::vector<std::string> movieFilenames = {
+            g_resources["unitTestDataPath"] + "/baseplate/2021-06-28-23-45-49_video_sched_0_probe_custom.isxd",
+            g_resources["unitTestDataPath"] + "/baseplate/2021-06-28-23-34-09_video_sched_0_probe_none.isxd",
+        };
+        const isx::WriteTimeRelativeTo format = isx::WriteTimeRelativeTo::TSC;
+        isx::MovieTimestampExporterParams params(outputFilename, format);
+        params.m_srcs = {isx::readMovie(movieFilenames[0]), isx::readMovie(movieFilenames[1])};
+
+        ISX_REQUIRE_EXCEPTION(
+            isx::runMovieTimestampExport(params),
+            isx::ExceptionSeries, "Members of series are not ordered in time.");
+    }
+
+    SECTION("isxd movie series with frame timestamps")
+    {
+        const std::vector<std::string> movieFilenames = {
+            g_resources["unitTestDataPath"] + "/baseplate/2021-06-28-23-34-09_video_sched_0_probe_none.isxd",
+            g_resources["unitTestDataPath"] + "/baseplate/2021-06-28-23-45-49_video_sched_0_probe_custom.isxd",
+        };
+        const isx::WriteTimeRelativeTo format = isx::WriteTimeRelativeTo::TSC;
+        isx::MovieTimestampExporterParams params(outputFilename, format);
+        params.m_srcs = {isx::readMovie(movieFilenames[0]), isx::readMovie(movieFilenames[1])};
+
+        const auto status = isx::runMovieTimestampExport(params);
+        REQUIRE(status == isx::AsyncTaskStatus::COMPLETE);
+
+        std::ifstream strm(outputFilename);
+        std::unique_ptr<char[]> buf = nullptr;
+
+        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (us)";
+        buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
+        strm.getline(buf.get(), expectedHeader.size() + 1);
+        const std::string actualHeader(buf.get());
+        REQUIRE(actualHeader == expectedHeader);
+
+        const std::string expectedFirstLine = "0,0,0,4170546756640";
+        buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
+        strm.getline(buf.get(), expectedFirstLine.size() + 1);
+        const std::string actualFirstLine(buf.get());
+        REQUIRE(actualFirstLine == expectedFirstLine);
+
+        const std::string expectedLastLine = "53,1,26,4171250265074";
+#if ISX_OS_WIN32
+        strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
+#else
+        strm.seekg(-int64_t(expectedLastLine.size() + 1), std::ios_base::end);
+#endif
+        buf = std::unique_ptr<char[]>(new char[expectedLastLine.size() + 1]);
+        strm.getline(buf.get(), expectedLastLine.size() + 1);
+        const std::string actualLastLine(buf.get());
+        REQUIRE(actualLastLine == expectedLastLine);
+    }
+
+    SECTION("isxb movie")
+    {
+        const std::string movieFilename = g_resources["unitTestDataPath"] + "/nVision/20220412-200447-camera-100.isxb";
+        const isx::WriteTimeRelativeTo format = isx::WriteTimeRelativeTo::TSC;
+        isx::MovieTimestampExporterParams params(outputFilename, format);
+        params.m_srcs = {isx::readMovie(movieFilename)};
+
+        const auto status = isx::runMovieTimestampExport(params);
+        REQUIRE(status == isx::AsyncTaskStatus::COMPLETE);
+
+        std::ifstream strm(outputFilename);
+        std::unique_ptr<char[]> buf = nullptr;
+
+        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (us)";
+        buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
+        strm.getline(buf.get(), expectedHeader.size() + 1);
+        const std::string actualHeader(buf.get());
+        REQUIRE(actualHeader == expectedHeader);
+
+        const std::string expectedFirstLine = "0,0,0,115829025489";
+        buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
+        strm.getline(buf.get(), expectedFirstLine.size() + 1);
+        const std::string actualFirstLine(buf.get());
+        REQUIRE(actualFirstLine == expectedFirstLine);
+
+        const std::string expectedLastLine = "112,0,112,115832757521";
+#if ISX_OS_WIN32
+        strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
+#else
+        strm.seekg(-int64_t(expectedLastLine.size() + 1), std::ios_base::end);
+#endif
+        buf = std::unique_ptr<char[]>(new char[expectedLastLine.size() + 1]);
+        strm.getline(buf.get(), expectedLastLine.size() + 1);
+        const std::string actualLastLine(buf.get());
+        REQUIRE(actualLastLine == expectedLastLine);
+    }
+
+    SECTION("unix timestamps")
+    {
+        const std::string movieFilename = g_resources["unitTestDataPath"] + "/nVision/20220412-200447-camera-100.isxb";
+        const isx::WriteTimeRelativeTo format = isx::WriteTimeRelativeTo::UNIX_EPOCH;
+        isx::MovieTimestampExporterParams params(outputFilename, format);
+        params.m_srcs = {isx::readMovie(movieFilename)};
+
+        const auto status = isx::runMovieTimestampExport(params);
+        REQUIRE(status == isx::AsyncTaskStatus::COMPLETE);
+
+        std::ifstream strm(outputFilename);
+        std::unique_ptr<char[]> buf = nullptr;
+
+        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (s)";
+        buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
+        strm.getline(buf.get(), expectedHeader.size() + 1);
+        const std::string actualHeader(buf.get());
+        REQUIRE(actualHeader == expectedHeader);
+
+        const std::string expectedFirstLine = "0,0,0,1649819290.471000";
+        buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
+        strm.getline(buf.get(), expectedFirstLine.size() + 1);
+        const std::string actualFirstLine(buf.get());
+        REQUIRE(actualFirstLine == expectedFirstLine);
+
+        const std::string expectedLastLine = "112,0,112,1649819294.203032";
+#if ISX_OS_WIN32
+        strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
+#else
+        strm.seekg(-int64_t(expectedLastLine.size() + 1), std::ios_base::end);
+#endif
+        buf = std::unique_ptr<char[]>(new char[expectedLastLine.size() + 1]);
+        strm.getline(buf.get(), expectedLastLine.size() + 1);
+        const std::string actualLastLine(buf.get());
+        REQUIRE(actualLastLine == expectedLastLine);        
+    }
+
+    SECTION("relative timestamps")
+    {
+        const std::string movieFilename = g_resources["unitTestDataPath"] + "/nVision/20220412-200447-camera-100.isxb";
+        const isx::WriteTimeRelativeTo format = isx::WriteTimeRelativeTo::FIRST_DATA_ITEM;
+        isx::MovieTimestampExporterParams params(outputFilename, format);
+        params.m_srcs = {isx::readMovie(movieFilename)};
+
+        const auto status = isx::runMovieTimestampExport(params);
+        REQUIRE(status == isx::AsyncTaskStatus::COMPLETE);
+
+        std::ifstream strm(outputFilename);
+        std::unique_ptr<char[]> buf = nullptr;
+
+        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (s)";
+        buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
+        strm.getline(buf.get(), expectedHeader.size() + 1);
+        const std::string actualHeader(buf.get());
+        REQUIRE(actualHeader == expectedHeader);
+
+        const std::string expectedFirstLine = "0,0,0,0.000000";
+        buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
+        strm.getline(buf.get(), expectedFirstLine.size() + 1);
+        const std::string actualFirstLine(buf.get());
+        REQUIRE(actualFirstLine == expectedFirstLine);
+
+        const std::string expectedLastLine = "112,0,112,3.732032";
+#if ISX_OS_WIN32
+        strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
+#else
+        strm.seekg(-int64_t(expectedLastLine.size() + 1), std::ios_base::end);
+#endif
+        buf = std::unique_ptr<char[]>(new char[expectedLastLine.size() + 1]);
+        strm.getline(buf.get(), expectedLastLine.size() + 1);
+        const std::string actualLastLine(buf.get());
+        REQUIRE(actualLastLine == expectedLastLine);    
+    }
+
+    isx::CoreShutdown();
+    
+    std::remove(outputFilename.c_str());
+}

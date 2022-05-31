@@ -19,7 +19,8 @@ class Time;
 enum class WriteTimeRelativeTo
 {
     FIRST_DATA_ITEM,    ///< write time stamps relative to start time of data set
-    UNIX_EPOCH          ///< write time stamps relative to unix epoch
+    UNIX_EPOCH,         ///< write time stamps relative to unix epoch
+    TSC                 ///< write time stamps relative to a hardware counter from an acquisition box
 };
 /// \endcond doxygen chokes on enum class inside of namespace
 
