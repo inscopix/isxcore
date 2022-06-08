@@ -293,7 +293,12 @@ SpVideoFrame_t
 NVisionMovieFile::readFrame(isize_t inFrameNumber)
 {
 	const TimingInfo & ti = getTimingInfo();
-	
+
+	if (inFrameNumber >= ti.getNumTimes())
+	{
+		ISX_THROW(ExceptionUserInput, "Failed to read frame from file. Index is out of bounds.");
+	}
+
 	if (ti.isDropped(inFrameNumber))
 	{
 		SpVideoFrame_t frame = makeVideoFrame(inFrameNumber);
@@ -350,6 +355,11 @@ uint64_t
 NVisionMovieFile::readFrameTimestamp(const isize_t inFrameNumber)
 {
 	const TimingInfo & ti = getTimingInfo();
+
+	if (inFrameNumber >= ti.getNumTimes())
+	{
+		ISX_THROW(ExceptionUserInput, "Failed to read frame timestamp from file. Index is out of bounds.");
+	}
 
 	if (ti.isIndexValid(inFrameNumber))
 	{

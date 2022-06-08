@@ -81,6 +81,20 @@ TEST_CASE("NVisionMovieFile", "[core]")
         REQUIRE(endTsc == expEndTsc);
     }
 
+    SECTION("Frame out of bounds")
+    {
+        const size_t numFrames = file.getTimingInfo().getNumTimes();
+
+        ISX_REQUIRE_EXCEPTION(
+            file.readFrame(numFrames),
+            isx::ExceptionUserInput, "Failed to read frame from file. Index is out of bounds.");
+        
+
+        ISX_REQUIRE_EXCEPTION(
+            file.readFrameTimestamp(numFrames),
+            isx::ExceptionUserInput, "Failed to read frame timestamp from file. Index is out of bounds.");
+    }
+
     SECTION("Acquisition info")
     {
         using json = nlohmann::json;
