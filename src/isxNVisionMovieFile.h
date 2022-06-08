@@ -202,7 +202,11 @@ private:
     /// Index of the first video stream in the container
     int                         m_videoStreamIndex = 0;
 
+    /// Vector of frame timestamps extracted from the per-frame metadata section of the file
     std::vector<uint64_t> m_frameTimestamps;
+
+    /// Index of the previous frame that was read from the file
+    size_t m_previousFrameNumber;
 };
 
 } // namespace isx

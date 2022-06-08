@@ -310,15 +310,9 @@ NVisionMovieFile::readFrame(isize_t inFrameNumber)
 	const size_t frameNumber = ti.timeIdxToRecordedIdx(inFrameNumber);
 	ISX_NVISION_MOVIE_LOG_DEBUG("Input frame number, actual frame number on disk: ", inFrameNumber, " ", frameNumber);
 
-	const int64_t seekPts = frameToPts(m_formatCtx->streams[m_videoStreamIndex], frameNumber);
-	ISX_NVISION_MOVIE_LOG_DEBUG("Seek pts: ", seekPts);
-
-	int avRetCode = av_seek_frame(m_formatCtx, m_videoStreamIndex, seekPts, AVSEEK_FLAG_ANY);
-	if (avRetCode < 0)
-	{
-		ISX_THROW(isx::ExceptionFileIO,
-			"Failed to seek to frame from movie file ( ", m_fileName, ") with ffmpeg error message: ", av_err2str(avRetCode));
-	}
+	// Compute pts based on requested frame number
+	const int64_t requestedPts = frameToPts(m_formatCtx->streams[m_videoStreamIndex], frameNumber);
+	ISX_NVISION_MOVIE_LOG_DEBUG("Requested pts: ", requestedPts);
 
 	SpVideoFrame_t frame;
 	AVPacket * pPacket = av_packet_alloc();
@@ -328,19 +322,90 @@ NVisionMovieFile::readFrame(isize_t inFrameNumber)
 			"Failed to allocated memory for AVPacket");
 	}
 
-	// Fill packet with data from stream
-	while (av_read_frame(m_formatCtx, pPacket) >= 0)
+	// Seeking to a frame with a specified pts is not guaranteed using the libavcodec API
+	// This is known to occur when seeking near the end of a long movie and then seeking backwards to a random frame earlier in the movie
+	// Sometimes multiple seek attempts are necessary in order to find the packet in the stream with the requested pts
+	int64_t pts = AV_NOPTS_VALUE;
+	int seekFlags = 0;
+	int64_t seekPts = requestedPts;
+	size_t seekFrameNumber = frameNumber;
+	size_t numReads = 0;
+	while (pts != requestedPts)
 	{
-		// Decode packet if it's the video stream
-		if (pPacket->stream_index == m_videoStreamIndex)
+		// If the requested frame is exactly one frame after the previous requested frame,
+		// then the requested frame can be read directly from the stream without seeking
+		if (frameNumber != (m_previousFrameNumber + 1))
 		{
-			ISX_NVISION_MOVIE_LOG_DEBUG("Found packet with pts: ", pPacket->pts);
-			frame = decodePacket(inFrameNumber, pPacket);
-			break;
+			// If the previous requested frame occurs after the requested frame, seek backwards
+			if (m_previousFrameNumber > frameNumber)
+			{
+				seekFlags = AVSEEK_FLAG_BACKWARD;
+			}
+
+			int avRetCode = av_seek_frame(m_formatCtx, m_videoStreamIndex, seekPts, seekFlags);
+			avcodec_flush_buffers(m_videoCodecCtx);
+			if (avRetCode < 0)
+			{
+				ISX_THROW(isx::ExceptionFileIO,
+					"Failed to seek to frame ", frameNumber, " from movie file ( ", m_fileName, ") with ffmpeg error message: ", av_err2str(avRetCode));
+			}
 		}
 
-		av_packet_unref(pPacket);
+		// Read next frame in stream
+		while (av_read_frame(m_formatCtx, pPacket) >= 0)
+		{
+			// Check if packet belongs to video stream
+			if (pPacket->stream_index == m_videoStreamIndex)
+			{
+				numReads++;
+				pts = pPacket->pts;
+				ISX_NVISION_MOVIE_LOG_DEBUG("Found packet with pts: ", pts);
+
+				// If the pts of the packet is less than the requested pts then
+				// keep reading the next frame in the stream until the packet with the requested pts is found
+				// If the the pts of the packet is greater than the requested pts, exit the loop and
+				// retry seeking to a point in the stream before the requested pts
+				if (pts >= requestedPts)
+				{
+					break;
+				}
+			}
+
+			av_packet_unref(pPacket);
+		}
+
+		// Retry seeking to the requested pts by seeking backwards from the current position
+		if (pts > requestedPts)
+		{
+			if (numReads == 1)
+			{
+				// This is the first time trying to seek backwards
+				// Try to seek backwards with the requested pts
+				ISX_ASSERT(seekPts == requestedPts);
+				seekFlags = AVSEEK_FLAG_BACKWARD;
+				ISX_NVISION_MOVIE_LOG_DEBUG("Failed to seek to frame ", frameNumber, " with pts ", requestedPts, ". Trying to seek backwards to requested frame.");
+			}
+			else
+			{
+				// This is not the first time trying to seek backwards
+				// Decrement the seek frame number so that we can seek to a point in the stream before the requested pts
+				seekFrameNumber--;
+				seekPts = frameToPts(m_formatCtx->streams[m_videoStreamIndex], seekFrameNumber);
+				ISX_NVISION_MOVIE_LOG_DEBUG("Failed to seek to frame ", frameNumber, " with pts ", requestedPts, ". Trying to seek backwards to frame ", seekFrameNumber, " with pts ", seekPts);
+			}
+		}
 	}
+
+	ISX_ASSERT(pts == requestedPts);
+	if (numReads > 1)
+	{
+		ISX_NVISION_MOVIE_LOG_DEBUG("Found frame ", frameNumber, " with pts ", requestedPts, " after skipping ", numReads, " packets");
+	}
+
+	frame = decodePacket(inFrameNumber, pPacket);
+	av_packet_unref(pPacket);
+
+	m_previousFrameNumber = frameNumber;
 
 	return frame;
 }
