@@ -11,17 +11,6 @@ using json = nlohmann::json;
 namespace isx
 {
 
-uint64_t getGpioFirstTsc(const SpGpio_t & inGpio)
-{
-    json extraProps = json::parse(inGpio->getExtraProperties());
-    if (extraProps.find("firstTsc") == extraProps.end())
-    {
-        ISX_THROW(isx::ExceptionUserInput, "GPIO first tsc not stored in file metadata.");
-    }
-
-    return extraProps.at("firstTsc").get<uint64_t>();
-}
-
 void setIsxbStartTime(const std::string inIsxbFilename, const Time & inStartTime)
 {
     const auto header = isx::NVisionMovieFile::Header();
@@ -52,100 +41,187 @@ void setIsxdStartTime(const std::string inIsxdFilename, const Time & inStartTime
     file.closeForWriting(modifiedTi);
 }
 
-AsyncTaskStatus synchronizeStartTimes(
-    const std::string inGpioFilename,
-    const std::string inIsxdFilename,
-    const std::string inIsxbFilename
+void setStartTime(
+    const std::string inFilename,
+    const Time inStartTime,
+    const DataSet::Type inDataType
 )
 {
-    // Read inputs
-    SpGpio_t gpio = isx::readGpio(inGpioFilename);
-    SpMovie_t isxbMovie = isx::readMovie(inIsxbFilename);
-    SpMovie_t isxdMovie = isx::readMovie(inIsxdFilename);
-
-    // Get epoch start timestamp and first TSC of gpio file
-    const auto gpioStartTime = gpio->getTimingInfo().getStart();
-    const auto gpioStartTimestamp = uint64_t(gpioStartTime.getSecsSinceEpoch().getNum());
-    const auto gpioFirstTsc = getGpioFirstTsc(gpio);
-
-    // Get first TSC of the isxb file
-    uint64_t isxbFirstTsc;
-    if (isxbMovie->getTimingInfo().isIndexValid(0))
+    if (inDataType == DataSet::Type::MOVIE)
     {
-        isxbFirstTsc = isxbMovie->getFrameTimestamp(0);
+        setIsxdStartTime(inFilename, inStartTime);
+    }
+    else if (inDataType == DataSet::Type::NVISION_MOVIE)
+    {
+        setIsxbStartTime(inFilename, inStartTime);
     }
     else
     {
-        // Handle case where there is no tsc value for the first frame of the movie
-        const auto & ti = isxbMovie->getTimingInfo();
-        size_t firstValidIdx = 0;
-        for (size_t i = 1; i < ti.getNumTimes(); i++)
+        ISX_THROW(isx::ExceptionUserInput, "Unsupported data type - can only set start time of isxd and isxb movies.");
+    }
+}
+
+uint64_t getFirstTsc(
+    const std::string inFilename,
+    const DataSet::Type inDataType
+)
+{
+    if (inDataType == DataSet::Type::MOVIE || inDataType == DataSet::Type::NVISION_MOVIE)
+    {
+        const auto movie = isx::readMovie(inFilename);
+        if (movie->hasFrameTimestamps())
         {
-            if (ti.isIndexValid(i))
+            // Get first TSC of the movie
+            if (movie->getTimingInfo().isIndexValid(0))
             {
-                firstValidIdx = i;
+                return movie->getFrameTimestamp(0);
+            }
+            else
+            {
+                // Handle case where there is no tsc value for the first frame of the movie
+                const auto & ti = movie->getTimingInfo();
+                size_t firstValidIdx = 0;
+                for (size_t i = 1; i < ti.getNumTimes(); i++)
+                {
+                    if (ti.isIndexValid(i))
+                    {
+                        firstValidIdx = i;
+                        break;
+                    }
+                }
+
+                if (firstValidIdx == 0)
+                {
+                    ISX_THROW(isx::Exception, "Failed to find index of first valid frame in isxb file.");
+                }
+
+                const auto firstValidTsc = movie->getFrameTimestamp(firstValidIdx);
+                const auto stepSizeUs = ti.getStep().toDouble() * 1e6;
+                return static_cast<uint64_t>(std::round(double(firstValidTsc) - stepSizeUs * double(firstValidIdx)));
+            }
+        }
+        else
+        {
+            ISX_THROW(isx::ExceptionUserInput, "Cannot get first tsc from movie with no frame timestamps.");
+        }
+    }
+    else if (inDataType == DataSet::Type::GPIO)
+    {
+        const auto gpio = isx::readGpio(inFilename);
+        json extraProps = json::parse(gpio->getExtraProperties());
+        if (extraProps.find("firstTsc") == extraProps.end())
+        {
+            ISX_THROW(isx::ExceptionUserInput, "GPIO first tsc not stored in file metadata.");
+        }
+
+        return extraProps.at("firstTsc").get<uint64_t>();
+    }
+    else
+    {
+        ISX_THROW(isx::ExceptionUserInput, "Unsupported data type - can only get first tsc of gpio files, isxd movies, and isxb movies.");
+    }
+
+    return 0;
+}
+
+Time getStart(
+    const std::string inFilename,
+    const DataSet::Type inDataType
+)
+{
+    if (inDataType == DataSet::Type::MOVIE || inDataType == DataSet::Type::NVISION_MOVIE)
+    {
+        const auto movie = isx::readMovie(inFilename);
+        return movie->getTimingInfo().getStart();
+    }
+    else if (inDataType == DataSet::Type::GPIO)
+    {
+        const auto gpio = isx::readGpio(inFilename);
+        return gpio->getTimingInfo().getStart();
+    }
+    else
+    {
+        ISX_THROW(isx::ExceptionUserInput, "Unsupported data type - can only get start time of gpio files, isxd movies, and isxb movies.");
+    }
+
+    return Time();
+}
+
+AsyncTaskStatus synchronizeStartTimes(
+    const std::string inRefFilename,
+    const std::vector<std::string> inAlignFilenames
+)
+{
+    DataSet::Type refDataType;
+    std::vector<DataSet::Type> alignDataTypes(inAlignFilenames.size());
+
+    // Check input data types
+    {
+        const std::vector<DataSet::Type> supportedRefDataTypes = {DataSet::Type::GPIO, DataSet::Type::MOVIE, DataSet::Type::NVISION_MOVIE};
+        
+        bool isRefDataTypeSupported = false;
+        isx::DataSet::Properties props;
+        refDataType = isx::readDataSetType(inRefFilename, props);
+        for (const auto & supportedRefDataType : supportedRefDataTypes)
+        {
+            if (refDataType == supportedRefDataType)
+            {
+                isRefDataTypeSupported = true;
                 break;
             }
         }
 
-        if (firstValidIdx == 0)
+        if (!isRefDataTypeSupported)
         {
-            ISX_THROW(isx::Exception, "Failed to find index of first valid frame in isxb file.");
+            ISX_THROW(isx::ExceptionUserInput, "Unsupported data type - only gpio files, isxd movies, and isxb movies are supported as a timing reference.");
         }
 
-        const auto firstValidTsc = isxbMovie->getFrameTimestamp(firstValidIdx);
-        const auto stepSizeUs = ti.getStep().toDouble() * 1e6;
-        isxbFirstTsc = static_cast<uint64_t>(std::round(double(firstValidTsc) - stepSizeUs * double(firstValidIdx)));
-    }
+        const std::vector<DataSet::Type> supportedAlignDataTypes = {DataSet::Type::MOVIE, DataSet::Type::NVISION_MOVIE};
 
-    // Set epoch start timestamp of isxb file
-    // TSC values are in microseconds, but epoch timestamp is stored in milliseconds, so the epoch timestamp needs to be rounded to the closest millisecond
-    const uint64_t isxbStartTimestamp = gpioStartTimestamp + static_cast<uint64_t>(std::round(double(isxbFirstTsc - gpioFirstTsc) / 1e3));
-    const Time isxbStartTime(
-        DurationInSeconds::fromMilliseconds(isxbStartTimestamp),
-        gpioStartTime.getUtcOffset()
-    );
-    setIsxbStartTime(inIsxbFilename, isxbStartTime);
-
-    // Get first TSC of the isxd file
-    uint64_t isxdFirstTsc;
-    if (isxdMovie->getTimingInfo().isIndexValid(0))
-    {
-        isxdFirstTsc = isxdMovie->getFrameTimestamp(0);
-    }
-    else
-    {
-        // Handle case where there is no tsc value for the first frame of the movie
-        const auto & ti = isxdMovie->getTimingInfo();
-        size_t firstValidIdx = 0;
-        for (size_t i = 1; i < ti.getNumTimes(); i++)
+        for (size_t i = 0; i < inAlignFilenames.size(); i++)
         {
-            if (ti.isIndexValid(i))
+            const auto & alignFilename = inAlignFilenames[i];
+            bool isAlignDataTypeSupported = false;
+            isx::DataSet::Properties props;
+            alignDataTypes[i] = isx::readDataSetType(alignFilename, props);
+            for (const auto & supportedAlignDataType : supportedAlignDataTypes)
             {
-                firstValidIdx = i;
-                break;
+                if (alignDataTypes[i] == supportedAlignDataType)
+                {
+                    isAlignDataTypeSupported = true;
+                    break;
+                }
+            }
+
+            if (!isAlignDataTypeSupported)
+            {
+                ISX_THROW(isx::ExceptionUserInput, "Unsupported data type - only isxd movies and isxb movies are supported as input files to align to a timing reference.");
             }
         }
-
-        if (firstValidIdx == 0)
-        {
-            ISX_THROW(isx::Exception, "Failed to find index of first valid frame in isxd file.");
-        }
-
-        const auto firstValidTsc = isxdMovie->getFrameTimestamp(firstValidIdx);
-        const auto stepSizeUs = ti.getStep().toDouble() * 1e6;
-        isxdFirstTsc = static_cast<uint64_t>(std::round(double(firstValidTsc) - stepSizeUs * double(firstValidIdx)));
     }
 
-    // Set epoch start timestamp of isxd file
-    // TSC values are in microseconds, but epoch timestamp is stored in milliseconds, so the epoch timestamp needs to be rounded to the closest millisecond
-    const uint64_t isxdStartTimestamp = gpioStartTimestamp + static_cast<uint64_t>(std::round(double(isxdFirstTsc - gpioFirstTsc) / 1e3));
-    const Time isxdStartTime(
-        DurationInSeconds::fromMilliseconds(isxdStartTimestamp),
-        gpioStartTime.getUtcOffset()
-    );
-    setIsxdStartTime(inIsxdFilename, isxdStartTime);
+    const auto refStart = getStart(inRefFilename, refDataType);
+    const auto refStartTimestamp = uint64_t(refStart.getSecsSinceEpoch().getNum());
+    const auto refFirstTsc = getFirstTsc(inRefFilename, refDataType);
 
+    for (size_t i = 0; i < inAlignFilenames.size(); i++)
+    {
+        const auto & alignFilename = inAlignFilenames[i];
+        const auto alignStart = getStart(alignFilename, alignDataTypes[i]);
+        const auto alignStartTimestamp = uint64_t(alignStart.getSecsSinceEpoch().getNum());
+        const auto alignFirstTsc = getFirstTsc(alignFilename, alignDataTypes[i]);
+
+        const uint64_t expAlignStartTimestamp = refStartTimestamp + static_cast<uint64_t>(std::round(double(alignFirstTsc - refFirstTsc) / 1e3));
+        if (alignStartTimestamp != expAlignStartTimestamp)
+        {
+            const Time newStart(
+                DurationInSeconds::fromMilliseconds(expAlignStartTimestamp),
+                refStart.getUtcOffset()
+            );
+            setStartTime(alignFilename, newStart, alignDataTypes[i]);
+        }
+    }
+    
     return AsyncTaskStatus::COMPLETE;
 }
 

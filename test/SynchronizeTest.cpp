@@ -63,6 +63,64 @@ writeIsxdMovieWithEarlyDroppedFrames(
     movie->closeForWriting();
 }
 
+
+TEST_CASE("SynchronizeStartTimes-Invalid", "[core]") 
+{
+    isx::CoreInitialize();
+
+    SECTION("invalid data type for timing reference")
+    {
+        const std::string refFilename = g_resources["unitTestDataPath"] + "/imu/2020-02-13-18-43-21_video.imu";
+        const std::vector<std::string> relFilenames = {g_resources["unitTestDataPath"] + "/nVision/20220412-200447-camera-100.isxb"};
+
+        ISX_REQUIRE_EXCEPTION(
+            isx::synchronizeStartTimes(
+                refFilename,
+                relFilenames
+            ),
+            isx::ExceptionUserInput,
+            "Unsupported data type - only gpio files, isxd movies, and isxb movies are supported as a timing reference."
+        );
+    }
+
+    SECTION("invalid data type for files to align to timing reference")
+    {
+        const std::string refFilename = g_resources["unitTestDataPath"] + "/gpio/2020-05-20-10-33-22_video.gpio";
+        const std::vector<std::string> relFilenames = {g_resources["unitTestDataPath"] + "/cell_metrics/cell_metrics_movie-PCA-ICA.isxd"};
+
+        ISX_REQUIRE_EXCEPTION(
+            isx::synchronizeStartTimes(
+                refFilename,
+                relFilenames
+            ),
+            isx::ExceptionUserInput,
+            "Unsupported data type - only isxd movies and isxb movies are supported as input files to align to a timing reference."
+        );
+    }
+
+    SECTION("no frame timestamps in movie")
+    {
+        const std::string refFilename = g_resources["unitTestDataPath"] + "/gpio/2020-05-20-10-33-22_video.gpio";
+        const std::vector<std::string> relFilenames = {g_resources["unitTestDataPath"] + "/cnmfe-cpp/movie_128x128x1000.isxd"};
+
+        ISX_REQUIRE_EXCEPTION(
+            isx::synchronizeStartTimes(
+                refFilename,
+                relFilenames
+            ),
+            isx::ExceptionUserInput,
+            "Cannot get first tsc from movie with no frame timestamps."
+        );
+    }
+
+    // TODO: implement test case when recording UUID is implemented in IDAS
+    // SECTION("files from different recording")
+    // {
+    // }
+
+    isx::CoreShutdown();
+}
+
 TEST_CASE("SynchronizeStartTimes", "[core]") 
 {
     isx::CoreInitialize();
@@ -83,8 +141,7 @@ TEST_CASE("SynchronizeStartTimes", "[core]")
     {
         isx::synchronizeStartTimes(
             gpioFilename,
-            isxdFilenameCopy,
-            isxbFilenameCopy
+            {isxdFilenameCopy, isxbFilenameCopy}
         );
 
         const auto originalMovie = isx::readMovie(isxdFilename);
@@ -101,8 +158,7 @@ TEST_CASE("SynchronizeStartTimes", "[core]")
     {
         isx::synchronizeStartTimes(
             gpioFilename,
-            isxdFilenameCopy,
-            isxbFilenameCopy
+            {isxdFilenameCopy, isxbFilenameCopy}
         );
 
         const auto originalMovie = isx::readMovie(isxbFilename);
@@ -127,8 +183,7 @@ TEST_CASE("SynchronizeStartTimes", "[core]")
     {
         isx::synchronizeStartTimes(
             gpioFilename,
-            isxdFilenameCopy,
-            isxbFilenameCopy
+            {isxdFilenameCopy, isxbFilenameCopy}
         );
 
         const auto originalMovie = isx::readMovie(isxdFilename);
@@ -147,8 +202,7 @@ TEST_CASE("SynchronizeStartTimes", "[core]")
     {
         isx::synchronizeStartTimes(
             gpioFilename,
-            isxdFilenameCopy,
-            isxbFilenameCopy
+            {isxdFilenameCopy, isxbFilenameCopy}
         );
 
         const auto originalMovie = isx::readMovie(isxbFilename);
@@ -167,8 +221,7 @@ TEST_CASE("SynchronizeStartTimes", "[core]")
     {
         isx::synchronizeStartTimes(
             gpioFilename,
-            isxdFilenameCopy,
-            isxbFilenameCopy
+            {isxdFilenameCopy, isxbFilenameCopy}
         );
 
         const auto originalMovie = isx::readMovie(isxdFilename);
@@ -181,8 +234,7 @@ TEST_CASE("SynchronizeStartTimes", "[core]")
     {
         isx::synchronizeStartTimes(
             gpioFilename,
-            isxdFilenameCopy,
-            isxbFilenameCopy
+            {isxdFilenameCopy, isxbFilenameCopy}
         );
 
         const auto originalMovie = isx::readMovie(isxbFilename);
@@ -230,8 +282,7 @@ TEST_CASE("SynchronizeStartTimes-EarlyDroppedFrames", "[core]")
 
         isx::synchronizeStartTimes(
             gpioFilename,
-            isxdFilename,
-            isxbFilenameCopy
+            {isxdFilename, isxbFilenameCopy}
         );
 
         const auto movie = isx::readMovie(isxdFilename);
@@ -260,8 +311,7 @@ TEST_CASE("SynchronizeStartTimes-EarlyDroppedFrames", "[core]")
 
         isx::synchronizeStartTimes(
             gpioFilename,
-            isxdFilename,
-            isxbFilenameCopy
+            {isxdFilename, isxbFilenameCopy}
         );
 
         const auto movie = isx::readMovie(isxdFilename);
