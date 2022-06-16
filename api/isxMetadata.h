@@ -1319,6 +1319,32 @@ namespace isx
         return basePlateOrderDefault;
     }
 
+    /// Returns a universally unique identifier (UUID) for a recording, stored in file metadata.
+    /// Files which originate from the same paired and synchronized start-stop
+    /// recording session will share the same recording UUID.
+    /// The UUID is structured as: Miniscope Prefix - Pair ID - Start epoch time in milliseconds (UTC)
+    /// This provides an easy way to identify files that are synchronized to each other.
+    /// See isxSynchronize.h for more details on how this is used for synchronization.
+    template<typename T>
+    std::string getRecordingUUID(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        const auto & processingInterface = extraProps.find("processingInterface");
+
+        if (processingInterface != extraProps.end())
+        {
+            const auto & recordingUUID = processingInterface->find("recordingUUID");
+            if (recordingUUID != processingInterface->end())
+            {
+                return recordingUUID->get<std::string>();
+            }
+        }
+
+        return "";
+    }
+
 } // namespace isx
 
 #endif // ISX_METADATA_H

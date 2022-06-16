@@ -11,6 +11,27 @@ using json = nlohmann::json;
 namespace isx
 {
 
+/// Wrapper around the getRecordingUUID function in isxMetadata
+std::string getRecordingUUID(const std::string inFilename, const DataSet::Type inDataType)
+{
+    if (inDataType == DataSet::Type::MOVIE || inDataType == DataSet::Type::NVISION_MOVIE)
+    {
+        const auto movie = isx::readMovie(inFilename);
+        return isx::getRecordingUUID(movie);
+    }
+    else if (inDataType == DataSet::Type::GPIO)
+    {
+        const auto gpio = isx::readGpio(inFilename);
+        return isx::getRecordingUUID(gpio);
+    }
+    else
+    {
+        ISX_THROW(isx::ExceptionUserInput, "Unsupported data type - can only get recording UUID of gpio files, isxd movies, and isxb movies.");
+    }
+
+    return "";
+}
+
 void setIsxbStartTime(const std::string inIsxbFilename, const Time & inStartTime)
 {
     const auto header = isx::NVisionMovieFile::Header();
@@ -152,13 +173,39 @@ AsyncTaskStatus synchronizeStartTimes(
     const std::vector<std::string> inAlignFilenames
 )
 {
+    // Check input filenames
+    auto alignFilenames = inAlignFilenames;
+    {
+        std::sort(alignFilenames.begin(), alignFilenames.end());
+        alignFilenames.erase(std::unique(alignFilenames.begin(), alignFilenames.end() ), alignFilenames.end());
+        if (alignFilenames.size() != inAlignFilenames.size())
+        {
+            ISX_LOG_WARNING("Duplicate input align files found, removing from list of input align files.");
+        }
+
+        int index = -1;
+        for (size_t i = 0; i < alignFilenames.size(); i++)
+        {
+            const auto & alignFilename = alignFilenames[i];
+            if (alignFilename == inRefFilename)
+            {
+                index = static_cast<int>(i);
+            }
+        }
+
+        if (index >= 0)
+        {
+            ISX_LOG_WARNING("Cannot align file to itself, removing from list of input align files.");
+            alignFilenames.erase(alignFilenames.begin() + index);
+        }
+    }
+
     DataSet::Type refDataType;
-    std::vector<DataSet::Type> alignDataTypes(inAlignFilenames.size());
+    std::vector<DataSet::Type> alignDataTypes(alignFilenames.size());
 
     // Check input data types
     {
         const std::vector<DataSet::Type> supportedRefDataTypes = {DataSet::Type::GPIO, DataSet::Type::MOVIE, DataSet::Type::NVISION_MOVIE};
-        
         bool isRefDataTypeSupported = false;
         isx::DataSet::Properties props;
         refDataType = isx::readDataSetType(inRefFilename, props);
@@ -177,10 +224,9 @@ AsyncTaskStatus synchronizeStartTimes(
         }
 
         const std::vector<DataSet::Type> supportedAlignDataTypes = {DataSet::Type::MOVIE, DataSet::Type::NVISION_MOVIE};
-
-        for (size_t i = 0; i < inAlignFilenames.size(); i++)
+        for (size_t i = 0; i < alignFilenames.size(); i++)
         {
-            const auto & alignFilename = inAlignFilenames[i];
+            const auto & alignFilename = alignFilenames[i];
             bool isAlignDataTypeSupported = false;
             isx::DataSet::Properties props;
             alignDataTypes[i] = isx::readDataSetType(alignFilename, props);
@@ -200,13 +246,33 @@ AsyncTaskStatus synchronizeStartTimes(
         }
     }
 
+    // Check input files share the same recording UUID (and are therefore paired and synchronized)
+    {
+        const auto refRecordingUUID = getRecordingUUID(inRefFilename, refDataType);
+        if (refRecordingUUID.empty())
+        {
+            ISX_THROW(isx::ExceptionUserInput, "Cannot determine if files are paired and synchronized - no recording UUID in timing reference file metadata.");
+        }
+
+        for (size_t i = 0; i < alignFilenames.size(); i++)
+        {
+            const auto & alignFilename = alignFilenames[i];
+            const auto alignRecordingUUID = getRecordingUUID(alignFilename, alignDataTypes[i]);
+
+            if (alignRecordingUUID != refRecordingUUID)
+            {
+                ISX_THROW(isx::ExceptionUserInput, "Files are not paired and synchronized - recording UUID of align file (", alignRecordingUUID, ") does not match recording UUID of timing reference file (", refRecordingUUID, ").");
+            }
+        }
+    }
+
     const auto refStart = getStart(inRefFilename, refDataType);
     const auto refStartTimestamp = uint64_t(refStart.getSecsSinceEpoch().getNum());
     const auto refFirstTsc = getFirstTsc(inRefFilename, refDataType);
 
-    for (size_t i = 0; i < inAlignFilenames.size(); i++)
+    for (size_t i = 0; i < alignFilenames.size(); i++)
     {
-        const auto & alignFilename = inAlignFilenames[i];
+        const auto & alignFilename = alignFilenames[i];
         const auto alignStart = getStart(alignFilename, alignDataTypes[i]);
         const auto alignStartTimestamp = uint64_t(alignStart.getSecsSinceEpoch().getNum());
         const auto alignFirstTsc = getFirstTsc(alignFilename, alignDataTypes[i]);

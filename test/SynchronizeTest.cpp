@@ -4,6 +4,7 @@
 #include "isxSynchronize.h"
 #include "isxPathUtils.h"
 #include "isxMovieFactory.h"
+#include "isxPreprocessMovie.h"
 
 #include "catch.hpp"
 #include <json.hpp>
@@ -27,7 +28,8 @@ writeIsxdMovieWithEarlyDroppedFrames(
     const std::string & inFileName,
     const isx::TimingInfo & inTimingInfo,
     const isx::SpacingInfo & inSpacingInfo,
-    const uint64_t inFirstTsc)
+    const uint64_t inFirstTsc,
+    const std::string inRecordingUUID)
 {
     isx::SpWritableMovie_t movie = isx::writeMosaicMovie(inFileName, inTimingInfo, inSpacingInfo, isx::DataType::U16, true);
     const isx::isize_t numFrames = inTimingInfo.getNumTimes();
@@ -59,6 +61,7 @@ writeIsxdMovieWithEarlyDroppedFrames(
     using json = nlohmann::json;
     json extraProps;
     extraProps["producer"]["version"] = "1.9.0";
+    extraProps["processingInterface"]["recordingUUID"] = inRecordingUUID;
     movie->setExtraProperties(extraProps.dump());
     movie->closeForWriting();
 }
@@ -67,6 +70,8 @@ writeIsxdMovieWithEarlyDroppedFrames(
 TEST_CASE("SynchronizeStartTimes-Invalid", "[core]") 
 {
     isx::CoreInitialize();
+
+    std::string processedFilename;
 
     SECTION("invalid data type for timing reference")
     {
@@ -100,6 +105,35 @@ TEST_CASE("SynchronizeStartTimes-Invalid", "[core]")
 
     SECTION("no frame timestamps in movie")
     {
+        const std::string testDataDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual";
+        const std::string refFilename = testDataDir + "/2022-06-08-23-53-41_video.gpio";
+        const std::string relFilename = testDataDir + "/2022-06-08-23-53-41_video.isxd";
+        processedFilename = testDataDir + "/2022-06-08-23-53-41_video-PP.isxd";
+
+        // preprocess movie to strip the movie of frame timestamps
+        const auto movie = isx::readMovie(relFilename);
+        const isx::PreprocessMovieParams preprocessParams(
+                movie,
+                processedFilename,
+                1,
+                1,
+                movie->getSpacingInfo().getFovInPixels(),
+                true);
+        auto outputParams = std::make_shared<isx::PreprocessMovieOutputParams>();
+        isx::preprocessMovie(preprocessParams, outputParams, [](float){return false;});
+
+        ISX_REQUIRE_EXCEPTION(
+            isx::synchronizeStartTimes(
+                refFilename,
+                {processedFilename}
+            ),
+            isx::ExceptionUserInput,
+            "Cannot get first tsc from movie with no frame timestamps."
+        );
+    }
+
+    SECTION("timing reference with no recording UUID metadata")
+    {
         const std::string refFilename = g_resources["unitTestDataPath"] + "/gpio/2020-05-20-10-33-22_video.gpio";
         const std::vector<std::string> relFilenames = {g_resources["unitTestDataPath"] + "/cnmfe-cpp/movie_128x128x1000.isxd"};
 
@@ -109,30 +143,78 @@ TEST_CASE("SynchronizeStartTimes-Invalid", "[core]")
                 relFilenames
             ),
             isx::ExceptionUserInput,
-            "Cannot get first tsc from movie with no frame timestamps."
+            "Cannot determine if files are paired and synchronized - no recording UUID in timing reference file metadata."
         );
     }
 
-    // TODO: implement test case when recording UUID is implemented in IDAS
-    // SECTION("files from different recording")
-    // {
-    // }
+    SECTION("paired and unsynchronized")
+    {
+        const std::string testDataDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-unsynchronized";
+        const std::string refFilename = testDataDir + "/2022-06-08-23-57-41_video.gpio";
+        const std::vector<std::string> relFilenames = {testDataDir + "/2022-06-08-23-57-43-camera-1.isxb"};
+
+        ISX_REQUIRE_EXCEPTION(
+            isx::synchronizeStartTimes(
+                refFilename,
+                relFilenames
+            ),
+            isx::ExceptionUserInput,
+            "Files are not paired and synchronized - recording UUID of align file (AC-00111111-l4R4GRt28o-1654732663355) does not match recording UUID of timing reference file (AC-00111111-l4R4GRt28o-1654732661796)."
+        );
+    }
+
+    SECTION("standalone")
+    {
+        const std::string testDataDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/";
+        const std::string refFilename = testDataDir + "/standalone-miniscope/2022-06-08-23-58-43_video.gpio";
+        const std::vector<std::string> relFilenames = {testDataDir + "/standalone-behavior/2022-06-08-23-58-51-camera-1.isxb"};
+
+        ISX_REQUIRE_EXCEPTION(
+            isx::synchronizeStartTimes(
+                refFilename,
+                relFilenames
+            ),
+            isx::ExceptionUserInput,
+            "Files are not paired and synchronized - recording UUID of align file (GA-21807233-0000000000-1654732731777) does not match recording UUID of timing reference file (AC-00111111-0000000000-1654732723918)."
+        );
+    }
+
+
+    SECTION("input filenames")
+    {
+        const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual";
+        const std::string gpioFilename = testDir + "/2022-06-08-23-53-41_video.gpio";
+        const std::string isxbFilename = testDir + "/2022-06-08-23-53-41_video-camera-1.isxb";
+
+        processedFilename = testDir + "/2022-06-08-23-53-41_video-camera-1-mod.isxb";
+        isx::copyFile(isxbFilename, processedFilename);
+
+        isx::synchronizeStartTimes(
+            gpioFilename,
+            {gpioFilename, processedFilename, processedFilename}
+        );
+    }
+
+    if (!processedFilename.empty())
+    {
+        std::remove(processedFilename.c_str());
+    }
 
     isx::CoreShutdown();
 }
 
-TEST_CASE("SynchronizeStartTimes", "[core]") 
+TEST_CASE("SynchronizeStartTimes-GpioRef", "[core]") 
 {
     isx::CoreInitialize();
 
-    const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/paired";
-    const std::string gpioFilename = testDir + "/miniscope/nVision_sync_ver_202205-06_1404.gpio";
-    const std::string isxdFilename = testDir + "/miniscope/nVision_sync_ver_202205-06_1404.isxd";
-    const std::string isxbFilename = testDir + "/behavior/nVision_sync_ver_202205-06_1404-camera-1.isxb";
+    const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual";
+    const std::string gpioFilename = testDir + "/2022-06-08-23-53-41_video.gpio";
+    const std::string isxdFilename = testDir + "/2022-06-08-23-53-41_video.isxd";
+    const std::string isxbFilename = testDir + "/2022-06-08-23-53-41_video-camera-1.isxb";
 
     // Copy test isxb and isxd files to modify.
-    const std::string isxdFilenameCopy = testDir + "/miniscope/nVision_sync_ver_202205-06_1404-mod.isxd";
-    const std::string isxbFilenameCopy = testDir + "/behavior/nVision_sync_ver_202205-06_1404-camera-1-mod.isxb";
+    const std::string isxdFilenameCopy = testDir + "/2022-06-08-23-53-41_video-mod.isxd";
+    const std::string isxbFilenameCopy = testDir + "/2022-06-08-23-53-41_video-camera-1-mod.isxb";
     isx::copyFile(isxdFilename, isxdFilenameCopy);
     isx::copyFile(isxbFilename, isxbFilenameCopy);
 
@@ -165,10 +247,10 @@ TEST_CASE("SynchronizeStartTimes", "[core]")
         const auto modifiedMovie = isx::readMovie(isxbFilenameCopy);
 
         const auto originalTimingInfo = originalMovie->getTimingInfo();
-        // The recomputed start time is 400 ms greater than the start time in the original isxb file
+        // The recomputed start time is 541 ms greater than the start time in the original isxb file
         // Generally there is a greater delay in the start of isxb recording because it's on a separate hardware system from the gpio and isxd files
         const isx::TimingInfo expTimingInfo(
-            originalTimingInfo.getStart() + isx::DurationInSeconds::fromMilliseconds(400),
+            originalTimingInfo.getStart() + isx::DurationInSeconds::fromMilliseconds(541),
             originalTimingInfo.getStep(),
             originalTimingInfo.getNumTimes(),
             originalTimingInfo.getDroppedFrames(),
@@ -248,32 +330,70 @@ TEST_CASE("SynchronizeStartTimes", "[core]")
     std::remove(isxbFilenameCopy.c_str());
 }
 
+TEST_CASE("SynchronizeStartTimes-IsxdRef", "[core]") 
+{
+    isx::CoreInitialize();
+
+    const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual";
+    const std::string isxdFilename = testDir + "/2022-06-08-23-53-41_video.isxd";
+    const std::string isxbFilename = testDir + "/2022-06-08-23-53-41_video-camera-1.isxb";
+
+    // Copy test isxb and isxd files to modify.
+    const std::string isxbFilenameCopy = testDir + "/2022-06-08-23-53-41_video-camera-1-mod.isxb";
+    isx::copyFile(isxbFilename, isxbFilenameCopy);
+
+    // Verify the timing info of the modified isxb file
+    SECTION("isxb timing info")
+    {
+        isx::synchronizeStartTimes(
+            isxdFilename,
+            {isxbFilenameCopy}
+        );
+
+        const auto originalMovie = isx::readMovie(isxbFilename);
+        const auto modifiedMovie = isx::readMovie(isxbFilenameCopy);
+
+        const auto originalTimingInfo = originalMovie->getTimingInfo();
+        // The recomputed start time is 541 ms greater than the start time in the original isxb file
+        const isx::TimingInfo expTimingInfo(
+            originalTimingInfo.getStart() + isx::DurationInSeconds::fromMilliseconds(541),
+            originalTimingInfo.getStep(),
+            originalTimingInfo.getNumTimes(),
+            originalTimingInfo.getDroppedFrames(),
+            originalTimingInfo.getCropped(),
+            originalTimingInfo.getBlankFrames()
+        );
+        REQUIRE(modifiedMovie->getTimingInfo() == expTimingInfo);
+    }
+
+    isx::CoreShutdown();
+
+    std::remove(isxbFilenameCopy.c_str());
+}
+
 TEST_CASE("SynchronizeStartTimes-EarlyDroppedFrames", "[core]") 
 {
     isx::CoreInitialize();
 
-    const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/paired";
-    const std::string gpioFilename = testDir + "/miniscope/nVision_sync_ver_202205-06_1404.gpio";
+    const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual";
+    const std::string gpioFilename = testDir + "/2022-06-08-23-53-41_video.gpio";
     const std::string isxdFilename = testDir + "/synthetic.isxd";
-    const std::string isxbFilename = testDir + "/behavior/nVision_sync_ver_202205-06_1404-camera-1.isxb";
-
-    // Copy test isxb file to modify.
-    const std::string isxbFilenameCopy = testDir + "/behavior/nVision_sync_ver_202205-06_1404-camera-1-mod.isxb";
-    isx::copyFile(isxbFilename, isxbFilenameCopy);
+    const std::string recordingUUID = "AC-00111111-l4R4GRt28o-1654732421577";
 
     SECTION("First frame of isxd movie is dropped")
     {
         // Create synthetic isxd movie with early dropped frames
-        const uint64_t gpioFirstTsc = 4223827383891;
+        const uint64_t gpioFirstTsc = 459472480691;
         const uint64_t isxdFirstValidTsc = gpioFirstTsc + uint64_t(500 * 1e3); // 500 ms greater than gpioFirstTsc
         writeIsxdMovieWithEarlyDroppedFrames(
             isxdFilename,
             isx::TimingInfo(isx::Time(), isx::DurationInSeconds(1, 10), 19, {0}),
             isx::SpacingInfo(isx::SizeInPixels_t(4, 3)),
-            isxdFirstValidTsc
+            isxdFirstValidTsc,
+            recordingUUID
         );
 
-        const uint64_t gpioStartTimestamp = 1651842274268;
+        const uint64_t gpioStartTimestamp = 1654732421836;
 
         // First frame is dropped
         // TSC value of first frame is estimated to be: isxdFirstValidTsc - stepSize = isxdFirstValidTsc - 100 ms
@@ -282,7 +402,7 @@ TEST_CASE("SynchronizeStartTimes-EarlyDroppedFrames", "[core]")
 
         isx::synchronizeStartTimes(
             gpioFilename,
-            {isxdFilename, isxbFilenameCopy}
+            {isxdFilename}
         );
 
         const auto movie = isx::readMovie(isxdFilename);
@@ -293,16 +413,17 @@ TEST_CASE("SynchronizeStartTimes-EarlyDroppedFrames", "[core]")
     SECTION("First three frames of isxd movie are dropped")
     {
         // Create synthetic isxd movie with early dropped frames
-        const uint64_t gpioFirstTsc = 4223827383891;
+        const uint64_t gpioFirstTsc = 459472480691;
         const uint64_t isxdFirstValidTsc = gpioFirstTsc + uint64_t(500 * 1e3); // 500 ms greater than gpioFirstTsc
         writeIsxdMovieWithEarlyDroppedFrames(
             isxdFilename,
             isx::TimingInfo(isx::Time(), isx::DurationInSeconds(1, 10), 19, {0, 1, 2}),
             isx::SpacingInfo(isx::SizeInPixels_t(4, 3)),
-            isxdFirstValidTsc
+            isxdFirstValidTsc,
+            recordingUUID
         );
 
-        const uint64_t gpioStartTimestamp = 1651842274268;
+        const uint64_t gpioStartTimestamp = 1654732421836;
 
         // First three frames are dropped
         // TSC value of first frame is estimated to be: isxdFirstValidTsc - stepSize = isxdFirstValidTsc - 300 ms
@@ -311,7 +432,7 @@ TEST_CASE("SynchronizeStartTimes-EarlyDroppedFrames", "[core]")
 
         isx::synchronizeStartTimes(
             gpioFilename,
-            {isxdFilename, isxbFilenameCopy}
+            {isxdFilename}
         );
 
         const auto movie = isx::readMovie(isxdFilename);
@@ -322,5 +443,63 @@ TEST_CASE("SynchronizeStartTimes-EarlyDroppedFrames", "[core]")
     isx::CoreShutdown();
 
     std::remove(isxdFilename.c_str());
-    std::remove(isxbFilenameCopy.c_str());
+}
+
+TEST_CASE("SynchronizeStartTimes-Series", "[core]") 
+{
+    isx::CoreInitialize();
+
+    const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/scheduled";
+    const std::string refFilename = testDir + "/2022-06-09-12-33-38_video_sched_0.gpio";
+    const std::vector<std::string> alignFilenames = {
+        testDir + "/2022-06-09-12-33-38_video_sched_0-camera-1.isxb",
+        testDir + "/2022-06-09-12-33-38_video_sched_1-camera-1.isxb",
+        testDir + "/2022-06-09-12-33-38_video_sched_2-camera-1.isxb"
+    };
+
+    // Copy test isxb and isxd files to modify.
+    const std::vector<std::string> alignCopyFilenames = {
+        testDir + "/2022-06-09-12-33-38_video_sched_0-camera-1-mod.isxb",
+        testDir + "/2022-06-09-12-33-38_video_sched_1-camera-1-mod.isxb",
+        testDir + "/2022-06-09-12-33-38_video_sched_2-camera-1-mod.isxb"
+    };
+
+    for (size_t i = 0; i < 3; i++)
+    {
+        isx::copyFile(alignFilenames[i], alignCopyFilenames[i]);
+    }
+
+    // Verify the timing info of the modified isxb files
+    SECTION("isxb timing info")
+    {
+        isx::synchronizeStartTimes(
+            refFilename,
+            alignCopyFilenames
+        );
+
+        const std::vector<int64_t> expTsDiffs = {524, 10428, 20433};
+        for (size_t i = 0; i < 3; i++)
+        {
+            const auto originalMovie = isx::readMovie(alignFilenames[i]);
+            const auto modifiedMovie = isx::readMovie(alignCopyFilenames[i]);
+
+            const auto originalTimingInfo = originalMovie->getTimingInfo();
+            const isx::TimingInfo expTimingInfo(
+                originalTimingInfo.getStart() + isx::DurationInSeconds::fromMilliseconds(expTsDiffs[i]),
+                originalTimingInfo.getStep(),
+                originalTimingInfo.getNumTimes(),
+                originalTimingInfo.getDroppedFrames(),
+                originalTimingInfo.getCropped(),
+                originalTimingInfo.getBlankFrames()
+            );
+            REQUIRE(modifiedMovie->getTimingInfo() == expTimingInfo);
+        }
+    }
+
+    isx::CoreShutdown();
+
+    for (size_t i = 0; i < 3; i++)
+    {
+        std::remove(alignCopyFilenames[i].c_str());
+    }
 }
