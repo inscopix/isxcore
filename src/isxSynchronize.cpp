@@ -277,7 +277,15 @@ AsyncTaskStatus synchronizeStartTimes(
         const auto alignStartTimestamp = uint64_t(alignStart.getSecsSinceEpoch().getNum());
         const auto alignFirstTsc = getFirstTsc(alignFilename, alignDataTypes[i]);
 
-        const uint64_t expAlignStartTimestamp = refStartTimestamp + static_cast<uint64_t>(std::round(double(alignFirstTsc - refFirstTsc) / 1e3));
+        // Calculate the expected start timestamp of the align file based on the reference file
+        // Convert the tsc values to int64_t in case the align file starts earlier than the reference file (i.e. negative tsc delta)
+        // Convert the tsc delta to double in order to convert the value from microseconds to milliseconds
+        const auto tscDelta = std::round(double(int64_t(alignFirstTsc) - int64_t(refFirstTsc)) / 1e3);
+
+        // Convert the tsc delta and the reference timestamp to int64_t in order to handle signed arithmetic
+        // Finally convert the result to uint64_t so it can be stored in the align file
+        const uint64_t expAlignStartTimestamp = uint64_t(int64_t(refStartTimestamp) + int64_t(tscDelta));
+        ISX_LOG_DEBUG("Synchronize start time diff: ", int64_t(expAlignStartTimestamp) - int64_t(alignStartTimestamp));
         if (alignStartTimestamp != expAlignStartTimestamp)
         {
             const Time newStart(
