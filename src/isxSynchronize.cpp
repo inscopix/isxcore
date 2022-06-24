@@ -605,12 +605,14 @@ AsyncTaskStatus exportAlignedTimestamps(
             const auto tsc = inputTimestamps[inputIdx][dataSetIdx][dataSetLocalIdx];
             if (inParams.m_format == WriteTimeRelativeTo::FIRST_DATA_ITEM)
             {
-                const auto timestamp = double(tsc - refFirstTsc) / 1e6;
+                // convert tsc from unsigned to signed int in order to handle negative tsc delta
+                const auto timestamp = double(int64_t(tsc) - int64_t(refFirstTsc)) / 1e6;
                 csv << std::fixed << std::setprecision(floatDecimalPrecision) << timestamp;
             }
             else if (inParams.m_format == WriteTimeRelativeTo::UNIX_EPOCH)
             {
-                const auto timestamp = refEpochStartTimestamp + (double(tsc - refFirstTsc) / 1e6);
+                // convert tsc from unsigned to signed int in order to handle negative tsc delta
+                const auto timestamp = refEpochStartTimestamp + (double(int64_t(tsc) - int64_t(refFirstTsc)) / 1e6);
                 csv << std::fixed << std::setprecision(floatDecimalPrecision) << timestamp;
             }
             else
@@ -633,6 +635,7 @@ AsyncTaskStatus exportAlignedTimestamps(
             dataSetLocalIdx++;
         }
         csv << std::endl;
+        inCheckInCB(float(sampleIdx) / float(maxFrames));
     }
 
     return AsyncTaskStatus::COMPLETE;
