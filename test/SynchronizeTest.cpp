@@ -112,11 +112,13 @@ TEST_CASE("SynchronizeStartTimes-Invalid", "[core]")
 
         // preprocess movie to strip the movie of frame timestamps
         const auto movie = isx::readMovie(relFilename);
+        const size_t temporalDsFactor = 2; // temporally downsample by 2x to strip movie of timestamps
+        const size_t spatialDsFactor = 1;
         const isx::PreprocessMovieParams preprocessParams(
                 movie,
                 processedFilename,
-                1,
-                1,
+                temporalDsFactor,
+                spatialDsFactor,
                 movie->getSpacingInfo().getFovInPixels(),
                 true);
         auto outputParams = std::make_shared<isx::PreprocessMovieOutputParams>();
@@ -553,11 +555,13 @@ TEST_CASE("ExportAlignedTimestamps-Invalid", "[core]")
 
         // preprocess movie to strip the movie of frame timestamps
         const auto movie = isx::readMovie(alignFilename);
+        const size_t temporalDsFactor = 2; // temporally downsample by 2x to strip movie of timestamps
+        const size_t spatialDsFactor = 1;
         const isx::PreprocessMovieParams preprocessParams(
                 movie,
                 processedFilename,
-                1,
-                1,
+                temporalDsFactor,
+                spatialDsFactor,
                 movie->getSpacingInfo().getFovInPixels(),
                 true);
         auto preprocessOutputParams = std::make_shared<isx::PreprocessMovieOutputParams>();
