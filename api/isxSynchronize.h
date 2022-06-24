@@ -122,7 +122,7 @@ struct ExportAlignedTimestampsOutputParams
 };
 using SpExportAlignedTimestampsOutputParams_t = std::shared_ptr<ExportAlignedTimestampsOutputParams>;
 
-/// Synchronize the epoch start times of files originating from the same paired and synced start-stop recording session.
+/// Align the epoch start times of files originating from the same paired and synchronized start-stop recording session.
 /// The epoch start time stored in the input align files are modified in-place
 /// so that they are aligned relative to the epoch start time of the input timing reference file
 /// For each input align file, the epoch start time is recomputed using the following formula:
@@ -138,7 +138,7 @@ using SpExportAlignedTimestampsOutputParams_t = std::shared_ptr<ExportAlignedTim
 /// These files can either be an .isxd movie or .isxb movie, otherwise the function will throw an error.
 /// The movies must contain frame timestamps, otherwise this function will throw an error.
 ///
-AsyncTaskStatus synchronizeStartTimes(
+AsyncTaskStatus alignStartTimes(
     const std::string inRefFilename,
     const std::vector<std::string> inAlignFilenames
 );

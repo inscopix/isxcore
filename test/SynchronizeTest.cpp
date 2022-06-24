@@ -67,7 +67,7 @@ writeIsxdMovieWithEarlyDroppedFrames(
 }
 
 
-TEST_CASE("SynchronizeStartTimes-Invalid", "[core]") 
+TEST_CASE("AlignStartTimes-Invalid", "[core]") 
 {
     isx::CoreInitialize();
 
@@ -79,7 +79,7 @@ TEST_CASE("SynchronizeStartTimes-Invalid", "[core]")
         const std::vector<std::string> relFilenames = {g_resources["unitTestDataPath"] + "/nVision/20220412-200447-camera-100.isxb"};
 
         ISX_REQUIRE_EXCEPTION(
-            isx::synchronizeStartTimes(
+            isx::alignStartTimes(
                 refFilename,
                 relFilenames
             ),
@@ -94,7 +94,7 @@ TEST_CASE("SynchronizeStartTimes-Invalid", "[core]")
         const std::vector<std::string> relFilenames = {g_resources["unitTestDataPath"] + "/cell_metrics/cell_metrics_movie-PCA-ICA.isxd"};
 
         ISX_REQUIRE_EXCEPTION(
-            isx::synchronizeStartTimes(
+            isx::alignStartTimes(
                 refFilename,
                 relFilenames
             ),
@@ -125,7 +125,7 @@ TEST_CASE("SynchronizeStartTimes-Invalid", "[core]")
         isx::preprocessMovie(preprocessParams, outputParams, [](float){return false;});
 
         ISX_REQUIRE_EXCEPTION(
-            isx::synchronizeStartTimes(
+            isx::alignStartTimes(
                 refFilename,
                 {processedFilename}
             ),
@@ -140,7 +140,7 @@ TEST_CASE("SynchronizeStartTimes-Invalid", "[core]")
         const std::vector<std::string> relFilenames = {g_resources["unitTestDataPath"] + "/cnmfe-cpp/movie_128x128x1000.isxd"};
 
         ISX_REQUIRE_EXCEPTION(
-            isx::synchronizeStartTimes(
+            isx::alignStartTimes(
                 refFilename,
                 relFilenames
             ),
@@ -156,7 +156,7 @@ TEST_CASE("SynchronizeStartTimes-Invalid", "[core]")
         const std::vector<std::string> relFilenames = {testDataDir + "/2022-06-08-23-57-43-camera-1.isxb"};
 
         ISX_REQUIRE_EXCEPTION(
-            isx::synchronizeStartTimes(
+            isx::alignStartTimes(
                 refFilename,
                 relFilenames
             ),
@@ -172,7 +172,7 @@ TEST_CASE("SynchronizeStartTimes-Invalid", "[core]")
         const std::vector<std::string> relFilenames = {testDataDir + "/standalone-behavior/2022-06-08-23-58-51-camera-1.isxb"};
 
         ISX_REQUIRE_EXCEPTION(
-            isx::synchronizeStartTimes(
+            isx::alignStartTimes(
                 refFilename,
                 relFilenames
             ),
@@ -191,7 +191,7 @@ TEST_CASE("SynchronizeStartTimes-Invalid", "[core]")
         processedFilename = testDir + "/2022-06-08-23-53-41_video-camera-1-mod.isxb";
         isx::copyFile(isxbFilename, processedFilename);
 
-        isx::synchronizeStartTimes(
+        isx::alignStartTimes(
             gpioFilename,
             {gpioFilename, processedFilename, processedFilename}
         );
@@ -205,7 +205,7 @@ TEST_CASE("SynchronizeStartTimes-Invalid", "[core]")
     isx::CoreShutdown();
 }
 
-TEST_CASE("SynchronizeStartTimes-GpioRef", "[core]") 
+TEST_CASE("AlignStartTimes-GpioRef", "[core]") 
 {
     isx::CoreInitialize();
 
@@ -223,7 +223,7 @@ TEST_CASE("SynchronizeStartTimes-GpioRef", "[core]")
     // Verify the timing info of the modified isxd file
     SECTION("isxd timing info")
     {
-        isx::synchronizeStartTimes(
+        isx::alignStartTimes(
             gpioFilename,
             {isxdFilenameCopy, isxbFilenameCopy}
         );
@@ -240,7 +240,7 @@ TEST_CASE("SynchronizeStartTimes-GpioRef", "[core]")
     // Verify the timing info of the modified isxb file
     SECTION("isxb timing info")
     {
-        isx::synchronizeStartTimes(
+        isx::alignStartTimes(
             gpioFilename,
             {isxdFilenameCopy, isxbFilenameCopy}
         );
@@ -265,7 +265,7 @@ TEST_CASE("SynchronizeStartTimes-GpioRef", "[core]")
     // Ensure the frame data in the file is not corrupted due to the operation.
     SECTION("isxd frame data")
     {
-        isx::synchronizeStartTimes(
+        isx::alignStartTimes(
             gpioFilename,
             {isxdFilenameCopy, isxbFilenameCopy}
         );
@@ -284,7 +284,7 @@ TEST_CASE("SynchronizeStartTimes-GpioRef", "[core]")
     // Ensure the frame data in the file is not corrupted due to the operation.
     SECTION("isxb frame data")
     {
-        isx::synchronizeStartTimes(
+        isx::alignStartTimes(
             gpioFilename,
             {isxdFilenameCopy, isxbFilenameCopy}
         );
@@ -303,7 +303,7 @@ TEST_CASE("SynchronizeStartTimes-GpioRef", "[core]")
     // Ensure the json metadata is not corrupted due to the operation.
     SECTION("isxd extra props")
     {
-        isx::synchronizeStartTimes(
+        isx::alignStartTimes(
             gpioFilename,
             {isxdFilenameCopy, isxbFilenameCopy}
         );
@@ -316,7 +316,7 @@ TEST_CASE("SynchronizeStartTimes-GpioRef", "[core]")
     // Ensure the json metadata is not corrupted due to the operation.
     SECTION("isxb extra props")
     {
-        isx::synchronizeStartTimes(
+        isx::alignStartTimes(
             gpioFilename,
             {isxdFilenameCopy, isxbFilenameCopy}
         );
@@ -332,7 +332,7 @@ TEST_CASE("SynchronizeStartTimes-GpioRef", "[core]")
     std::remove(isxbFilenameCopy.c_str());
 }
 
-TEST_CASE("SynchronizeStartTimes-IsxdRef", "[core]") 
+TEST_CASE("AlignStartTimes-IsxdRef", "[core]") 
 {
     isx::CoreInitialize();
 
@@ -347,7 +347,7 @@ TEST_CASE("SynchronizeStartTimes-IsxdRef", "[core]")
     // Verify the timing info of the modified isxb file
     SECTION("isxb timing info")
     {
-        isx::synchronizeStartTimes(
+        isx::alignStartTimes(
             isxdFilename,
             {isxbFilenameCopy}
         );
@@ -373,7 +373,7 @@ TEST_CASE("SynchronizeStartTimes-IsxdRef", "[core]")
     std::remove(isxbFilenameCopy.c_str());
 }
 
-TEST_CASE("SynchronizeStartTimes-EarlyDroppedFrames", "[core]") 
+TEST_CASE("AlignStartTimes-EarlyDroppedFrames", "[core]") 
 {
     isx::CoreInitialize();
 
@@ -402,7 +402,7 @@ TEST_CASE("SynchronizeStartTimes-EarlyDroppedFrames", "[core]")
         // which means start time of isxd movie is estimated to be 400 ms after the gpio start time
         const uint64_t expIsxdStartTimestamp = gpioStartTimestamp + 400;
 
-        isx::synchronizeStartTimes(
+        isx::alignStartTimes(
             gpioFilename,
             {isxdFilename}
         );
@@ -432,7 +432,7 @@ TEST_CASE("SynchronizeStartTimes-EarlyDroppedFrames", "[core]")
         // which means start time of isxd movie is estimated to be 200 ms after the gpio start time
         const uint64_t expIsxdStartTimestamp = gpioStartTimestamp + 200;
 
-        isx::synchronizeStartTimes(
+        isx::alignStartTimes(
             gpioFilename,
             {isxdFilename}
         );
@@ -447,7 +447,7 @@ TEST_CASE("SynchronizeStartTimes-EarlyDroppedFrames", "[core]")
     std::remove(isxdFilename.c_str());
 }
 
-TEST_CASE("SynchronizeStartTimes-Series", "[core]") 
+TEST_CASE("AlignStartTimes-Series", "[core]") 
 {
     isx::CoreInitialize();
 
@@ -474,7 +474,7 @@ TEST_CASE("SynchronizeStartTimes-Series", "[core]")
     // Verify the timing info of the modified isxb files
     SECTION("isxb timing info")
     {
-        isx::synchronizeStartTimes(
+        isx::alignStartTimes(
             refFilename,
             alignCopyFilenames
         );

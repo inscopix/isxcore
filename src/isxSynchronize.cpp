@@ -251,7 +251,7 @@ Time getStart(
     return Time();
 }
 
-AsyncTaskStatus synchronizeStartTimes(
+AsyncTaskStatus alignStartTimes(
     const std::string inRefFilename,
     const std::vector<std::string> inAlignFilenames
 )
