@@ -21,28 +21,28 @@ struct ExportAlignedTimestampsParams
 
     /// Convenience constructor to fill struct members in one-shot
     ///
-    /// \param  inRefFilename                      The path of the file to use as the timing reference to align with the other input files.
-    ///                                            Timestamps are exported relative to the start time of this file.
-    ///                                            This can be either a .gpio file, .isxd movie, or .isxb movie, otherwise the function will throw an error.
+    /// \param  inRefSeriesFilenames               The paths of the series to use as the timing reference to align with the other input files.
+    ///                                            Timestamps are exported relative to the start time of the first file in the series.
+    ///                                            These files can either be a .gpio file, .isxd movie or .isxb movie, otherwise the function will throw an error.
     ///                                            If the timing reference is a movie, the movie must contain frame timestamps, otherwise this function will throw an error.
-    /// \param  inAlignFilenames                   The path of the files to align to the epoch start time of the input timing reference file.
+    /// \param  inAlignSeriesFilenames             The paths of the series to align to the epoch start time of the input timing reference file.
     ///                                            These files can either be a .gpio file, .isxd movie or .isxb movie, otherwise the function will throw an error.
     ///                                            The movies must contain frame timestamps, otherwise this function will throw an error.
-    /// \param  inRefName                          The name of the reference data set to use in the output csv.
-    /// \param  inAlignNames                       The names of the align data sets to use in the output csv.
+    /// \param inRefSeriesName                     The name of the timing reference series to use in the output csv
+    /// \param inAlignSeriesNames                  The names of the align series to use in the output csv
     /// \param  inOutputFilename                   The path of the output csv file.
     /// \param inFormat                            The format of timestamps.
     ExportAlignedTimestampsParams(
-        const std::string inRefFilename,
-        const std::vector<std::string> inAlignFilenames,
-        const std::string inRefName,
-        const std::vector<std::string> inAlignNames,
+        const std::vector<std::string> inRefSeriesFilenames,
+        const std::vector<std::vector<std::string>> inAlignSeriesFilenames,
+        const std::string inRefSeriesName,
+        const std::vector<std::string> inAlignSeriesNames,
         const std::string inOutputFilename,
         const WriteTimeRelativeTo inFormat)
-        : m_refFilename(inRefFilename)
-        , m_alignFilenames(inAlignFilenames)
-        , m_refName(inRefName)
-        , m_alignNames(inAlignNames)
+        : m_refSeriesFilenames(inRefSeriesFilenames)
+        , m_alignSeriesFilenames(inAlignSeriesFilenames)
+        , m_refSeriesName(inRefSeriesName)
+        , m_alignSeriesNames(inAlignSeriesNames)
         , m_outputFilename(inOutputFilename)
         , m_format(inFormat)
     {
@@ -95,17 +95,17 @@ struct ExportAlignedTimestampsParams
     ///
     std::vector<std::string> getOutputFilePaths() const;
 
-    /// The ref file
-    std::string m_refFilename;
+    /// The ref series filenames
+    std::vector<std::string> m_refSeriesFilenames;
 
-    /// The align files
-    std::vector<std::string> m_alignFilenames;
+    /// The align series list filenames
+    std::vector<std::vector<std::string>> m_alignSeriesFilenames;
 
-    /// The name of the ref file
-    std::string m_refName;
+    /// The ref series name
+    std::string m_refSeriesName;
 
-    /// The name of the align files
-    std::vector<std::string> m_alignNames;
+    /// The align series list filenames
+    std::vector<std::string> m_alignSeriesNames;
 
     /// The output csv file
     std::string m_outputFilename;

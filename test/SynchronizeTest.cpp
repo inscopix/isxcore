@@ -515,10 +515,10 @@ TEST_CASE("ExportAlignedTimestamps-Invalid", "[core]")
 
     SECTION("invalid data type for timing reference")
     {
-        inputParams.m_refFilename = g_resources["unitTestDataPath"] + "/imu/2020-02-13-18-43-21_video.imu";
-        inputParams.m_alignFilenames = {g_resources["unitTestDataPath"] + "/nVision/20220412-200447-camera-100.isxb"};
-        inputParams.m_refName = "imu";
-        inputParams.m_alignNames = {"isxb"};
+        inputParams.m_refSeriesFilenames = {g_resources["unitTestDataPath"] + "/imu/2020-02-13-18-43-21_video.imu"};
+        inputParams.m_alignSeriesFilenames = {{g_resources["unitTestDataPath"] + "/nVision/20220412-200447-camera-100.isxb"}};
+        inputParams.m_refSeriesName = "imu";
+        inputParams.m_alignSeriesNames = {"isxb"};
 
         ISX_REQUIRE_EXCEPTION(
             isx::exportAlignedTimestamps(inputParams, outputParams, [](float) {return false; }),
@@ -529,10 +529,10 @@ TEST_CASE("ExportAlignedTimestamps-Invalid", "[core]")
 
     SECTION("invalid data type for files to align to timing reference")
     {
-        inputParams.m_refFilename = g_resources["unitTestDataPath"] + "/gpio/2020-05-20-10-33-22_video.gpio";
-        inputParams.m_alignFilenames = {g_resources["unitTestDataPath"] + "/cell_metrics/cell_metrics_movie-PCA-ICA.isxd"};
-        inputParams.m_refName = "gpio";
-        inputParams.m_alignNames = {"isxd"};
+        inputParams.m_refSeriesFilenames = {g_resources["unitTestDataPath"] + "/gpio/2020-05-20-10-33-22_video.gpio"};
+        inputParams.m_alignSeriesFilenames = {{g_resources["unitTestDataPath"] + "/cell_metrics/cell_metrics_movie-PCA-ICA.isxd"}};
+        inputParams.m_refSeriesName = "gpio";
+        inputParams.m_alignSeriesNames = {"isxd"};
 
         ISX_REQUIRE_EXCEPTION(
             isx::exportAlignedTimestamps(inputParams, outputParams, [](float) {return false; }),
@@ -544,12 +544,12 @@ TEST_CASE("ExportAlignedTimestamps-Invalid", "[core]")
     SECTION("no frame timestamps in movie")
     {
         const std::string testDataDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual";
-        inputParams.m_refFilename = testDataDir + "/2022-06-08-23-53-41_video.gpio";
+        inputParams.m_refSeriesFilenames = {testDataDir + "/2022-06-08-23-53-41_video.gpio"};
         const std::string alignFilename = testDataDir + "/2022-06-08-23-53-41_video.isxd";
         processedFilename = testDataDir + "/2022-06-08-23-53-41_video-PP.isxd";
-        inputParams.m_alignFilenames = {processedFilename};
-        inputParams.m_refName = "gpio";
-        inputParams.m_alignNames = {"isxd"};
+        inputParams.m_alignSeriesFilenames = {{processedFilename}};
+        inputParams.m_refSeriesName = "gpio";
+        inputParams.m_alignSeriesNames = {"isxd"};
 
         // preprocess movie to strip the movie of frame timestamps
         const auto movie = isx::readMovie(alignFilename);
@@ -572,10 +572,10 @@ TEST_CASE("ExportAlignedTimestamps-Invalid", "[core]")
 
     SECTION("timing reference with no recording UUID metadata")
     {
-        inputParams.m_refFilename = g_resources["unitTestDataPath"] + "/gpio/2020-05-20-10-33-22_video.gpio";
-        inputParams.m_alignFilenames = {g_resources["unitTestDataPath"] + "/cnmfe-cpp/movie_128x128x1000.isxd"};
-        inputParams.m_refName = "gpio";
-        inputParams.m_alignNames = {"isxd"};
+        inputParams.m_refSeriesFilenames = {g_resources["unitTestDataPath"] + "/gpio/2020-05-20-10-33-22_video.gpio"};
+        inputParams.m_alignSeriesFilenames = {{g_resources["unitTestDataPath"] + "/cnmfe-cpp/movie_128x128x1000.isxd"}};
+        inputParams.m_refSeriesName = "gpio";
+        inputParams.m_alignSeriesNames = {"isxd"};
 
         ISX_REQUIRE_EXCEPTION(
             isx::exportAlignedTimestamps(inputParams, outputParams, [](float) {return false; }),
@@ -587,10 +587,10 @@ TEST_CASE("ExportAlignedTimestamps-Invalid", "[core]")
     SECTION("paired and unsynchronized")
     {
         const std::string testDataDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-unsynchronized";
-        inputParams.m_refFilename = testDataDir + "/2022-06-08-23-57-41_video.gpio";
-        inputParams.m_alignFilenames = {testDataDir + "/2022-06-08-23-57-43-camera-1.isxb"};
-        inputParams.m_refName = "gpio";
-        inputParams.m_alignNames = {"isxb"};
+        inputParams.m_refSeriesFilenames = {testDataDir + "/2022-06-08-23-57-41_video.gpio"};
+        inputParams.m_alignSeriesFilenames = {{testDataDir + "/2022-06-08-23-57-43-camera-1.isxb"}};
+        inputParams.m_refSeriesName = "gpio";
+        inputParams.m_alignSeriesNames = {"isxb"};
 
         ISX_REQUIRE_EXCEPTION(
             isx::exportAlignedTimestamps(inputParams, outputParams, [](float) {return false; }),
@@ -602,10 +602,10 @@ TEST_CASE("ExportAlignedTimestamps-Invalid", "[core]")
     SECTION("standalone")
     {
         const std::string testDataDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/";
-        inputParams.m_refFilename = testDataDir + "/standalone-miniscope/2022-06-08-23-58-43_video.gpio";
-        inputParams.m_alignFilenames = {testDataDir + "/standalone-behavior/2022-06-08-23-58-51-camera-1.isxb"};
-        inputParams.m_refName = "gpio";
-        inputParams.m_alignNames = {"isxb"};
+        inputParams.m_refSeriesFilenames = {testDataDir + "/standalone-miniscope/2022-06-08-23-58-43_video.gpio"};
+        inputParams.m_alignSeriesFilenames = {{testDataDir + "/standalone-behavior/2022-06-08-23-58-51-camera-1.isxb"}};
+        inputParams.m_refSeriesName = "gpio";
+        inputParams.m_alignSeriesNames = {"isxb"};
 
         ISX_REQUIRE_EXCEPTION(
             isx::exportAlignedTimestamps(inputParams, outputParams, [](float) {return false; }),
@@ -614,39 +614,21 @@ TEST_CASE("ExportAlignedTimestamps-Invalid", "[core]")
         );
     }
 
-    SECTION("bad input filenames")
-    {
-        // duplicate input align files are internally removed
-        // and ref cannot align to itself
-        const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual";
-        const std::string gpioFilename = testDir + "/2022-06-08-23-53-41_video.gpio";
-        const std::string isxbFilename = testDir + "/2022-06-08-23-53-41_video-camera-1.isxb";
-        inputParams.m_refName = "gpio";
-        inputParams.m_alignNames = {"isxb"};
-
-        inputParams.m_refFilename = gpioFilename;
-        inputParams.m_alignFilenames = {gpioFilename, isxbFilename, isxbFilename};
-        inputParams.m_refName = "gpio";
-        inputParams.m_alignNames = {"gpio", "isxb", "isxb"};
-
-        REQUIRE(isx::exportAlignedTimestamps(inputParams, outputParams, [](float) {return false; }) == isx::AsyncTaskStatus::COMPLETE);
-    }
-
     SECTION("mismatching names")
     {
         const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual";
         const std::string refFilename = testDir + "/2022-06-08-23-53-41_video.gpio";
-        const std::vector<std::string> alignFilenames = {
-            testDir + "/2022-06-08-23-53-41_video-camera-1.isxb",
-            testDir + "/2022-06-08-23-53-41_video.isxd"
+        const std::vector<std::vector<std::string>> alignFilenames = {
+            {testDir + "/2022-06-08-23-53-41_video-camera-1.isxb"},
+            {testDir + "/2022-06-08-23-53-41_video.isxd"}
         };
 
         const std::string outputFilename = testDir + "/exportAlignedTimestamps.csv";
 
-        inputParams.m_refFilename = refFilename;
-        inputParams.m_alignFilenames = alignFilenames;
-        inputParams.m_refName = "Gpio Ref";
-        inputParams.m_alignNames = {"Only One Align"};
+        inputParams.m_refSeriesFilenames = {refFilename};
+        inputParams.m_alignSeriesFilenames = alignFilenames;
+        inputParams.m_refSeriesName = "Gpio Ref";
+        inputParams.m_alignSeriesNames = {"Only One Align"};
         inputParams.m_outputFilename = outputFilename;
 
         ISX_REQUIRE_EXCEPTION(
@@ -670,15 +652,15 @@ TEST_CASE("ExportAlignedTimestamps-GpioRef", "[core]")
 
     const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual";
     const std::string refFilename = testDir + "/2022-06-08-23-53-41_video.gpio";
-    const std::vector<std::string> alignFilenames = {
-        testDir + "/2022-06-08-23-53-41_video-camera-1.isxb",
-        testDir + "/2022-06-08-23-53-41_video.isxd"
+    const std::vector<std::vector<std::string>> alignFilenames = {
+        {testDir + "/2022-06-08-23-53-41_video-camera-1.isxb"},
+        {testDir + "/2022-06-08-23-53-41_video.isxd"}
     };
 
     const std::string outputFilename = testDir + "/exportAlignedTimestamps.csv";
 
     isx::ExportAlignedTimestampsParams inputParams(
-        refFilename,
+        {refFilename},
         alignFilenames,
         "Gpio Ref",
         {"Isxb Align", "Isxd Align"},
@@ -729,14 +711,14 @@ TEST_CASE("ExportAlignedTimestamps-IsxdRef", "[core]")
 
     const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual";
     const std::string refFilename = testDir + "/2022-06-08-23-53-41_video.isxd";
-    const std::vector<std::string> alignFilenames = {
-        testDir + "/2022-06-08-23-53-41_video-camera-1.isxb"
+    const std::vector<std::vector<std::string>> alignFilenames = {
+        {testDir + "/2022-06-08-23-53-41_video-camera-1.isxb"}
     };
 
     const std::string outputFilename = testDir + "/exportAlignedTimestamps.csv";
 
     isx::ExportAlignedTimestampsParams inputParams(
-        refFilename,
+        {refFilename},
         alignFilenames,
         "Isxd Ref",
         {"Isxb Align"},
@@ -787,19 +769,19 @@ TEST_CASE("ExportAlignedTimestamps-Series", "[core]")
 
     const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/scheduled";
     const std::string refFilename = testDir + "/2022-06-09-12-33-38_video_sched_0.gpio";
-    const std::vector<std::string> alignFilenames = {
-        testDir + "/2022-06-09-12-33-38_video_sched_0-camera-1.isxb",
+    const std::vector<std::vector<std::string>> alignFilenames = {
+        {testDir + "/2022-06-09-12-33-38_video_sched_0-camera-1.isxb",
         testDir + "/2022-06-09-12-33-38_video_sched_1-camera-1.isxb",
-        testDir + "/2022-06-09-12-33-38_video_sched_2-camera-1.isxb"
+        testDir + "/2022-06-09-12-33-38_video_sched_2-camera-1.isxb"}
     };
 
     const std::string outputFilename = testDir + "/exportAlignedTimestamps.csv";
 
     isx::ExportAlignedTimestampsParams inputParams(
-        refFilename,
+        {refFilename},
         alignFilenames,
         "Ref",
-        {"Align1", "Align2", "Align3"},
+        {"Align"},
         outputFilename,
         isx::WriteTimeRelativeTo::FIRST_DATA_ITEM
     );
@@ -812,19 +794,19 @@ TEST_CASE("ExportAlignedTimestamps-Series", "[core]")
         std::ifstream strm(outputFilename);
         std::unique_ptr<char[]> buf = nullptr;
 
-        const std::string expectedHeader = "Ref Timestamp (s),Ref Channel,Align1 Timestamp (s),Align2 Timestamp (s),Align3 Timestamp (s)";
+        const std::string expectedHeader = "Ref Timestamp (s),Ref Channel,Align Timestamp (s)";
         buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
         strm.getline(buf.get(), expectedHeader.size() + 1);
         const std::string actualHeader(buf.get());
         REQUIRE(actualHeader == expectedHeader);
 
-        const std::string expectedFirstLine = "0.000000,Digital GPI 0,0.265064,10.169111,20.174172";
+        const std::string expectedFirstLine = "0.000000,Digital GPI 0,0.265064";
         buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
         strm.getline(buf.get(), expectedFirstLine.size() + 1);
         const std::string actualFirstLine(buf.get());
         REQUIRE(actualFirstLine == expectedFirstLine);
 
-        const std::string expectedLastLine = "33.959800,BNC Trigger Input,,,";
+        const std::string expectedLastLine = "33.959800,BNC Trigger Input,";
 #if ISX_OS_WIN32
         strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
 #else
@@ -845,14 +827,14 @@ TEST_CASE("ExportAlignedTimestamps-Unix", "[core]")
 
     const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual";
     const std::string refFilename = testDir + "/2022-06-08-23-53-41_video.isxd";
-    const std::vector<std::string> alignFilenames = {
-        testDir + "/2022-06-08-23-53-41_video-camera-1.isxb"
+    const std::vector<std::vector<std::string>> alignFilenames = {
+        {testDir + "/2022-06-08-23-53-41_video-camera-1.isxb"}
     };
 
     const std::string outputFilename = testDir + "/exportAlignedTimestamps.csv";
 
     isx::ExportAlignedTimestampsParams inputParams(
-        refFilename,
+        {refFilename},
         alignFilenames,
         "Isxd Ref",
         {"Isxb Align"},
@@ -903,14 +885,14 @@ TEST_CASE("ExportAlignedTimestamps-Tsc", "[core]")
 
     const std::string testDir = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual";
     const std::string refFilename = testDir + "/2022-06-08-23-53-41_video.isxd";
-    const std::vector<std::string> alignFilenames = {
-        testDir + "/2022-06-08-23-53-41_video-camera-1.isxb"
+    const std::vector<std::vector<std::string>> alignFilenames = {
+        {testDir + "/2022-06-08-23-53-41_video-camera-1.isxb"}
     };
 
     const std::string outputFilename = testDir + "/exportAlignedTimestamps.csv";
 
     isx::ExportAlignedTimestampsParams inputParams(
-        refFilename,
+        {refFilename},
         alignFilenames,
         "Isxd Ref",
         {"Isxb Align"},

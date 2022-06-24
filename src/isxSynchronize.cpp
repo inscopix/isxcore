@@ -1,4 +1,4 @@
-#include "isxSynchronize.h"
+    #include "isxSynchronize.h"
 #include "isxGpio.h"
 #include "isxException.h"
 #include "isxMovieFactory.h"
@@ -35,8 +35,15 @@ ExportAlignedTimestampsParams::fromString(const std::string & inStr)
 {
     const json j = json::parse(inStr);
     ExportAlignedTimestampsParams params;
-    params.m_refFilename = j.at("Timing Reference Filename").get<std::string>();
-    params.m_alignFilenames = j.at("Align Filenames").get<std::vector<std::string>>();
+    params.m_refSeriesName = j.at("Timing Reference").at("Name").get<std::string>();
+    params.m_refSeriesFilenames = j.at("Timing Reference").at("Filenames").get<std::vector<std::string>>();
+
+    const auto align = j.at("Align");
+    for (auto it = align.begin(); it != align.end(); ++it)
+    {
+        params.m_alignSeriesNames.push_back(it.key());
+        params.m_alignSeriesFilenames.push_back(it.value());
+    }
     params.m_outputFilename = j.at("Output CSV Filename").get<std::string>();
     return params;
 }
@@ -45,8 +52,16 @@ std::string
 ExportAlignedTimestampsParams::toString() const
 {
     json j;
-    j["Timing Reference Filename"] = m_refFilename;
-    j["Align Filename"] = m_alignFilenames;
+    j["Timing Reference"] = {};
+    j["Timing Reference"]["Name"] = m_refSeriesName;
+    j["Timing Reference"]["Filenames"] = m_refSeriesFilenames;
+
+    j["Align"] = {};
+    ISX_ASSERT(m_alignSeriesNames.size() == m_alignSeriesFilenames.size());
+    for (size_t i = 0; i < m_alignSeriesNames.size(); i++)
+    {
+        j["Align"][m_alignSeriesNames[i]] = m_alignSeriesFilenames[i];
+    }
     j["Output CSV Filename"] = m_outputFilename;
     return j.dump(4);
 }
@@ -54,8 +69,14 @@ ExportAlignedTimestampsParams::toString() const
 std::vector<std::string>
 ExportAlignedTimestampsParams::getInputFilePaths() const
 {
-    std::vector<std::string> inputFilePaths = m_alignFilenames;
-    inputFilePaths.insert(inputFilePaths.begin(), m_refFilename);
+    std::vector<std::string> inputFilePaths = m_refSeriesFilenames;
+    for (const auto & alignSeriesFilenames : m_alignSeriesFilenames)
+    {
+        for (const auto & alignSeriesFilename : alignSeriesFilenames)
+        {
+            inputFilePaths.push_back(alignSeriesFilename);
+        }
+    }
     return inputFilePaths;
 }
 
@@ -368,8 +389,7 @@ readTimestamps(
     const std::string inFilename,
     const DataSet::Type inDataType,
     std::vector<uint64_t> & outTimestamps,
-    std::vector<std::pair<std::string, uint64_t>> & outChannels,
-    TimingInfo & outTimingInfo
+    std::vector<std::pair<std::string, uint64_t>> & outChannels
 
 )
 {
@@ -380,10 +400,10 @@ readTimestamps(
         {
             ISX_THROW(isx::ExceptionUserInput, "No frame timestamps stored in movie file to export.");
         }
-        outTimingInfo = movie->getTimingInfo();
+        const auto & timingInfo = movie->getTimingInfo();
 
-        outTimestamps.resize(outTimingInfo.getNumTimes());
-        for (size_t i = 0; i < outTimingInfo.getNumTimes(); i++)
+        outTimestamps.resize(timingInfo.getNumTimes());
+        for (size_t i = 0; i < timingInfo.getNumTimes(); i++)
         {
             outTimestamps[i] = movie->getFrameTimestamp(i);
         }
@@ -392,8 +412,8 @@ readTimestamps(
     {
         const auto firstTsc = getFirstTsc(inFilename, inDataType);
         const auto gpio = isx::readGpio(inFilename);
-        outTimingInfo = gpio->getTimingInfo();
-        const auto startTime = outTimingInfo.getStart();
+        const auto & timingInfo = gpio->getTimingInfo();
+        const auto startTime = timingInfo.getStart();
 
         const auto channelNames = gpio->getChannelList();
         const auto numChannels = channelNames.size();
@@ -427,50 +447,21 @@ AsyncTaskStatus exportAlignedTimestamps(
 )
 {
     // Check input filenames
-    auto alignFilenames = inParams.m_alignFilenames;
-    auto alignNames = inParams.m_alignNames;
+    auto alignSeriesFilenames = inParams.m_alignSeriesFilenames;
+    auto alignSeriesNames = inParams.m_alignSeriesNames;
+    if (alignSeriesFilenames.size() != alignSeriesNames.size())
     {
-        if (alignFilenames.size() != alignNames.size())
-        {
-            ISX_THROW(isx::ExceptionUserInput, "Number of align file paths does not match number of align names.");
-        }
-        std::sort(alignFilenames.begin(), alignFilenames.end());
-        alignFilenames.erase(std::unique(alignFilenames.begin(), alignFilenames.end() ), alignFilenames.end());
-
-        std::sort(alignNames.begin(), alignNames.end());
-        alignNames.erase(std::unique(alignNames.begin(), alignNames.end() ), alignNames.end());
-        if (alignFilenames.size() != inParams.m_alignFilenames.size())
-        {
-            ISX_LOG_WARNING("Duplicate input align files found, removing from list of input align files.");
-        }
-
-        int index = -1;
-        for (size_t i = 0; i < alignFilenames.size(); i++)
-        {
-            const auto & alignFilename = alignFilenames[i];
-            if (alignFilename == inParams.m_refFilename)
-            {
-                ISX_ASSERT(alignNames[i] == inParams.m_refName);
-                index = static_cast<int>(i);
-            }
-        }
-
-        if (index >= 0)
-        {
-            ISX_LOG_WARNING("Cannot align file to itself, removing from list of input align files.");
-            alignFilenames.erase(alignFilenames.begin() + index);
-            alignNames.erase(alignNames.begin() + index);
-        }
+        ISX_THROW(isx::ExceptionUserInput, "Number of align file paths does not match number of align names.");
     }
 
     DataSet::Type refDataType;
-    std::vector<DataSet::Type> alignDataTypes(alignFilenames.size());
+    std::vector<DataSet::Type> alignDataTypes(alignSeriesFilenames.size());
     // Check input data types
     {
         const std::vector<DataSet::Type> supportedRefDataTypes = {DataSet::Type::GPIO, DataSet::Type::MOVIE, DataSet::Type::NVISION_MOVIE};
         bool isRefDataTypeSupported = false;
         isx::DataSet::Properties props;
-        refDataType = isx::readDataSetType(inParams.m_refFilename, props);
+        refDataType = isx::readDataSetType(inParams.m_refSeriesFilenames.front(), props);
         for (const auto & supportedRefDataType : supportedRefDataTypes)
         {
             if (refDataType == supportedRefDataType)
@@ -486,9 +477,9 @@ AsyncTaskStatus exportAlignedTimestamps(
         }
 
         const std::vector<DataSet::Type> supportedAlignDataTypes = {DataSet::Type::GPIO, DataSet::Type::MOVIE, DataSet::Type::NVISION_MOVIE};
-        for (size_t i = 0; i < alignFilenames.size(); i++)
+        for (size_t i = 0; i < alignSeriesFilenames.size(); i++)
         {
-            const auto & alignFilename = alignFilenames[i];
+            const auto & alignFilename = alignSeriesFilenames[i].front();
             bool isAlignDataTypeSupported = false;
             isx::DataSet::Properties props;
             alignDataTypes[i] = isx::readDataSetType(alignFilename, props);
@@ -510,16 +501,15 @@ AsyncTaskStatus exportAlignedTimestamps(
 
     // Check input files share the same recording UUID (and are therefore paired and synchronized)
     {
-        const auto refRecordingUUID = getRecordingUUID(inParams.m_refFilename, refDataType);
+        const auto refRecordingUUID = getRecordingUUID(inParams.m_refSeriesFilenames.front(), refDataType);
         if (refRecordingUUID.empty())
         {
             ISX_THROW(isx::ExceptionUserInput, "Cannot determine if files are paired and synchronized - no recording UUID in timing reference file metadata.");
         }
 
-        for (size_t i = 0; i < alignFilenames.size(); i++)
+        for (size_t i = 0; i < alignSeriesFilenames.size(); i++)
         {
-            const auto & alignFilename = alignFilenames[i];
-            const auto alignRecordingUUID = getRecordingUUID(alignFilename, alignDataTypes[i]);
+            const auto alignRecordingUUID = getRecordingUUID(alignSeriesFilenames[i].front(), alignDataTypes[i]);
 
             if (alignRecordingUUID != refRecordingUUID)
             {
@@ -529,64 +519,90 @@ AsyncTaskStatus exportAlignedTimestamps(
     }
 
     // construct output csv
-    std::vector<std::string> inputFilenames = alignFilenames;
-    inputFilenames.insert(inputFilenames.begin(), inParams.m_refFilename);
+    std::vector<std::vector<std::string>> inputFilenames = alignSeriesFilenames;
+    inputFilenames.insert(inputFilenames.begin(), inParams.m_refSeriesFilenames);
 
-    std::vector<std::string> inputNames = alignNames;
-    inputNames.insert(inputNames.begin(), inParams.m_refName);
+    std::vector<std::string> inputNames = alignSeriesNames;
+    inputNames.insert(inputNames.begin(), inParams.m_refSeriesName);
 
     std::vector<DataSet::Type> inputDataTypes = alignDataTypes;
     inputDataTypes.insert(inputDataTypes.begin(), refDataType);
 
     const size_t numInputs = inputFilenames.size();
 
-    std::vector<std::vector<uint64_t>> inputTimestamps(numInputs);
-    std::vector<std::vector<std::pair<std::string, uint64_t>>> inputChannels(numInputs);
-    std::vector<TimingInfo> inputTimingInfos(numInputs);
+    std::vector<std::vector<std::vector<uint64_t>>> inputTimestamps(numInputs); // numInputs x numDataSets x numSamples
+    std::vector<std::vector<std::vector<std::pair<std::string, uint64_t>>>> inputChannels(numInputs); // numInputs x numDataSets x numChannels
     size_t maxFrames = 0;
-    for (size_t i = 0; i < numInputs; i++)
+    for (size_t inputIdx = 0; inputIdx < numInputs; inputIdx++)
     {
-        readTimestamps(inputFilenames[i], inputDataTypes[i], inputTimestamps[i], inputChannels[i], inputTimingInfos[i]);
-        maxFrames = std::max(inputTimestamps[i].size(), maxFrames);
+        const auto numDataSets = inputFilenames[inputIdx].size();
+        inputTimestamps[inputIdx] = std::vector<std::vector<uint64_t>>(numDataSets);
+        inputChannels[inputIdx] = std::vector<std::vector<std::pair<std::string, uint64_t>>>(numDataSets);
+
+        size_t numFrames = 0;
+        for (size_t dataSetIdx = 0; dataSetIdx < numDataSets; dataSetIdx++)
+        {
+            readTimestamps(inputFilenames[inputIdx][dataSetIdx], inputDataTypes[inputIdx], inputTimestamps[inputIdx][dataSetIdx], inputChannels[inputIdx][dataSetIdx]);
+            numFrames += inputTimestamps[inputIdx][dataSetIdx].size();
+        }
+        maxFrames = std::max(numFrames, maxFrames);
     }
 
-    const auto refFirstTsc = getFirstTsc(inParams.m_refFilename, refDataType);
-    const auto refEpochStartTimestamp = double(getStart(inParams.m_refFilename, refDataType).getSecsSinceEpoch().getNum()) / 1e3;
-
     std::ofstream csv(inParams.m_outputFilename);
-    for (size_t i = 0; i < numInputs; i++)
+    for (size_t inputIdx = 0; inputIdx < numInputs; inputIdx++)
     {
-        if (i > 0)
+        if (inputIdx > 0)
         {
             csv << ",";
         }
 
-        csv << inputNames[i] << " Timestamp (s)";
+        csv << inputNames[inputIdx] << " Timestamp (s)";
         
-        if (inputChannels[i].size())
+        if (inputChannels[inputIdx].front().size())
         {
-            csv << "," << inputNames[i] << " Channel";
+            csv << "," << inputNames[inputIdx] << " Channel";
         }
     }
     csv << std::endl;
     
     const size_t floatDecimalPrecision = 6;
-    for (size_t f = 0; f < maxFrames; f++)
+    const auto refFirstTsc = getFirstTsc(inParams.m_refSeriesFilenames.front(), refDataType);
+    const auto refEpochStartTimestamp = double(getStart(inParams.m_refSeriesFilenames.front(), refDataType).getSecsSinceEpoch().getNum()) / 1e3;
+
+    std::vector<size_t> inputDataSetIdxs(numInputs, 0);
+    std::vector<size_t> inputDataSetLocalIdxs(numInputs, 0);
+    for (size_t sampleIdx = 0; sampleIdx < maxFrames; sampleIdx++)
     {
-        for (size_t i = 0; i < numInputs; i++)
+        for (size_t inputIdx = 0; inputIdx < numInputs; inputIdx++)
         {
-            if (i > 0)
+            if (inputIdx > 0)
             {
                 csv << ",";
             }
 
-            if (f >= inputTimestamps[i].size())
+            auto & dataSetIdx = inputDataSetIdxs[inputIdx];
+            // All frames in this series have been processed, skip this input
+            if (dataSetIdx == inputTimestamps[inputIdx].size())
             {
                 continue;
             }
 
+            auto & dataSetLocalIdx = inputDataSetLocalIdxs[inputIdx];
+            // All frames in this data set have been processed, move on to the next data set in the series
+            if (dataSetLocalIdx == inputTimestamps[inputIdx][dataSetIdx].size())
+            {
+                dataSetIdx++;
+                dataSetLocalIdx = 0;
+
+                // All frames in this series have been processed, skip this value
+                if (dataSetIdx == inputTimestamps[inputIdx].size())
+                {
+                    continue;
+                }
+            }
+
             // Output timestamp in specified format
-            const auto tsc = inputTimestamps[i][f];
+            const auto tsc = inputTimestamps[inputIdx][dataSetIdx][dataSetLocalIdx];
             if (inParams.m_format == WriteTimeRelativeTo::FIRST_DATA_ITEM)
             {
                 const auto timestamp = double(tsc - refFirstTsc) / 1e6;
@@ -602,17 +618,19 @@ AsyncTaskStatus exportAlignedTimestamps(
                 csv << tsc;
             }
 
-            if (inputChannels[i].size())
+            if (inputChannels[inputIdx][dataSetIdx].size())
             {
                 // Find the channel that this timestamp belongs to
                 size_t channelIndex = 0;
-                while (channelIndex < (inputChannels[i].size() - 1) && f > (inputChannels[i][channelIndex].second - 1))
+                while (channelIndex < (inputChannels[inputIdx][dataSetIdx].size() - 1) && dataSetLocalIdx > (inputChannels[inputIdx][dataSetIdx][channelIndex].second - 1))
                 {
                     channelIndex++;
                 }
-                ISX_ASSERT(channelIndex < inputChannels[i].size());
-                csv << "," << inputChannels[i][channelIndex].first;
+                ISX_ASSERT(channelIndex < inputChannels[inputIdx][dataSetIdx].size());
+                csv << "," << inputChannels[inputIdx][dataSetIdx][channelIndex].first;
             }
+
+            dataSetLocalIdx++;
         }
         csv << std::endl;
     }
