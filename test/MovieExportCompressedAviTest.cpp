@@ -398,6 +398,43 @@ TEST_CASE("MovieCompressedAviExportU8Test", "[core][export_mp4]")
     std::remove(exportedCompressedAviFileName.c_str());
 }
 
+TEST_CASE("MovieCompressedAviExportIntFrameRateTest", "[core][export_mp4]")
+{
+    const std::vector<std::string> inputFileNames = {
+        g_resources["unitTestDataPath"] + "/nVision/20220401-022845-KTM-RQEHB_10_secs.isxb"
+    };
+
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.mp4";
+
+    isx::CoreInitialize();
+
+    isx::SpMovie_t inputMovie = isx::readMovie(inputFileNames[0]);
+
+    const double bitRateFraction = 0.1;
+    isx::MovieCompressedAviExporterParams params(
+        {inputMovie},
+        exportedCompressedAviFileName,
+        bitRateFraction);
+    params.setFrameRateFormat(isx::MovieExporterParams::FrameRateFormat::INTEGER_ROUNDED);
+    isx::runMovieCompressedAviExporter(params);
+    
+    SECTION("Verify exported data")
+    {
+        isx::DataSet::Properties props = {};
+        // props[isx::DataSet::PROP_MOVIE_FRAME_RATE] = isx::Variant(20.f);
+        props[isx::DataSet::PROP_MOVIE_START_TIME] = isx::Variant(isx::Time());
+        isx::BehavMovieFile::getBehavMovieProperties(exportedCompressedAviFileName, props);
+        isx::SpMovie_t exportedMovie = isx::readBehavioralMovie(exportedCompressedAviFileName, props);
+
+        const isx::DurationInSeconds expFrameRate(30, 1);
+        REQUIRE(exportedMovie->getTimingInfo().getStep().getInverse() == expFrameRate);
+    }
+
+    isx::CoreShutdown();
+
+    std::remove(exportedCompressedAviFileName.c_str());
+}
+
 TEST_CASE("MovieCompressedAviExportBitrateTest", "[core][export_mp4]")
 {
     std::array<const char *, 1> names =

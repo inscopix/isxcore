@@ -54,6 +54,9 @@ struct MovieTiffExporterParams : MovieExporterParams
     void
     setBitRateFraction(const double inBitRateFraction) override;
 
+    void
+    setFrameRateFormat(const FrameRateFormat inFrameRateFormat) override;
+
     void 
     setSources(const std::vector<SpMovie_t> & inSources) override;
 

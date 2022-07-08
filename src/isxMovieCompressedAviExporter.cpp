@@ -123,10 +123,20 @@ populatePixels(AVFrame *avf, int tIndex, int width, int height, isx::Image *inIm
 }
 
 int
-convertFrameToPacket(AVCodecContext *avcc, AVFrame *avf, AVFormatContext *avFmtCnxt, VideoOutput *vOut)
+convertFrameToPacket(AVCodecContext *avcc, AVFrame *avf, AVFormatContext *avFmtCnxt, VideoOutput *vOut, const bool inRoundFrameRate)
 {
     AVPacket pkt = { 0 };
     int got_packet = 0;
+    
+    // If the frame rate has been rounded to an integer, manually set the pts of the packet using a timescale of 1000.
+    // Based on the code from this post: https://stackoverflow.com/questions/70060148/libav-producing-mp4-file-with-extremely-high-frame-rate
+    int64_t avp_duration = 0;
+    if (avf && inRoundFrameRate)
+    {
+        AVRational avg_frame_rate = av_make_q(vOut->avcc->framerate.num / 1000, vOut->avcc->framerate.den);
+        avp_duration = avcc->time_base.den / avcc->time_base.num / avg_frame_rate.num * avg_frame_rate.den;
+        avf->pts = (int64_t)avf->pts * avp_duration;
+    }
 
     if (avcodec_send_frame(avcc, avf) < 0)
     {
@@ -142,6 +152,7 @@ convertFrameToPacket(AVCodecContext *avcc, AVFrame *avf, AVFormatContext *avFmtC
     got_packet = 1;
     av_packet_rescale_ts(&pkt, avcc->time_base, vOut->avs->time_base);
     pkt.stream_index = vOut->avs->index;
+    pkt.duration = avp_duration;
     int ret = av_interleaved_write_frame(avFmtCnxt, &pkt);
 
     if (ret < 0)
@@ -152,7 +163,7 @@ convertFrameToPacket(AVCodecContext *avcc, AVFrame *avf, AVFormatContext *avFmtC
 }
 
 bool
-preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut, const isx::Image *inImg, isx::DurationInSeconds framePeriod, isx::isize_t bitRate)
+preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut, const isx::Image *inImg, isx::DurationInSeconds framePeriod, isx::isize_t bitRate, const bool roundFrameRate)
 {
     vOut = { 0 };
     int ret;
@@ -199,12 +210,25 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
 
     avcc->codec_id = avOutFmt->video_codec;
     avcc->bit_rate = bitRate;
-
-    // The MPEG4 codec only supports frame period denominators of up to 2^16 - 1.
-    // Use libav util function to reduce the frampPeriod ratio so that both components are less than 2^16 - 1
-    // while still maintaining high enough precision with the average sampling rate stored in the exported file.
+    
     int framePeriodNum, framePeriodDen;
-    av_reduce(&framePeriodNum, &framePeriodDen, int64_t(framePeriod.getNum()), int64_t(framePeriod.getDen()), 65535);
+    if (roundFrameRate)
+    {
+        // Round the frame rate to the closest integer.
+        // Multiply the frame rate by 1000 to set the timescale of the encoder to 1000..
+        // This ensures that decoders interpret the frame rate correctly -
+        // using a timescale of 1 leads to decoders inferring a slightly different fps than what's encoded in the file.
+        // See function convertFrameToPacket for more info
+        framePeriodNum = 1;
+        framePeriodDen = int(std::round(framePeriod.getInverse().toDouble())) * 1000;
+    }
+    else
+    {
+        // The MPEG4 codec only supports frame period denominators of up to 2^16 - 1.
+        // Use libav util function to reduce the frampPeriod ratio so that both components are less than 2^16 - 1
+        // while still maintaining high enough precision with the average sampling rate stored in the exported file.
+        av_reduce(&framePeriodNum, &framePeriodDen, int64_t(framePeriod.getNum()), int64_t(framePeriod.getDen()), 65535);
+    }
     avcc->time_base.num = framePeriodNum;
     avcc->time_base.den = framePeriodDen;
     avcc->framerate.num = framePeriodDen;
@@ -297,7 +321,7 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
 }
 
 bool
-withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, const float inMinVal, const float inMaxVal, const bool isValid)
+withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, const float inMinVal, const float inMaxVal, const bool isValid, const bool inRoundFrameRate)
 {
     AVFrame *avf = NULL;
     AVCodecContext *avcc = vOut->avcc;
@@ -314,17 +338,17 @@ withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, con
     vOut->avf->pts = vOut->pts++;
     avf = vOut->avf;
 
-    convertFrameToPacket(avcc, avf, avFmtCnxt, vOut);
+    convertFrameToPacket(avcc, avf, avFmtCnxt, vOut, inRoundFrameRate);
     return false;
 }
 
 bool
-postLoop(AVFormatContext *avFmtCnxt, VideoOutput & vOut)
+postLoop(AVFormatContext *avFmtCnxt, VideoOutput & vOut, const bool inRoundFrameRate)
 {
     int done = 0;
     while (!done)
     {
-        done = convertFrameToPacket(vOut.avcc, NULL, avFmtCnxt, &vOut);
+        done = convertFrameToPacket(vOut.avcc, NULL, avFmtCnxt, &vOut, inRoundFrameRate);
     }
 
     AVOutputFormat *avOutFmt = avFmtCnxt->oformat;
@@ -387,7 +411,7 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<isx::S
 }
 
 bool
-compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, const float inProgressAllocation, const float inProgressStart, const isx::isize_t inBitRate, const bool inWriteInvalidFrames)
+compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, const float inProgressAllocation, const float inProgressStart, const isx::isize_t inBitRate, const bool inWriteInvalidFrames, const bool inRoundFrameRate)
 {
     int tInd = 0;
     bool cancelled = false;
@@ -427,12 +451,12 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
                 
                 if (tInd == 0)
                 {
-                    if (preLoop(inFileName.c_str(), avFmtCnxt, vOut, &img, stepFirst, inBitRate))
+                    if (preLoop(inFileName.c_str(), avFmtCnxt, vOut, &img, stepFirst, inBitRate, inRoundFrameRate))
                     {
                         return true;
                     }
                 }
-                if (withinLoop(avFmtCnxt, &vOut, &img, inMinVal, inMaxVal, isValid))
+                if (withinLoop(avFmtCnxt, &vOut, &img, inMinVal, inMaxVal, isValid, inRoundFrameRate))
                 {
                     return true;
                 }                
@@ -451,7 +475,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
         }
     }
 
-    if (postLoop(avFmtCnxt, vOut))
+    if (postLoop(avFmtCnxt, vOut, inRoundFrameRate))
     {
         return true;
     }
@@ -459,7 +483,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
 }
 
 bool
-toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, const isx::isize_t inBitRate, const bool inWriteInvalidFrames, const float inProgressAllocation, const float inProgressStart)
+toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, const isx::isize_t inBitRate, const bool inWriteInvalidFrames, const bool inRoundFrameRate, const float inProgressAllocation, const float inProgressStart)
 {
     bool cancelled;
     float minVal = -1;
@@ -478,7 +502,7 @@ toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t
         progressAllocation = inProgressAllocation * 0.9f;
     }
 
-    cancelled = compressedAVIOutputMovie(inFileName, inMovies, inCheckInCB, minVal, maxVal, progressAllocation, progressStart, inBitRate, inWriteInvalidFrames);
+    cancelled = compressedAVIOutputMovie(inFileName, inMovies, inCheckInCB, minVal, maxVal, progressAllocation, progressStart, inBitRate, inWriteInvalidFrames, inRoundFrameRate);
     if (cancelled) return true;
     
     return false;
@@ -531,6 +555,12 @@ void
 MovieCompressedAviExporterParams::setBitRateFraction(const double inBitRateFraction)
 {
     m_bitRateFraction = inBitRateFraction;
+}
+
+void
+MovieCompressedAviExporterParams::setFrameRateFormat(const FrameRateFormat inFrameRateFormat)
+{
+    m_frameRateFormat = inFrameRateFormat;
 }
 
 void
@@ -628,9 +658,10 @@ runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::sh
         inParams.updateBitRateBasedOnFraction();
     }
 
+    const bool inRoundFrameRate = inParams.m_frameRateFormat == MovieExporterParams::FrameRateFormat::INTEGER_ROUNDED;
     try
     {
-        cancelled = toCompressedAVI(inParams.m_filename, inParams.m_srcs, inCheckInCB, inParams.getBitRate(), inParams.m_writeInvalidFrames, inProgressAllocation, inProgressStart);
+        cancelled = toCompressedAVI(inParams.m_filename, inParams.m_srcs, inCheckInCB, inParams.getBitRate(), inParams.m_writeInvalidFrames, inRoundFrameRate, inProgressAllocation, inProgressStart);
     }
     catch (...)
     {

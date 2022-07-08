@@ -94,6 +94,9 @@ struct MovieNWBExporterParams : MovieExporterParams
     void
     setBitRateFraction(const double inBitRateFraction) override;
 
+    void
+    setFrameRateFormat(const FrameRateFormat inFrameRateFormat) override;
+
     /// \return id string
     ///
     static

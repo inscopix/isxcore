@@ -139,6 +139,15 @@ MovieExporterParamsWrapper::setBitRateFraction(const double inBitRateFraction)
 }
 
 void
+MovieExporterParamsWrapper::setFrameRateFormat(const MovieExporterParams::FrameRateFormat inFrameRateFormat)
+{
+    if (m_params)
+    {
+        m_params->setFrameRateFormat(inFrameRateFormat);
+    }
+}
+
+void
 MovieExporterParamsWrapper::setAdditionalInfo(
     const std::string & inIdentifierBase,
     const std::string & inSessionDescription,

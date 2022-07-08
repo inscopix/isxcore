@@ -23,6 +23,14 @@ struct MovieExporterParams
         MP4         ///< MP4
     };
 
+    /// Format to export frame rate metadata
+    /// Applicable for MP4 export
+    enum class FrameRateFormat
+    {
+        FLOATING_PRECISE = 0,
+        INTEGER_ROUNDED
+    };
+
     /// \return The type of export based on a string representing the type
     static isx::MovieExporterParams::Type convertStringToType(const std::string inStr)
     {
@@ -75,6 +83,11 @@ struct MovieExporterParams
     virtual
     void
     setBitRateFraction(const double inBitRateFraction) = 0;
+
+    /// \param  inFrameRateFormat    The format to export the frame rate
+    virtual
+    void
+    setFrameRateFormat(const FrameRateFormat inFrameRateFormat) = 0;
 
     /// \param inSources the input movies to be exported
     virtual
@@ -185,6 +198,10 @@ struct MovieExporterParamsWrapper
     ///                                 exporters that allow lossy compression.
     void
     setBitRateFraction(const double inBitRateFraction);
+
+    /// \param  inFrameRateFormat    The format to export the frame rate
+    void
+    setFrameRateFormat(const MovieExporterParams::FrameRateFormat inFrameRateFormat);
 
     /// Set additional information to be saved in the output file
     /// \param inIdentifierBase         identifer base used for creating a unique ID (eg. concatenated lab name, experimentalist, or a hash of

@@ -51,6 +51,12 @@ MovieTiffExporterParams::setBitRateFraction(const double inBitRateFraction)
 }
 
 void
+MovieTiffExporterParams::setFrameRateFormat(const FrameRateFormat inFrameRateFormat)
+{
+    // Do nothing - currently not applicable for TIFF
+}
+
+void
 MovieTiffExporterParams::setSources(const std::vector<SpMovie_t> & inSources)
 {
     m_srcs = inSources;

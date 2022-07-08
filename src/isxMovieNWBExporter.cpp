@@ -95,6 +95,12 @@ MovieNWBExporterParams::setBitRateFraction(const double inBitRateFraction)
     // Do nothing - currently NWB cannot contain these details
 }
 
+void
+MovieNWBExporterParams::setFrameRateFormat(const FrameRateFormat inFrameRateFormat)
+{
+    // Do nothing - currently not applicable for NWB
+}
+
 std::vector<std::string>
 MovieNWBExporterParams::getInputFilePaths() const
 {
