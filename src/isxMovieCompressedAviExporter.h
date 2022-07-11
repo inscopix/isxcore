@@ -97,7 +97,7 @@ struct MovieCompressedAviExporterParams : MovieExporterParams
     isize_t                 m_bitRate = 0;                  ///< bitrate in bps
     double                  m_bitRateFraction = s_defaultBitRateFraction;   ///< bitrate as fraction of theoretical uncompressed
     bool                    m_writeInvalidFrames = false;                           ///< substitute zero-frames with dropped and cropped
-    FrameRateFormat         m_frameRateFormat;             ///< format to export frame rate as in output mp4 file
+    FrameRateFormat         m_frameRateFormat = FrameRateFormat::INTEGER_ROUNDED;   ///< format to export frame rate as in output mp4 file
 };
 
 /// Movie exporter output parameters 

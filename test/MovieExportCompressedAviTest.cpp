@@ -125,9 +125,9 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
 {
     std::array<const char *, 3> names =
     { {
-        "seriesMovie0_avi.isxd",
-        "seriesMovie1_avi.isxd",
-        "seriesMovie2_avi.isxd"
+        "seriesMovie0.isxd",
+        "seriesMovie1.isxd",
+        "seriesMovie2.isxd"
     } };
     std::vector<std::string> filenames;
 
@@ -141,7 +141,7 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
         std::remove(fn.c_str());
     }
 
-    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.avi";
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.mp4";
     std::remove(exportedCompressedAviFileName.c_str());
 
     std::vector<isx::isize_t> dropped = { 2 };
@@ -182,6 +182,7 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
             movies,
             exportedCompressedAviFileName,
             isx::isize_t(400000));
+        // params.setFrameRateFormat(isx::MovieExporterParams::FrameRateFormat::FLOATING_PRECISE);
         isx::runMovieCompressedAviExporter(params);
         
         
@@ -235,9 +236,9 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
 {
     std::array<const char *, 3> names =
     { {
-            "seriesMovie0_avi.isxd",
-            "seriesMovie1_avi.isxd",
-            "seriesMovie2_avi.isxd"
+            "seriesMovie0.isxd",
+            "seriesMovie1.isxd",
+            "seriesMovie2.isxd"
         } };
     std::vector<std::string> filenames;
 
@@ -251,7 +252,7 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
         std::remove(fn.c_str());
     }
 
-    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.avi";
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.mp4";
     std::remove(exportedCompressedAviFileName.c_str());
 
     std::vector<isx::isize_t> dropped = { 2 };
@@ -378,9 +379,9 @@ TEST_CASE("MovieCompressedAviExportU8Test", "[core][export_mp4]")
         const size_t numFrames = inputMovie->getTimingInfo().getNumTimes();
         // Results of codec are slightly different between windows and linux/mac, but images look similar
 #if ISX_OS_WIN32
-        const uint64_t expSum = 11685404584;
+        const uint64_t expSum = 11674691272;
 #else
-        const uint64_t expSum = 11685363833;
+        const uint64_t expSum = 11675911035;
 #endif
         uint64_t sum = 0;
         for (size_t i = 0; i < numFrames; i++)
@@ -421,7 +422,6 @@ TEST_CASE("MovieCompressedAviExportIntFrameRateTest", "[core][export_mp4]")
     SECTION("Verify exported data")
     {
         isx::DataSet::Properties props = {};
-        // props[isx::DataSet::PROP_MOVIE_FRAME_RATE] = isx::Variant(20.f);
         props[isx::DataSet::PROP_MOVIE_START_TIME] = isx::Variant(isx::Time());
         isx::BehavMovieFile::getBehavMovieProperties(exportedCompressedAviFileName, props);
         isx::SpMovie_t exportedMovie = isx::readBehavioralMovie(exportedCompressedAviFileName, props);
@@ -439,7 +439,7 @@ TEST_CASE("MovieCompressedAviExportBitrateTest", "[core][export_mp4]")
 {
     std::array<const char *, 1> names =
     { {
-            "seriesMovie0_avi.isxd"
+            "seriesMovie0.isxd"
     } };
     std::vector<std::string> filenames;
 
@@ -453,7 +453,7 @@ TEST_CASE("MovieCompressedAviExportBitrateTest", "[core][export_mp4]")
         std::remove(fn.c_str());
     }
 
-    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.avi";
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.mp4";
 
     //std::vector<isx::isize_t> dropped = { 2 };
     std::array<isx::TimingInfo, 1> timingInfos =
