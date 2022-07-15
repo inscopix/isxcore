@@ -125,9 +125,9 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
 {
     std::array<const char *, 3> names =
     { {
-        "seriesMovie0.isxd",
-        "seriesMovie1.isxd",
-        "seriesMovie2.isxd"
+        "seriesMovie0_avi.isxd",
+        "seriesMovie1_avi.isxd",
+        "seriesMovie2_avi.isxd"
     } };
     std::vector<std::string> filenames;
 
@@ -141,7 +141,7 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
         std::remove(fn.c_str());
     }
 
-    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.mp4";
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.avi";
     std::remove(exportedCompressedAviFileName.c_str());
 
     std::vector<isx::isize_t> dropped = { 2 };
@@ -198,6 +198,9 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
             const size_t expNumTimes = 11;
             REQUIRE(exportedMovie->getTimingInfo().getNumTimes() == expNumTimes);
 
+            const isx::Ratio expStep(1, 20);
+            REQUIRE(exportedMovie->getTimingInfo().getStep() == expStep);
+            
             // MPEG-4 requires dimensions of video to be even numbers, so the 3 pixel height is downsized to 2 pixels
             const isx::SizeInPixels_t expSizeInPixels = isx::SizeInPixels_t(4, 2);
             REQUIRE(exportedMovie->getSpacingInfo().getNumPixels() == expSizeInPixels);
@@ -236,9 +239,9 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
 {
     std::array<const char *, 3> names =
     { {
-            "seriesMovie0.isxd",
-            "seriesMovie1.isxd",
-            "seriesMovie2.isxd"
+            "seriesMovie0_avi.isxd",
+            "seriesMovie1_avi.isxd",
+            "seriesMovie2_avi.isxd"
         } };
     std::vector<std::string> filenames;
 
@@ -252,7 +255,7 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
         std::remove(fn.c_str());
     }
 
-    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.mp4";
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.avi";
     std::remove(exportedCompressedAviFileName.c_str());
 
     std::vector<isx::isize_t> dropped = { 2 };
@@ -305,6 +308,9 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
             // Dropped frame results in one less frame in exported movie
             const size_t expNumTimes = 11;
             REQUIRE(exportedMovie->getTimingInfo().getNumTimes() == expNumTimes);
+
+            const isx::Ratio expStep(1, 20);
+            REQUIRE(exportedMovie->getTimingInfo().getStep() == expStep);
 
             // MPEG-4 requires dimensions of video to be even numbers, so the 3 pixel height is downsized to 2 pixels
             const isx::SizeInPixels_t expSizeInPixels = isx::SizeInPixels_t(4, 2);
@@ -369,6 +375,9 @@ TEST_CASE("MovieCompressedAviExportU8Test", "[core][export_mp4]")
         const size_t expNumTimes = inputMovie->getTimingInfo().getNumTimes();
         REQUIRE(exportedMovie->getTimingInfo().getNumTimes() == expNumTimes);
 
+        const isx::Ratio expStep(1233, 36985);
+        REQUIRE(exportedMovie->getTimingInfo().getStep() == expStep);
+
         const isx::SizeInPixels_t expSizeInPixels = inputMovie->getSpacingInfo().getNumPixels();
         REQUIRE(exportedMovie->getSpacingInfo().getNumPixels() == expSizeInPixels);
 
@@ -379,9 +388,9 @@ TEST_CASE("MovieCompressedAviExportU8Test", "[core][export_mp4]")
         const size_t numFrames = inputMovie->getTimingInfo().getNumTimes();
         // Results of codec are slightly different between windows and linux/mac, but images look similar
 #if ISX_OS_WIN32
-        const uint64_t expSum = 11674691272;
+        const uint64_t expSum = 11685404584;
 #else
-        const uint64_t expSum = 11675911035;
+        const uint64_t expSum = 11685363833;
 #endif
         uint64_t sum = 0;
         for (size_t i = 0; i < numFrames; i++)
@@ -439,7 +448,7 @@ TEST_CASE("MovieCompressedAviExportBitrateTest", "[core][export_mp4]")
 {
     std::array<const char *, 1> names =
     { {
-            "seriesMovie0.isxd"
+            "seriesMovie0_avi.isxd"
     } };
     std::vector<std::string> filenames;
 
@@ -453,7 +462,7 @@ TEST_CASE("MovieCompressedAviExportBitrateTest", "[core][export_mp4]")
         std::remove(fn.c_str());
     }
 
-    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.mp4";
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/exportedMovie.avi";
 
     //std::vector<isx::isize_t> dropped = { 2 };
     std::array<isx::TimingInfo, 1> timingInfos =

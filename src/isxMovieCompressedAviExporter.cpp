@@ -123,20 +123,10 @@ populatePixels(AVFrame *avf, int tIndex, int width, int height, isx::Image *inIm
 }
 
 int
-convertFrameToPacket(AVCodecContext *avcc, AVFrame *avf, AVFormatContext *avFmtCnxt, VideoOutput *vOut, const bool inRoundFrameRate)
+convertFrameToPacket(AVCodecContext *avcc, AVFrame *avf, AVFormatContext *avFmtCnxt, VideoOutput *vOut)
 {
     AVPacket pkt = { 0 };
     int got_packet = 0;
-    
-    // If the frame rate has been rounded to an integer, manually set the pts of the packet using a timescale of 1000.
-    // Based on the code from this post: https://stackoverflow.com/questions/70060148/libav-producing-mp4-file-with-extremely-high-frame-rate
-    int64_t avp_duration = 0;
-    if (avf && inRoundFrameRate)
-    {
-        AVRational avg_frame_rate = av_make_q(vOut->avcc->framerate.num / 1000, vOut->avcc->framerate.den);
-        avp_duration = avcc->time_base.den / avcc->time_base.num / avg_frame_rate.num * avg_frame_rate.den;
-        avf->pts = (int64_t)avf->pts * avp_duration;
-    }
 
     if (avcodec_send_frame(avcc, avf) < 0)
     {
@@ -150,9 +140,9 @@ convertFrameToPacket(AVCodecContext *avcc, AVFrame *avf, AVFormatContext *avFmtC
         return 1;
     }
     got_packet = 1;
+    pkt.duration = 1;
     av_packet_rescale_ts(&pkt, avcc->time_base, vOut->avs->time_base);
     pkt.stream_index = vOut->avs->index;
-    pkt.duration = avp_duration;
     int ret = av_interleaved_write_frame(avFmtCnxt, &pkt);
 
     if (ret < 0)
@@ -220,7 +210,7 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
         // using a timescale of 1 leads to decoders inferring a slightly different fps than what's encoded in the file.
         // See function convertFrameToPacket for more info
         framePeriodNum = 1;
-        framePeriodDen = int(std::round(framePeriod.getInverse().toDouble())) * 1000;
+        framePeriodDen = int(std::round(framePeriod.getInverse().toDouble()));
     }
     else
     {
@@ -321,7 +311,7 @@ preLoop(const char *filename, AVFormatContext * & avFmtCnxt, VideoOutput & vOut,
 }
 
 bool
-withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, const float inMinVal, const float inMaxVal, const bool isValid, const bool inRoundFrameRate)
+withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, const float inMinVal, const float inMaxVal, const bool isValid)
 {
     AVFrame *avf = NULL;
     AVCodecContext *avcc = vOut->avcc;
@@ -338,17 +328,17 @@ withinLoop(AVFormatContext *avFmtCnxt, VideoOutput *vOut, isx::Image *inImg, con
     vOut->avf->pts = vOut->pts++;
     avf = vOut->avf;
 
-    convertFrameToPacket(avcc, avf, avFmtCnxt, vOut, inRoundFrameRate);
+    convertFrameToPacket(avcc, avf, avFmtCnxt, vOut);
     return false;
 }
 
 bool
-postLoop(AVFormatContext *avFmtCnxt, VideoOutput & vOut, const bool inRoundFrameRate)
+postLoop(AVFormatContext *avFmtCnxt, VideoOutput & vOut)
 {
     int done = 0;
     while (!done)
     {
-        done = convertFrameToPacket(vOut.avcc, NULL, avFmtCnxt, &vOut, inRoundFrameRate);
+        done = convertFrameToPacket(vOut.avcc, NULL, avFmtCnxt, &vOut);
     }
 
     AVOutputFormat *avOutFmt = avFmtCnxt->oformat;
@@ -456,7 +446,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
                         return true;
                     }
                 }
-                if (withinLoop(avFmtCnxt, &vOut, &img, inMinVal, inMaxVal, isValid, inRoundFrameRate))
+                if (withinLoop(avFmtCnxt, &vOut, &img, inMinVal, inMaxVal, isValid))
                 {
                     return true;
                 }                
@@ -475,7 +465,7 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
         }
     }
 
-    if (postLoop(avFmtCnxt, vOut, inRoundFrameRate))
+    if (postLoop(avFmtCnxt, vOut))
     {
         return true;
     }
