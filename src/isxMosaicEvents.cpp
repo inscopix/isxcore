@@ -135,7 +135,11 @@ MosaicEvents::setTimingInfo(const isx::TimingInfo & inTimingInfo)
     if (m_type == FileType::V2)
     {
         auto f = std::static_pointer_cast<isx::EventBasedFileV2>(m_file);
-        f->setTimingInfo(inTimingInfo.getStart(), inTimingInfo.getEnd());
+        // IDPS-962 improving precision of average sampling rate in isxMosaicMovieFile.cpp can cause
+        // the computed end time to be a very large number which cannot be stored within a 64-bit unsigned integer.
+        // Round the end time to milliseconds so that it can be stored within a 64-bit unsigned integer in the file metadata.
+        const auto endTime = Time(DurationInSeconds::fromMilliseconds(inTimingInfo.getEnd().getSecsSinceEpoch().toMilliseconds()), inTimingInfo.getEnd().getUtcOffset());
+        f->setTimingInfo(inTimingInfo.getStart(), endTime);
     }
     else if (m_type == FileType::V1)
     {
