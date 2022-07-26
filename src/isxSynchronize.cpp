@@ -371,6 +371,7 @@ AsyncTaskStatus alignStartTimes(
         ISX_LOG_DEBUG("Synchronize start time diff: ", int64_t(expAlignStartTimestamp) - int64_t(alignStartTimestamp));
         if (alignStartTimestamp != expAlignStartTimestamp)
         {
+            ISX_LOG_INFO("Synchronizing start time of align file (", alignFilename, ") with reference file (", inRefFilename, "). Difference between expected and actual start time is: ", int64_t(expAlignStartTimestamp) - int64_t(alignStartTimestamp), " ms.");
             const Time newStart(
                 DurationInSeconds::fromMilliseconds(expAlignStartTimestamp),
                 refStart.getUtcOffset()
