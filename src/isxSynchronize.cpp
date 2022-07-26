@@ -384,13 +384,15 @@ AsyncTaskStatus alignStartTimes(
 
 // Reads frame timestamps from a file of a specified data type
 // Currently only supported for isxd movies, isxb movies, and gpio files
-void
+bool
 readTimestamps(
     const std::string inFilename,
     const DataSet::Type inDataType,
     std::vector<uint64_t> & outTimestamps,
-    std::vector<std::pair<std::string, uint64_t>> & outChannels
-
+    std::vector<std::pair<std::string, uint64_t>> & outChannels,
+    AsyncCheckInCB_t inCheckInCB,
+    const float inProgressAllocation,
+    const float inProgressStart
 )
 {
     if (inDataType == DataSet::Type::MOVIE || inDataType == DataSet::Type::NVISION_MOVIE)
@@ -402,10 +404,15 @@ readTimestamps(
         }
         const auto & timingInfo = movie->getTimingInfo();
 
-        outTimestamps.resize(timingInfo.getNumTimes());
-        for (size_t i = 0; i < timingInfo.getNumTimes(); i++)
+        const auto numFrames = timingInfo.getNumTimes();
+        outTimestamps.resize(numFrames);
+        for (size_t i = 0; i < numFrames; i++)
         {
             outTimestamps[i] = movie->getFrameTimestamp(i);
+            if (inCheckInCB(inProgressStart + (float(i) / float(numFrames)) * inProgressAllocation))
+            {
+                return true;
+            }
         }
     }
     else if (inDataType == DataSet::Type::GPIO)
@@ -425,19 +432,32 @@ readTimestamps(
         for (size_t c = 0; c < numChannels; c++)
         {
             const auto & channelName = channelNames[c];
-            const auto traceValues = logicalTraces[c]->getValues();
-            numValues += traceValues.size();
+            numValues += logicalTraces[c]->getValues().size();
             outChannels.push_back(std::make_pair(channelName, numValues));
+        }
+
+        // counter to track number of values iterated over in the gpio set
+        size_t i = 0;
+        for (size_t c = 0; c < numChannels; c++)
+        {
+            const auto traceValues = logicalTraces[c]->getValues();
             for (const auto & tv : traceValues)
             {
                 outTimestamps.push_back(firstTsc + uint64_t((tv.first - startTime).getNum()));
             }
+
+            if (inCheckInCB(inProgressStart + (float(i) / float(numValues)) * inProgressAllocation))
+            {
+                return true;
+            }
+            i += traceValues.size();
         }
     }
     else
     {
         ISX_THROW(isx::ExceptionUserInput, "Unsupported data type - can only read timestamps from gpio files, isxd movies, and isxb movies.");
     }
+    return false;
 }
 
 AsyncTaskStatus exportAlignedTimestamps(
@@ -528,7 +548,17 @@ AsyncTaskStatus exportAlignedTimestamps(
     std::vector<DataSet::Type> inputDataTypes = alignDataTypes;
     inputDataTypes.insert(inputDataTypes.begin(), refDataType);
 
+    // variables to keep track of progress
+    const float progressForRead = 0.3f;
+    const float progressForWrite = 0.7f;
+    float currentProgress = 0.0f;
+
     const size_t numInputs = inputFilenames.size();
+    size_t numDataSetsTotal = 0;
+    for (size_t inputIdx = 0; inputIdx < numInputs; inputIdx++)
+    {
+        numDataSetsTotal += inputFilenames[inputIdx].size();
+    }
 
     std::vector<std::vector<std::vector<uint64_t>>> inputTimestamps(numInputs); // numInputs x numDataSets x numSamples
     std::vector<std::vector<std::vector<std::pair<std::string, uint64_t>>>> inputChannels(numInputs); // numInputs x numDataSets x numChannels
@@ -542,8 +572,12 @@ AsyncTaskStatus exportAlignedTimestamps(
         size_t numFrames = 0;
         for (size_t dataSetIdx = 0; dataSetIdx < numDataSets; dataSetIdx++)
         {
-            readTimestamps(inputFilenames[inputIdx][dataSetIdx], inputDataTypes[inputIdx], inputTimestamps[inputIdx][dataSetIdx], inputChannels[inputIdx][dataSetIdx]);
+            if (readTimestamps(inputFilenames[inputIdx][dataSetIdx], inputDataTypes[inputIdx], inputTimestamps[inputIdx][dataSetIdx], inputChannels[inputIdx][dataSetIdx], inCheckInCB, progressForRead / float(numDataSetsTotal), currentProgress))
+            {
+                return AsyncTaskStatus::CANCELLED;
+            }
             numFrames += inputTimestamps[inputIdx][dataSetIdx].size();
+            currentProgress += progressForRead / float(numDataSetsTotal);
         }
         maxFrames = std::max(numFrames, maxFrames);
     }
@@ -635,7 +669,10 @@ AsyncTaskStatus exportAlignedTimestamps(
             dataSetLocalIdx++;
         }
         csv << std::endl;
-        inCheckInCB(float(sampleIdx) / float(maxFrames));
+        if (inCheckInCB(currentProgress + (float(sampleIdx) / float(maxFrames)) * progressForWrite))
+        {
+            return AsyncTaskStatus::CANCELLED;
+        }
     }
 
     return AsyncTaskStatus::COMPLETE;
