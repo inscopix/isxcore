@@ -8,6 +8,11 @@
 #include <fstream>
 #include <sstream>
 
+// Use this to turn bloodflow features in the GUI and API on/off
+#ifndef ISX_ENABLE_BLOODFLOW
+#define ISX_ENABLE_BLOODFLOW 1
+#endif
+
 namespace isx
 {
     /// The type of all sizes, lengths and indices
