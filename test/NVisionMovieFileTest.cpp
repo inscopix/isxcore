@@ -3,7 +3,8 @@
 #include "isxNVisionMovieFile.h"
 #include "isxTest.h"
 #include "isxArmaUtils.h"
-
+#include "isxMovieFactory.h"
+#include "isxPathUtils.h"
 #include "catch.hpp"
 
 TEST_CASE("NVisionMovieFile", "[core]") 
@@ -231,4 +232,352 @@ TEST_CASE("NVisionMovieFile-Dropped", "[core]")
     }
     
     isx::CoreShutdown();   
+}
+
+// Copy data from an existing isxb movie to a new one and verify the contents
+// of the newly written isxb file.
+TEST_CASE("NVisionMovieFile-Write", "[core]")
+{
+    const std::string inputFileName = g_resources["unitTestDataPath"] + "/nVision/20220412-200447-camera-100.isxb";
+    const std::string outputFileName = g_resources["unitTestDataPath"] + "/test.isxb";
+
+    isx::CoreInitialize();
+
+    isx::NVisionMovieFile inputFile(inputFileName);
+
+    {
+        isx::NVisionMovieFile outputFile(outputFileName, inputFile.getTimingInfo(), inputFile.getSpacingInfo());
+        for (size_t i = 0; i < inputFile.getTimingInfo().getNumTimes(); i++)
+        {
+            outputFile.writeFrame(inputFile.readFrame(i));
+            outputFile.writeFrameMetadata(inputFile.readFrameMetadata(i));
+        }
+        outputFile.setExtraProperties(inputFile.getExtraProperties());
+        outputFile.closeForWriting();
+    }
+
+    SECTION("Is valid")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName);
+        REQUIRE(outputFile.isValid());
+    }
+    
+    SECTION("File name")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName);
+        REQUIRE(outputFile.getFileName() == outputFileName);
+    }
+
+    SECTION("Timing info")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName);
+        REQUIRE(outputFile.getTimingInfo() == inputFile.getTimingInfo());
+    }
+
+    SECTION("Spacing info")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName);
+        REQUIRE(outputFile.getSpacingInfo() == inputFile.getSpacingInfo());
+    }
+
+    SECTION("Frames")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName);
+        
+        // Verify movie data by computing sum of both movies
+        const size_t numFrames = inputFile.getTimingInfo().getNumTimes();
+        uint64_t inputSum = 0;
+        uint64_t outputSum = 0;
+        for (size_t i = 0; i < numFrames; i++)
+        {
+            const auto inputFrame = inputFile.readFrame(i);
+            arma::Col<uint64_t> inputFrameCol;
+            isx::copyFrameToColumn(inputFrame, inputFrameCol);
+            inputSum += arma::sum(inputFrameCol);
+
+            const auto outputFrame = outputFile.readFrame(i);
+            arma::Col<uint64_t> outputFrameCol;
+            isx::copyFrameToColumn(outputFrame, outputFrameCol);
+            outputSum += arma::sum(outputFrameCol);
+        }
+
+        REQUIRE(approxEqual(double(outputSum), double(inputSum), 1e-4));
+    }
+
+    SECTION("Frame timestamps")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName);
+        
+        const size_t numFrames = inputFile.getTimingInfo().getNumTimes();
+        for (size_t i = 0; i < numFrames; i++)
+        {
+            REQUIRE(outputFile.readFrameTimestamp(i) == inputFile.readFrameTimestamp(i));
+        }
+    }
+
+    SECTION("Acquisition info")
+    {
+        using json = nlohmann::json;
+        isx::NVisionMovieFile outputFile(outputFileName);
+        const auto outputExtraProps = json::parse(outputFile.getExtraProperties());
+        const auto inputExtraProps = json::parse(inputFile.getExtraProperties());
+        REQUIRE(outputExtraProps == inputExtraProps);
+    }
+
+    isx::CoreShutdown();
+
+    std::remove(outputFileName.c_str());
+}
+
+// Write isxb movie improperly
+TEST_CASE("NVisionMovieFile-WriteInvalid", "[core]")
+{
+    const std::string outputFileName = g_resources["unitTestDataPath"] + "/test.isxb";
+
+    isx::CoreInitialize();
+
+    isx::TimingInfo timingInfo(isx::Time(), isx::DurationInSeconds::fromMilliseconds(10), 3);
+    isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(64, 10));
+    
+    SECTION("Number of per-frame metadata does not match number of samples")
+    {
+        using json = nlohmann::json;
+        isx::NVisionMovieFile outputFile(outputFileName, timingInfo, spacingInfo);
+        for (size_t i = 0; i < timingInfo.getNumTimes(); i++)
+        {
+            auto frame = std::make_shared<isx::VideoFrame>(
+                spacingInfo,
+                spacingInfo.getNumPixels().getWidth() * sizeof(uint8_t),
+                1,
+                isx::DataType::U8,
+                timingInfo.convertIndexToStartTime(i),
+                i);
+            std::memset(frame->getPixels(), 0, frame->getImageSizeInBytes());
+            outputFile.writeFrame(frame);
+
+            if (i > 0)
+            {
+                outputFile.writeFrameMetadata(json::object({{"fc", i}, {"tsc", int(i * 1e5)}}).dump());
+            }
+        }
+        outputFile.setExtraProperties("null");
+
+        ISX_REQUIRE_EXCEPTION(outputFile.closeForWriting(), isx::ExceptionUserInput, "Number of frames in video does not match number of per-frame metadata.")
+    }
+
+    SECTION("Read frame in write mode")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName, timingInfo, spacingInfo);
+
+        ISX_REQUIRE_EXCEPTION(outputFile.readFrame(0), isx::ExceptionUserInput, "Cannot simultaneously read and write to nVision movies.")
+    }
+
+    SECTION("Write frame in read mode")
+    {
+        const std::string inputFileName = g_resources["unitTestDataPath"] + "/nVision/20220412-200447-camera-100.isxb";
+        isx::NVisionMovieFile outputFile(inputFileName);
+
+        auto frame = std::make_shared<isx::VideoFrame>(
+            spacingInfo,
+            spacingInfo.getNumPixels().getWidth() * sizeof(uint8_t),
+            1,
+            isx::DataType::U8,
+            timingInfo.convertIndexToStartTime(0),
+            0);
+        std::memset(frame->getPixels(), 1, frame->getImageSizeInBytes());
+
+        ISX_REQUIRE_EXCEPTION(outputFile.writeFrame(frame), isx::ExceptionUserInput, "Cannot simultaneously read and write to nVision movies.")
+    }
+
+    SECTION("Unsupported widths")
+    {
+        spacingInfo = isx::SpacingInfo(isx::SizeInPixels_t(97, 64));
+
+        ISX_REQUIRE_EXCEPTION(isx::NVisionMovieFile(outputFileName, timingInfo, spacingInfo), isx::ExceptionUserInput, "Resolution (97 x 64) is unsupported for mjpeg encoder. Only resolutions with widths that are multiples of 64 are accepted.")
+    }
+    
+    isx::CoreShutdown();
+
+    std::remove(outputFileName.c_str());
+}
+
+// Write isxb movie with dropped frames and verify the contents of the file
+TEST_CASE("NVisionMovieFile-WriteDropped", "[core]")
+{
+    const std::string outputFileName = g_resources["unitTestDataPath"] + "/test.isxb";
+
+    isx::CoreInitialize();
+
+    using json = nlohmann::json;
+    isx::TimingInfo timingInfo(isx::Time(), isx::DurationInSeconds::fromMilliseconds(10), 5, {2, 3});
+    isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(64, 64));
+
+    {
+        isx::NVisionMovieFile outputFile(outputFileName, timingInfo, spacingInfo);
+        for (size_t i = 0; i < timingInfo.getNumTimes(); i++)
+        {
+            if (timingInfo.isIndexValid(i))
+            {
+                auto frame = std::make_shared<isx::VideoFrame>(
+                    spacingInfo,
+                    spacingInfo.getNumPixels().getWidth() * sizeof(uint8_t),
+                    1,
+                    isx::DataType::U8,
+                    timingInfo.convertIndexToStartTime(i),
+                    i);
+                std::memset(frame->getPixels(), 1, frame->getImageSizeInBytes());
+                outputFile.writeFrame(frame);
+                outputFile.writeFrameMetadata(json::object({{"fc", i}, {"tsc", int(i * 1e5)}}).dump());
+            }
+        }
+        outputFile.setExtraProperties("null");
+        outputFile.closeForWriting();
+    }
+
+    SECTION("Timing info")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName);
+        REQUIRE(outputFile.getTimingInfo() == timingInfo);
+    }
+
+    SECTION("Spacing info")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName);
+        REQUIRE(outputFile.getSpacingInfo() == spacingInfo);
+    }
+
+    SECTION("Frames")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName);
+        const size_t numFrames = timingInfo.getNumTimes();
+        for (size_t i = 0; i < numFrames; i++)
+        {
+            const auto frame = outputFile.readFrame(i);
+            arma::Col<uint64_t> frameCol;
+            isx::copyFrameToColumn(frame, frameCol);
+            const size_t sum = arma::sum(frameCol); 
+
+            if (timingInfo.isDropped(i))
+            {
+                REQUIRE(sum == 0);
+            }
+            else
+            {
+                REQUIRE(sum == 64*64);
+            }
+        }
+    }
+
+    isx::CoreShutdown();
+
+    std::remove(outputFileName.c_str());
+}
+
+// Write synthetic isxb movie with different resolutions to ensure
+// they are supported by the mjpeg encoder.
+TEST_CASE("NVisionMovieFile-WriteSupportedResolutions", "[core]")
+{
+    const std::string outputFileName = g_resources["unitTestDataPath"] + "/test.isxb";
+
+    isx::CoreInitialize();
+
+    using json = nlohmann::json;
+
+    SECTION("Supported widths")
+    {
+        const size_t height = 97;
+        for (size_t width = 64; width <= 4096; width+=64)
+        {
+            isx::TimingInfo timingInfo(isx::Time(), isx::DurationInSeconds::fromMilliseconds(10), 3);
+            isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(width, height));
+
+            {
+                isx::NVisionMovieFile outputFile(outputFileName, timingInfo, spacingInfo);
+                for (size_t i = 0; i < timingInfo.getNumTimes(); i++)
+                {
+                    if (timingInfo.isIndexValid(i))
+                    {
+                        auto frame = std::make_shared<isx::VideoFrame>(
+                            spacingInfo,
+                            spacingInfo.getNumPixels().getWidth() * sizeof(uint8_t),
+                            1,
+                            isx::DataType::U8,
+                            timingInfo.convertIndexToStartTime(i),
+                            i);
+                        std::memset(frame->getPixels(), 1, frame->getImageSizeInBytes());
+                        outputFile.writeFrame(frame);
+                        outputFile.writeFrameMetadata(json::object({{"fc", i}, {"tsc", int(i * 1e5)}}).dump());
+                    }
+                }
+                outputFile.setExtraProperties("null");
+                outputFile.closeForWriting();
+            }
+
+            isx::NVisionMovieFile outputFile(outputFileName);
+            const auto frame = outputFile.readFrame(0);
+            arma::Col<uint64_t> frameCol;
+            isx::copyFrameToColumn(frame, frameCol);
+            const size_t sum = arma::sum(frameCol);
+            REQUIRE(sum == width * height);
+        }
+    }
+
+    isx::CoreShutdown();
+
+    std::remove(outputFileName.c_str());
+}
+
+// Write synthetic isxb movie with no per-frame metadata
+TEST_CASE("NVisionMovieFile-WriteNoFrameMetadata", "[core]")
+{
+    const std::string outputFileName = g_resources["unitTestDataPath"] + "/test.isxb";
+
+    isx::CoreInitialize();
+
+    isx::TimingInfo timingInfo(isx::Time(), isx::DurationInSeconds::fromMilliseconds(10), 3);
+    isx::SpacingInfo spacingInfo(isx::SizeInPixels_t(64, 10));
+    
+    {
+        isx::NVisionMovieFile outputFile(outputFileName, timingInfo, spacingInfo);
+        for (size_t i = 0; i < timingInfo.getNumTimes(); i++)
+        {
+            auto frame = std::make_shared<isx::VideoFrame>(
+                spacingInfo,
+                spacingInfo.getNumPixels().getWidth() * sizeof(uint8_t),
+                1,
+                isx::DataType::U8,
+                timingInfo.convertIndexToStartTime(i),
+                i);
+            std::memset(frame->getPixels(), 0, frame->getImageSizeInBytes());
+            outputFile.writeFrame(frame);
+        }
+        outputFile.setExtraProperties("null");
+        outputFile.closeForWriting();
+    }
+
+    SECTION("Timing info")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName);
+        REQUIRE(outputFile.getTimingInfo() == timingInfo);
+    }
+
+    SECTION("Spacing info")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName);
+        REQUIRE(outputFile.getSpacingInfo() == spacingInfo);
+    }
+
+    SECTION("Frame timestamps")
+    {
+        isx::NVisionMovieFile outputFile(outputFileName);
+        REQUIRE(!outputFile.hasFrameTimestamps());
+        for (size_t i = 0; i < timingInfo.getNumTimes(); i++)
+        {
+            REQUIRE(!outputFile.readFrameTimestamp(i));
+        }
+    }
+
+    isx::CoreShutdown();
+
+    std::remove(outputFileName.c_str());
 }

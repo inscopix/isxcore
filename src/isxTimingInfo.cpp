@@ -163,8 +163,40 @@ TimingInfo::serialize(std::ostream& strm) const
     strm << "TimingInfo("
             << "Start=" << m_start << ", "
             << "Step=" << m_step << ", "
-            << "NumTimes=" << m_numTimes
-         << ")";
+            << "NumTimes=" << m_numTimes << ", "
+            << "DroppedFrames=[";
+    
+    for (size_t i = 0; i < m_droppedFrames.size(); i++)
+    {
+        strm << m_droppedFrames[i];
+        if (i < (m_droppedFrames.size() - 1))
+        {
+            strm << ", ";
+        }
+    }
+    
+    strm << "], CroppedFrames=[";
+    for (size_t i = 0; i < m_cropped.size(); i++)
+    {
+        strm << m_cropped[i];
+        if (i < (m_cropped.size() - 1))
+        {
+            strm << ", ";
+        }
+    }
+
+    strm << "], BlankFrames=[";
+    for (size_t i = 0; i < m_blankFrames.size(); i++)
+    {
+        strm << m_blankFrames[i];
+        if (i < (m_blankFrames.size() - 1))
+        {
+            strm << ", ";
+        }
+    }
+    strm << "]";
+
+    strm << ")";
 }
 
 
