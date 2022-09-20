@@ -563,18 +563,23 @@ convertTraceMetricsToJson(const TraceMetrics & inMetrics)
     return outJ;
 }
 
+float convertJsonToFloat(const json & inJ)
+{
+    return inJ.is_null() ? std::numeric_limits<float>::quiet_NaN() : inJ.get<float>();
+}
+
 void
 convertJsonToTraceMetrics(const json & inJ, TraceMetrics & outMetrics)
 {
-    outMetrics.m_snr            = inJ.at(0).get<float>();
-    outMetrics.m_mad            = inJ.at(1).get<float>();
-    outMetrics.m_eventRate      = inJ.at(2).get<float>();
-    outMetrics.m_eventAmpMedian = inJ.at(3).get<float>();
-    outMetrics.m_eventAmpSD     = inJ.at(4).get<float>();
-    outMetrics.m_riseMedian     = inJ.at(5).get<float>();
-    outMetrics.m_riseSD         = inJ.at(6).get<float>();
-    outMetrics.m_decayMedian    = inJ.at(7).get<float>();
-    outMetrics.m_decaySD        = inJ.at(8).get<float>();
+    outMetrics.m_snr            = convertJsonToFloat(inJ.at(0));
+    outMetrics.m_mad            = convertJsonToFloat(inJ.at(1));
+    outMetrics.m_eventRate      = convertJsonToFloat(inJ.at(2));
+    outMetrics.m_eventAmpMedian = convertJsonToFloat(inJ.at(3));
+    outMetrics.m_eventAmpSD     = convertJsonToFloat(inJ.at(4));
+    outMetrics.m_riseMedian     = convertJsonToFloat(inJ.at(5));
+    outMetrics.m_riseSD         = convertJsonToFloat(inJ.at(6));
+    outMetrics.m_decayMedian    = convertJsonToFloat(inJ.at(7));
+    outMetrics.m_decaySD        = convertJsonToFloat(inJ.at(8));
 }
 
 json
