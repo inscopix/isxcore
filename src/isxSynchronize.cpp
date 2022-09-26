@@ -368,10 +368,11 @@ AsyncTaskStatus alignStartTimes(
         // Convert the tsc delta and the reference timestamp to int64_t in order to handle signed arithmetic
         // Finally convert the result to uint64_t so it can be stored in the align file
         const uint64_t expAlignStartTimestamp = uint64_t(int64_t(refStartTimestamp) + int64_t(tscDelta));
-        ISX_LOG_DEBUG("Synchronize start time diff: ", int64_t(expAlignStartTimestamp) - int64_t(alignStartTimestamp));
         if (alignStartTimestamp != expAlignStartTimestamp)
         {
-            ISX_LOG_INFO("Synchronizing start time of align file (", alignFilename, ") with reference file (", inRefFilename, "). Difference between expected and actual start time is: ", int64_t(expAlignStartTimestamp) - int64_t(alignStartTimestamp), " ms.");
+            ISX_LOG_INFO("Files with the same recording UUID detected. Synchronizing start time of align file (", alignFilename, ") to reference file (", inRefFilename, "). ",
+                "Current start time of align file is: ", int64_t(expAlignStartTimestamp), " ms. Expected start time of align file is: ", int64_t(expAlignStartTimestamp), " ms. ",
+                "Difference between expected and actual start time is: ", int64_t(expAlignStartTimestamp) - int64_t(alignStartTimestamp), " ms.");
             const Time newStart(
                 DurationInSeconds::fromMilliseconds(expAlignStartTimestamp),
                 refStart.getUtcOffset()
