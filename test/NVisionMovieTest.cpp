@@ -168,6 +168,25 @@ TEST_CASE("NVisionMovie", "[core]")
         REQUIRE(endTsc == expEndTsc);
     }
 
+    SECTION("Per-frame metadata")
+    {
+        using json = nlohmann::json;
+
+        const auto actualFirstFrameMetadata = json::parse(movie->getFrameMetadata(0));
+        const json expectedFirstFrameMetadata({
+            {"fc", 1},
+            {"tsc", 215738669569}
+        });
+        REQUIRE(actualFirstFrameMetadata == expectedFirstFrameMetadata);
+
+        const auto actualSecondFrameMetadata = json::parse(movie->getFrameMetadata(1));
+        const json expectedSecondFrameMetadata({
+            {"fc", 2},
+            {"tsc", 215738701589}
+        });
+        REQUIRE(actualSecondFrameMetadata == expectedSecondFrameMetadata);
+    }
+
     isx::CoreShutdown();
 }
 
@@ -302,5 +321,14 @@ TEST_CASE("NVisionMovie-Dropped", "[core]")
         }
     }
     
+    SECTION("Per-frame metadata")
+    {
+        using json = nlohmann::json;
+        
+        const auto actualDroppedFrameMetadata = json::parse(movie->getFrameMetadata(186));
+        const auto expectedDroppedFrameMetadata = json::parse("null");
+        REQUIRE(actualDroppedFrameMetadata == expectedDroppedFrameMetadata);
+    }
+
     isx::CoreShutdown();   
 }

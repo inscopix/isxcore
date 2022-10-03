@@ -94,7 +94,7 @@ public:
 
     /// \param  inFrameNumber   The index of the frame.
     /// \return                 The frame header metadata.
-    std::unordered_map<std::string, uint64_t> readFrameHeaderMetadata(const isize_t inFrameNumber);
+    std::string readFrameMetadata(const isize_t inFrameNumber);
 
     /// \param  inFrameNumber   The index of the frame.
     /// \return                 The frame footer.

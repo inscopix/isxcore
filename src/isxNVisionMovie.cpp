@@ -69,7 +69,13 @@ NVisionMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 
     m_ioTaskTracker->schedule(getFrameCB, inCallback);
 }
-    
+
+std::string
+NVisionMovie::getFrameMetadata(const size_t inFrameNumber)
+{
+    return m_file->readFrameMetadata(inFrameNumber);
+}
+
 void
 NVisionMovie::cancelPendingReads()
 {

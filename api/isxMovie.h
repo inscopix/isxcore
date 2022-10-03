@@ -67,13 +67,14 @@ public:
     std::vector<uint16_t>
     getFrameHeader(const size_t inFrameNumber);
 
-    /// Retrieve and parse the metadata encoded in the frame header. Runs synchronously on the same thread that calls it.
+    /// Retrieve and parse the frame metadata. The string is in JSON format.
+    /// Runs synchronously on the same thread that calls it.
     ///
     /// \param  inFrameNumber   The frame number.
-    /// \return                 The frame header metadata associated with a given frame number.
+    /// \return                 The frame metadata associated with a given frame number.
     virtual
-    std::unordered_map<std::string, uint64_t>
-    getFrameHeaderMetadata(const size_t inFrameNumber);
+    std::string
+    getFrameMetadata(const size_t inFrameNumber);
 
     /// Get the frame footer. Runs synchronously on the same thread that calls it.
     ///

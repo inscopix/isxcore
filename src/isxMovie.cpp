@@ -9,10 +9,10 @@ Movie::getFrameHeader(const size_t inFrameNumber)
     return std::vector<uint16_t>();
 }
 
-std::unordered_map<std::string, uint64_t>
-Movie::getFrameHeaderMetadata(const size_t inFrameNumber)
+std::string
+Movie::getFrameMetadata(const size_t inFrameNumber)
 {
-    return std::unordered_map<std::string, uint64_t>();
+    return "null";
 }
 
 std::vector<uint16_t>

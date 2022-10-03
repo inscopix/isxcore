@@ -34,6 +34,8 @@ public:
 
     void getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback) override;
 
+    std::string getFrameMetadata(const size_t inFrameNumber) override;
+
     void cancelPendingReads() override;
 
     const isx::TimingInfo & getTimingInfo() const override;

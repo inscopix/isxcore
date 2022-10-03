@@ -732,13 +732,13 @@ NVisionMovieFile::readFrameMetadata(const isize_t inFrameNumber)
 		ISX_THROW(ExceptionUserInput, "Failed to read frame metadata from file. Index is out of bounds.");
 	}
 
-	if (ti.isDropped(inFrameNumber))
+	if (ti.isIndexValid(inFrameNumber))
 	{
-		return "null";
+		const size_t frameNumber = ti.timeIdxToRecordedIdx(inFrameNumber);
+		return m_frameMetadatas[frameNumber];
 	}
 
-	const size_t frameNumber = ti.timeIdxToRecordedIdx(inFrameNumber);
-	return m_frameMetadatas[frameNumber];
+	return "null";
 }
 
 void

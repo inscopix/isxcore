@@ -65,7 +65,7 @@ public:
 
     std::vector<uint16_t> getFrameHeader(const size_t inFrameNumber) override;
 
-    std::unordered_map<std::string, uint64_t> getFrameHeaderMetadata(const size_t inFrameNumber) override;
+    std::string getFrameMetadata(const size_t inFrameNumber) override;
 
     std::vector<uint16_t> getFrameFooter(const size_t inFrameNumber) override;
 

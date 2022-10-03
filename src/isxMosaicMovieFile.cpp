@@ -242,10 +242,10 @@ MosaicMovieFile::readFrameHeader(const isize_t inFrameNumber)
     return header;
 }
 
-std::unordered_map<std::string, uint64_t>
-MosaicMovieFile::readFrameHeaderMetadata(const isize_t inFrameNumber)
+std::string
+MosaicMovieFile::readFrameMetadata(const isize_t inFrameNumber)
 {
-    std::unordered_map<std::string, uint64_t> headerMetadata;
+    std::string headerMetadata;
     const std::vector<uint16_t> header = readFrameHeader(inFrameNumber);
     if (!header.empty())
     {
@@ -281,7 +281,7 @@ MosaicMovieFile::readFrameHeaderMetadata(const isize_t inFrameNumber)
 
         uint64_t tsc = readFrameTimestamp(inFrameNumber);
 
-        headerMetadata.insert({
+        headerMetadata = json{
             {"color_id", colorID},
             {"write_enable", writeEnable},
             {"frame_count", frameCount},
@@ -291,7 +291,7 @@ MosaicMovieFile::readFrameHeaderMetadata(const isize_t inFrameNumber)
             {"led2VF", led2VF},
             {"efocus", efocus},
             {"tsc", tsc}
-        });
+        }.dump();
     }
     return headerMetadata;
 }

@@ -378,6 +378,7 @@ TEST_CASE("MosaicMovieFileTimingInfo[MOS-1838]", "[core-internal][mosaic_movie_f
 
 TEST_CASE("MosaicMovieFileFrameHeaderMetadata", "[core-internal][mosaic_movie_file]")
 {
+    using json = nlohmann::json;
     isx::CoreInitialize();
 
     SECTION("uint16 dual-color movie")
@@ -387,8 +388,8 @@ TEST_CASE("MosaicMovieFileFrameHeaderMetadata", "[core-internal][mosaic_movie_fi
         REQUIRE(movie.isValid());
         REQUIRE(movie.getDataType() == isx::DataType::U16);
 
-        std::unordered_map<std::string, uint64_t> actualFirstFrameMetadata = movie.readFrameHeaderMetadata(0);
-        const std::unordered_map<std::string, uint64_t> expectedFirstFrameMetadata({
+        const auto actualFirstFrameMetadata = json::parse(movie.readFrameMetadata(0));
+        const json expectedFirstFrameMetadata({
             {"led2VF", 99},
             {"led2Power", 0},
             {"frame_count", 8015257},
@@ -401,8 +402,8 @@ TEST_CASE("MosaicMovieFileFrameHeaderMetadata", "[core-internal][mosaic_movie_fi
         });
         REQUIRE(expectedFirstFrameMetadata == actualFirstFrameMetadata);
 
-        std::unordered_map<std::string, uint64_t> actualSecondFrameMetadata = movie.readFrameHeaderMetadata(1);
-        const std::unordered_map<std::string, uint64_t> expectedSecondFrameMetadata({
+        const auto actualSecondFrameMetadata = json::parse(movie.readFrameMetadata(1));
+        const json expectedSecondFrameMetadata({
             {"led2VF", 17393},
             {"led2Power", 16},
             {"frame_count", 8015258},
@@ -415,8 +416,8 @@ TEST_CASE("MosaicMovieFileFrameHeaderMetadata", "[core-internal][mosaic_movie_fi
         });
         REQUIRE(expectedSecondFrameMetadata == actualSecondFrameMetadata);
 
-        REQUIRE((actualSecondFrameMetadata.at("frame_count") - actualFirstFrameMetadata.at("frame_count")) == 1);
-        REQUIRE(actualSecondFrameMetadata.at("tsc") > actualFirstFrameMetadata.at("tsc"));
+        REQUIRE((actualSecondFrameMetadata.at("frame_count").get<uint64_t>() - actualFirstFrameMetadata.at("frame_count").get<uint64_t>()) == 1);
+        REQUIRE(actualSecondFrameMetadata.at("tsc").get<uint64_t>() > actualFirstFrameMetadata.at("tsc").get<uint64_t>());
     }
 
     isx::CoreShutdown();
