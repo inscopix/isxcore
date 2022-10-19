@@ -437,5 +437,26 @@ TEST_CASE("DataSet-getMetadata", "[core][dataset]")
         REQUIRE(metaData.at("Camera Serial Number") == "KTM-RQEHB");
         REQUIRE(metaData.at("Miniscope Paired") == "false");
     }
+
+    SECTION("nVision Recording UUID")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual/2022-06-08-23-53-41_video-camera-1.isxb";
+        isx::DataSet ds("movie", isx::DataSet::Type::NVISION_MOVIE, filePath, isx::HistoricalDetails());
+
+        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+
+        REQUIRE(metaData.at("Recording UUID") == "AC-00111111-l4R4GRt28o-1654732421577");
+    }
+
+    SECTION("Miniscope Recording UUID")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/nVision/recordingUUID/paired-synchronized/manual/2022-06-08-23-53-41_video.isxd";
+        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, filePath, isx::HistoricalDetails());
+
+        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+
+        REQUIRE(metaData.at("Recording UUID") == "AC-00111111-l4R4GRt28o-1654732421577");
+    }
+
     isx::CoreShutdown();
 }

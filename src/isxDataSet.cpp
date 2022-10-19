@@ -974,6 +974,16 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                 acqInfo["Vessels with Direction Change Error"] = (vesselSetDirectionChangedVessels != vesselset->end()) ? vesselSetDirectionChangedVessels->get<std::string>() : "{}";
             }
         }
+        
+        const auto processingInterface = extraProps.find("processingInterface");
+        if (processingInterface != extraProps.end())
+        {
+            const auto & recordingUUID = processingInterface->find("recordingUUID");
+            if (recordingUUID != processingInterface->end())
+            {
+                acqInfo["Recording UUID"] = recordingUUID->get<std::string>();
+            }
+        }
     }
 
     return acqInfo.dump();
@@ -1008,6 +1018,12 @@ getNVisionAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
         const auto processingInterface = extraProps.find("processingInterface");
         if (processingInterface != extraProps.end())
         {
+            const auto & recordingUUID = processingInterface->find("recordingUUID");
+            if (recordingUUID != processingInterface->end())
+            {
+                acqInfo["Recording UUID"] = recordingUUID->get<std::string>();
+            }
+
             const auto system = processingInterface->find("system");
             if (system != processingInterface->end())
             {
