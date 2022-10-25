@@ -307,6 +307,12 @@ runMovieTimestampExport(const MovieTimestampExporterParams inParams, AsyncCheckI
     }
 
     std::ofstream csv(inParams.m_outputFilename);
+    if (!csv.good() || !csv.is_open())
+    {
+        ISX_THROW(isx::ExceptionFileIO,
+            "Failed to open movie file for write: ", inParams.m_outputFilename);
+    }
+
     csv << "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp ";
     if (inParams.m_format == WriteTimeRelativeTo::TSC)
     {
