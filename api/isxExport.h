@@ -121,11 +121,6 @@ bool toTiff(
         const float inProgressAllocation = 1.0f,
         const float inProgressStart = 0.0f);
 
-/// Export an image to PNG.
-/// \param inFileName   The filename for the output file.
-/// \param inImage      The image to export.
-void toPng(const std::string & inFileName, const SpImage_t & inImage);
-
 } // namespace isx
 
 #endif // ISX_EXPORT_H
