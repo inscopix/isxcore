@@ -154,6 +154,9 @@ namespace isx
             const size_t inMinor = 0,
             const size_t inPatch = 0);
 
+    /// \return     Whether the api is built without the GUI
+    bool isMinimalApi();
+
 } // namespace isx
 
 #endif // def ISX_CORE_H
