@@ -129,6 +129,7 @@ namespace isx
         BP30 = 15,
         BP31 = 18,
         BP32 = 16,
+        BP33 = 37
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -171,6 +172,7 @@ namespace isx
         {BasePlateType_t::BP30, "ProView DC Integrated Lens 0.75 mm x 8.6 mm"},
         {BasePlateType_t::BP31, "ProView DC Integrated Lens 1.0 mm x 4.2 mm"},
         {BasePlateType_t::BP32, "ProView DC Integrated Lens 1.0 mm x 11.7 mm"},
+        {BasePlateType_t::BP33, "ProView DC Prism Integrated Lens 0.5 mm x 5.6 mm"},
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -196,6 +198,7 @@ namespace isx
         {BasePlateType_t::BP30, std::make_pair(0.80,0.80)},
         {BasePlateType_t::BP31, std::make_pair(0.77, 0.80)},
         {BasePlateType_t::BP32, std::make_pair(0.81, 0.80)},
+        {BasePlateType_t::BP33, std::make_pair(0.81, 0.84)},
     };
 
     const std::map<std::string, BasePlateType_t> probeIdToBasePlate =
@@ -235,6 +238,7 @@ namespace isx
         {"1050-005443", BasePlateType_t::BP30},
         {"1050-005473", BasePlateType_t::BP31},
         {"1050-005475", BasePlateType_t::BP32},
+        {"1050-005474", BasePlateType_t::BP33},
     };
 
     /// \cond doxygen chokes on enum class inside of namespace
@@ -276,6 +280,7 @@ namespace isx
         BasePlateType_t::BP30,
         BasePlateType_t::BP31,
         BasePlateType_t::BP32,
+        BasePlateType_t::BP33,
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -330,6 +335,7 @@ namespace isx
         BasePlateType_t::BP30,
         BasePlateType_t::BP31,
         BasePlateType_t::BP32,
+        BasePlateType_t::BP33,
         BasePlateType_t::BP7,
         BasePlateType_t::BP8,
         BasePlateType_t::BP9,

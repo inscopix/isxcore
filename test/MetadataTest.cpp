@@ -20,6 +20,16 @@ TEST_CASE("IntegratedBasePlate-Get", "[core]")
         REQUIRE(probeType == expectedProbeType);
     }
 
+    SECTION("IDAS metadata - DC Prisim integrated base plate")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/probe/2022-12-09-08-50-39_video_multiplexing-channel_red_probe_dc_prisim.isxd";
+        isx::SpMovie_t movie = isx::readMovie(filePath);
+        isx::BasePlateType_t probeType = isx::getBasePlateType(movie);
+
+        isx::BasePlateType_t expectedProbeType = isx::BasePlateType_t::BP33;
+        REQUIRE(probeType == expectedProbeType);
+    }
+
     SECTION("IDAS metadata - Custom base plate")
     {
         const std::string filePath = g_resources["unitTestDataPath"] + "/baseplate/2021-06-28-23-45-49_video_sched_0_probe_custom.isxd";
