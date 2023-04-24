@@ -840,6 +840,15 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             acqInfo["Microscope Type"] = microscope->at("type");
 
             acqInfo["Exposure Time (ms)"] = microscope->at("exp");
+
+            const auto customMetadata = microscope->find("customMetadata");
+            if (customMetadata != microscope->end())
+            {
+                for (auto it = customMetadata->begin(); it != customMetadata->end(); it++)
+                {
+                    acqInfo[it.key()] = *it;
+                }
+            }
         }
 
         const auto name = extraProps.find("name");
@@ -1012,6 +1021,15 @@ getNVisionAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                 acqInfo["Animal Species"] = animal->at("species");
                 acqInfo["Animal Weight"] = animal->at("weight");
                 acqInfo["Animal Description"] = animal->at("description");
+            }
+
+            const auto customMetadata = userInterface->find("customMetadata");
+            if (customMetadata != userInterface->end())
+            {
+                for (auto it = customMetadata->begin(); it != customMetadata->end(); it++)
+                {
+                    acqInfo[it.key()] = it->at("value");
+                }
             }
         }
 
