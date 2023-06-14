@@ -501,9 +501,8 @@ getGaplessDurationSinceStart(const TimingInfos_t & inTis, const isize_t inSegmen
         );
         d += simplifiedDuration;
     }
-    const DurationInSeconds simplifiedStep(
-        uint64_t((inTis.at(inSegmentIndex).getStep() * 1e6).toDouble()),
-        1e6
+    const DurationInSeconds simplifiedStep = DurationInSeconds::fromMicroseconds(
+        int64_t((inTis.at(inSegmentIndex).getStep() * int64_t(1e6)).toDouble())
     );
     d += simplifiedStep * inLocalIndex;
     return d;
