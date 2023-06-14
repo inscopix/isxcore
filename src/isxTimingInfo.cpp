@@ -480,9 +480,8 @@ getTotalDuration(const TimingInfos_t & inTis)
     DurationInSeconds totalDuration;
     for (const auto & ti : inTis)
     {
-        const DurationInSeconds simplifiedDuration(
-            uint64_t((ti.getStep() * ti.getNumTimes() * 1e6).toDouble()),
-            1e6
+        const DurationInSeconds simplifiedDuration = DurationInSeconds::fromMicroseconds(
+            int64_t((ti.getStep() * ti.getNumTimes() * int64_t(1e6)).toDouble())
         );
         totalDuration += simplifiedDuration;
     }
@@ -497,9 +496,8 @@ getGaplessDurationSinceStart(const TimingInfos_t & inTis, const isize_t inSegmen
     DurationInSeconds d;
     for (isize_t s = 0; s < inSegmentIndex; ++s)
     {
-        const DurationInSeconds simplifiedDuration(
-            uint64_t((inTis.at(s).getStep() * inTis.at(s).getNumTimes() * 1e6).toDouble()),
-            1e6
+        const DurationInSeconds simplifiedDuration = DurationInSeconds::fromMicroseconds(
+            int64_t((inTis.at(s).getStep() * inTis.at(s).getNumTimes() * int64_t(1e6)).toDouble())
         );
         d += simplifiedDuration;
     }
