@@ -19,6 +19,9 @@ enum class SignalType : uint8_t
 class EventBasedFile
 {
 public:
+    virtual
+    ~EventBasedFile() {};
+    
     /// \return True if this in a valid state, otherwise don't use it!
     ///
     virtual

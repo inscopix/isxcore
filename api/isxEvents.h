@@ -75,6 +75,9 @@ public:
     /// The type of callback for getting a logical trace asynchronously
     using EventsGetLogicalDataCB_t = std::function<void(AsyncTaskResult<SpLogicalTrace_t>)>;
 
+    virtual
+    ~Events() {};
+
     /// \return True if the Events file is valid, false otherwise.
     ///
     virtual

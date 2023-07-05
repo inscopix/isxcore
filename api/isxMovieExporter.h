@@ -52,6 +52,9 @@ struct MovieExporterParams
         }
     }
 
+    virtual
+    ~MovieExporterParams() {};
+
     /// \return export operation name to display to user
     virtual
     MovieExporterParams::Type

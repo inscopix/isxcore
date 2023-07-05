@@ -112,6 +112,9 @@ enum class DisplayType
     DIAMETER_ESTIMATE               ///< The model fits from vessel diameter vessel sets
 };
 
+virtual
+~VesselSet() {};
+
 /// \return whether this is a valid vessel set object.
 ///
 virtual

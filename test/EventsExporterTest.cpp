@@ -25,7 +25,7 @@ writeNamedPacketsAsEvents(
         const std::map<std::string, std::map<isx::Time, float>> & inPackets)
 {
     std::vector<std::string> names;
-    for (const auto c : inPackets)
+    for (const auto & c : inPackets)
     {
         names.push_back(c.first);
     }
@@ -33,9 +33,9 @@ writeNamedPacketsAsEvents(
     const std::vector<isx::DurationInSeconds> steps(names.size(), inTi.getStep());
     isx::SpWritableEvents_t events = isx::writeEvents(inFilePath, names, steps);
     uint64_t idx = 0;
-    for (const auto c : inPackets)
+    for (const auto & c : inPackets)
     {
-        for (const auto e : c.second)
+        for (const auto & e : c.second)
         {
             auto offset = convertTimeToUSecsSinceEpoch(e.first) - convertTimeToUSecsSinceEpoch(inTi.getStart());
             events->writeDataPkt(idx, offset, e.second);

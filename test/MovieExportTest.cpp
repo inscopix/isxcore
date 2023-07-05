@@ -387,7 +387,7 @@ TEST_CASE("MovieExportTest", "[core]")
         std::vector<float> buf(pixelsPerFrame * 5);   // longest movie segment has 5 frames
 
         int32_t i = 0;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             createFrameData(buf.data(), int32_t(timingInfos[i].getNumTimes()), pixelsPerFrame, i * 5);
             writeTestF32MovieGeneric(fn, timingInfos[i], spacingInfo, buf.data());
@@ -396,7 +396,7 @@ TEST_CASE("MovieExportTest", "[core]")
 
         // export to nwb
         std::vector<isx::SpMovie_t> movies;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             movies.push_back(isx::readMovie(fn));
         }
@@ -426,7 +426,7 @@ TEST_CASE("MovieExportTest", "[core]")
 
             auto startTimeD = timingInfos[0].getStart().getSecsSinceEpoch().toDouble();
 
-            for (const auto fn : filenames)
+            for (const auto & fn : filenames)
             {
                 auto name = isx::getBaseName(fn);
                 auto g = an.openGroup(name);

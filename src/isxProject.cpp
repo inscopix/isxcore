@@ -407,7 +407,7 @@ Project::setFileName(const std::string & inFileName, bool inFromTemporary)
     if (oldPath != newPath)
     {
         std::function<void(Series *, const std::string &, const std::string &)> updateSeriesPath =
-        [&updateSeriesPath] (
+        [] (
             Series * inSeries,
             const std::string & inOldPath,
             const std::string & inNewPath)

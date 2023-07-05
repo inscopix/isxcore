@@ -29,6 +29,9 @@ public:
     /// The type of callback for getting a logical trace asynchronously
     using GpioGetLogicalDataCB_t = std::function<void(AsyncTaskResult<SpLogicalTrace_t>)>;
 
+    virtual
+    ~Gpio() {};
+
     /// \return True if the gpio file is valid, false otherwise.
     ///
     virtual

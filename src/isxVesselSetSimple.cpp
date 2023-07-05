@@ -153,7 +153,7 @@ VesselSetSimple::getImageAsync(isize_t inIndex, VesselSetGetImageCB_t inCallback
     // Only get a weak pointer to this, so that we don't bother reading
     // if this has been deleted when the read gets executed.
     std::weak_ptr<VesselSetSimple> weakThis = shared_from_this();
-    GetImageCB_t getImageCB = [weakThis, this, inIndex]()
+    GetImageCB_t getImageCB = [weakThis, this]()
         {
             auto sharedThis = weakThis.lock();
             SpImage_t im;

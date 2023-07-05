@@ -23,7 +23,7 @@ writePktsToEventBasedFile(
     const std::vector<DurationInSeconds> steps(inChannels.size(), inSamplePeriod);
 
     EventBasedFileV2 outputFile(inOutputFilePath, DataSet::Type::GPIO, inChannels, steps, inTypes);
-    for (const auto p : inPackets)
+    for (const auto & p : inPackets)
     {
         EventBasedFileV2::DataPkt pkt;
         if (p.offsetMicroSecs >= inFirstMicrosecondOffset)

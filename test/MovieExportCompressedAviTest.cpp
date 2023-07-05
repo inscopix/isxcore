@@ -166,7 +166,7 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
         std::vector<float> buf(pixelsPerFrame * 5);   // longest movie segment has 5 frames
 
         int32_t i = 0;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             createFrameData(buf.data(), int32_t(timingInfos[i].getNumTimes()), pixelsPerFrame, i * 5);
             writeTestF32MovieGeneric(fn, timingInfos[i], spacingInfo, buf.data());
@@ -174,7 +174,7 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
         }
 
         std::vector<isx::SpMovie_t> movies;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             movies.push_back(isx::readMovie(fn));
         }
@@ -278,7 +278,7 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
         std::vector<uint16_t> buf(pixelsPerFrame * 5);   // longest movie segment has 5 frames
 
         int32_t i = 0;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             createFrameData(buf.data(), int32_t(timingInfos[i].getNumTimes()), pixelsPerFrame, i * 5);
             writeTestU16MovieGeneric(fn, timingInfos[i], spacingInfo, buf.data());
@@ -286,7 +286,7 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
         }
 
         std::vector<isx::SpMovie_t> movies;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             movies.push_back(isx::readMovie(fn));
         }
@@ -482,7 +482,7 @@ TEST_CASE("MovieCompressedAviExportBitrateTest", "[core][export_mp4]")
         std::vector<float> buf(pixelsPerFrame * 200);   // longest movie segment has 200 frames
 
         int32_t i = 0;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             int32_t width = int32_t(sizePixels.getWidth());
             int32_t szSquare = 15; // size of each square on checkerboard pattern
@@ -494,7 +494,7 @@ TEST_CASE("MovieCompressedAviExportBitrateTest", "[core][export_mp4]")
         }
 
         std::vector<isx::SpMovie_t> movies;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             movies.push_back(isx::readMovie(fn));
         }

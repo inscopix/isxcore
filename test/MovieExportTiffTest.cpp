@@ -90,7 +90,7 @@ TEST_CASE("MovieTiffExportF32Test", "[core][export_tiff]")
         std::vector<float> buf(pixelsPerFrame);
 
         int32_t i = 0;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             createFrameData(buf.data(), int32_t(timingInfos[i].getNumTimes()), pixelsPerFrame, i * 5);
             writeTestF32MovieGeneric(fn, timingInfos[i], spacingInfo, buf.data());
@@ -99,7 +99,7 @@ TEST_CASE("MovieTiffExportF32Test", "[core][export_tiff]")
 
         // export to nwb
         std::vector<isx::SpMovie_t> movies;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             movies.push_back(isx::readMovie(fn));
         }
@@ -169,7 +169,7 @@ TEST_CASE("MovieTiffExportU16Test", "[core][export_tiff]")
         std::vector<uint16_t> buf(pixelsPerFrame);
 
         int32_t i = 0;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             createFrameData(buf.data(), int32_t(timingInfos[i].getNumTimes()), pixelsPerFrame, i * 5);
             writeTestU16MovieGeneric(fn, timingInfos[i], spacingInfo, buf.data());
@@ -178,7 +178,7 @@ TEST_CASE("MovieTiffExportU16Test", "[core][export_tiff]")
 
         // export to nwb
         std::vector<isx::SpMovie_t> movies;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             movies.push_back(isx::readMovie(fn));
         }
@@ -252,7 +252,7 @@ TEST_CASE("MovieTiffExportU16ComplexTest", "[core][export_tiff]")
         std::vector<uint16_t> buf(pixelsPerFrame * 5);   // longest movie segment has 5 frames
 
         int32_t i = 0;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             createFrameData(buf.data(), int32_t(timingInfos[i].getNumTimes()), pixelsPerFrame, i * 5);
             writeTestU16MovieGeneric(fn, timingInfos[i], spacingInfo, buf.data());
@@ -261,7 +261,7 @@ TEST_CASE("MovieTiffExportU16ComplexTest", "[core][export_tiff]")
 
         // export to nwb
         std::vector<isx::SpMovie_t> movies;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             movies.push_back(isx::readMovie(fn));
         }
@@ -355,7 +355,7 @@ TEST_CASE("MovieTiffExportF32ComplexTest", "[core][export_tiff]")
         std::vector<float> buf(pixelsPerFrame * 5);   // longest movie segment has 5 frames
 
         int32_t i = 0;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             createFrameData(buf.data(), int32_t(timingInfos[i].getNumTimes()), pixelsPerFrame, i * 5);
             writeTestF32MovieGeneric(fn, timingInfos[i], spacingInfo, buf.data());
@@ -364,7 +364,7 @@ TEST_CASE("MovieTiffExportF32ComplexTest", "[core][export_tiff]")
 
         // export to nwb
         std::vector<isx::SpMovie_t> movies;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             movies.push_back(isx::readMovie(fn));
         }
@@ -454,7 +454,7 @@ TEST_CASE("MovieTiffExportSplittedTest", "[core][export_tiff]")
         std::vector<uint16_t> buf(pixelsPerFrame * 5);   // longest movie segment has 5 frames
 
         int32_t i = 0;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             createFrameData(buf.data(), int32_t(timingInfos[i].getNumTimes()), pixelsPerFrame, i * 5);
             writeTestU16MovieGeneric(fn, timingInfos[i], spacingInfo, buf.data());
@@ -463,7 +463,7 @@ TEST_CASE("MovieTiffExportSplittedTest", "[core][export_tiff]")
 
         // export to nwb
         std::vector<isx::SpMovie_t> movies;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             movies.push_back(isx::readMovie(fn));
         }
@@ -547,7 +547,7 @@ TEST_CASE("MovieTiffExportWithDroppedTest", "[core][export_tiff]")
         std::vector<float> buf(pixelsPerFrame * 5);   // longest movie segment has 5 frames
 
         int32_t i = 0;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             createFrameData(buf.data(), int32_t(timingInfos[i].getNumTimes()), pixelsPerFrame, i * 5);
             writeTestF32MovieGeneric(fn, timingInfos[i], spacingInfo, buf.data());
@@ -556,7 +556,7 @@ TEST_CASE("MovieTiffExportWithDroppedTest", "[core][export_tiff]")
 
         // export to nwb
         std::vector<isx::SpMovie_t> movies;
-        for (const auto fn : filenames)
+        for (const auto & fn : filenames)
         {
             movies.push_back(isx::readMovie(fn));
         }

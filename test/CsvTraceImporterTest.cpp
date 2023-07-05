@@ -24,7 +24,7 @@ requireEqualValues(
     const std::map<isx::Time, float> & values = inTrace->getValues();
     REQUIRE(values.size() == inExpSize);
 
-    for (const auto expValue : inSomeExpValues)
+    for (const auto & expValue : inSomeExpValues)
     {
         const float value = values.at(expValue.first);
         if (std::isnan(expValue.second))

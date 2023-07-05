@@ -329,7 +329,7 @@ namespace isx
 
         std::weak_ptr<VesselSet> weakThis = shared_from_this();
 
-        m_vesselSets[vesselSetIndex]->getCorrelationsAsync(inIndex, frameIndex, [weakThis, inIndex, inCallback](AsyncTaskResult<SpVesselCorrelations_t> inAsyncTaskResult)
+        m_vesselSets[vesselSetIndex]->getCorrelationsAsync(inIndex, frameIndex, [weakThis, inCallback](AsyncTaskResult<SpVesselCorrelations_t> inAsyncTaskResult)
             {
                 auto sharedThis = weakThis.lock();
                 if (!sharedThis)

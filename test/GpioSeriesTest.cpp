@@ -90,7 +90,7 @@ TEST_CASE("GpioSeries-GpioSeries", "[core-internal]")
             g_resources["unitTestDataPath"] + "/recording_20161104_093749_gpio.raw"
         } };
 
-        for (const auto f : inputFilePaths)
+        for (const auto & f : inputFilePaths)
         {
             const std::vector<std::string> outputFilePaths = convertNVokeGpio(f, dirPath);
             filePaths.push_back(outputFilePaths.front());

@@ -65,7 +65,7 @@ IndexRanges_t
 convertJsonToIndexRanges(const json & j)
 {
     IndexRanges_t outRanges;
-    for (const std::string & str : j)
+    for (const std::string str : j)
     {
         outRanges.push_back(IndexRange(str));
     }

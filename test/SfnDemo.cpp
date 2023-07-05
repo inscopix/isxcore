@@ -55,7 +55,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
         const std::string fileName = dataDir + "/project-sfn_demo_mc.isxp";
         std::remove(fileName.c_str());
         isx::Project project(fileName, "SfN 2016 Demo (MC)");
-        for (const auto series : allSeries)
+        for (const auto & series : allSeries)
         {
             const isx::DataSet::Properties prop =
             {
@@ -102,7 +102,7 @@ TEST_CASE("SfnDemo", "[data][!hide]")
         std::remove(fileName.c_str());
         isx::Project project(fileName, "SfN 2016 Demo");
 
-        for (const auto series : allSeries)
+        for (const auto & series : allSeries)
         {
             auto s = project.createSeriesInRoot(series.first);
             auto css = std::make_shared<isx::Series>("Manual ROIs");
@@ -214,7 +214,7 @@ TEST_CASE("SfnDemoOrig", "[data][!hide]")
         std::remove(fileName.c_str());
         isx::Project project(fileName, "SfN 2016 Demo (Original)");
 
-        for (const auto series : allSeries)
+        for (const auto & series : allSeries)
         {
             project.createSeriesInRoot(series.first);
             const auto names = series.second;

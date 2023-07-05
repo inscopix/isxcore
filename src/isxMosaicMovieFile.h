@@ -143,7 +143,6 @@ public:
     ///             For a regular movie this will contain one TimingInfo object
     ///             matching getTimingInfo.
     ///
-    virtual
     const isx::TimingInfos_t &
     getTimingInfosForSeries() const;
     

@@ -59,6 +59,9 @@ enum class CellStatus {
     REJECTED = 2                    ///< Rejected
 };
 
+virtual
+~CellSet() {};
+
 /// \return whether this is a valid cell set object.
 ///
 virtual

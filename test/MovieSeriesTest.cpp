@@ -96,7 +96,7 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
     SECTION("Compatible set of movies")
     {
         isx::isize_t i = 0;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             writeTestU16Movie(fn, timingInfos[i], spacingInfo, uint16_t((i + 1) * 10));
             ++i;
@@ -105,7 +105,7 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
         const isx::TimingInfo expectedTimingInfo(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 12);
 
         isx::TimingInfos_t expectedTimingInfos;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             auto m = std::make_shared<isx::MosaicMovie>(fn);
             expectedTimingInfos.push_back(m->getTimingInfo());
@@ -125,7 +125,7 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
         std::vector<isx::TimingInfo> tis(timingInfos.begin(), timingInfos.end());
         tis[2] = isx::TimingInfo(isx::Time(2222, 4, 1, 3, 2, 0, isx::DurationInSeconds(1, 40)), isx::Ratio(1, 20), 5);
         isx::isize_t i = 0;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             writeTestU16Movie(fn, tis[i], spacingInfo, uint16_t((i + 1) * 10));
             ++i;
@@ -134,7 +134,7 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
         const isx::TimingInfo expectedTimingInfo(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 12);
 
         isx::TimingInfos_t expectedTimingInfos;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             auto m = std::make_shared<isx::MosaicMovie>(fn);
             expectedTimingInfos.push_back(m->getTimingInfo());
@@ -154,7 +154,7 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
         std::vector<isx::TimingInfo> tis(timingInfos.begin(), timingInfos.end());
         std::swap(tis[1], tis[2]);
         isx::isize_t i = 0;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             writeTestU16Movie(fn, tis[i], spacingInfo, uint16_t((i + 1) * 10));
             ++i;
@@ -162,7 +162,7 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
         const isx::TimingInfo expectedTimingInfo(isx::Time(2222, 4, 1, 3, 0, 0, isx::DurationInSeconds(0, 1)), isx::Ratio(1, 20), 12);
 
         isx::TimingInfos_t expectedTimingInfos;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             auto m = std::make_shared<isx::MosaicMovie>(fn);
             expectedTimingInfos.push_back(m->getTimingInfo());
@@ -180,7 +180,7 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
     SECTION("getFrame")
     {
         isx::isize_t i = 0;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             writeTestU16Movie(fn, timingInfos[i], spacingInfo, uint16_t((i + 1) * 10));
             ++i;
@@ -189,7 +189,7 @@ TEST_CASE("MovieSeriesU16", "[core-internal]")
         const auto tis = movieSeries->getTimingInfosForSeries();
 
         size_t mIndex = 0;
-        for (const auto fn: filenames)
+        for (const auto & fn: filenames)
         {
             auto m = std::make_shared<isx::MosaicMovie>(fn);
             const auto numFrames = m->getTimingInfo().getNumTimes();

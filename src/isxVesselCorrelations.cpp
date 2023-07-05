@@ -167,7 +167,7 @@ PointInPixels_t computeCenterOfBoundingBox(const Contour_t & inBoundingBox)
     int64_t xmax = std::numeric_limits<int64_t>::min();
     int64_t ymin = std::numeric_limits<int64_t>::max();
     int64_t ymax = std::numeric_limits<int64_t>::min();
-    for (const auto point : inBoundingBox)
+    for (const auto & point : inBoundingBox)
     {
         xmin = std::min(xmin, point.getX());
         xmax = std::max(xmax, point.getX());

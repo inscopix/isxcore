@@ -69,7 +69,7 @@ VesselCorrelationsMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t 
     std::tie(seriesIndex, frameIndex) = getSegmentAndLocalIndex(m_timingInfos, inFrameNumber);
 
     std::weak_ptr<VesselCorrelationsMovie> weakThis = shared_from_this();
-    m_vesselSet->getCorrelationsAsync(m_vesselId, inFrameNumber, [weakThis, this, inCallback, inFrameNumber, seriesIndex, frameIndex](isx::AsyncTaskResult<isx::SpVesselCorrelations_t> inAsyncTaskResult)
+    m_vesselSet->getCorrelationsAsync(m_vesselId, inFrameNumber, [weakThis, inCallback, inFrameNumber, seriesIndex, frameIndex](isx::AsyncTaskResult<isx::SpVesselCorrelations_t> inAsyncTaskResult)
     {
         auto sharedThis = weakThis.lock();
         if (!sharedThis)
