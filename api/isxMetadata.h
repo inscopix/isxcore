@@ -75,6 +75,15 @@ namespace isx
     /// \endcond doxygen chokes on enum class inside of namespace
 
     /// \cond doxygen chokes on enum class inside of namespace
+    /// Types of estimation methods for vessel diameter algorithm
+    enum class VesselDiameterEstimationMethod_t
+    {
+        PARAMETRIC = 0,
+        NON_PARAMETRIC
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
     /// Type of projection image
     enum class ProjectionType
     {
@@ -554,6 +563,19 @@ namespace isx
                 return inShorthand ? "px/s" : "pixels per second";
             case VesselSetUnits_t::MICRONS_PER_SECOND:
                 return inShorthand ? "um/s" : "microns per second";
+            default:
+                return "";
+        }
+    }
+
+    inline std::string getVesselDiameteEstimationMethodString(VesselDiameterEstimationMethod_t method)
+    {
+        switch(method)
+        {
+            case VesselDiameterEstimationMethod_t::PARAMETRIC:
+                return "Parametric FWHM";
+            case VesselDiameterEstimationMethod_t::NON_PARAMETRIC:
+                return "Non-Parametric FWHM";
             default:
                 return "";
         }
