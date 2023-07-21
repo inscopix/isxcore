@@ -962,6 +962,12 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                     acqInfo["Time Window (s)"] = vesselSetTimeWindow->get<double>();
                 }
 
+                const auto vesselSetEstimationMethod = vesselset->find("estimationMethod");
+                if (vesselSetEstimationMethod != vesselset->end())
+                {
+                    acqInfo["Vessel Diameter Estimation Method"] = vesselSetEstimationMethod->get<std::string>();
+                }
+
                 const auto vesselSetInvalidWindows = vesselset->find("invalidWindows");
                 if (vesselSetInvalidWindows != vesselset->end())
                 {

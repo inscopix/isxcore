@@ -389,19 +389,37 @@ namespace isx
         {
         }
 
-        /// fully specified constructor
+        /// fully specified constructor for vessel diameter
         VesselSetMetadata(
             const VesselSetUnits_t units,
             const ProjectionType projectionType,
             const double timeWindow,
             const double timeIncrement,
-            const double inputMovieFps = 0.0,
-            const std::map<std::string, std::vector<int>> clippedVessels = {},
-            const std::map<std::string, std::vector<int>> noSignificantVessels = {},
-            const std::map<std::string, std::vector<int>> directionChangedVessels = {},
-            const std::vector<int> invalidWindows = {}
+            const VesselDiameterEstimationMethod_t estimationMethodType
             )
-            : m_units(units)
+            : m_vesselSetType(VesselSetType_t::VESSEL_DIAMETER)
+            , m_units(units)
+            , m_projectionType(projectionType)
+            , m_timeWindow(timeWindow)
+            , m_timeIncrement(timeIncrement)
+            , m_estimationMethodType(estimationMethodType)
+        {
+        }
+
+        /// fully specified constructor for rbc velocty
+        VesselSetMetadata(
+            const VesselSetUnits_t units,
+            const ProjectionType projectionType,
+            const double timeWindow,
+            const double timeIncrement,
+            const double inputMovieFps,
+            const std::map<std::string, std::vector<int>> clippedVessels,
+            const std::map<std::string, std::vector<int>> noSignificantVessels,
+            const std::map<std::string, std::vector<int>> directionChangedVessels,
+            const std::vector<int> invalidWindows
+            )
+            : m_vesselSetType(VesselSetType_t::RBC_VELOCITY)
+            , m_units(units)
             , m_projectionType(projectionType)
             , m_timeWindow(timeWindow)
             , m_timeIncrement(timeIncrement)
@@ -413,10 +431,12 @@ namespace isx
         {
         }
 
+        VesselSetType_t m_vesselSetType; ///< the type of vessel set
         VesselSetUnits_t m_units;        ///< units of the traces in the vessel set
         ProjectionType m_projectionType; ///< type of projection stored in the vessel set
         double m_timeWindow;             ///< the length of the time window in seconds
         double m_timeIncrement;          ///< the length of the time increment in seconds
+        VesselDiameterEstimationMethod_t m_estimationMethodType; ///< the type of vessel diameter estimation method
         double m_inputMovieFps;          ///< the fps of the input movie
         std::map<std::string, std::vector<int>> m_clippedVessels; ///< map of vessel to timepoints where clipping occurred in the rbc algo
         std::map<std::string, std::vector<int>> m_noSignificantVessels; ///< map of vessel to timepoints where no signficant pixels were detected in the rbc algo
@@ -781,6 +801,29 @@ namespace isx
             ISX_THROW(ExceptionUserInput, "No time increment in vessel set metadata");
         }
         return extraProps["idps"]["vesselset"]["timeIncrement"].get<double>();
+    }
+
+    template <class T>
+    VesselDiameterEstimationMethod_t getVesselSetDiameterEstimationMethodType(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (extraProps["idps"]["vesselset"]["estimationMethod"].is_null())
+        {
+            ISX_THROW(ExceptionUserInput, "No diameter estimation method in vessel set metadata");
+        }
+
+        if (
+            extraProps["idps"]["vesselset"]["estimationMethod"] ==
+            getVesselDiameteEstimationMethodString(VesselDiameterEstimationMethod_t::PARAMETRIC)
+        )
+        {
+            return VesselDiameterEstimationMethod_t::PARAMETRIC;
+        }
+        else
+        {
+            return VesselDiameterEstimationMethod_t::NON_PARAMETRIC;
+        }
     }
 
     template <class T>
@@ -1166,23 +1209,34 @@ namespace isx
         extraProps["idps"]["vesselset"]["projectionType"] = getVesselSetProjectionTypeString(vesselSetMetadata.m_projectionType);
         extraProps["idps"]["vesselset"]["timeWindow"] = vesselSetMetadata.m_timeWindow;
         extraProps["idps"]["vesselset"]["timeIncrement"] = vesselSetMetadata.m_timeIncrement;
-        if (vesselSetMetadata.m_inputMovieFps > 0.0)
+
+        if (vesselSetMetadata.m_vesselSetType == VesselSetType_t::VESSEL_DIAMETER)
         {
-            extraProps["idps"]["vesselset"]["inputMovieFps"] = vesselSetMetadata.m_inputMovieFps;
+            // vessel diameter metadata
+            extraProps["idps"]["vesselset"]["estimationMethod"] = getVesselDiameteEstimationMethodString(vesselSetMetadata.m_estimationMethodType);
         }
-        if (!vesselSetMetadata.m_clippedVessels.empty())
+        else
         {
-            extraProps["idps"]["vesselset"]["clippedVessels"] = getVesselTimepointsString(vesselSetMetadata.m_clippedVessels);
+            // rbc velocity metadata
+            if (vesselSetMetadata.m_inputMovieFps > 0.0)
+            {
+                extraProps["idps"]["vesselset"]["inputMovieFps"] = vesselSetMetadata.m_inputMovieFps;
+            }
+            if (!vesselSetMetadata.m_clippedVessels.empty())
+            {
+                extraProps["idps"]["vesselset"]["clippedVessels"] = getVesselTimepointsString(vesselSetMetadata.m_clippedVessels);
+            }
+            if (!vesselSetMetadata.m_noSignificantVessels.empty())
+            {
+                extraProps["idps"]["vesselset"]["noSignificantVessels"] = getVesselTimepointsString(vesselSetMetadata.m_noSignificantVessels);
+            }
+            if (!vesselSetMetadata.m_directionChangedVessels.empty())
+            {
+                extraProps["idps"]["vesselset"]["directionChangedVessels"] = getVesselTimepointsString(vesselSetMetadata.m_directionChangedVessels);
+            }
+            extraProps["idps"]["vesselset"]["invalidWindows"] = vesselSetMetadata.m_invalidWindows;
         }
-        if (!vesselSetMetadata.m_noSignificantVessels.empty())
-        {
-            extraProps["idps"]["vesselset"]["noSignificantVessels"] = getVesselTimepointsString(vesselSetMetadata.m_noSignificantVessels);
-        }
-        if (!vesselSetMetadata.m_directionChangedVessels.empty())
-        {
-            extraProps["idps"]["vesselset"]["directionChangedVessels"] = getVesselTimepointsString(vesselSetMetadata.m_directionChangedVessels);
-        }
-        extraProps["idps"]["vesselset"]["invalidWindows"] = vesselSetMetadata.m_invalidWindows;
+        
         return extraProps.dump();
     }
 
