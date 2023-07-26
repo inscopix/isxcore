@@ -437,10 +437,10 @@ namespace isx
         double m_timeWindow;             ///< the length of the time window in seconds
         double m_timeIncrement;          ///< the length of the time increment in seconds
         VesselDiameterEstimationMethod_t m_estimationMethodType; ///< the type of vessel diameter estimation method
-        double m_inputMovieFps;          ///< the fps of the input movie
-        std::map<std::string, std::vector<int>> m_clippedVessels; ///< map of vessel to timepoints where clipping occurred in the rbc algo
-        std::map<std::string, std::vector<int>> m_noSignificantVessels; ///< map of vessel to timepoints where no signficant pixels were detected in the rbc algo
-        std::map<std::string, std::vector<int>> m_directionChangedVessels; ///< map of vessel to timepoints where direction travelled significant changed between offsets
+        double m_inputMovieFps = 0.0;          ///< the fps of the input movie
+        std::map<std::string, std::vector<int>> m_clippedVessels = {}; ///< map of vessel to timepoints where clipping occurred in the rbc algo
+        std::map<std::string, std::vector<int>> m_noSignificantVessels = {}; ///< map of vessel to timepoints where no signficant pixels were detected in the rbc algo
+        std::map<std::string, std::vector<int>> m_directionChangedVessels = {}; ///< map of vessel to timepoints where direction travelled significant changed between offsets
         std::vector<int> m_invalidWindows; ///< vector of windows that were skipped during processing due to invalid frames occurring within a window
     };
 
