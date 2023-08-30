@@ -16,7 +16,7 @@ EventBasedFileV2::EventBasedFileV2(const std::string & inFileName)
     m_file.open(m_fileName, std::ios::binary | std::ios_base::in);
     if (!m_file.good() || !m_file.is_open())
     {
-        ISX_THROW(ExceptionFileIO, "Failed to open file for reading: ", m_fileName);
+        ISX_THROW(ExceptionFileIO, "Failed to open events file for reading (", m_fileName, ")", " with error: ", getSystemErrorString());
     }
     readFileFooter();
 
@@ -37,7 +37,7 @@ EventBasedFileV2::EventBasedFileV2(
     m_file.open(m_fileName, std::ios::binary | std::ios_base::out);
     if (!m_file.good() || !m_file.is_open())
     {
-        ISX_THROW(ExceptionFileIO, "Failed to open file for writing: ", m_fileName);
+        ISX_THROW(ExceptionFileIO, "Failed to open events file for writing (", m_fileName, ")", " with error: ", getSystemErrorString());
     }
 
     const size_t numChannels = inChannelSteps.size();

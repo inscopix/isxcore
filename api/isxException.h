@@ -139,6 +139,10 @@ namespace isx
         ~ExceptionSeries() override;
     };
 
+    /// Returns a string error message describing the system error code errnum
+    ///
+    std::string getSystemErrorString();
+
 } // namespace isx
 
 #endif //ISX_EXCEPTION_H

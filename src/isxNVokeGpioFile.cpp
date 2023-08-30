@@ -82,7 +82,7 @@ NVokeGpioFile::NVokeGpioFile(const std::string & inFileName, const std::string &
     if (!m_file.good() || !m_file.is_open())
     {
         ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open GPIO data file for reading: ", m_fileName);
+            "Failed to open GPIO data file for reading (", m_fileName, ")", " with error: ", getSystemErrorString());
     }
 
     // Get the size of the file in bytes

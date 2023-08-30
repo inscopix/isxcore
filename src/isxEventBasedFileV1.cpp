@@ -64,7 +64,7 @@ EventBasedFileV1::EventBasedFileV1(const std::string & inFileName) :
     if (!m_file.good() || !m_file.is_open())
     {
         ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open file: ", m_fileName);
+            "Failed to open events file for reading (", m_fileName, ")", " with error: ", getSystemErrorString());
     }
     readFileFooter();
     m_valid = true;
@@ -80,7 +80,7 @@ EventBasedFileV1::EventBasedFileV1(const std::string & inFileName, StoredData da
     if (!m_file.good() || !m_file.is_open())
     {
         ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open file: ", m_fileName);
+            "Failed to open events file for writing (", m_fileName, ")", " with error: ", getSystemErrorString());
     }
 
     m_valid = true;

@@ -1,5 +1,9 @@
 #include "isxException.h"
 
+#if ISX_OS_LINUX
+#include <cstring>
+#endif
+
 namespace isx
 {
 
@@ -65,6 +69,17 @@ ExceptionSeries::ExceptionSeries(const std::string& file, int line, const std::s
 
 ExceptionSeries::~ExceptionSeries()
 {
+}
+
+std::string getSystemErrorString()
+{
+    #if ISX_OS_MACOS || ISX_OS_LINUX
+    return strerror(errno);
+    #elif ISX_OS_WIN32
+    char error[256];
+    strerror_s(error, 100, errno);
+    return error;
+    #endif
 }
 
 // Non API utilities.

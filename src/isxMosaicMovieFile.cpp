@@ -68,7 +68,7 @@ MosaicMovieFile::initialize(const std::string & inFileName, bool enableWrite)
     if (!m_file.good() || !m_file.is_open())
     {
         ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open movie file for reading: ", m_fileName);
+            "Failed to open movie file for reading (", m_fileName, ")", " with error: ", getSystemErrorString());
     }
     readHeader();
     m_fileClosedForWriting = !enableWrite;
@@ -139,7 +139,7 @@ MosaicMovieFile::initialize(
     if (!m_file.good() || !m_file.is_open())
     {
         ISX_THROW(isx::ExceptionFileIO,
-            "Failed to open movie file for read/write: ", m_fileName);
+            "Failed to open movie file for read/write (", m_fileName, ")", " with error: ", getSystemErrorString());
     }
 
     m_valid = true;

@@ -139,7 +139,7 @@ NVisionMovieFile::initializeFileStream()
 	if (!m_file.good() || !m_file.is_open())
 	{
 		ISX_THROW(isx::ExceptionFileIO,
-			"Failed to open movie file for ", (m_enableWrite ? "writing" : "reading"), " (", m_fileName, ")");
+			"Failed to open movie file for ", (m_enableWrite ? "writing" : "reading"), " (", m_fileName, ")", " with error: ", getSystemErrorString());
 	}
 	ISX_NVISION_MOVIE_LOG_DEBUG("File stream initialized.");
 }

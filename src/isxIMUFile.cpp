@@ -16,7 +16,7 @@ IMUFile::IMUFile(const std::string & inFileName, const std::string & inOutputDir
     m_file.open(m_fileName, std::ios::binary | std::ios_base::in);
     if (!m_file.good() || !m_file.is_open())
     {
-        ISX_THROW(ExceptionFileIO, "Failed to open IMU data file for reading: ", m_fileName);
+        ISX_THROW(ExceptionFileIO, "Failed to open IMU data file for reading (", m_fileName, ")", " with error: ", getSystemErrorString());
     }
 
     m_channels.push_back("Acc x");

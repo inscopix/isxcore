@@ -134,7 +134,7 @@ NVista3GpioFile::NVista3GpioFile(const std::string & inFileName, const std::stri
     m_file.open(m_fileName, std::ios::binary | std::ios_base::in);
     if (!m_file.good() || !m_file.is_open())
     {
-        ISX_THROW(ExceptionFileIO, "Failed to open GPIO data file for reading: ", m_fileName);
+        ISX_THROW(ExceptionFileIO, "Failed to open GPIO data file for reading (", m_fileName, ")", " with error: ", getSystemErrorString());
     }
     m_valid = true;
 }

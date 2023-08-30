@@ -25,7 +25,7 @@ namespace isx
         if (!m_file.good() || !m_file.is_open())
         {
             ISX_THROW(isx::ExceptionFileIO,
-                "Failed to open cell set file for reading: ", m_fileName);
+                "Failed to open cell set file for reading (", m_fileName, ")", " with error: ", getSystemErrorString());
         }
         readHeader();
         m_fileClosedForWriting = !enableWrite;
@@ -46,7 +46,7 @@ namespace isx
         if (!m_file.good() || !m_file.is_open())
         {
             ISX_THROW(isx::ExceptionFileIO,
-                "Failed to open cell set file for read/write: ", m_fileName);
+                "Failed to open cell set file for reading (", m_fileName, ")", " with error: ", getSystemErrorString());
         }
         m_valid = true;
     }

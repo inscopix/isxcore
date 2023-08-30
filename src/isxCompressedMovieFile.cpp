@@ -30,7 +30,7 @@ CompressedMovieFile::CompressedMovieFile (const std::string &inFileName, const s
     m_file.open(m_fileName, std::ios::binary | std::ios_base::in);
     if (!m_file.good() || !m_file.is_open())
     {
-        ISX_THROW(isx::ExceptionFileIO, "Failed to open movie file for reading: ", m_fileName);
+        ISX_THROW(isx::ExceptionFileIO, "Failed to open movie file for reading (", m_fileName, ")", " with error: ", getSystemErrorString());
     }
     // Read video header + session
     readVideoInfo();
