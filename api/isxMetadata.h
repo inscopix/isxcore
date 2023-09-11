@@ -1003,8 +1003,11 @@ namespace isx
 
         std::pair<double, double> efocusData = integratedBasePlateToScaling.at(basePlateType);
 
+        // The working distance range of the lens in units of GUI/ticks
+        const double workingDistance = 1000;
+
         // Linearly interpolate the efocus scale factor
-        double micronsPerPixel = ((efocusData.second - efocusData.first) / 200) * (efocus) + efocusData.first;
+        double micronsPerPixel = ((efocusData.second - efocusData.first) / workingDistance) * (efocus) + efocusData.first;
 
         // Ratio must not be zero
         if (micronsPerPixel == 0)
