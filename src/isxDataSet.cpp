@@ -849,6 +849,12 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                     acqInfo[it.key()] = *it;
                 }
             }
+
+            const auto wideField = microscope->find("widefield");
+            if (wideField != microscope->end())
+            {
+                acqInfo["Wide Field"] = wideField->get<bool>() ? "True" : "False";
+            }
         }
 
         const auto name = extraProps.find("name");

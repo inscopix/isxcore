@@ -138,7 +138,8 @@ namespace isx
         BP30 = 15,
         BP31 = 18,
         BP32 = 16,
-        BP33 = 37
+        BP33 = 37,
+        CRANIAL_WINDOW_WIDE_FIELD = 38
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -149,6 +150,7 @@ namespace isx
         {BasePlateType_t::UNAVAILABLE, "None"},
         {BasePlateType_t::CUSTOM, "Custom"},
         {BasePlateType_t::CRANIAL_WINDOW, "Cranial Window or No Lens"},
+        {BasePlateType_t::CRANIAL_WINDOW_WIDE_FIELD, "Cranial Window or No Lens"},
         {BasePlateType_t::BP1, "ProView Lens Probe 0.5 mm x 4.0 mm"},
         {BasePlateType_t::BP2, "Lens Probe 1.0 mm x 4.2 mm"},
         {BasePlateType_t::BP3, "Lens Probe 1.0 mm x 9.0 mm"},
@@ -191,6 +193,7 @@ namespace isx
     const std::map<BasePlateType_t, std::pair<double, double>> integratedBasePlateToScaling =
     {
         {BasePlateType_t::CRANIAL_WINDOW, std::make_pair(0.82, 0.80)},
+        {BasePlateType_t::CRANIAL_WINDOW_WIDE_FIELD, std::make_pair(1.41, 1.50)},
 
         {BasePlateType_t::BP7, std::make_pair(0.67,0.81)},
         {BasePlateType_t::BP8, std::make_pair(0.63,0.79)},
@@ -257,6 +260,7 @@ namespace isx
         BasePlateType_t::UNAVAILABLE,
         BasePlateType_t::CUSTOM,
         BasePlateType_t::CRANIAL_WINDOW,
+        BasePlateType_t::CRANIAL_WINDOW_WIDE_FIELD,
         BasePlateType_t::BP1,
         BasePlateType_t::BP2,
         BasePlateType_t::BP3,
@@ -354,6 +358,17 @@ namespace isx
         BasePlateType_t::BP13,
         BasePlateType_t::BP14,
         BasePlateType_t::BP15
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Vector specifying the base plate order to display in the metadata view
+    /// for nVue Wide Field miniscopes
+    const std::vector<BasePlateType_t> basePlateOrderNVueWideField =
+    {
+        BasePlateType_t::UNAVAILABLE,
+        BasePlateType_t::CUSTOM,
+        BasePlateType_t::CRANIAL_WINDOW_WIDE_FIELD,
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -870,6 +885,26 @@ namespace isx
         return map;
     }
 
+    template<typename T>
+    bool isWideField(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        const auto & microscope = extraProps.find("microscope");
+
+        if (microscope != extraProps.end())
+        {
+            const auto & wideField = microscope->find("widefield");
+            if (wideField != microscope->end())
+            {
+                return wideField->get<bool>();
+            }
+        }
+
+        return false;
+    }
+
     template <class T>
     BasePlateType_t getBasePlateType(T & inData)
     {
@@ -898,7 +933,9 @@ namespace isx
             }
             else if (name == "Cranial Window or No Lens")
             {
-                probeType = BasePlateType_t::CRANIAL_WINDOW;
+                probeType = isWideField(inData) ? 
+                    BasePlateType_t::CRANIAL_WINDOW_WIDE_FIELD : 
+                    BasePlateType_t::CRANIAL_WINDOW;
             }
             else // Integrated lens
             {
@@ -1398,6 +1435,10 @@ namespace isx
             else if (microscope.find("dual color") != std::string::npos || microscope.find("nvue") != std::string::npos)
             {
                 // Dual Color, nVue
+                if (isWideField(inData))
+                {
+                    return basePlateOrderNVueWideField;
+                }
                 return basePlateOrderNVue;
             }
         }
