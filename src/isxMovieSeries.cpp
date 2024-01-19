@@ -160,6 +160,22 @@ MovieSeries::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
         });
 }
 
+std::string
+MovieSeries::getFrameMetadata(isize_t inFrameNumber)
+{
+    if (inFrameNumber >= m_gaplessTimingInfo.getNumTimes())
+    {
+        ISX_THROW(ExceptionDataIO, "The index of the frame (", inFrameNumber,
+                ") is out of range (0-", m_gaplessTimingInfo.getNumTimes(), ").");
+    }
+
+    size_t movieIndex = 0;
+    size_t frameIndex = 0;
+    std::tie(movieIndex, frameIndex) = getSegmentAndLocalIndex(m_timingInfos, inFrameNumber);
+
+    return m_movies[movieIndex]->getFrameMetadata(frameIndex);
+}
+
 void
 MovieSeries::cancelPendingReads()
 {

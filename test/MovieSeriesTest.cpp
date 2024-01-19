@@ -314,5 +314,21 @@ TEST_CASE("NVisionMovieSeries", "[core-internal]")
         }
     }
 
+    SECTION("Frame metadata")
+    {
+        const auto movies = movie->getMovies();
+        size_t seriesIndex = 0;
+        for (const auto & m : movies)
+        {
+            for (size_t i = 0; i < m->getTimingInfo().getNumTimes(); i++)
+            {
+                const auto movieFrameMetadata = m->getFrameMetadata(i);
+                const auto seriesFrameMetadata = movie->getFrameMetadata(seriesIndex);
+                REQUIRE(movieFrameMetadata == seriesFrameMetadata);
+                seriesIndex++;
+            }
+        }
+    }
+
     isx::CoreShutdown();
 }
