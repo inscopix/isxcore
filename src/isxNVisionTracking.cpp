@@ -16,31 +16,35 @@ BoundingBox::fromMetadata(
         return BoundingBox();
     }
 
-    const auto trackerMetadata = frameMetadata.find("tracker");
-    if (trackerMetadata == frameMetadata.end())
+    if (frameMetadata.find("tracker") == frameMetadata.end())
     {
         return BoundingBox();
     }
+    const auto trackerMetadata = frameMetadata.at("tracker");
 
-    const auto trackerBoxMetadata = trackerMetadata->find("box");
-    if (trackerBoxMetadata == trackerMetadata->end())
+    if (trackerMetadata.find("box") == trackerMetadata.end())
     {
         return BoundingBox();
     }
+    const auto trackerBoxMetadata = trackerMetadata.at("box");
 
     int64_t zoneId = -1;
-    const auto zoneMetadata = trackerMetadata->find("zones");
-    if (zoneMetadata != trackerMetadata->end())
+    if (trackerMetadata.find("zones") != trackerMetadata.end())
     {
-        zoneId = zoneMetadata->at("id").get<int64_t>();
+        const auto zoneMetadata = trackerMetadata.at("zones");
+
+        if (zoneMetadata.find("id") != zoneMetadata.end())
+        {
+            zoneId = zoneMetadata.at("id").get<int64_t>();
+        }
     }
 
     return BoundingBox(
-        (*trackerBoxMetadata)[1].get<float>(),
-        (*trackerBoxMetadata)[0].get<float>(),
-        (*trackerBoxMetadata)[3].get<float>(),
-        (*trackerBoxMetadata)[2].get<float>(),
-        trackerMetadata->at("conf").get<float>(),
+        trackerBoxMetadata[1].get<float>(),
+        trackerBoxMetadata[0].get<float>(),
+        trackerBoxMetadata[3].get<float>(),
+        trackerBoxMetadata[2].get<float>(),
+        trackerMetadata.at("conf").get<float>(),
         zoneId
     );
 }
@@ -201,14 +205,34 @@ getZonesFromMetadata(
 {
     std::vector<Zone> zones;
     const auto extraProps = json::parse(inMetadata);
-    if (extraProps.find("trackingInterface") == extraProps.end())
+    if (
+        extraProps.find("trackingInterface") == extraProps.end() ||
+        extraProps.find("processingInterface") == extraProps.end()
+    )
     {
+        ISX_LOG_WARNING("No trackingInterface or processingInterface in isxb session metadata, cannot retrieve zones.");
         return zones;
     }
 
-    const auto cameraName = extraProps.at("cameraName").get<std::string>();
+
+    std::string cameraName = extraProps.at("cameraName").get<std::string>();
+    const auto processingInterface = extraProps.at("processingInterface");
+    if (processingInterface.find(cameraName) != processingInterface.end())
+    {
+        const auto cameraSection = processingInterface.at(cameraName);
+        if (cameraSection.find("cameraAlias") != cameraSection.end())
+        {
+            const auto cameraAlias = cameraSection.at("cameraAlias").get<std::string>();
+            if (!cameraAlias.empty())
+            {
+                cameraName = cameraAlias;
+            }
+        }
+    }
+
     json zonesMetadata;
-    for (auto cameraSection : extraProps.at("trackingInterface"))
+    const auto trackingInterface = extraProps.at("trackingInterface");
+    for (auto cameraSection : trackingInterface)
     {
         if (cameraSection.at("cameraName").get<std::string>() == cameraName)
         {
@@ -217,16 +241,25 @@ getZonesFromMetadata(
         }
     }
 
+    if (zonesMetadata.is_null())
+    {
+        ISX_LOG_WARNING("Could not extract zones from isxb session metadata");
+        return zones;
+    }
+
     for (auto zoneMetadata : zonesMetadata)
     {
-        const int64_t id = zoneMetadata["id"].get<int64_t>();
-        const bool enabled = zoneMetadata["enable"].get<bool>();
-        const std::string name = zoneMetadata["name"].get<std::string>();
-        const std::string description = zoneMetadata["description"].get<std::string>();
-        const Zone::Type type = Zone::getTypeFromString(zoneMetadata["geometry"]["type"].get<std::string>());
+        const int64_t id = zoneMetadata.at("id").get<int64_t>();
+        const bool enabled = zoneMetadata.at("enable").get<bool>();
+        const std::string name = zoneMetadata.at("name").get<std::string>();
+        const std::string description = zoneMetadata.at("description").get<std::string>();
+
+        const auto zoneGeometry = zoneMetadata.at("geometry");
+        const Zone::Type type = Zone::getTypeFromString(zoneGeometry.at("type").get<std::string>());
 
         std::vector<SpatialPoint<float>> coordinates;
-        for (auto coordinate : zoneMetadata["geometry"]["coordinates"])
+        const auto zoneCoordinates = zoneGeometry.at("coordinates");
+        for (auto coordinate : zoneCoordinates)
         {
             coordinates.push_back(
                 SpatialPoint<float>(
@@ -235,21 +268,28 @@ getZonesFromMetadata(
                 )
             );
         }
+        
+        float majorAxis = 0.0f, minorAxis = 0.0f, angle = 0.0f;
+        if (zoneGeometry.find("properties") != zoneGeometry.end())
+        {
+            const auto zoneGeometryProps = zoneGeometry.at("properties");
 
-        const float majorAxis = (
-            zoneMetadata["geometry"]["properties"]["majorAxis"].is_null() ?
-            0 : zoneMetadata["geometry"]["properties"]["majorAxis"].get<float>()
-        );
+            if (zoneGeometryProps.find("majorAxis") != zoneGeometryProps.end())
+            {
+                majorAxis = zoneGeometryProps.at("majorAxis").get<float>();
+            }
 
-        const float minorAxis = (
-            zoneMetadata["geometry"]["properties"]["minorAxis"].is_null() ?
-            0 : zoneMetadata["geometry"]["properties"]["minorAxis"].get<float>()
-        );
+            if (zoneGeometryProps.find("minorAxis") != zoneGeometryProps.end())
+            {
+                minorAxis = zoneGeometryProps.at("minorAxis").get<float>();
+            }
 
-        const float angle = (
-            zoneMetadata["geometry"]["properties"]["angle"].is_null() ?
-            0 : zoneMetadata["geometry"]["properties"]["angle"].get<float>()
-        );
+            if (zoneGeometryProps.find("angle") != zoneGeometryProps.end())
+            {
+                angle = zoneGeometryProps.at("angle").get<float>();
+            }
+
+        }
 
         zones.push_back(
             Zone(
