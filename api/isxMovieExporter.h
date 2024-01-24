@@ -169,6 +169,79 @@ struct MovieTimestampExporterParams
     WriteTimeRelativeTo              m_format;       ///< export format for timestamps
 };
 
+/// struct that defines NVisionMovieTrackingExporterParams's input data, output data and input parameters.
+struct NVisionMovieTrackingExporterParams
+{
+    /// Default constructor.
+    NVisionMovieTrackingExporterParams()
+    {}
+
+    /// Convenience constructor to fill struct members in one shot
+    /// \param inFrameTrackingDataOutputFilename  Filename for output file with the per-frame tracking data stored by nVision.
+    /// \param inZonesOutputFilename    Filename for output file with the zones metadata.
+    /// \param inWriteTimeRelativeTo    Format of timestamps column, if per-frame tracking data is exported.
+    /// \param inDrawBoundingBox    Flag indicating whether to draw the tracked bounding box on the exported mp4.
+    /// \param inDrawBoundingBoxCenter    Flag indicating whether to draw the tracked bounding box center on the exported mp4.
+    /// \param inDrawZones      Flag indicating whether to draw the tracked zones on the exported mp4.
+    NVisionMovieTrackingExporterParams(
+        const std::string inFrameTrackingDataOutputFilename,
+        const std::string inZonesOutputFilename,
+        const WriteTimeRelativeTo inWriteTimeRelativeTo,
+        const bool inDrawBoundingBox,
+        const bool inDrawBoundingBoxCenter,
+        const bool inDrawZones
+    ) : m_frameTrackingDataOutputFilename(inFrameTrackingDataOutputFilename)
+    , m_zonesOutputFilename(inZonesOutputFilename)
+    , m_writeTimeRelativeTo(inWriteTimeRelativeTo)
+    , m_drawBoundingBox(inDrawBoundingBox)
+    , m_drawBoundingBoxCenter(inDrawBoundingBoxCenter)
+    , m_drawZones(inDrawZones)
+    {}
+
+    /// \param inSources    The source input movies to export tracking data from.
+    void 
+    setSources(const std::vector<SpMovie_t> & inSources);
+
+    /// \return     A string representation of these parameters.
+    ///
+    std::string
+    toString() const;
+
+    /// \return The input file paths.
+    ///
+    std::vector<std::string> getInputFilePaths() const;
+
+    /// \return The output file paths.
+    ///
+    std::vector<std::string> getOutputFilePaths() const;
+
+    /// The source input movies to export tracking data from.
+    std::vector<SpMovie_t> m_srcs;
+
+    /// Filename for output file with the per-frame tracking data stored by nVision.
+    /// If empty, then the per-frame tracking data is not exported.
+    std::string m_frameTrackingDataOutputFilename;
+
+    /// Filename for output file with the zones metadata.
+    /// If empty, then the zone metadata is not exported.
+    std::string m_zonesOutputFilename;
+
+    /// Format of timestamps column, if per-frame tracking data is exported.
+    WriteTimeRelativeTo m_writeTimeRelativeTo;
+
+    /// Flag indicating whether to draw the tracked bounding box on the exported mp4.
+    /// Only used for mp4 export.
+    bool m_drawBoundingBox;
+
+    /// Flag indicating whether to draw the tracked bounding box center on the exported mp4.
+    /// Only used for mp4 export.
+    bool m_drawBoundingBoxCenter;
+
+    /// Flag indicating whether to draw the tracked zones on the exported mp4.
+    /// Only used for mp4 export.
+    bool m_drawZones;
+};
+
 /// Wrapper for movie export params.
 /// Needed for triggering export through the AsyncProcessor 
 struct MovieExporterParamsWrapper
@@ -178,6 +251,9 @@ struct MovieExporterParamsWrapper
 
     /// A pointer to the movie timestamp export parameters
     std::shared_ptr<MovieTimestampExporterParams> m_timestampParams;
+
+    /// A pointer to the nVision movie tracking export parameters
+    std::shared_ptr<NVisionMovieTrackingExporterParams> m_trackingParams;
 
     /// \return export operation name to display to user
     std::string getOpName();
@@ -261,6 +337,16 @@ runMovieTimestampExport(const MovieTimestampExporterParams inParams,
                         AsyncCheckInCB_t inCheckInCB = [](float) {return false; },
                         const float inProgressAllocation = 1.0f,
                         const float inProgressStart = 0.0f);
+
+
+/// Runs NVisionMovieTrackingExport
+/// \param inParams parameters for this export operation
+/// \param inCheckInCB check-in callback function that is periodically invoked with progress and to tell algo whether to cancel / abort
+AsyncTaskStatus
+runNVisionTrackingExporter(
+    NVisionMovieTrackingExporterParams inParams,
+    AsyncCheckInCB_t inCheckInCB  = [](float) {return false; }
+);
 
 /// Runs MovieExport
 /// \param inParams parameters for this Movie export

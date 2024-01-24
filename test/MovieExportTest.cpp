@@ -635,3 +635,237 @@ TEST_CASE("MovieTimestampExportTest", "[core]")
     
     std::remove(outputFilename.c_str());
 }
+
+TEST_CASE("NVisionMovieTrackingDataExportTest", "[core]")
+{
+    isx::CoreInitialize();
+
+    const std::string trackingOutputFilename = g_resources["unitTestDataPath"] + "/nVision/tracking/tracking.csv";
+    const std::string zonesOutputFilename = g_resources["unitTestDataPath"] + "/nVision/tracking/zones.csv";
+
+    SECTION("invalid isxb movie series")
+    {
+        const std::vector<std::string> movieFilenames = {
+            g_resources["unitTestDataPath"] +"/nVision/tracking/Group-20240111-080531_2024-01-12-08-55-21_sched_1.isxb",
+            g_resources["unitTestDataPath"] +"/nVision/tracking/Group-20240111-080531_2024-01-12-08-55-21_sched_0.isxb"
+        };
+        isx::NVisionMovieTrackingExporterParams params;
+        params.m_srcs = {isx::readMovie(movieFilenames[0]), isx::readMovie(movieFilenames[1])};
+        params.m_frameTrackingDataOutputFilename = trackingOutputFilename;
+
+        ISX_REQUIRE_EXCEPTION(
+            isx::runNVisionTrackingExporter(params),
+            isx::ExceptionSeries, "Members of series are not ordered in time.");
+    }
+
+    SECTION("invalid dataset type")
+    {
+        const std::vector<std::string> movieFilenames = {
+            g_resources["unitTestDataPath"] + "/baseplate/2021-06-28-23-34-09_video_sched_0_probe_none.isxd"
+        };
+        isx::NVisionMovieTrackingExporterParams params;
+        params.m_srcs = {isx::readMovie(movieFilenames[0])};
+        params.m_frameTrackingDataOutputFilename = trackingOutputFilename;
+
+        ISX_REQUIRE_EXCEPTION(
+            isx::runNVisionTrackingExporter(params),
+            isx::ExceptionUserInput, "Input movie is not isxb.");
+    }
+
+    SECTION("isxb movie with tracking data - export tracking data only")
+    {
+        const std::string movieFilename = g_resources["unitTestDataPath"] + "/nVision/tracking/Group-20240111-080531_2024-01-12-08-55-21_sched_0.isxb";
+        isx::NVisionMovieTrackingExporterParams params;
+        params.m_srcs = {isx::readMovie(movieFilename)};
+        params.m_frameTrackingDataOutputFilename = trackingOutputFilename;
+        params.m_writeTimeRelativeTo = isx::WriteTimeRelativeTo::TSC;
+
+        const auto status = isx::runNVisionTrackingExporter(params);
+        REQUIRE(status == isx::AsyncTaskStatus::COMPLETE);
+
+        std::ifstream strm(trackingOutputFilename);
+        std::unique_ptr<char[]> buf = nullptr;
+
+        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (us),Bounding Box Left,Bounding Box Top,Bounding Box Right,Bounding Box Bottom,Bounding Box Center X,Bounding Box Center Y,Confidence,Zone ID";
+        buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
+        strm.getline(buf.get(), expectedHeader.size() + 1);
+        const std::string actualHeader(buf.get());
+        REQUIRE(actualHeader == expectedHeader);
+
+        const std::string expectedFirstLine = "0,0,0,163957519943,526.136,682.003,650.985,908.188,588.561,795.096,67.986,";
+        buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
+        strm.getline(buf.get(), expectedFirstLine.size() + 1);
+        const std::string actualFirstLine(buf.get());
+        REQUIRE(actualFirstLine == expectedFirstLine);
+
+        const std::string expectedLastLine = "9,0,9,163957819928,524.127,642.998,649.235,884.224,586.681,763.611,95.4342,4270701760";
+#if ISX_OS_WIN32
+        strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
+#else
+        strm.seekg(-int64_t(expectedLastLine.size() + 1), std::ios_base::end);
+#endif
+        buf = std::unique_ptr<char[]>(new char[expectedLastLine.size() + 1]);
+        strm.getline(buf.get(), expectedLastLine.size() + 1);
+        const std::string actualLastLine(buf.get());
+        REQUIRE(actualLastLine == expectedLastLine);
+    }
+
+    SECTION("isxb movie with tracking data - export tracking data only - time since start")
+    {
+        const std::string movieFilename = g_resources["unitTestDataPath"] + "/nVision/tracking/Group-20240111-080531_2024-01-12-08-55-21_sched_0.isxb";
+        isx::NVisionMovieTrackingExporterParams params;
+        params.m_srcs = {isx::readMovie(movieFilename)};
+        params.m_frameTrackingDataOutputFilename = trackingOutputFilename;
+        params.m_writeTimeRelativeTo = isx::WriteTimeRelativeTo::FIRST_DATA_ITEM;
+
+        const auto status = isx::runNVisionTrackingExporter(params);
+        REQUIRE(status == isx::AsyncTaskStatus::COMPLETE);
+
+        std::ifstream strm(trackingOutputFilename);
+        std::unique_ptr<char[]> buf = nullptr;
+
+        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (s),Bounding Box Left,Bounding Box Top,Bounding Box Right,Bounding Box Bottom,Bounding Box Center X,Bounding Box Center Y,Confidence,Zone ID";
+        buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
+        strm.getline(buf.get(), expectedHeader.size() + 1);
+        const std::string actualHeader(buf.get());
+        REQUIRE(actualHeader == expectedHeader);
+
+        const std::string expectedFirstLine = "0,0,0,0.000000,526.136230,682.003479,650.984802,908.188293,588.560547,795.095886,67.986031,";
+        buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
+        strm.getline(buf.get(), expectedFirstLine.size() + 1);
+        const std::string actualFirstLine(buf.get());
+        REQUIRE(actualFirstLine == expectedFirstLine);
+
+        const std::string expectedLastLine = "9,0,9,0.299985,524.126526,642.998047,649.234924,884.224304,586.680725,763.611206,95.434235,4270701760";
+#if ISX_OS_WIN32
+        strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
+#else
+        strm.seekg(-int64_t(expectedLastLine.size() + 1), std::ios_base::end);
+#endif
+        buf = std::unique_ptr<char[]>(new char[expectedLastLine.size() + 1]);
+        strm.getline(buf.get(), expectedLastLine.size() + 1);
+        const std::string actualLastLine(buf.get());
+        REQUIRE(actualLastLine == expectedLastLine);
+    }
+
+    SECTION("isxb movie with tracking data - export tracking data only - epoch time")
+    {
+        const std::string movieFilename = g_resources["unitTestDataPath"] + "/nVision/tracking/Group-20240111-080531_2024-01-12-08-55-21_sched_0.isxb";
+        isx::NVisionMovieTrackingExporterParams params;
+        params.m_srcs = {isx::readMovie(movieFilename)};
+        params.m_frameTrackingDataOutputFilename = trackingOutputFilename;
+        params.m_writeTimeRelativeTo = isx::WriteTimeRelativeTo::UNIX_EPOCH;
+
+        const auto status = isx::runNVisionTrackingExporter(params);
+        REQUIRE(status == isx::AsyncTaskStatus::COMPLETE);
+
+        std::ifstream strm(trackingOutputFilename);
+        std::unique_ptr<char[]> buf = nullptr;
+
+        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (s),Bounding Box Left,Bounding Box Top,Bounding Box Right,Bounding Box Bottom,Bounding Box Center X,Bounding Box Center Y,Confidence,Zone ID";
+        buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
+        strm.getline(buf.get(), expectedHeader.size() + 1);
+        const std::string actualHeader(buf.get());
+        REQUIRE(actualHeader == expectedHeader);
+
+        const std::string expectedFirstLine = "0,0,0,1705049721.643000,526.136230,682.003479,650.984802,908.188293,588.560547,795.095886,67.986031,";
+        buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
+        strm.getline(buf.get(), expectedFirstLine.size() + 1);
+        const std::string actualFirstLine(buf.get());
+        REQUIRE(actualFirstLine == expectedFirstLine);
+
+        const std::string expectedLastLine = "9,0,9,1705049721.942985,524.126526,642.998047,649.234924,884.224304,586.680725,763.611206,95.434235,4270701760";
+#if ISX_OS_WIN32
+        strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
+#else
+        strm.seekg(-int64_t(expectedLastLine.size() + 1), std::ios_base::end);
+#endif
+        buf = std::unique_ptr<char[]>(new char[expectedLastLine.size() + 1]);
+        strm.getline(buf.get(), expectedLastLine.size() + 1);
+        const std::string actualLastLine(buf.get());
+        REQUIRE(actualLastLine == expectedLastLine);
+    }
+    
+    SECTION("isxb movie with tracking data - export zone data only")
+    {
+        const std::string movieFilename = g_resources["unitTestDataPath"] + "/nVision/tracking/Group-20240111-080531_2024-01-12-08-55-21_sched_0.isxb";
+        isx::NVisionMovieTrackingExporterParams params;
+        params.m_srcs = {isx::readMovie(movieFilename)};
+        params.m_zonesOutputFilename = zonesOutputFilename;
+
+        const auto status = isx::runNVisionTrackingExporter(params);
+        REQUIRE(status == isx::AsyncTaskStatus::COMPLETE);
+
+        std::ifstream strm(zonesOutputFilename);
+        std::unique_ptr<char[]> buf = nullptr;
+
+        const std::string expectedHeader = "ID,Enabled,Name,Description,Type,X 0,Y 0,X 1,Y 1,X 2,Y 2,X 3,Y 3,X 4,Y 4,Major Axis, Minor Axis, Angle";
+        buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
+        strm.getline(buf.get(), expectedHeader.size() + 1);
+        const std::string actualHeader(buf.get());
+        REQUIRE(actualHeader == expectedHeader);
+
+        const std::string expectedFirstLine = "1705077750976,1,ZONE#1 rectangle,,rectangle,534.135,387.9,993.203,387.9,993.203,868.86,534.135,868.86,,,,,";
+        buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
+        strm.getline(buf.get(), expectedFirstLine.size() + 1);
+        const std::string actualFirstLine(buf.get());
+        REQUIRE(actualFirstLine == expectedFirstLine);
+
+        const std::string expectedLastLine = "1705077943271,1,ZONE#4 Elipse,,ellipse,1273.26,241.02,,,,,,,,,293.76,98.1654,90";
+#if ISX_OS_WIN32
+        strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
+#else
+        strm.seekg(-int64_t(expectedLastLine.size() + 1), std::ios_base::end);
+#endif
+        buf = std::unique_ptr<char[]>(new char[expectedLastLine.size() + 1]);
+        strm.getline(buf.get(), expectedLastLine.size() + 1);
+        const std::string actualLastLine(buf.get());
+        REQUIRE(actualLastLine == expectedLastLine);
+    }
+
+    SECTION("isxb movie series with tracking data - export tracking data only")
+    {
+        const std::vector<std::string> movieFilenames = {
+            g_resources["unitTestDataPath"] +"/nVision/tracking/Group-20240111-080531_2024-01-12-08-55-21_sched_0.isxb",
+            g_resources["unitTestDataPath"] +"/nVision/tracking/Group-20240111-080531_2024-01-12-08-55-21_sched_1.isxb"
+        };
+        isx::NVisionMovieTrackingExporterParams params;
+        params.m_srcs = {isx::readMovie(movieFilenames[0]), isx::readMovie(movieFilenames[1])};
+        params.m_frameTrackingDataOutputFilename = trackingOutputFilename;
+        params.m_writeTimeRelativeTo = isx::WriteTimeRelativeTo::TSC;
+
+        const auto status = isx::runNVisionTrackingExporter(params);
+        REQUIRE(status == isx::AsyncTaskStatus::COMPLETE);
+
+        std::ifstream strm(trackingOutputFilename);
+        std::unique_ptr<char[]> buf = nullptr;
+
+        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (us),Bounding Box Left,Bounding Box Top,Bounding Box Right,Bounding Box Bottom,Bounding Box Center X,Bounding Box Center Y,Confidence,Zone ID";
+        buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
+        strm.getline(buf.get(), expectedHeader.size() + 1);
+        const std::string actualHeader(buf.get());
+        REQUIRE(actualHeader == expectedHeader);
+
+        const std::string expectedFirstLine = "0,0,0,163957519943,526.136,682.003,650.985,908.188,588.561,795.096,67.986,";
+        buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
+        strm.getline(buf.get(), expectedFirstLine.size() + 1);
+        const std::string actualFirstLine(buf.get());
+        REQUIRE(actualFirstLine == expectedFirstLine);
+
+        const std::string expectedLastLine = "19,1,9,163958151927,528.115,776.797,699.851,912.584,613.983,844.69,98.4992,4270701760";
+#if ISX_OS_WIN32
+        strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
+#else
+        strm.seekg(-int64_t(expectedLastLine.size() + 1), std::ios_base::end);
+#endif
+        buf = std::unique_ptr<char[]>(new char[expectedLastLine.size() + 1]);
+        strm.getline(buf.get(), expectedLastLine.size() + 1);
+        const std::string actualLastLine(buf.get());
+        REQUIRE(actualLastLine == expectedLastLine);
+    }
+
+    isx::CoreShutdown();
+    
+    std::remove(trackingOutputFilename.c_str());
+    std::remove(zonesOutputFilename.c_str());
+}

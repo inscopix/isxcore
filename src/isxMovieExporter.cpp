@@ -9,6 +9,8 @@
 #include "isxMovieNWBExporter.h"
 #include "isxMovieTiffExporter.h"
 #include "isxMovieCompressedAviExporter.h"
+#include "isxNVisionTracking.h"
+#include "isxDataSet.h"
 
 #include <fstream>
 #include <iomanip>
@@ -19,7 +21,42 @@
 #include <memory>
 #include <json.hpp>
 
+using json = nlohmann::json;
+
 namespace isx {
+
+/// NVisionMovieTrackingExporterParams
+
+void 
+NVisionMovieTrackingExporterParams::setSources(const std::vector<SpMovie_t> & inSources)
+{
+    m_srcs = inSources;
+}
+
+std::string
+NVisionMovieTrackingExporterParams::toString() const
+{
+    using json = nlohmann::json;
+    json j;
+    return j.dump(4);
+}
+
+std::vector<std::string>
+NVisionMovieTrackingExporterParams::getInputFilePaths() const
+{
+    std::vector<std::string> inputFilePaths;
+    for (const auto & s : m_srcs)
+    {
+        inputFilePaths.push_back(s->getFileName());
+    }
+    return inputFilePaths;
+}
+
+std::vector<std::string>
+NVisionMovieTrackingExporterParams::getOutputFilePaths() const
+{
+    return {m_frameTrackingDataOutputFilename, m_zonesOutputFilename};
+}
 
 /// MovieTimestampExporterParams
 
@@ -118,6 +155,11 @@ MovieExporterParamsWrapper::setSources(const std::vector<SpMovie_t> & inSources)
     {
         m_timestampParams->setSources(inSources);
     }
+
+    if (m_trackingParams)
+    {
+        m_trackingParams->setSources(inSources);
+    }
 }
 
 void
@@ -181,11 +223,16 @@ MovieExporterParamsWrapper::getInputFilePaths() const
     {
         return m_params->getInputFilePaths();
     }
-    else
+    else if (m_timestampParams)
     {
-        ISX_ASSERT(m_timestampParams);
         return m_timestampParams->getInputFilePaths();
     }
+    else
+    {
+        ISX_ASSERT(m_trackingParams);
+        return m_trackingParams->getInputFilePaths();
+    }
+
 }
 
 std::vector<std::string>
@@ -204,6 +251,12 @@ MovieExporterParamsWrapper::getOutputFilePaths() const
         outputFilePaths.insert(outputFilePaths.end(), tsOutputFilePaths.begin(), tsOutputFilePaths.end());
     }
 
+    if (m_trackingParams)
+    {
+        const auto trOutputFilePaths = m_trackingParams->getOutputFilePaths();
+        outputFilePaths.insert(outputFilePaths.end(), trOutputFilePaths.begin(), trOutputFilePaths.end());
+    }
+    
     return outputFilePaths;
 }
 
@@ -368,6 +421,228 @@ runMovieTimestampExport(const MovieTimestampExporterParams inParams, AsyncCheckI
     return AsyncTaskStatus::COMPLETE;
 }
 
+/// helper function to write nvision tracking data to csv
+void
+writeNVisionTrackingBoundingBoxToCsv(
+    const std::vector<SpMovie_t> & movies,
+    const std::string outputFilename,
+    const WriteTimeRelativeTo timestampFormat
+)
+{
+    std::ofstream csv(outputFilename);
+
+    const auto timestampUnit = 
+        (timestampFormat == WriteTimeRelativeTo::TSC) ? "us" : "s";
+
+    csv << "Global Frame Number,Movie Number,Local Frame Number,"
+        << "Frame Timestamp (" << timestampUnit << "),"
+        << "Bounding Box Left,Bounding Box Top,"
+        << "Bounding Box Right,Bounding Box Bottom,"
+        << "Bounding Box Center X,Bounding Box Center Y,"
+        << "Confidence,Zone ID"
+        << std::endl;
+
+
+    size_t globalFrameNumber = 0;
+    const auto firstTsc = getFirstTsc(movies.front());
+    const double epochStartTimestamp = double(
+        movies.front()->getTimingInfo().getStart().getSecsSinceEpoch().getNum()
+    ) / 1e3;
+    for (size_t movieNumber = 0; movieNumber < movies.size(); movieNumber++)
+    {
+        const auto movie = movies[movieNumber];
+        const auto timingInfo = movie->getTimingInfo();
+        for (size_t localFrameNumber = 0; localFrameNumber < timingInfo.getNumTimes(); localFrameNumber++)
+        {
+            csv << globalFrameNumber << "," << movieNumber << "," << localFrameNumber << ",";
+
+            if (!timingInfo.isIndexValid(localFrameNumber))
+            {
+                csv << ",,,,,,," << std::endl;
+                globalFrameNumber++;
+                continue;
+            }
+
+            const auto tsc = movie->getFrameTimestamp(localFrameNumber);
+            if (timestampFormat == WriteTimeRelativeTo::FIRST_DATA_ITEM)
+            {
+                const auto timestamp = double(tsc - firstTsc) / 1e6;
+                csv << std::fixed << std::setprecision(6) << timestamp;
+            }
+            else if (timestampFormat == WriteTimeRelativeTo::UNIX_EPOCH)
+            {
+                const auto timestamp = epochStartTimestamp + (double(tsc - firstTsc) / 1e6);
+                csv << std::fixed << std::setprecision(6) << timestamp;
+            }
+            else
+            {
+                csv << tsc;
+            }
+            csv << ",";
+
+            const auto boundingBox = BoundingBox::fromMetadata(
+                movie->getFrameMetadata(localFrameNumber)
+            );
+
+            if (!boundingBox.isValid())
+            {
+                csv << ",,,,," << std::endl;
+                globalFrameNumber++;
+                continue;
+            }
+
+            csv << boundingBox.getLeft() << ","
+                << boundingBox.getTop() << ","
+                << boundingBox.getRight() << ","
+                << boundingBox.getBottom() << ",";
+            
+            const auto center = boundingBox.getCenter();
+            csv << center.getX() << ","
+                << center.getY() << ","
+                << boundingBox.getConfidence() << ",";
+
+            const auto zoneId = boundingBox.getZoneId();
+            if (zoneId >= 0)
+            {
+                csv << zoneId;
+            }
+            csv << std::endl;
+
+            globalFrameNumber++;
+        }
+    }
+}
+
+/// helper function to write nvision zones to csv
+void
+writeNVisionTrackingZonesToCsv(
+    const std::vector<SpMovie_t> & movies,
+    const std::string outputFilename
+)
+{
+    std::ofstream csv(outputFilename);
+    csv << "ID,"
+        << "Enabled,"
+        << "Name,"
+        << "Description,"
+        << "Type";
+
+    auto zones = getZonesFromMetadata(movies.front()->getExtraProperties());
+    size_t maxNumCoordinates = 0;
+    for (auto & zone : zones)
+    {
+        maxNumCoordinates = std::max(maxNumCoordinates, zone.getCoordinates().size());
+    }
+
+    for (size_t i = 0; i < maxNumCoordinates; i++)
+    {
+        csv << ",X " << i << ",Y " << i;
+    }
+    csv << ",Major Axis, Minor Axis, Angle" << std::endl;
+
+    for (auto & zone : zones)
+    {
+        csv << zone.getId() << ","
+            << zone.getEnabled() << ","
+            << zone.getName() << ","
+            << zone.getDescription() << ","
+            << zone.getZoneTypeString() << ",";
+
+        for (auto coordinate : zone.getCoordinates())
+        {
+            csv << coordinate.getX() << ","
+                << coordinate.getY() << ",";
+        }
+
+        const auto numRemainingCoordinates = (maxNumCoordinates - zone.getCoordinates().size()); 
+        for (size_t i = 0; i < numRemainingCoordinates; i++)
+        {
+            csv << ",,";
+        }
+
+        if (zone.getType() != isx::Zone::Type::ELLIPSE)
+        {
+            csv << ",,";
+        }
+        else
+        {
+            csv << zone.getMajorAxis() << ","
+                << zone.getMinorAxis() << ","
+                << zone.getAngle();   
+        }
+
+        csv << std::endl;
+    }
+}
+
+AsyncTaskStatus
+runNVisionTrackingExporter(NVisionMovieTrackingExporterParams inParams, AsyncCheckInCB_t inCheckInCB)
+{
+    // Ensure input movie series is ordered in time
+    {
+        const auto & movies = inParams.m_srcs;
+        std::string errorMessage;
+        for (isize_t i = 1; i < movies.size(); ++i)
+        {
+            if (!checkNewMemberOfSeries({movies[i - 1]}, movies[i], errorMessage))
+            {
+                ISX_THROW(ExceptionSeries, errorMessage);
+            }
+
+            if (movies[i]->getTimingInfo().getStart() < movies[i - 1]->getTimingInfo().getStart())
+            {
+                ISX_THROW(ExceptionSeries, "Members of series are not ordered in time.");
+            }
+
+        }
+    }
+
+    for (const auto & movie : inParams.m_srcs)
+    {
+        isx::DataSet::Properties props;
+        if (isx::readDataSetType(movie->getFileName(), props) != isx::DataSet::Type::NVISION_MOVIE)
+        {
+            ISX_THROW(isx::ExceptionUserInput, "Input movie is not isxb.");
+        }
+    }
+
+    auto & srcs = inParams.m_srcs;
+
+    // validate inputs
+    if (srcs.empty())
+    {
+        inCheckInCB(1.f);
+        return AsyncTaskStatus::COMPLETE;
+    }
+
+    for (auto & vs: srcs)
+    {
+        if (vs == nullptr)
+        {
+            ISX_THROW(isx::ExceptionUserInput, "One or more of the sources is invalid.");
+        }
+    }
+
+    if (!inParams.m_frameTrackingDataOutputFilename.empty())
+    {
+        writeNVisionTrackingBoundingBoxToCsv(
+            srcs,
+            inParams.m_frameTrackingDataOutputFilename,
+            inParams.m_writeTimeRelativeTo
+        );
+    }
+
+    if (!inParams.m_zonesOutputFilename.empty())
+    {
+        writeNVisionTrackingZonesToCsv(
+            srcs,
+            inParams.m_zonesOutputFilename
+        );
+    }
+
+    return AsyncTaskStatus::COMPLETE;
+}
+
 AsyncTaskStatus
 runMovieExport(MovieExporterParamsWrapper inParams, std::shared_ptr<MovieExporterOutputParams> inOutputParams, AsyncCheckInCB_t inCheckInCB)
 {
@@ -396,6 +671,17 @@ runMovieExport(MovieExporterParamsWrapper inParams, std::shared_ptr<MovieExporte
         }
     }
 
+    if (inParams.m_trackingParams &&
+        (!inParams.m_trackingParams->m_frameTrackingDataOutputFilename.empty() ||
+        !inParams.m_trackingParams->m_zonesOutputFilename.empty())
+    )
+    {
+        status = runNVisionTrackingExporter(
+            *inParams.m_trackingParams,
+            inCheckInCB
+        );
+    }
+
     if (inParams.m_params)
     {
         switch (inParams.m_params->getType())
@@ -417,6 +703,11 @@ runMovieExport(MovieExporterParamsWrapper inParams, std::shared_ptr<MovieExporte
         case (isx::MovieExporterParams::Type::MP4):
         {
             auto params = *(isx::MovieCompressedAviExporterParams*)inParams.m_params.get();
+            if (inParams.m_trackingParams)
+            {
+                params.m_trackingParams = inParams.m_trackingParams;
+            }
+
             auto outparams = std::static_pointer_cast<MovieCompressedAviExporterOutputParams>(inOutputParams);
             status = runMovieCompressedAviExporter(params, outparams, inCheckInCB, progressAllocation, progressStart);
         }

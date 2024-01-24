@@ -98,6 +98,9 @@ struct MovieCompressedAviExporterParams : MovieExporterParams
     double                  m_bitRateFraction = s_defaultBitRateFraction;   ///< bitrate as fraction of theoretical uncompressed
     bool                    m_writeInvalidFrames = false;                           ///< substitute zero-frames with dropped and cropped
     FrameRateFormat         m_frameRateFormat = FrameRateFormat::FLOATING_PRECISE;   ///< format to export frame rate as in output mp4 file
+
+    // Optional nVision tracking params
+    std::shared_ptr<NVisionMovieTrackingExporterParams> m_trackingParams;
 };
 
 /// Movie exporter output parameters 

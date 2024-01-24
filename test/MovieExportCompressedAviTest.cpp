@@ -534,6 +534,75 @@ TEST_CASE("MovieCompressedAviExportBitrateTest", "[core][export_mp4]")
 
 }
 
+
+TEST_CASE("MovieCompressedAviExportTracking", "[core][export_mp4]")
+{
+    const std::vector<std::string> inputFileNames = {
+            g_resources["unitTestDataPath"] +"/nVision/tracking/Group-20240111-080531_2024-01-12-08-55-21_sched_0.isxb",
+            g_resources["unitTestDataPath"] +"/nVision/tracking/Group-20240111-080531_2024-01-12-08-55-21_sched_1.isxb"
+        };
+
+    std::string exportedCompressedAviFileName = g_resources["unitTestDataPath"] + "/nVision/tracking/exportedMovie.mp4";
+
+    isx::CoreInitialize();
+
+    isx::SpMovie_t inputMovie = isx::readMovie(inputFileNames[0]);
+
+    const double bitRateFraction = 0.1;
+    isx::MovieCompressedAviExporterParams params(
+        {inputMovie},
+        exportedCompressedAviFileName,
+        bitRateFraction);
+    params.m_trackingParams = std::shared_ptr<isx::NVisionMovieTrackingExporterParams>(new isx::NVisionMovieTrackingExporterParams());
+    params.m_trackingParams->m_drawBoundingBox = true;
+    params.m_trackingParams->m_drawBoundingBoxCenter = true;
+    params.m_trackingParams->m_drawZones = true;
+    isx::runMovieCompressedAviExporter(params);
+    
+    SECTION("Verify exported data")
+    {
+        isx::DataSet::Properties props = {};
+        props[isx::DataSet::PROP_MOVIE_FRAME_RATE] = isx::Variant(20.f);
+        props[isx::DataSet::PROP_MOVIE_START_TIME] = isx::Variant(isx::Time());
+        isx::BehavMovieFile::getBehavMovieProperties(exportedCompressedAviFileName, props);
+        isx::SpMovie_t exportedMovie = isx::readBehavioralMovie(exportedCompressedAviFileName, props);
+
+        const size_t expNumTimes = inputMovie->getTimingInfo().getNumTimes();
+        REQUIRE(exportedMovie->getTimingInfo().getNumTimes() == expNumTimes);
+
+        const isx::Ratio expStep(1893, 56773);
+        REQUIRE(exportedMovie->getTimingInfo().getStep() == expStep);
+
+        const isx::SizeInPixels_t expSizeInPixels = inputMovie->getSpacingInfo().getNumPixels();
+        REQUIRE(exportedMovie->getSpacingInfo().getNumPixels() == expSizeInPixels);
+
+        const isx::DataType expDataType = isx::DataType::U8;
+        REQUIRE(exportedMovie->getDataType() == expDataType);
+
+        // Verify some movie data by computing sum of entire movie
+        const size_t numFrames = inputMovie->getTimingInfo().getNumTimes();
+        // Results of codec are slightly different between windows and linux/mac, but images look similar
+#if ISX_OS_WIN32
+        const uint64_t expSum = 2429253809;
+#else
+        const uint64_t expSum = 2429241765;
+#endif
+        uint64_t sum = 0;
+        for (size_t i = 0; i < numFrames; i++)
+        {
+            const auto frame = exportedMovie->getFrame(i);
+            arma::Col<uint64_t> frameCol;
+            isx::copyFrameToColumn(frame, frameCol);
+            sum += arma::sum(frameCol);
+        }
+        REQUIRE(sum == expSum);
+    }
+
+    isx::CoreShutdown();
+
+    std::remove(exportedCompressedAviFileName.c_str());
+}
+
 TEST_CASE("MOS-1675", "[core][export_mp4]")
 {
     isx::CoreInitialize();

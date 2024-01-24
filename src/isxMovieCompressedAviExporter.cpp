@@ -5,6 +5,7 @@
 #include "isxPathUtils.h"
 #include "isxCellSetUtils.h"
 #include "isxException.h"
+#include "isxNVisionTracking.h"
 
 #include <array>
 #include <fstream>
@@ -12,6 +13,8 @@
 #include <cmath>
 
 #include "json.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/imgproc.hpp"
 
 extern "C"
 {
@@ -400,8 +403,132 @@ compressedAVIFindMinMax(const std::string & inFileName, const std::vector<isx::S
     return cancelled;
 }
 
+// helper function to draw nVision tracking data on movie frames.
+void drawTrackingData(
+    isx::Image & inImage,
+    const isx::SpMovie_t & inMovie,
+    const size_t inFrameIndex,
+    const isx::NVisionMovieTrackingExporterParams inParams,
+    const std::vector<isx::Zone> inZones
+)
+{
+
+    const auto spacingInfo = inImage.getSpacingInfo();
+    const auto numPixels = spacingInfo.getNumPixels();
+    const auto size = cv::Size(
+        int(numPixels.getWidth()),
+        int(numPixels.getHeight())
+    );
+    const auto dataType = CV_8U; // constant for nVision movies
+    auto mat = cv::Mat(size, dataType, inImage.getPixels());
+
+    const auto boundingBox = isx::BoundingBox::fromMetadata(
+        inMovie->getFrameMetadata(inFrameIndex)
+    );
+    const auto rect = boundingBox.isValid() ?
+        cv::Rect(
+            cv::Point(
+                int(std::round(boundingBox.getLeft())),
+                int(std::round(boundingBox.getTop()))
+            ),
+            cv::Point(
+                int(std::round(boundingBox.getRight())),
+                int(std::round(boundingBox.getBottom()))
+            )
+        ) :
+        cv::Rect();
+
+    // TODO: make line color visible.
+    const auto color = cv::Scalar(255, 255, 255);
+    const int lineThickness = 2;
+    
+    if (inParams.m_drawBoundingBox && rect.area())
+    {
+        cv::rectangle(
+            mat,
+            rect,
+            color,
+            lineThickness
+        );
+
+    }
+
+    if (inParams.m_drawBoundingBoxCenter && rect.area())
+    {
+        cv::Point center(
+            int(boundingBox.getCenter().getX()),
+            int(boundingBox.getCenter().getY())
+        );
+        cv::circle(
+            mat,
+            center,
+            3,
+            color,
+            -1
+        );
+    }
+
+    if (inParams.m_drawZones)
+    {
+        const bool isClosed = true;
+        for (const auto & zone : inZones)
+        {
+            std::vector<cv::Point> coordinates;
+            for (const auto & coordinate : zone.getCoordinates())
+            {
+                coordinates.push_back(cv::Point(
+                    int(std::round(coordinate.getX())),
+                    int(std::round(coordinate.getY()))
+                ));
+            }
+
+            if (zone.getType() == isx::Zone::Type::ELLIPSE)
+            {
+                const double startAngle = 0.0;
+                const double endAngle = 360.0;
+                cv::ellipse(
+                    mat,
+                    coordinates.front(),
+                    cv::Size(
+                        int(std::round(zone.getMajorAxis() / 2.0f)),
+                        int(std::round(zone.getMinorAxis() / 2.0f))
+                    ),
+                    zone.getAngle(),
+                    startAngle,
+                    endAngle,
+                    color,
+                    lineThickness
+                );
+            }
+            else
+            {
+                cv::polylines(
+                    mat,
+                    coordinates,
+                    isClosed,
+                    color,
+                    lineThickness
+                );
+            }
+
+        }
+    }
+}
+
 bool
-compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, float & inMinVal, float & inMaxVal, const float inProgressAllocation, const float inProgressStart, const isx::isize_t inBitRate, const bool inWriteInvalidFrames, const bool inRoundFrameRate)
+compressedAVIOutputMovie(
+    const std::string & inFileName,
+    const std::vector<isx::SpMovie_t> & inMovies,
+    isx::AsyncCheckInCB_t & inCheckInCB,
+    float & inMinVal,
+    float & inMaxVal,
+    const float inProgressAllocation,
+    const float inProgressStart,
+    const isx::isize_t inBitRate,
+    const bool inWriteInvalidFrames,
+    const bool inRoundFrameRate,
+    const std::shared_ptr<isx::NVisionMovieTrackingExporterParams> inTrackingParams
+)
 {
     int tInd = 0;
     bool cancelled = false;
@@ -431,6 +558,12 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
 
     for (auto m : inMovies)
     {
+        std::vector<isx::Zone> zones;
+        if (inTrackingParams)
+        {
+            zones = isx::getZonesFromMetadata(m->getExtraProperties());
+        }
+
         for (isx::isize_t i = 0; i < m->getTimingInfo().getNumTimes(); ++i)
         {
             const bool isValid = m->getTimingInfo().isIndexValid(i);
@@ -438,6 +571,17 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
             {
                 auto f = m->getFrame(i);
                 auto& img = f->getImage();
+
+                if (inTrackingParams)
+                {
+                    drawTrackingData(
+                        img,
+                        m,
+                        i,
+                        *inTrackingParams,
+                        zones
+                    );
+                }
                 
                 if (tInd == 0)
                 {
@@ -473,7 +617,17 @@ compressedAVIOutputMovie(const std::string & inFileName, const std::vector<isx::
 }
 
 bool
-toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t> & inMovies, isx::AsyncCheckInCB_t & inCheckInCB, const isx::isize_t inBitRate, const bool inWriteInvalidFrames, const bool inRoundFrameRate, const float inProgressAllocation, const float inProgressStart)
+toCompressedAVI(
+    const std::string & inFileName,
+    const std::vector<isx::SpMovie_t> & inMovies,
+    isx::AsyncCheckInCB_t & inCheckInCB,
+    const isx::isize_t inBitRate,
+    const bool inWriteInvalidFrames,
+    const bool inRoundFrameRate,
+    const float inProgressAllocation,
+    const float inProgressStart,
+    const std::shared_ptr<isx::NVisionMovieTrackingExporterParams> inTrackingParams
+)
 {
     bool cancelled;
     float minVal = -1;
@@ -492,7 +646,20 @@ toCompressedAVI(const std::string & inFileName, const std::vector<isx::SpMovie_t
         progressAllocation = inProgressAllocation * 0.9f;
     }
 
-    cancelled = compressedAVIOutputMovie(inFileName, inMovies, inCheckInCB, minVal, maxVal, progressAllocation, progressStart, inBitRate, inWriteInvalidFrames, inRoundFrameRate);
+    cancelled = compressedAVIOutputMovie(
+        inFileName,
+        inMovies,
+        inCheckInCB,
+        minVal,
+        maxVal,
+        progressAllocation,
+        progressStart,
+        inBitRate,
+        inWriteInvalidFrames,
+        inRoundFrameRate,
+        inTrackingParams
+    );
+
     if (cancelled) return true;
     
     return false;
@@ -651,7 +818,17 @@ runMovieCompressedAviExporter(MovieCompressedAviExporterParams inParams, std::sh
     const bool inRoundFrameRate = inParams.m_frameRateFormat == MovieExporterParams::FrameRateFormat::INTEGER_ROUNDED;
     try
     {
-        cancelled = toCompressedAVI(inParams.m_filename, inParams.m_srcs, inCheckInCB, inParams.getBitRate(), inParams.m_writeInvalidFrames, inRoundFrameRate, inProgressAllocation, inProgressStart);
+        cancelled = toCompressedAVI(
+            inParams.m_filename,
+            inParams.m_srcs,
+            inCheckInCB,
+            inParams.getBitRate(),
+            inParams.m_writeInvalidFrames,
+            inRoundFrameRate,
+            inProgressAllocation,
+            inProgressStart,
+            inParams.m_trackingParams
+        );
     }
     catch (...)
     {
