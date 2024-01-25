@@ -23,13 +23,15 @@ class BoundingBox {
         /// \param inRight    The right pixel coordinate of the bounding box.
         /// \param inConfidence    The confidence of the model.
         /// \param inZoneId    The zone id the bounding box occupies.
+        /// \param inZoneName   The zone name.
         BoundingBox(
             const float inTop,
             const float inLeft,
             const float inBottom,
             const float inRight,
             const float inConfidence,
-            const int64_t inZoneId
+            const int64_t inZoneId,
+            const std::string inZoneName
         )
         : m_top(inTop)
         , m_left(inLeft)
@@ -37,6 +39,7 @@ class BoundingBox {
         , m_right(inRight)
         , m_confidence(inConfidence)
         , m_zoneId(inZoneId)
+        , m_zoneName(inZoneName)
         {
         }
 
@@ -84,6 +87,10 @@ class BoundingBox {
         int64_t
         getZoneId() const;
 
+        /// Get the zone name
+        std::string
+        getZoneName() const;
+
     private:
         /// The top pixel coordinate of the bounding box.
         float m_top = 0;
@@ -100,9 +107,12 @@ class BoundingBox {
         /// The model confidence.
         float m_confidence = 0;
 
-        /// Get the zone id that the bounding box occupies.
+        /// The zone id that the bounding box occupies.
         /// Equals -1 if there is no zone identified.
         int64_t m_zoneId = 0;
+
+        /// The zone name
+        std::string m_zoneName = "";
 
 }; //class
 
@@ -121,7 +131,8 @@ bool operator==(
         lhs.getBottom() == rhs.getBottom() &&
         lhs.getRight() == rhs.getRight() &&
         lhs.getConfidence() == rhs.getConfidence() &&
-        lhs.getZoneId() == rhs.getZoneId()
+        lhs.getZoneId() == rhs.getZoneId() &&
+        lhs.getZoneName() == rhs.getZoneName()
     );
 }
 

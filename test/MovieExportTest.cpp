@@ -686,19 +686,19 @@ TEST_CASE("NVisionMovieTrackingDataExportTest", "[core]")
         std::ifstream strm(trackingOutputFilename);
         std::unique_ptr<char[]> buf = nullptr;
 
-        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (us),Bounding Box Left,Bounding Box Top,Bounding Box Right,Bounding Box Bottom,Bounding Box Center X,Bounding Box Center Y,Confidence,Zone ID";
+        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (us),Bounding Box Left,Bounding Box Top,Bounding Box Right,Bounding Box Bottom,Bounding Box Center X,Bounding Box Center Y,Confidence,Zone ID,Zone Name";
         buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
         strm.getline(buf.get(), expectedHeader.size() + 1);
         const std::string actualHeader(buf.get());
         REQUIRE(actualHeader == expectedHeader);
 
-        const std::string expectedFirstLine = "0,0,0,163957519943,526.136,682.003,650.985,908.188,588.561,795.096,67.986,";
+        const std::string expectedFirstLine = "0,0,0,163957519943,526.136,682.003,650.985,908.188,588.561,795.096,67.986,,";
         buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
         strm.getline(buf.get(), expectedFirstLine.size() + 1);
         const std::string actualFirstLine(buf.get());
         REQUIRE(actualFirstLine == expectedFirstLine);
 
-        const std::string expectedLastLine = "9,0,9,163957819928,524.127,642.998,649.235,884.224,586.681,763.611,95.4342,4270701760";
+        const std::string expectedLastLine = "9,0,9,163957819928,524.127,642.998,649.235,884.224,586.681,763.611,95.4342,4270701760,ZONE#1 rectangle";
 #if ISX_OS_WIN32
         strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
 #else
@@ -724,19 +724,19 @@ TEST_CASE("NVisionMovieTrackingDataExportTest", "[core]")
         std::ifstream strm(trackingOutputFilename);
         std::unique_ptr<char[]> buf = nullptr;
 
-        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (s),Bounding Box Left,Bounding Box Top,Bounding Box Right,Bounding Box Bottom,Bounding Box Center X,Bounding Box Center Y,Confidence,Zone ID";
+        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (s),Bounding Box Left,Bounding Box Top,Bounding Box Right,Bounding Box Bottom,Bounding Box Center X,Bounding Box Center Y,Confidence,Zone ID,Zone Name";
         buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
         strm.getline(buf.get(), expectedHeader.size() + 1);
         const std::string actualHeader(buf.get());
         REQUIRE(actualHeader == expectedHeader);
 
-        const std::string expectedFirstLine = "0,0,0,0.000000,526.136230,682.003479,650.984802,908.188293,588.560547,795.095886,67.986031,";
+        const std::string expectedFirstLine = "0,0,0,0.000000,526.136230,682.003479,650.984802,908.188293,588.560547,795.095886,67.986031,,";
         buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
         strm.getline(buf.get(), expectedFirstLine.size() + 1);
         const std::string actualFirstLine(buf.get());
         REQUIRE(actualFirstLine == expectedFirstLine);
 
-        const std::string expectedLastLine = "9,0,9,0.299985,524.126526,642.998047,649.234924,884.224304,586.680725,763.611206,95.434235,4270701760";
+        const std::string expectedLastLine = "9,0,9,0.299985,524.126526,642.998047,649.234924,884.224304,586.680725,763.611206,95.434235,4270701760,ZONE#1 rectangle";
 #if ISX_OS_WIN32
         strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
 #else
@@ -762,19 +762,19 @@ TEST_CASE("NVisionMovieTrackingDataExportTest", "[core]")
         std::ifstream strm(trackingOutputFilename);
         std::unique_ptr<char[]> buf = nullptr;
 
-        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (s),Bounding Box Left,Bounding Box Top,Bounding Box Right,Bounding Box Bottom,Bounding Box Center X,Bounding Box Center Y,Confidence,Zone ID";
+        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (s),Bounding Box Left,Bounding Box Top,Bounding Box Right,Bounding Box Bottom,Bounding Box Center X,Bounding Box Center Y,Confidence,Zone ID,Zone Name";
         buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
         strm.getline(buf.get(), expectedHeader.size() + 1);
         const std::string actualHeader(buf.get());
         REQUIRE(actualHeader == expectedHeader);
 
-        const std::string expectedFirstLine = "0,0,0,1705049721.643000,526.136230,682.003479,650.984802,908.188293,588.560547,795.095886,67.986031,";
+        const std::string expectedFirstLine = "0,0,0,1705049721.643000,526.136230,682.003479,650.984802,908.188293,588.560547,795.095886,67.986031,,";
         buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
         strm.getline(buf.get(), expectedFirstLine.size() + 1);
         const std::string actualFirstLine(buf.get());
         REQUIRE(actualFirstLine == expectedFirstLine);
 
-        const std::string expectedLastLine = "9,0,9,1705049721.942985,524.126526,642.998047,649.234924,884.224304,586.680725,763.611206,95.434235,4270701760";
+        const std::string expectedLastLine = "9,0,9,1705049721.942985,524.126526,642.998047,649.234924,884.224304,586.680725,763.611206,95.434235,4270701760,ZONE#1 rectangle";
 #if ISX_OS_WIN32
         strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
 #else
@@ -840,19 +840,19 @@ TEST_CASE("NVisionMovieTrackingDataExportTest", "[core]")
         std::ifstream strm(trackingOutputFilename);
         std::unique_ptr<char[]> buf = nullptr;
 
-        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (us),Bounding Box Left,Bounding Box Top,Bounding Box Right,Bounding Box Bottom,Bounding Box Center X,Bounding Box Center Y,Confidence,Zone ID";
+        const std::string expectedHeader = "Global Frame Number,Movie Number,Local Frame Number,Frame Timestamp (us),Bounding Box Left,Bounding Box Top,Bounding Box Right,Bounding Box Bottom,Bounding Box Center X,Bounding Box Center Y,Confidence,Zone ID,Zone Name";
         buf = std::unique_ptr<char[]>(new char[expectedHeader.size() + 1]);   // account for null termination
         strm.getline(buf.get(), expectedHeader.size() + 1);
         const std::string actualHeader(buf.get());
         REQUIRE(actualHeader == expectedHeader);
 
-        const std::string expectedFirstLine = "0,0,0,163957519943,526.136,682.003,650.985,908.188,588.561,795.096,67.986,";
+        const std::string expectedFirstLine = "0,0,0,163957519943,526.136,682.003,650.985,908.188,588.561,795.096,67.986,,";
         buf = std::unique_ptr<char[]>(new char[expectedFirstLine.size() + 1]);
         strm.getline(buf.get(), expectedFirstLine.size() + 1);
         const std::string actualFirstLine(buf.get());
         REQUIRE(actualFirstLine == expectedFirstLine);
 
-        const std::string expectedLastLine = "19,1,9,163958151927,528.115,776.797,699.851,912.584,613.983,844.69,98.4992,4270701760";
+        const std::string expectedLastLine = "19,1,9,163958151927,528.115,776.797,699.851,912.584,613.983,844.69,98.4992,4270701760,ZONE#1 rectangle";
 #if ISX_OS_WIN32
         strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
 #else

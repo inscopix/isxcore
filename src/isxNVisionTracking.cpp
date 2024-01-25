@@ -29,6 +29,7 @@ BoundingBox::fromMetadata(
     const auto trackerBoxMetadata = trackerMetadata.at("box");
 
     int64_t zoneId = -1;
+    std::string zoneName = "";
     if (trackerMetadata.find("zones") != trackerMetadata.end())
     {
         const auto zoneMetadata = trackerMetadata.at("zones");
@@ -36,6 +37,11 @@ BoundingBox::fromMetadata(
         if (zoneMetadata.find("id") != zoneMetadata.end())
         {
             zoneId = zoneMetadata.at("id").get<int64_t>();
+        }
+
+        if (zoneMetadata.find("name") != zoneMetadata.end())
+        {
+            zoneName = zoneMetadata.at("name").get<std::string>();
         }
     }
 
@@ -45,7 +51,8 @@ BoundingBox::fromMetadata(
         trackerBoxMetadata[3].get<float>(),
         trackerBoxMetadata[2].get<float>(),
         trackerMetadata.at("conf").get<float>(),
-        zoneId
+        zoneId,
+        zoneName
     );
 }
 
@@ -98,6 +105,12 @@ int64_t
 BoundingBox::getZoneId() const
 {
     return m_zoneId;
+}
+
+std::string
+BoundingBox::getZoneName() const
+{
+    return m_zoneName;
 }
 
 int64_t 

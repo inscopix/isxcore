@@ -19,7 +19,8 @@ TEST_CASE("NVisionTrackingBoundingBox", "[core]")
             912.584289550781f,
             699.851165771484f,
             98.4991912841797f,
-            4270701760
+            4270701760,
+            "ZONE#1 rectangle"
         );
         const auto actualBoundingBox = isx::BoundingBox::fromMetadata(frameMetadata);
         REQUIRE(expectedBoundingBox == actualBoundingBox);

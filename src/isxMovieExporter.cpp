@@ -439,7 +439,7 @@ writeNVisionTrackingBoundingBoxToCsv(
         << "Bounding Box Left,Bounding Box Top,"
         << "Bounding Box Right,Bounding Box Bottom,"
         << "Bounding Box Center X,Bounding Box Center Y,"
-        << "Confidence,Zone ID"
+        << "Confidence,Zone ID,Zone Name"
         << std::endl;
 
 
@@ -458,7 +458,7 @@ writeNVisionTrackingBoundingBoxToCsv(
 
             if (!timingInfo.isIndexValid(localFrameNumber))
             {
-                csv << ",,,,,,," << std::endl;
+                csv << ",,,,,,,," << std::endl;
                 globalFrameNumber++;
                 continue;
             }
@@ -486,7 +486,7 @@ writeNVisionTrackingBoundingBoxToCsv(
 
             if (!boundingBox.isValid())
             {
-                csv << ",,,,," << std::endl;
+                csv << ",,,,,," << std::endl;
                 globalFrameNumber++;
                 continue;
             }
@@ -506,6 +506,8 @@ writeNVisionTrackingBoundingBoxToCsv(
             {
                 csv << zoneId;
             }
+
+            csv << "," << boundingBox.getZoneName();
             csv << std::endl;
 
             globalFrameNumber++;
