@@ -167,6 +167,18 @@ Zone::getAngle() const
     return m_angle;
 }
 
+Color
+Zone::getInColor() const
+{
+    return m_inColor;
+}
+
+Color
+Zone::getOutColor() const
+{
+    return m_outColor;
+}
+
 Zone::Type
 Zone::getTypeFromString(
     const std::string inStr
@@ -304,6 +316,37 @@ getZonesFromMetadata(
 
         }
 
+        Color inColor, outColor;
+        if (zoneMetadata.find("inColor") != zoneMetadata.end())
+        {
+            const auto inColorMetadata = zoneMetadata.at("inColor");
+            /// use the border color as the in color
+            /// there is also a fill color in this section
+            /// but is reportedly unused by IDAS for the forseeable future
+            const auto borderColorMetadata = inColorMetadata.at("borderColor");
+            inColor = Color(
+                borderColorMetadata[0].get<uint8_t>(),
+                borderColorMetadata[1].get<uint8_t>(),
+                borderColorMetadata[2].get<uint8_t>(),
+                borderColorMetadata[3].get<uint8_t>()
+            );
+        }
+        
+        if (zoneMetadata.find("outColor") != zoneMetadata.end())
+        {
+            const auto outColorMetadata = zoneMetadata.at("outColor");
+            /// use the border color as the out color
+            /// there is also a fill color in this section
+            /// but is reportedly unused by IDAS for the forseeable future
+            const auto borderColorMetadata = outColorMetadata.at("borderColor");
+            outColor = Color(
+                borderColorMetadata[0].get<uint8_t>(),
+                borderColorMetadata[1].get<uint8_t>(),
+                borderColorMetadata[2].get<uint8_t>(),
+                borderColorMetadata[3].get<uint8_t>()
+            );
+        }
+
         zones.push_back(
             Zone(
                 id,
@@ -314,7 +357,9 @@ getZonesFromMetadata(
                 coordinates,
                 majorAxis,
                 minorAxis,
-                angle
+                angle,
+                inColor,
+                outColor
             )
         );
     }

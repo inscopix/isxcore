@@ -62,7 +62,10 @@ TEST_CASE("NVisionTrackingZones", "[core]")
                         534.135338345865f,
                         868.86f
                     )
-                })
+                }),
+                0.0f, 0.0f, 0.0f,
+                isx::Color(255, 0, 0, 255),
+                isx::Color(255, 165, 0, 255)
             ),
             isx::Zone(
                 1705077787809,
@@ -78,7 +81,9 @@ TEST_CASE("NVisionTrackingZones", "[core]")
                 }),
                 568.781954887218f,
                 270.72f,
-                0.0f
+                0.0f,
+                isx::Color(255, 0, 0, 255),
+                isx::Color(0,0,255,255)
             ),
             isx::Zone(
                 1705077917385,
@@ -107,7 +112,10 @@ TEST_CASE("NVisionTrackingZones", "[core]")
                         1022.07518796992f,
                         771.84f
                     ),
-                })
+                }),
+                0.0f, 0.0f, 0.0f,
+                isx::Color(255, 0, 0, 255),
+                isx::Color(255,255,0,255)
             ),
             isx::Zone(
                 1705077943271,
@@ -123,7 +131,9 @@ TEST_CASE("NVisionTrackingZones", "[core]")
                 }),
                 293.76f,
                 98.1654135338346f,
-                90.0f
+                90.0f,
+                isx::Color(255, 0, 0, 255),
+                isx::Color(255,0,255,255)
             ),
         };
         

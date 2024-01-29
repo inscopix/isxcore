@@ -4,6 +4,7 @@
 #include "isxCore.h"
 #include "isxSpacingInfo.h"
 #include "isxCoreFwd.h"
+#include "isxColor.h"
 
 namespace isx
 {
@@ -164,6 +165,8 @@ class Zone
         /// \param inMajorAxis  Only used for ellipse shaped zones. Length of the major axis.
         /// \param inMinorAxis  Only used for ellipse shaped zones. Length of the minor axis.
         /// \param inAngle  Only used for ellipse shaped zones. Ellipse rotation angle in degrees.
+        /// \param inInColor The color of the zone when the tracked object is inside the zone.
+        /// \param inOutColor The color of the zone when the tracked object is outside the zone.
         Zone(
             const int64_t inId,
             const bool inEnabled,
@@ -173,7 +176,9 @@ class Zone
             const std::vector<SpatialPoint<float>> inCoordinates,
             const float inMajorAxis = 0.0f,
             const float inMinorAxis = 0.0f,
-            const float inAngle = 0.0f
+            const float inAngle = 0.0f,
+            const Color inInColor = Color(),
+            const Color inOutColor = Color()
         )
         : m_id(inId)
         , m_enabled(inEnabled)
@@ -184,6 +189,8 @@ class Zone
         , m_majorAxis(inMajorAxis)
         , m_minorAxis(inMinorAxis)
         , m_angle(inAngle)
+        , m_inColor(inInColor)
+        , m_outColor(inOutColor)
         {}
 
         /// Get the unique identifier for the zone.
@@ -216,6 +223,14 @@ class Zone
         /// Get the ellipse rotation angle in degrees.
         /// Only used for ellipse shaped zones.
         float getAngle() const;
+
+        /// Get the color of the zone when the tracked
+        /// object is inside the zone
+        Color getInColor() const;
+
+        /// Get the color of the zone when the tracked
+        /// object is outside the zone
+        Color getOutColor() const;
 
         /// Get the zone type based on a string from metadata
         static
@@ -258,6 +273,14 @@ class Zone
         /// Only used for ellipse shaped zones.
         /// Ellipse rotation angle in degrees.
         float m_angle;
+
+        /// The color of the zone when the tracked
+        /// object is inside the zone
+        Color m_inColor;
+
+        /// The color of the zone when the tracked
+        /// object is outside the zone
+        Color m_outColor;
 };
 
 
@@ -294,7 +317,9 @@ bool operator==(
         lhs.getType() == rhs.getType() &&
         lhs.getMajorAxis() == rhs.getMajorAxis() &&
         lhs.getMinorAxis() == rhs.getMinorAxis() &&
-        lhs.getAngle() == rhs.getAngle()
+        lhs.getAngle() == rhs.getAngle() &&
+        lhs.getInColor() == rhs.getInColor() &&
+        lhs.getOutColor() == rhs.getOutColor()
     );
 }
 

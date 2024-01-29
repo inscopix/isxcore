@@ -73,6 +73,13 @@ namespace isx
         return (lhs.m_rgba != rhs.m_rgba);
     }
 
+    /// Equality operator
+    ///
+    inline bool operator==(const Color& lhs, const Color& rhs)
+    {
+        return (lhs.m_rgba == rhs.m_rgba);
+    }
+
     typedef std::pair<unsigned int, Color> IdColorPair;
     typedef std::vector<IdColorPair> IdColorPairs;
 }
