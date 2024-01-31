@@ -6,6 +6,7 @@
 #include "isxVideoFrame.h"
 #include "isxTimingInfo.h"
 #include "isxSpacingInfo.h"
+#include <fstream>
 
 // ffmpeg forwards
 struct AVFormatContext;
@@ -37,8 +38,13 @@ public:
     /// Read constructor.
     ///
     /// \param  inFileName      The name of the movie file.
+    /// \param inEnableWrite    Flag indicating whether the file should be open for read & write.
+    ///                         This used for updating metadata on existing isxb movies.
     ///
-    NVisionMovieFile(const std::string & inFilename);
+    NVisionMovieFile(
+        const std::string & inFilename,
+        const bool inEnableWrite = false
+    );
 
     /// Write constructor.
     ///
@@ -191,7 +197,8 @@ public:
 private:
     /// Initialize the file stream which reads metadata segments from the file.
     ///
-    void initializeFileStream();
+    /// \param inOpenMode   Specifies the mode to open the file.
+    void initializeFileStream(const std::ios_base::openmode inOpenMode);
 
     /// Initializes the codec to be used for decoding compressed video data read from the file.
     ///

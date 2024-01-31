@@ -68,11 +68,18 @@ std::ostream& operator<<(std::ostream& os, const NVisionMovieFile::Header & head
 }
 
 NVisionMovieFile::NVisionMovieFile(
-	const std::string & inFileName)
+	const std::string & inFileName,
+	const bool inEnableWrite)
 	: m_fileName(inFileName)
-	, m_enableWrite(false)
+	, m_enableWrite(inEnableWrite)
 {
-	initializeFileStream();
+	initializeFileStream(
+		m_enableWrite ?
+		// open in r+ mode for both reading and writing. The file must exist.
+		std::ios::binary | std::ios_base::in | std::ios_base::out :
+		// open in r+ mode for reading. The file must exist.
+		std::ios::binary | std::ios_base::in
+	);
 	readHeader();
 	readMetadata();
 	initializeDecoder();
@@ -94,7 +101,10 @@ NVisionMovieFile::NVisionMovieFile(
 		ISX_THROW(isx::ExceptionUserInput, "Resolution (", m_spacingInfo.getNumPixels(), ") is unsupported for mjpeg encoder. Only resolutions with widths that are multiples of 64 are accepted.");
 	}
 
-	initializeFileStream();
+	initializeFileStream(
+		// open in w+ mode. Creates an empty file for both reading and writing.
+		std::ios::binary | std::ios_base::in | std::ios_base::out | std::ios_base::trunc
+	);
 	writeHeader();
 	initializeEncoder();
 
@@ -127,15 +137,10 @@ NVisionMovieFile::isResolutionSupported(const SpacingInfo & inSpacingInfo)
 }
 
 void
-NVisionMovieFile::initializeFileStream()
+NVisionMovieFile::initializeFileStream(const std::ios_base::openmode inOpenMode)
 {
 	ISX_NVISION_MOVIE_LOG_DEBUG("Initializing file stream.");
-	auto openMode = std::ios::binary | std::ios_base::in;
-	if (m_enableWrite)
-	{
-		openMode |= std::ios_base::out | std::ios_base::trunc;
-	}
-	m_file.open(m_fileName, openMode);
+	m_file.open(m_fileName, inOpenMode);
 	if (!m_file.good() || !m_file.is_open())
 	{
 		ISX_THROW(isx::ExceptionFileIO,

@@ -12,6 +12,7 @@
 #include "isxEvents.h"
 #include "isxMetadata.h"
 #include "isxMosaicMovie.h"
+#include "isxNVisionMovie.h"
 
 #include "json.hpp"
 
@@ -766,6 +767,12 @@ DataSet::setExtraProperties(const std::string & inProperties)
         SpWritableMovie_t movie = std::make_shared<isx::MosaicMovie>(
                 m_fileName, true);
 
+        movie->setExtraProperties(inProperties);
+        movie->closeForWriting();
+    }
+    else if (m_type == Type::NVISION_MOVIE)
+    {
+        auto movie = std::make_shared<isx::NVisionMovie>(m_fileName, true);
         movie->setExtraProperties(inProperties);
         movie->closeForWriting();
     }

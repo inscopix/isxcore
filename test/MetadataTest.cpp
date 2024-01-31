@@ -5,6 +5,7 @@
 #include "isxDataSet.h"
 #include "isxMovieFactory.h"
 #include "isxPathUtils.h"
+#include "isxNVisionMovie.h"
 
 TEST_CASE("IntegratedBasePlate-Get", "[core]")
 {
@@ -245,4 +246,54 @@ TEST_CASE("getEfocus", "[core]")
     }
 
     isx::CoreShutdown();
+}
+
+TEST_CASE("getPixelsPerCm", "[core]")
+{
+    using json = nlohmann::json;
+    isx::CoreInitialize();
+
+    std::string tmpFilename;
+
+    SECTION("Movie with no metadata")
+    {
+        const std::string inputFilename = g_resources["unitTestDataPath"] + "/nVision/20220412-200447-camera-100.isxb";
+        const isx::SpMovie_t movie = isx::readMovie(inputFilename);
+
+        const double expectedPxPerCm = 0.0;
+        const double actualPxPerCm = isx::getPixelsPerCm(movie);
+        REQUIRE(actualPxPerCm == expectedPxPerCm);
+    }
+
+    SECTION("Movie with idps metadata")
+    {
+        const std::string inputFilename = g_resources["unitTestDataPath"] + "/nVision/tracking/scale/test_2_3_0_alpha2_nvoke_2_0_2024-01-26-11-44-35-test-1.isxb";
+        tmpFilename = g_resources["unitTestDataPath"] + "/nVision/tracking/scale/test_2_3_0_alpha2_nvoke_2_0_2024-01-26-11-44-35-test-1-tmp.isxb";
+
+        // overwrite idas metadata with idps metadata
+        isx::copyFile(inputFilename, tmpFilename);
+        auto movie = std::make_shared<isx::NVisionMovie>(tmpFilename, true);
+        json extraProps = isx::getExtraPropertiesJSON(movie);
+        extraProps["idps"]["pixelsPerCm"] = 15.0;
+        movie->setExtraProperties(extraProps.dump());
+        movie->closeForWriting();
+
+        const double expectedPxPerCm = 15.0;
+        const double actualPxPerCm = isx::getPixelsPerCm(movie);
+        REQUIRE(approxEqual(actualPxPerCm, expectedPxPerCm, 1e-5));
+    }
+
+    SECTION("Movie with idas metadata")
+    {
+        const std::string inputFilename = g_resources["unitTestDataPath"] + "/nVision/tracking/scale/test_2_3_0_alpha2_nvoke_2_0_2024-01-26-11-44-35-test-1.isxb";
+        const isx::SpMovie_t movie = isx::readMovie(inputFilename);
+
+        const double expectedPxPerCm = 16.7466833988;
+        const double actualPxPerCm = isx::getPixelsPerCm(movie);
+        REQUIRE(approxEqual(actualPxPerCm, expectedPxPerCm, 1e-5));
+    }
+
+    isx::CoreShutdown();
+    
+    std::remove(tmpFilename.c_str());
 }

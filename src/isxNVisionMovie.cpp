@@ -16,11 +16,11 @@ NVisionMovie::NVisionMovie()
 {
 }
 
-NVisionMovie::NVisionMovie(const std::string & inFileName)
+NVisionMovie::NVisionMovie(const std::string & inFileName, const bool inEnableWrite)
     : m_valid(false)
     , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
-    m_file = std::make_shared<NVisionMovieFile>(inFileName);
+    m_file = std::make_shared<NVisionMovieFile>(inFileName, inEnableWrite);
     m_valid = true;
 }
 
@@ -135,6 +135,18 @@ std::string
 NVisionMovie::getExtraProperties() const
 {
     return m_file->getExtraProperties();
+}
+
+void
+NVisionMovie::setExtraProperties(const std::string & inProperties)
+{
+    m_file->setExtraProperties(inProperties);
+}
+
+void
+NVisionMovie::closeForWriting()
+{
+    m_file->closeForWriting();
 }
 
 } // namespace isx

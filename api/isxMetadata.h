@@ -957,6 +957,93 @@ namespace isx
     }
 
     template <class T>
+    double getPixelsPerCm(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        if (!extraProps["idps"]["pixelsPerCm"].is_null())
+        {
+            // read IDPS metadata
+            return extraProps["idps"]["pixelsPerCm"].get<double>();
+        }
+
+        // no IDPS metadata
+        // check IDAS metadata
+        if (
+            extraProps.find("trackingInterface") == extraProps.end() ||
+            extraProps.find("processingInterface") == extraProps.end()
+        )
+        {
+            ISX_LOG_WARNING("No trackingInterface or processingInterface in isxb session metadata, cannot retrieve px per cm.");
+            return 0;
+        }
+
+
+        // get camera name, which is used to look for px per cm metadata
+        // in other sections of the metadata. if the user sets an alias
+        // for the camera, that needs to be used instead.
+        std::string cameraName = extraProps.at("cameraName").get<std::string>();
+        const auto processingInterface = extraProps.at("processingInterface");
+        if (processingInterface.find(cameraName) != processingInterface.end())
+        {
+            const auto cameraSection = processingInterface.at(cameraName);
+            if (cameraSection.find("cameraAlias") != cameraSection.end())
+            {
+                const auto cameraAlias = cameraSection.at("cameraAlias").get<std::string>();
+                if (!cameraAlias.empty())
+                {
+                    cameraName = cameraAlias;
+                }
+            }
+        }
+
+        json trackingArea;
+        const auto trackingInterface = extraProps.at("trackingInterface");
+        for (auto cameraSection : trackingInterface)
+        {
+            if (cameraSection.at("cameraName").get<std::string>() == cameraName)
+            {
+                trackingArea = cameraSection.at("trackingArea");
+                break;
+            }
+        }
+
+        if (trackingArea.is_null() && trackingArea.find("scale") == trackingArea.end())
+        {
+            ISX_LOG_WARNING("Could not extract px per cm from isxb session metadata");
+            return 0;
+        }
+
+        const auto scale = trackingArea.at("scale");
+        if (scale.find("geometry") != scale.end())
+        {
+            const auto geometry = scale.at("geometry");
+            const auto coordinates = geometry.at("coordinates");
+
+            if (coordinates.size() == 2)
+            {
+                // calculate length of line drawn by user in idas
+                const double lineLengthPx = std::sqrt(
+                    std::pow(
+                        coordinates[0][0].get<double>() - coordinates[1][0].get<double>(),
+                        2
+                    )
+                    +
+                    std::pow(
+                        coordinates[0][1].get<double>() - coordinates[1][1].get<double>(),
+                        2
+                    )
+                );
+
+                const double lineLengthCm = scale.at("length").get<double>();
+                return lineLengthPx / lineLengthCm; 
+            }
+        }
+
+        return 0;
+    }
+
+    template <class T>
     uint16_t getEfocus(const T & inData)
     {
         /*
@@ -1174,6 +1261,16 @@ namespace isx
 
         extraProps["idps"]["integratedBasePlate"] = basePlateString;
 
+        inData->setExtraProperties(extraProps.dump());
+    }
+
+    template <class T>
+    void setPixelsPerCm(T & inData, double pixelsPerCm)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+        
+        extraProps["idps"]["pixelsPerCm"] = pixelsPerCm;
         inData->setExtraProperties(extraProps.dump());
     }
 

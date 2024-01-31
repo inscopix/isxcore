@@ -25,7 +25,12 @@ public:
     /// \param  inFileName      The name of the movie file.
     /// \throw  isx::ExceptionFileIO    If reading the movie file fails.
     /// \throw  isx::ExceptionDataIO    If parsing the movie file fails.
-    NVisionMovie(const std::string & inFileName);
+    /// \param inEnableWrite    Flag indicating whether the file should be open for read & write.
+    ///                         This used for updating metadata on existing isxb movies.
+    NVisionMovie(
+        const std::string & inFileName,
+        const bool inEnableWrite = false
+    );
 
     // Overrides - see base classes for documentation
     bool isValid() const override;
@@ -56,6 +61,10 @@ public:
     uint64_t getFrameTimestamp(const isize_t inIndex) override;
     
     std::string getExtraProperties() const override;
+
+    void setExtraProperties(const std::string & inProperties);
+
+    void closeForWriting();
 
 private:
     /// True if the movie file is valid, false otherwise.
