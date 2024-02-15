@@ -1568,6 +1568,44 @@ namespace isx
         return "";
     }
 
+    // detect if an nVision movie has tracking metadata
+    template<typename T>
+    bool hasTrackingData(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        if (
+            extraProps.find("cameraName") != extraProps.end()
+            && extraProps.find("processingInterface") != extraProps.end()
+            && extraProps.find("trackingInterface") != extraProps.end()
+        )
+        {
+            auto cameraName = extraProps.at("cameraName").get<std::string>();
+            const auto & processingInterface = extraProps.at("processingInterface");
+
+            if (processingInterface.find(cameraName) != processingInterface.end())
+            {
+                const auto cameraAlias = processingInterface.at(cameraName).at("cameraAlias").get<std::string>();
+                if (!cameraAlias.empty())
+                {
+                    cameraName = cameraAlias;
+                }
+            }
+
+            const auto & trackingInterface = extraProps.at("trackingInterface");
+            for (const auto & el : trackingInterface)
+            {
+                if (el.at("cameraName").get<std::string>() == cameraName)
+                {
+                    return el.at("enable").get<bool>();
+                }
+            }
+        }
+
+        return false;
+    }
+
 } // namespace isx
 
 #endif // ISX_METADATA_H

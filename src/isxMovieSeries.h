@@ -89,6 +89,9 @@ public:
     std::string
     getFrameMetadata(const size_t inFrameNumber) override;
 
+    uint64_t
+    getFrameTimestamp(const isize_t inFrameNumber) override;
+    
     void cancelPendingReads() override;
 
     const TimingInfo & getTimingInfo() const override;
