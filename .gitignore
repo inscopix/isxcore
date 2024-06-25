@@ -1,3 +1,8 @@
+# Hidden project directories
+build
+third_party
+test_data
+
 # Prerequisites
 *.d
 

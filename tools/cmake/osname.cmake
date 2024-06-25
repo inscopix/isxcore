@@ -1,0 +1,18 @@
+set(ISX_OS_MACOS FALSE)
+set(ISX_OS_LINUX FALSE)
+set(ISX_OS_WIN32 FALSE)
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	set(ISX_OS_MACOS TRUE)
+elseif(WIN32)
+	set(ISX_OS_WIN32 TRUE)
+elseif(UNIX AND NOT APPLE)
+    set(ISX_OS_LINUX TRUE)
+else()
+	message(FATAL_ERROR "cmake is not configured for this OS")
+endif()
+
+set(ISX_ARCH_ARM FALSE)
+if (${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64")
+    set(ISX_ARCH_ARM TRUE)
+endif()
