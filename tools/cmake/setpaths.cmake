@@ -1,5 +1,5 @@
-set(t ${CMAKE_CURRENT_LIST_DIR}/../../third_party)
-get_filename_component(THIRD_PARTY_DIR ${t} ABSOLUTE)
+# set(t ${CMAKE_CURRENT_LIST_DIR}/../../third_party)
+get_filename_component(THIRD_PARTY_DIR $ENV{THIRD_PARTY_DIR} ABSOLUTE)
 
 include(${CMAKE_CURRENT_LIST_DIR}/Qt.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/catch.cmake)

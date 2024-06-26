@@ -6,14 +6,18 @@ BUILD_TYPE=Release
 BUILD_DIR_CMAKE=cmake
 BUILD_PATH=$(BUILD_DIR_ROOT)/$(BUILD_TYPE)/$(BUILD_DIR_CMAKE)
 
-ifndef TEST_DATA_PATH
-	TEST_DATA_PATH=test_data
+ifndef TEST_DATA_DIR
+	TEST_DATA_DIR=test_data
+endif
+
+ifndef THIRD_PARTY_DIR
+	THIRD_PARTY_DIR=third_party
 endif
 
 BIN_DIR=bin
 MOSTEST_EXE=mostest
 MOSTEST_BIN_DIR=$(BUILD_DIR_ROOT)/$(BUILD_TYPE)/$(BIN_DIR)
-MOSTEST_COMMAND=$(MOSTEST_BIN_DIR)/$(MOSTEST_EXE) -p $(TEST_DATA_PATH) $*
+MOSTEST_COMMAND=$(MOSTEST_BIN_DIR)/$(MOSTEST_EXE) -p $(TEST_DATA_DIR) $*
 
 ifeq ($(OS), Windows_NT)
 	DETECTED_OS = windows
@@ -64,17 +68,17 @@ clean:
 	@rm -rf build
 
 build: check_os
-	@echo ${CMAKE_GENERATOR} $(BUILD_PATH) $(CMAKE_OPTIONS)
+	@echo ${CMAKE_GENERATOR} $(BUILD_PATH) $(CMAKE_OPTIONS) $(THIRD_PARTY_DIR)
 	mkdir -p $(BUILD_PATH) && \
 	cd $(BUILD_PATH) && \
-	cmake $(CMAKE_OPTIONS) -G $(CMAKE_GENERATOR) ../../../
+	THIRD_PARTY_DIR=$(THIRD_PARTY_DIR) cmake $(CMAKE_OPTIONS) -G $(CMAKE_GENERATOR) ../../../
 ifeq ($(DETECTED_OS), mac)
 	cd $(BUILD_PATH) && \
 	xcodebuild -alltargets -configuration $(BUILD_TYPE) -project Project.xcodeproj CODE_SIGN_IDENTITY=""
 endif
 
 rebuild: clean build
-
+ 
 test: build
 ifeq ($(DETECTED_OS), mac)
 	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(MOSTEST_BIN_DIR) $(MOSTEST_COMMAND)
