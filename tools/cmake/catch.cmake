@@ -1,0 +1,3 @@
+set (CATCH_HEADER_SEARCH_PATHS)
+get_filename_component(t ${THIRD_PARTY_DIR}/catch/1.4.0 ABSOLUTE)
+list(APPEND CATCH_HEADER_SEARCH_PATHS ${t})

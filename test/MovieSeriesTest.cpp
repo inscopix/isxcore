@@ -238,7 +238,7 @@ TEST_CASE("NVisionMovieSeries", "[core-internal]")
 
     SECTION("Filename")
     {
-        const std::string expFileName = "MovieSeries(test_data/unit_test/nVision/20220412-200447-camera-100.isxb, test_data/unit_test/nVision/2022-04-18-21-48-13-camera-1_dropped.isxb)";
+        const std::string expFileName = "MovieSeries(" + g_resources["unitTestDataPath"] + "/nVision/20220412-200447-camera-100.isxb, " + g_resources["unitTestDataPath"] + "/nVision/2022-04-18-21-48-13-camera-1_dropped.isxb)";
         REQUIRE(movie->getFileName() == expFileName);
     }
 
