@@ -52,6 +52,7 @@ ifeq ($(DETECTED_OS), windows)
 	CMAKE_GENERATOR = Visual Studio 14 2015 Win64
 else ifeq ($(DETECTED_OS), linux)
 	CMAKE_GENERATOR = Unix Makefiles
+	CMAKE_OPTIONS += -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
 else ifeq ($(DETECTED_OS), mac)
 	CMAKE_GENERATOR = Xcode
 endif
@@ -71,8 +72,11 @@ build: check_os
 	@echo ${CMAKE_GENERATOR} $(BUILD_PATH) $(CMAKE_OPTIONS) $(THIRD_PARTY_DIR)
 	mkdir -p $(BUILD_PATH) && \
 	cd $(BUILD_PATH) && \
-	THIRD_PARTY_DIR=$(THIRD_PARTY_DIR) cmake $(CMAKE_OPTIONS) -G $(CMAKE_GENERATOR) ../../../
-ifeq ($(DETECTED_OS), mac)
+	THIRD_PARTY_DIR=$(THIRD_PARTY_DIR) cmake $(CMAKE_OPTIONS) -G "$(CMAKE_GENERATOR)" ../../../
+ifeq ($(DETECTED_OS), linux)
+	cd $(BUILD_PATH) && \
+	make -j2
+else ifeq ($(DETECTED_OS), mac)
 	cd $(BUILD_PATH) && \
 	xcodebuild -alltargets -configuration $(BUILD_TYPE) -project Project.xcodeproj CODE_SIGN_IDENTITY=""
 endif
@@ -82,4 +86,6 @@ rebuild: clean build
 test: build
 ifeq ($(DETECTED_OS), mac)
 	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(MOSTEST_BIN_DIR) $(MOSTEST_COMMAND)
+else ifeq ($(DETECTED_OS), linux)
+	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(MOSTEST_BIN_DIR) ${MOSTEST_COMMAND}
 endif
