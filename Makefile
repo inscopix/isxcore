@@ -73,7 +73,10 @@ build: check_os
 	mkdir -p $(BUILD_PATH) && \
 	cd $(BUILD_PATH) && \
 	THIRD_PARTY_DIR=$(THIRD_PARTY_DIR) cmake $(CMAKE_OPTIONS) -G "$(CMAKE_GENERATOR)" ../../../
-ifeq ($(DETECTED_OS), linux)
+ifeq ($(DETECTED_OS), windows)
+	cd $(BUILD_PATH) && \
+	"/c/Program Files (x86)/MSBuild/14.0/Bin/MSBuild.exe" Project.sln //p:Configuration=$(BUILD_TYPE) //maxcpucount:8
+else ifeq ($(DETECTED_OS), linux)
 	cd $(BUILD_PATH) && \
 	make -j2
 else ifeq ($(DETECTED_OS), mac)
@@ -84,7 +87,9 @@ endif
 rebuild: clean build
  
 test: build
-ifeq ($(DETECTED_OS), mac)
+ifeq ($(DETECTED_OS), windows)
+	$(MOSTEST_COMMAND)
+else ifeq ($(DETECTED_OS), mac)
 	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(MOSTEST_BIN_DIR) $(MOSTEST_COMMAND)
 else ifeq ($(DETECTED_OS), linux)
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(MOSTEST_BIN_DIR) ${MOSTEST_COMMAND}

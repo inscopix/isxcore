@@ -9,8 +9,6 @@ file(GLOB CORE_API_HDRS ${CORE_API_DIR}/*.h)
 
 add_library(${TARGET_NAME_CORE} STATIC ${CORE_SRCS} ${CORE_HDRS} ${CORE_API_HDRS})
 
-message("OPENCV: ${OPENCV_HEADER_SEARCH_PATHS}), ${OPENCV_LINK_LIBRARIES}")
-
 target_include_directories(${TARGET_NAME_CORE} PUBLIC ${CORE_API_DIR} ${BOOST_HEADER_SEARCH_PATHS})
 target_include_directories(${TARGET_NAME_CORE} PRIVATE
     ${QT_CORE_HEADER_SEARCH_PATHS}
@@ -55,3 +53,8 @@ target_compile_definitions(${TARGET_NAME_CORE} PRIVATE
 installFiles(${TARGET_NAME_CORE} "${MODULES_DEST_DIR}/include/${TARGET_NAME_CORE}" "${CORE_API_HDRS}")
 installQtCoreSharedLibs(${TARGET_NAME_CORE} "${MODULES_DEST_DIR}/third_party/${TARGET_NAME_CORE}")
 installFfmpegSharedLibs(${TARGET_NAME_CORE} "${MODULES_DEST_DIR}/third_party/${TARGET_NAME_CORE}")
+
+if(${ISX_OS_WIN32})
+    installQtCoreSharedLibs(${TARGET_NAME_CORE} "${CMAKE_BINARY_DIR}/../bin")
+    installFfmpegSharedLibs(${TARGET_NAME_CORE} "${CMAKE_BINARY_DIR}/../bin")
+endif()
