@@ -1003,3 +1003,59 @@ TEST_CASE("nVoke2-newClockKey", "[core][nv3_gpio]")
     isx::removeDirectory(outputDir);
     isx::CoreShutdown();
 }
+
+
+TEST_CASE("nVista3GpioClosedLoop", "[core][gpio][nv3_gpio]")
+{
+    const std::string inputDirPath = g_resources["unitTestDataPath"] + "/nVista3Gpio/closed_loop";
+    const std::string outputDirPath = inputDirPath + "/output";
+    isx::makeDirectory(outputDirPath);
+    isx::CoreInitialize();
+
+    SECTION("Real data")
+    {
+        const std::string inputFilePath = inputDirPath + "/test_closed_loop_2024-07-03-11-54-19_video.gpio";
+        std::string outputFilePath;
+        {
+            isx::NVista3GpioFile raw(inputFilePath, outputDirPath);
+            raw.parse();
+            outputFilePath = raw.getOutputFileName();
+        }
+
+        const isx::SpGpio_t gpio = isx::readGpio(outputFilePath);
+
+        const auto channelList = gpio->getChannelList();
+
+        // Check GPI channels are renamed correctly
+        REQUIRE(channelList[4] == "SoftTrig-1");
+        REQUIRE(channelList[5] == "SoftTrig-2");
+        REQUIRE(channelList[6] == "SoftTrig-3");
+        REQUIRE(channelList[7] == "SoftTrig-4");
+
+        // Check GPO channels don't exist in parsed event file
+        const std::vector<std::string> ignoredChannels = {
+            "Digital GPO 4",
+            "Digital GPO 5",
+            "Digital GPO 6",
+            "Digital GPO 7"
+        };
+        
+        for (const auto & ignoredChannel : ignoredChannels)
+        {
+            bool channelExists = false;
+            for (const auto & channel : channelList)
+            {
+                if (channel ==  ignoredChannel)
+                {
+                    channelExists = true;
+                }
+            }
+
+            REQUIRE(!channelExists);
+            REQUIRE(gpio->getLogicalData(ignoredChannel) == nullptr);
+        }
+    }
+
+    isx::removeDirectory(outputDirPath);
+    isx::CoreShutdown();
+}

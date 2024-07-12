@@ -225,6 +225,17 @@ NVista3GpioFile::addDigitalGpiPkts(const uint64_t inTsc, uint16_t inDigitalGpi)
 void
 NVista3GpioFile::addDigitalGpoPkts(const uint64_t inTsc, uint16_t inDigitalGpo)
 {
+    // For closed loop systems, don't parse packets from channels GPO-4 - GPO-7
+    if (m_fileFormat == GPIO_FILE_FORMAT_CLOSED_LOOP)
+    {
+        for (uint32_t i = uint32_t(Channel::DIGITAL_GPO_0); i <= uint32_t(Channel::DIGITAL_GPO_3); ++i)
+        {
+            addPkt(Channel(i), inTsc, float(inDigitalGpo & 0b1));
+            inDigitalGpo >>= 1;
+        }
+        return;
+    }
+
     for (uint32_t i = uint32_t(Channel::DIGITAL_GPO_0); i <= uint32_t(Channel::DIGITAL_GPO_7); ++i)
     {
         addPkt(Channel(i), inTsc, float(inDigitalGpo & 0b1));
@@ -427,7 +438,8 @@ NVista3GpioFile::parse()
         if (readAndRewind<uint32_t>() != s_syncWord)
         {
             const auto fileHeaderExtras = read<AdpDumpHeaderExtras>();
-            ISX_LOG_DEBUG_NV3_GPIO("Found header extras with fileFormat ", fileHeaderExtras.fileFormat);
+            m_fileFormat = fileHeaderExtras.fileFormat;
+            ISX_LOG_DEBUG_NV3_GPIO("Found header extras with fileFormat ", m_fileFormat);
             sessionDataOffset = fileHeaderExtras.sessionDataOffset;
         }
     }
@@ -565,6 +577,30 @@ NVista3GpioFile::parse()
                     else if (s == s_channelNames.at(NVista3GpioFile::Channel::OG_LED))
                     {
                         s = "EX-LED2";
+                    }
+                }
+            }
+
+            // For closed-loop systems, rename channels GPI-4 - GPI-7 to SoftTrig-1 - SoftTrig-4
+            if (m_fileFormat == GPIO_FILE_FORMAT_CLOSED_LOOP)
+            {
+                for (std::string &s : channels)
+                {
+                    if (s == s_channelNames.at(NVista3GpioFile::Channel::DIGITAL_GPI_4))
+                    {
+                        s = "SoftTrig-1";
+                    }
+                    else if (s == s_channelNames.at(NVista3GpioFile::Channel::DIGITAL_GPI_5))
+                    {
+                        s = "SoftTrig-2";
+                    }
+                    else if (s == s_channelNames.at(NVista3GpioFile::Channel::DIGITAL_GPI_6))
+                    {
+                        s = "SoftTrig-3";
+                    }
+                    else if (s == s_channelNames.at(NVista3GpioFile::Channel::DIGITAL_GPI_7))
+                    {
+                        s = "SoftTrig-4";
                     }
                 }
             }

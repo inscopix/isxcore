@@ -11,6 +11,9 @@
 #include <map>
 #include <memory>
 
+/// File format version for gpio files generated from closed-loop systems
+#define GPIO_FILE_FORMAT_CLOSED_LOOP 240
+
 namespace isx
 {
 
@@ -235,6 +238,9 @@ private:
 
     /// True if the movie file is valid, false otherwise.
     bool m_valid = false;
+
+    /// File format version read from the file header
+    uint64_t m_fileFormat;
 
     /// The name of the data file.
     std::string m_fileName;
