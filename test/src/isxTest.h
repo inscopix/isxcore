@@ -152,6 +152,30 @@ requireEqualImages(
         const isx::Image & inExpected,
         const double inRelTol = 0);
 
+/// Computes the sum of a video frame
+///
+/// \param  inFrame    The video frame to sum.
+uint64_t
+computeFrameSum(
+    const isx::SpVideoFrame_t & inFrame
+);
+
+/// Computes the sum of an image
+///
+/// \param  inFrame    The image to sum.
+uint64_t
+computeFrameSum(
+    const isx::Image & inImage
+);
+
+/// Computes the sum of a movie
+///
+/// \param  inFrame    The movie to sum.
+uint64_t
+computeMovieSum(
+    const isx::SpMovie_t & inMovie
+);
+
 /// Checks that image is zero use Catch REQUIRE statements.
 ///
 /// This compares both data values and meta-data (e.g. spacing info).

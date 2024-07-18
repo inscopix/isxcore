@@ -341,6 +341,72 @@ requireEqualImages(
     }
 }
 
+uint64_t
+computeFrameSum(
+    const isx::SpVideoFrame_t & inFrame
+) {
+    return computeFrameSum(inFrame->getImage());
+}
+
+uint64_t
+computeFrameSum(
+    const isx::Image & inImage
+) {
+    const isx::DataType dataType = inImage.getDataType();
+    const isx::SpacingInfo spacingInfo = inImage.getSpacingInfo();
+    const isx::isize_t numPixels = spacingInfo.getTotalNumPixels();
+
+    uint64_t sum = 0;
+    switch (dataType)
+    {
+        case isx::DataType::U16:
+        {
+            const uint16_t * pixels = inImage.getPixelsAsU16();
+            for (isx::isize_t i = 0; i < numPixels; ++i)
+            {
+                sum += uint64_t(pixels[i]);
+            }
+            break;
+        }
+        case isx::DataType::F32:
+        {
+            const float * pixels = inImage.getPixelsAsF32();
+            for (isx::isize_t i = 0; i < numPixels; ++i)
+            {
+                sum += uint64_t(pixels[i]);
+            }
+            break;
+        }
+        case isx::DataType::U8:
+        {
+            const uint8_t * pixels = inImage.getPixelsAsU8();
+            for (isx::isize_t i = 0; i < numPixels; ++i)
+            {
+                sum += uint64_t(pixels[i]);
+            }
+            break;
+        }
+        default:
+        {
+            ISX_THROW(isx::ExceptionDataIO, "Data type not recognized: ", dataType);
+        }
+    }
+
+    return sum;
+}
+
+uint64_t
+computeMovieSum(
+    const isx::SpMovie_t & inMovie
+) {
+    const auto numTimes = inMovie->getTimingInfo().getNumTimes();
+    uint64_t sum = 0;
+    for (size_t i = 0; i < numTimes; i++)
+    {
+        sum += computeFrameSum(inMovie->getFrame(i));
+    }
+    return sum;
+}
 
 void
 requireZeroImage(

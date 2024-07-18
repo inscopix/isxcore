@@ -7,10 +7,9 @@
 #include "isxPathUtils.h"
 #include "isxCore.h"
 #include "isxBehavMovieFile.h"
-// #include "isxArmaUtils.h"
 
-#if ISX_ARCH_ARM == 0
-// #include "isxTemporalCrop.h"
+#if ISX_ARCH_ARM == 0 && ISX_WITH_ALGOS
+#include "isxTemporalCrop.h"
 #endif
 
 #include <array>
@@ -86,7 +85,7 @@ namespace
         return rc == 0 ? stat_buf.st_size : -1;
     }
 
-#if ISX_ARCH_ARM == 0
+#if ISX_ARCH_ARM == 0 && ISX_WITH_ALGOS
     void
     trimAndCompressMovie(
             const std::string & inInputFile,
@@ -100,11 +99,10 @@ namespace
         std::remove(trimmedFile.c_str());
         const isx::SpMovie_t movie = isx::readMovie(inInputFile);
         const isx::isize_t numFrames = movie->getTimingInfo().getNumTimes();
-        // TODO: refactor to not use temporal crop in algo module
-        // const isx::TemporalCropParams trimInputParams(movie, trimmedFile,
-        //         {isx::IndexRange(inNumFramesToKeep, numFrames - 1)});
-        // auto trimOutputParams = std::make_shared<isx::TemporalCropOutputParams>();
-        // isx::temporalCrop(trimInputParams, trimOutputParams, [](float){return false;});
+        const isx::TemporalCropParams trimInputParams(movie, trimmedFile,
+                {isx::IndexRange(inNumFramesToKeep, numFrames - 1)});
+        auto trimOutputParams = std::make_shared<isx::TemporalCropOutputParams>();
+        isx::temporalCrop(trimInputParams, trimOutputParams, [](float){return false;});
 
         const isx::SpMovie_t trimmedMovie = isx::readMovie(trimmedFile);
         isx::MovieCompressedAviExporterParams params({trimmedMovie}, "", 1.0);
@@ -216,16 +214,9 @@ TEST_CASE("MovieCompressedAviExportF32Test", "[core][export_mp4]")
 #else
             const uint64_t expSum = 10844;
 #endif
-            // TODO: refactor to not use arma utils in algo module
-            // uint64_t sum = 0;
-            // for (size_t i = 0; i < expNumTimes; i++)
-            // {
-            //     const auto frame = exportedMovie->getFrame(i);
-            //     arma::Col<uint64_t> frameCol;
-            //     isx::copyFrameToColumn(frame, frameCol);
-            //     sum += arma::sum(frameCol);
-            // }
-            // REQUIRE(sum == expSum);
+
+            const auto sum = computeMovieSum(exportedMovie);
+            REQUIRE(sum == expSum);
         }
 
     }
@@ -328,16 +319,9 @@ TEST_CASE("MovieCompressedAviExportU16Test", "[core][export_mp4]")
 #else
             const uint64_t expSum = 10844;
 #endif
-            // TODO: refactor to not use arma utils in algo module
-            // uint64_t sum = 0;
-            // for (size_t i = 0; i < expNumTimes; i++)
-            // {
-            //     const auto frame = exportedMovie->getFrame(i);
-            //     arma::Col<uint64_t> frameCol;
-            //     isx::copyFrameToColumn(frame, frameCol);
-            //     sum += arma::sum(frameCol);
-            // }
-            // REQUIRE(sum == expSum);
+
+            const auto sum = computeMovieSum(exportedMovie);
+            REQUIRE(sum == expSum);
         }
 
     }
@@ -395,16 +379,9 @@ TEST_CASE("MovieCompressedAviExportU8Test", "[core][export_mp4]")
 #else
         const uint64_t expSum = 11685363833;
 #endif
-        // TODO: refactor to not use arma utils in algo module
-        // uint64_t sum = 0;
-        // for (size_t i = 0; i < numFrames; i++)
-        // {
-        //     const auto frame = exportedMovie->getFrame(i);
-        //     arma::Col<uint64_t> frameCol;
-        //     isx::copyFrameToColumn(frame, frameCol);
-        //     sum += arma::sum(frameCol);
-        // }
-        // REQUIRE(sum == expSum);
+
+        const auto sum = computeMovieSum(exportedMovie);
+        REQUIRE(sum == expSum);
     }
 
     isx::CoreShutdown();
@@ -591,16 +568,9 @@ TEST_CASE("MovieCompressedAviExportTracking", "[core][export_mp4]")
 #else
         const uint64_t expSum = 2429241068;
 #endif
-        // TODO: refactor to not use arma utils in algo module
-        // uint64_t sum = 0;
-        // for (size_t i = 0; i < numFrames; i++)
-        // {
-        //     const auto frame = exportedMovie->getFrame(i);
-        //     arma::Col<uint64_t> frameCol;
-        //     isx::copyFrameToColumn(frame, frameCol);
-        //     sum += arma::sum(frameCol);
-        // }
-        // REQUIRE(sum == expSum);
+
+        const auto sum = computeMovieSum(exportedMovie);
+        REQUIRE(sum == expSum);
     }
 
     isx::CoreShutdown();
@@ -632,7 +602,7 @@ TEST_CASE("MOS-1675", "[core][export_mp4]")
     isx::CoreShutdown();
 }
 
-#if ISX_ARCH_ARM == 0
+#if ISX_ARCH_ARM == 0 && ISX_WITH_ALGOS
 
 TEST_CASE("MOS-1408", "[!hide]")
 {
