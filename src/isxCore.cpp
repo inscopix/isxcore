@@ -351,9 +351,9 @@ namespace isx
         return true;
     }
 
-    bool isMinimalApi()
+    bool isWithAlgos()
     {
-        return ISX_IS_MINIMAL_API;
+        return ISX_WITH_ALGOS;
     }
 
 } // namespace isx

@@ -2258,9 +2258,9 @@ isx_get_core_version_build()
 }
 
 int
-isx_get_is_minimal_api()
+isx_get_is_with_algos()
 {
-    return isx::isMinimalApi();
+    return isx::isWithAlgos();
 }
 
 const char *

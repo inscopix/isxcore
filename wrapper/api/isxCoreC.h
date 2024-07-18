@@ -866,7 +866,7 @@ isx_get_core_version_build();
 
 ISX_DLL_EXPORT
 int
-isx_get_is_minimal_api();
+isx_get_is_with_algos();
 
 // Note: This is not thread-safe. Multi-threaded invocation of the fun.ctions here will certainly break
 // this if there is more than one exception.  To make this thread-safe we'll need to design a different
