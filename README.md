@@ -1,5 +1,9 @@
 # isx-core
-Core functionality of the isx C++ API
+Core functionality of the isx C++ API.
+This functionality mainly includes:
+* Reading Inscopix files (`.isxd`, `.isxb`, `.gpio`, `.imu`)
+* Writing Inscopix files (`.isxd`, `.isxb`, `.gpio`, `.imu`)
+* Exporting Inscopix files to third-party formats (e.g., `.mp4`, `.tiff`, `.hdf5`)
 
 ## Supported Platforms
 
@@ -114,27 +118,37 @@ To build the library run the following command in the root of this repo:
 make build
 ```
 
-Ensure third party dependencies are downloaded prior to running this command.
-By default, the build system assumes the third party dependencies are in a folder named `third_party` under the root of this repo.
+> **Note:** Ensure third party dependencies are downloaded prior to running this command. By default, the build system assumes the third party dependencies are in a folder named `third_party` under the root of this repo.
 
-If the folder is located elsewhere on the machine, the path to this folder can be pass as a variable when running the build command:
+If the third party folder is located elsewhere on the machine, the path to this folder can be passed as a variable when running the build command:
 
 ```
 make build THIRD_PARTY_DIR=/path/to/third/party/dir
 ```
 
+## Clean
+
+Before building, it's possible to clean the build folder by running the following target:
+```
+make clean
+```
+
+The build folder can be removed and the library can be built in one command as well by running the following target:
+```
+make rebuild
+```
+
 ## Test
 
-To test the library run the following command in the root of this repo:
+This library contains an extensive set of unit tests which validate the behavior of the compiled binaries. To execute unit tests, run the following command in the root of this repo:
 
 ```
 make test
 ```
 
-Ensure test data is downloaded prior to running this command.
-By default, the build system assumes the test data is in a folder named `test_data` under the root of this repo.
+> **Note:** Ensure test data is downloaded prior to running this command. By default, the build system assumes the test data is in a folder named `test_data` under the root of this repo.
 
-If the folder is located elsewhere on the machine, the path to this folder can be pass as a variable when running the build command:
+If the test data folder is located elsewhere on the machine, the path to this folder can be passed as a variable when running the test command:
 
 ```
 make test THIRD_PARTY_DIR=/path/to/third/party/dir TEST_DATA_DIR=/path/to/test/data/dir
