@@ -75,6 +75,10 @@ endif
 clean:
 	@rm -rf build
 
+setup:
+	./scripts/setup -v --src ${REMOTE_DIR} --dst ${REMOTE_LOCAL_DIR} --remote-copy
+	./scripts/setup --src ${IDPS_REMOTE_EXT_COPY_DIR}
+
 build: check_os
 	@echo ${CMAKE_GENERATOR} $(BUILD_PATH) $(CMAKE_OPTIONS) $(THIRD_PARTY_DIR)
 	@mkdir -p $(BUILD_PATH) && \

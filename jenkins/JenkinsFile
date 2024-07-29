@@ -1,0 +1,29 @@
+// The Jenkinsfile for the Development Builds pipeline.
+// This pipeline will trigger development builds on all three operating systems.
+// This pipeline should automatically start a build whenever a new commit is pushed to github.
+// Refer to the README for more information on the Jenkins setup.
+pipeline {
+    agent none
+    stages {
+        stage("Trigger OS Builds")
+        {
+            parallel {
+                stage("Linux Build") {
+                    steps {
+                        build job: 'IDPS/linux_dev/' + env.BRANCH_NAME, parameters: [string(name: 'BUILD_OS_TYPE', value: 'linux')]
+                    }
+                }
+                stage("Mac Build") {
+                    steps {
+                        build job: 'IDPS/mac_dev/' + env.BRANCH_NAME, parameters: [string(name: 'BUILD_OS_TYPE', value: 'mac')]
+                    }
+                }
+                stage("Windows Build") {
+                    steps {
+                        build job: 'IDPS/win_dev/' + env.BRANCH_NAME, parameters: [string(name: 'BUILD_OS_TYPE', value: 'windows')]
+                    }
+                }
+            }
+        }
+    }
+}
