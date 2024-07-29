@@ -45,7 +45,7 @@ pipeline {
         {
             steps {
                 script {
-                    run_command("make test")
+                    run_command("make test", params.BUILD_OS_TYPE)
                 }
             }
             post {
