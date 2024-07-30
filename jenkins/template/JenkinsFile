@@ -48,11 +48,6 @@ pipeline {
                     run_command("make test", params.BUILD_OS_TYPE)
                 }
             }
-            post {
-                always {
-                    junit "*.xml" // Post test results
-                }
-            }
         }
     }
     post {
