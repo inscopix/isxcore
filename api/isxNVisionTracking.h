@@ -1,13 +1,128 @@
 #ifndef ISX_NVISION_TRACKING_H
 #define ISX_NVISION_TRACKING_H
 
+#include <map>
 #include "isxCore.h"
 #include "isxSpacingInfo.h"
 #include "isxCoreFwd.h"
 #include "isxColor.h"
+#include "isxException.h"
 
 namespace isx
 {
+
+/// @brief Zone events captured by nVision tracking model
+class ZoneEvent
+{
+    public:
+        /// @brief The type of zone event
+        enum class Type
+        {
+            NONE = 0,
+            ENTRY,
+            OCCUPIED,
+            EXIT
+        };
+
+        /// @brief Converts string representation of zone event type
+        /// (from nVision frame metadata) to instance of zone event type enum.
+        /// @param str  The string representation of zone event type
+        /// @return The corresponding zone event type enum.
+        static Type strToType(const std::string str);
+
+        /// @brief Converts type to a string representation
+        /// @param type The zone event type to convert to string
+        /// @return The zone event type represented as a string
+        static std::string typeToStr(const Type type);
+
+        /// @brief The trigger of the zone event (for closed-loop systems).
+        /// Maps to the SoftTrig 1-4 channels in the corresponding gpio file.
+        enum class Trigger
+        {
+            NONE = 0,
+            SOFT_TRIG_1,
+            SOFT_TRIG_2,
+            SOFT_TRIG_3,
+            SOFT_TRIG_4
+        };
+
+        /// @brief Converts string representation of zone event trigger
+        /// (from nVision frame metadata) to instance of zone event trigger enum.
+        /// @param str  The string representation of zone event trigger
+        /// @return The corresponding zone event trigger enum.
+        static Trigger strToTrigger(const std::string str);
+        
+        /// @brief Converts trigger to a string representation
+        /// @param trigger The zone event trigger to convert to string
+        /// @return The zone event trigger represented as a string
+        static std::string triggerToStr(const Trigger trigger);
+
+        /// @brief Default constructor
+        ZoneEvent()
+        {}
+
+        /// @brief Constructor
+        /// @param inZoneId     The zone id for the zone event
+        /// @param inZoneName   The zone name for the zone event
+        /// @param inType       The type of zone event.
+        /// @param inTrigger    The trigger of the zone event.
+        ZoneEvent(
+            const int64_t inZoneId,
+            const std::string inZoneName,
+            const Type inType,
+            const Trigger inTrigger
+        )
+        : m_zoneId(inZoneId)
+        , m_zoneName(inZoneName)
+        , m_type(inType)
+        , m_trigger(inTrigger)
+        {}
+
+        /// @brief /// Create a list of zone events from nVision movie frame metadata.
+        /// @param inMetadata   The frame metadata from the nVision system.
+        ///                     Input is formatted as a json serialized string.
+        /// @return             List of zone events captured from the frame
+        static
+        ZoneEvent
+        fromMetadata(
+            const std::string & inMetadata
+        );
+
+        /// @brief Get the zone id
+        int64_t
+        getZoneId() const;
+
+        /// @brief Get the zone name
+        std::string
+        getZoneName() const;
+
+        /// @brief Get the zone event type
+        Type
+        getType() const;
+
+        /// @brief Get the zone event trigger
+        Trigger
+        getTrigger() const;
+
+    private:
+        /// @brief A map of zone event types to string representations in json metadata
+        const static std::map<Type, std::string> s_typeToStrMap;
+
+        /// @brief A map of zone event triggers to string representations in json metadata
+        const static std::map<Trigger, std::string> s_triggerToStrMap;
+
+        /// @brief The zone id for the zone event.
+        int64_t m_zoneId = -1;
+
+        /// @brief The zone name for the zone event.
+        std::string m_zoneName = "";
+
+        /// @brief The type of zone event.
+        Type m_type = Type::NONE;
+
+        /// @brief  The trigger of the zone event.
+        Trigger m_trigger = Trigger::NONE;
+};
 
 /// Bounding box information tracked by the nVision system.
 class BoundingBox {
@@ -23,24 +138,21 @@ class BoundingBox {
         /// \param inBottom    The bottom pixel coordinate of the bounding box.
         /// \param inRight    The right pixel coordinate of the bounding box.
         /// \param inConfidence    The confidence of the model.
-        /// \param inZoneId    The zone id the bounding box occupies.
-        /// \param inZoneName   The zone name.
+        /// \param inZoneEvents    The zone events of the bounding box.
         BoundingBox(
             const float inTop,
             const float inLeft,
             const float inBottom,
             const float inRight,
             const float inConfidence,
-            const int64_t inZoneId,
-            const std::string inZoneName
+            const std::vector<ZoneEvent> inZoneEvents
         )
         : m_top(inTop)
         , m_left(inLeft)
         , m_bottom(inBottom)
         , m_right(inRight)
         , m_confidence(inConfidence)
-        , m_zoneId(inZoneId)
-        , m_zoneName(inZoneName)
+        , m_zoneEvents(inZoneEvents)
         {
         }
 
@@ -83,14 +195,9 @@ class BoundingBox {
         float
         getConfidence() const;
 
-        /// Get the zone id that the bounding box occupies.
-        /// Returns -1 if there is no zone identified.
-        int64_t
-        getZoneId() const;
-
-        /// Get the zone name
-        std::string
-        getZoneName() const;
+        /// Get the zone events.
+        std::vector<ZoneEvent>
+        getZoneEvents() const;
 
     private:
         /// The top pixel coordinate of the bounding box.
@@ -108,15 +215,26 @@ class BoundingBox {
         /// The model confidence.
         float m_confidence = 0;
 
-        /// The zone id that the bounding box occupies.
-        /// Equals -1 if there is no zone identified.
-        int64_t m_zoneId = 0;
-
-        /// The zone name
-        std::string m_zoneName = "";
+        /// The zone events
+        std::vector<ZoneEvent> m_zoneEvents = {};
 
 }; //class
 
+/// Equality operator for ZoneEvent object.
+/// \param lhs  The zone event on the left hand size of the equality operation.
+/// \param rhs  The zone event on the right hand size of the equality operation.
+inline
+bool operator==(
+    const ZoneEvent & lhs,
+    const ZoneEvent & rhs
+) {
+    return (
+        lhs.getZoneId() == rhs.getZoneId() &&
+        lhs.getZoneName() == rhs.getZoneName() &&
+        lhs.getType() == rhs.getType() &&
+        lhs.getTrigger() == rhs.getTrigger()
+    );
+}
 
 /// Equality operator for BoundingBox object.
 /// \param lhs  The bounding box on the left hand size of the equality operation.
@@ -126,14 +244,27 @@ bool operator==(
     const BoundingBox & lhs,
     const BoundingBox & rhs
 ) {
+    const auto lZoneEvents = lhs.getZoneEvents();
+    const auto rZoneEvents = rhs.getZoneEvents();
+
+    if (lZoneEvents.size() != rZoneEvents.size())
+    {
+        return false;
+    }
+
+    bool zoneEventsEquals = true;
+    for (size_t i = 0; i < lZoneEvents.size(); i++)
+    {
+        zoneEventsEquals &= (lZoneEvents[i] == rZoneEvents[i]);
+    }
+
     return (
         lhs.getTop() == rhs.getTop() &&
         lhs.getLeft() == rhs.getLeft() &&
         lhs.getBottom() == rhs.getBottom() &&
         lhs.getRight() == rhs.getRight() &&
         lhs.getConfidence() == rhs.getConfidence() &&
-        lhs.getZoneId() == rhs.getZoneId() &&
-        lhs.getZoneName() == rhs.getZoneName()
+        zoneEventsEquals
     );
 }
 

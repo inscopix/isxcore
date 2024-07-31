@@ -5,6 +5,116 @@ using json = nlohmann::json;
 
 namespace isx {
 
+const std::map<ZoneEvent::Type, std::string> ZoneEvent::s_typeToStrMap = {
+    {ZoneEvent::Type::NONE, ""},
+    {ZoneEvent::Type::ENTRY, "e"},
+    {ZoneEvent::Type::OCCUPIED, "o"},
+    {ZoneEvent::Type::EXIT, "x"}
+};
+
+const std::map<ZoneEvent::Trigger, std::string> ZoneEvent::s_triggerToStrMap = {
+    {ZoneEvent::Trigger::NONE, ""},
+    {ZoneEvent::Trigger::SOFT_TRIG_1, "softTrig-1"},
+    {ZoneEvent::Trigger::SOFT_TRIG_2, "softTrig-2"},
+    {ZoneEvent::Trigger::SOFT_TRIG_3, "softTrig-3"},
+    {ZoneEvent::Trigger::SOFT_TRIG_4, "softTrig-4"}
+};
+
+ZoneEvent::Type
+ZoneEvent::strToType(const std::string str)
+{
+    for (const auto & entry : s_typeToStrMap)
+    {
+        if (entry.second == str)
+        {
+            return entry.first;
+        }
+    }
+
+    ISX_THROW(ExceptionFileIO, "Failed to recognize zone event from str: ", str);
+}
+
+std::string
+ZoneEvent::typeToStr(const ZoneEvent::Type type)
+{
+    return s_typeToStrMap.at(type);
+}
+
+ZoneEvent::Trigger
+ZoneEvent::strToTrigger(const std::string str)
+{
+    for (const auto & entry : s_triggerToStrMap)
+    {
+        if (entry.second == str)
+        {
+            return entry.first;
+        }
+    }
+
+    ISX_THROW(ExceptionFileIO, "Failed to recognize zone trigger from str: ", str);
+}
+
+std::string
+ZoneEvent::triggerToStr(const ZoneEvent::Trigger trigger)
+{
+    return s_triggerToStrMap.at(trigger);
+}
+
+ZoneEvent
+ZoneEvent::fromMetadata(
+    const std::string & inMetadata
+)
+{
+    const auto zoneMetadata = json::parse(inMetadata);
+
+    const auto zoneId = zoneMetadata.at("id").get<int64_t>();
+    const auto zoneName = zoneMetadata.at("name").get<std::string>();
+
+    auto type = Type::NONE;
+    if (zoneMetadata.find("event") != zoneMetadata.end())
+    {
+        type = strToType(zoneMetadata.at("event").get<std::string>());
+    }
+
+    auto trigger = Trigger::NONE;
+    if (zoneMetadata.find("trig") != zoneMetadata.end())
+    {
+        trigger = strToTrigger(zoneMetadata.at("trig").get<std::string>());
+    }
+    
+    return ZoneEvent(
+        zoneId,
+        zoneName,
+        type,
+        trigger
+    );
+}
+
+int64_t
+ZoneEvent::getZoneId() const
+{
+    return m_zoneId;
+}
+
+std::string
+ZoneEvent::getZoneName() const
+{
+    return m_zoneName;
+}
+
+ZoneEvent::Type
+ZoneEvent::getType() const
+{
+    return m_type;
+}
+
+ZoneEvent::Trigger
+ZoneEvent::getTrigger() const
+{
+    return m_trigger;
+}
+
+
 BoundingBox
 BoundingBox::fromMetadata(
     const std::string & inMetadata
@@ -28,21 +138,26 @@ BoundingBox::fromMetadata(
     }
     const auto trackerBoxMetadata = trackerMetadata.at("box");
 
-    int64_t zoneId = -1;
-    std::string zoneName = "";
+    std::vector<ZoneEvent> zoneEvents = {};
     if (trackerMetadata.find("zones") != trackerMetadata.end())
     {
         const auto zoneMetadata = trackerMetadata.at("zones");
-
-        if (zoneMetadata.find("id") != zoneMetadata.end())
+        if (zoneMetadata.is_array())
         {
-            zoneId = zoneMetadata.at("id").get<int64_t>();
+            for (const auto & zone : zoneMetadata)
+            {
+                zoneEvents.push_back(
+                    ZoneEvent::fromMetadata(zone.dump())
+                );
+            }
+        }
+        else
+        {
+            zoneEvents.push_back(
+                ZoneEvent::fromMetadata(zoneMetadata.dump())
+            );
         }
 
-        if (zoneMetadata.find("name") != zoneMetadata.end())
-        {
-            zoneName = zoneMetadata.at("name").get<std::string>();
-        }
     }
 
     return BoundingBox(
@@ -51,8 +166,7 @@ BoundingBox::fromMetadata(
         trackerBoxMetadata[3].get<float>(),
         trackerBoxMetadata[2].get<float>(),
         trackerMetadata.at("conf").get<float>(),
-        zoneId,
-        zoneName
+        zoneEvents
     );
 }
 
@@ -101,16 +215,10 @@ BoundingBox::getConfidence() const
     return m_confidence;
 }
 
-int64_t
-BoundingBox::getZoneId() const
+std::vector<ZoneEvent>
+BoundingBox::getZoneEvents() const
 {
-    return m_zoneId;
-}
-
-std::string
-BoundingBox::getZoneName() const
-{
-    return m_zoneName;
+    return m_zoneEvents;
 }
 
 int64_t 

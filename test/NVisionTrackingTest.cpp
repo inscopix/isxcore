@@ -9,7 +9,7 @@ TEST_CASE("NVisionTrackingBoundingBox", "[core]")
 {
     isx::CoreInitialize();
 
-    SECTION("From metadata")
+    SECTION("From metadata - single zone event")
     {
         const std::string frameMetadata = "{\"fc\":19,\"tracker\":{\"box\":[528.115173339844,776.796661376953,699.851165771484,912.584289550781],\"conf\":98.4991912841797,\"zones\":{\"id\":4270701760,\"name\":\"ZONE#1 rectangle\"}},\"tsc\":163958151927}";
 
@@ -19,8 +19,43 @@ TEST_CASE("NVisionTrackingBoundingBox", "[core]")
             912.584289550781f,
             699.851165771484f,
             98.4991912841797f,
-            4270701760,
-            "ZONE#1 rectangle"
+            {
+                isx::ZoneEvent(
+                    4270701760,
+                    "ZONE#1 rectangle",
+                    isx::ZoneEvent::Type::NONE,
+                    isx::ZoneEvent::Trigger::NONE
+                )
+            }
+        );
+        const auto actualBoundingBox = isx::BoundingBox::fromMetadata(frameMetadata);
+        REQUIRE(expectedBoundingBox == actualBoundingBox);
+    }
+
+    SECTION("From metadata - multi zone event")
+    {
+        const std::string frameMetadata = "{\"fc\":2844,\"tracker\":{\"box\":[1268.00234985352,768.432312011719,1365.31988525391,895.73291015625],\"conf\":80.8296203613281,\"zones\":[{\"event\":\"e\",\"id\":1720032796530,\"name\":\"ZONE#3\",\"trig\":\"softTrig-3\"},{\"event\":\"x\",\"id\":1720032411965,\"name\":\"ZONE#2\",\"trig\":\"softTrig-2\"}]},\"tsc\":1017645148394}";
+
+        const isx::BoundingBox expectedBoundingBox(
+            768.432312011719f,
+            1268.00234985352f,
+            895.73291015625f,
+            1365.31988525391f,
+            80.8296203613281f,
+            {
+                isx::ZoneEvent(
+                    1720032796530,
+                    "ZONE#3",
+                    isx::ZoneEvent::Type::ENTRY,
+                    isx::ZoneEvent::Trigger::SOFT_TRIG_3
+                ),
+                isx::ZoneEvent(
+                    1720032411965,
+                    "ZONE#2",
+                    isx::ZoneEvent::Type::EXIT,
+                    isx::ZoneEvent::Trigger::SOFT_TRIG_2
+                )
+            }
         );
         const auto actualBoundingBox = isx::BoundingBox::fromMetadata(frameMetadata);
         REQUIRE(expectedBoundingBox == actualBoundingBox);
