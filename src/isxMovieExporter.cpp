@@ -128,7 +128,11 @@ MovieExporterParamsWrapper::toString() const
 
     if (m_timestampParams)
     {
-        j += json::parse(m_timestampParams->toString());
+        const auto timestampsJson = json::parse(m_timestampParams->toString());
+        for (auto it = timestampsJson.begin(); it != timestampsJson.end(); it++)
+        {
+            j[it.key()] = it.value();
+        }
     }
 
     return j.dump(4);
