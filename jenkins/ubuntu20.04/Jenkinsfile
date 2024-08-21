@@ -49,6 +49,12 @@ pipeline {
         }
     }
     post {
+        success {
+            script {
+                sh "zip -r modules.zip build/Release/modules"
+                archiveArtifacts artifacts: "modules.zip"
+            }
+        }
         cleanup {
             cleanWs()
             dir("${env.WORKSPACE}@tmp") {
