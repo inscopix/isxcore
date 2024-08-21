@@ -47,7 +47,9 @@ target_compile_definitions(${TARGET_NAME_CORE} PRIVATE
     ISX_VERSION_PATCH=${ISX_VERSION_PATCH}
     ISX_VERSION_BUILD=${ISX_VERSION_BUILD}
     ISX_IS_BETA=${ISX_IS_BETA}
-    ISX_WITH_ALGOS=${ISX_WITH_ALGOS})
+    ISX_WITH_ALGOS=${ISX_WITH_ALGOS}
+    ISX_ASYNC_API=${ISX_ASYNC_API}
+)
 
 # Install headers and third party shared libraries
 installFiles(${TARGET_NAME_CORE} "${MODULES_DEST_DIR}/include/${TARGET_NAME_CORE}" "${CORE_API_HDRS}")

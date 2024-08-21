@@ -27,8 +27,6 @@ else()
     list(APPEND CMAKE_PREFIX_PATH ${OPENCV_DIR}/share/OpenCV)
 endif()
 
-message("OPENCV: ${OPENCV_DIR}")
-
 if(${ISX_ARCH_ARM})
     find_package(OpenCV ${OPENCV_VERSION} REQUIRED core imgproc video cudawarping)
 else()

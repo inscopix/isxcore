@@ -43,6 +43,11 @@ ISX_VERSION_PATCH=5
 ISX_VERSION_BUILD=0
 ISX_IS_BETA=1
 
+# configure whether to use async ops for file io (movies only supported currently)
+ifndef ISX_ASYNC_API
+	ISX_ASYNC_API=0
+endif
+
 # Configures building with algos module from IDPS
 ISX_WITH_ALGOS=0
 
@@ -53,7 +58,8 @@ CMAKE_OPTIONS=\
     -DISX_VERSION_PATCH=${ISX_VERSION_PATCH}\
     -DISX_VERSION_BUILD=${ISX_VERSION_BUILD}\
     -DISX_IS_BETA=${ISX_IS_BETA}\
-    -DISX_WITH_ALGOS=${ISX_WITH_ALGOS}
+    -DISX_WITH_ALGOS=${ISX_WITH_ALGOS}\
+	-DISX_ASYNC_API=${ISX_ASYNC_API}
 
 ifeq ($(DETECTED_OS), windows)
 	CMAKE_GENERATOR = Visual Studio 14 2015 Win64
