@@ -45,7 +45,7 @@ ISX_IS_BETA=1
 
 # configure whether to use async ops for file io (movies only supported currently)
 ifndef ISX_ASYNC_API
-	ISX_ASYNC_API=0
+	ISX_ASYNC_API=1
 endif
 
 # Configures building with algos module from IDPS
