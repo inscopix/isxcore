@@ -51,8 +51,8 @@ pipeline {
     post {
         success {
             script {
-                sh "zip -r modules.zip build/Release/modules"
-                archiveArtifacts artifacts: "modules.zip"
+                sh "cp isxcore.cmake build/Release/ && cd build/Release && zip -r isxcore modules isxcore.cmake"
+                archiveArtifacts artifacts: "build/Release/isxcore.zip"
             }
         }
         cleanup {
