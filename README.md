@@ -79,7 +79,7 @@ Currently gcc-7 is required to build `isxcore`, which can be installed from apt:
 sudo apt-get install gcc-7
 ```
 
-Then configure gcc-7 as the default on your system:
+You can configure gcc-7 as the default on your system:
 
 ```
 sudo update-alternatives --remove-all gcc 
@@ -93,6 +93,30 @@ Verify the default gcc is configured correctly by ensuring the version is 7:
 ```
 gcc --version
 g++ --version
+```
+
+Alternatively, you can pass this gcc version to the build command:
+```
+make build CMAKE_C_COMPILER=gcc-7 CMAKE_CXX_COMPILER=g++-7
+```
+
+In order to build IDPS, some dependencies need to be obtained from older apt repos. Add the following line to /etc/apt/sources.list
+```
+deb http://us.archive.ubuntu.com/ubuntu/ bionic main universe
+```
+
+Then run:
+```
+sudo apt update
+sudo apt-get install libswresample2
+```
+
+Then remove the added line from /etc/apt/sources.list
+
+Run the following commands to link to libz.so:
+```
+cd /lib64
+sudo ln -s /lib/x86_64-linux-gnu/libz.so.1 libz.so
 ```
 
 ### Windows 11

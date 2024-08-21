@@ -59,7 +59,14 @@ ifeq ($(DETECTED_OS), windows)
 	CMAKE_GENERATOR = Visual Studio 14 2015 Win64
 else ifeq ($(DETECTED_OS), linux)
 	CMAKE_GENERATOR = Unix Makefiles
-	CMAKE_OPTIONS += -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+
+	ifndef CMAKE_C_COMPILER
+		CMAKE_C_COMPILER=gcc
+	endif
+	ifndef CMAKE_CXX_COMPILER
+		CMAKE_CXX_COMPILER=g++
+	endif
+	CMAKE_OPTIONS += -DCMAKE_C_COMPILER=$(CMAKE_C_COMPILER) -DCMAKE_CXX_COMPILER=$(CMAKE_CXX_COMPILER)
 else ifeq ($(DETECTED_OS), mac)
 	CMAKE_GENERATOR = Xcode
 endif
@@ -77,7 +84,7 @@ clean:
 
 setup:
 	./scripts/setup -v --src ${REMOTE_DIR} --dst ${REMOTE_LOCAL_DIR} --remote-copy
-	./scripts/setup --src ${IDPS_REMOTE_EXT_COPY_DIR}
+	./scripts/setup --src ${REMOTE_LOCAL_DIR}
 
 build: check_os
 	@echo ${CMAKE_GENERATOR} $(BUILD_PATH) $(CMAKE_OPTIONS) $(THIRD_PARTY_DIR)
