@@ -114,7 +114,7 @@ private:
 
     /// The shared pointer to the movie file that stores data.
     std::shared_ptr<MosaicMovieFile>            m_file;
-    std::shared_ptr<IoTaskTracker<VideoFrame>>  m_ioTaskTracker;
+    // std::shared_ptr<IoTaskTracker<VideoFrame>>  m_ioTaskTracker;
 
     /// Writes to the movie file and waits for the operation to finished on the I/O thread.
     void writeAndWait(std::function<void()> inCallback, const std::string & inName);
