@@ -48,6 +48,7 @@ MosaicMovie::isValid() const
 SpVideoFrame_t
 MosaicMovie::getFrame(isize_t inFrameNumber)
 {
+    ISX_LOG_INFO("read frame noasync");
     return m_file->readFrame(inFrameNumber);
     // Mutex mutex;
     // ConditionVariable cv;
