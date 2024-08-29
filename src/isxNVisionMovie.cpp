@@ -18,7 +18,7 @@ NVisionMovie::NVisionMovie()
 
 NVisionMovie::NVisionMovie(const std::string & inFileName, const bool inEnableWrite)
     : m_valid(false)
-    , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
+    // , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
 {
     m_file = std::make_shared<NVisionMovieFile>(inFileName, inEnableWrite);
     m_valid = true;
@@ -33,41 +33,43 @@ NVisionMovie::isValid() const
 SpVideoFrame_t
 NVisionMovie::getFrame(isize_t inFrameNumber)
 {
-    Mutex mutex;
-    ConditionVariable cv;
-    mutex.lock("getFrame");
-    AsyncTaskResult<SpVideoFrame_t> asyncTaskResult;
-    getFrameAsync(inFrameNumber,
-        [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
-        {
-            mutex.lock("getFrame async");
-            asyncTaskResult = inAsyncTaskResult;
-            mutex.unlock();
-            cv.notifyOne();
-        }
-    );
-    cv.wait(mutex);
-    mutex.unlock();
+    // Mutex mutex;
+    // ConditionVariable cv;
+    // mutex.lock("getFrame");
+    // AsyncTaskResult<SpVideoFrame_t> asyncTaskResult;
+    // getFrameAsync(inFrameNumber,
+    //     [&asyncTaskResult, &cv, &mutex](AsyncTaskResult<SpVideoFrame_t> inAsyncTaskResult)
+    //     {
+    //         mutex.lock("getFrame async");
+    //         asyncTaskResult = inAsyncTaskResult;
+    //         mutex.unlock();
+    //         cv.notifyOne();
+    //     }
+    // );
+    // cv.wait(mutex);
+    // mutex.unlock();
 
-    return asyncTaskResult.get();   // will throw if asyncTaskResult contains an exception
+    // return asyncTaskResult.get();   // will throw if asyncTaskResult contains an exception
+    ISX_LOG_INFO("read isxb frame");
+    return m_file->readFrame(inFrameNumber);
 }
 
 void
 NVisionMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
-    std::weak_ptr<NVisionMovie> weakThis = shared_from_this();
-    GetFrameCB_t getFrameCB = 
-        [weakThis, this, inFrameNumber]()
-        {
-            auto sharedThis = weakThis.lock();
-            if (sharedThis)
-            {
-                return m_file->readFrame(inFrameNumber);
-            }
-            return SpVideoFrame_t();
-        };
+    // std::weak_ptr<NVisionMovie> weakThis = shared_from_this();
+    // GetFrameCB_t getFrameCB = 
+    //     [weakThis, this, inFrameNumber]()
+    //     {
+    //         auto sharedThis = weakThis.lock();
+    //         if (sharedThis)
+    //         {
+    //             return m_file->readFrame(inFrameNumber);
+    //         }
+    //         return SpVideoFrame_t();
+    //     };
 
-    m_ioTaskTracker->schedule(getFrameCB, inCallback);
+    // m_ioTaskTracker->schedule(getFrameCB, inCallback);
 }
 
 std::string
@@ -79,7 +81,7 @@ NVisionMovie::getFrameMetadata(const size_t inFrameNumber)
 void
 NVisionMovie::cancelPendingReads()
 {
-    m_ioTaskTracker->cancelPendingTasks();
+    // m_ioTaskTracker->cancelPendingTasks();
 }
 
 const isx::TimingInfo &

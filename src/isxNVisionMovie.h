@@ -72,7 +72,7 @@ private:
 
     /// The shared pointer to the movie file that stores data.
     std::shared_ptr<NVisionMovieFile>             m_file;
-    std::shared_ptr<IoTaskTracker<VideoFrame>>  m_ioTaskTracker;
+    // std::shared_ptr<IoTaskTracker<VideoFrame>>  m_ioTaskTracker;
 };
 
 } // namespace isx
