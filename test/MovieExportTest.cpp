@@ -890,7 +890,7 @@ TEST_CASE("NVisionMovieTrackingDataExportTest", "[core]")
         const std::string actualFirstLine(buf.get());
         REQUIRE(actualFirstLine == expectedFirstLine);
 
-        const std::string expectedLastLine = "9,0,9,1720007659.987005,1201.097168,805.654907,1293.367554,928.300720,1247.232422,866.977783,21.289660,1720032796530,ZONE#3,o,softTrig-3";
+        const std::string expectedLastLine = "9,0,9,1720007659.987005,1201.097168,805.654907,1293.367554,928.300720,1247.232422,866.977783,21.289660,1720032796530,ZONE#3,occupying,softTrig-3";
 #if ISX_OS_WIN32
         strm.seekg(-int64_t(expectedLastLine.size() + 2), std::ios_base::end);
 #else

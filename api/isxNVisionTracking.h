@@ -35,6 +35,12 @@ class ZoneEvent
         /// @return The zone event type represented as a string
         static std::string typeToStr(const Type type);
 
+        /// @brief Converts type to a full string representation
+        /// (not a single char embedded in frame metadata)
+        /// @param type The zone event type to convert to string
+        /// @return The zone event type represented as a string
+        static std::string typeToFullStr(const Type type);
+
         /// @brief The trigger of the zone event (for closed-loop systems).
         /// Maps to the SoftTrig 1-4 channels in the corresponding gpio file.
         enum class Trigger
@@ -110,6 +116,9 @@ class ZoneEvent
 
         /// @brief A map of zone event triggers to string representations in json metadata
         const static std::map<Trigger, std::string> s_triggerToStrMap;
+
+        /// @brief A map of zone event triggers to string representations in json metadata
+        const static std::map<Type, std::string> s_typeToFullStrMap;
 
         /// @brief The zone id for the zone event.
         int64_t m_zoneId = -1;

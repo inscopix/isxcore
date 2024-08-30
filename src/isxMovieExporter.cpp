@@ -457,100 +457,118 @@ writeNVisionTrackingBoundingBoxToCsv(
     {
         const auto movie = movies[movieNumber];
         const auto timingInfo = movie->getTimingInfo();
-
-        size_t localFrameNumber = 0;
-        while (localFrameNumber < timingInfo.getNumTimes())
+        for (size_t localFrameNumber = 0; localFrameNumber < timingInfo.getNumTimes(); localFrameNumber++)
         {
+            csv << globalFrameNumber << "," << movieNumber << "," << localFrameNumber << ",";
+            
+            if (!timingInfo.isIndexValid(localFrameNumber))
+            {
+                for (size_t i = 0; i < (numColumns - numFrameNumColumns - 1); i++)
+                {
+                    csv << ",";
+                }
+                csv << std::endl;
+                globalFrameNumber++;
+                continue;
+            }
+
+            const auto tsc = movie->getFrameTimestamp(localFrameNumber);
+            if (timestampFormat == WriteTimeRelativeTo::FIRST_DATA_ITEM)
+            {
+                const auto timestamp = double(tsc - firstTsc) / 1e6;
+                csv << std::fixed << std::setprecision(6) << timestamp;
+            }
+            else if (timestampFormat == WriteTimeRelativeTo::UNIX_EPOCH)
+            {
+                const auto timestamp = epochStartTimestamp + (double(tsc - firstTsc) / 1e6);
+                csv << std::fixed << std::setprecision(6) << timestamp;
+            }
+            else
+            {
+                csv << tsc;
+            }
+            csv << ",";
+
             const auto boundingBox = BoundingBox::fromMetadata(
                 movie->getFrameMetadata(localFrameNumber)
             );
-            auto zoneEvents = boundingBox.getZoneEvents();
-            if (zoneEvents.empty())
+
+            if (!boundingBox.isValid())
             {
-                // for no zone events, create an empty zone which will be detected
-                // in the for loop that follows
-                zoneEvents = {isx::ZoneEvent()};
-            }
-            
-            // for each frame, and each zone event that occurred in that frame,
-            // write a line in the csv output
-            for (const auto & zoneEvent : zoneEvents)
-            {
-                csv << globalFrameNumber << "," << movieNumber << "," << localFrameNumber << ",";
-
-                if (!timingInfo.isIndexValid(localFrameNumber))
+                // add one more column to cut for timestamp column
+                for (size_t i = 0; i < (numColumns - numFrameNumColumns - 1 - 1); i++)
                 {
-                    for (size_t i = 0; i < (numColumns - numFrameNumColumns - 1); i++)
-                    {
-                        csv << ",";
-                    }
-                    csv << std::endl;
-                    globalFrameNumber++;
-                    continue;
+                    csv << ",";
                 }
-
-                const auto tsc = movie->getFrameTimestamp(localFrameNumber);
-                if (timestampFormat == WriteTimeRelativeTo::FIRST_DATA_ITEM)
-                {
-                    const auto timestamp = double(tsc - firstTsc) / 1e6;
-                    csv << std::fixed << std::setprecision(6) << timestamp;
-                }
-                else if (timestampFormat == WriteTimeRelativeTo::UNIX_EPOCH)
-                {
-                    const auto timestamp = epochStartTimestamp + (double(tsc - firstTsc) / 1e6);
-                    csv << std::fixed << std::setprecision(6) << timestamp;
-                }
-                else
-                {
-                    csv << tsc;
-                }
-                csv << ",";
-
-                const auto boundingBox = BoundingBox::fromMetadata(
-                    movie->getFrameMetadata(localFrameNumber)
-                );
-
-                if (!boundingBox.isValid())
-                {
-                    // add one more column to cut for timestamp column
-                    for (size_t i = 0; i < (numColumns - numFrameNumColumns - 1 - 1); i++)
-                    {
-                        csv << ",";
-                    }
-                    csv << std::endl;
-                    globalFrameNumber++;
-                    continue;
-                }
-
-                csv << boundingBox.getLeft() << ","
-                    << boundingBox.getTop() << ","
-                    << boundingBox.getRight() << ","
-                    << boundingBox.getBottom() << ",";
-                
-                const auto center = boundingBox.getCenter();
-                csv << center.getX() << ","
-                    << center.getY() << ","
-                    << boundingBox.getConfidence() << ",";
-
-                const auto zoneId = zoneEvent.getZoneId();
-                if (zoneId < 0)
-                {
-                    // invalid zone (which means no zone events for this frame)
-                    csv << ",,,";
-                }
-                else
-                {
-                    csv << zoneId << ","
-                        << zoneEvent.getZoneName() << ","
-                        << isx::ZoneEvent::typeToStr(zoneEvent.getType()) << ","
-                        << isx::ZoneEvent::triggerToStr(zoneEvent.getTrigger());
-
-                }
-
                 csv << std::endl;
+                globalFrameNumber++;
+                continue;
             }
 
-            localFrameNumber++;
+            csv << boundingBox.getLeft() << ","
+                << boundingBox.getTop() << ","
+                << boundingBox.getRight() << ","
+                << boundingBox.getBottom() << ",";
+            
+            const auto center = boundingBox.getCenter();
+            csv << center.getX() << ","
+                << center.getY() << ","
+                << boundingBox.getConfidence() << ",";
+
+            // combine zone event info into a single cell of the csv
+            std::string zoneIdStr = "";
+            std::string zoneNameStr = "";
+            std::string zoneEventStr = "";
+            std::string zoneTriggerStr = "";
+            size_t numZones = 0;
+            for (const auto & zoneEvent : boundingBox.getZoneEvents())
+            {
+                if (zoneEvent.getType() == ZoneEvent::Type::NONE && zoneEvent.getZoneId() == 0)
+                {
+                    continue;
+                }
+
+                if (!zoneIdStr.empty())
+                {
+                    zoneIdStr += ",";
+                }
+                zoneIdStr += std::to_string(zoneEvent.getZoneId());
+
+                if (!zoneNameStr.empty())
+                {
+                    zoneNameStr += ",";
+                }
+                zoneNameStr += zoneEvent.getZoneName();
+
+                if (!zoneEventStr.empty())
+                {
+                    zoneEventStr += ",";
+                }
+                zoneEventStr += ZoneEvent::typeToFullStr(zoneEvent.getType());
+
+                if (!zoneTriggerStr.empty())
+                {
+                    zoneTriggerStr += ",";
+                }
+                zoneTriggerStr += ZoneEvent::triggerToStr(zoneEvent.getTrigger());
+
+                numZones++;
+            }
+
+            if (numZones > 1)
+            {
+                csv << "\"" << zoneIdStr << "\","
+                    << "\"" << zoneNameStr << "\","
+                    << "\"" << zoneEventStr << "\","
+                    << "\"" << zoneTriggerStr << "\"";
+            }
+            else
+            {
+                csv << zoneIdStr << "," << zoneNameStr
+                    << "," << zoneEventStr << "," << zoneTriggerStr;
+            }
+
+            csv << std::endl;
             globalFrameNumber++;
         }
     }

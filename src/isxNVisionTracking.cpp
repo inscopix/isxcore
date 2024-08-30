@@ -12,6 +12,14 @@ const std::map<ZoneEvent::Type, std::string> ZoneEvent::s_typeToStrMap = {
     {ZoneEvent::Type::EXIT, "x"}
 };
 
+const std::map<ZoneEvent::Type, std::string> ZoneEvent::s_typeToFullStrMap = {
+    {ZoneEvent::Type::NONE, ""},
+    {ZoneEvent::Type::ENTRY, "entry"},
+    {ZoneEvent::Type::OCCUPIED, "occupying"},
+    {ZoneEvent::Type::EXIT, "exit"}
+};
+
+
 const std::map<ZoneEvent::Trigger, std::string> ZoneEvent::s_triggerToStrMap = {
     {ZoneEvent::Trigger::NONE, ""},
     {ZoneEvent::Trigger::SOFT_TRIG_1, "softTrig-1"},
@@ -38,6 +46,12 @@ std::string
 ZoneEvent::typeToStr(const ZoneEvent::Type type)
 {
     return s_typeToStrMap.at(type);
+}
+
+std::string
+ZoneEvent::typeToFullStr(const ZoneEvent::Type type)
+{
+    return s_typeToFullStrMap.at(type);
 }
 
 ZoneEvent::Trigger
