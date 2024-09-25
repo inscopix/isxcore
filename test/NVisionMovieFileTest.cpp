@@ -2,7 +2,6 @@
 #include "isxCoreFwd.h"
 #include "isxNVisionMovieFile.h"
 #include "isxTest.h"
-#include "isxArmaUtils.h"
 #include "isxMovieFactory.h"
 #include "isxPathUtils.h"
 #include "catch.hpp"
@@ -62,10 +61,7 @@ TEST_CASE("NVisionMovieFile", "[core]")
         uint64_t sum = 0;
         for (size_t i = 0; i < numFrames; i++)
         {
-            const auto frame = file.readFrame(i);
-            arma::Col<uint64_t> frameCol;
-            isx::copyFrameToColumn(frame, frameCol);
-            sum += arma::sum(frameCol);
+            sum += computeFrameSum(file.readFrame(i));
         }
         REQUIRE(sum == expSum);   
     }
@@ -218,10 +214,7 @@ TEST_CASE("NVisionMovieFile-Dropped", "[core]")
         uint64_t sumWithoutDropped = 0;
         for (size_t i = 0; i < numFrames; i++)
         {
-            const auto frame = file.readFrame(i);
-            arma::Col<uint64_t> frameCol;
-            isx::copyFrameToColumn(frame, frameCol);
-            const size_t sum = arma::sum(frameCol); 
+            const size_t sum = computeFrameSum(file.readFrame(i));
             sumWithDropped += sum;
             
             if (!ti.isDropped(i))
@@ -318,15 +311,8 @@ TEST_CASE("NVisionMovieFile-Write", "[core]")
         uint64_t outputSum = 0;
         for (size_t i = 0; i < numFrames; i++)
         {
-            const auto inputFrame = inputFile.readFrame(i);
-            arma::Col<uint64_t> inputFrameCol;
-            isx::copyFrameToColumn(inputFrame, inputFrameCol);
-            inputSum += arma::sum(inputFrameCol);
-
-            const auto outputFrame = outputFile.readFrame(i);
-            arma::Col<uint64_t> outputFrameCol;
-            isx::copyFrameToColumn(outputFrame, outputFrameCol);
-            outputSum += arma::sum(outputFrameCol);
+            inputSum += computeFrameSum(inputFile.readFrame(i));
+            outputSum += computeFrameSum(outputFile.readFrame(i));
         }
 
         REQUIRE(approxEqual(double(outputSum), double(inputSum), 1e-4));
@@ -480,10 +466,7 @@ TEST_CASE("NVisionMovieFile-WriteDropped", "[core]")
         const size_t numFrames = timingInfo.getNumTimes();
         for (size_t i = 0; i < numFrames; i++)
         {
-            const auto frame = outputFile.readFrame(i);
-            arma::Col<uint64_t> frameCol;
-            isx::copyFrameToColumn(frame, frameCol);
-            const size_t sum = arma::sum(frameCol); 
+            const size_t sum = computeFrameSum(outputFile.readFrame(i));
 
             if (timingInfo.isDropped(i))
             {
@@ -542,10 +525,7 @@ TEST_CASE("NVisionMovieFile-WriteSupportedResolutions", "[core]")
             }
 
             isx::NVisionMovieFile outputFile(outputFileName);
-            const auto frame = outputFile.readFrame(0);
-            arma::Col<uint64_t> frameCol;
-            isx::copyFrameToColumn(frame, frameCol);
-            const size_t sum = arma::sum(frameCol);
+            const size_t sum = computeFrameSum(outputFile.readFrame(0));
             REQUIRE(sum == width * height);
         }
     }

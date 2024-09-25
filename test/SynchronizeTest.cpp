@@ -1,3 +1,4 @@
+#if ISX_WITH_ALGOS
 #include "isxCore.h"
 #include "isxCoreFwd.h"
 #include "isxTest.h"
@@ -940,3 +941,4 @@ TEST_CASE("ExportAlignedTimestamps-Tsc", "[core]")
 
     std::remove(outputFilename.c_str());
 }
+#endif
