@@ -1,0 +1,61 @@
+// The Jenkinsfile for the Linux Development Builds pipeline.
+// This pipeline will build and test IDPS on a Linux OS.
+// Refer to the README for more information on the Jenkins setup.
+
+def AGENT_LABEL = "idps-" + params.BUILD_OS_TYPE + "-node"
+
+def run_command(command, os) {
+    // Run a command on a particular OS
+    // On Windows, the command needs to be run as a Bat script
+    // which calls the git bash shell. This was the best way to
+    // run Unix commands on Windows using Jenkins
+    if (os == "linux" || os == "mac") {
+        sh command
+    }
+    else {
+        bat ("sh -c \"${command}\"")
+    }
+}
+
+pipeline {
+    agent {
+        label AGENT_LABEL
+    }
+    parameters {
+        choice(name: "BUILD_OS_TYPE", choices: ['linux', 'mac', 'windows'], description: 'Specify the OS to build on.')
+    }
+    stages {
+        stage("Setup") {
+            steps {
+                script {
+                    checkout scm
+                    run_command("make setup REMOTE_DIR=${IDPS_REMOTE_EXT_DIR} REMOTE_LOCAL_DIR=${IDPS_REMOTE_EXT_COPY_DIR}", params.BUILD_OS_TYPE)
+                }
+            }
+        }
+        stage("Build")
+        {
+            steps {
+                script {
+                    run_command("make build", params.BUILD_OS_TYPE)
+                }
+            }
+        }
+        stage("Test")
+        {
+            steps {
+                script {
+                    run_command("make test", params.BUILD_OS_TYPE)
+                }
+            }
+        }
+    }
+    post {
+        cleanup {
+            cleanWs()
+            dir("${env.WORKSPACE}@tmp") {
+                deleteDir()
+            }
+        }
+    }
+}
