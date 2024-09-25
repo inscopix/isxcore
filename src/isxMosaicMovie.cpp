@@ -20,7 +20,9 @@ MosaicMovie::MosaicMovie()
 
 MosaicMovie::MosaicMovie(const std::string & inFileName, bool enableWrite)
     : m_valid(false)
+#if ISX_ASYNC_API
     , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
+#endif
 {
     m_file = std::make_shared<MosaicMovieFile>(inFileName, enableWrite);
     m_valid = true;
@@ -33,7 +35,9 @@ MosaicMovie::MosaicMovie(
     const DataType inDataType,
     const bool inHasFrameHeaderFooter)
     : m_valid(false)
+#if ISX_ASYNC_API
     , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
+#endif
 {
     m_file = std::make_shared<MosaicMovieFile>(inFileName, inTimingInfo, inSpacingInfo, inDataType, inHasFrameHeaderFooter);
     m_valid = true;
@@ -48,6 +52,7 @@ MosaicMovie::isValid() const
 SpVideoFrame_t
 MosaicMovie::getFrame(isize_t inFrameNumber)
 {
+#if ISX_ASYNC_API
     Mutex mutex;
     ConditionVariable cv;
     mutex.lock("getFrame");
@@ -65,11 +70,15 @@ MosaicMovie::getFrame(isize_t inFrameNumber)
     mutex.unlock();
 
     return asyncTaskResult.get();   // throws if asyncTaskResult contains an exception
+#else
+    return m_file->readFrame(inFrameNumber);
+#endif
 }
 
 void
 MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
+#if ISX_ASYNC_API
     std::weak_ptr<MosaicMovie> weakThis = shared_from_this();
     GetFrameCB_t getFrameCB = [weakThis, this, inFrameNumber]()
         {
@@ -81,6 +90,9 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
             return SpVideoFrame_t();
         };
     m_ioTaskTracker->schedule(getFrameCB, inCallback);
+#else
+    ISX_THROW(isx::Exception, "No async operations permitted for this build.");
+#endif
 }
 
 std::vector<uint16_t>
@@ -104,7 +116,9 @@ MosaicMovie::getFrameFooter(const size_t inFrameNumber)
 void
 MosaicMovie::cancelPendingReads()
 {
+#if ISX_ASYNC_API
     m_ioTaskTracker->cancelPendingTasks();
+#endif
 }
 
 void
@@ -117,34 +131,46 @@ MosaicMovie::writeFrame(const SpVideoFrame_t & inVideoFrame)
         return;
     }
 
+#if ISX_ASYNC_API
     // Get a new shared pointer to the file, so we can guarantee the write.
     std::shared_ptr<MosaicMovieFile> file = m_file;
     writeAndWait([file, inVideoFrame]()
     {
         file->writeFrame(inVideoFrame);
     }, "writeFrame");
+#else
+    m_file->writeFrame(inVideoFrame);
+#endif
 }
 
 void
 MosaicMovie::writeFrameWithHeaderFooter(const uint16_t * inBuffer)
 {
+#if ISX_ASYNC_API
     // Get a new shared pointer to the file, so we can guarantee the write.
     std::shared_ptr<MosaicMovieFile> file = m_file;
     writeAndWait([file, inBuffer]()
     {
         file->writeFrameWithHeaderFooter(inBuffer);
     }, "writeFrameWithHeaderFooterTogether");
+#else
+    m_file->writeFrameWithHeaderFooter(inBuffer);
+#endif
 }
 
 void
 MosaicMovie::writeFrameWithHeaderFooter(const uint16_t * inHeader, const uint16_t * inPixels, const uint16_t * inFooter)
 {
+#if ISX_ASYNC_API
     // Get a new shared pointer to the file, so we can guarantee the write.
     std::shared_ptr<MosaicMovieFile> file = m_file;
     writeAndWait([file, inHeader, inPixels, inFooter]()
     {
         file->writeFrameWithHeaderFooter(inHeader, inPixels, inFooter);
     }, "writeFrameWithHeaderFooterSeparate");
+#else
+    m_file->writeFrameWithHeaderFooter(inHeader, inPixels, inFooter);
+#endif
 }
 
 void
