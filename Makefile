@@ -37,9 +37,9 @@ endif
 
 # Environment variables to pass to cmake for compilation
 # Configures the lib version
-ISX_VERSION_MAJOR=1
-ISX_VERSION_MINOR=9
-ISX_VERSION_PATCH=5
+ISX_VERSION_MAJOR=2
+ISX_VERSION_MINOR=0
+ISX_VERSION_PATCH=0
 ISX_VERSION_BUILD=0
 ISX_IS_BETA=1
 
