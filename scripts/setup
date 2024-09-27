@@ -167,48 +167,30 @@ synclib "catch" "1.4.0"                 ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} "." $
 synclib "ffmpeg" "3.1.4"                ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
 synclib "json_modern_C++" "2.0.1_isx"   ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} "." ${VERBOSE}
 synclib "libtiff" "4.0.8.isx"           ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
-# synclib "TurboReg" "2002-04-08"         ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
-# synclib "cvxcore" "1.0.31_isx"          ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
-# synclib "scs" "2.1.1_isx"               ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
-# synclib "ThreadPool" "1.0"              ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} "." ${VERBOSE}
-# synclib "eigen" "3.3.9"                 ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} "." ${VERBOSE}
 synclib "boost" "1.72.0"                ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
 
 if isUbuntu; then
     synclib "hdf5" "1.10"                   ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} "linux-ubuntu" ${VERBOSE}
-    # synclib "ceres" "1.14.0"                ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} "linux-ubuntu" ${VERBOSE}
     if [[ ${IS_REMOTE_COPY} == false ]]; then
         mv "${LOCAL_EXT_DIR}/hdf5/1.10/linux-ubuntu" "${LOCAL_EXT_DIR}/hdf5/1.10/linux"
-        # mv "${LOCAL_EXT_DIR}/ceres/1.14.0/linux-ubuntu" "${LOCAL_EXT_DIR}/ceres/1.14.0/linux"
     fi
 else
     synclib "hdf5" "1.10"                   ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
-    # synclib "ceres" "1.14.0"                ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
 fi;
 
 if isArm; then
     synclib "Qt" "5.8"                      ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
-    # synclib "armadillo" "7.800.2_isx_2-arm"     ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} "." ${VERBOSE}
     synclib "OpenCV" "3.2.0.cuda"       ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
     synclib "OpenBLAS" "0.2.20"         ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
 else
     # Change to 5.12 when ready - see IDPS-87
-    # synclib "Qt" "5.12"                     ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
     synclib "Qt" "5.8"                      ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
-    # synclib "armadillo" "9.900.1"           ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} "." ${VERBOSE}
     synclib "OpenCV" "3.2.0.no_mkl"         ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
-    # synclib "FlexNetEmbedded" "2017.R2"     ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
-    # synclib "qcustomplot" "2.0.0"           ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
-    # synclib "Intel_MKL" "2017.2"            ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
 
     if isLinux; then
         synclib "Qt" "5.5"                  ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} ${OS_SUB_DIR} ${VERBOSE}
     fi
 fi
-
-# if isWin; then
-#     synclib "vc_redist" "2015.3" ${REMOTE_EXT_DIR} ${LOCAL_EXT_DIR} "." ${VERBOSE}
-# fi
 
 # Copy test data
 REMOTE_TEST_DATA_DIR=test_data_structured
@@ -218,43 +200,3 @@ if [[ ${IS_REMOTE_COPY} == true ]]; then
 fi
 # Data for unit tests
 syncdir ${VERBOSE} ${REMOTE_EXT_DIR}/${REMOTE_TEST_DATA_DIR}/unit_test ${LOCAL_TEST_DATA_DIR}
-# # Real data
-# if [[ ${LARGE_DATA_SYNC} == true ]]; then
-#     # Copy all real data
-#     syncdir ${VERBOSE} ${REMOTE_EXT_DIR}/${REMOTE_TEST_DATA_DIR}/real ${LOCAL_TEST_DATA_DIR}
-# fi
-
-# # Benchmark data
-# if [[ ${BENCH_DATA_SYNC} == true ]]; then
-#     syncdir ${VERBOSE} ${BENCH_DATA_DIR}/bench ${LOCAL_TEST_DATA_DIR}
-# fi
-
-# # Copy resources
-# REMOTE_RESOURCES_DIR=mosaic2_resources/resources
-# LOCAL_RESOURCES_DIR=./app
-# if [[ ${IS_REMOTE_COPY} == true ]]; then
-#     LOCAL_RESOURCES_DIR="${LOCAL_EXT_DIR}/mosaic2_resources"
-# fi
-# syncdir ${VERBOSE} ${REMOTE_EXT_DIR}/${REMOTE_RESOURCES_DIR} ${LOCAL_RESOURCES_DIR}
-
-# # Copy some docs
-# REMOTE_DOCS_DIR=mosaic2_docs_screenCaptures/captures
-# LOCAL_DOCS_DIR=doc/user
-# if [[ ${IS_REMOTE_COPY} == true ]]; then
-#     LOCAL_DOCS_DIR="${LOCAL_EXT_DIR}/mosaic2_docs_screenCaptures"
-# fi
-# syncdir ${VERBOSE} ${REMOTE_EXT_DIR}/${REMOTE_DOCS_DIR} ${LOCAL_DOCS_DIR}
-
-# Setup Python environment
-# Disabled because compiling oasis for caiman on yabby fails,
-# possibly due to the following bug in Apple's implementation of clang:
-# https://jira.lsstcorp.org/browse/DM-5753
-#CONDA_ENV_FILE="modules/publicApi/python/api/isx/environment.yml"
-#CONDA_ENV_NAME="isxenv"
-#if conda list --name ${CONDA_ENV_NAME} &> /dev/null; then
-#    echo "Updating conda env ${CONDA_ENV_NAME}"
-#    conda env update -n ${CONDA_ENV_NAME} -f ${CONDA_ENV_FILE}
-#else
-#    echo "Creating conda env ${CONDA_ENV_NAME}"
-#    conda env create -n ${CONDA_ENV_NAME} -f ${CONDA_ENV_FILE}
-#fi

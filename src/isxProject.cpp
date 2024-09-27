@@ -235,7 +235,7 @@ Project::flattenSeries(Series * inSeries)
         return;
     }
     auto group = static_cast<Group *>(item);
-    // TODO sweet : before moving the items we need to check that the
+    // TODO : before moving the items we need to check that the
     // destination doesn't contain any conflicting names.
     auto index = inSeries->getMemberIndex();
     for (auto dataSet : inSeries->getDataSets())

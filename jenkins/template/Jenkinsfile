@@ -1,7 +1,6 @@
-// The Jenkinsfile for the Linux Development Builds pipeline.
-// This pipeline will build and test IDPS on a Linux OS.
-// Refer to the README for more information on the Jenkins setup.
+// This pipeline will build and test the isxcore on one of the following operating systems: linux, mac, windows.
 
+// TODO: change the name of this node
 def AGENT_LABEL = "idps-" + params.BUILD_OS_TYPE + "-node"
 
 def run_command(command, os) {

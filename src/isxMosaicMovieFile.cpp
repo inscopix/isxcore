@@ -430,7 +430,7 @@ MosaicMovieFile::readHeader()
 
     try
     {
-        // TODO sweet : extra check to see if data type is recognized
+        // TODO : extra check to see if data type is recognized
         m_dataType = DataType(isize_t(j["dataType"]));
         DataSet::Type type = DataSet::Type(size_t(j["type"]));
         if (!(type == DataSet::Type::MOVIE || type == DataSet::Type::IMAGE))

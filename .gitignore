@@ -35,3 +35,10 @@ test_data
 *.exe
 *.out
 *.app
+
+# IDE
+.idea/
+.vscode/
+
+# Mac
+*.DS_Store

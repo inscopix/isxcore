@@ -1,9 +1,13 @@
 # isx-core
-Core functionality of the isx C++ API.
-This functionality mainly includes:
-* Reading Inscopix files (`.isxd`, `.isxb`, `.gpio`, `.imu`)
-* Writing Inscopix files (`.isxd`, `.isxb`, `.gpio`, `.imu`)
-* Exporting Inscopix files to third-party formats (e.g., `.mp4`, `.tiff`, `.hdf5`)
+
+Library containing core functionality of the isx C++ API.
+The following I/O functionality is encapsulated:
+
+* Reading Inscopix files (`.isxd`, `.isxc`, `.isxb`, `.gpio`, `.imu`)
+* Writing Inscopix files (`.isxd`, `.gpio`, `.imu`)
+* Exporting Inscopix files to third-party formats (`.mp4`, `.tiff`, `.csv`, `.hdf5`)
+
+This library can be used in C++ projects using the `isxcore.cmake` configuration file, and copying the `build/Release/modules` folder to the third party dependencies of the project. Bindings in other languages can also be created. For example, there is a python binding for this api, [pyisx](https://github.com/inscopix/pyisx).
 
 ## Supported Platforms
 

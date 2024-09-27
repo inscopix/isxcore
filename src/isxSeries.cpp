@@ -455,7 +455,7 @@ bool
 Series::isASuitableParent(std::string & outErrorMessage) const
 {
     // An empty series is always suitable.
-    // TODO sweet : instead of having this check to stop getType
+    // TODO : instead of having this check to stop getType
     // failing, we might want to add a NONE type to DataSet::Type.
     if (!isUnitary() && m_unitarySeries.empty())
     {

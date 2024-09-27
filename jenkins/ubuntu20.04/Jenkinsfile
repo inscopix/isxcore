@@ -1,7 +1,6 @@
-// The Jenkinsfile for the Linux Development Builds pipeline.
-// This pipeline will build and test IDPS on a Linux OS.
-// Refer to the README for more information on the Jenkins setup.
+// This pipeline will build and test the isxcore on one of the following operating systems: linux, mac, windows.
 
+// TODO: unify this file with other jenkinsfile and remove mini2p ref
 def AGENT_LABEL = "mini2p-3-build-node"
 def BUILD_OS_TYPE = "linux"
 

@@ -19,7 +19,7 @@ endif()
 string(APPEND OPENCV_DIR "/${CMAKE_BUILD_TYPE}")
 
 if(${ISX_OS_WIN32})
-    # TODO sweet : need to force this variable for windows, but may need
+    # TODO : need to force this variable for windows, but may need
     # to check/rebuild OpenCV to correct this
     set(OpenCV_STATIC ON)
     list(APPEND CMAKE_PREFIX_PATH ${OPENCV_DIR})
@@ -36,7 +36,7 @@ endif()
 list(APPEND OPENCV_HEADER_SEARCH_PATHS ${OpenCV_INCLUDE_DIRS})
 list(APPEND OPENCV_LINK_LIBRARIES ${OpenCV_LIBS})
 
-# TODO sweet : check if this is needed after using CMake for OpenCV
+# TODO : check if this is needed after using CMake for OpenCV
 if(${ISX_OS_LINUX})
     list(APPEND OPENCV_LINK_LIBRARIES libpthread.so)
 endif()

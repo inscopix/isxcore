@@ -1,4 +1,4 @@
-.PHONY: build test
+.PHONY: check_os clean setup build rebuild test
 
 # Variables defining build paths
 BUILD_DIR_ROOT=build
@@ -43,7 +43,8 @@ ISX_VERSION_PATCH=0
 ISX_VERSION_BUILD=0
 ISX_IS_BETA=1
 
-# configure whether to use async ops for file io (movies only supported currently)
+# Configure whether to use async ops for file io (movies only supported currently)
+# Disable async api if you don't want to create a QT event loop in order to use the api for read/write ops
 ifndef ISX_ASYNC_API
 	ISX_ASYNC_API=1
 endif
