@@ -2,7 +2,6 @@
 #include "isxCoreFwd.h"
 #include "isxNVisionMovie.h"
 #include "isxTest.h"
-#include "isxArmaUtils.h"
 
 #include "catch.hpp"
 #include <atomic>
@@ -108,10 +107,7 @@ TEST_CASE("NVisionMovie", "[core]")
         uint64_t sum = 0;
         for (size_t i = 0; i < numFrames; i++)
         {
-            const auto frame = movie->getFrame(i);
-            arma::Col<uint64_t> frameCol;
-            isx::copyFrameToColumn(frame, frameCol);
-            sum += arma::sum(frameCol);
+            sum += computeFrameSum(movie->getFrame(i));
         }
         REQUIRE(sum == expSum);
     }
@@ -125,9 +121,7 @@ TEST_CASE("NVisionMovie", "[core]")
         {
             REQUIRE(!inAsyncTaskResult.getException());
             const isx::SpVideoFrame_t frame = inAsyncTaskResult.get();
-            arma::Col<uint64_t> frameCol;
-            isx::copyFrameToColumn(frame, frameCol);
-            sum += arma::sum(frameCol);
+            sum += computeFrameSum(frame);
             ++doneCount;
         };
 
@@ -246,10 +240,7 @@ TEST_CASE("NVisionMovie-Dropped", "[core]")
         for (size_t i = 0; i < numFrames; i++)
         {
             const size_t index = 180 + i;
-            const auto frame = movie->getFrame(index);
-            arma::Col<uint64_t> frameCol;
-            isx::copyFrameToColumn(frame, frameCol);
-            const auto sum = arma::sum(frameCol);
+            const auto sum = computeFrameSum(movie->getFrame(index));
             sumWithDropped += sum;
             
             if (!ti.isDropped(index))
@@ -271,9 +262,7 @@ TEST_CASE("NVisionMovie-Dropped", "[core]")
         {
             REQUIRE(!inAsyncTaskResult.getException());
             const isx::SpVideoFrame_t frame = inAsyncTaskResult.get();
-            arma::Col<uint64_t> frameCol;
-            isx::copyFrameToColumn(frame, frameCol);
-            sum += arma::sum(frameCol);
+            sum += computeFrameSum(frame);
             ++doneCount;
         };
 

@@ -154,8 +154,8 @@ namespace isx
             const size_t inMinor = 0,
             const size_t inPatch = 0);
 
-    /// \return     Whether the api is built without the GUI
-    bool isMinimalApi();
+    /// \return     Whether the api is built with the algos module
+    bool isWithAlgos();
 
 } // namespace isx
 

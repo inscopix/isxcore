@@ -1,0 +1,64 @@
+// This pipeline will build and test the isxcore on one of the following operating systems: linux, mac, windows.
+
+// TODO: unify this file with other jenkinsfile and remove mini2p ref
+def AGENT_LABEL = "mini2p-3-build-node"
+def BUILD_OS_TYPE = "linux"
+
+def run_command(command, os) {
+    // Run a command on a particular OS
+    // On Windows, the command needs to be run as a Bat script
+    // which calls the git bash shell. This was the best way to
+    // run Unix commands on Windows using Jenkins
+    if (os == "linux" || os == "mac") {
+        sh command
+    }
+    else {
+        bat ("sh -c \"${command}\"")
+    }
+}
+
+pipeline {
+    agent {
+        label AGENT_LABEL
+    }
+    stages {
+        stage("Setup") {
+            steps {
+                script {
+                    checkout scm
+                    run_command("make setup REMOTE_DIR=${IDPS_REMOTE_EXT_DIR} REMOTE_LOCAL_DIR=${IDPS_REMOTE_EXT_COPY_DIR}", BUILD_OS_TYPE)
+                }
+            }
+        }
+        stage("Build")
+        {
+            steps {
+                script {
+                    run_command("make build", BUILD_OS_TYPE)
+                }
+            }
+        }
+        stage("Test")
+        {
+            steps {
+                script {
+                    run_command("make test", BUILD_OS_TYPE)
+                }
+            }
+        }
+    }
+    post {
+        success {
+            script {
+                sh "cp -r build/Release/modules . && zip -r isx-core modules third_party isxcore.cmake"
+                archiveArtifacts artifacts: "isx-core.zip"
+            }
+        }
+        cleanup {
+            cleanWs()
+            dir("${env.WORKSPACE}@tmp") {
+                deleteDir()
+            }
+        }
+    }
+}

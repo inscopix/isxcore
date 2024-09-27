@@ -1,0 +1,10 @@
+get_filename_component(THIRD_PARTY_DIR $ENV{THIRD_PARTY_DIR} ABSOLUTE)
+
+include(${CMAKE_CURRENT_LIST_DIR}/Qt.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/catch.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/libtiff.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/opencv.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/hdf5.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/json.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/ffmpeg.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/boost.cmake)

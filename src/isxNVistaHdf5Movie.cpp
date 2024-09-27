@@ -196,7 +196,7 @@ NVistaHdf5Movie::initialize(
 
     if (inSpacingInfo.isValid())
     {
-        // TODO sweet : Even if the spacing info is valid, we don't trust
+        // TODO : Even if the spacing info is valid, we don't trust
         // the width/height because the acquisition software does not store
         // the actual width/height after downsampling.
         // Therefore, we try to get it from the HDF5 file and use the given
