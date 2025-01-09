@@ -139,7 +139,13 @@ namespace isx
         BP31 = 18,
         BP32 = 16,
         BP33 = 37,
-        CRANIAL_WINDOW_WIDE_FIELD = 38
+        CRANIAL_WINDOW_WIDE_FIELD = 38,
+
+        CRANIAL_WINDOW_2P = 39,
+        BP34 = 40,
+        BP35 = 41,
+        BP36 = 42,
+        BP37 = 43
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -151,6 +157,7 @@ namespace isx
         {BasePlateType_t::CUSTOM, "Custom"},
         {BasePlateType_t::CRANIAL_WINDOW, "Cranial Window or No Lens"},
         {BasePlateType_t::CRANIAL_WINDOW_WIDE_FIELD, "Cranial Window or No Lens"},
+        {BasePlateType_t::CRANIAL_WINDOW_2P, "Cranial Window or No Lens"},
         {BasePlateType_t::BP1, "ProView Lens Probe 0.5 mm x 4.0 mm"},
         {BasePlateType_t::BP2, "Lens Probe 1.0 mm x 4.2 mm"},
         {BasePlateType_t::BP3, "Lens Probe 1.0 mm x 9.0 mm"},
@@ -184,6 +191,10 @@ namespace isx
         {BasePlateType_t::BP31, "ProView DC Integrated Lens 1.0 mm x 4.2 mm"},
         {BasePlateType_t::BP32, "ProView DC Integrated Lens 1.0 mm x 11.7 mm"},
         {BasePlateType_t::BP33, "ProView DC Prism Integrated Lens 0.5 mm x 5.6 mm"},
+        {BasePlateType_t::BP34, "ProView 2P Integrated Lens 0.5 mm x 4.0 mm"},
+        {BasePlateType_t::BP35, "ProView 2P Integrated Lens 0.5 mm x 6.1 mm"},
+        {BasePlateType_t::BP36, "ProView 2P Integrated Lens 1.0 mm x 4.2 mm"},
+        {BasePlateType_t::BP37, "ProView 2P Integrated Lens 1.0 mm x 9.0 mm"},
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -194,6 +205,7 @@ namespace isx
     {
         {BasePlateType_t::CRANIAL_WINDOW, std::make_pair(0.82, 0.80)},
         {BasePlateType_t::CRANIAL_WINDOW_WIDE_FIELD, std::make_pair(1.41, 1.50)},
+        {BasePlateType_t::CRANIAL_WINDOW_2P, std::make_pair(0.77, 0.80)},
 
         {BasePlateType_t::BP7, std::make_pair(0.67,0.81)},
         {BasePlateType_t::BP8, std::make_pair(0.63,0.79)},
@@ -211,6 +223,11 @@ namespace isx
         {BasePlateType_t::BP31, std::make_pair(0.77, 0.80)},
         {BasePlateType_t::BP32, std::make_pair(0.81, 0.80)},
         {BasePlateType_t::BP33, std::make_pair(0.81, 0.84)},
+
+        {BasePlateType_t::BP34, std::make_pair(0.56, 0.91)},
+        {BasePlateType_t::BP35, std::make_pair(0.48, 0.77)},
+        {BasePlateType_t::BP36, std::make_pair(0.71, 0.86)},
+        {BasePlateType_t::BP37, std::make_pair(0.66, 0.82)},
     };
 
     const std::map<std::string, BasePlateType_t> probeIdToBasePlate =
@@ -251,6 +268,11 @@ namespace isx
         {"1050-005473", BasePlateType_t::BP31},
         {"1050-005475", BasePlateType_t::BP32},
         {"1050-005474", BasePlateType_t::BP33},
+
+        {"1050-007380", BasePlateType_t::BP34},
+        {"1050-007381", BasePlateType_t::BP35},
+        {"1050-007382", BasePlateType_t::BP36},
+        {"1050-007383", BasePlateType_t::BP37},
     };
 
     /// \cond doxygen chokes on enum class inside of namespace
@@ -260,7 +282,6 @@ namespace isx
         BasePlateType_t::UNAVAILABLE,
         BasePlateType_t::CUSTOM,
         BasePlateType_t::CRANIAL_WINDOW,
-        BasePlateType_t::CRANIAL_WINDOW_WIDE_FIELD,
         BasePlateType_t::BP1,
         BasePlateType_t::BP2,
         BasePlateType_t::BP3,
@@ -294,6 +315,10 @@ namespace isx
         BasePlateType_t::BP31,
         BasePlateType_t::BP32,
         BasePlateType_t::BP33,
+        BasePlateType_t::BP34,
+        BasePlateType_t::BP35,
+        BasePlateType_t::BP36,
+        BasePlateType_t::BP37,
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -369,6 +394,21 @@ namespace isx
         BasePlateType_t::UNAVAILABLE,
         BasePlateType_t::CUSTOM,
         BasePlateType_t::CRANIAL_WINDOW_WIDE_FIELD,
+    };
+    /// \endcond doxygen chokes on enum class inside of namespace
+
+    /// \cond doxygen chokes on enum class inside of namespace
+    /// Vector specifying the base plate order to display in the metadata view
+    /// for nVue Wide Field miniscopes
+    const std::vector<BasePlateType_t> basePlateOrderMPulse =
+    {
+        BasePlateType_t::UNAVAILABLE,
+        BasePlateType_t::CUSTOM,
+        BasePlateType_t::CRANIAL_WINDOW_2P,
+        BasePlateType_t::BP34,
+        BasePlateType_t::BP35,
+        BasePlateType_t::BP36,
+        BasePlateType_t::BP37,
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -935,7 +975,11 @@ namespace isx
             {
                 probeType = isWideField(inData) ? 
                     BasePlateType_t::CRANIAL_WINDOW_WIDE_FIELD : 
-                    BasePlateType_t::CRANIAL_WINDOW;
+                    (
+                        isMini2p(inData) ?
+                        BasePlateType_t::CRANIAL_WINDOW_2P :
+                        BasePlateType_t::CRANIAL_WINDOW
+                    );
             }
             else // Integrated lens
             {
@@ -1539,6 +1583,10 @@ namespace isx
                 return basePlateOrderNVue;
             }
         }
+        else if (isMini2p(inData))
+        {
+            return basePlateOrderMPulse;
+        }
         return basePlateOrderDefault;
     }
 
@@ -1609,6 +1657,27 @@ namespace isx
     // detect if the file has mini2p metadata
     template<typename T>
     bool isMini2p(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        if (extraProps.find("processingInterface") != extraProps.end())
+        {
+            const auto & processingInterface = extraProps.at("processingInterface");
+
+            if (processingInterface.find("mini2p") != processingInterface.end())
+            {
+                return true;
+            }
+        }
+
+        return false;
+
+    }
+
+    // detect if the file is mini2p z-stack
+    template<typename T>
+    bool isMini2pZStack(T & inData)
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);

@@ -894,8 +894,12 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
         const auto producer = extraProps.find("producer");
         if (producer != extraProps.end())
         {
-            const std::vector<std::string> versionTokens = splitString(producer->at("versionBE"), '-');
-            acqInfo["Acquisition SW Version"] = versionTokens.at(0);
+            const auto & versionBE = producer->find("versionBE");
+            if (versionBE != producer->end())
+            {
+                const std::vector<std::string> versionTokens = splitString(versionBE->get<std::string>(), '-');
+                acqInfo["Acquisition SW Version"] = versionTokens.at(0);\
+            }
         }
 
         const auto idps = extraProps.find("idps");
@@ -1010,6 +1014,24 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             if (recordingUUID != processingInterface->end())
             {
                 acqInfo["Recording UUID"] = recordingUUID->get<std::string>();
+            }
+
+            const auto & mini2p = processingInterface->find("mini2p");
+            if (mini2p != processingInterface->end())
+            {
+                acqInfo["Microscope Type"] = "mPulse";
+
+                const auto isZStack = mini2p->at("isZStack").get<bool>();
+                acqInfo["Z-Stack"] = isZStack;
+                if (isZStack)
+                {
+                    const auto & planes = mini2p->find("planes");
+                    if (planes != mini2p->end())
+                    {
+                        acqInfo["Z-Stack Planes"] = planes->get<std::vector<size_t>>();
+                    }
+                }
+
             }
         }
     }

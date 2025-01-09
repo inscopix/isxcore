@@ -458,5 +458,30 @@ TEST_CASE("DataSet-getMetadata", "[core][dataset]")
         REQUIRE(metaData.at("Recording UUID") == "AC-00111111-l4R4GRt28o-1654732421577");
     }
 
+    SECTION("Mini2p Non Z-Stack")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/mini2p/lens/20241210_2024-12-11-12-06-39_video-TPC.isxd";
+        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, filePath, isx::HistoricalDetails());
+
+        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+
+        REQUIRE(metaData.at("Microscope Type") == "mPulse");
+        REQUIRE(metaData.at("Recording UUID") == "KA-20241030-0000000000-1733918799355");
+        REQUIRE(metaData.at("Z-Stack") == "false");
+    }
+
+    SECTION("Mini2p Z-Stack")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/mini2p/zstack/2024-12-06-15-10-14_stack.isxd";
+        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, filePath, isx::HistoricalDetails());
+
+        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+
+        REQUIRE(metaData.at("Microscope Type") == "mPulse");
+        REQUIRE(metaData.at("Recording UUID") == "KA-20241030-0000000000-1733497814041");
+        REQUIRE(metaData.at("Z-Stack") == "true");
+        REQUIRE(metaData.at("Z-Stack Planes") == "[400,427,455,483,511,538,566,594,622,650]");
+    }
+
     isx::CoreShutdown();
 }
