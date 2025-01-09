@@ -1606,6 +1606,31 @@ namespace isx
         return false;
     }
 
+    // detect if the file has mini2p metadata
+    template<typename T>
+    bool isMini2p(T & inData)
+    {
+        using json = nlohmann::json;
+        json extraProps = getExtraPropertiesJSON(inData);
+
+        if (extraProps.find("processingInterface") != extraProps.end())
+        {
+            const auto & processingInterface = extraProps.at("processingInterface");
+
+            if (processingInterface.find("mini2p") != processingInterface.end())
+            {
+                const auto & mini2p = processingInterface.at("mini2p");
+                if (mini2p.find("isZStack") != mini2p.end())
+                {
+                    return mini2p.at("isZStack").get<bool>();
+                }
+            }
+        }
+
+        return false;
+
+    }
+
 } // namespace isx
 
 #endif // ISX_METADATA_H
