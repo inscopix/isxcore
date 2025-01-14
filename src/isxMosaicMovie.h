@@ -4,7 +4,7 @@
 #include "isxWritableMovie.h"
 #include "isxMosaicMovieFile.h"
 
-#include <memory>
+#include <mutex>
 
 namespace isx
 {
@@ -115,6 +115,9 @@ private:
     /// The shared pointer to the movie file that stores data.
     std::shared_ptr<MosaicMovieFile>            m_file;
     std::shared_ptr<IoTaskTracker<VideoFrame>>  m_ioTaskTracker;
+
+    std::mutex m_fileMutex;  /// Mutex to control file access across multiple threads
+                             /// (see getFrameMetadata for more info)
 
     /// Writes to the movie file and waits for the operation to finished on the I/O thread.
     void writeAndWait(std::function<void()> inCallback, const std::string & inName);

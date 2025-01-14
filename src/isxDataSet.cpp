@@ -1019,8 +1019,6 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
             const auto & mini2p = processingInterface->find("mini2p");
             if (mini2p != processingInterface->end())
             {
-                acqInfo["Microscope Type"] = "mPulse";
-
                 const auto isZStack = mini2p->at("isZStack").get<bool>();
                 acqInfo["Z-Stack"] = isZStack;
                 if (isZStack)
@@ -1032,6 +1030,119 @@ getAcquisitionInfoFromExtraProps(const std::string & inExtraPropsStr)
                     }
                 }
 
+            }
+        }
+
+        const auto userInterface = extraProps.find("userInterface");
+        if (userInterface != extraProps.end())
+        {
+            const auto & customMetadata = userInterface->find("customMetadata");
+            if (customMetadata != userInterface->end())
+            {
+                const auto & animalSex = customMetadata->find("Animal Sex");
+                if (animalSex != customMetadata->end())
+                {
+                    acqInfo["Animal Sex"] = animalSex->at("value").get<std::string>();
+                }
+
+                const auto & animalDob = customMetadata->find("DOB");
+                if (animalDob != customMetadata->end())
+                {
+                    acqInfo["Animal Date of Birth"] = animalDob->at("value").get<std::string>();
+                }
+
+                const auto & animalId = customMetadata->find("Animal ID");
+                if (animalId != customMetadata->end())
+                {
+                    acqInfo["Animal ID"] = animalId->at("value").get<std::string>();
+                }
+
+                const auto & animalSpecies = customMetadata->find("Species");
+                if (animalSpecies != customMetadata->end())
+                {
+                    acqInfo["Animal Species"] = animalSpecies->at("value").get<std::string>();
+                }
+                
+                const auto & animalWeight = customMetadata->find("Weight");
+                if (animalWeight != customMetadata->end())
+                {
+                    acqInfo["Animal Weight"] = animalWeight->at("value").get<std::string>();
+                }
+
+                const auto & experimenterName = customMetadata->find("Personnel");
+                if (experimenterName != customMetadata->end())
+                {
+                    acqInfo["Experimenter Name"] = experimenterName->at("value").get<std::string>();
+                }
+            }
+
+            const auto & system = userInterface->find("system");
+            if (system != userInterface->end())
+            {
+                const auto & hardware = system->find("hardware");
+                if (hardware != system->end())
+                {
+                    const auto & miniscopeType = hardware->find("miniscopeType");
+                    if (miniscopeType != hardware->end())
+                    {
+                        acqInfo["Microscope Type"] = miniscopeType->get<std::string>();
+                    }
+
+                    const auto & miniscopeSerial = hardware->find("miniscopeSerial");
+                    if (miniscopeSerial != hardware->end())
+                    {
+                        acqInfo["Microscope Serial Number"] = miniscopeSerial->get<std::string>();
+                    }
+                }
+            }
+
+            const auto & sessionName = userInterface->find("sessionName");
+            if (sessionName != userInterface->end())
+            {
+                acqInfo["Session Name"] = sessionName->get<std::string>();
+            }
+            
+        }
+
+        const auto & hardwareInterface = extraProps.find("hardwareInterface");
+        if (hardwareInterface != extraProps.end())
+        {
+            const auto & miniscope = hardwareInterface->find("miniscope");
+            if (miniscope != hardwareInterface->end())
+            {
+                const auto & channel1 = miniscope->find("channel-1");
+                if (channel1 != miniscope->end())
+                {
+                    const auto & lens = channel1->find("lens");
+                    if (lens != channel1->end())
+                    {
+                        const auto & focus = lens->find("focus");
+                        if (focus != lens->end())
+                        {
+                            acqInfo["Microscope Focus"] = focus->at("value").get<int>();
+                        }
+                    }
+
+                    const auto & mppc = channel1->find("mppc");
+                    if (mppc != channel1->end())
+                    {
+                        const auto & gain = mppc->find("gain");
+                        if (gain != mppc->end())
+                        {
+                            acqInfo["Microscope Gain"] = gain->at("value").get<float>();
+                        }
+                    }
+                    
+                    const auto & laser = channel1->find("laser");
+                    if (laser != channel1->end())
+                    {
+                        const auto & power = laser->find("power");
+                        if (power != laser->end())
+                        {
+                            acqInfo["Microscope Power"] = power->at("value").get<float>();
+                        }
+                    }
+                }
             }
         }
     }
