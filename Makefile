@@ -110,7 +110,7 @@ endif
 
 rebuild: clean build
  
-test: build
+test:
 ifeq ($(DETECTED_OS), windows)
 	@$(MOSTEST_COMMAND)
 else ifeq ($(DETECTED_OS), mac)
