@@ -297,3 +297,20 @@ TEST_CASE("getPixelsPerCm", "[core]")
     
     std::remove(tmpFilename.c_str());
 }
+
+TEST_CASE("mini2pMetadata", "[core]")
+{
+    isx::CoreInitialize();
+
+    SECTION("Movie with 2P lens metadata")
+    {
+        const std::string inputFilename = g_resources["unitTestDataPath"] + "/mini2p/lens/20241210_2024-12-11-12-06-39_video-TPC.isxd";
+        const isx::SpMovie_t movie = isx::readMovie(inputFilename);
+
+        const auto expectedBasePlate = isx::BasePlateType_t::BP35;
+        const auto actualBasePlate = isx::getBasePlateType(movie);
+        REQUIRE(actualBasePlate == expectedBasePlate);
+    }
+
+    isx::CoreShutdown();
+}

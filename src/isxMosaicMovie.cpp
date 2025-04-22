@@ -3,7 +3,6 @@
 #include "isxException.h"
 #include "isxLog.h"
 #include "isxJsonUtils.h"
-#include "isxMutex.h"
 #include "isxIoQueue.h"
 #include "isxConditionVariable.h"
 #include "isxIoTaskTracker.h"
@@ -85,7 +84,9 @@ MosaicMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
             auto sharedThis = weakThis.lock();
             if (sharedThis)
             {
-                return m_file->readFrame(inFrameNumber);
+                const std::lock_guard<std::mutex> lock(m_fileMutex);
+                auto frame = m_file->readFrame(inFrameNumber);
+                return frame;
             }
             return SpVideoFrame_t();
         };
@@ -104,7 +105,11 @@ MosaicMovie::getFrameHeader(const size_t inFrameNumber)
 std::string
 MosaicMovie::getFrameMetadata(const size_t inFrameNumber)
 {
-    return m_file->readFrameMetadata(inFrameNumber);
+    // (IDPS-1162) Protect access to the file when it's being accessed across multiple threads
+    // This can happen when frame metadata is retrieved while frames are displayed the player.
+    const std::lock_guard<std::mutex> lock(m_fileMutex);
+    auto frameMetadata = m_file->readFrameMetadata(inFrameNumber);
+    return frameMetadata;
 }
 
 std::vector<uint16_t>

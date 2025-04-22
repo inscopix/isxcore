@@ -458,5 +458,70 @@ TEST_CASE("DataSet-getMetadata", "[core][dataset]")
         REQUIRE(metaData.at("Recording UUID") == "AC-00111111-l4R4GRt28o-1654732421577");
     }
 
+    SECTION("Mini2p Non Z-Stack")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/mini2p/lens/20241210_2024-12-11-12-06-39_video-TPC.isxd";
+        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, filePath, isx::HistoricalDetails());
+
+        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+
+        REQUIRE(metaData.at("Start Time") == "2024/12/11-12:06:40.654");
+        REQUIRE(metaData.at("End Time") == "2024/12/11-12:06:41.308");
+        REQUIRE(metaData.at("Duration (s)") == "0.654");
+        REQUIRE(metaData.at("Sample Rate (Hz)") == "15.291");
+        REQUIRE(metaData.at("Number of Time Samples") == "10");
+        REQUIRE(metaData.at("Number of Dropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Cropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Blank Samples") == "0");
+        REQUIRE(metaData.at("Number of Pixels") == "512 x 512");
+        REQUIRE(metaData.at("Microns per Pixel") == "0.480");
+        REQUIRE(metaData.at("Animal Date of Birth") == "");
+        REQUIRE(metaData.at("Animal ID") == "");
+        REQUIRE(metaData.at("Animal Sex") == "");
+        REQUIRE(metaData.at("Animal Species") == "");
+        REQUIRE(metaData.at("Animal Weight") == "");
+        REQUIRE(metaData.at("Experimenter Name") == "");
+        REQUIRE(metaData.at("Microscope Focus") == "480");
+        REQUIRE(metaData.at("Microscope Gain") == "0.900");
+        REQUIRE(metaData.at("Microscope Power") == "9.200");
+        REQUIRE(metaData.at("Microscope Serial Number") == "KA-20241030");
+        REQUIRE(metaData.at("Microscope Type") == "default");
+        REQUIRE(metaData.at("Recording UUID") == "KA-20241030-0000000000-1733918799355");
+        REQUIRE(metaData.at("Z-Stack") == "false");
+    }
+
+    SECTION("Mini2p Z-Stack")
+    {
+        const std::string filePath = g_resources["unitTestDataPath"] + "/mini2p/zstack/2024-12-06-15-10-14_stack.isxd";
+        isx::DataSet ds("movie", isx::DataSet::Type::MOVIE, filePath, isx::HistoricalDetails());
+
+        const std::map<std::string, std::string> metaData = convertMetadataToMap(ds.getMetadata());
+
+        REQUIRE(metaData.at("Start Time") == "2024/12/06-15:10:15.442");
+        REQUIRE(metaData.at("End Time") == "2024/12/06-15:10:16.750");
+        REQUIRE(metaData.at("Duration (s)") == "1.309");
+        REQUIRE(metaData.at("Sample Rate (Hz)") == "7.640");
+        REQUIRE(metaData.at("Number of Time Samples") == "10");
+        REQUIRE(metaData.at("Number of Dropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Cropped Samples") == "0");
+        REQUIRE(metaData.at("Number of Blank Samples") == "0");
+        REQUIRE(metaData.at("Number of Pixels") == "512 x 512");
+        REQUIRE(metaData.at("Microns per Pixel") == "0.560");
+        REQUIRE(metaData.at("Animal Date of Birth") == "");
+        REQUIRE(metaData.at("Animal ID") == "");
+        REQUIRE(metaData.at("Animal Sex") == "");
+        REQUIRE(metaData.at("Animal Species") == "");
+        REQUIRE(metaData.at("Animal Weight") == "");
+        REQUIRE(metaData.at("Experimenter Name") == "");
+        REQUIRE(metaData.at("Microscope Focus") == "650");
+        REQUIRE(metaData.at("Microscope Gain") == "7.300");
+        REQUIRE(metaData.at("Microscope Power") == "44.800");
+        REQUIRE(metaData.at("Microscope Serial Number") == "KA-20241030");
+        REQUIRE(metaData.at("Microscope Type") == "default");
+        REQUIRE(metaData.at("Recording UUID") == "KA-20241030-0000000000-1733497814041");
+        REQUIRE(metaData.at("Z-Stack") == "true");
+        REQUIRE(metaData.at("Z-Stack Planes") == "[400,427,455,483,511,538,566,594,622,650]");
+    }
+
     isx::CoreShutdown();
 }
