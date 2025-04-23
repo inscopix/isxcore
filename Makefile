@@ -17,12 +17,6 @@ ifndef TEST_DATA_DIR
 	TEST_DATA_DIR=test_data
 endif
 
-# Variables for unit tests
-BIN_DIR=bin
-MOSTEST_EXE=mostest
-MOSTEST_BIN_DIR=$(BUILD_DIR_ROOT)/$(BUILD_TYPE)/$(BIN_DIR)
-MOSTEST_COMMAND=$(MOSTEST_BIN_DIR)/$(MOSTEST_EXE) -p $(TEST_DATA_DIR) $*
-
 # Detect OS from env variables or uname
 ifeq ($(OS), Windows_NT)
 	DETECTED_OS = windows
@@ -33,6 +27,16 @@ else
 	else ifeq ($(UNAME_S), Darwin)
 		DETECTED_OS = mac
 	endif
+endif
+
+# Variables for unit tests
+BIN_DIR=bin
+MOSTEST_EXE=mostest
+MOSTEST_BIN_DIR=$(BUILD_DIR_ROOT)/$(BUILD_TYPE)/$(BIN_DIR)
+ifeq ($(DETECTED_OS), windows)
+	MOSTEST_COMMAND=$(MOSTEST_BIN_DIR)/$(MOSTEST_EXE) -p $(shell cygpath -m "$(realpath  $(TEST_DATA_DIR))") $*
+else
+	MOSTEST_COMMAND=$(MOSTEST_BIN_DIR)/$(MOSTEST_EXE) -p $(TEST_DATA_DIR) $*
 endif
 
 # Environment variables to pass to cmake for compilation
