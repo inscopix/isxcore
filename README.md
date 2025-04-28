@@ -179,5 +179,5 @@ make test
 If the test data folder is located elsewhere on the machine, the path to this folder can be passed as a variable when running the test command:
 
 ```
-make test THIRD_PARTY_DIR=/path/to/third/party/dir TEST_DATA_DIR=/path/to/test/data/dir
+make test TEST_DATA_DIR=/path/to/test/data/dir
 ```
