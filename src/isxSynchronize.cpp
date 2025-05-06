@@ -121,8 +121,9 @@ void setIsxbStartTime(const std::string inIsxbFilename, const Time & inStartTime
     const auto offset = sizeof(header.m_fileVersion) + sizeof(header.m_headerSize);
 
     const uint64_t startTimestamp = uint64_t(inStartTime.getSecsSinceEpoch().getNum());
-    const int64_t utcOffset = int64_t(inStartTime.getUtcOffset());
-    
+    // isxb start time encodes utc offset in minutes instead of seconds (isxd format)
+    const int64_t utcOffset = int64_t(inStartTime.getUtcOffset() / 60);
+
     std::fstream file(inIsxbFilename, std::ios::binary | std::ios_base::in | std::ios_base::out);
     file.seekp(offset, std::ios_base::beg);
     file.write(reinterpret_cast<const char*>(&startTimestamp), sizeof(startTimestamp));
@@ -372,7 +373,8 @@ AsyncTaskStatus alignStartTimes(
         {
             ISX_LOG_INFO("Files with the same recording UUID detected. Synchronizing start time of align file (", alignFilename, ") to reference file (", inRefFilename, "). ",
                 "Current start time of align file is: ", int64_t(expAlignStartTimestamp), " ms. Expected start time of align file is: ", int64_t(expAlignStartTimestamp), " ms. ",
-                "Difference between expected and actual start time is: ", int64_t(expAlignStartTimestamp) - int64_t(alignStartTimestamp), " ms.");
+                "Difference between expected and actual start time is: ", int64_t(expAlignStartTimestamp) - int64_t(alignStartTimestamp), " ms.",
+                "Setting time zone of align file to time zone of reference file: GMT ", refStart.getUtcOffset(), " s");
             const Time newStart(
                 DurationInSeconds::fromMilliseconds(expAlignStartTimestamp),
                 refStart.getUtcOffset()
