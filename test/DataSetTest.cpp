@@ -474,7 +474,7 @@ TEST_CASE("DataSet-getMetadata", "[core][dataset]")
         REQUIRE(metaData.at("Number of Cropped Samples") == "0");
         REQUIRE(metaData.at("Number of Blank Samples") == "0");
         REQUIRE(metaData.at("Number of Pixels") == "512 x 512");
-        REQUIRE(metaData.at("Microns per Pixel") == "0.480");
+        REQUIRE(metaData.at("Microns per Pixel") == "0.330");
         REQUIRE(metaData.at("Animal Date of Birth") == "");
         REQUIRE(metaData.at("Animal ID") == "");
         REQUIRE(metaData.at("Animal Sex") == "");
@@ -506,7 +506,7 @@ TEST_CASE("DataSet-getMetadata", "[core][dataset]")
         REQUIRE(metaData.at("Number of Cropped Samples") == "0");
         REQUIRE(metaData.at("Number of Blank Samples") == "0");
         REQUIRE(metaData.at("Number of Pixels") == "512 x 512");
-        REQUIRE(metaData.at("Microns per Pixel") == "0.560");
+        REQUIRE(metaData.at("Microns per Pixel") == "0.580");
         REQUIRE(metaData.at("Animal Date of Birth") == "");
         REQUIRE(metaData.at("Animal ID") == "");
         REQUIRE(metaData.at("Animal Sex") == "");
