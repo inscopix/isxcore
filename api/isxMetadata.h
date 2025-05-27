@@ -145,7 +145,8 @@ namespace isx
         BP34 = 40,
         BP35 = 41,
         BP36 = 42,
-        BP37 = 43
+        BP37 = 43,
+        BP38 = 44
     };
     /// \endcond doxygen chokes on enum class inside of namespace
 
@@ -193,6 +194,7 @@ namespace isx
         {BasePlateType_t::BP33, "ProView DC Prism Integrated Lens 0.5 mm x 5.6 mm"},
         {BasePlateType_t::BP34, "ProView 2P Integrated Lens 0.5 mm x 4.0 mm"},
         {BasePlateType_t::BP35, "ProView 2P Integrated Lens 0.5 mm x 6.1 mm"},
+        {BasePlateType_t::BP38, "ProView 2P Integrated Lens 0.6 mm x 7.3 mm"},
         {BasePlateType_t::BP36, "ProView 2P Integrated Lens 1.0 mm x 4.2 mm"},
         {BasePlateType_t::BP37, "ProView 2P Integrated Lens 1.0 mm x 9.0 mm"},
     };
@@ -205,7 +207,7 @@ namespace isx
     {
         {BasePlateType_t::CRANIAL_WINDOW, std::make_pair(0.82, 0.80)},
         {BasePlateType_t::CRANIAL_WINDOW_WIDE_FIELD, std::make_pair(1.41, 1.50)},
-        {BasePlateType_t::CRANIAL_WINDOW_2P, std::make_pair(0.77, 0.80)},
+        {BasePlateType_t::CRANIAL_WINDOW_2P, std::make_pair(0.7825, 0.82)},
 
         {BasePlateType_t::BP7, std::make_pair(0.67,0.81)},
         {BasePlateType_t::BP8, std::make_pair(0.63,0.79)},
@@ -224,10 +226,11 @@ namespace isx
         {BasePlateType_t::BP32, std::make_pair(0.81, 0.80)},
         {BasePlateType_t::BP33, std::make_pair(0.81, 0.84)},
 
-        {BasePlateType_t::BP34, std::make_pair(0.56, 0.91)},
-        {BasePlateType_t::BP35, std::make_pair(0.48, 0.77)},
-        {BasePlateType_t::BP36, std::make_pair(0.71, 0.86)},
-        {BasePlateType_t::BP37, std::make_pair(0.66, 0.82)},
+        {BasePlateType_t::BP34, std::make_pair(0.4825, 0.97)},
+        {BasePlateType_t::BP35, std::make_pair(0.29, 0.49)},
+        {BasePlateType_t::BP38, std::make_pair(0.3325, 0.57)},
+        {BasePlateType_t::BP36, std::make_pair(0.6975, 0.86)},
+        {BasePlateType_t::BP37, std::make_pair(0.62, 0.82)},
     };
 
     const std::map<std::string, BasePlateType_t> probeIdToBasePlate =
@@ -271,6 +274,7 @@ namespace isx
 
         {"1050-007380", BasePlateType_t::BP34},
         {"1050-007381", BasePlateType_t::BP35},
+        {"1050-007748", BasePlateType_t::BP38},
         {"1050-007382", BasePlateType_t::BP36},
         {"1050-007383", BasePlateType_t::BP37},
     };
@@ -317,6 +321,7 @@ namespace isx
         BasePlateType_t::BP33,
         BasePlateType_t::BP34,
         BasePlateType_t::BP35,
+        BasePlateType_t::BP38,
         BasePlateType_t::BP36,
         BasePlateType_t::BP37,
     };
@@ -407,6 +412,7 @@ namespace isx
         BasePlateType_t::CRANIAL_WINDOW_2P,
         BasePlateType_t::BP34,
         BasePlateType_t::BP35,
+        BasePlateType_t::BP38,
         BasePlateType_t::BP36,
         BasePlateType_t::BP37,
     };
@@ -1130,6 +1136,29 @@ namespace isx
                     return 0;
                 }
             }
+        }
+
+        auto processingInterface = extraProps.find("processingInterface");
+        if (processingInterface != extraProps.end())
+        {
+            // for mini2p, look in processing interface for efocus
+            auto mini2p = processingInterface->find("mini2p");
+            if (mini2p != processingInterface->end())
+            {
+                const auto isMultiplane = mini2p->value("isMultiplane", false);
+                const auto isZStack = mini2p->value("isZStack", false);
+                auto planes = mini2p->find("planes");
+                // TODO: handle multiplane and zstack data
+                if (!isMultiplane && !isZStack && planes != mini2p->end())
+                {
+                    const auto planesVec = planes->get<std::vector<uint16_t>>();
+                    if (planesVec.size() == 1)
+                    {
+                        return planesVec[0];
+                    }
+                }
+            }
+
         }
 
         return 0;
