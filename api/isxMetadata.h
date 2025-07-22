@@ -5,6 +5,7 @@
 #include "json.hpp"
 #include <string>
 #include <map>
+#include <vector>
 
 namespace isx
 {
@@ -1164,6 +1165,29 @@ namespace isx
         return 0;
     }
 
+    template <class T>
+    std::vector<uint16_t>
+    getEfocusForPlanes(const T & inData)
+    {
+        // return efocus values for planes in recording
+        // currently used for 2p z-stack movies
+        using json = nlohmann::json;
+        json extraProperties = getExtraPropertiesJSON(inData);
+        std::vector<uint16_t> efocusValues;
+        
+        const auto processingInterface = extraProperties.find("processingInterface");
+        if (processingInterface != extraProperties.end())
+        {
+            const auto mini2p = processingInterface->find("mini2p");
+            if (mini2p != processingInterface->end())
+            {
+                efocusValues = mini2p->value("planes", std::vector<uint16_t>());
+            }
+        }
+        
+        return efocusValues;
+    }
+
     template<class T>
     std::vector<uint16_t> getEfocusSeries(const std::vector<T> & inDataSeries)
     {
@@ -1186,12 +1210,13 @@ namespace isx
     }
 
     template <class T>
-    double getMicronsPerPixel(T & inData)
+    double getMicronsPerPixel(T & inData, const size_t inEfocus = 0)
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
 
-        uint16_t efocus = getEfocus(inData);
+        uint16_t efocus = (inEfocus > 0) ? inEfocus : getEfocus(inData);
+        ISX_LOG_INFO("USING EFOCUS: ", efocus);
         BasePlateType_t basePlateType = getBasePlateType(inData);
         if (integratedBasePlateToScaling.find(basePlateType) == integratedBasePlateToScaling.end())
         {
