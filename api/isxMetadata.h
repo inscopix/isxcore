@@ -1215,7 +1215,7 @@ namespace isx
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
 
-        uint16_t efocus = (inEfocus > 0) ? inEfocus : getEfocus(inData);
+        uint16_t efocus = (inEfocus > 0) ? static_cast<uint16_t>(inEfocus) : getEfocus(inData);
         ISX_LOG_INFO("USING EFOCUS: ", efocus);
         BasePlateType_t basePlateType = getBasePlateType(inData);
         if (integratedBasePlateToScaling.find(basePlateType) == integratedBasePlateToScaling.end())
