@@ -1210,12 +1210,12 @@ namespace isx
     }
 
     template <class T>
-    double getMicronsPerPixel(T & inData, const size_t inEfocus = 0)
+    double getMicronsPerPixel(T & inData, const int inEfocus = -1)
     {
         using json = nlohmann::json;
         json extraProps = getExtraPropertiesJSON(inData);
 
-        uint16_t efocus = (inEfocus > 0) ? static_cast<uint16_t>(inEfocus) : getEfocus(inData);
+        uint16_t efocus = (inEfocus >= 0) ? static_cast<uint16_t>(inEfocus) : getEfocus(inData);
         BasePlateType_t basePlateType = getBasePlateType(inData);
         if (integratedBasePlateToScaling.find(basePlateType) == integratedBasePlateToScaling.end())
         {
