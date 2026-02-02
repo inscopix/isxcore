@@ -3,6 +3,13 @@ function(setCommonCxxOptionsForTarget targetName)
         list(APPEND GLOBAL_CXX_OPTIONS "-Wall")
         list(APPEND GLOBAL_CXX_OPTIONS "-Wsign-compare")
         list(APPEND GLOBAL_CXX_OPTIONS "-Werror")
+
+        # TODO: temporary ignores to support macOS 15
+        list(APPEND GLOBAL_CXX_OPTIONS "-Wno-deprecated")
+        list(APPEND GLOBAL_CXX_OPTIONS "-Wno-unused-but-set-variable")
+        list(APPEND GLOBAL_CXX_OPTIONS "-Wno-shorten-64-to-32")
+        list(APPEND GLOBAL_CXX_OPTIONS "-Wno-enum-constexpr-conversion")
+
         list(APPEND GLOBAL_CXX_OPTIONS "-std=c++11")
         list(APPEND GLOBAL_CXX_OPTIONS "-stdlib=libc++")
 
