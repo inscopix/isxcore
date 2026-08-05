@@ -1,7 +1,7 @@
 #ifndef ISX_NVISION_MOVIE_H
 #define ISX_NVISION_MOVIE_H
 
-#include "isxMovie.h"
+#include "isxWritableMovie.h"
 #include "isxNVisionMovieFile.h"
 
 namespace isx
@@ -10,7 +10,7 @@ template <typename T> class IoTaskTracker;
 
 /// Encapsulates nVision behavioural movie information and data.
 /// All data IO operations are performed by the IoQueue thread.
-class NVisionMovie : public Movie
+class NVisionMovie : public WritableMovie
                  , public std::enable_shared_from_this<NVisionMovie>
 {
 public:
@@ -32,6 +32,12 @@ public:
         const bool inEnableWrite = false
     );
 
+    NVisionMovie(
+        const std::string & inFileName,
+        const TimingInfo & inTimingInfo,
+        const SpacingInfo & inSpacingInfo
+    );
+
     // Overrides - see base classes for documentation
     bool isValid() const override;
 
@@ -40,6 +46,20 @@ public:
     void getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback) override;
 
     std::string getFrameMetadata(const size_t inFrameNumber) override;
+
+    void writeFrame(const SpVideoFrame_t & inVideoFrame) override;
+
+    void writeFrameWithHeaderFooter(const uint16_t * inBuffer) override;
+
+    void writeFrameWithHeaderFooter(const uint16_t * inHeader, const uint16_t * inPixels, const uint16_t * inFooter) override;
+
+    void
+    writeFrameMetadata(const std::string inMetadata) override;
+
+    void
+    closeForWriting(const TimingInfo & inTimingInfo = TimingInfo()) override;
+
+    SpVideoFrame_t makeVideoFrame(isize_t inIndex) override;
 
     void cancelPendingReads() override;
 
@@ -62,9 +82,9 @@ public:
     
     std::string getExtraProperties() const override;
 
-    void setExtraProperties(const std::string & inProperties);
+    void setExtraProperties(const std::string & inProperties) override;
 
-    void closeForWriting();
+    // void closeForWriting();
 
 private:
     /// True if the movie file is valid, false otherwise.
@@ -73,6 +93,9 @@ private:
     /// The shared pointer to the movie file that stores data.
     std::shared_ptr<NVisionMovieFile>             m_file;
     std::shared_ptr<IoTaskTracker<VideoFrame>>  m_ioTaskTracker;
+
+    /// Writes to the movie file and waits for the operation to finished on the I/O thread.
+    void writeAndWait(std::function<void()> inCallback, const std::string & inName);
 };
 
 } // namespace isx

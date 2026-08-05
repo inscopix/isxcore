@@ -49,6 +49,19 @@ public:
     void
     writeFrameWithHeaderFooter(const uint16_t * inHeader, const uint16_t * inPixels, const uint16_t * inFooter) = 0;
 
+
+    /// Write a frame with a header and footer.
+    ///
+    /// This assumes the header, pixels, and footer are contiguously stored in memory
+    /// as should be the case when writing raw data from the sensor.
+    ///
+    /// \param  inMetadata    The header, pixel, and footer data in one contiguous buffer.
+    virtual
+    void
+    writeFrameMetadata(const std::string inMetadata) {
+        return;
+    };
+
     /// Close this file for writing.  This writes the header containing
     /// metadata at the end of the file.  Any attempts to write frames after
     /// this is called will result in an exception.

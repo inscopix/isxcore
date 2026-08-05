@@ -21,8 +21,18 @@ writeMosaicMovie(
         DataType inDataType,
         const bool inHasFrameHeaderFooter)
 {
-    SpWritableMovie_t movie = std::make_shared<MosaicMovie>(
+    std::string ext = getExtension(inFileName);
+    SpWritableMovie_t movie;
+    if (ext == "isxd")
+    {
+        movie = std::make_shared<MosaicMovie>(
             inFileName, inTimingInfo, inSpacingInfo, inDataType, inHasFrameHeaderFooter);
+    }
+    else if (ext == "isxb")
+    {
+        movie = std::make_shared<NVisionMovie>(
+            inFileName, inTimingInfo, inSpacingInfo);
+    }
     return movie;
 }
 

@@ -172,6 +172,15 @@ public:
     void
     closeForWriting();
 
+    /// Return a video frame compatible with current video stream's dimensions and
+    /// with timing info set according to the input frame number.
+    ///
+    /// \param inIndex    The index of the frame used to set the timing info of the output video frame.
+    /// \return                 A pointer to the black video frame
+    ///
+    SpVideoFrame_t
+    makeVideoFrame(const isize_t inIndex) const;
+
     /// Struct representing file header contents
     ///
     struct Header {
@@ -231,15 +240,6 @@ private:
     ///
     SpVideoFrame_t
     decodePacket(size_t inFrameNumber, AVPacket * m_pPacket);
-
-    /// Return a video frame compatible with current video stream's dimensions and
-    /// with timing info set according to the input frame number.
-    ///
-    /// \param inIndex    The index of the frame used to set the timing info of the output video frame.
-    /// \return                 A pointer to the black video frame
-    ///
-    SpVideoFrame_t
-    makeVideoFrame(const isize_t inIndex) const;
 
     /// Check if the file stream is good, if not throw an exception.
     ///

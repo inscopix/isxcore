@@ -24,6 +24,17 @@ NVisionMovie::NVisionMovie(const std::string & inFileName, const bool inEnableWr
     m_valid = true;
 }
 
+NVisionMovie::NVisionMovie(
+    const std::string & inFileName,
+    const TimingInfo & inTimingInfo,
+    const SpacingInfo & inSpacingInfo)
+    : m_valid(false)
+    , m_ioTaskTracker(new IoTaskTracker<VideoFrame>())
+{
+    m_file = std::make_shared<NVisionMovieFile>(inFileName, inTimingInfo, inSpacingInfo);
+    m_valid = true;
+}
+
 bool
 NVisionMovie::isValid() const
 {
@@ -52,6 +63,13 @@ NVisionMovie::getFrame(isize_t inFrameNumber)
     return asyncTaskResult.get();   // will throw if asyncTaskResult contains an exception
 }
 
+
+void
+NVisionMovie::writeFrameMetadata(const std::string inMetadata)
+{
+    m_file->writeFrameMetadata(inMetadata);
+}
+
 void
 NVisionMovie::getFrameAsync(isize_t inFrameNumber, MovieGetFrameCB_t inCallback)
 {
@@ -74,6 +92,81 @@ std::string
 NVisionMovie::getFrameMetadata(const size_t inFrameNumber)
 {
     return m_file->readFrameMetadata(inFrameNumber);
+}
+
+void
+NVisionMovie::writeFrame(const SpVideoFrame_t & inVideoFrame)
+{
+
+    const TimingInfo & ti = getTimingInfo();
+    if (!ti.isIndexValid(inVideoFrame->getFrameIndex()))
+    {
+        ISX_ASSERT(false, "Attempt to write invalid frame.");
+        return;
+    }
+
+    // Get a new shared pointer to the file, so we can guarantee the write.
+    std::shared_ptr<NVisionMovieFile> file = m_file;
+    writeAndWait([file, inVideoFrame]()
+    {
+        file->writeFrame(inVideoFrame);
+    }, "writeFrame");
+}
+
+void
+NVisionMovie::writeFrameWithHeaderFooter(const uint16_t * inBuffer)
+{
+}
+
+void
+NVisionMovie::writeFrameWithHeaderFooter(const uint16_t * inHeader, const uint16_t * inPixels, const uint16_t * inFooter)
+{
+}
+
+void
+NVisionMovie::closeForWriting(const TimingInfo & inTimingInfo)
+{
+    m_file->closeForWriting();
+}
+
+SpVideoFrame_t
+NVisionMovie::makeVideoFrame(isize_t inIndex)
+{
+    return m_file->makeVideoFrame(inIndex);
+}
+
+void
+NVisionMovie::setExtraProperties(const std::string & inProperties)
+{
+    m_file->setExtraProperties(inProperties);
+}
+
+void
+NVisionMovie::writeAndWait(std::function<void()> inCallback, const std::string & inName)
+{
+    Mutex mutex;
+    ConditionVariable cv;
+    mutex.lock(inName);
+    auto writeIoTask = std::make_shared<IoTask>(
+        inCallback,
+        [&cv, &mutex, &inName](AsyncTaskStatus inStatus)
+        {
+            if (inStatus != AsyncTaskStatus::COMPLETE)
+            {
+                ISX_LOG_ERROR("An error occurred while writing data to NVisionMovieFile.");
+            }
+            mutex.lock(inName + " finished");  // will only be able to take lock when client reaches cv.waitForMs
+            mutex.unlock();
+            cv.notifyOne();
+        });
+    writeIoTask->schedule();
+    cv.wait(mutex);
+    mutex.unlock();
+
+    if (writeIoTask->getTaskStatus() == AsyncTaskStatus::ERROR_EXCEPTION)
+    {
+        std::rethrow_exception(writeIoTask->getExceptionPtr());
+    }
 }
 
 void
@@ -137,16 +230,16 @@ NVisionMovie::getExtraProperties() const
     return m_file->getExtraProperties();
 }
 
-void
-NVisionMovie::setExtraProperties(const std::string & inProperties)
-{
-    m_file->setExtraProperties(inProperties);
-}
+// void
+// NVisionMovie::setExtraProperties(const std::string & inProperties)
+// {
+//     m_file->setExtraProperties(inProperties);
+// }
 
-void
-NVisionMovie::closeForWriting()
-{
-    m_file->closeForWriting();
-}
+// void
+// NVisionMovie::closeForWriting()
+// {
+//     m_file->closeForWriting();
+// }
 
 } // namespace isx
