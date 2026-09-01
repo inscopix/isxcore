@@ -19,7 +19,6 @@ function(setCommonCxxOptionsForTarget targetName)
 
     elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
         list(APPEND GLOBAL_CXX_OPTIONS "-Wall")
-        list(APPEND GLOBAL_CXX_OPTIONS "-Werror")
         list(APPEND GLOBAL_CXX_OPTIONS "-fPIC")
         list(APPEND GLOBAL_CXX_OPTIONS "-std=c++11")
 

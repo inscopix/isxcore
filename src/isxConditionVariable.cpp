@@ -3,6 +3,7 @@
 
 #include <QMutex>
 #include <QWaitCondition>
+#include <climits>
 
 namespace isx
 {

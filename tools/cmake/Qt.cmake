@@ -3,7 +3,7 @@ if(${ISX_ARCH_ARM})
 else()
     # Change to 5.12 when ready - see IDPS-87
     # set(QT_VERSION "5.12")
-    set(QT_VERSION "5.8")
+    set(QT_VERSION "5.15")
 endif()
 set(QT_DIR ${THIRD_PARTY_DIR}/Qt/${QT_VERSION})
 if(${ISX_OS_MACOS})
